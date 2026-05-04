@@ -322,9 +322,10 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
   const [form, setForm] = useState({
     name: '', description: '', category: 'food',
     venue_name: '', address: '', start_date: '', end_date: '',
-    is_free: false,
+    is_free: false, image_url: '',
     ticket_tiers: [{ id: '1', name: 'General Admission', price: 0, capacity: 100, remaining: 100, description: '' }]
   })
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const categories = [
@@ -343,6 +344,20 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
         name: '', price: 0, capacity: 100, remaining: 100, description: ''
       }]
     }))
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${businessId}-${Date.now()}.${fileExt}`
+    const { data, error } = await supabase.storage.from('event-images').upload(fileName, file)
+    setUploading(false)
+    if (!error && data) {
+      const { data: { publicUrl } } = supabase.storage.from('event-images').getPublicUrl(data.path)
+      setForm(prev => ({ ...prev, image_url: publicUrl }))
+    }
   }
 
   const handleTierChange = (index, field, value) => {
@@ -404,6 +419,40 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
 
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Cover Image Upload */}
+          <FormField label="Cover Image">
+            <div
+              onClick={() => document.getElementById('event-cover-upload').click()}
+              style={{
+                width: '100%', height: 160, borderRadius: 16,
+                border: '2px dashed var(--color-outline)',
+                background: form.image_url ? `url(${form.image_url}) center/cover` : 'var(--color-surface-container-low)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', gap: 8
+              }}
+            >
+              {!form.image_url && (
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-outline)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-on-surface-variant)' }}>
+                    {uploading ? 'Uploading...' : 'Click to upload 16:9 image'}
+                  </span>
+                </>
+              )}
+              <input
+                id="event-cover-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </FormField>
+
           <FormField label="Event Name">
             <input type="text" value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder="e.g., Summer Night Market" style={inputStyle} />
           </FormField>
@@ -422,9 +471,9 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
                     padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
                     border: '1px solid',
                     cursor: 'pointer',
-                    background: form.category === cat.id ? 'var(--color-secondary)' : 'var(--color-surface-container)',
-                    color: form.category === cat.id ? '#fff' : 'var(--color-on-surface)',
-                    borderColor: form.category === cat.id ? 'var(--color-secondary)' : 'var(--color-outline-variant)'
+                    background: form.category === cat.id ? '#111827' : '#fff',
+                    color: form.category === cat.id ? '#fff' : '#374151',
+                    borderColor: form.category === cat.id ? '#111827' : '#E5E7EB'
                   }}
                 >
                   {cat.label}
@@ -433,9 +482,9 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
             </div>
           </FormField>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: 'var(--color-surface-container-low)', borderRadius: 12 }}>
-            <input type="checkbox" id="is_free" checked={form.is_free} onChange={e => setForm(prev => ({ ...prev, is_free: e.target.checked }))} style={{ width: 18, height: 18, accentColor: 'var(--color-secondary)' }} />
-            <label htmlFor="is_free" style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-on-surface)', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
+            <input type="checkbox" id="is_free" checked={form.is_free} onChange={e => setForm(prev => ({ ...prev, is_free: e.target.checked }))} style={{ width: 18, height: 18, accentColor: '#10B981' }} />
+            <label htmlFor="is_free" style={{ fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>
               This is a free event
             </label>
           </div>
@@ -468,8 +517,8 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
           )}
 
           {form.ticket_tiers.map((tier, index) => (
-            <div key={tier.id} style={{ padding: 16, background: 'var(--color-surface-container-low)', borderRadius: 12, border: '1px solid var(--color-outline-variant)' }}>
-              <div style={{ fontSize: 11, color: 'var(--color-on-surface-variant)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Tier {index + 1}</div>
+            <div key={tier.id} style={{ padding: 16, background: '#F9FAFB', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+              <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>Tier {index + 1}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <FormField label="Tier Name">
                   <input type="text" value={tier.name} onChange={e => handleTierChange(index, 'name', e.target.value)} placeholder="e.g., General Admission" style={inputStyle} />
@@ -489,29 +538,29 @@ function CreateEventView({ businessId, lang, onBack, onSuccess }) {
             </div>
           ))}
 
-          <button onClick={handleAddTier} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px dashed var(--color-outline)', background: 'var(--color-surface-container)', color: 'var(--color-on-surface-variant)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={handleAddTier} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px dashed #D1D5DB', background: '#fff', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
             + Add Ticket Tier
           </button>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: 16, background: 'var(--color-surface-container-low)', borderRadius: 12 }}>
-            <span style={{ fontSize: 13, color: 'var(--color-on-surface-variant)', fontWeight: 600 }}>Total Capacity</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-on-surface)' }}>{totalCapacity} Attendees</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: 16, background: '#F9FAFB', borderRadius: 12 }}>
+            <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 600 }}>Total Capacity</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{totalCapacity} Attendees</span>
           </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 24, paddingTop: 16, borderTop: '1px solid #E5E7EB' }}>
         {step > 1 && (
-          <button onClick={() => setStep(step - 1)} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1px solid var(--color-outline-variant)', background: 'var(--color-surface-container)', color: 'var(--color-on-surface)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={() => setStep(step - 1)} style={{ flex: 1, padding: '14px', borderRadius: 12, border: '1px solid #E5E7EB', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
             Back
           </button>
         )}
         {step < 3 ? (
-          <button onClick={() => setStep(step + 1)} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--color-on-surface)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={() => setStep(step + 1)} style={{ flex: 1, padding: '14px', borderRadius: 12, border: 'none', background: '#111827', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
             Continue
           </button>
         ) : (
-          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--color-secondary)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '14px', borderRadius: 12, border: 'none', background: '#10B981', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
             {saving ? 'Saving...' : 'Create Event'}
           </button>
         )}
@@ -533,7 +582,7 @@ function FormField({ label, children }) {
 
 const inputStyle = {
   width: '100%', padding: '12px 14px', borderRadius: 12,
-  border: '1px solid var(--color-outline-variant)', fontSize: 14,
-  fontWeight: 500, color: 'var(--color-on-surface)',
-  background: 'var(--color-surface-container)', outline: 'none', boxSizing: 'border-box'
+  border: '1px solid #E5E7EB', fontSize: 14,
+  fontWeight: 500, color: '#111827',
+  background: '#fff', outline: 'none', boxSizing: 'border-box'
 }
