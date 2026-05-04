@@ -967,7 +967,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 onLogout={handleLogout}
             />
 
-            <div style={{ padding: 16, paddingBottom: 100 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', padding: 16, paddingBottom: 100 }}>
                 {/* TOP PILLS: Menu / Inventory */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                     {[
