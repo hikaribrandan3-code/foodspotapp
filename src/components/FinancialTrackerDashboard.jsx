@@ -115,13 +115,19 @@ export default function FinancialTrackerDashboard() {
         <button
           onClick={() => setShowCalc(true)}
           style={{
-            width: 36, height: 36, borderRadius: 10, background: primaryColor,
+            width: 40, height: 40, borderRadius: 12, background: primaryColor,
             border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: '#FFFFFF', boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
-            transition: 'all 0.2s'
+            cursor: 'pointer', color: '#FFFFFF',
+            boxShadow: '0 0 12px rgba(16,185,129,0.5), 0 2px 8px rgba(16,185,129,0.3)',
+            transition: 'all 0.2s ease',
+            animation: 'calcGlow 2.5s ease-in-out infinite',
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08) rotate(3deg)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(16,185,129,0.7), 0 4px 12px rgba(16,185,129,0.4)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1) rotate(0deg)'; e.currentTarget.style.boxShadow = '0 0 12px rgba(16,185,129,0.5), 0 2px 8px rgba(16,185,129,0.3)'; }}
+          onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.95)'; }}
+          onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; }}
           title="Open calculator"
         >
           <Calculator className="w-5 h-5" />
@@ -313,6 +319,13 @@ export default function FinancialTrackerDashboard() {
         </div>
       </div>
 
+      <style>{`
+        @keyframes calcGlow {
+          0%, 100% { box-shadow: 0 0 12px rgba(16,185,129,0.5), 0 2px 8px rgba(16,185,129,0.3); }
+          50% { box-shadow: 0 0 20px rgba(16,185,129,0.8), 0 4px 12px rgba(16,185,129,0.4); }
+        }
+      `}</style>
+
       {/* Calculator Modal */}
       {showCalc && <CalculatorModal onClose={() => setShowCalc(false)} primaryColor={primaryColor} cardStyle={cardStyle} />}
     </div>
@@ -324,6 +337,13 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
   const [prev, setPrev] = useState(null);
   const [op, setOp] = useState(null);
   const [newNum, setNewNum] = useState(true);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = original; };
+  }, []);
 
   const inputNum = (n) => {
     if (newNum) {
@@ -364,61 +384,94 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
     setNewNum(true);
   };
 
-  const btnStyle = (accent) => ({
-    padding: '16px 0',
-    borderRadius: 12,
+  const baseBtn = {
+    padding: '18px 0',
+    borderRadius: 14,
     border: 'none',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 700,
     cursor: 'pointer',
-    background: accent ? primaryColor : '#F9FAFB',
-    color: accent ? '#FFFFFF' : '#111827',
-    transition: 'all 0.15s',
+    transition: 'all 0.12s',
+    touchAction: 'manipulation',
+    WebkitTapHighlightColor: 'transparent',
     userSelect: 'none',
     WebkitUserSelect: 'none',
-  });
+    outline: 'none',
+    position: 'relative',
+    overflow: 'hidden',
+  };
 
-  const opBtnStyle = (active) => ({
-    padding: '16px 0',
-    borderRadius: 12,
-    border: 'none',
-    fontSize: 18,
-    fontWeight: 700,
-    cursor: 'pointer',
+  const numBtn = {
+    ...baseBtn,
+    background: '#F9FAFB',
+    color: '#111827',
+  };
+
+  const accentBtn = {
+    ...baseBtn,
+    background: primaryColor,
+    color: '#FFFFFF',
+  };
+
+  const opBtn = (active) => ({
+    ...baseBtn,
     background: active ? '#DBEAFE' : '#F3F4F6',
     color: active ? '#2563EB' : '#6B7280',
-    transition: 'all 0.15s',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
   });
 
-  const keys = [
-    ['C', '÷', '×', '⌫'],
-    ['7', '8', '9', '-'],
-    ['4', '5', '6', '+'],
-    ['1', '2', '3', '='],
-    ['0', '.', '=', '='],
-  ];
+  const handlePress = (fn) => (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fn();
+  };
+
+  const CalcBtn = ({ children, style, onPress, wide, tall }) => (
+    <button
+      onClick={onPress}
+      onTouchStart={onPress}
+      style={{
+        ...style,
+        gridColumn: wide ? 'span 2' : undefined,
+        gridRow: tall ? 'span 2' : undefined,
+        display: tall ? 'flex' : undefined,
+        alignItems: tall ? 'center' : undefined,
+        justifyContent: tall ? 'center' : undefined,
+      }}
+      onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.94)'; e.currentTarget.style.opacity = '0.85'; }}
+      onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
+      onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.94)'; e.currentTarget.style.opacity = '0.85'; }}
+      onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
+    >
+      {children}
+    </button>
+  );
 
   return (
     <div
       style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.4)',
+        position: 'fixed', inset: 0, zIndex: 99999,
+        background: 'rgba(0,0,0,0.5)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 16,
+        touchAction: 'none',
       }}
       onClick={onClose}
     >
       <div
-        style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20 }}
+        style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20, zIndex: 1 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Calculator</h3>
           <button
             onClick={onClose}
-            style={{ padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF' }}
+            onTouchStart={onClose}
+            style={{
+              padding: 8, background: 'transparent', border: 'none', cursor: 'pointer',
+              borderRadius: 8, color: '#9CA3AF', touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+            }}
             onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
             onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
           >
@@ -429,46 +482,41 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
         <div
           style={{
             background: '#111827', borderRadius: 16, padding: '20px 16px',
-            textAlign: 'right', marginBottom: 16, minHeight: 64,
+            textAlign: 'right', marginBottom: 16, minHeight: 72,
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}
         >
           <div style={{ fontSize: 12, color: '#6B7280', minHeight: 18 }}>
             {prev !== null ? `${prev} ${op || ''}` : ''}
           </div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all' }}>
+          <div style={{ fontSize: 36, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all', lineHeight: 1.2 }}>
             {display}
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          <button onClick={clear} style={btnStyle(true)}>C</button>
-          <button onClick={() => inputOp('/')} style={opBtnStyle(op === '/' && prev !== null)}>÷</button>
-          <button onClick={() => inputOp('*')} style={opBtnStyle(op === '*' && prev !== null)}>×</button>
-          <button
-            onClick={() => setDisplay(display.length > 1 ? display.slice(0, -1) : '0')}
-            style={btnStyle(false)}
-          >
-            ⌫
-          </button>
+          <CalcBtn style={accentBtn} onPress={handlePress(clear)}>C</CalcBtn>
+          <CalcBtn style={opBtn(op === '/' && prev !== null)} onPress={handlePress(() => inputOp('/'))}>÷</CalcBtn>
+          <CalcBtn style={opBtn(op === '*' && prev !== null)} onPress={handlePress(() => inputOp('*'))}>×</CalcBtn>
+          <CalcBtn style={numBtn} onPress={handlePress(() => setDisplay(display.length > 1 ? display.slice(0, -1) : '0'))}>⌫</CalcBtn>
 
           {[7, 8, 9].map((n) => (
-            <button key={n} onClick={() => inputNum(n)} style={btnStyle(false)}>{n}</button>
+            <CalcBtn key={n} style={numBtn} onPress={handlePress(() => inputNum(n))}>{n}</CalcBtn>
           ))}
-          <button onClick={() => inputOp('-')} style={opBtnStyle(op === '-' && prev !== null)}>-</button>
+          <CalcBtn style={opBtn(op === '-' && prev !== null)} onPress={handlePress(() => inputOp('-'))}>-</CalcBtn>
 
           {[4, 5, 6].map((n) => (
-            <button key={n} onClick={() => inputNum(n)} style={btnStyle(false)}>{n}</button>
+            <CalcBtn key={n} style={numBtn} onPress={handlePress(() => inputNum(n))}>{n}</CalcBtn>
           ))}
-          <button onClick={() => inputOp('+')} style={opBtnStyle(op === '+' && prev !== null)}>+</button>
+          <CalcBtn style={opBtn(op === '+' && prev !== null)} onPress={handlePress(() => inputOp('+'))}>+</CalcBtn>
 
           {[1, 2, 3].map((n) => (
-            <button key={n} onClick={() => inputNum(n)} style={btnStyle(false)}>{n}</button>
+            <CalcBtn key={n} style={numBtn} onPress={handlePress(() => inputNum(n))}>{n}</CalcBtn>
           ))}
-          <button onClick={calc} style={{ ...btnStyle(true), gridRow: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>=</button>
+          <CalcBtn style={accentBtn} tall onPress={handlePress(calc)}>=</CalcBtn>
 
-          <button onClick={() => inputNum(0)} style={{ ...btnStyle(false), gridColumn: 'span 2' }}>0</button>
-          <button onClick={() => { if (newNum) { setDisplay('0.'); setNewNum(false); } else if (!display.includes('.')) { setDisplay(display + '.'); } }} style={btnStyle(false)}>.</button>
+          <CalcBtn style={numBtn} wide onPress={handlePress(() => inputNum(0))}>0</CalcBtn>
+          <CalcBtn style={numBtn} onPress={handlePress(() => { if (newNum) { setDisplay('0.'); setNewNum(false); } else if (!display.includes('.')) { setDisplay(display + '.'); } })}>.</CalcBtn>
         </div>
       </div>
     </div>
