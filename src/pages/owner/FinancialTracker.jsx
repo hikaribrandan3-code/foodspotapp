@@ -15,7 +15,6 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react';
-import { motion } from 'motion';
 
 const StatCard = ({ title, value, delta, icon: Icon }) => (
   <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-2">
@@ -61,11 +60,7 @@ export default function App() {
       <main className="p-6 md:p-8 space-y-8 flex-1">
         {/* Hero Section (Bento KPI Grid) */}
         <section className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-5">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="md:col-span-2 md:row-span-2 bg-linear-to-br from-surface-container to-primary-container/10 border border-outline-variant rounded-3xl p-8 flex flex-col justify-between"
-          >
+          <div className="md:col-span-2 md:row-span-2 bg-linear-to-br from-surface-container to-primary-container/10 border border-outline-variant rounded-3xl p-8 flex flex-col justify-between animate-fadeIn">
             <div className="space-y-4">
               <p className="text-xs font-bold text-outline tracking-widest uppercase">Net Profit</p>
               <h3 className="text-5xl font-bold text-on-surface tracking-tighter leading-tight font-data">
@@ -86,7 +81,7 @@ export default function App() {
                 Calculated from 42 products
               </div>
             </div>
-          </motion.div>
+          </div>
 
           <div className="bg-surface-container border border-outline-variant rounded-3xl p-6 flex flex-col justify-between">
             <p className="text-xs font-bold text-outline tracking-widest uppercase">Expenses</p>
@@ -191,9 +186,9 @@ export default function App() {
                     onClick={() => toggleProductActive(product.id)}
                     className={`w-10 h-6 rounded-full relative transition-colors ${product.active ? 'bg-primary' : 'bg-outline-variant'}`}
                   >
-                    <motion.div
-                      animate={{ x: product.active ? 18 : 2 }}
-                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
+                    <div
+                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform"
+                      style={{ transform: `translateX(${product.active ? 18 : 2}px)` }}
                     />
                   </button>
                 </div>
