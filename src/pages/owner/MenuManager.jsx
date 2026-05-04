@@ -1001,8 +1001,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
+                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ {t('pause_orders')}</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>{t('pause_orders_desc')}</p>
                             </div>
                             <label className="toggle">
                                 <input
