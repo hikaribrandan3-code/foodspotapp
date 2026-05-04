@@ -39,13 +39,21 @@ export const GameIcon = () => (
     </svg>
 )
 
+// --- EVENTS: Calendar / Ticket ---
+export const EventsIcon = () => (
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H72v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V208Zm-64-76a12,12,0,1,1-12,12A12,12,0,0,1,144,132Zm-32,0a12,12,0,1,1-12,12A12,12,0,0,1,112,132Zm0,40a12,12,0,1,1-12,12A12,12,0,0,1,112,172Zm32,0a12,12,0,1,1-12,12A12,12,0,0,1,144,172Z"></path>
+    </svg>
+)
+
 // Icon map for dynamic lookup
 export const HERO_ICONS = {
     menu: MenuIcon,
     delivery: DeliveryIcon,
     promos: PromosIcon,
     game: GameIcon,
-    rewards: PromosIcon // Alias for backward compatibility
+    rewards: PromosIcon, // Alias for backward compatibility
+    events: EventsIcon
 }
 
 // Labels for display
@@ -54,5 +62,6 @@ export const HERO_LABELS = {
     delivery: 'Envíos',
     promos: 'Promos',
     game: 'Juego',
-    rewards: 'Promos' // Alias for backward compatibility
+    rewards: 'Promos', // Alias for backward compatibility
+    events: 'Eventos'
 }

@@ -55,6 +55,7 @@ import Promos from './pages/customer/Promos.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
+import EventsView from './pages/customer/events/EventsView.jsx'
 
 // Staff Pages
 import StaffLogin from './pages/staff/StaffLogin.jsx'
@@ -526,6 +527,7 @@ function App() {
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/events" element={<EventsView />} />
 
                                             <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
                                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffOpsRedirect />} />
