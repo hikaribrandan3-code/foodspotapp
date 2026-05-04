@@ -10,6 +10,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import FinancialTrackerDashboard from '../../components/FinancialTrackerDashboard.jsx'
+import OwnerEventsView from '../../components/owner/OwnerEventsView.jsx'
 // ============================================
 // 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
 // ============================================
@@ -48,7 +49,7 @@ const Analytics = () => {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
-    const { t } = useLanguage()
+    const { t, lang } = useLanguage()
     // 🍃 OVERRIDE: Use Green for analytics as requested
     const primaryColor = '#10B981'
 
@@ -168,7 +169,8 @@ const Analytics = () => {
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {[
                         { id: 'analytics', label: 'Analytics' },
-                        { id: 'financials', label: 'Financial Tracker' },
+                        { id: 'financials', label: 'Financials' },
+                        { id: 'events', label: 'Create Events' },
                     ].map((tab) => (
                         <button
                             key={tab.id}
@@ -317,6 +319,17 @@ const Analytics = () => {
                 {activeTab === 'financials' && (
                   <div>
                     <FinancialTrackerDashboard />
+                  </div>
+                )}
+
+                {activeTab === 'events' && (
+                  <div>
+                    <OwnerEventsView 
+                      businessId={businessId}
+                      tenantSlug={tenantSlug}
+                      lang={lang}
+                      onBack={() => setActiveTab('analytics')}
+                    />
                   </div>
                 )}
             </div>
