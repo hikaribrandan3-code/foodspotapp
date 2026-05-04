@@ -8,7 +8,6 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import PrintMenu from '../../components/PrintMenu.jsx'
@@ -961,13 +960,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title={demoMode ? (lang === 'es' ? 'Demo Menú' : 'Demo Menu') : (lang === 'es' ? 'Menú' : 'Menu')}
+                title={demoMode ? "Demo Menú" : "Menú"}
                 onLogout={handleLogout}
             />
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* TOP PILLS: Menu / Inventory */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                     {[
                         { id: 'menu', label: 'Menu' },
                         { id: 'inventory', label: 'Inventory' },

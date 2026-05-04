@@ -32,8 +32,8 @@ const colors = {
 
 export default function MenuInventoryView() {
   const { businessId } = useTenant();
-  const { lang } = useLanguage();
-  const t = (key) => staffTranslations[key]?.[lang] || staffTranslations[key]?.['en'] || key;
+  const { language } = useLanguage();
+  const t = (key) => staffTranslations[key]?.[language] || staffTranslations[key]?.['en'] || key;
 
   const [activeTab, setActiveTab] = useState('entry');
 
@@ -231,12 +231,13 @@ export default function MenuInventoryView() {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingLeft: 16, paddingRight: 16, paddingBottom: 112 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
+        marginBottom: 4,
       }}>
         <Package size={20} strokeWidth={2.2} style={{ color: BLUE }} />
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: colors.textPrimary, margin: 0 }}>
