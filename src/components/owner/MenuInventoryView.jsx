@@ -234,7 +234,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '16px 16px 112px 16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '0 16px 112px 16px' }}>
       {/* Header + Sub-tabs: Entry / Stock / Audit */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <Package size={18} strokeWidth={2.2} style={{ color: BLUE }} />
