@@ -380,7 +380,7 @@ export default function FinancialTrackerDashboard() {
           </button>
           {showBudgets && (
             <div style={{ marginTop: 8 }}>
-              {CATEGORIES.filter((c) => c.name !== 'Rent' && c.name !== 'Operations').map((cat) => {
+              {CATEGORIES.map((cat) => {
                 const spent = filteredExpenses
                   .filter((e) => e.category === cat.name)
                   .reduce((s, e) => s + e.amount, 0);
