@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -73,6 +73,12 @@ const getMockEvents = (businessId = 'demo') => [
       { id: 'tier_regular', name: 'General Admission', price: 12000, qty: 1000 }
     ],
     category: 'Festivals',
+    lineup: [
+      { time: '14:00', artist: 'Neon Horizon', genre: 'Electronic', stage: 'Main Stage' },
+      { time: '16:30', artist: 'The Midnight City', genre: 'Dream Pop', stage: 'Main Stage' },
+      { time: '19:00', artist: 'Solar Flare', genre: 'House', stage: 'Main Stage', live: true },
+      { time: '21:30', artist: 'Cosmic Echo', genre: 'Techno', stage: 'Main Stage' }
+    ],
     business_id: 'foodspot_hq_001'
   },
   {
@@ -99,6 +105,14 @@ export default function EventsView() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
   const [bookingData, setBookingData] = useState(null);
+  const [allBookings, setAllBookings] = useState(() => {
+    const saved = localStorage.getItem('event_bookings');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('event_bookings', JSON.stringify(allBookings));
+  }, [allBookings]);
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
@@ -112,6 +126,7 @@ export default function EventsView() {
 
   const handleConfirm = (booking) => {
     setBookingData(booking);
+    setAllBookings(prev => [booking, ...prev]);
     setStage('ticket');
   };
 

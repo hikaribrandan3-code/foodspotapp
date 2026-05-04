@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 import { getMockEvents } from '../../../../utils/mockEvents.js';
-import { VenueMap } from '../../../../components/events/VenueMap.jsx';
+import { VenueMap } from '../../../../components/VenueMap';
 
 const EventCountdown = ({ startDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });

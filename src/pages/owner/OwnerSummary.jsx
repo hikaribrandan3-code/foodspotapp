@@ -528,7 +528,6 @@ function OwnerSummary() {
                                     style={{
                                         background: isPending ? '#3B82F6' : 'none',
                                         border: isPending ? '2px solid #3B82F6' : 'none',
-                                        color: isSelected ? '#111827' : '#9CA3AF',
                                         fontWeight: isSelected ? 700 : 500,
                                         fontSize: 13,
                                         letterSpacing: '0.1em',
