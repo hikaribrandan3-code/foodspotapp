@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronDown, ChevronUp, Plus, Settings, Camera, X, Check, Package } from 'lucide-react';
 import { useTenant } from '../../contexts/TenantContext.jsx';
-import { useLanguage } from '../../contexts/LanguageContext.jsx';
 import { translations as staffTranslations } from '../../staff-ops/lib/translations';
 import { supabase } from '../../lib/supabaseClient.js';
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -30,10 +29,9 @@ const colors = {
   emptyIcon: 'rgba(100, 116, 139, 0.4)',
 };
 
-export default function MenuInventoryView() {
+export default function MenuInventoryView({ lang = 'en' }) {
   const { businessId } = useTenant();
-  const { language } = useLanguage();
-  const t = (key) => staffTranslations[key]?.[language] || staffTranslations[key]?.['en'] || key;
+  const t = (key) => staffTranslations[key]?.[lang] || staffTranslations[key]?.['en'] || key;
 
   const [activeTab, setActiveTab] = useState('entry');
 
@@ -126,7 +124,12 @@ export default function MenuInventoryView() {
         console.error("Scanner setup failed", err);
       }
     }
-    return () => { scanner?.clear().catch(() => {}); };
+    return () => {
+      if (scanner) {
+        try { scanner.stop().catch(() => {}); } catch {}
+        try { scanner.clear().catch(() => {}); } catch {}
+      }
+    };
   }, [showScanner, scanResult]);
 
   const confirmScanAdd = () => {
@@ -231,13 +234,12 @@ export default function MenuInventoryView() {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingLeft: 16, paddingRight: 16, paddingBottom: 112 }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        marginBottom: 4,
       }}>
         <Package size={20} strokeWidth={2.2} style={{ color: BLUE }} />
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: colors.textPrimary, margin: 0 }}>

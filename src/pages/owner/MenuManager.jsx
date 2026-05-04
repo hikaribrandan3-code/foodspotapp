@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase, updateBranding } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
@@ -8,13 +8,15 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import PrintMenu from '../../components/PrintMenu.jsx'
-import MenuInventoryView from '../../components/owner/MenuInventoryView.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
+
+const MenuInventoryView = lazy(() => import('../../components/owner/MenuInventoryView.jsx'))
 
 /**
  * MENU MANAGER
@@ -49,6 +51,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
+    const { lang } = useLanguage()
     // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
@@ -960,13 +963,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title={demoMode ? "Demo Menú" : "Menú"}
+                title={demoMode ? (lang === 'es' ? 'Demo Menú' : 'Demo Menu') : (lang === 'es' ? 'Menú' : 'Menu')}
                 onLogout={handleLogout}
             />
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* TOP PILLS: Menu / Inventory */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                     {[
                         { id: 'menu', label: 'Menu' },
                         { id: 'inventory', label: 'Inventory' },
@@ -1753,7 +1756,11 @@ function MenuManager({ config: configProp, demoMode = false }) {
             }
                 </div>
 
-                {viewTab === 'inventory' && <MenuInventoryView />}
+                {viewTab === 'inventory' && (
+                    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>}>
+                        <MenuInventoryView lang={lang} />
+                    </Suspense>
+                )}
 
             {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
             <input
