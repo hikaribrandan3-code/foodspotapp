@@ -969,7 +969,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* TOP PILLS: Menu / Inventory */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                     {[
                         { id: 'menu', label: 'Menu' },
                         { id: 'inventory', label: 'Inventory' },
