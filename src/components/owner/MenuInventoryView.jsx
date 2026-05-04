@@ -235,12 +235,8 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '0 16px 112px 16px' }}>
-      {/* Header + Sub-tabs: Entry / Stock / Audit */}
+      {/* Sub-tabs: Entry / Stock / Audit */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <Package size={18} strokeWidth={2.2} style={{ color: BLUE }} />
-        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: colors.textPrimary, margin: 0, marginRight: 12 }}>
-          Inventory
-        </h1>
         {tabs.map((tab) => (
           <button
             key={tab.id}
