@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import RamenBowl from './RamenBowl';
-import Fireworks from './Fireworks';
+import MiniFireworks from './MiniFireworks';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -39,34 +39,8 @@ export default function CameraActivationBanner({
 
   return (
     <>
-      {/* Fireworks explosion on food arrival */}
-      <Fireworks trigger={isVisible} />
-
-      {/* Confetti rain during character walk-in */}
-      <div className="sprinkles-container">
-        {Array.from({ length: 120 }).map((_, i) => {
-          const colors = [
-            `hsl(${Math.random() * 360}, 100%, ${Math.random() * 50 + 50}%)`, // random bright colors
-            `hsl(${Math.random() * 60 + 320}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // pink/red range
-            `hsl(${Math.random() * 60 + 180}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // cyan/blue range
-            `hsl(${Math.random() * 60}, ${Math.random() * 40 + 70}%, ${Math.random() * 40 + 45}%)`, // yellow/orange range
-          ];
-          return (
-            <div
-              key={i}
-              className="sprinkle"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 30}px`,
-                width: `${Math.random() * 8 + 3}px`,
-                height: `${Math.random() * 8 + 3}px`,
-                animationDelay: `${Math.random() * 0.3}s`,
-                backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-              }}
-            />
-          );
-        })}
-      </div>
+      {/* Mini fireworks burst from donut at 0.4s */}
+      <MiniFireworks trigger={isVisible} />
 
       {/* Character modal - walks in and bounces */}
       <div className={`camera-activation-banner ${className}`}>
