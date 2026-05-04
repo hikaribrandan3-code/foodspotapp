@@ -20,12 +20,12 @@ export default function Fireworks({ trigger = false }) {
     canvas.height = height;
 
     const colors = [
-      'hsl(0, 100%, 50%)',     // red
-      'hsl(45, 100%, 50%)',    // yellow
-      'hsl(120, 100%, 50%)',   // green
-      'hsl(240, 100%, 50%)',   // blue
-      'hsl(280, 100%, 50%)',   // purple
-      'hsl(340, 100%, 60%)',   // pink
+      'hsl(0, 100%, 50%)',
+      'hsl(45, 100%, 50%)',
+      'hsl(120, 100%, 50%)',
+      'hsl(240, 100%, 50%)',
+      'hsl(280, 100%, 50%)',
+      'hsl(340, 100%, 60%)',
     ];
 
     const createParticles = () => {
@@ -34,7 +34,7 @@ export default function Fireworks({ trigger = false }) {
       const particleCount = 80;
 
       for (let i = 0; i < particleCount; i++) {
-        const angle = (Math.random() * Math.PI * 2);
+        const angle = Math.random() * Math.PI * 2;
         const velocity = 4 + Math.random() * 6;
         const color = colors[Math.floor(Math.random() * colors.length)];
         const size = Math.random() * 4 + 2;
@@ -48,7 +48,7 @@ export default function Fireworks({ trigger = false }) {
           color,
           size,
           alpha: 1,
-          life: 1500, // 1.5 seconds in ms
+          life: 1500,
           maxLife: 1500,
         });
       }
@@ -58,19 +58,16 @@ export default function Fireworks({ trigger = false }) {
       particlesRef.current = particlesRef.current.filter(p => p.life > 0);
 
       particlesRef.current.forEach(p => {
-        // Physics
         p.vy += p.gravity;
         p.x += p.vx;
         p.y += p.vy;
 
-        // Bounce off nav bar (assume nav is ~60px from bottom)
         const navBarY = height - 60;
         if (p.y > navBarY && p.vy > 0) {
-          p.vy *= -0.5; // Bounce with energy loss
+          p.vy *= -0.5;
           p.y = navBarY;
         }
 
-        // Fade out
         p.life -= deltaTime;
         p.alpha = Math.max(0, p.life / p.maxLife);
       });
@@ -90,10 +87,10 @@ export default function Fireworks({ trigger = false }) {
       });
     };
 
-    const animate = (now) => {
+    const animate = () => {
       if (!isPlayingRef.current) return;
 
-      const deltaTime = 16; // Approximate 60fps
+      const deltaTime = 16;
       updateParticles(deltaTime);
       draw();
 
