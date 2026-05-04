@@ -103,13 +103,13 @@ export default function EventDiscovery({ events, onSelectEvent }) {
           >
             <div className="relative h-56 overflow-hidden">
               <img 
-                src={event.image} 
+                src={event.image_url} 
                 alt={event.name} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               
               <div className="absolute top-4 left-4 flex gap-1.5">
-                 <EventCountdown startDate={event.date} />
+                 <EventCountdown startDate={event.start_date} />
               </div>
 
               <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-black text-[var(--color-primary)] shadow-lg border border-white/20">
@@ -121,7 +121,7 @@ export default function EventDiscovery({ events, onSelectEvent }) {
                   <span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10">
                     <Calendar size={12} className="text-[var(--color-primary)]" />
                     <span className="text-white drop-shadow-sm">
-                      {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(event.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                   </span>
                   <span className="w-1 h-1 rounded-full bg-white/40"></span>

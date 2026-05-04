@@ -555,7 +555,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {showBottomNav && <BottomNav config={safeConfig} />}
+                                    {showBottomNav && !pathname.includes('/promos/events') && <BottomNav config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>

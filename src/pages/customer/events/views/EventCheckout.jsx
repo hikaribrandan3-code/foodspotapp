@@ -27,8 +27,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       total: total,
       purchase_date: new Date().toISOString(),
       venue_name: event.venue_name,
-      date: event.date,
-      image: event.image
+      date: event.start_date,
+      image: event.image_url
     });
   };
 
@@ -50,7 +50,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         {/* Immersive Event Summary Card */}
         <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm flex flex-col">
           <div className="relative h-32 w-full">
-            <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
+            <img src={event.image_url} alt={event.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/40 dark:via-slate-900/40 to-transparent"></div>
             <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
               <div>

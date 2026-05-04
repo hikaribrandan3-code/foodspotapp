@@ -73,7 +73,7 @@ export default function EventTicket({ booking, onClose }) {
           {/* Ticket Flyer / Header Decor */}
           <div className="relative w-full h-40">
             <img 
-              src={booking.image} 
+              src={booking.image_url} 
               alt={booking.event_name} 
               className="w-full h-full object-cover" 
             />
@@ -90,7 +90,7 @@ export default function EventTicket({ booking, onClose }) {
                {booking.event_name}
              </h2>
              <div className="flex items-center justify-center gap-3 text-[var(--text-secondary)] font-bold text-xs opacity-70">
-                <span className="flex items-center gap-1"><Calendar size={12} /> {booking.date}</span>
+                <span className="flex items-center gap-1"><Calendar size={12} /> {booking.start_date}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1"><MapPin size={12} /> {booking.venue_name}</span>
              </div>

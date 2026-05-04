@@ -56,7 +56,7 @@ export default function EventDetail({ event, onBook, onBack }) {
     <div className="flex flex-col h-screen bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
       <div className="relative h-[420px] shrink-0">
         <img 
-          src={event.image} 
+          src={event.image_url} 
           alt={event.name} 
           className="w-full h-full object-cover"
         />
@@ -89,7 +89,7 @@ export default function EventDetail({ event, onBook, onBack }) {
         <div className="bg-[var(--canvas-bg)] p-4 rounded-[28px] border border-[var(--border-color)] shadow-sm">
            <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 mb-3 text-center">Event Starts In</h3>
            <div className="flex justify-center">
-             <EventCountdown startDate={event.date} />
+             <EventCountdown startDate={event.start_date} />
            </div>
         </div>
 
@@ -100,7 +100,7 @@ export default function EventDetail({ event, onBook, onBack }) {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('date')}</p>
-              <p className="text-sm font-black text-[var(--text-primary)]">{new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })}</p>
+              <p className="text-sm font-black text-[var(--text-primary)]">{new Date(event.start_date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })}</p>
             </div>
           </div>
           <div className="h-10 w-px bg-[var(--border-color)]"></div>
