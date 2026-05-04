@@ -350,6 +350,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const fileInputRef = useRef(null)
   const [form, setForm] = useState({
     name: '', description: '', category: 'Food',
     image_url: '', start_date: '', end_date: '',
@@ -431,8 +432,27 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                   ))}
                 </div>
               </Field>
-              <Field label="Cover Image URL">
-                <input style={s.input} placeholder="https://…" value={form.image_url} onChange={e => patch('image_url', e.target.value)} />
+              <Field label="Cover Image (16:9)">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onload = (evt) => patch('image_url', evt.target?.result || '')
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16 }}
+                >
+                  📸 Upload Image
+                </button>
                 {form.image_url && (
                   <div style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140 }}>
                     <img src={form.image_url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
