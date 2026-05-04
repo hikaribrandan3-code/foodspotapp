@@ -1,8 +1,10 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
 import { MapPin, Calendar, ArrowRight, Sparkles } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
+import { getMockEvents } from '../../../../utils/mockEvents.js';
 
 const EventCountdown = ({ startDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
@@ -42,13 +44,15 @@ const EventCountdown = ({ startDate }) => {
 };
 
 
-export default function EventDiscovery({ events, onSelectEvent }) {
+export default function EventDiscovery() {
+  const navigate = useNavigate();
+  const { tenantSlug } = useParams();
   const { t, language, setLanguage } = useLanguage();
   const { businessId } = useTenant();
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const events = getMockEvents(businessId);
 
   const categories = ['All', 'Music', 'Exclusives', 'Free', 'Festivals', 'Pop-ups'];
-
 
   // Multi-tenancy filter + category filter
   const filteredEvents = events
@@ -96,9 +100,9 @@ export default function EventDiscovery({ events, onSelectEvent }) {
         </div>
 
         {filteredEvents.map(event => (
-          <div 
+          <div
             key={event.id}
-            onClick={() => onSelectEvent(event)}
+            onClick={() => navigate(`/${tenantSlug}/promos/events/${event.id}`)}
             className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm active:scale-[0.98] transition-all cursor-pointer group"
           >
             <div className="relative h-56 overflow-hidden">

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Download, Share2, X, MapPin, Calendar, Ticket, CheckCircle2 } from 'lucide-react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 // import { motion } from 'motion/react';
 import { motion } from 'framer-motion';
@@ -8,8 +9,12 @@ import confetti from 'canvas-confetti';
 
 const formatPrice = (cents) => (cents / 100).toFixed(2);
 
-export default function EventTicket({ booking, onClose }) {
+export default function EventTicket() {
+  const navigate = useNavigate();
+  const { tenantSlug } = useParams();
+  const location = useLocation();
   const { t } = useLanguage();
+  const booking = location.state?.booking;
 
   useEffect(() => {
     const duration = 3 * 1000;
@@ -56,8 +61,8 @@ export default function EventTicket({ booking, onClose }) {
             <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50 uppercase tracking-widest">{t('my_tickets')}</p>
           </div>
         </div>
-        <button 
-          onClick={onClose}
+        <button
+          onClick={() => navigate(`/${tenantSlug}`)}
           className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[var(--canvas-bg)] text-[var(--text-primary)] active:scale-90 transition-all border border-[var(--border-color)]"
         >
           <X size={20} />

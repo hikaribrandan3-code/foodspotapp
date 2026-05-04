@@ -52,7 +52,10 @@ import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
 import Info from './pages/customer/Info.jsx'
 import Promos from './pages/customer/Promos.jsx'
-import EventsView from './pages/customer/events/EventsView.jsx'
+import EventDiscovery from './pages/customer/events/views/EventDiscovery.jsx'
+import EventDetail from './pages/customer/events/views/EventDetail.jsx'
+import EventCheckout from './pages/customer/events/views/EventCheckout.jsx'
+import EventTicket from './pages/customer/events/views/EventTicket.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
@@ -525,7 +528,10 @@ function App() {
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                                             <Route path="/:tenantSlug/promos" element={<Promos />} />
-                                            <Route path="/:tenantSlug/promos/events" element={<EventsView />} />
+                                            <Route path="/:tenantSlug/promos/events" element={<EventDiscovery />} />
+                                            <Route path="/:tenantSlug/promos/events/:eventId" element={<EventDetail />} />
+                                            <Route path="/:tenantSlug/promos/events/:eventId/checkout" element={<EventCheckout />} />
+                                            <Route path="/:tenantSlug/promos/events/ticket/:ticketId" element={<EventTicket />} />
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />

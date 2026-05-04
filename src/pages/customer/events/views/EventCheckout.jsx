@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Ticket, CreditCard, Info } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useTenant } from '../../../../contexts/TenantContext';
+import { getMockEvents } from '../../../../utils/mockEvents.js';
 
 const formatPrice = (cents) => (cents / 100).toFixed(2);
 
-export default function EventCheckout({ event, tier, onConfirm, onBack }) {
+export default function EventCheckout() {
+  const navigate = useNavigate();
+  const { tenantSlug, eventId } = useParams();
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
+  const { businessId } = useTenant();
   const [qty, setQty] = useState(1);
   const [promoCode, setPromoCode] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+
+  const events = getMockEvents(businessId);
+  const event = events.find(e => e.id === eventId);
+  const tierId = searchParams.get('tier');
+  const tier = event?.tiers.find(t => t.id === tierId);
 
   if (!event || !tier) return null;
 
@@ -17,26 +29,31 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
   const handleConfirm = () => {
     // TODO: call supabase.functions.invoke('create-preference-event')
-    onConfirm({
-      id: 'TKT-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      event_id: event.id,
-      event_name: event.name,
-      tier_name: tier.name,
-      tier_id: tier.id,
-      quantity: qty,
-      total: total,
-      purchase_date: new Date().toISOString(),
-      venue_name: event.venue_name,
-      date: event.start_date,
-      image: event.image_url
+    const ticketId = 'TKT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    navigate(`/${tenantSlug}/promos/events/ticket/${ticketId}`, {
+      state: {
+        booking: {
+          id: ticketId,
+          event_id: event.id,
+          event_name: event.name,
+          tier_name: tier.name,
+          tier_id: tier.id,
+          quantity: qty,
+          total: total,
+          purchase_date: new Date().toISOString(),
+          venue_name: event.venue_name,
+          date: event.start_date,
+          image: event.image_url
+        }
+      }
     });
   };
 
   return (
     <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
       <header className="px-6 pt-12 pb-6 flex items-center gap-4 bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
-        <button 
-          onClick={onBack}
+        <button
+          onClick={() => navigate(`/${tenantSlug}/promos/events/${eventId}`)}
           className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[var(--canvas-bg)] text-[var(--text-primary)] active:scale-90 transition-all border border-[var(--border-color)]"
         >
           <ChevronLeft size={20} />

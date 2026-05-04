@@ -1,7 +1,10 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
 import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Ticket } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useTenant } from '../../../../contexts/TenantContext';
+import { getMockEvents } from '../../../../utils/mockEvents.js';
 
 const EventCountdown = ({ startDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -47,8 +50,13 @@ const EventCountdown = ({ startDate }) => {
 
 const formatPrice = (cents) => (cents / 100).toFixed(2);
 
-export default function EventDetail({ event, onBook, onBack }) {
+export default function EventDetail() {
+  const navigate = useNavigate();
+  const { tenantSlug, eventId } = useParams();
   const { t } = useLanguage();
+  const { businessId } = useTenant();
+  const events = getMockEvents(businessId);
+  const event = events.find(e => e.id === eventId);
 
   if (!event) return null;
 
@@ -62,8 +70,8 @@ export default function EventDetail({ event, onBook, onBack }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-950 via-transparent to-transparent"></div>
         
-        <button 
-          onClick={onBack}
+        <button
+          onClick={() => navigate(`/${tenantSlug}`)}
           className="absolute top-12 left-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[var(--text-primary)] shadow-xl active:scale-90 transition-all border border-white/20"
         >
           <ChevronLeft size={24} />
@@ -172,7 +180,7 @@ export default function EventDetail({ event, onBook, onBack }) {
             {event.tiers.map(tier => (
               <button
                 key={tier.id}
-                onClick={() => onBook(tier)}
+                onClick={() => navigate(`/${tenantSlug}/promos/events/${eventId}/checkout?tier=${tier.id}`)}
                 className="group relative flex items-center justify-between p-6 rounded-[32px] bg-white dark:bg-slate-900 border border-[var(--border-color)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 active:scale-[0.98] transition-all text-left shadow-sm overflow-hidden"
               >
                 <div className="relative z-10 flex items-center gap-4">
