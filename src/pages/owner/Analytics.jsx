@@ -10,6 +10,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import FinancialTrackerDashboard from '../../components/FinancialTrackerDashboard.jsx'
+import InventoryOwnerDashboard from '../../components/InventoryOwnerDashboard.jsx'
 
 
 
@@ -67,6 +68,7 @@ const Analytics = () => {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [dateRange, setDateRange] = useState('today')
+    const [activeTab, setActiveTab] = useState('analytics')
 
     // FETCH ORDERS + real-time subscription
     useEffect(() => {
@@ -167,6 +169,32 @@ const Analytics = () => {
             />
 
             <div style={{ padding: 16 }}>
+                {/* MAIN TABS */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+                    {[
+                        { id: 'analytics', label: 'Analytics' },
+                        { id: 'inventory', label: 'Inventory' },
+                        { id: 'financials', label: 'Financial Tracker' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            style={{
+                                padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                background: activeTab === tab.id ? primaryColor : '#FFFFFF',
+                                color: activeTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                boxShadow: activeTab === tab.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {activeTab === 'analytics' && (
+                <div>
                 {/* DATE RANGE TABS */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {DATE_RANGES(t).map(range => (
@@ -286,9 +314,12 @@ const Analytics = () => {
 
                     </>
                 )}
-            </div>
+                </div>
+                )}
 
-            <FinancialTrackerDashboard />
+                {activeTab === 'inventory' && <InventoryOwnerDashboard />}
+                {activeTab === 'financials' && <FinancialTrackerDashboard />}
+            </div>
 
             <BackendNav
                 role="owner"
