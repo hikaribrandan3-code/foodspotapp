@@ -55,22 +55,6 @@ export default function BoardView() {
 
   return (
     <div className="h-full w-full flex flex-col relative">
-      {/* Status bar */}
-      <div
-        className="h-7 w-full flex items-center justify-between px-4 text-[10px] font-semibold tracking-wide border-b transition-colors duration-300"
-        style={{
-          backgroundColor: state.isOnline ? 'var(--status-bar-online-bg)' : 'var(--status-bar-offline-bg)',
-          borderColor: state.isOnline ? 'var(--status-bar-online-border)' : 'var(--status-bar-offline-border)',
-          color: state.isOnline ? 'var(--status-bar-online-text)' : 'var(--status-bar-offline-text)',
-        }}
-      >
-        <div className="flex items-center gap-1.5">
-          {state.isOnline ? <Wifi size={12} /> : <WifiOff size={12} />}
-          <span>{state.isOnline ? t('online') : t('offline')}</span>
-        </div>
-        <button onClick={toggleOnline} className="underline opacity-70">{state.isOnline ? 'Test offline' : 'Restore'}</button>
-      </div>
-
       {/* Header */}
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-center gap-2 mb-1">

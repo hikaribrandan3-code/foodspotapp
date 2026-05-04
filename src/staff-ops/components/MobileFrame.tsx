@@ -92,11 +92,11 @@ export default function MobileFrame() {
         {/* Profile icon — top-right corner, always visible */}
         <button
           onClick={() => setProfileOpen(true)}
-          className="absolute top-3 right-3 z-40 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-          style={{ backgroundColor: 'var(--nav-bg)', color: 'var(--text-secondary)', border: '1px solid var(--nav-border)' }}
+          className="absolute top-3 right-3 z-40 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          style={{ backgroundColor: '#EFF6FF', color: '#3B82F6', border: '2px solid #3B82F6' }}
           aria-label="Profile"
         >
-          <User size={16} strokeWidth={2.2} />
+          <User size={20} strokeWidth={2.2} />
         </button>
 
         <AnimatePresence mode="wait">

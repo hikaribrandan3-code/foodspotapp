@@ -335,23 +335,6 @@ function ActiveTabPills({ tab, setTab, counts }) {
   )
 }
 
-function OnlinePill() {
-  return (
-    <div style={{
-      background: T.onlineBg, padding: '7px 14px', display: 'flex', alignItems: 'center',
-      borderBottom: `1px solid ${T.line2}`,
-    }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 7, color: T.online, fontWeight: 600,
-        fontSize: 11, letterSpacing: '0.06em',
-      }}>
-        <Icon type="wifi" color={T.online} size={13} />
-        ONLINE
-      </div>
-    </div>
-  )
-}
-
 export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
   const { orders: fetchedOrders, loading, refreshOrders } = useOrdersPolling(businessId)
@@ -613,7 +596,6 @@ export default function Dashboard() {
       display: 'grid', gridTemplateRows: 'auto auto 1fr auto', overflow: 'hidden',
     }}>
       <BackendHeader title={t('orders')} />
-      <OnlinePill />
 
       <div style={{ overflowY: 'auto' }}>
         <div style={{ padding: '16px 16px 14px' }}>
