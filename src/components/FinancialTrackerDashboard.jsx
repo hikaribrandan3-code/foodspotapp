@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Trash2, Plus, Calendar, DollarSign, TrendingUp, Package, Calculator, X } from 'lucide-react';
+import {
+  Trash2, Plus, Calendar, DollarSign, TrendingUp, Package, Calculator, X,
+  Download, Repeat, ChevronDown, ChevronUp, Target
+} from 'lucide-react';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as ReTooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
 
@@ -8,6 +15,48 @@ const fmtMoney = (n) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
 
 const todayStr = () => new Date().toISOString().split('T')[0];
+
+const CATEGORIES = [
+  { name: 'Food & Ingredients', color: '#F59E0B', icon: '🥩' },
+  { name: 'Packaging', color: '#8B5CF6', icon: '📦' },
+  { name: 'Payroll / Labor', color: '#EF4444', icon: '👷' },
+  { name: 'Utilities', color: '#06B6D4', icon: '⚡' },
+  { name: 'Equipment & Repairs', color: '#6366F1', icon: '🔧' },
+  { name: 'Insurance', color: '#EC4899', icon: '🛡️' },
+  { name: 'Licenses & Permits', color: '#14B8A6', icon: '📋' },
+  { name: 'Bank & Processing Fees', color: '#64748B', icon: '💳' },
+  { name: 'Delivery / Transport', color: '#F97316', icon: '🚚' },
+  { name: 'Cleaning & Sanitation', color: '#10B981', icon: '🧼' },
+  { name: 'Software', color: '#3B82F6', icon: '💻' },
+  { name: 'Marketing', color: '#D946EF', icon: '📢' },
+  { name: 'Rent', color: '#DC2626', icon: '🏢' },
+  { name: 'Operations', color: '#6B7280', icon: '⚙️' },
+  { name: 'Supplies', color: '#84CC16', icon: '📎' },
+];
+
+function getDateRange(filter) {
+  const now = new Date();
+  const start = new Date();
+  switch (filter) {
+    case 'week':
+      start.setDate(now.getDate() - 7);
+      return [start.toISOString().split('T')[0], now.toISOString().split('T')[0]];
+    case 'month':
+      start.setDate(1);
+      return [start.toISOString().split('T')[0], now.toISOString().split('T')[0]];
+    case 'quarter': {
+      const q = Math.floor(now.getMonth() / 3);
+      start.setMonth(q * 3, 1);
+      return [start.toISOString().split('T')[0], now.toISOString().split('T')[0]];
+    }
+    default:
+      return ['2000-01-01', '2099-12-31'];
+  }
+}
+
+function getCatMeta(name) {
+  return CATEGORIES.find((c) => c.name === name) || { color: '#9CA3AF', icon: '•' };
+}
 
 export default function FinancialTrackerDashboard() {
   const { businessId } = useTenant();
@@ -30,22 +79,26 @@ export default function FinancialTrackerDashboard() {
   // Expenses stored in localStorage per business
   const storageKey = `fs_expenses_${businessId || 'global'}`;
   const [expenses, setExpenses] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey)) || [];
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
   });
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(expenses));
   }, [expenses, storageKey]);
 
+  // Budgets
+  const budgetKey = `fs_budgets_${businessId || 'global'}`;
+  const [budgets, setBudgets] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(budgetKey)) || {}; } catch { return {}; }
+  });
+  useEffect(() => {
+    localStorage.setItem(budgetKey, JSON.stringify(budgets));
+  }, [budgets, budgetKey]);
+
   // Fetch real orders + menu items
   useEffect(() => {
     if (!businessId) return;
     let cancelled = false;
-
     const fetchData = async () => {
       setLoading(true);
       const [{ data: orderData }, { data: menuData }] = await Promise.all([
@@ -64,34 +117,98 @@ export default function FinancialTrackerDashboard() {
       setMenuItems(menuData || []);
       setLoading(false);
     };
-
     fetchData();
   }, [businessId]);
 
-  const totalRevenue = useMemo(() => orders.reduce((s, o) => s + (o.total || 0), 0), [orders]);
-  const totalExpenses = useMemo(() => expenses.reduce((s, e) => s + (e.amount || 0), 0), [expenses]);
+  // Date filter
+  const [dateFilter, setDateFilter] = useState('all');
+  const [rangeStart, rangeEnd] = getDateRange(dateFilter);
+
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((e) => e.date >= rangeStart && e.date <= rangeEnd);
+  }, [expenses, rangeStart, rangeEnd]);
+
+  const filteredOrders = useMemo(() => {
+    return orders.filter((o) => {
+      const d = o.created_at?.split('T')[0];
+      return d >= rangeStart && d <= rangeEnd;
+    });
+  }, [orders, rangeStart, rangeEnd]);
+
+  const totalRevenue = useMemo(() => filteredOrders.reduce((s, o) => s + (o.total || 0), 0), [filteredOrders]);
+  const totalExpenses = useMemo(() => filteredExpenses.reduce((s, e) => s + (e.amount || 0), 0), [filteredExpenses]);
   const netProfit = totalRevenue - totalExpenses;
   const activeProducts = menuItems.filter((m) => m.active !== false).length;
 
+  // Charts data
+  const pieData = useMemo(() => {
+    const map = {};
+    filteredExpenses.forEach((e) => {
+      map[e.category] = (map[e.category] || 0) + e.amount;
+    });
+    return Object.entries(map)
+      .map(([name, value]) => ({ name, value, color: getCatMeta(name).color }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredExpenses]);
+
+  const barData = useMemo(() => {
+    const map = {};
+    filteredOrders.forEach((o) => {
+      const d = o.created_at?.split('T')[0];
+      if (!map[d]) map[d] = { date: d, revenue: 0, expenses: 0 };
+      map[d].revenue += o.total || 0;
+    });
+    filteredExpenses.forEach((e) => {
+      if (!map[e.date]) map[e.date] = { date: e.date, revenue: 0, expenses: 0 };
+      map[e.date].expenses += e.amount || 0;
+    });
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+  }, [filteredOrders, filteredExpenses]);
+
+  // Form state
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Operations');
+  const [category, setCategory] = useState('Food & Ingredients');
+  const [recurring, setRecurring] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
   const [calcToast, setCalcToast] = useState(null);
+  const [showBudgets, setShowBudgets] = useState(false);
 
   const addExpense = () => {
     const amt = parseFloat(amount);
     if (!desc.trim() || isNaN(amt) || amt <= 0) return;
     setExpenses((prev) => [
-      { id: crypto.randomUUID?.() || String(Date.now()), category, description: desc, amount: amt, date: todayStr() },
+      {
+        id: crypto.randomUUID?.() || String(Date.now()),
+        category, description: desc, amount: amt, date: todayStr(),
+        recurring: !!recurring,
+      },
       ...prev,
     ]);
     setDesc('');
     setAmount('');
+    setRecurring(false);
     setCalcToast(null);
   };
 
   const deleteExpense = (id) => setExpenses((prev) => prev.filter((e) => e.id !== id));
+
+  const exportCSV = () => {
+    const headers = ['Date', 'Category', 'Description', 'Amount', 'Recurring'];
+    const rows = filteredExpenses.map((e) => [
+      e.date, e.category, e.description, e.amount, e.recurring ? 'Yes' : 'No'
+    ]);
+    const csv = [headers, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `expenses-${businessId || 'all'}-${todayStr()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const nextPayout = useMemo(() => {
     const d = new Date();
@@ -111,6 +228,7 @@ export default function FinancialTrackerDashboard() {
 
   return (
     <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #E5E7EB' }}>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>
           Financial Tracker
@@ -137,6 +255,30 @@ export default function FinancialTrackerDashboard() {
         </button>
       </div>
 
+      {/* Date Filter */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
+        {[
+          { key: 'all', label: 'All Time' },
+          { key: 'week', label: 'This Week' },
+          { key: 'month', label: 'This Month' },
+          { key: 'quarter', label: 'This Quarter' },
+        ].map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setDateFilter(f.key)}
+            style={{
+              padding: '8px 14px', borderRadius: 20, border: '1px solid #E5E7EB',
+              background: dateFilter === f.key ? primaryColor : '#FFFFFF',
+              color: dateFilter === f.key ? '#FFFFFF' : '#6B7280',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              transition: 'all 0.2s'
+            }}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* KPI Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
@@ -145,18 +287,16 @@ export default function FinancialTrackerDashboard() {
             {fmtMoney(netProfit)}
           </h3>
           <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-            {orders.length} orders
+            {filteredOrders.length} orders
           </p>
         </div>
-
         <div style={cardStyle}>
           <span style={labelStyle}>Expenses</span>
           <h3 style={{ ...valueStyle, color: '#DC2626' }}>{fmtMoney(totalExpenses)}</h3>
           <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-            {expenses.length} entries
+            {filteredExpenses.length} entries
           </p>
         </div>
-
         <div style={cardStyle}>
           <span style={labelStyle}>Products</span>
           <h3 style={valueStyle}>{activeProducts}</h3>
@@ -164,19 +304,123 @@ export default function FinancialTrackerDashboard() {
             {menuItems.length} total
           </p>
         </div>
-
         <div style={cardStyle}>
           <span style={labelStyle}>Next Payout</span>
           <h3 style={{ ...valueStyle, fontSize: 18 }}>{nextPayout}</h3>
-          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-            Auto-deposit
-          </p>
+          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Auto-deposit</p>
         </div>
       </div>
 
-      {/* Revenue Breakdown + Recent Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
-        {/* Revenue Card */}
+      {/* Charts */}
+      {filteredExpenses.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
+          {/* Pie Chart */}
+          <div style={cardStyle}>
+            <span style={{ ...labelStyle, marginBottom: 12 }}>Expenses by Category</span>
+            <div style={{ width: '100%', height: 260 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ReTooltip formatter={(v) => fmtMoney(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 12px', marginTop: 8, justifyContent: 'center' }}>
+              {pieData.map((d) => (
+                <span key={d.name} style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: d.color }} />
+                  {d.name}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Bar Chart */}
+          {barData.length > 0 && (
+            <div style={cardStyle}>
+              <span style={{ ...labelStyle, marginBottom: 12 }}>Revenue vs Expenses</span>
+              <div style={{ width: '100%', height: 220 }}>
+                <ResponsiveContainer>
+                  <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9CA3AF" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="#9CA3AF" tickFormatter={(v) => `$${v}`} />
+                    <ReTooltip formatter={(v) => fmtMoney(v)} />
+                    <Bar dataKey="revenue" fill={primaryColor} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expenses" fill="#DC2626" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Budget vs Actual */}
+      {filteredExpenses.length > 0 && (
+        <div style={cardStyle}>
+          <button
+            onClick={() => setShowBudgets((v) => !v)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <span style={labelStyle}>Budget vs Actual</span>
+            {showBudgets ? <ChevronUp className="w-4 h-4" style={{ color: '#9CA3AF' }} /> : <ChevronDown className="w-4 h-4" style={{ color: '#9CA3AF' }} />}
+          </button>
+          {showBudgets && (
+            <div style={{ marginTop: 8 }}>
+              {CATEGORIES.map((cat) => {
+                const spent = filteredExpenses
+                  .filter((e) => e.category === cat.name)
+                  .reduce((s, e) => s + e.amount, 0);
+                const budget = budgets[cat.name] || 0;
+                const pct = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+                const over = budget > 0 && spent > budget;
+                if (spent === 0 && budget === 0) return null;
+                return (
+                  <div key={cat.name} style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span>{cat.icon}</span> {cat.name}
+                      </span>
+                      <span style={{ color: over ? '#DC2626' : '#6B7280', fontWeight: 500 }}>
+                        {fmtMoney(spent)} {budget > 0 && <span style={{ color: '#9CA3AF' }}>/ {fmtMoney(budget)}</span>}
+                      </span>
+                    </div>
+                    <div style={{ height: 8, background: '#F3F4F6', borderRadius: 4, overflow: 'hidden', marginBottom: 4 }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: over ? '#DC2626' : cat.color, borderRadius: 4, transition: 'width 0.5s' }} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="number"
+                        placeholder="Set budget"
+                        value={budgets[cat.name] || ''}
+                        onChange={(e) => setBudgets((prev) => ({ ...prev, [cat.name]: parseFloat(e.target.value) || 0 }))}
+                        style={{ width: 100, padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 11, outline: 'none' }}
+                      />
+                      {over && <span style={{ fontSize: 11, color: '#DC2626', fontWeight: 600 }}>Over budget!</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Revenue Breakdown */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20, marginTop: 20 }}>
         <div style={cardStyle}>
           <span style={{ ...labelStyle, marginBottom: 16 }}>Revenue Breakdown</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
@@ -194,15 +438,7 @@ export default function FinancialTrackerDashboard() {
             </span>
           </div>
           <div style={{ height: 6, width: '100%', background: '#F3F4F6', borderRadius: 3, marginTop: 12, overflow: 'hidden' }}>
-            <div
-              style={{
-                height: '100%',
-                background: totalRevenue > 0 && (totalExpenses / totalRevenue) > 1 ? '#DC2626' : primaryColor,
-                borderRadius: 3,
-                width: `${Math.min(totalRevenue > 0 ? (totalExpenses / totalRevenue) * 100 : 0, 100)}%`,
-                transition: 'width 0.5s ease'
-              }}
-            />
+            <div style={{ height: '100%', background: totalRevenue > 0 && (totalExpenses / totalRevenue) > 1 ? '#DC2626' : primaryColor, borderRadius: 3, width: `${Math.min(totalRevenue > 0 ? (totalExpenses / totalRevenue) * 100 : 0, 100)}%`, transition: 'width 0.5s ease' }} />
           </div>
         </div>
 
@@ -210,55 +446,58 @@ export default function FinancialTrackerDashboard() {
         <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={labelStyle}>Recent Activity</span>
-            <span style={{ fontSize: 12, color: '#9CA3AF' }}>{expenses.length} expenses</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: '#9CA3AF' }}>{filteredExpenses.length} expenses</span>
+              <button
+                onClick={exportCSV}
+                style={{ padding: 6, background: '#F3F4F6', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center' }}
+                title="Export CSV"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {expenses.length === 0 ? (
+          {filteredExpenses.length === 0 ? (
             <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>
-              No expenses yet. Add one below.
+              No expenses for this period. Add one below.
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {expenses.map((expense) => (
-                <div
-                  key={expense.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: 12, background: '#F9FAFB', borderRadius: 12
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{
-                      width: 36, height: 36, background: '#EFF6FF', borderRadius: 10,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
-                    }}>
-                      <DollarSign className="w-4 h-4" style={{ color: '#3B82F6' }} />
+              {filteredExpenses.map((expense) => {
+                const meta = getCatMeta(expense.category);
+                return (
+                  <div key={expense.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, background: meta.color + '15', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>
+                        {meta.icon}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.description}</p>
+                        <p style={{ fontSize: 12, color: '#6B7280', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ color: meta.color, fontWeight: 600 }}>{expense.category}</span>
+                          <span>•</span>
+                          <span>{expense.date}</span>
+                          {expense.recurring && <span title="Recurring monthly"><Repeat className="w-3 h-3" style={{ color: primaryColor }} /></span>}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0 }}>{expense.description}</p>
-                      <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>
-                        {expense.category} • {expense.date}
-                      </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
+                        -${expense.amount.toFixed(2)}
+                      </span>
+                      <button
+                        onClick={() => deleteExpense(expense.id)}
+                        style={{ padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
-                      -${expense.amount.toFixed(2)}
-                    </span>
-                    <button
-                      onClick={() => deleteExpense(expense.id)}
-                      style={{
-                        padding: 6, background: 'transparent', border: 'none',
-                        cursor: 'pointer', borderRadius: 8, color: '#9CA3AF'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -272,10 +511,7 @@ export default function FinancialTrackerDashboard() {
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#065F46' }}>{calcToast}</p>
             <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Review & add below</p>
           </div>
-          <button
-            onClick={() => setCalcToast(null)}
-            style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 6, color: '#065F46', flexShrink: 0 }}
-          >
+          <button onClick={() => setCalcToast(null)} style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 6, color: '#065F46', flexShrink: 0 }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -291,10 +527,7 @@ export default function FinancialTrackerDashboard() {
               placeholder="Description"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
-              style={{
-                width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB',
-                fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box'
-              }}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box' }}
             />
           </div>
           <input
@@ -302,25 +535,27 @@ export default function FinancialTrackerDashboard() {
             placeholder="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            style={{
-              padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB',
-              fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%'
-            }}
+            style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%' }}
           />
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            style={{
-              padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB',
-              fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%'
-            }}
+            style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%' }}
           >
-            <option>Operations</option>
-            <option>Software</option>
-            <option>Marketing</option>
-            <option>Rent</option>
-            <option>Supplies</option>
+            {CATEGORIES.map((c) => (
+              <option key={c.name} value={c.name}>{c.icon} {c.name}</option>
+            ))}
           </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#6B7280', gridColumn: '1 / -1', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={recurring}
+              onChange={(e) => setRecurring(e.target.checked)}
+              style={{ width: 16, height: 16, accentColor: primaryColor, cursor: 'pointer' }}
+            />
+            <Repeat className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+            Repeat monthly
+          </label>
           <button
             onClick={addExpense}
             style={{
@@ -354,7 +589,7 @@ export default function FinancialTrackerDashboard() {
         }
       `}</style>
 
-      {/* Calculator Modal — rendered via portal to avoid scroll container bugs */}
+      {/* Calculator Modal */}
       {showCalc && (
         <CalculatorModal
           onClose={() => setShowCalc(false)}
@@ -385,13 +620,10 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
   });
 
-  // Lock scroll
   useEffect(() => {
     const originalBody = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalBody;
-    };
+    return () => { document.body.style.overflow = originalBody; };
   }, []);
 
   const inputNum = (n) => {
@@ -439,9 +671,7 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
   };
 
   const copyDisplay = async () => {
-    try {
-      await navigator.clipboard.writeText(display);
-    } catch {
+    try { await navigator.clipboard.writeText(display); } catch {
       const ta = document.createElement('textarea');
       ta.value = display;
       document.body.appendChild(ta);
@@ -463,11 +693,9 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
   const up = (e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; };
 
   const Btn = ({ s, children, w, onPress }) => (
-    <button
-      onClick={onPress}
-      style={{ ...s, gridColumn: w ? 'span 2' : undefined }}
-      onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}
-    >{children}</button>
+    <button onClick={onPress} style={{ ...s, gridColumn: w ? 'span 2' : undefined }} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}>
+      {children}
+    </button>
   );
 
   const modalContent = (
@@ -477,15 +705,10 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
       onClick={onClose}
     >
       <div style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Calculator</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <button
-              onClick={press(() => setShowHistory((v) => !v))}
-              style={{ padding: 8, background: showHistory ? '#E5E7EB' : 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: showHistory ? '#111827' : '#9CA3AF', pointerEvents: 'auto' }}
-              title="History"
-            >
+            <button onClick={press(() => setShowHistory((v) => !v))} style={{ padding: 8, background: showHistory ? '#E5E7EB' : 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: showHistory ? '#111827' : '#9CA3AF', pointerEvents: 'auto' }} title="History">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </button>
             <button onClick={press(onClose)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF', pointerEvents: 'auto' }}>
@@ -494,18 +717,13 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
           </div>
         </div>
 
-        {/* History panel */}
         {showHistory && (
           <div style={{ marginBottom: 12, background: '#F9FAFB', borderRadius: 12, padding: '8px 12px', maxHeight: 140, overflowY: 'auto' }}>
             {history.length === 0 ? (
               <p style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center', margin: '8px 0' }}>No history yet</p>
             ) : (
               history.map((h, i) => (
-                <button
-                  key={i}
-                  onClick={press(() => { setDisplay(h.result); setNewNum(true); setShowHistory(false); })}
-                  style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '8px 4px', background: 'transparent', border: 'none', borderBottom: i < history.length - 1 ? '1px solid #E5E7EB' : 'none', cursor: 'pointer', fontSize: 14, color: '#111827', pointerEvents: 'auto' }}
-                >
+                <button key={i} onClick={press(() => { setDisplay(h.result); setNewNum(true); setShowHistory(false); })} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '8px 4px', background: 'transparent', border: 'none', borderBottom: i < history.length - 1 ? '1px solid #E5E7EB' : 'none', cursor: 'pointer', fontSize: 14, color: '#111827', pointerEvents: 'auto' }}>
                   <span style={{ color: '#9CA3AF', fontSize: 12 }}>{new Date(h.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   <span style={{ fontWeight: 700 }}>{h.result}</span>
                 </button>
@@ -514,22 +732,12 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
           </div>
         )}
 
-        {/* Display */}
-        <div
-          onClick={press(copyDisplay)}
-          style={{ background: '#111827', borderRadius: 16, padding: '20px 16px', textAlign: 'right', marginBottom: 16, minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center', cursor: 'pointer', position: 'relative', pointerEvents: 'auto' }}
-          title="Tap to copy"
-        >
+        <div onClick={press(copyDisplay)} style={{ background: '#111827', borderRadius: 16, padding: '20px 16px', textAlign: 'right', marginBottom: 16, minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center', cursor: 'pointer', position: 'relative', pointerEvents: 'auto' }} title="Tap to copy">
           <div style={{ fontSize: 12, color: '#6B7280', minHeight: 18 }}>{prev !== null ? `${prev} ${op || ''}` : ''}</div>
           <div style={{ fontSize: 36, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all', lineHeight: 1.2 }}>{display}</div>
-          {copied && (
-            <div style={{ position: 'absolute', top: 8, left: 12, fontSize: 11, fontWeight: 600, color: primaryColor, background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 6 }}>
-              Copied!
-            </div>
-          )}
+          {copied && <div style={{ position: 'absolute', top: 8, left: 12, fontSize: 11, fontWeight: 600, color: primaryColor, background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 6 }}>Copied!</div>}
         </div>
 
-        {/* Keypad */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           <Btn s={accentBtn} onPress={press(clear)}>C</Btn>
           <Btn s={opBtn(false)} onPress={press(inputPercent)}>%</Btn>
@@ -550,19 +758,8 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
           <Btn s={accentBtn} onPress={press(calc)}>=</Btn>
         </div>
 
-        {/* Quick Expense Drop */}
         {onUseResult && (
-          <button
-            onClick={press(() => { onUseResult(display); onClose(); })}
-            style={{
-              width: '100%', marginTop: 14, padding: '12px', background: primaryColor, color: '#FFFFFF',
-              borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: '0 2px 8px rgba(16,185,129,0.3)', pointerEvents: 'auto'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
-          >
+          <button onClick={press(() => { onUseResult(display); onClose(); })} style={{ width: '100%', marginTop: 14, padding: '12px', background: primaryColor, color: '#FFFFFF', borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 2px 8px rgba(16,185,129,0.3)', pointerEvents: 'auto' }} onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
             Use ${display} as Expense
           </button>
