@@ -1754,7 +1754,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             }
                 </div>
 
-                {viewTab === 'inventory' && <MenuInventoryView lang={lang} />
+                {viewTab === 'inventory' && <MenuInventoryView />}
 
             {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
             <input

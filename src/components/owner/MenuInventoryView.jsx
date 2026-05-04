@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronDown, ChevronUp, Plus, Settings, Camera, X, Check, Package } from 'lucide-react';
 import { useTenant } from '../../contexts/TenantContext.jsx';
+import { useLanguage } from '../../contexts/LanguageContext.jsx';
 import { translations as staffTranslations } from '../../staff-ops/lib/translations';
 import { supabase } from '../../lib/supabaseClient.js';
 import { Html5QrcodeScanner } from 'html5-qrcode';
@@ -29,8 +30,9 @@ const colors = {
   emptyIcon: 'rgba(100, 116, 139, 0.4)',
 };
 
-export default function MenuInventoryView({ lang = 'en' }) {
+export default function MenuInventoryView() {
   const { businessId } = useTenant();
+  const { lang } = useLanguage();
   const t = (key) => staffTranslations[key]?.[lang] || staffTranslations[key]?.['en'] || key;
 
   const [activeTab, setActiveTab] = useState('entry');
