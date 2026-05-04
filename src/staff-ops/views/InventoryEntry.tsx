@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, ChevronDown, ChevronUp, User, Plus, Settings, Camera, X, Check } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext.jsx';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
 import { Html5QrcodeScanner } from 'html5-qrcode';

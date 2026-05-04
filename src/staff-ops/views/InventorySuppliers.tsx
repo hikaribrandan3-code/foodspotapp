@@ -1,6 +1,6 @@
 import React from 'react';
 import { Phone, Mail, MapPin, Globe, Plus, Search } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext.jsx';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '../lib/translations';
 
 export const InventorySuppliers: React.FC = () => {
