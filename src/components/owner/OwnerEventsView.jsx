@@ -470,13 +470,61 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
 
   if (showSuccess) return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
       style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center' }}
     >
-      <Trophy size={80} color="#10B981" />
-      <h2 style={{ fontSize: 32, fontWeight: 900, margin: '24px 0 8px', color: theme.textPrimary }}>It's Live! 🚀</h2>
-      <p style={{ color: theme.textSecondary, fontSize: 15 }}>Your event is beautifully published.</p>
+      {/* Soft radial glow behind icon */}
+      <div style={{ position: 'relative', width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)',
+          }}
+        />
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.15 }}
+          style={{
+            width: 72, height: 72, borderRadius: '50%',
+            background: '#10B981',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(16,185,129,0.35)',
+          }}
+        >
+          <motion.div
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: 0.35, delay: 0.4 }}
+          >
+            <CheckCircle2 size={36} color="#fff" strokeWidth={2.5} />
+          </motion.div>
+        </motion.div>
+      </div>
+
+      <motion.h2
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.45 }}
+        style={{ fontSize: 28, fontWeight: 800, margin: '24px 0 6px', color: theme.textPrimary }}
+      >
+        It's Live!
+      </motion.h2>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.55 }}
+        style={{ color: theme.textSecondary, fontSize: 15, margin: 0 }}
+      >
+        Your event is published.
+      </motion.p>
     </motion.div>
   )
 
