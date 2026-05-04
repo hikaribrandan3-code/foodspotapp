@@ -224,15 +224,17 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  animation: fallConfetti 3.5s ease-in forwards;
+  animation: fallConfetti 4s ease-in forwards;
+  top: 0;
 }
 
 @keyframes fallConfetti {
   0% {
-    transform: translateY(-10px) rotate(0deg);
+    transform: translateY(0) rotate(0deg);
     opacity: 1;
   }
-  90% {
+  30% {
+    transform: translateY(0) rotate(90deg);
     opacity: 1;
   }
   100% {

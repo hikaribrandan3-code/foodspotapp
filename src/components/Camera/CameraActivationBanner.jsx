@@ -41,7 +41,7 @@ export default function CameraActivationBanner({
       {/* Confetti rain when donut reaches middle (~1.2s) */}
       {isVisible && (
         <div className="confetti-container">
-          {Array.from({ length: 40 }).map((_, i) => {
+          {Array.from({ length: 120 }).map((_, i) => {
             const colors = [
               'hsl(0, 100%, 50%)',
               'hsl(45, 100%, 50%)',
@@ -57,7 +57,7 @@ export default function CameraActivationBanner({
                 style={{
                   left: `${Math.random() * 100}%`,
                   backgroundColor: colors[Math.floor(Math.random() * colors.length)],
-                  animationDelay: `${1.2 + Math.random() * 0.3}s`,
+                  animationDelay: `${0.8 + Math.random() * 0.4}s`,
                 }}
               />
             );
