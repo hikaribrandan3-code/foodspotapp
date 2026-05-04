@@ -27,15 +27,15 @@ export default function InventoryView() {
           </span>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto justify-center">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border"
+              className="px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border"
               style={{
                 background: activeTab === tab.id ? '#10B981' : 'var(--filter-bg)',
-                color: activeTab === tab.id ? '#FFFFFF' : '#000000',
+                color: activeTab === tab.id ? '#FFFFFF' : 'var(--text-primary)',
                 borderColor: activeTab === tab.id ? '#10B981' : 'var(--nav-border)',
               }}
             >

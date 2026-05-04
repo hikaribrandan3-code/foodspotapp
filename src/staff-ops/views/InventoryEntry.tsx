@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ChevronDown, ChevronUp, User, Plus, Settings, Camera, X, Check } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Plus, Settings, Camera, X, Check } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
@@ -16,7 +16,7 @@ export const InventoryEntry: React.FC = () => {
   const [categories, setCategories] = useState(['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
   const [activeCategory, setActiveCategory] = useState('All');
   const [lastClick, setLastClick] = useState<{ id: string, time: number } | null>(null);
-  
+
   // Scanner State
   const [showScanner, setShowScanner] = useState(false);
   const [scanResult, setScanResult] = useState<{ name: string; category: string; barcode: string; price: number } | null>(null);
@@ -32,7 +32,6 @@ export const InventoryEntry: React.FC = () => {
 
   // Mock lookup for scanned barcodes
   const lookupBarcode = (barcode: string) => {
-    // In real app, this would be a Supabase query: SELECT * FROM menu_items WHERE barcode = scanned_value
     const mockDb: Record<string, { name: string; category: string; price: number }> = {
       '123456': { name: 'Tomato Soup', category: 'Food', price: 5.99 },
       '000111': { name: 'Fresh Avocado', category: 'Food', price: 1.50 },
@@ -68,7 +67,12 @@ export const InventoryEntry: React.FC = () => {
       try {
         scanner = new Html5QrcodeScanner(
           "reader",
-          { fps: 15, qrbox: { width: 250, height: 250 }, disableFlip: false },
+          {
+            fps: 15,
+            qrbox: { width: 250, height: 250 },
+            disableFlip: false,
+            supportedScanTypes: [0], // 0 = SCAN_TYPE_CAMERA, hide file upload
+          },
           false
         );
 
@@ -108,19 +112,19 @@ export const InventoryEntry: React.FC = () => {
   };
 
   const updateItem = (id: string, updates: Partial<any>) => {
-    setItems(prev => prev.map(item => 
+    setItems(prev => prev.map(item =>
       item.id === id ? { ...item, ...updates } : item
     ));
   };
 
   const updateQty = (id: string, delta: number) => {
-    setItems(prev => prev.map(item => 
+    setItems(prev => prev.map(item =>
       item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item
     ));
   };
 
   const toggleExpand = (id: string) => {
-    setExpandedItems(prev => 
+    setExpandedItems(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
@@ -171,27 +175,27 @@ export const InventoryEntry: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-28" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
-      <main className="px-4 pt-2 flex flex-col gap-6">
+    <div className="flex flex-col min-h-full pb-32" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
+      <main className="px-4 pt-4 flex flex-col gap-6">
         {/* Search & Add */}
         <div className="flex gap-2">
           <div className="relative h-[48px] rounded-xl flex items-center px-4 gap-3 flex-1 border shadow-sm transition-all focus-within:ring-2 focus-within:ring-[var(--accent)]" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
             <Search size={20} className="text-[var(--text-tertiary)]" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder={t('search_items')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-transparent border-none focus:ring-0 w-full text-[17px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none"
             />
           </div>
-          <button 
+          <button
             onClick={() => setShowScanner(true)}
             className="w-[48px] h-[48px] rounded-xl bg-[var(--accent)] text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform shrink-0"
           >
             <Camera size={24} />
           </button>
-          <button 
+          <button
             onClick={() => {
               const name = prompt(t('item_name'));
               if (name) addItem(name);
@@ -206,13 +210,13 @@ export const InventoryEntry: React.FC = () => {
         {/* Scanner Overlay */}
         <AnimatePresence>
           {showScanner && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6"
             >
-              <button 
+              <button
                 onClick={() => {
                   setShowScanner(false);
                   setScanResult(null);
@@ -222,29 +226,30 @@ export const InventoryEntry: React.FC = () => {
                 <X size={24} />
               </button>
 
-              <div className="w-full max-w-sm flex flex-col gap-8">
+              <div className="w-full max-w-sm flex flex-col gap-6">
                 {!scanResult ? (
                   <>
                     <div className="text-center">
                       <h2 className="text-white text-2xl font-bold mb-2">{t('scanning')}</h2>
                       <p className="text-white/60">{t('point_camera')}</p>
                     </div>
-                    <div id="reader" className="w-full aspect-square overflow-hidden rounded-3xl border-2 border-[var(--accent)] bg-white/5 shadow-[0_0_50px_rgba(var(--accent-rgb),0.3)]"></div>
+                    <div id="reader" className="w-full aspect-square overflow-hidden rounded-3xl border-2 border-emerald-500 bg-white/5"></div>
+                    <p className="text-center text-white/40 text-sm">Allow camera access when prompted</p>
                   </>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     className="bg-white rounded-[32px] p-8 flex flex-col gap-6 shadow-2xl"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-[var(--accent)] text-white flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-2xl bg-emerald-500 text-white flex items-center justify-center">
                         {scanResult.name === t('item_not_found') ? <Search size={32} /> : <Check size={32} />}
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-bold uppercase tracking-wider text-gray-400">{t('found')}</p>
                         <h2 className="text-2xl font-black text-black leading-tight">{scanResult.name}</h2>
-                        <p className="text-gray-500 font-medium">{scanResult.category} • {scanResult.barcode}</p>
+                        <p className="text-gray-500 font-medium">{scanResult.category} &bull; {scanResult.barcode}</p>
                       </div>
                     </div>
 
@@ -252,13 +257,13 @@ export const InventoryEntry: React.FC = () => {
                       <label className="text-xs font-bold uppercase tracking-wider text-gray-400 ml-1">{t('qty')}</label>
                       <div className="flex items-center gap-4">
                         <div className="flex-1 h-16 rounded-2xl bg-gray-100 flex items-center px-6 gap-4">
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             value={scanQty}
                             onChange={(e) => setScanQty(Number(e.target.value))}
                             className="bg-transparent border-none focus:ring-0 text-2xl font-bold text-black w-full"
                           />
-                          <select 
+                          <select
                             value={scanUnit}
                             onChange={(e) => setScanUnit(e.target.value)}
                             className="bg-transparent border-none focus:ring-0 text-gray-500 font-bold"
@@ -272,15 +277,15 @@ export const InventoryEntry: React.FC = () => {
                     </div>
 
                     <div className="flex gap-3 mt-2">
-                      <button 
+                      <button
                         onClick={() => setScanResult(null)}
                         className="flex-1 h-14 rounded-2xl border-2 border-gray-100 font-bold text-gray-500 active:scale-95 transition-all"
                       >
                         {t('cancel')}
                       </button>
-                      <button 
+                      <button
                         onClick={confirmScanAdd}
-                        className="flex-[2] h-14 rounded-2xl bg-[var(--accent)] font-bold text-white shadow-lg shadow-blue-200 active:scale-95 transition-all"
+                        className="flex-[2] h-14 rounded-2xl bg-emerald-500 font-bold text-white shadow-lg active:scale-95 transition-all"
                       >
                         {t('confirm_scan')}
                       </button>
@@ -296,25 +301,28 @@ export const InventoryEntry: React.FC = () => {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('category')}</h2>
-            <button 
+            <button
               onClick={addCategory}
-              className="text-[var(--accent)] text-[14px] font-bold flex items-center gap-1 active:opacity-60"
+              className="text-emerald-500 text-[14px] font-bold flex items-center gap-1 active:opacity-60"
             >
               <Plus size={14} />
               {t('add_category')}
             </button>
           </div>
-          <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar -mx-4 px-4 mask-fade-right">
+          <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar -mx-4 px-4">
             {categories.map((cat) => (
               <div key={cat} className="relative flex-shrink-0">
-                <button 
+                <button
                   onClick={() => handleCategoryInteraction(cat)}
                   className={`px-4 py-2 rounded-xl whitespace-nowrap text-[15px] font-medium transition-all border flex items-center gap-2
-                    ${activeCategory === cat ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-md translate-y-[-1px]' : 'bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-tertiary)]'}`}
+                    ${activeCategory === cat
+                      ? 'bg-emerald-500 text-white border-emerald-500 shadow-md translate-y-[-1px]'
+                      : 'bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)]'
+                    }`}
                 >
                   {cat === 'All' ? t('all') : cat}
                   {activeCategory === cat && cat !== 'All' && (
-                    <div 
+                    <div
                       onClick={(e) => {
                         e.stopPropagation();
                         manageCategory(cat);
@@ -331,21 +339,21 @@ export const InventoryEntry: React.FC = () => {
         </div>
 
         {/* Item List */}
-        <div className="flex flex-col gap-3 min-h-[400px]">
+        <div className="flex flex-col gap-3">
           {activeItems.length > 0 ? activeItems.map(item => {
             const isExpanded = expandedItems.includes(item.id);
             return (
-              <div 
+              <div
                 key={item.id}
                 className="overflow-hidden transition-all shadow-sm active:scale-[0.99]"
-                style={{ 
-                  backgroundColor: isExpanded ? 'var(--card-bg)' : 'var(--nav-bg)', 
+                style={{
+                  backgroundColor: isExpanded ? 'var(--card-bg)' : 'var(--nav-bg)',
                   borderColor: isExpanded ? 'var(--accent)' : 'var(--nav-border)',
                   borderWidth: '1px',
                   borderRadius: '16px'
                 }}
               >
-                <div 
+                <div
                   className="p-4 flex flex-col gap-3"
                   onClick={() => toggleExpand(item.id)}
                 >
@@ -353,7 +361,7 @@ export const InventoryEntry: React.FC = () => {
                     <div className="flex-1">
                       <h3 className="text-[18px] font-bold text-[var(--text-primary)]">{item.name}</h3>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--filter-bg)] text-[var(--text-tertiary)] border border-[var(--nav-border)]">
+                        <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--filter-bg)] text-[var(--text-secondary)] border border-[var(--nav-border)]">
                           {item.category}
                         </span>
                         {item.tags?.map(tag => (
@@ -363,10 +371,10 @@ export const InventoryEntry: React.FC = () => {
                         ))}
                       </div>
                     </div>
-                    
+
                     {!isExpanded && (
                       <div className="text-right">
-                        <p className="text-[20px] font-bold text-[var(--accent)]">
+                        <p className="text-[20px] font-bold text-emerald-500">
                           {item.qty}
                         </p>
                         <p className="text-[11px] font-bold uppercase text-[var(--text-tertiary)]">
@@ -384,24 +392,24 @@ export const InventoryEntry: React.FC = () => {
                     <div className="flex flex-col gap-5 mt-3 pt-5 border-t" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
                       {/* Basic Info */}
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('category')}</label>
                           <select
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                            className="h-[44px] px-3 rounded-xl border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                           >
                             {categories.filter(c => c !== 'All').map(c => (
                               <option key={c} value={c}>{c}</option>
                             ))}
                           </select>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('unit_type')}</label>
                           <select
                             value={item.unit}
                             onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                            className="h-[44px] px-3 rounded-xl border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                           >
                             <option value="units">{t('units')}</option>
                             <option value="kg">kg</option>
@@ -413,76 +421,76 @@ export const InventoryEntry: React.FC = () => {
 
                       {/* Supply Chain */}
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('supplier')}</label>
                           <input
                             type="text"
                             value={(item as any).supplier || ''}
                             onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
                             placeholder="e.g. Sysco"
-                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                            className="h-[44px] px-3 rounded-xl border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                           />
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('min_stock')}</label>
                           <input
                             type="number"
                             value={item.min || 0}
                             onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
-                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                            className="h-[44px] px-3 rounded-xl border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                           />
                         </div>
                       </div>
 
                       {/* Pricing */}
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Cost ($)</label>
                           <input
                             type="number"
                             step="0.01"
                             value={(item as any).cost || 0}
                             onChange={(e) => updateItem(item.id, { cost: Number(e.target.value) })}
-                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                            className="h-[44px] px-3 rounded-xl border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                           />
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">Price ($)</label>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-emerald-500">Price ($)</label>
                           <input
                             type="number"
                             step="0.01"
                             value={(item as any).price || ''}
                             onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
-                            className="h-[44px] px-3 rounded-lg border font-bold bg-[var(--filter-bg)] border-[var(--accent)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                            className="h-[44px] px-3 rounded-xl border font-bold bg-[var(--filter-bg)] border-emerald-500 text-[var(--text-primary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                           />
                         </div>
                       </div>
 
                       {/* Tags */}
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Tags</label>
                         <input
                           type="text"
                           value={item.tags?.join(', ') || ''}
                           onChange={(e) => updateItem(item.id, { tags: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
                           placeholder="LOW STOCK, ORGANIC"
-                          className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                          className="h-[44px] px-3 rounded-xl border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-emerald-500 outline-none text-[15px]"
                         />
                       </div>
 
                       {/* Quantity */}
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('qty')}</label>
-                        <div className="flex items-center gap-2 rounded-lg border overflow-hidden bg-[var(--filter-bg)] border-[var(--nav-border)]">
+                        <div className="flex items-center gap-2 rounded-xl border overflow-hidden bg-[var(--filter-bg)] border-[var(--nav-border)]">
                           <input
                             type="number"
                             value={item.qty}
                             disabled
-                            className="h-[44px] flex-1 bg-transparent border-none text-center text-[18px] text-[var(--accent)] font-bold"
+                            className="h-[44px] flex-1 bg-transparent border-none text-center text-[18px] text-emerald-500 font-bold"
                           />
                           <button
                             onClick={() => updateQty(item.id, 1)}
-                            className="h-[44px] px-4 bg-[var(--accent)] text-white font-bold flex items-center gap-2 active:opacity-80 transition-opacity"
+                            className="h-[44px] px-4 bg-emerald-500 text-white font-bold flex items-center gap-2 active:opacity-80 transition-opacity"
                           >
                             <Plus size={16} />
                             {t('restock')}
@@ -497,7 +505,7 @@ export const InventoryEntry: React.FC = () => {
           }) : (
             <div className="flex flex-col items-center justify-center py-16 text-center bg-[var(--filter-bg)] rounded-[32px] border-2 border-dashed border-[var(--nav-border)] mx-4">
               <div className="w-20 h-20 rounded-full bg-[var(--nav-bg)] flex items-center justify-center mb-6 shadow-sm">
-                <Plus size={32} className="text-[var(--accent)] opacity-40" />
+                <Plus size={32} className="text-emerald-500 opacity-40" />
               </div>
               <p className="text-[19px] font-bold text-[var(--text-primary)] mb-2">
                 {activeCategory === 'All' ? 'No items found' : `Empty "${activeCategory}" Category`}
@@ -505,12 +513,12 @@ export const InventoryEntry: React.FC = () => {
               <p className="text-[15px] text-[var(--text-tertiary)] mb-8 px-8">
                 Start building your inventory by adding your first item here.
               </p>
-              <button 
+              <button
                 onClick={() => {
                   const name = prompt(t('item_name'));
                   if (name) addItem(name);
                 }}
-                className="bg-[var(--accent)] text-white font-bold py-4 px-10 rounded-2xl shadow-xl active:scale-95 transition-all text-[17px]"
+                className="bg-emerald-500 text-white font-bold py-4 px-10 rounded-2xl shadow-xl active:scale-95 transition-all text-[17px]"
               >
                 + {t('add_item')}
               </button>
@@ -518,15 +526,8 @@ export const InventoryEntry: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Actions */}
-        <div className="flex gap-4 mt-6 pt-4 border-t" style={{ borderColor: 'var(--nav-border)' }}>
-          <button className="flex-1 h-[50px] border rounded-lg flex items-center justify-center text-[17px] font-bold transition-colors" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--accent)' }}>
-            {t('previous')}
-          </button>
-          <button className="flex-1 h-[50px] rounded-lg flex items-center justify-center text-[17px] font-bold text-white transition-colors shadow-sm" style={{ backgroundColor: 'var(--accent)' }}>
-            {t('next')}
-          </button>
-        </div>
+        {/* Bottom spacer for scrolling */}
+        <div className="h-8" />
       </main>
     </div>
   );

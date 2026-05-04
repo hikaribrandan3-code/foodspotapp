@@ -37,6 +37,7 @@ import { useLanguage } from '../contexts/LanguageContext'
 const OWNER_TABS = [
     { id: 'summary', label: 'Summary', route: null },
     { id: 'menu', label: 'Menu', route: null },
+    { id: 'inventory', label: 'Inventory', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'analytics', label: 'Analytics', route: null },
@@ -53,6 +54,7 @@ const STAFF_TABS = [
 const SUPERADMIN_TABS = [
     { id: 'summary', label: 'Summary', route: null },
     { id: 'menu', label: 'Menu', route: null },
+    { id: 'inventory', label: 'Inventory', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'analytics', label: 'Analytics', route: null },
@@ -68,6 +70,7 @@ const getRouteMaps = (tenantSlug) => ({
     owner: {
         summary: `/${tenantSlug}/owner/summary`,
         menu: `/${tenantSlug}/owner/menu`,
+        inventory: `/${tenantSlug}/owner/inventory`,
         branding: `/${tenantSlug}/owner/branding`,
         orders: `/${tenantSlug}/owner/delivery`,
         analytics: `/${tenantSlug}/owner/analytics`,
@@ -81,6 +84,7 @@ const getRouteMaps = (tenantSlug) => ({
     demo: {
         summary: '/demo',
         menu: '/demo/menu',
+        inventory: '/demo/inventory',
         branding: '/demo/branding',
         orders: '/demo/orders',
         analytics: '/demo/analytics',
