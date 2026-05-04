@@ -291,6 +291,37 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     es: 'El pago debe verificarse antes de que la cocina vea este pedido.',
     pt: 'O pagamento deve ser verificado antes que a cozinha veja este pedido.',
   }
+  // Inventory
+  'inventory_title': {
+    en: 'Inventory',
+    es: 'Inventario',
+    pt: 'Inventário',
+  },
+  'low_stock': {
+    en: 'Low Stock',
+    es: 'Stock Bajo',
+    pt: 'Estoque Baixo',
+  },
+  'out_of_stock': {
+    en: 'OUT',
+    es: 'AGOTADO',
+    pt: 'ESGOTADO',
+  },
+  'no_inventory': {
+    en: 'No inventory items found',
+    es: 'No hay artículos en inventario',
+    pt: 'Nenhum item no inventário',
+  },
+  'no_results': {
+    en: 'No items match your search',
+    es: 'Sin resultados',
+    pt: 'Sem resultados',
+  },
+  'search_items': {
+    en: 'Search items…',
+    es: 'Buscar artículos…',
+    pt: 'Buscar itens…',
+  },
 };
 
 export function t(key: string, lang: string = 'en'): string {
