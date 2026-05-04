@@ -500,7 +500,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
         <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step}/3</span>
       </div>
 
-      <div style={{ padding: '24px 16px', paddingBottom: 110 }}>
+      <div style={{ padding: '24px 16px', paddingBottom: 140 }}>
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
