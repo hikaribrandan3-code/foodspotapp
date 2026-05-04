@@ -56,6 +56,7 @@ import EventDiscovery from './pages/customer/events/views/EventDiscovery.jsx'
 import EventDetail from './pages/customer/events/views/EventDetail.jsx'
 import EventCheckout from './pages/customer/events/views/EventCheckout.jsx'
 import EventTicket from './pages/customer/events/views/EventTicket.jsx'
+import MyTickets from './pages/customer/events/views/MyTickets.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
@@ -529,6 +530,7 @@ function App() {
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                                             <Route path="/:tenantSlug/promos" element={<Promos />} />
                                             <Route path="/:tenantSlug/promos/events" element={<EventDiscovery />} />
+                                            <Route path="/:tenantSlug/promos/events/my-tickets" element={<MyTickets />} />
                                             <Route path="/:tenantSlug/promos/events/:eventId" element={<EventDetail />} />
                                             <Route path="/:tenantSlug/promos/events/:eventId/checkout" element={<EventCheckout />} />
                                             <Route path="/:tenantSlug/promos/events/ticket/:ticketId" element={<EventTicket />} />
