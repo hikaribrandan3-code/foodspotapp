@@ -76,15 +76,23 @@ export default function FinancialTrackerDashboard() {
   };
   const valueStyle = { margin: 0, fontSize: 24, fontWeight: 800, color: '#111827' };
 
-  // Expenses stored in localStorage per business
-  const storageKey = `fs_expenses_${businessId || 'global'}`;
-  const [expenses, setExpenses] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
-  });
+  // Expenses from Supabase
+  const [expenses, setExpenses] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(expenses));
-  }, [expenses, storageKey]);
+    if (!businessId) return;
+    let cancelled = false;
+    const fetchExpenses = async () => {
+      const { data } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('date', { ascending: false });
+      if (!cancelled) setExpenses(data || []);
+    };
+    fetchExpenses();
+    return () => { cancelled = true; };
+  }, [businessId]);
 
   // Budgets
   const budgetKey = `fs_budgets_${businessId || 'global'}`;
@@ -174,24 +182,30 @@ export default function FinancialTrackerDashboard() {
   const [calcToast, setCalcToast] = useState(null);
   const [showBudgets, setShowBudgets] = useState(false);
 
-  const addExpense = () => {
+  const addExpense = async () => {
     const amt = parseFloat(amount);
     if (!desc.trim() || isNaN(amt) || amt <= 0) return;
-    setExpenses((prev) => [
-      {
-        id: crypto.randomUUID?.() || String(Date.now()),
-        category, description: desc, amount: amt, date: todayStr(),
-        recurring: !!recurring,
-      },
-      ...prev,
-    ]);
+    const { data: userData } = await supabase.auth.getUser();
+    const newExpense = {
+      business_id: businessId,
+      user_id: userData.user?.id,
+      category, description: desc, amount: amt, date: todayStr(),
+      is_recurring: !!recurring,
+    };
+    const { data, error } = await supabase.from('expenses').insert(newExpense).select().single();
+    if (!error && data) {
+      setExpenses((prev) => [data, ...prev]);
+    }
     setDesc('');
     setAmount('');
     setRecurring(false);
     setCalcToast(null);
   };
 
-  const deleteExpense = (id) => setExpenses((prev) => prev.filter((e) => e.id !== id));
+  const deleteExpense = async (id) => {
+    await supabase.from('expenses').delete().eq('id', id);
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+  };
 
   const exportCSV = () => {
     const headers = ['Date', 'Category', 'Description', 'Amount', 'Recurring'];
@@ -478,7 +492,7 @@ export default function FinancialTrackerDashboard() {
                           <span style={{ color: meta.color, fontWeight: 600 }}>{expense.category}</span>
                           <span>•</span>
                           <span>{expense.date}</span>
-                          {expense.recurring && <span title="Recurring monthly"><Repeat className="w-3 h-3" style={{ color: primaryColor }} /></span>}
+                          {expense.is_recurring && <span title="Recurring monthly"><Repeat className="w-3 h-3" style={{ color: primaryColor }} /></span>}
                         </p>
                       </div>
                     </div>
