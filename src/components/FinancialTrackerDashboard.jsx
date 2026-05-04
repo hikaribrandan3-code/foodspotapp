@@ -17,21 +17,21 @@ const fmtMoney = (n) =>
 const todayStr = () => new Date().toISOString().split('T')[0];
 
 const CATEGORIES = [
-  { name: 'Food & Ingredients', color: '#F59E0B', icon: '🥩' },
-  { name: 'Packaging', color: '#8B5CF6', icon: '📦' },
-  { name: 'Payroll / Labor', color: '#EF4444', icon: '👷' },
-  { name: 'Utilities', color: '#06B6D4', icon: '⚡' },
-  { name: 'Equipment & Repairs', color: '#6366F1', icon: '🔧' },
-  { name: 'Insurance', color: '#EC4899', icon: '🛡️' },
-  { name: 'Licenses & Permits', color: '#14B8A6', icon: '📋' },
-  { name: 'Bank & Processing Fees', color: '#64748B', icon: '💳' },
-  { name: 'Delivery / Transport', color: '#F97316', icon: '🚚' },
-  { name: 'Cleaning & Sanitation', color: '#10B981', icon: '🧼' },
-  { name: 'Software', color: '#3B82F6', icon: '💻' },
-  { name: 'Marketing', color: '#D946EF', icon: '📢' },
-  { name: 'Rent', color: '#DC2626', icon: '🏢' },
-  { name: 'Operations', color: '#6B7280', icon: '⚙️' },
-  { name: 'Supplies', color: '#84CC16', icon: '📎' },
+  { name: 'Food & Ingredients', color: '#F59E0B' },
+  { name: 'Packaging', color: '#8B5CF6' },
+  { name: 'Payroll / Labor', color: '#EF4444' },
+  { name: 'Utilities', color: '#06B6D4' },
+  { name: 'Equipment & Repairs', color: '#6366F1' },
+  { name: 'Insurance', color: '#EC4899' },
+  { name: 'Licenses & Permits', color: '#14B8A6' },
+  { name: 'Bank & Processing Fees', color: '#64748B' },
+  { name: 'Delivery / Transport', color: '#F97316' },
+  { name: 'Cleaning & Sanitation', color: '#10B981' },
+  { name: 'Software', color: '#3B82F6' },
+  { name: 'Marketing', color: '#D946EF' },
+  { name: 'Rent', color: '#DC2626' },
+  { name: 'Operations', color: '#6B7280' },
+  { name: 'Supplies', color: '#84CC16' },
 ];
 
 function getDateRange(filter) {
@@ -380,7 +380,7 @@ export default function FinancialTrackerDashboard() {
           </button>
           {showBudgets && (
             <div style={{ marginTop: 8 }}>
-              {CATEGORIES.map((cat) => {
+              {CATEGORIES.filter((c) => c.name !== 'Rent' && c.name !== 'Operations').map((cat) => {
                 const spent = filteredExpenses
                   .filter((e) => e.category === cat.name)
                   .reduce((s, e) => s + e.amount, 0);
@@ -392,7 +392,7 @@ export default function FinancialTrackerDashboard() {
                   <div key={cat.name} style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
                       <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <span>{cat.icon}</span> {cat.name}
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: cat.color }} /> {cat.name}
                       </span>
                       <span style={{ color: over ? '#DC2626' : '#6B7280', fontWeight: 500 }}>
                         {fmtMoney(spent)} {budget > 0 && <span style={{ color: '#9CA3AF' }}>/ {fmtMoney(budget)}</span>}
@@ -469,8 +469,8 @@ export default function FinancialTrackerDashboard() {
                 return (
                   <div key={expense.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 36, height: 36, background: meta.color + '15', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>
-                        {meta.icon}
+                      <div style={{ width: 36, height: 36, background: meta.color + '15', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, fontWeight: 700, color: meta.color }}>
+                        {meta.name[0]}
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.description}</p>
@@ -543,7 +543,7 @@ export default function FinancialTrackerDashboard() {
             style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #E5E7EB', fontSize: 14, outline: 'none', background: '#F9FAFB', boxSizing: 'border-box', width: '100%' }}
           >
             {CATEGORIES.map((c) => (
-              <option key={c.name} value={c.name}>{c.icon} {c.name}</option>
+              <option key={c.name} value={c.name}>{c.name}</option>
             ))}
           </select>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#6B7280', gridColumn: '1 / -1', cursor: 'pointer' }}>
