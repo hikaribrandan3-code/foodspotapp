@@ -15,7 +15,7 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion';
 
 const StatCard = ({ title, value, delta, icon: Icon }) => (
   <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-col gap-2">
