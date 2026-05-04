@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { Trash2, Plus, Calendar, DollarSign, TrendingUp, Package, Calculator, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
@@ -326,7 +327,7 @@ export default function FinancialTrackerDashboard() {
         }
       `}</style>
 
-      {/* Calculator Modal */}
+      {/* Calculator Modal — rendered via portal to avoid scroll container bugs */}
       {showCalc && <CalculatorModal onClose={() => setShowCalc(false)} primaryColor={primaryColor} cardStyle={cardStyle} />}
     </div>
   );
@@ -338,187 +339,93 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
   const [op, setOp] = useState(null);
   const [newNum, setNewNum] = useState(true);
 
-  // Prevent body scroll when modal is open
+  // Lock scroll everywhere
   useEffect(() => {
-    const original = document.body.style.overflow;
+    const originalBody = document.body.style.overflow;
+    const originalTouch = document.body.style.touchAction;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
+    document.body.style.touchAction = 'none';
+
+    const page = document.querySelector('.page');
+    if (page) { page.style.overflow = 'hidden'; page.style.touchAction = 'none'; }
+
+    return () => {
+      document.body.style.overflow = originalBody;
+      document.body.style.touchAction = originalTouch;
+      if (page) { page.style.overflow = ''; page.style.touchAction = ''; }
+    };
   }, []);
 
   const inputNum = (n) => {
-    if (newNum) {
-      setDisplay(String(n));
-      setNewNum(false);
-    } else {
-      setDisplay(display === '0' ? String(n) : display + n);
-    }
+    if (newNum) { setDisplay(String(n)); setNewNum(false); }
+    else { setDisplay(display === '0' ? String(n) : display + n); }
   };
-
-  const inputOp = (o) => {
-    setOp(o);
-    setPrev(parseFloat(display));
-    setNewNum(true);
-  };
-
+  const inputOp = (o) => { setOp(o); setPrev(parseFloat(display)); setNewNum(true); };
+  const clear = () => { setDisplay('0'); setPrev(null); setOp(null); setNewNum(true); };
   const calc = () => {
     if (op === null || prev === null) return;
     const curr = parseFloat(display);
     let res = 0;
-    switch (op) {
-      case '+': res = prev + curr; break;
-      case '-': res = prev - curr; break;
-      case '*': res = prev * curr; break;
-      case '/': res = curr !== 0 ? prev / curr : 0; break;
-      default: break;
-    }
-    setDisplay(String(Math.round(res * 100) / 100));
-    setPrev(null);
-    setOp(null);
-    setNewNum(true);
+    switch (op) { case '+': res = prev + curr; break; case '-': res = prev - curr; break; case '*': res = prev * curr; break; case '/': res = curr !== 0 ? prev / curr : 0; break; }
+    setDisplay(String(Math.round(res * 100) / 100)); setPrev(null); setOp(null); setNewNum(true);
   };
 
-  const clear = () => {
-    setDisplay('0');
-    setPrev(null);
-    setOp(null);
-    setNewNum(true);
-  };
+  const baseBtn = { padding: '18px 0', borderRadius: 14, border: 'none', fontSize: 20, fontWeight: 700, cursor: 'pointer', transition: 'transform 0.08s, opacity 0.08s', WebkitTapHighlightColor: 'transparent', userSelect: 'none', WebkitUserSelect: 'none' };
+  const numBtn = { ...baseBtn, background: '#F9FAFB', color: '#111827' };
+  const accentBtn = { ...baseBtn, background: primaryColor, color: '#FFFFFF' };
+  const opBtn = (active) => ({ ...baseBtn, background: active ? '#DBEAFE' : '#F3F4F6', color: active ? '#2563EB' : '#6B7280' });
 
-  const baseBtn = {
-    padding: '18px 0',
-    borderRadius: 14,
-    border: 'none',
-    fontSize: 20,
-    fontWeight: 700,
-    cursor: 'pointer',
-    transition: 'all 0.12s',
-    touchAction: 'manipulation',
-    WebkitTapHighlightColor: 'transparent',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
-    outline: 'none',
-    position: 'relative',
-    overflow: 'hidden',
-  };
+  const press = (fn) => (e) => { e.stopPropagation(); fn(); };
+  const down = (e) => { e.currentTarget.style.transform = 'scale(0.93)'; e.currentTarget.style.opacity = '0.8'; };
+  const up = (e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; };
 
-  const numBtn = {
-    ...baseBtn,
-    background: '#F9FAFB',
-    color: '#111827',
-  };
-
-  const accentBtn = {
-    ...baseBtn,
-    background: primaryColor,
-    color: '#FFFFFF',
-  };
-
-  const opBtn = (active) => ({
-    ...baseBtn,
-    background: active ? '#DBEAFE' : '#F3F4F6',
-    color: active ? '#2563EB' : '#6B7280',
-  });
-
-  const handlePress = (fn) => (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    fn();
-  };
-
-  const CalcBtn = ({ children, style, onPress, wide, tall }) => (
+  const Btn = ({ s, children, w, t, onPress }) => (
     <button
       onClick={onPress}
-      onTouchStart={onPress}
-      style={{
-        ...style,
-        gridColumn: wide ? 'span 2' : undefined,
-        gridRow: tall ? 'span 2' : undefined,
-        display: tall ? 'flex' : undefined,
-        alignItems: tall ? 'center' : undefined,
-        justifyContent: tall ? 'center' : undefined,
-      }}
-      onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.94)'; e.currentTarget.style.opacity = '0.85'; }}
-      onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-      onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.94)'; e.currentTarget.style.opacity = '0.85'; }}
-      onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; }}
-    >
-      {children}
-    </button>
+      style={{ ...s, gridColumn: w ? 'span 2' : undefined, gridRow: t ? 'span 2' : undefined, display: t ? 'flex' : undefined, alignItems: t ? 'center' : undefined, justifyContent: t ? 'center' : undefined }}
+      onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}
+    >{children}</button>
   );
 
-  return (
+  const modalContent = (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 99999,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 16,
-        touchAction: 'none',
-      }}
+      style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
       onClick={onClose}
     >
-      <div
-        style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20, zIndex: 1 }}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20 }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Calculator</h3>
-          <button
-            onClick={onClose}
-            onTouchStart={onClose}
-            style={{
-              padding: 8, background: 'transparent', border: 'none', cursor: 'pointer',
-              borderRadius: 8, color: '#9CA3AF', touchAction: 'manipulation',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
-          >
+          <button onClick={press(onClose)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF' }} onMouseEnter={(e) => e.currentTarget.style.color = '#111827'} onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}>
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div
-          style={{
-            background: '#111827', borderRadius: 16, padding: '20px 16px',
-            textAlign: 'right', marginBottom: 16, minHeight: 72,
-            display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          }}
-        >
-          <div style={{ fontSize: 12, color: '#6B7280', minHeight: 18 }}>
-            {prev !== null ? `${prev} ${op || ''}` : ''}
-          </div>
-          <div style={{ fontSize: 36, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all', lineHeight: 1.2 }}>
-            {display}
-          </div>
+        <div style={{ background: '#111827', borderRadius: 16, padding: '20px 16px', textAlign: 'right', marginBottom: 16, minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: 12, color: '#6B7280', minHeight: 18 }}>{prev !== null ? `${prev} ${op || ''}` : ''}</div>
+          <div style={{ fontSize: 36, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all', lineHeight: 1.2 }}>{display}</div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-          <CalcBtn style={accentBtn} onPress={handlePress(clear)}>C</CalcBtn>
-          <CalcBtn style={opBtn(op === '/' && prev !== null)} onPress={handlePress(() => inputOp('/'))}>÷</CalcBtn>
-          <CalcBtn style={opBtn(op === '*' && prev !== null)} onPress={handlePress(() => inputOp('*'))}>×</CalcBtn>
-          <CalcBtn style={numBtn} onPress={handlePress(() => setDisplay(display.length > 1 ? display.slice(0, -1) : '0'))}>⌫</CalcBtn>
+          <Btn s={accentBtn} onPress={press(clear)}>C</Btn>
+          <Btn s={opBtn(op === '/' && prev !== null)} onPress={press(() => inputOp('/'))}>÷</Btn>
+          <Btn s={opBtn(op === '*' && prev !== null)} onPress={press(() => inputOp('*'))}>×</Btn>
+          <Btn s={numBtn} onPress={press(() => setDisplay(display.length > 1 ? display.slice(0, -1) : '0'))}>⌫</Btn>
 
-          {[7, 8, 9].map((n) => (
-            <CalcBtn key={n} style={numBtn} onPress={handlePress(() => inputNum(n))}>{n}</CalcBtn>
-          ))}
-          <CalcBtn style={opBtn(op === '-' && prev !== null)} onPress={handlePress(() => inputOp('-'))}>-</CalcBtn>
+          {[7,8,9].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}
+          <Btn s={opBtn(op === '-' && prev !== null)} onPress={press(() => inputOp('-'))}>-</Btn>
 
-          {[4, 5, 6].map((n) => (
-            <CalcBtn key={n} style={numBtn} onPress={handlePress(() => inputNum(n))}>{n}</CalcBtn>
-          ))}
-          <CalcBtn style={opBtn(op === '+' && prev !== null)} onPress={handlePress(() => inputOp('+'))}>+</CalcBtn>
+          {[4,5,6].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}
+          <Btn s={opBtn(op === '+' && prev !== null)} onPress={press(() => inputOp('+'))}>+</Btn>
 
-          {[1, 2, 3].map((n) => (
-            <CalcBtn key={n} style={numBtn} onPress={handlePress(() => inputNum(n))}>{n}</CalcBtn>
-          ))}
-          <CalcBtn style={accentBtn} tall onPress={handlePress(calc)}>=</CalcBtn>
+          {[1,2,3].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}
+          <Btn s={accentBtn} t onPress={press(calc)}>=</Btn>
 
-          <CalcBtn style={numBtn} wide onPress={handlePress(() => inputNum(0))}>0</CalcBtn>
-          <CalcBtn style={numBtn} onPress={handlePress(() => { if (newNum) { setDisplay('0.'); setNewNum(false); } else if (!display.includes('.')) { setDisplay(display + '.'); } })}>.</CalcBtn>
+          <Btn s={numBtn} w onPress={press(() => inputNum(0))}>0</Btn>
+          <Btn s={numBtn} onPress={press(() => { if (newNum) { setDisplay('0.'); setNewNum(false); } else if (!display.includes('.')) { setDisplay(display + '.'); } })}>.</Btn>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
