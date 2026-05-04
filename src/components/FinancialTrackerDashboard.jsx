@@ -77,6 +77,7 @@ export default function FinancialTrackerDashboard() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Operations');
   const [showCalc, setShowCalc] = useState(false);
+  const [calcToast, setCalcToast] = useState(null);
 
   const addExpense = () => {
     const amt = parseFloat(amount);
@@ -262,8 +263,19 @@ export default function FinancialTrackerDashboard() {
         </div>
       </div>
 
+      {/* Toast from calculator */}
+      {calcToast && (
+        <div style={{ ...cardStyle, marginBottom: 12, background: '#ECFDF5', border: `1px solid ${primaryColor}`, display: 'flex', alignItems: 'center', gap: 10, animation: 'slideDown 0.3s ease' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>✓</div>
+          <div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#065F46' }}>{calcToast}</p>
+            <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Review & add below</p>
+          </div>
+        </div>
+      )}
+
       {/* Quick Add Form */}
-      <div style={cardStyle}>
+      <div id="expense-form" style={cardStyle}>
         <span style={{ ...labelStyle, marginBottom: 16 }}>Quick Expense Add</span>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div style={{ gridColumn: '1 / -1' }}>
@@ -329,10 +341,27 @@ export default function FinancialTrackerDashboard() {
           0%, 100% { transform: translateY(0) scale(1); }
           50% { transform: translateY(-6px) scale(1.05); }
         }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
 
       {/* Calculator Modal — rendered via portal to avoid scroll container bugs */}
-      {showCalc && <CalculatorModal onClose={() => setShowCalc(false)} onUseResult={(val) => setAmount(String(parseFloat(val) || 0))} primaryColor={primaryColor} cardStyle={cardStyle} />}
+      {showCalc && (
+        <CalculatorModal
+          onClose={() => setShowCalc(false)}
+          onUseResult={(val) => {
+            const clean = String(parseFloat(val) || 0);
+            setAmount(clean);
+            setCalcToast(`$${clean} added to expense form`);
+            setTimeout(() => setCalcToast(null), 4000);
+            setTimeout(() => document.getElementById('expense-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+          }}
+          primaryColor={primaryColor}
+          cardStyle={cardStyle}
+        />
+      )}
     </div>
   );
 }
