@@ -220,9 +220,9 @@ export default function MenuInventoryView({ lang = 'en' }) {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '6px 12px',
-    borderRadius: 10,
-    fontSize: 12,
+    padding: '10px 16px',
+    borderRadius: 12,
+    fontSize: 13,
     fontWeight: 600,
     border: '1px solid',
     cursor: 'pointer',
@@ -234,7 +234,15 @@ export default function MenuInventoryView({ lang = 'en' }) {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 16, paddingRight: 16, paddingBottom: 112 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 16, paddingRight: 16, paddingBottom: 112 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Package size={18} strokeWidth={2.2} style={{ color: BLUE }} />
+        <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', color: colors.textPrimary, margin: 0 }}>
+          Inventory
+        </h1>
+      </div>
+
       {/* Sub-tabs: Entry / Stock / Audit */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 0 }}>
         {tabs.map((tab) => (
