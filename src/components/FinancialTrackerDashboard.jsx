@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trash2, Plus, Calendar, DollarSign, TrendingUp, Package } from 'lucide-react';
+import { Trash2, Plus, Calendar, DollarSign, TrendingUp, Package, Calculator, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
 
@@ -75,6 +75,7 @@ export default function FinancialTrackerDashboard() {
   const [desc, setDesc] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Operations');
+  const [showCalc, setShowCalc] = useState(false);
 
   const addExpense = () => {
     const amt = parseFloat(amount);
@@ -107,9 +108,25 @@ export default function FinancialTrackerDashboard() {
 
   return (
     <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #E5E7EB' }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 16 }}>
-        💰 Financial Tracker
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>
+          Financial Tracker
+        </h2>
+        <button
+          onClick={() => setShowCalc(true)}
+          style={{
+            width: 36, height: 36, borderRadius: 10, background: primaryColor,
+            border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#FFFFFF', boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Open calculator"
+        >
+          <Calculator className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* KPI Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
@@ -293,6 +310,165 @@ export default function FinancialTrackerDashboard() {
             <Plus className="w-4 h-4" />
             Add Transaction
           </button>
+        </div>
+      </div>
+
+      {/* Calculator Modal */}
+      {showCalc && <CalculatorModal onClose={() => setShowCalc(false)} primaryColor={primaryColor} cardStyle={cardStyle} />}
+    </div>
+  );
+}
+
+function CalculatorModal({ onClose, primaryColor, cardStyle }) {
+  const [display, setDisplay] = useState('0');
+  const [prev, setPrev] = useState(null);
+  const [op, setOp] = useState(null);
+  const [newNum, setNewNum] = useState(true);
+
+  const inputNum = (n) => {
+    if (newNum) {
+      setDisplay(String(n));
+      setNewNum(false);
+    } else {
+      setDisplay(display === '0' ? String(n) : display + n);
+    }
+  };
+
+  const inputOp = (o) => {
+    setOp(o);
+    setPrev(parseFloat(display));
+    setNewNum(true);
+  };
+
+  const calc = () => {
+    if (op === null || prev === null) return;
+    const curr = parseFloat(display);
+    let res = 0;
+    switch (op) {
+      case '+': res = prev + curr; break;
+      case '-': res = prev - curr; break;
+      case '*': res = prev * curr; break;
+      case '/': res = curr !== 0 ? prev / curr : 0; break;
+      default: break;
+    }
+    setDisplay(String(Math.round(res * 100) / 100));
+    setPrev(null);
+    setOp(null);
+    setNewNum(true);
+  };
+
+  const clear = () => {
+    setDisplay('0');
+    setPrev(null);
+    setOp(null);
+    setNewNum(true);
+  };
+
+  const btnStyle = (accent) => ({
+    padding: '16px 0',
+    borderRadius: 12,
+    border: 'none',
+    fontSize: 18,
+    fontWeight: 700,
+    cursor: 'pointer',
+    background: accent ? primaryColor : '#F9FAFB',
+    color: accent ? '#FFFFFF' : '#111827',
+    transition: 'all 0.15s',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  });
+
+  const opBtnStyle = (active) => ({
+    padding: '16px 0',
+    borderRadius: 12,
+    border: 'none',
+    fontSize: 18,
+    fontWeight: 700,
+    cursor: 'pointer',
+    background: active ? '#DBEAFE' : '#F3F4F6',
+    color: active ? '#2563EB' : '#6B7280',
+    transition: 'all 0.15s',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  });
+
+  const keys = [
+    ['C', '÷', '×', '⌫'],
+    ['7', '8', '9', '-'],
+    ['4', '5', '6', '+'],
+    ['1', '2', '3', '='],
+    ['0', '.', '=', '='],
+  ];
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.4)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Calculator</h3>
+          <button
+            onClick={onClose}
+            style={{ padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#111827'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div
+          style={{
+            background: '#111827', borderRadius: 16, padding: '20px 16px',
+            textAlign: 'right', marginBottom: 16, minHeight: 64,
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          }}
+        >
+          <div style={{ fontSize: 12, color: '#6B7280', minHeight: 18 }}>
+            {prev !== null ? `${prev} ${op || ''}` : ''}
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all' }}>
+            {display}
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <button onClick={clear} style={btnStyle(true)}>C</button>
+          <button onClick={() => inputOp('/')} style={opBtnStyle(op === '/' && prev !== null)}>÷</button>
+          <button onClick={() => inputOp('*')} style={opBtnStyle(op === '*' && prev !== null)}>×</button>
+          <button
+            onClick={() => setDisplay(display.length > 1 ? display.slice(0, -1) : '0')}
+            style={btnStyle(false)}
+          >
+            ⌫
+          </button>
+
+          {[7, 8, 9].map((n) => (
+            <button key={n} onClick={() => inputNum(n)} style={btnStyle(false)}>{n}</button>
+          ))}
+          <button onClick={() => inputOp('-')} style={opBtnStyle(op === '-' && prev !== null)}>-</button>
+
+          {[4, 5, 6].map((n) => (
+            <button key={n} onClick={() => inputNum(n)} style={btnStyle(false)}>{n}</button>
+          ))}
+          <button onClick={() => inputOp('+')} style={opBtnStyle(op === '+' && prev !== null)}>+</button>
+
+          {[1, 2, 3].map((n) => (
+            <button key={n} onClick={() => inputNum(n)} style={btnStyle(false)}>{n}</button>
+          ))}
+          <button onClick={calc} style={{ ...btnStyle(true), gridRow: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>=</button>
+
+          <button onClick={() => inputNum(0)} style={{ ...btnStyle(false), gridColumn: 'span 2' }}>0</button>
+          <button onClick={() => { if (newNum) { setDisplay('0.'); setNewNum(false); } else if (!display.includes('.')) { setDisplay(display + '.'); } }} style={btnStyle(false)}>.</button>
         </div>
       </div>
     </div>
