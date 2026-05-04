@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import RamenBowl from './RamenBowl';
-import MiniFireworks from './MiniFireworks';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -39,8 +38,32 @@ export default function CameraActivationBanner({
 
   return (
     <>
-      {/* Mini fireworks burst from donut at 0.4s */}
-      <MiniFireworks trigger={isVisible} />
+      {/* Confetti rain when donut reaches middle (~1.2s) */}
+      {isVisible && (
+        <div className="confetti-container">
+          {Array.from({ length: 40 }).map((_, i) => {
+            const colors = [
+              'hsl(0, 100%, 50%)',
+              'hsl(45, 100%, 50%)',
+              'hsl(120, 100%, 50%)',
+              'hsl(240, 100%, 50%)',
+              'hsl(280, 100%, 50%)',
+              'hsl(340, 100%, 60%)',
+            ];
+            return (
+              <div
+                key={i}
+                className="confetti"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+                  animationDelay: `${1.2 + Math.random() * 0.3}s`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Character modal - walks in and bounces */}
       <div className={`camera-activation-banner ${className}`}>
