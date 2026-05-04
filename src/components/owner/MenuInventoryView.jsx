@@ -244,7 +244,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
       </div>
 
       {/* Sub-tabs: Entry / Stock / Audit */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12, marginBottom: 16 }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
