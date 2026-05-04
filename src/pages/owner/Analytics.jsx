@@ -9,6 +9,7 @@ import { logout } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
+import FinancialTracker from './FinancialTracker.jsx';
 
 
 
@@ -279,6 +280,11 @@ const Analytics = () => {
                                     </div>
                                 ))
                             )}
+                        </div>
+
+                        {/* FINANCIAL TRACKER */}
+                        <div style={{ marginTop: 40, paddingTop: 20, borderTop: '1px solid #E5E7EB' }}>
+                            <FinancialTracker />
                         </div>
                     </>
                 )}
