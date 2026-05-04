@@ -290,7 +290,7 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     en: 'Payment must be verified before kitchen sees this order.',
     es: 'El pago debe verificarse antes de que la cocina vea este pedido.',
     pt: 'O pagamento deve ser verificado antes que a cozinha veja este pedido.',
-  }
+  },
   // Inventory
   'inventory_title': {
     en: 'Inventory',
