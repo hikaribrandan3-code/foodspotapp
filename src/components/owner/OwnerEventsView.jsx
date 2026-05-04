@@ -543,16 +543,21 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                     }
                   }}
                 />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16 }}
-                >
-                  📸 Upload Image
-                </button>
-                {form.image_url && (
-                  <div style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140 }}>
+                {form.image_url ? (
+                  <motion.div
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140, cursor: 'pointer', border: `2px solid ${theme.primary}` }}
+                  >
                     <img src={form.image_url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  </div>
+                  </motion.div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16 }}
+                  >
+                    📸 Upload Image
+                  </button>
                 )}
               </Field>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: theme.bgSurface, borderRadius: 12, marginTop: 4 }}>
@@ -654,8 +659,13 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={() => step < 3 ? setStep(s => s + 1) : handlePublish()}
-          disabled={saving}
-          style={{ ...s.btnPrimary, flex: 2, opacity: saving ? 0.7 : 1 }}
+          disabled={step === 1 && (!form.name.trim() || !form.category || !form.image_url) || saving}
+          style={{
+            ...s.btnPrimary,
+            flex: 2,
+            opacity: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 0.5 : (saving ? 0.7 : 1),
+            cursor: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 'not-allowed' : 'pointer',
+          }}
         >
           {step === 3 ? (saving ? 'Publishing…' : '🚀 Publish Event') : 'Continue →'}
         </motion.button>
