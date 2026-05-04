@@ -140,6 +140,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
       onEdit={() => setView('edit')}
       onAttendees={() => setView('attendees')}
       onCheckin={() => setView('checkin')}
+      onPromos={() => setView('promos')}
       onDelete={handleDelete}
       onRefresh={fetchEvents}
     />
@@ -149,6 +150,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   )
   if (view === 'checkin' && selectedEvent) return (
     <CheckinView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} />
+  )
+  if (view === 'promos' && selectedEvent) return (
+    <PromosView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} />
   )
 
   // ── Stat Modals ──────────────────────────────────────────────────────────────
@@ -328,7 +332,7 @@ function EventListCard({ event, onClick, delay = 0 }) {
 }
 
 // ── Detail View ───────────────────────────────────────────────────────────────
-function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onDelete, onRefresh }) {
+function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onPromos, onDelete, onRefresh }) {
   const tiers = event.ticket_tiers || []
   const totalSold = tiers.reduce((a, t) => a + (t.sold || 0), 0)
   const totalCap  = tiers.reduce((a, t) => a + (t.capacity || 0), 0)
@@ -372,6 +376,16 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onDele
         <StatCard label="Sold"       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={Ticket} />
         <StatCard label="Check-ins"  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
         <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, flex: 1, padding: 12, fontSize: 13 }}>
+          <QrCode size={16} /> Scan Tickets
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onPromos} style={{ ...s.btnSecondary, flex: 1, padding: 12, fontSize: 13 }}>
+          <Tag size={16} /> Promo Codes
+        </motion.button>
       </div>
 
       {/* Tiers */}
@@ -849,6 +863,144 @@ function CheckinView({ event, businessId, onBack }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </motion.div>
+  )
+}
+
+// ── Promos View ──────────────────────────────────────────────────────────────────
+function PromosView({ event, businessId, onBack }) {
+  const [promos, setPromos] = useState([
+    { id: 'promo_1', code: 'EARLYBIRD20', discount: 20, type: 'percent', uses: 15, limit: 50, expiry: '2026-06-01' },
+    { id: 'promo_2', code: 'VIP15', discount: 15, type: 'percent', uses: 8, limit: 30, expiry: '2026-05-25' },
+  ])
+  const [showForm, setShowForm] = useState(false)
+  const [newPromo, setNewPromo] = useState({ code: '', discount: 10, type: 'percent', limit: 100 })
+
+  const handleCreatePromo = () => {
+    if (!newPromo.code.trim()) { alert('Code required'); return }
+    setPromos([...promos, {
+      id: 'promo_' + Date.now(),
+      ...newPromo,
+      uses: 0,
+      expiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    }])
+    setNewPromo({ code: '', discount: 10, type: 'percent', limit: 100 })
+    setShowForm(false)
+  }
+
+  const handleDeletePromo = (id) => {
+    if (window.confirm('Delete this promo code?')) {
+      setPromos(promos.filter(p => p.id !== id))
+    }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+        <ArrowLeft size={18} /> Back
+      </button>
+      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Promo Codes</h2>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{event.name}</p>
+
+      {showForm ? (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 20 }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: theme.textPrimary }}>Create Promo Code</h3>
+
+          <Field label="Code">
+            <input
+              style={s.input}
+              placeholder="EARLYBIRD20"
+              value={newPromo.code}
+              onChange={e => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })}
+            />
+          </Field>
+
+          <Field label="Discount Type">
+            <div style={{ display: 'flex', gap: 8 }}>
+              {['percent', 'fixed'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setNewPromo({ ...newPromo, type: t })}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '1px solid',
+                    background: newPromo.type === t ? theme.primary : theme.bgWhite,
+                    color: newPromo.type === t ? '#fff' : theme.textSecondary,
+                    borderColor: newPromo.type === t ? theme.primary : theme.border,
+                  }}
+                >
+                  {t === 'percent' ? '%' : '$'}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={newPromo.type === 'percent' ? 'Discount %' : 'Discount $'}>
+            <input
+              type="number"
+              style={s.input}
+              value={newPromo.discount}
+              onChange={e => setNewPromo({ ...newPromo, discount: Number(e.target.value) })}
+            />
+          </Field>
+
+          <Field label="Usage Limit">
+            <input
+              type="number"
+              style={s.input}
+              placeholder="100"
+              value={newPromo.limit}
+              onChange={e => setNewPromo({ ...newPromo, limit: Number(e.target.value) })}
+            />
+          </Field>
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={() => setShowForm(false)} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
+            <motion.button whileTap={{ scale: 0.97 }} onClick={handleCreatePromo} style={{ ...s.btnPrimary, flex: 1 }}>
+              Create Code
+            </motion.button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowForm(true)} style={{ ...s.btnPrimary, width: '100%', padding: 14, marginBottom: 20, justifyContent: 'center' }}>
+          <Plus size={18} /> New Promo Code
+        </motion.button>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {promos.map(promo => (
+          <motion.div key={promo.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: theme.primary, letterSpacing: 2 }}>{promo.code}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary, marginTop: 2 }}>
+                  {promo.discount}{promo.type === 'percent' ? '%' : '$'} off
+                </div>
+              </div>
+              <button
+                onClick={() => handleDeletePromo(promo.id)}
+                style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Uses</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: theme.textPrimary }}>{promo.uses} / {promo.limit}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Expires</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary }}>{new Date(promo.expiry).toLocaleDateString()}</div>
+              </div>
+            </div>
+
+            <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ width: `${(promo.uses / promo.limit) * 100}%`, height: '100%', background: theme.primary, borderRadius: 3 }} />
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </motion.div>
   )
 }
