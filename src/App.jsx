@@ -52,6 +52,7 @@ import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
 import Info from './pages/customer/Info.jsx'
 import Promos from './pages/customer/Promos.jsx'
+import EventsView from './pages/customer/events/EventsView.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
@@ -524,6 +525,7 @@ function App() {
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                                             <Route path="/:tenantSlug/promos" element={<Promos />} />
+                                            <Route path="/:tenantSlug/promos/events" element={<EventsView />} />
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
