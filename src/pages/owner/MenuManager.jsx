@@ -994,7 +994,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     ))}
                 </div>
 
-                <div style={{ display: viewTab === 'menu' ? 'block' : 'none' }}>
+                {viewTab === 'menu' && (
+                <div>
                 {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
                 <div style={{ marginBottom: 24 }}>
                     {/* Pause Orders Toggle */}
@@ -1755,6 +1756,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 )
             }
                 </div>
+                )}
 
                 {viewTab === 'inventory' && (
                     <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>}>
