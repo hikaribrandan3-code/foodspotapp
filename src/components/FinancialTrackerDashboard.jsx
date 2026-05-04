@@ -332,16 +332,23 @@ export default function FinancialTrackerDashboard() {
       `}</style>
 
       {/* Calculator Modal — rendered via portal to avoid scroll container bugs */}
-      {showCalc && <CalculatorModal onClose={() => setShowCalc(false)} primaryColor={primaryColor} cardStyle={cardStyle} />}
+      {showCalc && <CalculatorModal onClose={() => setShowCalc(false)} onUseResult={(val) => setAmount(String(parseFloat(val) || 0))} primaryColor={primaryColor} cardStyle={cardStyle} />}
     </div>
   );
 }
 
-function CalculatorModal({ onClose, primaryColor, cardStyle }) {
+function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
   const [display, setDisplay] = useState('0');
   const [prev, setPrev] = useState(null);
   const [op, setOp] = useState(null);
   const [newNum, setNewNum] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const HISTORY_KEY = 'fs_calc_history';
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+  });
 
   // Lock scroll
   useEffect(() => {
@@ -357,13 +364,58 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
     else { setDisplay(display === '0' ? String(n) : display + n); }
   };
   const inputOp = (o) => { setOp(o); setPrev(parseFloat(display)); setNewNum(true); };
+  const inputPercent = () => {
+    const val = parseFloat(display);
+    if (isNaN(val)) return;
+    setDisplay(String(Math.round((val / 100) * 100000000) / 100000000));
+    setNewNum(true);
+  };
+  const inputDot = () => {
+    if (newNum) { setDisplay('0.'); setNewNum(false); }
+    else if (!display.includes('.')) { setDisplay(display + '.'); }
+  };
+  const backspace = () => setDisplay(display.length > 1 ? display.slice(0, -1) : '0');
   const clear = () => { setDisplay('0'); setPrev(null); setOp(null); setNewNum(true); };
+
+  const saveHistory = (result) => {
+    const entry = { result, time: Date.now() };
+    const next = [entry, ...history].slice(0, 5);
+    setHistory(next);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(next)); } catch {}
+  };
+
   const calc = () => {
     if (op === null || prev === null) return;
     const curr = parseFloat(display);
+    if (isNaN(curr)) return;
     let res = 0;
-    switch (op) { case '+': res = prev + curr; break; case '-': res = prev - curr; break; case '*': res = prev * curr; break; case '/': res = curr !== 0 ? prev / curr : 0; break; }
-    setDisplay(String(Math.round(res * 100) / 100)); setPrev(null); setOp(null); setNewNum(true);
+    switch (op) {
+      case '+': res = prev + curr; break;
+      case '-': res = prev - curr; break;
+      case '*': res = prev * curr; break;
+      case '/': res = curr !== 0 ? prev / curr : 0; break;
+    }
+    const formatted = String(Math.round(res * 100000000) / 100000000);
+    setDisplay(formatted);
+    setPrev(null);
+    setOp(null);
+    setNewNum(true);
+    saveHistory(formatted);
+  };
+
+  const copyDisplay = async () => {
+    try {
+      await navigator.clipboard.writeText(display);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = display;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
   };
 
   const baseBtn = { padding: '18px 0', borderRadius: 14, border: 'none', fontSize: 20, fontWeight: 700, cursor: 'pointer', transition: 'transform 0.08s, opacity 0.08s', WebkitTapHighlightColor: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', pointerEvents: 'auto' };
@@ -375,10 +427,10 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
   const down = (e) => { e.currentTarget.style.transform = 'scale(0.93)'; e.currentTarget.style.opacity = '0.8'; };
   const up = (e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.opacity = '1'; };
 
-  const Btn = ({ s, children, w, t, onPress }) => (
+  const Btn = ({ s, children, w, onPress }) => (
     <button
       onClick={onPress}
-      style={{ ...s, gridColumn: w ? 'span 2' : undefined, gridRow: t ? 'span 2' : undefined, display: t ? 'flex' : undefined, alignItems: t ? 'center' : undefined, justifyContent: t ? 'center' : undefined }}
+      style={{ ...s, gridColumn: w ? 'span 2' : undefined }}
       onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}
     >{children}</button>
   );
@@ -390,36 +442,96 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
       onClick={onClose}
     >
       <div style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Calculator</h3>
-          <button onClick={press(onClose)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF', pointerEvents: 'auto' }} onMouseEnter={(e) => e.currentTarget.style.color = '#111827'} onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}>
-            <X className="w-5 h-5" />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={press(() => setShowHistory((v) => !v))}
+              style={{ padding: 8, background: showHistory ? '#E5E7EB' : 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: showHistory ? '#111827' : '#9CA3AF', pointerEvents: 'auto' }}
+              title="History"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+            <button onClick={press(onClose)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF', pointerEvents: 'auto' }}>
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        <div style={{ background: '#111827', borderRadius: 16, padding: '20px 16px', textAlign: 'right', marginBottom: 16, minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {/* History panel */}
+        {showHistory && (
+          <div style={{ marginBottom: 12, background: '#F9FAFB', borderRadius: 12, padding: '8px 12px', maxHeight: 140, overflowY: 'auto' }}>
+            {history.length === 0 ? (
+              <p style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center', margin: '8px 0' }}>No history yet</p>
+            ) : (
+              history.map((h, i) => (
+                <button
+                  key={i}
+                  onClick={press(() => { setDisplay(h.result); setNewNum(true); setShowHistory(false); })}
+                  style={{ display: 'flex', justifyContent: 'space-between', width: '100%', padding: '8px 4px', background: 'transparent', border: 'none', borderBottom: i < history.length - 1 ? '1px solid #E5E7EB' : 'none', cursor: 'pointer', fontSize: 14, color: '#111827', pointerEvents: 'auto' }}
+                >
+                  <span style={{ color: '#9CA3AF', fontSize: 12 }}>{new Date(h.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span style={{ fontWeight: 700 }}>{h.result}</span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Display */}
+        <div
+          onClick={press(copyDisplay)}
+          style={{ background: '#111827', borderRadius: 16, padding: '20px 16px', textAlign: 'right', marginBottom: 16, minHeight: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center', cursor: 'pointer', position: 'relative', pointerEvents: 'auto' }}
+          title="Tap to copy"
+        >
           <div style={{ fontSize: 12, color: '#6B7280', minHeight: 18 }}>{prev !== null ? `${prev} ${op || ''}` : ''}</div>
           <div style={{ fontSize: 36, fontWeight: 700, color: '#FFFFFF', wordBreak: 'break-all', lineHeight: 1.2 }}>{display}</div>
+          {copied && (
+            <div style={{ position: 'absolute', top: 8, left: 12, fontSize: 11, fontWeight: 600, color: primaryColor, background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 6 }}>
+              Copied!
+            </div>
+          )}
         </div>
 
+        {/* Keypad */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           <Btn s={accentBtn} onPress={press(clear)}>C</Btn>
+          <Btn s={opBtn(false)} onPress={press(inputPercent)}>%</Btn>
+          <Btn s={numBtn} onPress={press(backspace)}>⌫</Btn>
           <Btn s={opBtn(op === '/' && prev !== null)} onPress={press(() => inputOp('/'))}>÷</Btn>
-          <Btn s={opBtn(op === '*' && prev !== null)} onPress={press(() => inputOp('*'))}>×</Btn>
-          <Btn s={numBtn} onPress={press(() => setDisplay(display.length > 1 ? display.slice(0, -1) : '0'))}>⌫</Btn>
 
           {[7,8,9].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}
-          <Btn s={opBtn(op === '-' && prev !== null)} onPress={press(() => inputOp('-'))}>-</Btn>
+          <Btn s={opBtn(op === '*' && prev !== null)} onPress={press(() => inputOp('*'))}>×</Btn>
 
           {[4,5,6].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}
-          <Btn s={opBtn(op === '+' && prev !== null)} onPress={press(() => inputOp('+'))}>+</Btn>
+          <Btn s={opBtn(op === '-' && prev !== null)} onPress={press(() => inputOp('-'))}>-</Btn>
 
           {[1,2,3].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}
-          <Btn s={accentBtn} t onPress={press(calc)}>=</Btn>
+          <Btn s={opBtn(op === '+' && prev !== null)} onPress={press(() => inputOp('+'))}>+</Btn>
 
           <Btn s={numBtn} w onPress={press(() => inputNum(0))}>0</Btn>
-          <Btn s={numBtn} onPress={press(() => { if (newNum) { setDisplay('0.'); setNewNum(false); } else if (!display.includes('.')) { setDisplay(display + '.'); } })}>.</Btn>
+          <Btn s={numBtn} onPress={press(inputDot)}>.</Btn>
+          <Btn s={accentBtn} onPress={press(calc)}>=</Btn>
         </div>
+
+        {/* Quick Expense Drop */}
+        {onUseResult && (
+          <button
+            onClick={press(() => { onUseResult(display); onClose(); })}
+            style={{
+              width: '100%', marginTop: 14, padding: '12px', background: primaryColor, color: '#FFFFFF',
+              borderRadius: 12, border: 'none', fontSize: 14, fontWeight: 700,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              boxShadow: '0 2px 8px rgba(16,185,129,0.3)', pointerEvents: 'auto'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+            Use ${display} as Expense
+          </button>
+        )}
       </div>
     </div>
   );
