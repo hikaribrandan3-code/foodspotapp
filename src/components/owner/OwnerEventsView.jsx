@@ -500,16 +500,16 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
         <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step}/3</span>
       </div>
 
-      <div style={{ padding: '24px 16px', paddingBottom: 140 }}>
+      <div style={{ padding: '20px 16px 24px' }}>
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Event Details</h2>
+              <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Event Details</h2>
               <Field label="Event Name">
                 <input style={s.input} placeholder="e.g. Taco Night" value={form.name} onChange={e => patch('name', e.target.value)} />
               </Field>
               <Field label="Description">
-                <textarea style={{ ...s.input, minHeight: 100, resize: 'none' }} placeholder="Tell us what makes this special…" value={form.description} onChange={e => patch('description', e.target.value)} />
+                <textarea style={{ ...s.input, minHeight: 72, resize: 'none' }} placeholder="Tell us what makes this special…" value={form.description} onChange={e => patch('description', e.target.value)} />
               </Field>
               <Field label="Category">
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -649,11 +649,9 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
 
-      {/* Buttons — wrapped tightly inside scrollable content */}
-      <div style={{ padding: '20px 16px 40px' }}>
-        <div style={{ display: 'flex', gap: 12 }}>
+        {/* Buttons — tight to content */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
           {step > 1 && (
             <button onClick={() => setStep(s => s - 1)} style={{ ...s.btnSecondary, flex: 1, borderRadius: 14, padding: '14px 16px', fontSize: 15 }}>Back</button>
           )}
@@ -1044,7 +1042,7 @@ function StatCard({ label, value, color, icon: Icon, onClick }) {
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 18 }}>
+    <div style={{ marginBottom: 14 }}>
       <label style={s.label}>{label}</label>
       {children}
     </div>
