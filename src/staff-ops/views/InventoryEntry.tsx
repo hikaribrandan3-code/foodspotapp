@@ -4,6 +4,7 @@ import { Search, ChevronDown, ChevronUp, Plus, Settings, Camera, X, Check, Packa
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
+import { supabase } from '../../lib/supabaseClient.js';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const BLUE = '#3b82f6';
@@ -21,7 +22,8 @@ export const InventoryEntry: React.FC = () => {
 
   // Scanner State
   const [showScanner, setShowScanner] = useState(false);
-  const [scanResult, setScanResult] = useState<{ name: string; category: string; barcode: string; price: number } | null>(null);
+  const [scanResult, setScanResult] = useState<{ name: string; category: string; barcode: string; price: number; cost?: number; supplier?: string; unit?: string } | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
   const [scanQty, setScanQty] = useState(1);
   const [scanUnit, setScanUnit] = useState('units');
 
@@ -32,32 +34,39 @@ export const InventoryEntry: React.FC = () => {
     { id: '4', name: 'Cola 330ml', category: 'Drinks', min: 24, max: 120, qty: 48, unit: 'units', expiryDate: '', location: 'Fridge 1', supplier: 'Coke', cost: 0.45, price: 1.50, barcode: '901234', tags: [] },
   ]);
 
-  // Mock lookup for scanned barcodes
-  const lookupBarcode = (barcode: string) => {
-    const mockDb: Record<string, { name: string; category: string; price: number }> = {
-      '123456': { name: 'Tomato Soup', category: 'Food', price: 5.99 },
-      '000111': { name: 'Fresh Avocado', category: 'Food', price: 1.50 },
-      '222333': { name: 'Napkins (Pack 500)', category: 'Paper Goods', price: 12.99 },
-    };
-    return mockDb[barcode] || null;
+  // Query Supabase for scanned barcode
+  const lookupBarcode = async (barcode: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory')
+        .select('name, category, price, cost, supplier, unit')
+        .eq('barcode', barcode)
+        .eq('business_id', businessId)
+        .single();
+
+      if (error || !data) return null;
+      return data;
+    } catch {
+      return null;
+    }
   };
 
-  const addItem = (name: string, category?: string, qty: number = 0, barcode: string = '') => {
+  const addItem = (item: Partial<any> & { name: string; qty: number }) => {
     const newItem = {
       id: Math.random().toString(36).substr(2, 9),
-      name: name,
-      category: category || (activeCategory === 'All' ? categories[1] || 'Food' : activeCategory),
-      qty: qty,
-      min: 0,
-      max: 100,
-      unit: scanUnit || 'units',
-      expiryDate: '',
-      location: '',
-      supplier: '',
-      cost: 0,
-      price: scanResult?.price || 0,
-      barcode: barcode,
-      tags: []
+      name: item.name,
+      category: item.category || (activeCategory === 'All' ? categories[1] || 'Food' : activeCategory),
+      qty: item.qty,
+      min: item.min || 0,
+      max: item.max || 100,
+      unit: item.unit || scanUnit || 'units',
+      expiryDate: item.expiryDate || '',
+      location: item.location || '',
+      supplier: item.supplier || '',
+      cost: item.cost || 0,
+      price: item.price || 0,
+      barcode: item.barcode || '',
+      tags: item.tags || []
     };
     setItems([newItem, ...items]);
     setExpandedItems([newItem.id]);
@@ -80,8 +89,10 @@ export const InventoryEntry: React.FC = () => {
         );
 
         scanner.render(
-          (decodedText: string) => {
-            const foundItem = lookupBarcode(decodedText);
+          async (decodedText: string) => {
+            setScanLoading(true);
+            const foundItem = await lookupBarcode(decodedText);
+            setScanLoading(false);
             setScanResult(foundItem ?
               { ...foundItem, barcode: decodedText } :
               { name: t('item_not_found'), category: t('uncategorized'), barcode: decodedText, price: 0 }
@@ -104,9 +115,18 @@ export const InventoryEntry: React.FC = () => {
     if (scanResult) {
       if (scanResult.name === t('item_not_found')) {
         const name = prompt(t('item_name'));
-        if (name) addItem(name, 'Food', scanQty, scanResult.barcode);
+        if (name) addItem({ name, category: 'Food', qty: scanQty, barcode: scanResult.barcode });
       } else {
-        addItem(scanResult.name, scanResult.category, scanQty, scanResult.barcode);
+        addItem({
+          name: scanResult.name,
+          category: scanResult.category,
+          qty: scanQty,
+          barcode: scanResult.barcode,
+          cost: scanResult.cost,
+          price: scanResult.price,
+          supplier: scanResult.supplier,
+          unit: scanResult.unit,
+        });
       }
       setShowScanner(false);
       setScanResult(null);
@@ -202,7 +222,7 @@ export const InventoryEntry: React.FC = () => {
         <button
           onClick={() => {
             const name = prompt(t('item_name'));
-            if (name) addItem(name);
+            if (name) addItem({ name, qty: 0 });
           }}
           className="w-12 h-12 rounded-xl border flex items-center justify-center shadow-sm active:scale-95 transition-transform shrink-0"
           style={{ backgroundColor: 'var(--nav-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
@@ -231,7 +251,12 @@ export const InventoryEntry: React.FC = () => {
             </button>
 
             <div className="w-full max-w-sm flex flex-col gap-6">
-              {!scanResult ? (
+              {scanLoading ? (
+                <div className="flex flex-col items-center justify-center gap-4 py-12">
+                  <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                  <p className="text-white/60 text-sm font-medium">Looking up item...</p>
+                </div>
+              ) : !scanResult ? (
                 <>
                   <div className="text-center">
                     <h2 className="text-white text-2xl font-bold mb-2">{t('scanning')}</h2>
@@ -285,14 +310,14 @@ export const InventoryEntry: React.FC = () => {
                       onClick={() => setScanResult(null)}
                       className="flex-1 h-14 rounded-2xl border-2 border-gray-100 font-bold text-gray-500 active:scale-95 transition-all"
                     >
-                      {t('cancel')}
+                      {scanResult.name === t('item_not_found') ? t('cancel') : 'Scan again'}
                     </button>
                     <button
                       onClick={confirmScanAdd}
                       className="flex-[2] h-14 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all"
                       style={{ backgroundColor: BLUE }}
                     >
-                      {t('confirm_scan')}
+                      {scanResult.name === t('item_not_found') ? 'Add new item' : t('confirm_scan')}
                     </button>
                   </div>
                 </motion.div>
