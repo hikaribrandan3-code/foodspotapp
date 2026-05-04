@@ -54,6 +54,7 @@ export function HikariBoy({
   const [showLoader, setShowLoader] = useState(false);
   const gameFrameRef = useRef(null);
   const loaderStartRef = useRef(0);
+  const gameStartedRef = useRef(false);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -140,6 +141,7 @@ export function HikariBoy({
     // Small delay so loader renders before heavy iframe work
     setTimeout(() => {
       setCurrentGame(game);
+      gameStartedRef.current = false;
     }, 50);
   };
 
@@ -176,6 +178,7 @@ export function HikariBoy({
     
     if (isPaused && button === BUTTONS.START) {
       setIsPaused(false);
+      gameFrameRef.current?.contentWindow?.postMessage({ type: 'BUTTON_PRESS', button }, '*');
       return;
     }
 
@@ -185,7 +188,13 @@ export function HikariBoy({
         button
       }, '*');
 
-      if (button === BUTTONS.START) setIsPaused(true);
+      if (button === BUTTONS.START) {
+        if (!gameStartedRef.current) {
+          gameStartedRef.current = true;
+        } else {
+          setIsPaused(true);
+        }
+      }
       if (button === BUTTONS.MENU) {
         onClose?.();
         return;
@@ -267,7 +276,10 @@ export function HikariBoy({
             {isPaused && (
               <div className="hb-pause-overlay">
                 <div className="pause-icon">PAUSED</div>
-                <button onClick={() => setIsPaused(false)}>Resume</button>
+                <button onClick={() => {
+                  setIsPaused(false);
+                  gameFrameRef.current?.contentWindow?.postMessage({ type: 'BUTTON_PRESS', button: BUTTONS.START }, '*');
+                }}>Resume</button>
                 <button onClick={() => setCurrentGame(null)}>Quit</button>
               </div>
             )}
