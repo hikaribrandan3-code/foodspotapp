@@ -1,6 +1,6 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
-import { MapPin, Calendar, ArrowRight, Cloud, Sun, Droplets, Thermometer, Sparkles, Languages } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 
@@ -25,15 +25,15 @@ const EventCountdown = ({ startDate }) => {
 
   return (
     <div className="flex gap-1.5 items-center">
-      <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
+      <div className="bg-slate-900/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
         <span className="text-[10px] font-black text-white">{timeLeft.days}</span>
         <span className="text-[6px] font-bold uppercase text-white/60 tracking-tighter">Days</span>
       </div>
-      <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
+      <div className="bg-slate-900/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
         <span className="text-[10px] font-black text-white">{timeLeft.hours}</span>
         <span className="text-[6px] font-bold uppercase text-white/60 tracking-tighter">Hrs</span>
       </div>
-      <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
+      <div className="bg-slate-900/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
         <span className="text-[10px] font-black text-white">{timeLeft.minutes}</span>
         <span className="text-[6px] font-bold uppercase text-white/60 tracking-tighter">Mins</span>
       </div>
@@ -41,38 +41,6 @@ const EventCountdown = ({ startDate }) => {
   );
 };
 
-const WeatherWidget = () => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return (
-    <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-[24px] p-3 mb-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-emerald-600">
-            <Sun size={16} />
-          </div>
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-tight text-emerald-900 dark:text-emerald-100">7-Day Forecast</h4>
-            <p className="text-[8px] font-medium text-emerald-600 dark:text-emerald-400">Perfect weekend for events</p>
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="flex items-center gap-1 text-emerald-900 dark:text-emerald-100 font-black text-xs">
-            <Thermometer size={12} /> 24°C
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-between px-1">
-        {days.map((day, i) => (
-          <div key={day} className="flex flex-col items-center gap-1">
-            <span className="text-[7px] font-bold text-emerald-600/60 uppercase">{day}</span>
-            {i % 2 === 0 ? <Sun size={10} className="text-orange-400" /> : <Cloud size={10} className="text-slate-400" />}
-            <span className="text-[8px] font-black text-emerald-900 dark:text-emerald-100">{20 + i}°</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 export default function EventDiscovery({ events, onSelectEvent }) {
   const { t, language, setLanguage } = useLanguage();
@@ -81,11 +49,6 @@ export default function EventDiscovery({ events, onSelectEvent }) {
 
   const categories = ['All', 'Music', 'Exclusives', 'Free', 'Festivals', 'Pop-ups'];
 
-  const languages = [
-    { code: 'en', name: 'EN' },
-    { code: 'es', name: 'ES' },
-    { code: 'pt', name: 'PT' }
-  ];
 
   // Multi-tenancy filter + category filter
   const filteredEvents = events
@@ -104,7 +67,6 @@ export default function EventDiscovery({ events, onSelectEvent }) {
       </header>
 
       <div className="px-6">
-        <WeatherWidget />
       </div>
 
       <div className="px-6 mb-2 flex gap-3 overflow-x-auto hide-scrollbar pb-2">

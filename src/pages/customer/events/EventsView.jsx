@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTenant } from '../../../contexts/TenantContext';
+import { useLanguage } from '../../../contexts/LanguageContext';
 import EventDiscovery from './views/EventDiscovery';
 import EventDetail from './views/EventDetail';
 import EventCheckout from './views/EventCheckout';
@@ -17,9 +19,9 @@ const mockEvents = [
     venue_name: 'Main Hall A',
     image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_vip_table', name: 'VIP Table for 4', price: 1200.00, qty: 10 },
-      { id: 'tier_vip', name: 'VIP Pass', price: 250.00, qty: 50 },
-      { id: 'tier_regular', name: 'General Admission', price: 95.00, qty: 200 }
+      { id: 'tier_vip_table', name: 'VIP Table for 4', price: 120000, qty: 10 },
+      { id: 'tier_vip', name: 'VIP Pass', price: 25000, qty: 50 },
+      { id: 'tier_regular', name: 'General Admission', price: 9500, qty: 200 }
     ],
     category: 'Exclusives',
     business_id: 'foodspot_hq_001'
@@ -34,8 +36,8 @@ const mockEvents = [
     venue_name: 'The Velvet Lounge',
     image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_vip', name: 'VIP Pass', price: 75.00, qty: 30 },
-      { id: 'tier_regular', name: 'General Admission', price: 30.00, qty: 100 }
+      { id: 'tier_vip', name: 'VIP Pass', price: 7500, qty: 30 },
+      { id: 'tier_regular', name: 'General Admission', price: 3000, qty: 100 }
     ],
     category: 'Music',
     business_id: 'foodspot_hq_001'
@@ -65,10 +67,10 @@ const mockEvents = [
     venue_name: 'Stadium Ground',
     image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_vip_table', name: 'VIP Deck Table', price: 1500.00, qty: 5 },
-      { id: 'tier_vip', name: 'VIP Pass', price: 350.00, qty: 100 },
-      { id: 'tier_early', name: 'Early Bird', price: 85.00, qty: 500 },
-      { id: 'tier_regular', name: 'General Admission', price: 120.00, qty: 1000 }
+      { id: 'tier_vip_table', name: 'VIP Deck Table', price: 150000, qty: 5 },
+      { id: 'tier_vip', name: 'VIP Pass', price: 35000, qty: 100 },
+      { id: 'tier_early', name: 'Early Bird', price: 8500, qty: 500 },
+      { id: 'tier_regular', name: 'General Admission', price: 12000, qty: 1000 }
     ],
     category: 'Festivals',
     business_id: 'foodspot_hq_001'
@@ -91,6 +93,8 @@ const mockEvents = [
 ];
 
 export default function EventsView() {
+  const { businessId } = useTenant();
+  const { t } = useLanguage();
   const [stage, setStage] = useState('discovery'); // 'discovery' | 'detail' | 'checkout' | 'ticket'
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
@@ -128,6 +132,7 @@ export default function EventsView() {
           {stage === 'discovery' && (
             <EventDiscovery 
               events={mockEvents} 
+              businessId={businessId}
               onSelectEvent={handleSelectEvent} 
             />
           )}

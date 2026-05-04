@@ -45,6 +45,8 @@ const EventCountdown = ({ startDate }) => {
   );
 };
 
+const formatPrice = (cents) => (cents / 100).toFixed(2);
+
 export default function EventDetail({ event, onBook, onBack }) {
   const { t } = useLanguage();
 
@@ -193,7 +195,7 @@ export default function EventDetail({ event, onBook, onBack }) {
                   </div>
                 </div>
                 <div className="relative z-10 text-right">
-                  <p className="text-xl font-black text-[var(--color-primary)]">${tier.price}</p>
+                  <p className="text-xl font-black text-[var(--color-primary)]">${formatPrice(tier.price)}</p>
                   <p className="text-[9px] font-black uppercase tracking-tight text-[var(--text-secondary)] opacity-50">Available</p>
                 </div>
               </button>

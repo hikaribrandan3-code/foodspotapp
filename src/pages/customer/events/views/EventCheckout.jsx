@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ChevronLeft, Ticket, CreditCard, Info } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 
+const formatPrice = (cents) => (cents / 100).toFixed(2);
+
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const { t } = useLanguage();
   const [qty, setQty] = useState(1);
@@ -56,7 +58,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mt-0.5">{tier.name}</p>
               </div>
               <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
-                <span className="text-[10px] font-black text-[var(--text-primary)]">${tier.price} <span className="opacity-40">ea</span></span>
+                <span className="text-[10px] font-black text-[var(--text-primary)]">${formatPrice(tier.price)} <span className="opacity-40">ea</span></span>
               </div>
             </div>
           </div>
@@ -82,7 +84,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
              <div className="flex items-center justify-between">
                 <span className="text-xl font-black text-[var(--text-primary)] tracking-tight">{t('total')}</span>
                 <div className="text-right">
-                  <span className="text-2xl font-black text-[var(--color-primary)] tracking-tighter">${total.toFixed(2)}</span>
+                  <span className="text-2xl font-black text-[var(--color-primary)] tracking-tighter">${formatPrice(total)}</span>
                   <p className="text-[9px] font-black text-[var(--text-secondary)] opacity-40 uppercase tracking-widest mt-0.5">Admin fees included</p>
                 </div>
              </div>

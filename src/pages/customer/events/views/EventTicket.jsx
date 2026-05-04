@@ -6,6 +6,8 @@ import { useLanguage } from '../../../../contexts/LanguageContext';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
+const formatPrice = (cents) => (cents / 100).toFixed(2);
+
 export default function EventTicket({ booking, onClose }) {
   const { t } = useLanguage();
 
