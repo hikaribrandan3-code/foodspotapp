@@ -322,9 +322,9 @@ const Analytics = () => {
                   </div>
                 )}
 
-                {activeTab === 'events' && (
+                {activeTab === 'events' && businessId && (
                   <div>
-                    <OwnerEventsView 
+                    <OwnerEventsView
                       businessId={businessId}
                       tenantSlug={tenantSlug}
                       lang={lang}

@@ -1,13 +1,87 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabaseClient.js'
-import { Calendar, MapPin, DollarSign, Ticket, Plus, ArrowLeft, Edit2, QrCode, ChevronRight, ImageIcon, Trash2, Users, MoreVertical, Check, AlertCircle, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Html5Qrcode } from 'html5-qrcode'
+import confetti from 'canvas-confetti'
+import {
+  Calendar, MapPin, DollarSign, Ticket, Plus, ArrowLeft, Edit2, QrCode,
+  ChevronRight, Trash2, Users, Check, AlertCircle, X, Trophy, Clock,
+  Tag, Share2, CheckCircle2, PartyPopper
+} from 'lucide-react'
 
+// ── Theme tokens ──────────────────────────────────────────────────────────────
+const theme = {
+  primary:       'var(--color-primary, #10B981)',
+  textPrimary:   'var(--text-primary, #111827)',
+  textSecondary: 'var(--text-secondary, #64748B)',
+  border:        'var(--border-color, #E5E7EB)',
+  bgWhite:       'var(--bg-white, #FFFFFF)',
+  bgSurface:     'var(--bg-surface, #F9FAFB)',
+  danger:        'var(--color-danger, #EF4444)',
+}
+
+const s = {
+  card: {
+    background: theme.bgWhite,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 16,
+    padding: 20,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+  },
+  label: {
+    color: theme.textSecondary,
+    fontSize: 11,
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    display: 'block',
+    letterSpacing: '0.5px',
+  },
+  btnPrimary: {
+    background: theme.primary,
+    color: '#fff',
+    border: 'none',
+    borderRadius: 12,
+    padding: '12px 16px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  btnSecondary: {
+    background: theme.bgWhite,
+    color: theme.textSecondary,
+    border: `1px solid ${theme.border}`,
+    borderRadius: 12,
+    padding: '12px 16px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  input: {
+    width: '100%',
+    padding: '14px',
+    border: `1px solid ${theme.border}`,
+    borderRadius: 12,
+    fontSize: 14,
+    background: theme.bgWhite,
+    color: theme.textPrimary,
+    outline: 'none',
+    boxSizing: 'border-box',
+  },
+}
+
+// ── Root ─────────────────────────────────────────────────────────────────────
 export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }) {
-  const [view, setView] = useState('list') // 'list' | 'create' | 'detail' | 'edit' | 'attendees' | 'checkin' | 'refund'
+  const [view, setView] = useState('list')
   const [events, setEvents] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const [statModal, setStatModal] = useState(null) // 'revenue' | 'tickets' | 'checkins' | null
 
   useEffect(() => {
     if (!businessId) return
@@ -16,24 +90,15 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
   const fetchEvents = async () => {
     setLoading(true)
-    // TODO: Wire Supabase query
-    // const { data, error } = await supabase
-    //   .from('events')
-    //   .select(`
-    //     *,
-    //     event_orders(count)
-    //   `)
-    //   .eq('business_id', businessId)
-    //   .order('start_date', { ascending: false })
-
-    // Mock data for now
-    const mockData = [
+    // TODO: replace mock with real Supabase query
+    // const { data } = await supabase.from('events').select('*, event_orders(count)').eq('business_id', businessId).order('start_date', { ascending: false })
+    setEvents([
       {
         id: 'evt_001',
         business_id: businessId,
         name: 'Summer Night Market',
-        description: 'Live music and local vendors',
-        category: 'food',
+        description: 'Live music and local vendors — a night to remember.',
+        category: 'Food',
         start_date: '2026-06-15T19:00:00',
         end_date: '2026-06-15T23:00:00',
         venue_name: 'Central Park',
@@ -43,723 +108,945 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         status: 'live',
         ticket_tiers: [
           { id: 't1', name: 'General', price: 2500, capacity: 100, sold: 45, remaining: 55 },
-          { id: 't2', name: 'VIP', price: 5000, capacity: 20, sold: 18, remaining: 2 }
+          { id: 't2', name: 'VIP',     price: 5000, capacity: 20,  sold: 18, remaining: 2  },
         ],
         total_capacity: 120,
         tickets_sold: 63,
         total_revenue: 137500,
         checkins: 32,
-        created_at: new Date().toISOString()
-      }
-    ]
-
-    setEvents(mockData)
+        created_at: new Date().toISOString(),
+      },
+    ])
     setLoading(false)
   }
 
-  const handleSelectEvent = (event) => {
-    setSelectedEvent(event)
-    setView('detail')
-  }
-
-  const handleCreateSuccess = () => {
-    fetchEvents()
-    setView('list')
-  }
-
-  const handleEditSuccess = () => {
-    fetchEvents()
-    setView('detail')
-  }
-
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure? This cannot be undone.')) return
-    // TODO: Wire Supabase delete
-    // await supabase.from('events').update({ status: 'archived' }).eq('id', selectedEvent.id)
-    alert('Event archived successfully')
+    if (!window.confirm('Archive this event? This cannot be undone.')) return
+    // TODO: await supabase.from('events').update({ status: 'archived' }).eq('id', selectedEvent.id)
     fetchEvents()
     setView('list')
   }
 
-  if (view === 'create') {
-    return <CreateEventView businessId={businessId} onBack={() => setView('list')} onSuccess={handleCreateSuccess} />
-  }
+  if (view === 'create') return (
+    <CreateEventView businessId={businessId} onBack={() => setView('list')} onSuccess={() => { fetchEvents(); setView('list') }} />
+  )
+  if (view === 'edit' && selectedEvent) return (
+    <EditEventView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} onSuccess={() => { fetchEvents(); setView('detail') }} />
+  )
+  if (view === 'detail' && selectedEvent) return (
+    <EventDetailView
+      event={selectedEvent}
+      onBack={() => setView('list')}
+      onEdit={() => setView('edit')}
+      onAttendees={() => setView('attendees')}
+      onCheckin={() => setView('checkin')}
+      onPromos={() => setView('promos')}
+      onDelete={handleDelete}
+      onRefresh={fetchEvents}
+    />
+  )
+  if (view === 'attendees' && selectedEvent) return (
+    <AttendeeListView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} />
+  )
+  if (view === 'checkin' && selectedEvent) return (
+    <CheckinView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} />
+  )
+  if (view === 'promos' && selectedEvent) return (
+    <PromosView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} />
+  )
 
-  if (view === 'edit' && selectedEvent) {
-    return <EditEventView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} onSuccess={handleEditSuccess} />
-  }
-
-  if (view === 'detail' && selectedEvent) {
+  // ── Stat Modals ──────────────────────────────────────────────────────────────
+  if (statModal === 'revenue') {
+    const totalRev = events.reduce((a, e) => a + (e.total_revenue || 0), 0)
+    const revenueSplits = events.map(e => ({ name: e.name, amount: e.total_revenue || 0 })).sort((a, b) => b.amount - a.amount)
     return (
-      <EventDetailView
-        event={selectedEvent}
-        onBack={() => setView('list')}
-        onEdit={() => setView('edit')}
-        onAttendees={() => setView('attendees')}
-        onCheckin={() => setView('checkin')}
-        onDelete={handleDelete}
-        onRefresh={() => { setRefreshing(true); fetchEvents().then(() => setRefreshing(false)) }}
-      />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+        <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Revenue Details</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>Total: ${(totalRev / 100).toFixed(2)}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {revenueSplits.map(e => (
+            <div key={e.name} style={{ padding: 14, background: theme.bgWhite, borderRadius: 12, border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, color: theme.textPrimary }}>{e.name}</span>
+              <span style={{ fontWeight: 800, color: theme.primary, fontSize: 15 }}>${(e.amount / 100).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
     )
   }
 
-  if (view === 'attendees' && selectedEvent) {
-    return <AttendeeListView event={selectedEvent} onBack={() => setView('detail')} businessId={businessId} />
-  }
-
-  if (view === 'checkin' && selectedEvent) {
-    return <CheckinView event={selectedEvent} onBack={() => setView('detail')} businessId={businessId} />
-  }
-
-  // List View
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, color: '#111827' }}>Events</h2>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#6B7280' }}>Manage and track event performance</p>
-        </div>
-        <button
-          onClick={() => setView('create')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: '#10B981', color: '#fff', border: 'none',
-            padding: '10px 16px', borderRadius: 12, fontSize: 13,
-            fontWeight: 600, cursor: 'pointer'
-          }}
-        >
-          <Plus size={16} strokeWidth={2} /> Create Event
+  if (statModal === 'tickets') {
+    const ticketBreakdown = events.flatMap(e => e.ticket_tiers?.map(t => ({ eventName: e.name, tier: t.name, sold: t.sold, capacity: t.capacity })) || []).sort((a, b) => b.sold - a.sold)
+    const totalSold = ticketBreakdown.reduce((a, t) => a + t.sold, 0)
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+        <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+          <ArrowLeft size={18} /> Back
         </button>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Tickets Sold</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{totalSold} total tickets</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {ticketBreakdown.map((t, i) => (
+            <div key={i} style={{ padding: 12, background: theme.bgWhite, borderRadius: 12, border: `1px solid ${theme.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 600, fontSize: 14, color: theme.textPrimary }}>{t.tier}</span>
+                <span style={{ fontWeight: 700, color: theme.primary }}>{t.sold}/{t.capacity}</span>
+              </div>
+              <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${(t.sold / t.capacity) * 100}%`, height: '100%', background: theme.primary, borderRadius: 3 }} />
+              </div>
+              <div style={{ fontSize: 11, color: theme.textSecondary, marginTop: 4 }}>{t.eventName}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (statModal === 'checkins') {
+    const checkInsList = [
+      { name: 'John Smith', time: '6:32 PM', tier: 'VIP', event: 'Summer Night Market' },
+      { name: 'Jane Doe', time: '6:28 PM', tier: 'General', event: 'Summer Night Market' },
+      { name: 'Mike Johnson', time: '6:15 PM', tier: 'VIP', event: 'Summer Night Market' },
+      { name: 'Sarah Lee', time: '6:05 PM', tier: 'General', event: 'Summer Night Market' },
+      { name: 'Alex Chen', time: '5:58 PM', tier: 'VIP', event: 'Summer Night Market' },
+    ]
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+        <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-ins</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{checkInsList.length} total</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {checkInsList.map((c, i) => (
+            <div key={i} style={{ padding: 12, background: theme.bgWhite, borderRadius: 12, border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 600, color: theme.textPrimary }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>{c.event} • {c.tier}</div>
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: theme.primary }}>{c.time}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  // ── List view ───────────────────────────────────────────────────────────────
+  return (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {onBack && (
+            <button onClick={onBack} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
+              <ArrowLeft size={22} color={theme.textPrimary} />
+            </button>
+          )}
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.textPrimary }}>Events</h1>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: theme.textSecondary }}>Manage tickets & check-ins</p>
+          </div>
+        </div>
+        <motion.button whileTap={{ scale: 0.96 }} onClick={() => setView('create')} style={s.btnPrimary}>
+          <Plus size={18} /> Create
+        </motion.button>
       </div>
 
-      {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-        <StatCard label="Total Revenue" value={`$${(events.reduce((sum, e) => sum + (e.total_revenue || 0), 0) / 100).toFixed(2)}`} color="#10B981" icon={DollarSign} />
-        <StatCard label="Tickets Sold" value={events.reduce((sum, e) => sum + (e.tickets_sold || 0), 0).toString()} color="#3B82F6" icon={Ticket} />
-        <StatCard label="Active Events" value={events.filter(e => e.status === 'live').length.toString()} color="#8B5CF6" icon={Calendar} />
-        <StatCard label="Check-ins" value={events.reduce((sum, e) => sum + (e.checkins || 0), 0).toString()} color="#F59E0B" icon={Users} />
+      {/* Stats strip */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+        <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
+        <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={Ticket} onClick={() => setStatModal('tickets')} />
+        <StatCard label="Live Events" value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
+        <StatCard label="Check-ins" value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
       </div>
 
-      {/* Events List */}
+      {/* List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF' }}>
-          <p>Loading events...</p>
-        </div>
+        <div style={{ textAlign: 'center', padding: 60, color: theme.textSecondary }}>Loading events…</div>
       ) : events.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB' }}>
-          <h3 style={{ fontSize: 20, fontWeight: 600, color: '#111827', marginBottom: 8 }}>No events yet</h3>
-          <p style={{ fontSize: 14, color: '#6B7280', marginBottom: 24 }}>Create your first event to start selling tickets</p>
-          <button
-            onClick={() => setView('create')}
-            style={{
-              background: '#10B981', color: '#fff', border: 'none',
-              padding: '10px 20px', borderRadius: 12, fontSize: 14,
-              fontWeight: 600, cursor: 'pointer'
-            }}
-          >
-            Create Event
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ ...s.card, textAlign: 'center', padding: 60 }}>
+          <PartyPopper size={48} color={theme.textSecondary} style={{ margin: '0 auto 16px' }} />
+          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: theme.textPrimary }}>No events yet</h3>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: theme.textSecondary }}>Create your first event to start selling tickets</p>
+          <button onClick={() => setView('create')} style={{ ...s.btnPrimary, margin: '0 auto', width: 'fit-content' }}>
+            <Plus size={16} /> Create Event
           </button>
-        </div>
+        </motion.div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {events.map(event => (
-            <EventListCard key={event.id} event={event} onClick={() => handleSelectEvent(event)} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {events.map((event, i) => (
+            <EventListCard key={event.id} event={event} delay={i * 0.05} onClick={() => { setSelectedEvent(event); setView('detail') }} />
           ))}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
-// ===== LIST CARD =====
-function EventListCard({ event, onClick }) {
-  const eventDate = new Date(event.start_date)
-  const now = new Date()
-  const isPast = eventDate < now
-
+// ── Event List Card ───────────────────────────────────────────────────────────
+function EventListCard({ event, onClick, delay = 0 }) {
+  const date = new Date(event.start_date)
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      style={{
-        background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB',
-        overflow: 'hidden', cursor: 'pointer', display: 'flex', padding: 16, gap: 16
-      }}
+      style={{ ...s.card, padding: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', height: 110 }}
     >
       <div style={{
-        width: 80, height: 80, borderRadius: 12,
-        background: event.image_url ? `url(${event.image_url}) center/cover` : '#F3F4F6',
-        flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center'
+        width: 100, flexShrink: 0,
+        background: event.image_url ? `url(${event.image_url}) center/cover` : theme.bgSurface,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {!event.image_url && <Calendar size={24} color="#9CA3AF" strokeWidth={2} />}
+        {!event.image_url && <Calendar size={28} color={theme.textSecondary} />}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {event.name}
-          </h3>
-          <span style={{
-            background: event.status === 'live' ? '#DCFCE7' : '#F3F4F6',
-            color: event.status === 'live' ? '#16A34A' : '#6B7280',
-            fontSize: 10, fontWeight: 600, padding: '2px 8px',
-            borderRadius: 20, textTransform: 'uppercase', flexShrink: 0
-          }}>
-            {event.status}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: '#6B7280', marginBottom: 8 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Calendar size={12} strokeWidth={2} /> {eventDate.toLocaleDateString()}
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <MapPin size={12} strokeWidth={2} /> {event.venue_name}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
-          <span style={{ fontWeight: 600, color: '#111827' }}>
-            ${(event.total_revenue / 100).toFixed(2)}
-            <span style={{ fontWeight: 400, color: '#6B7280', fontSize: 11 }}> revenue</span>
-          </span>
-          <span style={{ fontWeight: 600, color: '#111827' }}>
-            {event.tickets_sold}/{event.total_capacity}
-            <span style={{ fontWeight: 400, color: '#6B7280', fontSize: 11 }}> sold</span>
-          </span>
+      <div style={{ flex: 1, padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
+        <span style={{ fontSize: 10, fontWeight: 800, color: theme.primary, textTransform: 'uppercase', letterSpacing: 1 }}>{event.category}</span>
+        <h3 style={{ margin: '3px 0', fontSize: 15, fontWeight: 700, color: theme.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {event.name}
+        </h3>
+        <div style={{ fontSize: 12, color: theme.textSecondary, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Calendar size={11} /> {date.toLocaleDateString()} · {event.venue_name}
         </div>
       </div>
-      <ChevronRight size={20} color="#9CA3AF" strokeWidth={2} style={{ flexShrink: 0, alignSelf: 'center' }} />
-    </div>
+
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 6 }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, textTransform: 'uppercase',
+          background: event.status === 'live' ? '#DCFCE7' : '#F3F4F6',
+          color: event.status === 'live' ? '#16A34A' : theme.textSecondary,
+        }}>{event.status}</span>
+        <span style={{ fontWeight: 800, fontSize: 15, color: theme.textPrimary }}>${(event.total_revenue / 100).toFixed(0)}</span>
+        <ChevronRight size={16} color={theme.textSecondary} />
+      </div>
+    </motion.div>
   )
 }
 
-// ===== DETAIL VIEW =====
-function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onDelete, onRefresh }) {
+// ── Detail View ───────────────────────────────────────────────────────────────
+function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onPromos, onDelete, onRefresh }) {
   const tiers = event.ticket_tiers || []
-  const totalCapacity = tiers.reduce((sum, t) => sum + (t.capacity || 0), 0)
-  const totalSold = tiers.reduce((sum, t) => sum + (t.sold || 0), 0)
+  const totalSold = tiers.reduce((a, t) => a + (t.sold || 0), 0)
+  const totalCap  = tiers.reduce((a, t) => a + (t.capacity || 0), 0)
 
   return (
-    <div>
-      {/* Header */}
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+      {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <button
-          onClick={onBack}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'none', border: 'none', color: '#6B7280',
-            fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0
-          }}
-        >
-          <ArrowLeft size={18} strokeWidth={2} /> Back
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14 }}>
+          <ArrowLeft size={18} /> Back
         </button>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={onEdit}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: '#F3F4F6', border: 'none', color: '#374151',
-              padding: '8px 14px', borderRadius: 10, fontSize: 13,
-              fontWeight: 600, cursor: 'pointer'
-            }}
-          >
-            <Edit2 size={14} strokeWidth={2} /> Edit
+          <button onClick={onEdit} style={{ ...s.btnSecondary, padding: '8px 14px', fontSize: 13 }}>
+            <Edit2 size={14} /> Edit
           </button>
-          <button
-            onClick={onCheckin}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              background: '#10B981', border: 'none', color: '#fff',
-              padding: '8px 14px', borderRadius: 10, fontSize: 13,
-              fontWeight: 600, cursor: 'pointer'
-            }}
-          >
-            <QrCode size={14} strokeWidth={2} /> Scan
-          </button>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, padding: '8px 14px', fontSize: 13 }}>
+            <QrCode size={14} /> Scan
+          </motion.button>
         </div>
       </div>
 
-      {/* Event Image & Title */}
+      {/* Hero image */}
       <div style={{
-        width: '100%', height: 200, borderRadius: 16,
-        background: event.image_url ? `url(${event.image_url}) center/cover` : '#F3F4F6',
-        marginBottom: 20, display: 'flex', alignItems: 'flex-end', padding: 16,
-        position: 'relative'
+        width: '100%', height: 200, borderRadius: 20, overflow: 'hidden',
+        background: event.image_url ? `url(${event.image_url}) center/cover` : theme.bgSurface,
+        position: 'relative', marginBottom: 20,
       }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
-          borderRadius: 16
-        }} />
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 700, color: '#fff' }}>{event.name}</h2>
-          <div style={{ display: 'flex', gap: 12, fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Calendar size={14} strokeWidth={2} /> {new Date(event.start_date).toLocaleDateString()}
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <MapPin size={14} strokeWidth={2} /> {event.venue_name}
-            </span>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)', borderRadius: 20 }} />
+        <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
+          <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#fff' }}>{event.name}</h2>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', display: 'flex', gap: 12 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} /> {new Date(event.start_date).toLocaleDateString()}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={12} /> {event.venue_name}</span>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-        <StatCard label="Total Revenue" value={`$${(event.total_revenue / 100).toFixed(2)}`} color="#10B981" icon={DollarSign} />
-        <StatCard label="Tickets Sold" value={`${totalSold} / ${totalCapacity}`} color="#3B82F6" icon={Ticket} />
-        <StatCard label="Check-ins" value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
-        <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue || 0) / totalSold / 100).toFixed(2) : '0'}`} color="#F59E0B" icon={Ticket} />
+        <StatCard label="Revenue"    value={`$${(event.total_revenue / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
+        <StatCard label="Sold"       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={Ticket} />
+        <StatCard label="Check-ins"  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
+        <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
       </div>
 
-      {/* Tier Performance */}
-      <div style={{ padding: 16, background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', marginBottom: 20 }}>
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, flex: 1, padding: 12, fontSize: 13 }}>
+          <QrCode size={16} /> Scan Tickets
+        </motion.button>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onPromos} style={{ ...s.btnSecondary, flex: 1, padding: 12, fontSize: 13 }}>
+          <Tag size={16} /> Promo Codes
+        </motion.button>
+      </div>
+
+      {/* Tiers */}
+      <div style={{ ...s.card, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#111827' }}>Ticket Tiers</h3>
-          <button onClick={onAttendees} style={{ background: 'none', border: 'none', color: '#10B981', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Users size={14} /> View Attendees
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Ticket Tiers</h3>
+          <button onClick={onAttendees} style={{ background: 'none', border: 'none', color: theme.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Users size={14} /> Attendees
           </button>
         </div>
-        {tiers.length === 0 ? (
-          <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20, margin: 0 }}>No tiers</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {tiers.map(tier => {
-              const percentage = tier.capacity > 0 ? (tier.sold / tier.capacity) * 100 : 0
-              const remaining = (tier.capacity || 0) - (tier.sold || 0)
-              return (
-                <div key={tier.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{tier.name}</span>
-                    <span style={{ fontSize: 13, color: '#6B7280' }}>
-                      {tier.sold} / {tier.capacity} sold
-                      <span style={{ fontWeight: 600, color: '#111827', marginLeft: 8 }}>${(tier.price / 100).toFixed(2)}</span>
-                    </span>
-                  </div>
-                  <div style={{ width: '100%', height: 8, background: '#F3F4F6', borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${percentage}%`, height: '100%',
-                      background: remaining === 0 ? '#DC2626' : '#10B981',
-                      transition: 'width 0.3s'
-                    }} />
-                  </div>
-                  {remaining < 5 && remaining > 0 && (
-                    <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <AlertCircle size={12} /> Only {remaining} left
-                    </div>
-                  )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {tiers.map(tier => {
+            const pct = tier.capacity > 0 ? (tier.sold / tier.capacity) * 100 : 0
+            const rem = (tier.capacity || 0) - (tier.sold || 0)
+            return (
+              <div key={tier.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700, color: theme.textPrimary }}>{tier.name}</span>
+                  <span style={{ fontSize: 13, color: theme.textSecondary }}>
+                    {tier.sold}/{tier.capacity} · <strong style={{ color: theme.textPrimary }}>${(tier.price / 100).toFixed(0)}</strong>
+                  </span>
                 </div>
-              )
-            })}
-          </div>
-        )}
+                <div style={{ width: '100%', height: 8, background: theme.bgSurface, borderRadius: 4, overflow: 'hidden' }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    style={{ height: '100%', background: rem === 0 ? theme.danger : theme.primary, borderRadius: 4 }}
+                  />
+                </div>
+                {rem < 5 && rem > 0 && (
+                  <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <AlertCircle size={11} /> Only {rem} left!
+                  </div>
+                )}
+                {rem === 0 && (
+                  <div style={{ fontSize: 11, color: theme.danger, marginTop: 4, fontWeight: 700 }}>SOLD OUT</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Danger Zone */}
+      {/* Danger zone */}
       <div style={{ padding: 16, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
-        <h4 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: '#DC2626' }}>Danger Zone</h4>
-        <button
-          onClick={onDelete}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-            background: '#DC2626', color: '#fff', border: 'none',
-            padding: '10px 14px', borderRadius: 10, fontSize: 13,
-            fontWeight: 600, cursor: 'pointer'
-          }}
-        >
-          <Trash2 size={14} strokeWidth={2} /> Archive Event
+        <h4 style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: theme.danger, textTransform: 'uppercase', letterSpacing: 1 }}>Danger Zone</h4>
+        <button onClick={onDelete} style={{ ...s.btnPrimary, background: theme.danger, width: '100%', padding: 12 }}>
+          <Trash2 size={15} /> Archive Event
         </button>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
-// ===== CREATE VIEW =====
+// ── Create Event (3-step wizard) ──────────────────────────────────────────────
 function CreateEventView({ businessId, onBack, onSuccess }) {
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const fileInputRef = useRef(null)
   const [form, setForm] = useState({
-    name: '', description: '', category: 'food',
-    venue_name: '', address: '', start_date: '', end_date: '',
-    is_free: false, image_url: '',
-    ticket_tiers: [{ id: '1', name: 'General Admission', price: 0, capacity: 100 }]
+    name: '', description: '', category: 'Food',
+    image_url: '', start_date: '', end_date: '',
+    venue_name: '', address: '', is_free: false,
+    ticket_tiers: [{ id: '1', name: 'General Admission', price: 25, capacity: 100 }],
   })
 
-  const categories = [
-    { id: 'food', label: 'Food' },
-    { id: 'music', label: 'Music' },
-    { id: 'art', label: 'Art' },
-    { id: 'classes', label: 'Classes' },
-    { id: 'drinks', label: 'Drinks' },
-  ]
+  const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sport']
 
-  const handleAddTier = () => {
-    setForm(prev => ({
-      ...prev,
-      ticket_tiers: [...prev.ticket_tiers, {
-        id: String(prev.ticket_tiers.length + 1),
-        name: '', price: 0, capacity: 100
-      }]
-    }))
-  }
+  const patch = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
-  const handleTierChange = (index, field, value) => {
-    setForm(prev => {
-      const tiers = [...prev.ticket_tiers]
-      tiers[index] = { ...tiers[index], [field]: value }
-      return { ...prev, ticket_tiers: tiers }
-    })
-  }
-
-  const handleSave = async (asDraft = false) => {
-    if (!form.name.trim() || !form.start_date) {
-      alert('Please fill in required fields')
-      return
-    }
+  const handlePublish = async () => {
+    if (!form.name.trim() || !form.start_date) { alert('Name and start date are required'); return }
     setSaving(true)
-
-    // TODO: Wire Supabase insert
-    // const { error } = await supabase.from('events').insert([{
-    //   business_id: businessId,
-    //   name: form.name,
-    //   description: form.description,
-    //   category: form.category,
-    //   venue_name: form.venue_name,
-    //   address: form.address,
-    //   start_date: form.start_date,
-    //   end_date: form.end_date,
-    //   image_url: form.image_url,
-    //   is_free: form.is_free,
-    //   ticket_tiers: form.ticket_tiers,
-    //   status: asDraft ? 'draft' : 'live',
-    //   total_capacity: form.ticket_tiers.reduce((sum, t) => sum + Number(t.capacity), 0),
-    //   tickets_sold: 0,
-    //   total_revenue: 0,
-    //   checkins: 0
-    // }])
-
+    // TODO: await supabase.from('events').insert([{ business_id: businessId, ...form, status: 'live', tickets_sold: 0, total_revenue: 0, checkins: 0, total_capacity: form.ticket_tiers.reduce((a, t) => a + Number(t.capacity), 0) }])
     setSaving(false)
-    alert('Event created successfully!')
-    onSuccess()
+    setShowSuccess(true)
+    confetti({ particleCount: 140, spread: 80, origin: { y: 0.55 }, colors: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6'] })
+    setTimeout(() => { setShowSuccess(false); onSuccess() }, 2800)
   }
 
-  const totalCapacity = form.ticket_tiers.reduce((sum, t) => sum + Number(t.capacity), 0)
+  if (showSuccess) return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center' }}
+    >
+      <Trophy size={80} color="#10B981" />
+      <h2 style={{ fontSize: 32, fontWeight: 900, margin: '24px 0 8px', color: theme.textPrimary }}>It's Live! 🚀</h2>
+      <p style={{ color: theme.textSecondary, fontSize: 15 }}>Your event is beautifully published.</p>
+    </motion.div>
+  )
 
   return (
-    <div style={{ paddingBottom: 120 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <button
-          onClick={onBack}
-          style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <ArrowLeft size={18} strokeWidth={2} /> Back
+    <div style={{ minHeight: '100vh', background: theme.bgSurface }}>
+      {/* Header */}
+      <div style={{ padding: '18px 16px', background: theme.bgWhite, borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ArrowLeft size={22} color={theme.textPrimary} />
         </button>
+        <span style={{ flex: 1, fontSize: 16, fontWeight: 800, color: theme.textPrimary }}>Create Event</span>
         <div style={{ display: 'flex', gap: 6 }}>
-          {[1, 2, 3].map(s => <div key={s} style={{ width: 28, height: 3, borderRadius: 2, background: s <= step ? '#10B981' : '#E5E7EB' }} />)}
+          {[1, 2, 3].map(n => (
+            <motion.div
+              key={n}
+              animate={{ background: n <= step ? theme.primary : theme.border }}
+              style={{ width: 32, height: 4, borderRadius: 2 }}
+            />
+          ))}
         </div>
+        <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step}/3</span>
       </div>
 
-      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 600, color: '#111827' }}>
-        {step === 1 && 'Create Event'}{step === 2 && 'Date & Venue'}{step === 3 && 'Ticket Tiers'}
-      </h2>
-      <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6B7280' }}>Step {step} of 3</p>
-
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', padding: 20 }}>
-        {step === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <FormField label="Cover Image">
-              <input type="text" placeholder="Image URL (16:9)" value={form.image_url} onChange={e => setForm(prev => ({ ...prev, image_url: e.target.value }))} style={inputStyle} />
-            </FormField>
-            <FormField label="Event Name">
-              <input type="text" value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder="Summer Night Market" style={inputStyle} />
-            </FormField>
-            <FormField label="Description">
-              <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} placeholder="What makes your event special?" rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
-            </FormField>
-            <FormField label="Category">
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {categories.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setForm(prev => ({ ...prev, category: cat.id }))}
-                    style={{
-                      padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                      border: '1px solid', cursor: 'pointer',
-                      background: form.category === cat.id ? '#111827' : '#fff',
-                      color: form.category === cat.id ? '#fff' : '#374151',
-                      borderColor: form.category === cat.id ? '#111827' : '#E5E7EB'
-                    }}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </FormField>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
-              <input type="checkbox" id="free" checked={form.is_free} onChange={e => setForm(prev => ({ ...prev, is_free: e.target.checked }))} style={{ width: 18, height: 18, cursor: 'pointer' }} />
-              <label htmlFor="free" style={{ fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Free event</label>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <FormField label="Start Date & Time">
-              <input type="datetime-local" value={form.start_date} onChange={e => setForm(prev => ({ ...prev, start_date: e.target.value }))} style={inputStyle} />
-            </FormField>
-            <FormField label="End Date & Time">
-              <input type="datetime-local" value={form.end_date} onChange={e => setForm(prev => ({ ...prev, end_date: e.target.value }))} style={inputStyle} />
-            </FormField>
-            <FormField label="Venue Name">
-              <input type="text" value={form.venue_name} onChange={e => setForm(prev => ({ ...prev, venue_name: e.target.value }))} placeholder="The Grand Plaza" style={inputStyle} />
-            </FormField>
-            <FormField label="Address">
-              <input type="text" value={form.address} onChange={e => setForm(prev => ({ ...prev, address: e.target.value }))} placeholder="Full address" style={inputStyle} />
-            </FormField>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {form.ticket_tiers.map((tier, idx) => (
-              <div key={tier.id} style={{ padding: 14, background: '#F9FAFB', borderRadius: 12, border: '1px solid #E5E7EB' }}>
-                <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 10 }}>Tier {idx + 1}</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <FormField label="Name">
-                    <input type="text" value={tier.name} onChange={e => handleTierChange(idx, 'name', e.target.value)} placeholder="General Admission" style={inputStyle} />
-                  </FormField>
-                  {!form.is_free && (
-                    <FormField label="Price (in cents)">
-                      <input type="number" value={tier.price} onChange={e => handleTierChange(idx, 'price', Number(e.target.value))} placeholder="2500" style={inputStyle} />
-                    </FormField>
-                  )}
-                  <FormField label="Capacity">
-                    <input type="number" value={tier.capacity} onChange={e => handleTierChange(idx, 'capacity', Number(e.target.value))} placeholder="100" style={inputStyle} />
-                  </FormField>
+      <div style={{ padding: '24px 16px', paddingBottom: 140 }}>
+        <AnimatePresence mode="wait">
+          {step === 1 && (
+            <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Event Details</h2>
+              <Field label="Event Name">
+                <input style={s.input} placeholder="e.g. Taco Night" value={form.name} onChange={e => patch('name', e.target.value)} />
+              </Field>
+              <Field label="Description">
+                <textarea style={{ ...s.input, minHeight: 100, resize: 'none' }} placeholder="Tell us what makes this special…" value={form.description} onChange={e => patch('description', e.target.value)} />
+              </Field>
+              <Field label="Category">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => patch('category', cat)}
+                      style={{
+                        padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '1px solid',
+                        background: form.category === cat ? theme.textPrimary : theme.bgWhite,
+                        color:      form.category === cat ? '#fff'            : theme.textSecondary,
+                        borderColor: form.category === cat ? theme.textPrimary : theme.border,
+                        transition: 'all 0.15s',
+                      }}
+                    >{cat}</button>
+                  ))}
                 </div>
+              </Field>
+              <Field label="Cover Image (16:9)">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onload = (evt) => patch('image_url', evt.target?.result || '')
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+                {form.image_url ? (
+                  <motion.div
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140, cursor: 'pointer', border: `2px solid ${theme.primary}` }}
+                  >
+                    <img src={form.image_url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </motion.div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16 }}
+                  >
+                    📸 Upload Image
+                  </button>
+                )}
+              </Field>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: theme.bgSurface, borderRadius: 12, marginTop: 4 }}>
+                <input type="checkbox" id="free" checked={form.is_free} onChange={e => patch('is_free', e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: theme.primary }} />
+                <label htmlFor="free" style={{ fontSize: 14, fontWeight: 600, color: theme.textPrimary, cursor: 'pointer' }}>Free event (no tickets)</label>
               </div>
-            ))}
-            <button onClick={handleAddTier} style={{ padding: 12, borderRadius: 12, border: '1px dashed #D1D5DB', background: '#fff', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-              + Add Tier
-            </button>
-            <div style={{ padding: 12, background: '#F9FAFB', borderRadius: 12, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 600 }}>Total Capacity</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{totalCapacity} people</span>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
 
-        {/* Buttons */}
-        <div style={{ display: 'flex', gap: 12, marginTop: 20, paddingTop: 16, borderTop: '1px solid #E5E7EB' }}>
+          {step === 2 && (
+            <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Date & Venue</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                <Field label="Start Date">
+                  <input type="date" style={s.input} value={form.start_date.split('T')[0] || ''} onChange={e => patch('start_date', e.target.value)} />
+                </Field>
+                <Field label="Start Time">
+                  <input type="time" style={s.input} value={form.start_date.includes('T') ? form.start_date.split('T')[1] : ''} onChange={e => patch('start_date', (form.start_date.split('T')[0] || '') + 'T' + e.target.value)} />
+                </Field>
+              </div>
+              <Field label="Venue Name">
+                <input style={s.input} placeholder="The Grand Plaza" value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
+              </Field>
+              <Field label="Address">
+                <input style={s.input} placeholder="Full address" value={form.address} onChange={e => patch('address', e.target.value)} />
+              </Field>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Ticket Tiers</h2>
+              <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>Set prices and capacity for each tier</p>
+
+              {form.ticket_tiers.map((tier, idx) => (
+                <motion.div
+                  key={tier.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{ ...s.card, marginBottom: 12, background: theme.bgSurface }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 800, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+                    Tier {idx + 1}
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                    <div style={{ flex: 2 }}>
+                      <label style={s.label}>Name</label>
+                      <input style={s.input} placeholder="General Admission" value={tier.name} onChange={e => {
+                        const tiers = [...form.ticket_tiers]; tiers[idx].name = e.target.value; patch('ticket_tiers', tiers)
+                      }} />
+                    </div>
+                    {!form.is_free && (
+                      <div style={{ flex: 1 }}>
+                        <label style={s.label}>Price ($)</label>
+                        <input type="number" style={s.input} placeholder="25" value={tier.price} onChange={e => {
+                          const tiers = [...form.ticket_tiers]; tiers[idx].price = Number(e.target.value); patch('ticket_tiers', tiers)
+                        }} />
+                      </div>
+                    )}
+                    <div style={{ flex: 1 }}>
+                      <label style={s.label}>Capacity</label>
+                      <input type="number" style={s.input} placeholder="100" value={tier.capacity} onChange={e => {
+                        const tiers = [...form.ticket_tiers]; tiers[idx].capacity = Number(e.target.value); patch('ticket_tiers', tiers)
+                      }} />
+                    </div>
+                  </div>
+                  {form.ticket_tiers.length > 1 && (
+                    <button onClick={() => patch('ticket_tiers', form.ticket_tiers.filter((_, i) => i !== idx))}
+                      style={{ background: 'none', border: 'none', color: theme.danger, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Trash2 size={12} /> Remove tier
+                    </button>
+                  )}
+                </motion.div>
+              ))}
+
+              <button
+                onClick={() => patch('ticket_tiers', [...form.ticket_tiers, { id: Date.now().toString(), name: '', price: 0, capacity: 100 }])}
+                style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 16 }}
+              >
+                <Plus size={16} /> Add Tier
+              </button>
+
+              <div style={{ padding: 14, background: theme.bgSurface, borderRadius: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: theme.textSecondary }}>Total Capacity</span>
+                <span style={{ fontSize: 16, fontWeight: 900, color: theme.textPrimary }}>
+                  {form.ticket_tiers.reduce((a, t) => a + Number(t.capacity), 0)} people
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Buttons — wrapped tightly inside scrollable content */}
+      <div style={{ padding: '20px 16px 40px' }}>
+        <div style={{ display: 'flex', gap: 12 }}>
           {step > 1 && (
-            <button onClick={() => setStep(step - 1)} style={{ flex: 1, padding: '14px 16px', borderRadius: 14, border: '1px solid #E5E7EB', background: '#F3F4F6', color: '#374151', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
-              Back
-            </button>
+            <button onClick={() => setStep(s => s - 1)} style={{ ...s.btnSecondary, flex: 1, borderRadius: 14, padding: '14px 16px', fontSize: 15 }}>Back</button>
           )}
-          {step < 3 ? (
-            <button onClick={() => setStep(step + 1)} style={{ flex: step > 1 ? 1 : 'none', width: step > 1 ? undefined : '100%', padding: '14px 16px', borderRadius: 14, border: 'none', background: '#111827', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              Continue <ChevronRight size={16} strokeWidth={2.5} />
-            </button>
-          ) : (
-            <button onClick={() => handleSave(false)} disabled={saving} style={{ flex: 1, padding: '14px 16px', borderRadius: 14, border: 'none', background: '#10B981', color: '#fff', fontSize: 15, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              {saving ? 'Creating...' : 'Create Event'}
-            </button>
-          )}
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => step < 3 ? setStep(s => s + 1) : handlePublish()}
+            disabled={step === 1 && (!form.name.trim() || !form.category || !form.image_url) || saving}
+            style={{
+              ...s.btnPrimary,
+              flex: step > 1 ? 2 : 1,
+              width: step > 1 ? undefined : '100%',
+              borderRadius: 14,
+              padding: '14px 16px',
+              fontSize: 15,
+              fontWeight: 700,
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              opacity: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 0.5 : (saving ? 0.7 : 1),
+              cursor: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {step === 3 ? (saving ? 'Publishing…' : 'Publish Event') : 'Continue'}
+          </motion.button>
         </div>
       </div>
     </div>
   )
 }
 
-// ===== EDIT VIEW (reuses Create form) =====
+// ── Edit Event ────────────────────────────────────────────────────────────────
 function EditEventView({ event, businessId, onBack, onSuccess }) {
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState(event)
+  const [form, setForm] = useState({ ...event })
+  const patch = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const handleSave = async () => {
     setSaving(true)
-    // TODO: Wire Supabase update
-    // await supabase.from('events').update(form).eq('id', event.id)
+    // TODO: await supabase.from('events').update(form).eq('id', event.id)
     setSaving(false)
-    alert('Event updated!')
     onSuccess()
   }
 
   return (
-    <div>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
-      <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 600, color: '#111827' }}>Edit Event</h2>
+      <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Edit Event</h2>
 
-      <FormField label="Event Name">
-        <input type="text" value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} style={inputStyle} />
-      </FormField>
-      <FormField label="Description">
-        <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} rows={4} style={{ ...inputStyle, resize: 'vertical', marginBottom: 16 }} />
-      </FormField>
-      <FormField label="Venue Name">
-        <input type="text" value={form.venue_name} onChange={e => setForm(prev => ({ ...prev, venue_name: e.target.value }))} style={inputStyle} />
-      </FormField>
+      <Field label="Event Name">
+        <input style={s.input} value={form.name} onChange={e => patch('name', e.target.value)} />
+      </Field>
+      <Field label="Description">
+        <textarea style={{ ...s.input, minHeight: 100, resize: 'none' }} value={form.description} onChange={e => patch('description', e.target.value)} />
+      </Field>
+      <Field label="Venue">
+        <input style={s.input} value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
+      </Field>
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24, paddingTop: 16, borderTop: '1px solid #E5E7EB' }}>
-        <button onClick={onBack} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1px solid #E5E7EB', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-          Cancel
-        </button>
-        <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: '#10B981', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Saving...' : 'Save Changes'}
-        </button>
+      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+        <button onClick={onBack} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
+        <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving} style={{ ...s.btnPrimary, flex: 2, opacity: saving ? 0.7 : 1 }}>
+          {saving ? 'Saving…' : 'Save Changes'}
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
-// ===== ATTENDEE LIST =====
-function AttendeeListView({ event, onBack, businessId }) {
+// ── Attendees ─────────────────────────────────────────────────────────────────
+function AttendeeListView({ event, businessId, onBack }) {
   const [attendees, setAttendees] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Wire Supabase query
-    // const fetchAttendees = async () => {
-    //   const { data } = await supabase
-    //     .from('event_orders')
-    //     .select('id, customer_name, customer_email, customer_phone, tier_name, quantity, status, created_at')
-    //     .eq('event_id', event.id)
-    //     .order('created_at', { ascending: false })
-    //   setAttendees(data || [])
-    //   setLoading(false)
-    // }
-    // fetchAttendees()
-
-    // Mock data
+    // TODO: real fetch from event_orders
     setAttendees([
-      { id: 'o1', customer_name: 'John Smith', customer_email: 'john@example.com', customer_phone: '555-1234', tier_name: 'VIP', quantity: 2, status: 'paid', created_at: new Date().toISOString() },
-      { id: 'o2', customer_name: 'Jane Doe', customer_email: 'jane@example.com', customer_phone: '555-5678', tier_name: 'General', quantity: 1, status: 'paid', created_at: new Date().toISOString() },
+      { id: 'o1', customer_name: 'John Smith', customer_email: 'john@example.com', tier_name: 'VIP',     quantity: 2, status: 'paid', created_at: new Date().toISOString() },
+      { id: 'o2', customer_name: 'Jane Doe',   customer_email: 'jane@example.com', tier_name: 'General', quantity: 1, status: 'paid', created_at: new Date().toISOString() },
     ])
     setLoading(false)
   }, [event.id])
 
   return (
-    <div>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
-      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 600, color: '#111827' }}>Attendees</h2>
-      <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6B7280' }}>{attendees.length} total</p>
+      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Attendees</h2>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{attendees.length} registered</p>
 
-      {loading ? (
-        <p style={{ color: '#9CA3AF' }}>Loading...</p>
-      ) : attendees.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: '#9CA3AF' }}>
-          <Users size={32} style={{ margin: '0 auto 12px' }} />
-          <p>No attendees yet</p>
-        </div>
-      ) : (
+      {loading ? <p style={{ color: theme.textSecondary }}>Loading…</p> : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {attendees.map(att => (
-            <div key={att.id} style={{ padding: 16, background: '#fff', borderRadius: 12, border: '1px solid #E5E7EB' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 8 }}>
+            <motion.div key={att.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={s.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#111827' }}>{att.customer_name}</h4>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6B7280' }}>{att.customer_email}</p>
+                  <h4 style={{ margin: 0, fontWeight: 700, color: theme.textPrimary }}>{att.customer_name}</h4>
+                  <p style={{ margin: '3px 0 0', fontSize: 12, color: theme.textSecondary }}>{att.customer_email}</p>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 600, background: '#DCFCE7', color: '#16A34A', padding: '4px 8px', borderRadius: 6 }}>
-                  {att.tier_name}
-                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: '#DCFCE7', color: '#16A34A' }}>{att.tier_name}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6B7280' }}>
-                <span>{att.quantity}x ticket{att.quantity > 1 ? 's' : ''}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: theme.textSecondary }}>
+                <span>{att.quantity}× ticket{att.quantity > 1 ? 's' : ''}</span>
                 <span>{new Date(att.created_at).toLocaleDateString()}</span>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
-// ===== CHECKIN VIEW =====
-function CheckinView({ event, onBack, businessId }) {
-  const [checked, setChecked] = useState([])
-  const [qrInput, setQrInput] = useState('')
+// ── Check-in (QR Scanner) ─────────────────────────────────────────────────────
+function CheckinView({ event, businessId, onBack }) {
+  const [scanning, setScanning] = useState(false)
+  const [result, setResult] = useState(null)
+  const [checkedIn, setCheckedIn] = useState(0)
+  const [manualInput, setManualInput] = useState('')
+  const scannerRef = useRef(null)
+  const html5QrRef = useRef(null)
 
-  const handleQrScan = (ticketId) => {
-    // TODO: Validate ticket QR and mark as checked in
-    // Wire to event_checkins table
-    if (!checked.includes(ticketId)) {
-      setChecked(prev => [...prev, ticketId])
-      alert('✓ Checked in!')
-    } else {
-      alert('Already checked in')
+  const startScanner = async () => {
+    setScanning(true)
+    setResult(null)
+    try {
+      const scanner = new Html5Qrcode('qr-reader')
+      html5QrRef.current = scanner
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        (decodedText) => {
+          scanner.stop()
+          setScanning(false)
+          handleCheckin(decodedText)
+        },
+        () => {}
+      )
+    } catch (e) {
+      setScanning(false)
+      alert('Camera unavailable — use manual input')
     }
-    setQrInput('')
   }
 
+  const stopScanner = async () => {
+    if (html5QrRef.current) {
+      try { await html5QrRef.current.stop() } catch {}
+      html5QrRef.current = null
+    }
+    setScanning(false)
+  }
+
+  const handleCheckin = (ticketId) => {
+    // TODO: validate ticket against event_checkins in Supabase
+    setResult({ success: true, ticketId })
+    setCheckedIn(n => n + 1)
+    confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6'] })
+    setTimeout(() => setResult(null), 3000)
+  }
+
+  useEffect(() => () => { stopScanner() }, [])
+
   return (
-    <div>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 0, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 40 }}>
+      <button onClick={() => { stopScanner(); onBack() }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
-      <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 600, color: '#111827' }}>Check-in: {event.name}</h2>
+      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-in</h2>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{event.name}</p>
 
-      <div style={{ padding: 16, background: '#F0FDF4', borderRadius: 12, marginBottom: 20, border: '1px solid #BBF7D0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#16A34A', fontWeight: 600 }}>
-          <Check size={16} /> {checked.length} checked in
+      {/* Counter */}
+      <div style={{ ...s.card, background: '#F0FDF4', border: '1px solid #BBF7D0', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <CheckCircle2 size={24} color="#16A34A" />
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#16A34A' }}>{checkedIn}</div>
+          <div style={{ fontSize: 12, color: '#166534', fontWeight: 600 }}>checked in today</div>
         </div>
       </div>
 
-      <FormField label="Scan QR Code">
-        <input
-          type="text"
-          value={qrInput}
-          onChange={e => setQrInput(e.target.value)}
-          onKeyPress={e => {
-            if (e.key === 'Enter') handleQrScan(qrInput)
-          }}
-          placeholder="Scan ticket QR code..."
-          style={{ ...inputStyle, fontSize: 16 }}
-          autoFocus
-        />
-      </FormField>
+      {/* QR scanner area */}
+      {scanning ? (
+        <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', marginBottom: 16 }}>
+          <div id="qr-reader" style={{ width: '100%' }} />
+          <button onClick={stopScanner} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }}>
+            <X size={20} color="#fff" />
+          </button>
+        </div>
+      ) : (
+        <motion.button whileTap={{ scale: 0.97 }} onClick={startScanner} style={{ ...s.btnPrimary, width: '100%', padding: 16, marginBottom: 16, fontSize: 15 }}>
+          <QrCode size={20} /> Open Camera Scanner
+        </motion.button>
+      )}
 
-      <div style={{ padding: 12, background: '#FEF3C7', borderRadius: 12, border: '1px solid #FCD34D', fontSize: 12, color: '#92400E', marginTop: 16 }}>
-        Point camera at QR code or paste scanned value above
-      </div>
-    </div>
+      {/* Manual input */}
+      <Field label="Or Enter Ticket ID Manually">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            style={{ ...s.input, flex: 1 }}
+            placeholder="Paste ticket ID…"
+            value={manualInput}
+            onChange={e => setManualInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && manualInput) { handleCheckin(manualInput); setManualInput('') } }}
+          />
+          <button
+            onClick={() => { if (manualInput) { handleCheckin(manualInput); setManualInput('') } }}
+            style={{ ...s.btnPrimary, padding: '14px 18px', flexShrink: 0 }}
+          >
+            <Check size={18} />
+          </button>
+        </div>
+      </Field>
+
+      {/* Result toast */}
+      <AnimatePresence>
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            style={{ position: 'fixed', bottom: 40, left: 20, right: 20, background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', textAlign: 'center', zIndex: 200 }}
+          >
+            <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 12px' }} />
+            <div style={{ fontWeight: 800, fontSize: 18, color: theme.textPrimary }}>Ticket Verified! ✓</div>
+            <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>{result.ticketId}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   )
 }
 
-// ===== STAT CARD =====
-function StatCard({ label, value, color, icon: Icon }) {
+// ── Promos View ──────────────────────────────────────────────────────────────────
+function PromosView({ event, businessId, onBack }) {
+  const [promos, setPromos] = useState([
+    { id: 'promo_1', code: 'EARLYBIRD20', discount: 20, type: 'percent', uses: 15, limit: 50, expiry: '2026-06-01' },
+    { id: 'promo_2', code: 'VIP15', discount: 15, type: 'percent', uses: 8, limit: 30, expiry: '2026-05-25' },
+  ])
+  const [showForm, setShowForm] = useState(false)
+  const [newPromo, setNewPromo] = useState({ code: '', discount: 10, type: 'percent', limit: 100 })
+
+  const handleCreatePromo = () => {
+    if (!newPromo.code.trim()) { alert('Code required'); return }
+    setPromos([...promos, {
+      id: 'promo_' + Date.now(),
+      ...newPromo,
+      uses: 0,
+      expiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    }])
+    setNewPromo({ code: '', discount: 10, type: 'percent', limit: 100 })
+    setShowForm(false)
+  }
+
+  const handleDeletePromo = (id) => {
+    if (window.confirm('Delete this promo code?')) {
+      setPromos(promos.filter(p => p.id !== id))
+    }
+  }
+
   return (
-    <div style={{ padding: 16, background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 40, height: 40, borderRadius: 12, background: color + '15', color: color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon size={20} strokeWidth={2} />
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+        <ArrowLeft size={18} /> Back
+      </button>
+      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Promo Codes</h2>
+      <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{event.name}</p>
+
+      {showForm ? (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 20 }}>
+          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: theme.textPrimary }}>Create Promo Code</h3>
+
+          <Field label="Code">
+            <input
+              style={s.input}
+              placeholder="EARLYBIRD20"
+              value={newPromo.code}
+              onChange={e => setNewPromo({ ...newPromo, code: e.target.value.toUpperCase() })}
+            />
+          </Field>
+
+          <Field label="Discount Type">
+            <div style={{ display: 'flex', gap: 8 }}>
+              {['percent', 'fixed'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setNewPromo({ ...newPromo, type: t })}
+                  style={{
+                    flex: 1, padding: '10px', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '1px solid',
+                    background: newPromo.type === t ? theme.primary : theme.bgWhite,
+                    color: newPromo.type === t ? '#fff' : theme.textSecondary,
+                    borderColor: newPromo.type === t ? theme.primary : theme.border,
+                  }}
+                >
+                  {t === 'percent' ? '%' : '$'}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field label={newPromo.type === 'percent' ? 'Discount %' : 'Discount $'}>
+            <input
+              type="number"
+              style={s.input}
+              value={newPromo.discount}
+              onChange={e => setNewPromo({ ...newPromo, discount: Number(e.target.value) })}
+            />
+          </Field>
+
+          <Field label="Usage Limit">
+            <input
+              type="number"
+              style={s.input}
+              placeholder="100"
+              value={newPromo.limit}
+              onChange={e => setNewPromo({ ...newPromo, limit: Number(e.target.value) })}
+            />
+          </Field>
+
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={() => setShowForm(false)} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
+            <motion.button whileTap={{ scale: 0.97 }} onClick={handleCreatePromo} style={{ ...s.btnPrimary, flex: 1 }}>
+              Create Code
+            </motion.button>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowForm(true)} style={{ ...s.btnPrimary, width: '100%', padding: 14, marginBottom: 20, justifyContent: 'center' }}>
+          <Plus size={18} /> New Promo Code
+        </motion.button>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {promos.map(promo => (
+          <motion.div key={promo.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: theme.primary, letterSpacing: 2 }}>{promo.code}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary, marginTop: 2 }}>
+                  {promo.discount}{promo.type === 'percent' ? '%' : '$'} off
+                </div>
+              </div>
+              <button
+                onClick={() => handleDeletePromo(promo.id)}
+                style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Uses</div>
+                <div style={{ fontSize: 15, fontWeight: 800, color: theme.textPrimary }}>{promo.uses} / {promo.limit}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Expires</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary }}>{new Date(promo.expiry).toLocaleDateString()}</div>
+              </div>
+            </div>
+
+            <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ width: `${(promo.uses / promo.limit) * 100}%`, height: '100%', background: theme.primary, borderRadius: 3 }} />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Shared helpers ────────────────────────────────────────────────────────────
+function StatCard({ label, value, color, icon: Icon, onClick }) {
+  return (
+    <motion.button
+      whileTap={{ scale: onClick ? 0.97 : 1 }}
+      onClick={onClick}
+      style={{ padding: 16, background: theme.bgWhite, borderRadius: 16, border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12, cursor: onClick ? 'pointer' : 'default', textAlign: 'left', width: '100%' }}
+    >
+      <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={20} />
       </div>
       <div>
-        <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{value}</div>
+        <div style={{ fontSize: 11, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+        <div style={{ fontSize: 20, fontWeight: 900, color: theme.textPrimary }}>{value}</div>
       </div>
-    </div>
+    </motion.button>
   )
 }
 
-// ===== FORM FIELD =====
-function FormField({ label, children }) {
+function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
-        {label}
-      </label>
+    <div style={{ marginBottom: 18 }}>
+      <label style={s.label}>{label}</label>
       {children}
     </div>
   )
-}
-
-const inputStyle = {
-  width: '100%', padding: '12px 14px', borderRadius: 12,
-  border: '1px solid #E5E7EB', fontSize: 14,
-  fontWeight: 500, color: '#111827', background: '#fff', outline: 'none', boxSizing: 'border-box'
 }

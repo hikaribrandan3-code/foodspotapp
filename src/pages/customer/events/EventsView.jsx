@@ -7,8 +7,8 @@ import EventDetail from './views/EventDetail';
 import EventCheckout from './views/EventCheckout';
 import EventTicket from './views/EventTicket';
 
-// Mock Event Data as per spec
-const mockEvents = [
+// Mock Event Data — note: businessId will be patched in component
+const getMockEvents = (businessId = 'demo') => [
   {
     id: 'evt_001',
     name: 'Neon Tech Summit 2026',
@@ -24,7 +24,7 @@ const mockEvents = [
       { id: 'tier_regular', name: 'General Admission', price: 9500, qty: 200 }
     ],
     category: 'Exclusives',
-    business_id: businessId || 'demo'
+    business_id: businessId
   },
   {
     id: 'evt_002',
@@ -130,10 +130,10 @@ export default function EventsView() {
     <div className="min-h-screen bg-[var(--canvas-bg)] text-[var(--text-primary)] font-sans transition-colors duration-300">
       <div className="h-full w-full max-w-lg mx-auto">
           {stage === 'discovery' && (
-            <EventDiscovery 
-              events={mockEvents} 
+            <EventDiscovery
+              events={getMockEvents(businessId)}
               businessId={businessId}
-              onSelectEvent={handleSelectEvent} 
+              onSelectEvent={handleSelectEvent}
             />
           )}
           {stage === 'detail' && (
