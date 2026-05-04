@@ -51,6 +51,8 @@
     --btn-secondary-hover: #e2e8f0;
     --btn-secondary-active: #cbd5e1;
     --filter-active-bg: #eff6ff;
+    --filter-active-text: #3b82f6;
+    --filter-active-border: #bfdbfe;
     --filter-inactive-bg: #ffffff;
     --section-bg: #ffffff;
     --section-border: #e2e8f0;
@@ -143,6 +145,8 @@
     --btn-secondary-hover: #475569;
     --btn-secondary-active: #64748b;
     --filter-active-bg: rgba(59, 130, 246, 0.1);
+    --filter-active-text: #60a5fa;
+    --filter-active-border: rgba(59, 130, 246, 0.3);
     --filter-inactive-bg: #1e293b;
     --section-bg: #1e293b;
     --section-border: rgba(255, 255, 255, 0.05);

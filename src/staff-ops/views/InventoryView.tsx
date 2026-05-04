@@ -15,28 +15,28 @@ export default function InventoryView() {
 
   return (
     <div className="h-full w-full flex flex-col" style={{ backgroundColor: 'var(--app-bg)' }}>
-      {/* Top pills */}
+      {/* Header */}
       <div
-        className="px-4 pt-4 pb-3 border-b transition-colors duration-300"
+        className="px-4 pt-5 pb-3 border-b transition-colors duration-300"
         style={{ backgroundColor: 'var(--nav-bg)', borderColor: 'var(--nav-border)' }}
       >
         <div className="flex items-center gap-2 mb-3">
-          <Package size={18} strokeWidth={2.2} style={{ color: 'var(--text-primary)' }} />
-          <span className="text-sm font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+          <Package size={20} strokeWidth={2.2} style={{ color: 'var(--status-icon-prep)' }} />
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
             Inventory
-          </span>
+          </h1>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto justify-center">
+        <div className="flex gap-2 overflow-x-auto justify-center scrollbar-hide">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border"
+              className="flex-1 flex items-center justify-center py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border"
               style={{
-                background: activeTab === tab.id ? '#10B981' : 'var(--filter-bg)',
-                color: activeTab === tab.id ? '#FFFFFF' : 'var(--text-primary)',
-                borderColor: activeTab === tab.id ? '#10B981' : 'var(--nav-border)',
+                backgroundColor: activeTab === tab.id ? 'var(--filter-active-bg)' : 'var(--counter-bg)',
+                color: activeTab === tab.id ? 'var(--filter-active-text)' : 'var(--text-secondary)',
+                borderColor: activeTab === tab.id ? 'var(--filter-active-border, var(--card-border))' : 'var(--counter-border)',
               }}
             >
               {tab.label}
@@ -46,7 +46,7 @@ export default function InventoryView() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         {activeTab === 'entry' && <InventoryEntry />}
         {activeTab === 'stock' && <InventoryStockList />}
         {activeTab === 'audit' && <InventoryAudit />}
