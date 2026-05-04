@@ -3,13 +3,11 @@ import { Package } from 'lucide-react';
 import { InventoryEntry } from './InventoryEntry';
 import { InventoryStockList } from './InventoryStockList';
 import { InventoryAudit } from './InventoryAudit';
-import { InventorySuppliers } from './InventorySuppliers';
 
 const TABS = [
   { id: 'entry', label: 'Entry' },
   { id: 'stock', label: 'Stock' },
   { id: 'audit', label: 'Audit' },
-  { id: 'suppliers', label: 'Suppliers' },
 ];
 
 export default function InventoryView() {
@@ -37,7 +35,7 @@ export default function InventoryView() {
               className="px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border"
               style={{
                 background: activeTab === tab.id ? '#10B981' : 'var(--filter-bg)',
-                color: activeTab === tab.id ? '#FFFFFF' : 'var(--text-tertiary)',
+                color: activeTab === tab.id ? '#FFFFFF' : '#000000',
                 borderColor: activeTab === tab.id ? '#10B981' : 'var(--nav-border)',
               }}
             >
@@ -52,7 +50,6 @@ export default function InventoryView() {
         {activeTab === 'entry' && <InventoryEntry />}
         {activeTab === 'stock' && <InventoryStockList />}
         {activeTab === 'audit' && <InventoryAudit />}
-        {activeTab === 'suppliers' && <InventorySuppliers />}
       </div>
     </div>
   );

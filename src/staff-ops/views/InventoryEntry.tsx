@@ -65,35 +65,31 @@ export const InventoryEntry: React.FC = () => {
   useEffect(() => {
     let scanner: Html5QrcodeScanner | null = null;
     if (showScanner && !scanResult) {
-      scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
+      try {
+        scanner = new Html5QrcodeScanner(
+          "reader",
+          { fps: 15, qrbox: { width: 250, height: 250 }, disableFlip: false },
+          false
+        );
 
-      const onScanSuccess = (decodedText: string) => {
-        console.log(`Code matched = ${decodedText}`);
-        const foundItem = lookupBarcode(decodedText);
-        if (foundItem) {
-          setScanResult({ ...foundItem, barcode: decodedText });
-        } else {
-          // If not found, we could show a manual form or a message
-          setScanResult({ name: t('item_not_found'), category: t('uncategorized'), barcode: decodedText, price: 0 });
-        }
-        scanner?.clear();
-      };
-
-      const onScanFailure = (error: any) => {
-        // console.warn(`Code scan error = ${error}`);
-      };
-
-      scanner.render(onScanSuccess, onScanFailure);
+        scanner.render(
+          (decodedText: string) => {
+            const foundItem = lookupBarcode(decodedText);
+            setScanResult(foundItem ?
+              { ...foundItem, barcode: decodedText } :
+              { name: t('item_not_found'), category: t('uncategorized'), barcode: decodedText, price: 0 }
+            );
+            scanner?.clear();
+          },
+          () => {}
+        );
+      } catch (err) {
+        console.error("Scanner setup failed", err);
+      }
     }
 
     return () => {
-      if (scanner) {
-        scanner.clear().catch(e => console.error("Failed to clear scanner", e));
-      }
+      scanner?.clear().catch(() => {});
     };
   }, [showScanner, scanResult]);
 
@@ -175,7 +171,7 @@ export const InventoryEntry: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-20" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
+    <div className="flex flex-col min-h-screen pb-28" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       <main className="px-4 pt-2 flex flex-col gap-6">
         {/* Search & Add */}
         <div className="flex gap-2">
@@ -385,38 +381,27 @@ export const InventoryEntry: React.FC = () => {
                   </div>
 
                   {isExpanded && (
-                    <div className="flex flex-col gap-4 mt-2 pt-4 border-t" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-col gap-5 mt-3 pt-5 border-t" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
+                      {/* Basic Info */}
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">{t('category')}</label>
-                          <select 
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('category')}</label>
+                          <select
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                            className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none"
+                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
                           >
                             {categories.filter(c => c !== 'All').map(c => (
                               <option key={c} value={c}>{c}</option>
                             ))}
                           </select>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">{t('min_stock')}</label>
-                          <input 
-                            type="number"
-                            value={item.min || 0}
-                            onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
-                            className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">{t('unit_type')}</label>
-                          <select 
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('unit_type')}</label>
+                          <select
                             value={item.unit}
                             onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                            className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none"
+                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
                           >
                             <option value="units">{t('units')}</option>
                             <option value="kg">kg</option>
@@ -424,65 +409,82 @@ export const InventoryEntry: React.FC = () => {
                             <option value="liters">Liters</option>
                           </select>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">{t('supplier')}</label>
-                          <input 
+                      </div>
+
+                      {/* Supply Chain */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('supplier')}</label>
+                          <input
                             type="text"
                             value={(item as any).supplier || ''}
                             onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
-                            className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none"
+                            placeholder="e.g. Sysco"
+                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('min_stock')}</label>
+                          <input
+                            type="number"
+                            value={item.min || 0}
+                            onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
+                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
                           />
                         </div>
                       </div>
 
+                      {/* Pricing */}
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">{t('cost')} ($)</label>
-                          <input 
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Cost ($)</label>
+                          <input
                             type="number"
                             step="0.01"
                             value={(item as any).cost || 0}
                             onChange={(e) => updateItem(item.id, { cost: Number(e.target.value) })}
-                            className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none"
+                            className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
                           />
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-[12px] font-bold uppercase text-[var(--accent)] ml-1">{t('price')} ($)</label>
-                          <input 
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">Price ($)</label>
+                          <input
                             type="number"
                             step="0.01"
                             value={(item as any).price || ''}
                             onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
-                            className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--accent)] text-[var(--text-primary)] font-bold focus:ring-2 focus:ring-[var(--accent)] outline-none"
+                            className="h-[44px] px-3 rounded-lg border font-bold bg-[var(--filter-bg)] border-[var(--accent)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
                           />
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">Tags (comma separated)</label>
-                        <input 
+                      {/* Tags */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">Tags</label>
+                        <input
                           type="text"
                           value={item.tags?.join(', ') || ''}
                           onChange={(e) => updateItem(item.id, { tags: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
-                          placeholder="e.g. LOW STOCK, ORGANIC"
-                          className="h-[48px] w-full rounded-xl border px-3 text-[16px] bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--accent)] outline-none"
+                          placeholder="LOW STOCK, ORGANIC"
+                          className="h-[44px] px-3 rounded-lg border bg-[var(--filter-bg)] border-[var(--nav-border)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:ring-2 focus:ring-[var(--accent)] outline-none text-[15px]"
                         />
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[12px] font-bold uppercase text-[var(--text-tertiary)] ml-1">{t('qty')}</label>
-                        <div className="flex items-center rounded-xl border overflow-hidden bg-[var(--filter-bg)] border-[var(--nav-border)]">
-                          <input 
-                            type="number" 
+                      {/* Quantity */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)]">{t('qty')}</label>
+                        <div className="flex items-center gap-2 rounded-lg border overflow-hidden bg-[var(--filter-bg)] border-[var(--nav-border)]">
+                          <input
+                            type="number"
                             value={item.qty}
                             disabled
-                            className="h-[48px] flex-1 bg-transparent border-none text-center text-[18px] text-[var(--accent)] font-bold"
+                            className="h-[44px] flex-1 bg-transparent border-none text-center text-[18px] text-[var(--accent)] font-bold"
                           />
-                          <button 
+                          <button
                             onClick={() => updateQty(item.id, 1)}
-                            className="h-[48px] px-6 bg-[var(--accent)] text-white font-bold flex items-center gap-2 active:opacity-80 transition-opacity"
+                            className="h-[44px] px-4 bg-[var(--accent)] text-white font-bold flex items-center gap-2 active:opacity-80 transition-opacity"
                           >
-                            <Plus size={18} />
+                            <Plus size={16} />
                             {t('restock')}
                           </button>
                         </div>
