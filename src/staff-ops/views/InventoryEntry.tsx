@@ -11,7 +11,7 @@ const BLUE = '#3b82f6';
 export const InventoryEntry: React.FC = () => {
   const { language } = useLanguage();
   const { businessId } = useBusiness();
-  const t = (key: string) => (translations as any)[language]?.[key] || key;
+  const t = (key: string) => (translations as any)[key]?.[language] || key;
 
   const [expandedItems, setExpandedItems] = useState<string[]>(['1']);
   const [search, setSearch] = useState('');
@@ -74,6 +74,7 @@ export const InventoryEntry: React.FC = () => {
             qrbox: { width: 250, height: 250 },
             disableFlip: false,
             supportedScanTypes: [0],
+            videoConstraints: { facingMode: 'environment' },
           },
           false
         );
