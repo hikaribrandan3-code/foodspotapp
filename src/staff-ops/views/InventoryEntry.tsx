@@ -51,7 +51,7 @@ export const InventoryEntry: React.FC = () => {
     }
   };
 
-  const addItem = (item: Partial<any> & { name: string; qty: number }) => {
+  const addItem = async (item: Partial<any> & { name: string; qty: number }) => {
     const newItem = {
       id: Math.random().toString(36).substr(2, 9),
       name: item.name,
@@ -70,6 +70,28 @@ export const InventoryEntry: React.FC = () => {
     };
     setItems([newItem, ...items]);
     setExpandedItems([newItem.id]);
+
+    // Persist to Supabase
+    if (businessId && newItem.barcode) {
+      try {
+        await supabase
+          .from('inventory')
+          .insert({
+            business_id: businessId,
+            menu_item_id: null,
+            barcode: newItem.barcode,
+            cost_per_unit: newItem.cost,
+            quantity_available: newItem.qty,
+            reorder_level: newItem.min,
+            safety_stock: Math.floor(newItem.min / 2),
+            max_stock: newItem.max,
+            storage_location: newItem.location,
+            supplier: newItem.supplier
+          });
+      } catch (err) {
+        console.error('Failed to save inventory item:', err);
+      }
+    }
   };
 
   useEffect(() => {

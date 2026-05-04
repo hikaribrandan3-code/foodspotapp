@@ -314,7 +314,11 @@ const Analytics = () => {
                 </div>
                 )}
 
-                {activeTab === 'financials' && <FinancialTrackerDashboard />}
+                {activeTab === 'financials' && (
+                  <div>
+                    <FinancialTrackerDashboard />
+                  </div>
+                )}
             </div>
 
             <BackendNav

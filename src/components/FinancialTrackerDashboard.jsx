@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
+import { ORDER_STATUS } from '../constants/database.js';
 
 const fmtMoney = (n) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
@@ -114,7 +115,7 @@ export default function FinancialTrackerDashboard() {
           .from('orders')
           .select('total, status, created_at')
           .eq('business_id', businessId)
-          .in('status', ['paid', 'paid_unreleased', 'released_to_kitchen', 'confirmado', 'en_camino', 'despachado', 'entregado']),
+          .in('status', [ORDER_STATUS.DELIVERED, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.PAID_UNRELEASED]),
         supabase
           .from('menu_items')
           .select('id, active')
