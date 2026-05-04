@@ -88,6 +88,7 @@ export default function FinancialTrackerDashboard() {
     ]);
     setDesc('');
     setAmount('');
+    setCalcToast(null);
   };
 
   const deleteExpense = (id) => setExpenses((prev) => prev.filter((e) => e.id !== id));
@@ -266,11 +267,17 @@ export default function FinancialTrackerDashboard() {
       {/* Toast from calculator */}
       {calcToast && (
         <div style={{ ...cardStyle, marginBottom: 12, background: '#ECFDF5', border: `1px solid ${primaryColor}`, display: 'flex', alignItems: 'center', gap: 10, animation: 'slideDown 0.3s ease' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: 14, fontWeight: 700 }}>✓</div>
-          <div>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFFFFF', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>✓</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#065F46' }}>{calcToast}</p>
             <p style={{ margin: 0, fontSize: 11, color: '#6B7280' }}>Review & add below</p>
           </div>
+          <button
+            onClick={() => setCalcToast(null)}
+            style={{ padding: 4, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 6, color: '#065F46', flexShrink: 0 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
         </div>
       )}
 
@@ -355,7 +362,6 @@ export default function FinancialTrackerDashboard() {
             const clean = String(parseFloat(val) || 0);
             setAmount(clean);
             setCalcToast(`$${clean} added to expense form`);
-            setTimeout(() => setCalcToast(null), 4000);
             setTimeout(() => document.getElementById('expense-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
           }}
           primaryColor={primaryColor}
