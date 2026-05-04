@@ -11,6 +11,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import PrintMenu from '../../components/PrintMenu.jsx'
+import MenuInventoryView from '../../components/owner/MenuInventoryView.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
@@ -244,6 +245,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [isSaving, setIsSaving] = useState(false)
     // 📦 PENDING FILE BUFFER: Holds raw File objects until save
     const [pendingFiles, setPendingFiles] = useState({})
+    // Top-level tab: menu | inventory
+    const [viewTab, setViewTab] = useState('menu')
 
     // --- FEATURED ITEMS LOGIC (MOVED HERE TO FIX TDZ) ---
     // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
@@ -962,6 +965,30 @@ function MenuManager({ config: configProp, demoMode = false }) {
             />
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
+                {/* TOP PILLS: Menu / Inventory */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
+                    {[
+                        { id: 'menu', label: 'Menu' },
+                        { id: 'inventory', label: 'Inventory' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setViewTab(tab.id)}
+                            style={{
+                                padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                background: viewTab === tab.id ? '#10B981' : '#FFFFFF',
+                                color: viewTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                boxShadow: viewTab === tab.id ? '0 4px 12px rgba(16, 185, 129, 0.25)' : '0 1px 2px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div style={{ display: viewTab === 'menu' ? 'block' : 'none' }}>
                 {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
                 <div style={{ marginBottom: 24 }}>
                     {/* Pause Orders Toggle */}
@@ -1721,7 +1748,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
                 )
             }
+                </div>
 
+                {viewTab === 'inventory' && <MenuInventoryView />}
 
             {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
             <input

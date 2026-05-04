@@ -165,7 +165,7 @@ const Analytics = () => {
 
             <div style={{ padding: 16 }}>
                 {/* MAIN TABS */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', justifyContent: 'center' }}>
                     {[
                         { id: 'analytics', label: 'Analytics' },
                         { id: 'financials', label: 'Financial Tracker' },
