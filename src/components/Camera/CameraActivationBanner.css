@@ -274,6 +274,319 @@
 }
 
 
+/* ═══════════════════════════════════════════════════════════
+   BURGER CHARACTER ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
+
+.burger-character {
+  animation: burgerWalkIn 2.5s ease-out forwards;
+}
+
+@keyframes burgerWalkIn {
+  0% { transform: translateX(calc(-50vw)) translateY(0); opacity: 0; }
+  4% { opacity: 1; }
+  100% { transform: translateX(0) translateY(0); opacity: 1; }
+}
+
+.burger-legs {
+  transform-origin: top center;
+  animation: burgerWaddle 0.4s ease-in-out infinite;
+}
+
+@keyframes burgerWaddle {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-6px); }
+  50% { transform: translateY(0); }
+  75% { transform: translateY(-6px); }
+}
+
+.burger-leg-left {
+  transform-origin: 122px 240px;
+  animation: burgerLegLeft 0.44s 5 ease-in-out forwards;
+}
+
+.burger-leg-right {
+  transform-origin: 177px 240px;
+  animation: burgerLegRight 0.44s 5 ease-in-out forwards;
+}
+
+@keyframes burgerLegLeft {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(20deg) translateY(-15px); }
+}
+
+@keyframes burgerLegRight {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(20deg) translateY(-15px); }
+}
+
+.burger-face-elements {
+  animation: burgerFaceTurn 2.5s ease-out forwards;
+}
+
+@keyframes burgerFaceTurn {
+  0%, 85% { transform: translateX(35px); }
+  100% { transform: translateX(0); }
+}
+
+.burger-seeds-group {
+  animation: burgerSeedsTurn 2.5s ease-out forwards;
+}
+
+@keyframes burgerSeedsTurn {
+  0%, 85% { transform: translateX(15px); }
+  100% { transform: translateX(0); }
+}
+
+.burger-phone-arm {
+  transform-origin: 270px 180px;
+  animation: burgerPullPhone 2.8s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes burgerPullPhone {
+  0%, 80% { opacity: 0; transform: rotate(50deg) translateY(30px); }
+  85%, 100% { opacity: 1; transform: rotate(0deg) translateY(0); }
+}
+
+.burger-flash-anim {
+  opacity: 0;
+  animation: burgerSnapFlash 3s infinite 3.0s;
+}
+
+@keyframes burgerSnapFlash {
+  0%, 90%, 100% { opacity: 0; }
+  95% { opacity: 0.9; }
+}
+
+.burger-eyes {
+  animation: burgerEyeBlink 4s infinite;
+}
+
+@keyframes burgerEyeBlink {
+  0%, 90%, 100% { opacity: 1; }
+  95% { opacity: 0.3; }
+}
+
+.burger-bubble {
+  opacity: 0;
+  animation: burgerPopBubble 3.0s ease-out forwards;
+  transform-origin: 150px 110px;
+}
+
+@keyframes burgerPopBubble {
+  0%, 85% { opacity: 0; transform: translateY(0px) scale(0.8); }
+  100% { opacity: 1; transform: translateY(-30px) scale(1); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PIZZA CHARACTER ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
+
+.pizza-character {
+  animation: pizzaWalkIn 2.2s ease-out forwards;
+}
+
+@keyframes pizzaWalkIn {
+  0% { transform: translateX(-100vw); }
+  100% { transform: translateX(0); }
+}
+
+.pizza-leg-left {
+  transform-origin: 122px 230px;
+  animation: pizzaWalkCycleLeft 0.15s 15 ease-in-out forwards;
+}
+
+.pizza-leg-right {
+  transform-origin: 177px 230px;
+  animation: pizzaWalkCycleRight 0.15s 15 ease-in-out forwards;
+}
+
+@keyframes pizzaWalkCycleLeft {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(20deg) translateY(-15px); }
+}
+
+@keyframes pizzaWalkCycleRight {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(20deg) translateY(-15px); }
+}
+
+.pizza-face-elements {
+  animation: pizzaFaceTurn 2.5s ease-out forwards;
+}
+
+@keyframes pizzaFaceTurn {
+  0%, 85% { transform: translateX(35px); }
+  100% { transform: translateX(0); }
+}
+
+.pizza-parallax-elements {
+  animation: pizzaParallaxTurn 2.5s ease-out forwards;
+}
+
+@keyframes pizzaParallaxTurn {
+  0%, 85% { transform: translateX(15px); }
+  100% { transform: translateX(0); }
+}
+
+.pizza-phone-arm {
+  transform-origin: 235px 180px;
+  animation: pizzaPullPhone 2.8s ease-out forwards;
+}
+
+@keyframes pizzaPullPhone {
+  0%, 80% { transform: translate(-10px, 40px) rotate(15deg); }
+  88%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+.pizza-flash-anim {
+  opacity: 0;
+  animation: pizzaSnapFlash 3s infinite 3.0s;
+}
+
+@keyframes pizzaSnapFlash {
+  0%, 90%, 100% { opacity: 0; }
+  95% { opacity: 0.9; }
+}
+
+.pizza-bubble {
+  opacity: 0;
+  animation: pizzaPopBubble 3.0s ease-out forwards;
+  transform-origin: 150px 110px;
+}
+
+@keyframes pizzaPopBubble {
+  0%, 85% { opacity: 0; transform: translateY(0px) scale(0.8); }
+  100% { opacity: 1; transform: translateY(-30px) scale(1); }
+}
+
+.pizza-drip-1 { transform-origin: 127px 248px; animation: pizzaDripStretch 3s infinite alternate ease-in-out; }
+.pizza-drip-2 { transform-origin: 170px 250px; animation: pizzaDripStretch 4s infinite alternate-reverse ease-in-out; }
+.pizza-drip-3 { transform-origin: 52px 92px; animation: pizzaDripStretch 3.5s infinite alternate ease-in-out; }
+.pizza-drip-4 { transform-origin: 245px 87px; animation: pizzaDripStretch 4.5s infinite alternate-reverse ease-in-out; }
+.pizza-drip-5 { transform-origin: 102px 80px; animation: pizzaDripStretch 3.8s infinite alternate ease-in-out; }
+
+@keyframes pizzaDripStretch {
+  0% { transform: scaleY(0.85); }
+  100% { transform: scaleY(1.25); }
+}
+
+.pizza-drop-anim-1 {
+  transform-origin: 127px 275px;
+  animation: pizzaDropFall 3s infinite ease-in;
+}
+.pizza-drop-anim-2 {
+  transform-origin: 170px 280px;
+  animation: pizzaDropFall 4s infinite ease-in 1.5s;
+}
+
+@keyframes pizzaDropFall {
+  0%, 60% { opacity: 0; transform: translateY(-5px) scale(0); }
+  70% { opacity: 1; transform: translateY(0px) scale(1); }
+  100% { opacity: 0; transform: translateY(20px) scale(0.5); }
+}
+
+.pizza-eyes {
+  animation: pizzaEyeBlink 4s infinite;
+}
+
+@keyframes pizzaEyeBlink {
+  0%, 90%, 100% { opacity: 1; }
+  95% { opacity: 0.3; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TACO CHARACTER ANIMATIONS
+   ═══════════════════════════════════════════════════════════ */
+
+.taco-character {
+  animation: tacoWalkIn 2.2s ease-out forwards;
+}
+
+@keyframes tacoWalkIn {
+  0% { transform: translateX(-100vw); }
+  100% { transform: translateX(0); }
+}
+
+.taco-leg-left {
+  transform-origin: 122px 240px;
+  animation: tacoWalkCycleLeft 0.15s 15 ease-in-out forwards;
+}
+
+.taco-leg-right {
+  transform-origin: 177px 240px;
+  animation: tacoWalkCycleRight 0.15s 15 ease-in-out forwards;
+}
+
+@keyframes tacoWalkCycleLeft {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(20deg) translateY(-15px); }
+}
+
+@keyframes tacoWalkCycleRight {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(20deg) translateY(-15px); }
+}
+
+.taco-face-elements {
+  animation: tacoFaceTurn 2.5s ease-out forwards;
+}
+
+@keyframes tacoFaceTurn {
+  0%, 85% { transform: translateX(35px); }
+  100% { transform: translateX(0); }
+}
+
+.taco-parallax-elements {
+  animation: tacoParallaxTurn 2.5s ease-out forwards;
+}
+
+@keyframes tacoParallaxTurn {
+  0%, 85% { transform: translateX(15px); }
+  100% { transform: translateX(0); }
+}
+
+.taco-phone-arm {
+  transform-origin: 270px 180px;
+  animation: tacoPullPhone 2.8s ease-out forwards;
+}
+
+@keyframes tacoPullPhone {
+  0%, 80% { transform: translate(-10px, 40px) rotate(15deg); }
+  88%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+.taco-flash-anim {
+  opacity: 0;
+  animation: tacoSnapFlash 3s infinite 3.0s;
+}
+
+@keyframes tacoSnapFlash {
+  0%, 90%, 100% { opacity: 0; }
+  95% { opacity: 0.9; }
+}
+
+.taco-bubble {
+  opacity: 0;
+  animation: tacoPopBubble 3.0s ease-out forwards;
+  transform-origin: 150px 110px;
+}
+
+@keyframes tacoPopBubble {
+  0%, 85% { opacity: 0; transform: translateY(0px) scale(0.8); }
+  100% { opacity: 1; transform: translateY(-30px) scale(1); }
+}
+
+.taco-eyes {
+  animation: tacoEyeBlink 4s infinite;
+}
+
+@keyframes tacoEyeBlink {
+  0%, 90%, 100% { opacity: 1; }
+  95% { opacity: 0.3; }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .donut-entry {
