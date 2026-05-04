@@ -501,6 +501,30 @@ export const translations = {
     pickup: { es: "Para llevar", en: "Takeout", pt: "Para viagem" },
     special_requests: { es: "Solicitudes Especiales", en: "Special Requests", pt: "Solicitações Especiais" },
     no_orders_column: { es: "Sin pedidos", en: "No orders", pt: "Sem pedidos" },
-    no_completed_today: { es: "No hay pedidos completados hoy", en: "No completed orders today", pt: "Nenhum pedido concluído hoje" }
+    no_completed_today: { es: "No hay pedidos completados hoy", en: "No completed orders today", pt: "Nenhum pedido concluído hoje" },
+
+    // Financial Tracker
+    financial_overview: { es: "Resumen Financiero", en: "Financial Overview", pt: "Resumo Financeiro" },
+    total_expenses: { es: "Gastos Totales", en: "Total Expenses", pt: "Despesas Totais" },
+    total_products: { es: "Productos Totales", en: "Total Products", pt: "Produtos Totais" },
+    net_profit: { es: "Ganancia Neta", en: "Net Profit", pt: "Lucro Líquido" },
+    quick_add: { es: "Agregar Rápido", en: "Quick Add", pt: "Adicionar Rápido" },
+    add_expense: { es: "Agregar Gasto", en: "Add Expense", pt: "Adicionar Despesa" },
+    add_product: { es: "Agregar Producto", en: "Add Product", pt: "Adicionar Produto" },
+    category: { es: "Categoría", en: "Category", pt: "Categoria" },
+    amount: { es: "Monto", en: "Amount", pt: "Montante" },
+    description: { es: "Descripción", en: "Description", pt: "Descrição" },
+    date: { es: "Fecha", en: "Date", pt: "Data" },
+    recurring_expense: { es: "Gasto Recurrente", en: "Recurring Expense", pt: "Despesa Recorrente" },
+    recent_expenses: { es: "Gastos Recientes", en: "Recent Expenses", pt: "Despesas Recentes" },
+    active_products: { es: "Productos Activos", en: "Active Products", pt: "Produtos Ativos" },
+    product_name: { es: "Nombre del Producto", en: "Product Name", pt: "Nome do Produto" },
+    price: { es: "Precio", en: "Price", pt: "Preço" },
+    cost: { es: "Costo", en: "Cost", pt: "Custo" },
+    status: { es: "Estado", en: "Status", pt: "Status" },
+    calculator: { es: "Calculadora", en: "Calculator", pt: "Calculadora" },
+    use_result: { es: "Usar Resultado", en: "Use Result", pt: "Usar Resultado" },
+    no_expenses: { es: "Sin gastos aún", en: "No expenses yet", pt: "Sem despesas ainda" },
+    no_products: { es: "Sin productos aún", en: "No products yet", pt: "Sem produtos ainda" }
 };
 
