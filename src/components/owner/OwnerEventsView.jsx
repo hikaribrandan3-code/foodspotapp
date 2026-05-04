@@ -81,6 +81,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const [events, setEvents] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [statModal, setStatModal] = useState(null) // 'revenue' | 'tickets' | 'checkins' | null
 
   useEffect(() => {
     if (!businessId) return
@@ -150,6 +151,87 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     <CheckinView event={selectedEvent} businessId={businessId} onBack={() => setView('detail')} />
   )
 
+  // ── Stat Modals ──────────────────────────────────────────────────────────────
+  if (statModal === 'revenue') {
+    const totalRev = events.reduce((a, e) => a + (e.total_revenue || 0), 0)
+    const revenueSplits = events.map(e => ({ name: e.name, amount: e.total_revenue || 0 })).sort((a, b) => b.amount - a.amount)
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+        <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Revenue Details</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>Total: ${(totalRev / 100).toFixed(2)}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {revenueSplits.map(e => (
+            <div key={e.name} style={{ padding: 14, background: theme.bgWhite, borderRadius: 12, border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, color: theme.textPrimary }}>{e.name}</span>
+              <span style={{ fontWeight: 800, color: theme.primary, fontSize: 15 }}>${(e.amount / 100).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (statModal === 'tickets') {
+    const ticketBreakdown = events.flatMap(e => e.ticket_tiers?.map(t => ({ eventName: e.name, tier: t.name, sold: t.sold, capacity: t.capacity })) || []).sort((a, b) => b.sold - a.sold)
+    const totalSold = ticketBreakdown.reduce((a, t) => a + t.sold, 0)
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+        <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Tickets Sold</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{totalSold} total tickets</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {ticketBreakdown.map((t, i) => (
+            <div key={i} style={{ padding: 12, background: theme.bgWhite, borderRadius: 12, border: `1px solid ${theme.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontWeight: 600, fontSize: 14, color: theme.textPrimary }}>{t.tier}</span>
+                <span style={{ fontWeight: 700, color: theme.primary }}>{t.sold}/{t.capacity}</span>
+              </div>
+              <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${(t.sold / t.capacity) * 100}%`, height: '100%', background: theme.primary, borderRadius: 3 }} />
+              </div>
+              <div style={{ fontSize: 11, color: theme.textSecondary, marginTop: 4 }}>{t.eventName}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
+  if (statModal === 'checkins') {
+    const checkInsList = [
+      { name: 'John Smith', time: '6:32 PM', tier: 'VIP', event: 'Summer Night Market' },
+      { name: 'Jane Doe', time: '6:28 PM', tier: 'General', event: 'Summer Night Market' },
+      { name: 'Mike Johnson', time: '6:15 PM', tier: 'VIP', event: 'Summer Night Market' },
+      { name: 'Sarah Lee', time: '6:05 PM', tier: 'General', event: 'Summer Night Market' },
+      { name: 'Alex Chen', time: '5:58 PM', tier: 'VIP', event: 'Summer Night Market' },
+    ]
+    return (
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+        <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+          <ArrowLeft size={18} /> Back
+        </button>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-ins</h2>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{checkInsList.length} total</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {checkInsList.map((c, i) => (
+            <div key={i} style={{ padding: 12, background: theme.bgWhite, borderRadius: 12, border: `1px solid ${theme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 600, color: theme.textPrimary }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>{c.event} • {c.tier}</div>
+              </div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: theme.primary }}>{c.time}</div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    )
+  }
+
   // ── List view ───────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
@@ -173,10 +255,10 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
       {/* Stats strip */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-        <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} />
-        <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={Ticket} />
+        <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
+        <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={Ticket} onClick={() => setStatModal('tickets')} />
         <StatCard label="Live Events" value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
-        <StatCard label="Check-ins" value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} />
+        <StatCard label="Check-ins" value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
       </div>
 
       {/* List */}
@@ -772,17 +854,21 @@ function CheckinView({ event, businessId, onBack }) {
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
-function StatCard({ label, value, color, icon: Icon }) {
+function StatCard({ label, value, color, icon: Icon, onClick }) {
   return (
-    <motion.div whileTap={{ scale: 0.97 }} style={{ padding: 16, background: theme.bgWhite, borderRadius: 16, border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <motion.button
+      whileTap={{ scale: onClick ? 0.97 : 1 }}
+      onClick={onClick}
+      style={{ padding: 16, background: theme.bgWhite, borderRadius: 16, border: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12, cursor: onClick ? 'pointer' : 'default', textAlign: 'left', width: '100%' }}
+    >
+      <div style={{ width: 42, height: 42, borderRadius: 12, background: color + '18', color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <Icon size={20} />
       </div>
       <div>
         <div style={{ fontSize: 11, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
         <div style={{ fontSize: 20, fontWeight: 900, color: theme.textPrimary }}>{value}</div>
       </div>
-    </motion.div>
+    </motion.button>
   )
 }
 
