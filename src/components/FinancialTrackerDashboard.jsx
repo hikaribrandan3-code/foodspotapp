@@ -121,7 +121,7 @@ export default function FinancialTrackerDashboard() {
             cursor: 'pointer', color: '#FFFFFF',
             boxShadow: '0 0 12px rgba(16,185,129,0.5), 0 2px 8px rgba(16,185,129,0.3)',
             transition: 'all 0.2s ease',
-            animation: 'calcGlow 2.5s ease-in-out infinite',
+            animation: 'calcFloat 2.5s ease-in-out infinite, calcGlow 2.5s ease-in-out infinite',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
           }}
@@ -325,6 +325,10 @@ export default function FinancialTrackerDashboard() {
           0%, 100% { box-shadow: 0 0 12px rgba(16,185,129,0.5), 0 2px 8px rgba(16,185,129,0.3); }
           50% { box-shadow: 0 0 20px rgba(16,185,129,0.8), 0 4px 12px rgba(16,185,129,0.4); }
         }
+        @keyframes calcFloat {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-6px) scale(1.05); }
+        }
       `}</style>
 
       {/* Calculator Modal — rendered via portal to avoid scroll container bugs */}
@@ -339,20 +343,12 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
   const [op, setOp] = useState(null);
   const [newNum, setNewNum] = useState(true);
 
-  // Lock scroll everywhere
+  // Lock scroll
   useEffect(() => {
     const originalBody = document.body.style.overflow;
-    const originalTouch = document.body.style.touchAction;
     document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-
-    const page = document.querySelector('.page');
-    if (page) { page.style.overflow = 'hidden'; page.style.touchAction = 'none'; }
-
     return () => {
       document.body.style.overflow = originalBody;
-      document.body.style.touchAction = originalTouch;
-      if (page) { page.style.overflow = ''; page.style.touchAction = ''; }
     };
   }, []);
 
@@ -370,7 +366,7 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
     setDisplay(String(Math.round(res * 100) / 100)); setPrev(null); setOp(null); setNewNum(true);
   };
 
-  const baseBtn = { padding: '18px 0', borderRadius: 14, border: 'none', fontSize: 20, fontWeight: 700, cursor: 'pointer', transition: 'transform 0.08s, opacity 0.08s', WebkitTapHighlightColor: 'transparent', userSelect: 'none', WebkitUserSelect: 'none' };
+  const baseBtn = { padding: '18px 0', borderRadius: 14, border: 'none', fontSize: 20, fontWeight: 700, cursor: 'pointer', transition: 'transform 0.08s, opacity 0.08s', WebkitTapHighlightColor: 'transparent', userSelect: 'none', WebkitUserSelect: 'none', pointerEvents: 'auto' };
   const numBtn = { ...baseBtn, background: '#F9FAFB', color: '#111827' };
   const accentBtn = { ...baseBtn, background: primaryColor, color: '#FFFFFF' };
   const opBtn = (active) => ({ ...baseBtn, background: active ? '#DBEAFE' : '#F3F4F6', color: active ? '#2563EB' : '#6B7280' });
@@ -389,13 +385,14 @@ function CalculatorModal({ onClose, primaryColor, cardStyle }) {
 
   const modalContent = (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      className="calculator-modal-backdrop"
+      style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 2147483647, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, pointerEvents: 'auto' }}
       onClick={onClose}
     >
-      <div style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20 }} onClick={(e) => e.stopPropagation()}>
+      <div style={{ ...cardStyle, width: '100%', maxWidth: 360, padding: 20, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>Calculator</h3>
-          <button onClick={press(onClose)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF' }} onMouseEnter={(e) => e.currentTarget.style.color = '#111827'} onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}>
+          <button onClick={press(onClose)} style={{ padding: 8, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF', pointerEvents: 'auto' }} onMouseEnter={(e) => e.currentTarget.style.color = '#111827'} onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}>
             <X className="w-5 h-5" />
           </button>
         </div>

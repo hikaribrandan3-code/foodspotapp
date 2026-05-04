@@ -1609,7 +1609,7 @@ body {
 }
 
 /* Kill any invisible divs with full-viewport coverage */
-div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-fullscreen-wrapper) {
+div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.camera-fullscreen-wrapper):not(.calculator-modal-backdrop) {
   pointer-events: none !important;
 }
 
