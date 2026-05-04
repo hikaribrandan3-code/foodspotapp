@@ -165,7 +165,7 @@ const Analytics = () => {
 
             <div style={{ padding: 16 }}>
                 {/* MAIN TABS */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {[
                         { id: 'analytics', label: 'Analytics' },
                         { id: 'financials', label: 'Financial Tracker' },
@@ -174,10 +174,13 @@ const Analytics = () => {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             style={{
-                                padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                flex: 1,
+                                padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                                border: '1px solid',
+                                cursor: 'pointer', whiteSpace: 'nowrap',
                                 background: activeTab === tab.id ? primaryColor : '#FFFFFF',
                                 color: activeTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                borderColor: activeTab === tab.id ? primaryColor : '#E5E7EB',
                                 boxShadow: activeTab === tab.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
                                 transition: 'all 0.2s'
                             }}

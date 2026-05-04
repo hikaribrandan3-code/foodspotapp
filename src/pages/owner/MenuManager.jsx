@@ -966,7 +966,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
             <div style={{ padding: 16, paddingBottom: 100 }}>
                 {/* TOP PILLS: Menu / Inventory */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
                     {[
                         { id: 'menu', label: 'Menu' },
                         { id: 'inventory', label: 'Inventory' },
@@ -975,10 +975,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             key={tab.id}
                             onClick={() => setViewTab(tab.id)}
                             style={{
-                                padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                flex: 1,
+                                padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                                border: '1px solid',
+                                cursor: 'pointer', whiteSpace: 'nowrap',
                                 background: viewTab === tab.id ? '#10B981' : '#FFFFFF',
                                 color: viewTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                borderColor: viewTab === tab.id ? '#10B981' : '#E5E7EB',
                                 boxShadow: viewTab === tab.id ? '0 4px 12px rgba(16, 185, 129, 0.25)' : '0 1px 2px rgba(0,0,0,0.05)',
                                 transition: 'all 0.2s'
                             }}
