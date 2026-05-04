@@ -12,13 +12,6 @@ canvas{display:block;width:100%;height:100%;touch-action:none;}
 </style>
 </head>
 <body>
-<!-- HikariBoy Audio Unlock -->
-<div id="hb-unlock" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:2147483647;font-family:'Courier New',monospace;touch-action:manipulation;-webkit-user-select:none;user-select:none;cursor:pointer">
-  <div style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:4px;text-shadow:0 0 12px rgba(255,255,255,0.5);animation:hb-pulse 1.4s ease-in-out infinite">TAP TO START</div>
-  <div style="color:rgba(255,255,255,0.55);font-size:11px;margin-top:12px;letter-spacing:2px">UNLOCK AUDIO</div>
-</div>
-<style>@keyframes hb-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.92)}}#hb-unlock.fade-out{transition:opacity 0.35s ease-out;opacity:0}</style>
-<script>(function(){var el=document.getElementById('hb-unlock');function unlock(e){if(e.type==='touchstart')e.preventDefault();if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio&&game.audio.resume){game.audio.resume();if(game.state==='title'&&game.audio.musicPlaying===false)game.audio.playMusic(game.audio.titleSeq);}el.classList.add('fade-out');setTimeout(function(){el.remove()},350);}el.addEventListener('touchstart',unlock,{passive:false});el.addEventListener('click',unlock);})();</script>
 <div id="gc"><canvas id="C"></canvas></div>
 <script>
 document.addEventListener('gesturestart',e=>e.preventDefault());
