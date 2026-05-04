@@ -17,6 +17,8 @@ canvas{display:block;margin:0 auto;touch-action:none;outline:none}
 // ── CANVAS ────────────────────────────────────────────────
 const W=534,H=560,Y_OFF=43,GX_OFF=0;
 const cvs=document.getElementById('c');
+// HB Audio Unlock
+(function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}cvs.addEventListener('touchstart',unlock,{passive:true,once:true});cvs.addEventListener('mousedown',unlock,{once:true});})();
 const ctx=cvs.getContext('2d');
 let scale=1;
 function resize(){

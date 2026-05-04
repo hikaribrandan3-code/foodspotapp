@@ -36,6 +36,8 @@ const GAME_W=448,GAME_H=520;
 })();
 const W=GAME_W,H=GAME_H;
 const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+// HB Audio Unlock
+(function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}canvas.addEventListener('touchstart',unlock,{passive:true,once:true});canvas.addEventListener('mousedown',unlock,{once:true});})();
 canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
 ctx.scale(dpr,dpr);
 const COUNTER_Y=Math.round(H*0.60);

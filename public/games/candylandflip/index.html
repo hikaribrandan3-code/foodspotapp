@@ -30,6 +30,8 @@ const HYPE=[{at:100,msg:'sheesh you cookin 🔥'},{at:250,msg:'LOCK IN!! 🔒'},
 const AURA=[{min:0,label:'NPC Energy',emoji:'🌀',col:'iridescent'},{min:60,label:'Mild Rizz',emoji:'😐',col:'#AAAAFF'},{min:180,label:'Lowkey Valid',emoji:'👀',col:'#00FF88'},{min:350,label:'Certified Cooked',emoji:'🔥',col:'#FF6B00'},{min:550,label:'SHEESH Tier',emoji:'😤',col:'#FF0080'},{min:800,label:'Aura Farmer',emoji:'💅',col:'#AA00FF'},{min:1100,label:'THE GOAT',emoji:'🐐',col:'#FFD700'}];
 
 const canvas=document.getElementById('gameCanvas');
+// HB Audio Unlock
+(function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}canvas.addEventListener('touchstart',unlock,{passive:true,once:true});canvas.addEventListener('mousedown',unlock,{once:true});canvas.addEventListener('click',unlock,{once:true});})();
 const ctx=canvas.getContext('2d');
 const dpr=Math.min(window.devicePixelRatio||1,2);
 canvas.width=C.W*dpr;canvas.height=C.H*dpr;

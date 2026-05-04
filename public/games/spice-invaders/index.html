@@ -21,6 +21,8 @@ let lastTap=0;
 document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTap<300)e.preventDefault();lastTap=n;},false);
 
 const canvas=document.getElementById('c');
+// HB Audio Unlock
+(function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}canvas.addEventListener('touchstart',unlock,{passive:true,once:true});canvas.addEventListener('mousedown',unlock,{once:true});canvas.addEventListener('click',unlock,{once:true});})();
 const ctx=canvas.getContext('2d');
 let W,H;
 function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;}

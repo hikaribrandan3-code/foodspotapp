@@ -19,6 +19,8 @@ document.addEventListener('dblclick',e=>e.preventDefault());
 
 const isHikariBoy = window.parent !== window;
 const cv = document.getElementById('gc');
+// HB Audio Unlock
+(function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}cv.addEventListener('touchstart',unlock,{passive:true,once:true});cv.addEventListener('mousedown',unlock,{once:true});cv.addEventListener('pointerdown',unlock,{once:true});})();
 const cx = cv.getContext('2d');
 let W,H,R,NC,ROWS=16,GX,GY,CNX,CNY,SC;
 
