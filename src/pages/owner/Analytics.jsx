@@ -10,11 +10,6 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import FinancialTrackerDashboard from '../../components/FinancialTrackerDashboard.jsx'
-import InventoryOwnerDashboard from '../../components/InventoryOwnerDashboard.jsx'
-
-
-
-
 // ============================================
 // 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
 // ============================================
@@ -173,7 +168,6 @@ const Analytics = () => {
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {[
                         { id: 'analytics', label: 'Analytics' },
-                        { id: 'inventory', label: 'Inventory' },
                         { id: 'financials', label: 'Financial Tracker' },
                     ].map((tab) => (
                         <button
@@ -317,7 +311,6 @@ const Analytics = () => {
                 </div>
                 )}
 
-                {activeTab === 'inventory' && <InventoryOwnerDashboard />}
                 {activeTab === 'financials' && <FinancialTrackerDashboard />}
             </div>
 

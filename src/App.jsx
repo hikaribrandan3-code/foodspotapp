@@ -67,7 +67,7 @@ import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
-import InventoryOwner from './pages/owner/InventoryOwner.jsx'
+
 import FoodSpotAI from './pages/owner/FoodSpotAI.jsx'
 import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 import Dashboard from './pages/owner/Dashboard.jsx'
@@ -536,7 +536,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/inventory" element={<ProtectedRoute requiredRole="owner"><InventoryOwner /></ProtectedRoute>} />
+
                                             <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
