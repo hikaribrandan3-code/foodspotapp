@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import RamenBowl from './RamenBowl';
+import Fireworks from './Fireworks';
 import './CameraActivationBanner.css';
 
 export default function CameraActivationBanner({
@@ -38,6 +39,9 @@ export default function CameraActivationBanner({
 
   return (
     <>
+      {/* Fireworks explosion on food arrival */}
+      <Fireworks trigger={isVisible} />
+
       {/* Confetti rain during character walk-in */}
       <div className="sprinkles-container">
         {Array.from({ length: 120 }).map((_, i) => {
