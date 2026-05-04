@@ -446,7 +446,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
   const totalCapacity = form.ticket_tiers.reduce((sum, t) => sum + Number(t.capacity), 0)
 
   return (
-    <div>
+    <div style={{ paddingBottom: 120 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <button
           onClick={onBack}
@@ -464,106 +464,108 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
       </h2>
       <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6B7280' }}>Step {step} of 3</p>
 
-      {step === 1 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <FormField label="Cover Image">
-            <input type="text" placeholder="Image URL (16:9)" value={form.image_url} onChange={e => setForm(prev => ({ ...prev, image_url: e.target.value }))} style={inputStyle} />
-          </FormField>
-          <FormField label="Event Name">
-            <input type="text" value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder="Summer Night Market" style={inputStyle} />
-          </FormField>
-          <FormField label="Description">
-            <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} placeholder="What makes your event special?" rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
-          </FormField>
-          <FormField label="Category">
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setForm(prev => ({ ...prev, category: cat.id }))}
-                  style={{
-                    padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                    border: '1px solid', cursor: 'pointer',
-                    background: form.category === cat.id ? '#111827' : '#fff',
-                    color: form.category === cat.id ? '#fff' : '#374151',
-                    borderColor: form.category === cat.id ? '#111827' : '#E5E7EB'
-                  }}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </FormField>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
-            <input type="checkbox" id="free" checked={form.is_free} onChange={e => setForm(prev => ({ ...prev, is_free: e.target.checked }))} style={{ width: 18, height: 18, cursor: 'pointer' }} />
-            <label htmlFor="free" style={{ fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Free event</label>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <FormField label="Start Date & Time">
-            <input type="datetime-local" value={form.start_date} onChange={e => setForm(prev => ({ ...prev, start_date: e.target.value }))} style={inputStyle} />
-          </FormField>
-          <FormField label="End Date & Time">
-            <input type="datetime-local" value={form.end_date} onChange={e => setForm(prev => ({ ...prev, end_date: e.target.value }))} style={inputStyle} />
-          </FormField>
-          <FormField label="Venue Name">
-            <input type="text" value={form.venue_name} onChange={e => setForm(prev => ({ ...prev, venue_name: e.target.value }))} placeholder="The Grand Plaza" style={inputStyle} />
-          </FormField>
-          <FormField label="Address">
-            <input type="text" value={form.address} onChange={e => setForm(prev => ({ ...prev, address: e.target.value }))} placeholder="Full address" style={inputStyle} />
-          </FormField>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {form.ticket_tiers.map((tier, idx) => (
-            <div key={tier.id} style={{ padding: 16, background: '#F9FAFB', borderRadius: 12, border: '1px solid #E5E7EB' }}>
-              <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 12 }}>Tier {idx + 1}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <FormField label="Name">
-                  <input type="text" value={tier.name} onChange={e => handleTierChange(idx, 'name', e.target.value)} placeholder="General Admission" style={inputStyle} />
-                </FormField>
-                {!form.is_free && (
-                  <FormField label="Price (in cents)">
-                    <input type="number" value={tier.price} onChange={e => handleTierChange(idx, 'price', Number(e.target.value))} placeholder="2500" style={inputStyle} />
-                  </FormField>
-                )}
-                <FormField label="Capacity">
-                  <input type="number" value={tier.capacity} onChange={e => handleTierChange(idx, 'capacity', Number(e.target.value))} placeholder="100" style={inputStyle} />
-                </FormField>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', padding: 20 }}>
+        {step === 1 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <FormField label="Cover Image">
+              <input type="text" placeholder="Image URL (16:9)" value={form.image_url} onChange={e => setForm(prev => ({ ...prev, image_url: e.target.value }))} style={inputStyle} />
+            </FormField>
+            <FormField label="Event Name">
+              <input type="text" value={form.name} onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))} placeholder="Summer Night Market" style={inputStyle} />
+            </FormField>
+            <FormField label="Description">
+              <textarea value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} placeholder="What makes your event special?" rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+            </FormField>
+            <FormField label="Category">
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {categories.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setForm(prev => ({ ...prev, category: cat.id }))}
+                    style={{
+                      padding: '8px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                      border: '1px solid', cursor: 'pointer',
+                      background: form.category === cat.id ? '#111827' : '#fff',
+                      color: form.category === cat.id ? '#fff' : '#374151',
+                      borderColor: form.category === cat.id ? '#111827' : '#E5E7EB'
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
               </div>
+            </FormField>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
+              <input type="checkbox" id="free" checked={form.is_free} onChange={e => setForm(prev => ({ ...prev, is_free: e.target.checked }))} style={{ width: 18, height: 18, cursor: 'pointer' }} />
+              <label htmlFor="free" style={{ fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Free event</label>
             </div>
-          ))}
-          <button onClick={handleAddTier} style={{ padding: 12, borderRadius: 12, border: '1px dashed #D1D5DB', background: '#fff', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-            + Add Tier
-          </button>
-          <div style={{ padding: 12, background: '#F9FAFB', borderRadius: 12, display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 600 }}>Total Capacity</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{totalCapacity} people</span>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Buttons */}
-      <div style={{ display: 'flex', gap: 12, marginTop: 24, paddingTop: 16, borderTop: '1px solid #E5E7EB' }}>
-        {step > 1 && (
-          <button onClick={() => setStep(step - 1)} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1px solid #E5E7EB', background: '#fff', color: '#374151', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-            Back
-          </button>
+        {step === 2 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <FormField label="Start Date & Time">
+              <input type="datetime-local" value={form.start_date} onChange={e => setForm(prev => ({ ...prev, start_date: e.target.value }))} style={inputStyle} />
+            </FormField>
+            <FormField label="End Date & Time">
+              <input type="datetime-local" value={form.end_date} onChange={e => setForm(prev => ({ ...prev, end_date: e.target.value }))} style={inputStyle} />
+            </FormField>
+            <FormField label="Venue Name">
+              <input type="text" value={form.venue_name} onChange={e => setForm(prev => ({ ...prev, venue_name: e.target.value }))} placeholder="The Grand Plaza" style={inputStyle} />
+            </FormField>
+            <FormField label="Address">
+              <input type="text" value={form.address} onChange={e => setForm(prev => ({ ...prev, address: e.target.value }))} placeholder="Full address" style={inputStyle} />
+            </FormField>
+          </div>
         )}
-        {step < 3 ? (
-          <button onClick={() => setStep(step + 1)} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: '#111827', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-            Continue
-          </button>
-        ) : (
-          <button onClick={() => handleSave(false)} disabled={saving} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: '#10B981', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-            {saving ? 'Creating...' : 'Create Event'}
-          </button>
+
+        {step === 3 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {form.ticket_tiers.map((tier, idx) => (
+              <div key={tier.id} style={{ padding: 14, background: '#F9FAFB', borderRadius: 12, border: '1px solid #E5E7EB' }}>
+                <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 600, textTransform: 'uppercase', marginBottom: 10 }}>Tier {idx + 1}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <FormField label="Name">
+                    <input type="text" value={tier.name} onChange={e => handleTierChange(idx, 'name', e.target.value)} placeholder="General Admission" style={inputStyle} />
+                  </FormField>
+                  {!form.is_free && (
+                    <FormField label="Price (in cents)">
+                      <input type="number" value={tier.price} onChange={e => handleTierChange(idx, 'price', Number(e.target.value))} placeholder="2500" style={inputStyle} />
+                    </FormField>
+                  )}
+                  <FormField label="Capacity">
+                    <input type="number" value={tier.capacity} onChange={e => handleTierChange(idx, 'capacity', Number(e.target.value))} placeholder="100" style={inputStyle} />
+                  </FormField>
+                </div>
+              </div>
+            ))}
+            <button onClick={handleAddTier} style={{ padding: 12, borderRadius: 12, border: '1px dashed #D1D5DB', background: '#fff', color: '#6B7280', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              + Add Tier
+            </button>
+            <div style={{ padding: 12, background: '#F9FAFB', borderRadius: 12, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 600 }}>Total Capacity</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{totalCapacity} people</span>
+            </div>
+          </div>
         )}
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: 12, marginTop: 20, paddingTop: 16, borderTop: '1px solid #E5E7EB' }}>
+          {step > 1 && (
+            <button onClick={() => setStep(step - 1)} style={{ flex: 1, padding: '14px 16px', borderRadius: 14, border: '1px solid #E5E7EB', background: '#F3F4F6', color: '#374151', fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+              Back
+            </button>
+          )}
+          {step < 3 ? (
+            <button onClick={() => setStep(step + 1)} style={{ flex: step > 1 ? 1 : 'none', width: step > 1 ? undefined : '100%', padding: '14px 16px', borderRadius: 14, border: 'none', background: '#111827', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              Continue <ChevronRight size={16} strokeWidth={2.5} />
+            </button>
+          ) : (
+            <button onClick={() => handleSave(false)} disabled={saving} style={{ flex: 1, padding: '14px 16px', borderRadius: 14, border: 'none', background: '#10B981', color: '#fff', fontSize: 15, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              {saving ? 'Creating...' : 'Create Event'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
