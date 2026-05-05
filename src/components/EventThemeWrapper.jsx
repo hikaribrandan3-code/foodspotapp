@@ -51,12 +51,13 @@ const CAM_ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';   // Camera icon  same +20% as
 const LABEL_SIZE = 'clamp(11px, 1.4vw, 16px)';
 const BTN_GAP = 'clamp(5px, 1.2vh, 10px)';
 const BTN_PY = 'clamp(10px, 1.8vh, 20px)';
-const FAB_SIZE = 'clamp(56px, 8.4vw, 76px)';        // Camera button  same +20% as events
+const FAB_SIZE = 'clamp(56px, 8.568vw, 76px)';      // Camera button +2% larger
 const FAB_OFFSET = 'clamp(20px, 4vh, 32px)';        // Elevated higher
 const FAB_RADIUS = 'clamp(24px, 3.5vw, 34px)';
 const FAB_BORDER = 'clamp(5px, 1vw, 8px)';
 const DROP_H = 'clamp(8px, 2vh, 12px)';
 const DROP_BLUR = 'clamp(16px, 3vw, 32px)';
+const SIDE_MARGIN = 'clamp(12px, 10vw, 48px)';      // Push side buttons ~10% toward edges
 
 export default function EventThemeWrapper() {
   const navigate = useNavigate();
@@ -155,11 +156,10 @@ export default function EventThemeWrapper() {
 
       {/* Bottom Navigation: Events | Camera | My Tickets */}
       <nav
-        className="fixed bottom-0 w-full z-50 flex justify-center items-center px-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        className="fixed bottom-0 w-full z-50 flex justify-between items-center px-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
         style={{
           borderColor: 'var(--border-color)',
           height: NAV_HEIGHT,
-          gap: NAV_GAP,
           paddingBottom: `calc(${NAV_PB} + env(safe-area-inset-bottom))`,
         }}
       >
@@ -167,7 +167,7 @@ export default function EventThemeWrapper() {
         <button
           onClick={() => setView('events')}
           className={`${navBtnBase} ${view === 'events' ? navBtnActive : navBtnInactive}`}
-          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44 }}
+          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44, marginLeft: SIDE_MARGIN }}
         >
           <TicketIcon
             style={{ width: ICON_SIZE, height: ICON_SIZE }}
@@ -216,7 +216,7 @@ export default function EventThemeWrapper() {
         <button
           onClick={() => setView('my-tickets')}
           className={`${navBtnBase} ${view === 'my-tickets' ? navBtnActive : navBtnInactive}`}
-          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44 }}
+          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44, marginRight: SIDE_MARGIN }}
         >
           <Assignment
             style={{ width: ICON_SIZE, height: ICON_SIZE }}
