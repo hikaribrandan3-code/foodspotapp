@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Html5Qrcode } from 'html5-qrcode'
 import confetti from 'canvas-confetti'
 import {
-  Calendar, MapPin, DollarSign, Ticket, Plus, ArrowLeft, Edit2, QrCode,
+  Calendar, MapPin, DollarSign, Ticket as TicketIcon, Plus, ArrowLeft, Edit2, QrCode,
   ChevronRight, Trash2, Users, Check, AlertCircle, X, Trophy, Clock,
   Tag, Share2, CheckCircle2, PartyPopper
 } from 'lucide-react'
@@ -260,7 +260,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
       {/* Stats strip */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
         <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
-        <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={Ticket} onClick={() => setStatModal('tickets')} />
+        <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={TicketIcon} onClick={() => setStatModal('tickets')} />
         <StatCard label="Live Events" value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
         <StatCard label="Check-ins" value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
       </div>
@@ -373,7 +373,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <StatCard label="Revenue"    value={`$${(event.total_revenue / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
-        <StatCard label="Sold"       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={Ticket} />
+        <StatCard label="Sold"       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={TicketIcon} />
         <StatCard label="Check-ins"  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
         <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
       </div>
