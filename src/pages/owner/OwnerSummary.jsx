@@ -22,16 +22,12 @@ function OwnerSummary() {
     const [ordersLoading, setOrdersLoading] = useState(true)
     const [session, setSession] = useState(null)
     const [savingConfig, setSavingConfig] = useState(false)
-    const [pendingLanguage, setPendingLanguage] = useState(null)
-    const [languageSaving, setLanguageSaving] = useState(false)
-    const [languageSaveStatus, setLanguageSaveStatus] = useState(null)
     const [mpAliasInput, setMpAliasInput] = useState('')
     const [mpAliasSaved, setMpAliasSaved] = useState(false)
     const [mpAliasSaving, setMpAliasSaving] = useState(false)
     const [discordWebhookInput, setDiscordWebhookInput] = useState('')
     const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
     const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
-    const [showAuditor, setShowAuditor] = useState(false)
 
     const debounceTimerRef = useRef(null)
     const mpAliasInitialized = useRef(false)
@@ -104,11 +100,6 @@ function OwnerSummary() {
         }
     }, [appConfig?.notifications?.discordWebhookUrl])
 
-    useEffect(() => {
-        document.body.style.overflow = showAuditor ? 'hidden' : 'unset'
-        return () => { document.body.style.overflow = 'unset' }
-    }, [showAuditor])
-
     const stats = useMemo(() => {
         const today = new Date().toDateString()
         const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
@@ -135,26 +126,11 @@ function OwnerSummary() {
         window.location.href = `/${tenantSlug}`
     }
 
-    const handleLanguageChange = (newLang) => {
-        setPendingLanguage(newLang)
-    }
-
-    const saveLanguage = async () => {
-        if (!pendingLanguage) return
-        setLanguageSaving(true)
-        setLanguageSaveStatus(null)
-
+    const handleLanguageChange = async (newLang) => {
         try {
-            await changeLanguage(pendingLanguage)
-            setLanguageSaveStatus({ message: t('language_saved') || 'Idioma guardado', type: 'success' })
-            setPendingLanguage(null)
-            setTimeout(() => setLanguageSaveStatus(null), 3000)
+            await changeLanguage(newLang)
         } catch (err) {
-            console.error('Language save failed:', err)
-            setLanguageSaveStatus({ message: t('save_error') || 'Error al guardar', type: 'error' })
-            setTimeout(() => setLanguageSaveStatus(null), 3000)
-        } finally {
-            setLanguageSaving(false)
+            console.error('Language change failed:', err)
         }
     }
 
@@ -216,17 +192,6 @@ function OwnerSummary() {
         }, 1000)
     }
 
-    const updateBrandingCloud = async (field, value) => {
-        const columnMap = {
-            mercadoPagoAccessToken: 'mp_access_token'
-        }
-        const column = columnMap[field]
-        if (!column) return
-
-        await supabase.from('branding').update({ [column]: value }).eq('business_id', businessId)
-        await refreshTenantData()
-    }
-
     return (
         <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-900 min-h-screen">
             <BackendHeader
@@ -238,47 +203,24 @@ function OwnerSummary() {
             />
 
             <main className="p-4 space-y-3 pb-24">
-                {/* TOP BAR: Sync + Auditor buttons */}
-                <div className="flex gap-2">
-                    <button
-                        onClick={async () => {
-                            setOrdersLoading(true)
-                            const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
-                            const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', ORDER_STATUS.CANCELLED).order('created_at', { ascending: false })
-                            if (data) setOrders(data)
-                            setOrdersLoading(false)
-                        }}
-                        className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
-                    >
-                        🔄 {t('update')}
-                    </button>
-                    <button
-                        onClick={() => setShowAuditor(true)}
-                        className="flex-1 bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
-                    >
-                        📊 Backend Auditor
-                    </button>
-                </div>
-
-                {/* KEY METRICS: Always visible */}
-                <div className="grid grid-cols-2 gap-3">
-                    {/* Daily Revenue */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Daily Revenue</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalToday)}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.todayOrders.length} orders</p>
-                    </div>
-
-                    {/* Sessions This Week */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">This Week</p>
-                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.weekCount}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">orders</p>
+                {/* KEY METRICS CARD */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Daily Revenue</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalToday)}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.todayOrders.length} orders</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">This Week</p>
+                            <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.weekCount}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">orders</p>
+                        </div>
                     </div>
                 </div>
 
                 {/* ACCORDION SECTIONS */}
-                <AccordionSection title="Payment Breakdown" icon="💰">
+                <AccordionSection title="Payment Breakdown">
                     <div className="space-y-3">
                         <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                             <div>
@@ -297,7 +239,7 @@ function OwnerSummary() {
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Venue Info" icon="📍">
+                <AccordionSection title="Venue Info">
                     <div className="space-y-3">
                         <div>
                             <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">WhatsApp</label>
@@ -306,7 +248,7 @@ function OwnerSummary() {
                                 placeholder="ex: +54 9 351 123-4567"
                                 defaultValue={appConfig?.businessInfo?.whatsapp || ''}
                                 onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                         <div>
@@ -315,54 +257,54 @@ function OwnerSummary() {
                                 type="text"
                                 defaultValue={appConfig?.businessInfo?.address || ''}
                                 onChange={(e) => updateBusinessInfo('address', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Google Maps Link</label>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Google Maps</label>
                             <input
                                 type="text"
                                 defaultValue={appConfig?.businessInfo?.mapsLink || ''}
                                 onChange={(e) => updateBusinessInfo('mapsLink', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="External Links" icon="🔗">
+                <AccordionSection title="External Links">
                     <div className="space-y-3">
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">📸 Instagram</label>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Instagram</label>
                             <input
                                 type="text"
                                 defaultValue={appConfig?.externalOrdering?.instagram || ''}
                                 onChange={(e) => updateExternalOrdering({ instagram: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">🎵 TikTok</label>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">TikTok</label>
                             <input
                                 type="text"
                                 defaultValue={appConfig?.externalOrdering?.tiktok || ''}
                                 onChange={(e) => updateExternalOrdering({ tiktok: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">🧡 Rappi</label>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Rappi</label>
                             <input
                                 type="text"
                                 defaultValue={appConfig?.externalOrdering?.rappi || ''}
                                 onChange={(e) => updateExternalOrdering({ rappi: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                         </div>
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Mercado Pago Setup" icon="💳">
+                <AccordionSection title="Mercado Pago">
                     <div className="space-y-3">
                         <div>
                             <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Access Token</label>
@@ -370,7 +312,7 @@ function OwnerSummary() {
                                 type="password"
                                 defaultValue={appConfig?.payments?.mercadoPagoAccessToken || ''}
                                 onChange={(e) => updatePayments({ mercadoPagoAccessToken: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 placeholder="APP_xxx..."
                             />
                         </div>
@@ -380,52 +322,52 @@ function OwnerSummary() {
                                 placeholder="MP Alias (optional)"
                                 value={mpAliasInput}
                                 onChange={(e) => setMpAliasInput(e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                             <button
                                 onClick={saveMpAlias}
                                 disabled={mpAliasSaving}
-                                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                                className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
                             >
                                 {mpAliasSaving ? '...' : 'Save'}
                             </button>
                         </div>
-                        {mpAliasSaved && <p className="text-xs text-green-600 dark:text-green-400">✓ Saved</p>}
+                        {mpAliasSaved && <p className="text-xs text-green-600 dark:text-green-400">Saved</p>}
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Discord Webhook" icon="🤖">
+                <AccordionSection title="Discord Webhook">
                     <div className="space-y-3">
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Send delivery notifications to Discord</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Delivery notifications</p>
                         <div className="flex gap-2">
                             <input
                                 type="password"
                                 placeholder="Webhook URL"
                                 value={discordWebhookInput}
                                 onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                             />
                             <button
                                 onClick={saveDiscordWebhook}
                                 disabled={discordWebhookSaving}
-                                className="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                                className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
                             >
                                 {discordWebhookSaving ? '...' : 'Save'}
                             </button>
                         </div>
-                        {discordWebhookSaved && <p className="text-xs text-green-600 dark:text-green-400">✓ Saved</p>}
+                        {discordWebhookSaved && <p className="text-xs text-green-600 dark:text-green-400">Saved</p>}
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Language" icon="🌐">
+                <AccordionSection title="Language">
                     <div className="flex gap-2 justify-center py-2">
                         {['en', 'es', 'pt'].map(lng => (
                             <button
                                 key={lng}
                                 onClick={() => handleLanguageChange(lng)}
                                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                                    pendingLanguage === lng || lang === lng
-                                        ? 'bg-blue-500 text-white'
+                                    lang === lng
+                                        ? 'bg-green-600 text-white'
                                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                 }`}
                             >
@@ -433,16 +375,6 @@ function OwnerSummary() {
                             </button>
                         ))}
                     </div>
-                    {pendingLanguage && pendingLanguage !== lang && (
-                        <button
-                            onClick={saveLanguage}
-                            disabled={languageSaving}
-                            className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 mt-2"
-                        >
-                            {languageSaving ? t('saving') : 'Save Language'}
-                        </button>
-                    )}
-                    {languageSaveStatus && <p className={`text-xs mt-2 ${languageSaveStatus.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{languageSaveStatus.message}</p>}
                 </AccordionSection>
             </main>
 
@@ -451,7 +383,7 @@ function OwnerSummary() {
     )
 }
 
-function AccordionSection({ title, icon, children }) {
+function AccordionSection({ title, children }) {
     const [isOpen, setIsOpen] = useState(false)
 
     return (
@@ -460,10 +392,7 @@ function AccordionSection({ title, icon, children }) {
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-                <div className="flex items-center gap-3">
-                    <span className="text-lg">{icon}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
-                </div>
+                <span className="font-medium text-gray-900 dark:text-white">{title}</span>
                 <svg
                     className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}
                     fill="none"
