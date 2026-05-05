@@ -218,71 +218,6 @@ export function useCamera() {
         return FILTER_STYLES[selectedFilter] || 'none'
     }, [selectedFilter])
 
-    const applyPixelFilter = useCallback((imageData, filterName) => {
-        const data = imageData.data
-        const len = data.length
-        const clamp = (v) => v < 0 ? 0 : v > 255 ? 255 : v
-
-        switch (filterName) {
-            case 'mono': {
-                for (let i = 0; i < len; i += 4) {
-                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
-                    const final = clamp((gray - 128) * 1.1 + 128)
-                    data[i] = data[i + 1] = data[i + 2] = final
-                }
-                break
-            }
-            case 'warm': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = gray + (r - gray) * 1.15 + 15
-                    g = gray + (g - gray) * 1.1 + 8
-                    b = gray + (b - gray) * 0.9 - 20
-                    data[i] = clamp(r * 1.08); data[i + 1] = clamp(g * 1.05); data[i + 2] = clamp(b)
-                }
-                break
-            }
-            case 'cool': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = gray + (r - gray) * 0.9 - 10
-                    g = gray + (g - gray) * 1.0 + 5
-                    b = gray + (b - gray) * 1.1 + 20
-                    data[i] = clamp(r * 1.02); data[i + 1] = clamp(g * 1.05); data[i + 2] = clamp(b * 1.08)
-                }
-                break
-            }
-            case 'vibrant': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = (gray + (r - gray) * 1.5 - 128) * 1.1 + 128
-                    g = (gray + (g - gray) * 1.5 - 128) * 1.1 + 128
-                    b = (gray + (b - gray) * 1.5 - 128) * 1.1 + 128
-                    data[i] = clamp(r * 1.03); data[i + 1] = clamp(g * 1.03); data[i + 2] = clamp(b * 1.03)
-                }
-                break
-            }
-            case 'vintage': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = gray + (r - gray) * 0.7
-                    g = gray + (g - gray) * 0.7
-                    b = gray + (b - gray) * 0.7
-                    r = (r * 1.1 + 10 - 128) * 0.85 + 128 + 15
-                    g = (g * 1.0 + 5 - 128) * 0.85 + 128 + 10
-                    b = (b * 0.85 - 5 - 128) * 0.85 + 128 + 5
-                    data[i] = clamp(r); data[i + 1] = clamp(g); data[i + 2] = clamp(b)
-                }
-                break
-            }
-        }
-        return imageData
-    }, [])
-
     const captureFrame = useCallback(async () => {
         if (!videoRef.current || !canvasRef.current) return null
         const video = videoRef.current
@@ -292,25 +227,18 @@ export function useCamera() {
 
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
-        const ctx = canvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
+        const ctx = canvas.getContext('2d', { colorSpace: 'display-p3' })
 
         ctx.save()
         if (facingMode === 'user') {
             ctx.translate(canvas.width, 0)
             ctx.scale(-1, 1)
         }
+        // Apply the SAME CSS filter used in live preview for guaranteed 1:1 match
+        ctx.filter = FILTER_STYLES[selectedFilter] || 'none'
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        ctx.filter = 'none'
         ctx.restore()
-
-        if (selectedFilter !== 'original') {
-            try {
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-                applyPixelFilter(imageData, selectedFilter)
-                ctx.putImageData(imageData, 0, 0)
-            } catch (e) {
-                console.warn('Pixel filter failed:', e)
-            }
-        }
 
         if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
 
@@ -329,7 +257,7 @@ export function useCamera() {
                 }
             }, 'image/jpeg', 0.95)
         })
-    }, [flashMode, applyFlash, facingMode, selectedFilter, applyPixelFilter])
+    }, [flashMode, applyFlash, facingMode, selectedFilter])
 
     const stopCamera = useCallback(() => {
         if (streamRef.current) {
