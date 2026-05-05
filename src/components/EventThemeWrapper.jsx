@@ -181,10 +181,10 @@ export default function EventThemeWrapper() {
           </span>
         </button>
 
-        {/* Center Camera Button — Horizontal Pill */}
+        {/* Center Camera Button — Matches home tab, +8% bigger */}
         <div
           className="flex justify-center relative"
-          style={{ width: 'clamp(100px, 18vw, 130px)', transform: `translateY(-${FAB_OFFSET})` }}
+          style={{ width: 'clamp(68px, 10vw, 88px)', transform: `translateY(-${FAB_OFFSET})` }}
         >
           <div
             className="absolute inset-x-0 bg-black/20 rounded-full opacity-40"
@@ -192,31 +192,25 @@ export default function EventThemeWrapper() {
           />
           <button
             onClick={openCamera}
-            className="flex items-center justify-center gap-2 transition-all duration-500 active:scale-95 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
+            className="flex items-center justify-center transition-all duration-500 active:scale-95 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
             style={{
-              width: 'clamp(100px, 18vw, 130px)',
-              height: 'clamp(40px, 5.5vh, 52px)',
-              borderRadius: 9999,
-              border: `${FAB_BORDER} solid var(--canvas-bg)`,
+              width: 'clamp(65px, 9vw, 76px)',
+              height: 'clamp(65px, 9vw, 76px)',
+              borderRadius: '50%',
+              border: `clamp(4px, 0.6vw, 5px) solid var(--canvas-bg)`,
               boxShadow: theme === 'dark'
-                ? '0 clamp(6px, 1.2vh, 12px) clamp(12px, 2vh, 20px) rgba(0,0,0,0.15), 0 0 clamp(20px, 3vh, 32px) rgba(16, 185, 129, 0.4)'
-                : '0 clamp(6px, 1.2vh, 12px) clamp(12px, 2vh, 20px) rgba(0,0,0,0.15)',
-              minWidth: 80,
-              minHeight: 40,
+                ? '0 4px 14px rgba(0,0,0,0.25), 0 0 24px rgba(16, 185, 129, 0.35)'
+                : '0 4px 14px rgba(0,0,0,0.25)',
+              minWidth: 56,
+              minHeight: 56,
             }}
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <Camera
-              style={{ width: CAM_ICON_SIZE, height: CAM_ICON_SIZE }}
+              style={{ width: 'clamp(30px, 4vw, 35px)', height: 'clamp(30px, 4vw, 35px)' }}
               strokeWidth={2.5}
-              className="relative z-10 shrink-0"
+              className="relative z-10"
             />
-            <span
-              className="relative z-10 font-black uppercase tracking-tighter"
-              style={{ fontSize: LABEL_SIZE }}
-            >
-              Cam
-            </span>
           </button>
         </div>
 
