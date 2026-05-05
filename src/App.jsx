@@ -95,7 +95,7 @@ function StaffOpsRedirect() {
 function App() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { tenantData, businessId } = useTenant();
+    const { tenantData, businessId, loading: tenantLoading } = useTenant();
     const [authUser, setAuthUser] = useState(null);
 
     // Safe pathname extraction
