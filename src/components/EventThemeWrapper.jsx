@@ -42,6 +42,21 @@ const DARK_TOKENS = {
   '--shadow-raised': '0px 12px 32px rgba(0,0,0,0.6)',
 };
 
+/* ─── Responsive nav constants (single source of truth) ─── */
+const NAV_HEIGHT = 'clamp(72px, 10vh, 96px)';
+const NAV_GAP = 'clamp(24px, 4vw, 40px)';
+const NAV_PB = 'clamp(12px, 2vh, 24px)';
+const ICON_SIZE = 'clamp(24px, 3.5vw, 32px)';
+const LABEL_SIZE = 'clamp(10px, 1.2vw, 13px)';
+const BTN_GAP = 'clamp(4px, 1vh, 8px)';
+const BTN_PY = 'clamp(8px, 1.5vh, 16px)';
+const FAB_SIZE = 'clamp(52px, 8vw, 64px)';
+const FAB_OFFSET = 'clamp(16px, 3vh, 24px)';
+const FAB_RADIUS = 'clamp(20px, 3vw, 28px)';
+const FAB_BORDER = 'clamp(4px, 0.8vw, 6px)';
+const DROP_H = 'clamp(6px, 1.5vh, 10px)';
+const DROP_BLUR = 'clamp(12px, 2vw, 24px)';
+
 export default function EventThemeWrapper() {
   const navigate = useNavigate();
   const { tenantSlug } = useParams();
@@ -84,6 +99,10 @@ export default function EventThemeWrapper() {
     navigate(`/${tenantSlug || ''}/camera`);
   };
 
+  const navBtnBase = 'flex flex-col items-center transition-all';
+  const navBtnActive = 'text-[var(--color-primary)]';
+  const navBtnInactive = 'text-slate-300 dark:text-slate-600';
+
   return (
     <div
       className={`${theme === 'dark' ? 'dark' : ''} min-h-[100dvh] relative`}
@@ -122,8 +141,11 @@ export default function EventThemeWrapper() {
         </button>
       </div>
 
-      {/* Main Content Area — isolated scroll */}
-      <div className="pt-4 h-[calc(100dvh-88px)] overflow-y-auto">
+      {/* Main Content Area — fluid height minus responsive nav */}
+      <div
+        className="pt-4 overflow-y-auto"
+        style={{ height: `calc(100dvh - ${NAV_HEIGHT})` }}
+      >
         {view === 'events' && (
           <EventsView onViewTickets={() => setView('my-tickets')} />
         )}
@@ -132,35 +154,79 @@ export default function EventThemeWrapper() {
 
       {/* Bottom Navigation: Events | Camera | My Tickets */}
       <nav
-        className="fixed bottom-0 w-full z-50 flex justify-center items-center gap-8 h-20 pb-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
-        style={{ borderColor: 'var(--border-color)' }}
+        className="fixed bottom-0 w-full z-50 flex justify-center items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        style={{
+          borderColor: 'var(--border-color)',
+          height: NAV_HEIGHT,
+          gap: NAV_GAP,
+          paddingBottom: `calc(${NAV_PB} + env(safe-area-inset-bottom))`,
+        }}
       >
+        {/* Events Button */}
         <button
           onClick={() => setView('events')}
-          className={`flex flex-col items-center gap-1.5 py-3 transition-all ${view === 'events' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`${navBtnBase} ${view === 'events' ? navBtnActive : navBtnInactive}`}
+          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44 }}
         >
-          <TicketIcon size={28} strokeWidth={view === 'events' ? 2.5 : 2} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
+          <TicketIcon
+            style={{ width: ICON_SIZE, height: ICON_SIZE }}
+            strokeWidth={view === 'events' ? 2.5 : 2}
+          />
+          <span
+            className="font-bold uppercase"
+            style={{ fontSize: LABEL_SIZE, letterSpacing: 'clamp(0.05em, 0.1vw, 0.15em)' }}
+          >
+            Events
+          </span>
         </button>
 
         {/* Center Camera Button */}
-        <div className="w-20 flex justify-center -translate-y-5 relative">
-          <div className="absolute inset-x-0 -bottom-3 h-8 bg-black/20 rounded-full blur-xl opacity-40" />
+        <div
+          className="flex justify-center relative"
+          style={{ width: 'clamp(72px, 10vw, 96px)', transform: `translateY(-${FAB_OFFSET})` }}
+        >
+          <div
+            className="absolute inset-x-0 bg-black/20 rounded-full opacity-40"
+            style={{ bottom: -12, height: DROP_H, filter: `blur(${DROP_BLUR})` }}
+          />
           <button
             onClick={openCamera}
-            className="w-14 h-14 rounded-[24px] flex items-center justify-center shadow-[0_16px_32px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-95 border-[5px] border-[var(--canvas-bg)] dark:border-slate-950 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
+            className="flex items-center justify-center transition-all duration-500 active:scale-95 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
+            style={{
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              borderRadius: FAB_RADIUS,
+              border: `${FAB_BORDER} solid var(--canvas-bg)`,
+              boxShadow: '0 clamp(12px, 2vh, 20px) clamp(24px, 4vh, 40px) rgba(0,0,0,0.3)',
+              minWidth: 44,
+              minHeight: 44,
+            }}
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Camera size={28} strokeWidth={2.5} className="relative z-10" />
+            <Camera
+              style={{ width: ICON_SIZE, height: ICON_SIZE }}
+              strokeWidth={2.5}
+              className="relative z-10"
+            />
           </button>
         </div>
 
+        {/* My Tickets Button */}
         <button
           onClick={() => setView('my-tickets')}
-          className={`flex flex-col items-center gap-1.5 py-3 transition-all ${view === 'my-tickets' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`${navBtnBase} ${view === 'my-tickets' ? navBtnActive : navBtnInactive}`}
+          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44 }}
         >
-          <Assignment size={28} strokeWidth={view === 'my-tickets' ? 2.5 : 2} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">My Tickets</span>
+          <Assignment
+            style={{ width: ICON_SIZE, height: ICON_SIZE }}
+            strokeWidth={view === 'my-tickets' ? 2.5 : 2}
+          />
+          <span
+            className="font-bold uppercase"
+            style={{ fontSize: LABEL_SIZE, letterSpacing: 'clamp(0.05em, 0.1vw, 0.15em)' }}
+          >
+            My Tickets
+          </span>
         </button>
       </nav>
     </div>
