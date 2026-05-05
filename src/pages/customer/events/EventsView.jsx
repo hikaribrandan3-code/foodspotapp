@@ -21,8 +21,8 @@ const mockEvents = [
     venue_name: 'Main Screen Arena',
     image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_ga', name: 'General Admission', price: 20.00, qty: 300 },
-      { id: 'tier_table', name: 'Reserved Table + Choripán', price: 45.00, qty: 20 }
+      { id: 'tier_ga', name: 'General Admission', price: 20.00, qty: 300, sold: 0 },
+      { id: 'tier_table', name: 'Reserved Table + Choripán', price: 45.00, qty: 20, sold: 0 }
     ],
     category: 'Sports',
     business_id: 'foodspot_hq_001',
@@ -38,8 +38,8 @@ const mockEvents = [
     venue_name: 'Pavilion 4',
     image: 'https://images.unsplash.com/photo-1613771404721-1f92d799e49f?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_player', name: 'Competitor Entry', price: 30.00, qty: 256 },
-      { id: 'tier_spectator', name: 'Spectator Pass', price: 10.00, qty: 500 }
+      { id: 'tier_player', name: 'Competitor Entry', price: 30.00, qty: 256, sold: 0 },
+      { id: 'tier_spectator', name: 'Spectator Pass', price: 10.00, qty: 500, sold: 0 }
     ],
     category: 'Gaming',
     business_id: 'foodspot_hq_001'
@@ -54,8 +54,8 @@ const mockEvents = [
     venue_name: 'Ocre Pavilion',
     image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_day', name: 'Day Pass', price: 20.00, qty: 5000 },
-      { id: 'tier_vip', name: 'VIP Meet & Greet', price: 85.00, qty: 200 }
+      { id: 'tier_day', name: 'Day Pass', price: 20.00, qty: 5000, sold: 0 },
+      { id: 'tier_vip', name: 'VIP Meet & Greet', price: 85.00, qty: 200, sold: 0 }
     ],
     category: 'Exclusives',
     business_id: 'foodspot_hq_001',
@@ -71,9 +71,9 @@ const mockEvents = [
     venue_name: 'Main Hall A',
     image: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_vip_table', name: 'VIP Table for 4', price: 1200.00, qty: 10 },
-      { id: 'tier_vip', name: 'VIP Pass', price: 250.00, qty: 50 },
-      { id: 'tier_regular', name: 'General Admission', price: 95.00, qty: 200 }
+      { id: 'tier_vip_table', name: 'VIP Table for 4', price: 1200.00, qty: 10, sold: 0 },
+      { id: 'tier_vip', name: 'VIP Pass', price: 250.00, qty: 50, sold: 0 },
+      { id: 'tier_regular', name: 'General Admission', price: 95.00, qty: 200, sold: 0 }
     ],
     category: 'Exclusives',
     business_id: 'foodspot_hq_001',
@@ -89,8 +89,8 @@ const mockEvents = [
     venue_name: 'The Velvet Lounge',
     image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_vip', name: 'VIP Pass', price: 75.00, qty: 30 },
-      { id: 'tier_regular', name: 'General Admission', price: 30.00, qty: 100 }
+      { id: 'tier_vip', name: 'VIP Pass', price: 75.00, qty: 30, sold: 0 },
+      { id: 'tier_regular', name: 'General Admission', price: 30.00, qty: 100, sold: 0 }
     ],
     category: 'Music',
     business_id: 'foodspot_hq_001',
@@ -106,8 +106,8 @@ const mockEvents = [
     venue_name: 'Live Stage Room',
     image: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_entry', name: 'Single Entry', price: 25.00, qty: 100 },
-      { id: 'tier_friend', name: 'Duo Pack (Bring a wingman)', price: 40.00, qty: 50 }
+      { id: 'tier_entry', name: 'Single Entry', price: 25.00, qty: 100, sold: 0 },
+      { id: 'tier_friend', name: 'Duo Pack (Bring a wingman)', price: 40.00, qty: 50, sold: 0 }
     ],
     category: 'Social',
     business_id: 'foodspot_hq_001',
@@ -123,10 +123,10 @@ const mockEvents = [
     venue_name: 'Stadium Ground',
     image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_vip_l', name: 'VIP Lounge North', price: 450.00, qty: 50 },
-      { id: 'tier_vip_r', name: 'VIP Lounge South', price: 450.00, qty: 50 },
-      { id: 'tier_tables', name: 'Front Row Tables', price: 1800.00, qty: 12 },
-      { id: 'tier_general', name: 'GA Field Access', price: 150.00, qty: 5000 }
+      { id: 'tier_vip_l', name: 'VIP Lounge North', price: 450.00, qty: 50, sold: 0 },
+      { id: 'tier_vip_r', name: 'VIP Lounge South', price: 450.00, qty: 50, sold: 0 },
+      { id: 'tier_tables', name: 'Front Row Tables', price: 1800.00, qty: 12, sold: 0 },
+      { id: 'tier_general', name: 'GA Field Access', price: 150.00, qty: 5000, sold: 0 }
     ],
     category: 'Festivals',
     lineup: [
@@ -148,8 +148,8 @@ const mockEvents = [
     venue_name: 'The Great Lawn',
     image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_entry', name: 'Entry Pass', price: 15.00, qty: 1000 },
-      { id: 'tier_tasting', name: 'Tasting Ticket (Inc 5 Tokens)', price: 45.00, qty: 500 }
+      { id: 'tier_entry', name: 'Entry Pass', price: 15.00, qty: 1000, sold: 0 },
+      { id: 'tier_tasting', name: 'Tasting Ticket (Inc 5 Tokens)', price: 45.00, qty: 500, sold: 0 }
     ],
     category: 'Festivals',
     business_id: 'foodspot_hq_001',
@@ -165,7 +165,7 @@ const mockEvents = [
     venue_name: 'The Garden',
     image: 'https://images.unsplash.com/photo-1543007630-9710e4a00a20?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_entry', name: 'General Admission', price: 0, qty: 500 }
+      { id: 'tier_entry', name: 'General Admission', price: 0, qty: 500, sold: 0 }
     ],
     category: 'Exclusives',
     business_id: 'foodspot_hq_001'
@@ -180,7 +180,7 @@ const mockEvents = [
     venue_name: 'The Listening Room',
     image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=800&auto=format&fit=crop',
     tiers: [
-      { id: 'tier_entry', name: 'Tasting Pass', price: 40.00, qty: 40 }
+      { id: 'tier_entry', name: 'Tasting Pass', price: 40.00, qty: 40, sold: 0 }
     ],
     category: 'Music',
     business_id: 'foodspot_hq_001'
@@ -209,7 +209,8 @@ function normalizeEvent(event) {
       id: t.id,
       name: t.name,
       price: (t.price_cents || 0) / 100,
-      qty: t.capacity || 0
+      qty: t.capacity || 0,
+      sold: t.sold || 0
     })),
     lineup: event.lineup || undefined
   };
