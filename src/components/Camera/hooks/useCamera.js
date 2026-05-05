@@ -212,6 +212,42 @@ export function useCamera() {
         return FILTER_STYLES[selectedFilter] || 'none'
     }, [selectedFilter])
 
+    const applyPixelFilter = useCallback((imageData, filterName) => {
+        const data = imageData.data
+        const len = data.length
+        const clamp = (v) => v < 0 ? 0 : v > 255 ? 255 : v
+
+        switch (filterName) {
+            case 'mono': {
+                for (let i = 0; i < len; i += 4) {
+                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+                    const final = clamp((gray - 128) * 1.1 + 128)
+                    data[i] = data[i + 1] = data[i + 2] = final
+                }
+                break
+            }
+            case 'pastel': {
+                for (let i = 0; i < len; i += 4) {
+                    let r = data[i], g = data[i + 1], b = data[i + 2]
+                    r = clamp(r * 1.1 + 10)
+                    g = clamp(g * 1.15 + 5)
+                    b = clamp(b * 1.05)
+                    data[i] = r; data[i + 1] = g; data[i + 2] = b
+                }
+                break
+            }
+            case 'soft': {
+                for (let i = 0; i < len; i += 4) {
+                    data[i] = clamp(data[i] * 1.08 + 5)
+                    data[i + 1] = clamp(data[i + 1] * 1.08 + 3)
+                    data[i + 2] = clamp(data[i + 2] * 1.05 + 2)
+                }
+                break
+            }
+        }
+        return imageData
+    }, [])
+
     const captureFrame = useCallback(async () => {
         if (!videoRef.current || !canvasRef.current) return null
         const video = videoRef.current
@@ -221,18 +257,25 @@ export function useCamera() {
 
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
-        const ctx = canvas.getContext('2d', { colorSpace: 'display-p3' })
+        const ctx = canvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
 
         ctx.save()
         if (facingMode === 'user') {
             ctx.translate(canvas.width, 0)
             ctx.scale(-1, 1)
         }
-        // Apply the SAME CSS filter used in live preview for guaranteed 1:1 match
-        ctx.filter = FILTER_STYLES[selectedFilter] || 'none'
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-        ctx.filter = 'none'
         ctx.restore()
+
+        if (selectedFilter !== 'original') {
+            try {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+                applyPixelFilter(imageData, selectedFilter)
+                ctx.putImageData(imageData, 0, 0)
+            } catch (e) {
+                console.warn('Pixel filter failed:', e)
+            }
+        }
 
         if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
 
@@ -251,7 +294,7 @@ export function useCamera() {
                 }
             }, 'image/jpeg', 0.95)
         })
-    }, [flashMode, applyFlash, facingMode, selectedFilter])
+    }, [flashMode, applyFlash, facingMode, selectedFilter, applyPixelFilter])
 
     const stopCamera = useCallback(() => {
         if (streamRef.current) {
