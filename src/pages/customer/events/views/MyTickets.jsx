@@ -1,118 +1,198 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Ticket, Share2, ChevronRight, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import EventTicket from './EventTicket';
 
-export default function MyTickets({ onViewTicket }) {
+const TicketCard = ({ ticket, isPast = false, onClick }) => {
   const { t } = useLanguage();
-  const [bookings, setBookings] = useState([]);
-  const [showReferral, setShowReferral] = useState(false);
-
-  useEffect(() => {
-    const raw = localStorage.getItem('event_bookings');
-    if (raw) {
-      try { setBookings(JSON.parse(raw)); } catch { }
-    }
-  }, []);
-
-  if (bookings.length === 0) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
-          style={{ backgroundColor: 'var(--surface-bg, #fff)' }}
-        >
-          <Ticket size={32} className="opacity-20" />
-        </motion.div>
-        <h2 className="text-xl font-black tracking-tight mb-2">{t('no_tickets') || 'No Tickets Yet'}</h2>
-        <p className="text-sm font-medium opacity-40 mb-6">{t('browse_events') || 'Browse events and book your first experience.'}</p>
+  return (
+    <div
+      onClick={!isPast ? onClick : undefined}
+      className={`relative overflow-hidden rounded-[32px] border group transition-all cursor-pointer bg-white dark:bg-slate-900 h-28 ${isPast ? 'border-slate-100 dark:border-slate-800 opacity-60 grayscale' : 'border-[var(--border-color)] shadow-sm active:scale-[0.98]'}`}
+    >
+      {/* Full Background Flyer */}
+      <div className="absolute inset-0 z-0">
+         <img src={ticket.image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+         <div className={`absolute inset-0 bg-gradient-to-r ${isPast ? 'from-slate-900/90' : 'from-slate-900/95 via-slate-900/60'} to-transparent`} />
       </div>
+
+      <div className="relative z-10 p-5 flex items-center h-full gap-5">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-black text-white text-base truncate uppercase tracking-tight mb-1">{ticket.name}</h4>
+          <div className="flex items-center gap-3">
+             <div className="flex items-center gap-1.5 text-white/70">
+                <Calendar size={10} className="text-[var(--color-primary)]" />
+                <span className="text-[10px] font-bold uppercase tracking-tight">
+                  {new Date(ticket.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+             </div>
+             {!isPast && (
+               <div className="flex items-center gap-1.5 text-white/70">
+                  <MapPin size={10} className="text-[var(--color-primary)]" />
+                  <span className="text-[10px] font-bold uppercase tracking-tight truncate max-w-[120px]">{ticket.venue}</span>
+               </div>
+             )}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+           {isPast ? (
+             <span className="text-[8px] font-black text-white/40 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm">Past</span>
+           ) : (
+             <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg shadow-black/20 group-hover:translate-x-1 transition-transform border border-white/20">
+               <ChevronRight size={18} />
+             </div>
+           )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function MyTickets() {
+  const { t } = useLanguage();
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const savedBookings = JSON.parse(localStorage.getItem('event_bookings') || '[]');
+
+  // Combine real bookings with any static ones if desired, or just use real
+  const upcomingTickets = savedBookings;
+
+  // Mock Referral Data
+  const referralCode = "FOOD-" + (savedBookings[0]?.id?.split('-')[1] || "PLAY").substring(0, 4).toUpperCase();
+  const referralStats = {
+    friends: 3,
+    credits: 30.00
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referralCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const pastTickets = [
+    {
+      id: 'TKT-OLD',
+      name: 'Midnight Market Sessions',
+      date: 'April 20, 2026',
+      venue: 'The Velvet Lounge',
+      image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=200&h=200&fit=crop'
+    }
+  ];
+
+  if (selectedBooking) {
+    return (
+      <EventTicket
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+      />
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto px-6 pt-14 pb-24">
-      <header className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight">{t('my_tickets') || 'My Tickets'}</h1>
-        <p className="text-sm font-medium opacity-40">{bookings.length} {t('active_booking') || 'active booking'}{bookings.length !== 1 ? 's' : ''}</p>
+    <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
+      <header className="px-6 pt-12 pb-6">
+        <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">
+          {t('my_tickets')}
+        </h1>
       </header>
 
-      <div className="space-y-4">
-        {bookings.map((booking, i) => (
-          <motion.div
-            key={booking.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            onClick={() => onViewTicket(booking)}
-            className="group relative overflow-hidden rounded-[32px] cursor-pointer active:scale-[0.98] transition-transform border"
-            style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
-          >
-            <div className="flex gap-4 p-4">
-              <img src={booking.image} alt="" className="w-24 h-24 rounded-2xl object-cover shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="text-base font-black leading-tight truncate">{booking.event_name}</h3>
-                    <p className="text-[10px] font-bold opacity-40 mt-1">{booking.venue_name}</p>
-                  </div>
-                  <ChevronRight size={16} className="opacity-20 shrink-0 mt-1" />
+      <main className="flex-1 overflow-y-auto px-6 space-y-8 pb-32">
+        {/* Referral Dashboard Section */}
+        <section>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[var(--border-color)] overflow-hidden shadow-sm">
+            <div className="p-5 bg-gradient-to-br from-[var(--color-primary)] to-slate-900 text-white relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Award size={14} />
+                  <h2 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-90">{t('refer_earn')}</h2>
                 </div>
-                <div className="flex items-center gap-3 mt-3">
-                  <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
-                    style={{ backgroundColor: 'var(--color-primary, #8B7355)', color: '#fff' }}
-                  >
-                    {booking.tier_name}
-                  </span>
-                  <span className="text-xs font-black opacity-50">
-                    {new Date(booking.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                  </span>
-                </div>
+                <p className="text-[13px] font-bold leading-relaxed opacity-95">{t('refer_desc')}</p>
               </div>
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
             </div>
-          </motion.div>
-        ))}
-      </div>
 
-      {/* Referral Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mt-6 p-5 rounded-[32px] border cursor-pointer active:scale-[0.98] transition-transform"
-        style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
-        onClick={() => setShowReferral(!showReferral)}
-      >
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: 'var(--color-primary, #8B7355)', color: '#fff' }}
-          >
-            <Sparkles size={18} />
-          </div>
-          <div>
-            <h4 className="text-sm font-black">{t('refer_friend') || 'Refer a Friend'}</h4>
-            <p className="text-[10px] font-bold opacity-40">{t('earn_credit') || 'Earn $10 credit for each referral'}</p>
-          </div>
-        </div>
-        {showReferral && (
-          <div className="mt-3 pt-3 border-t"
-            style={{ borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
-          >
-            <div className="flex items-center gap-2 p-3 rounded-2xl border"
-              style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
-            >
-              <code className="text-xs font-mono font-bold flex-1 truncate">FOODSPOT-EVENTS-{Math.random().toString(36).substr(2, 6).toUpperCase()}</code>
-              <button className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider text-white"
-                style={{ backgroundColor: 'var(--color-primary, #8B7355)' }}
-              >
-                {t('copy') || 'Copy'}
-              </button>
+            <div className="p-5 space-y-4">
+               <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                     <p className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-1.5">{t('your_code')}</p>
+                     <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-[var(--border-color)] group active:scale-[0.98] transition-all cursor-pointer" onClick={handleCopy}>
+                        <span className="font-black tracking-widest text-[var(--text-primary)] text-sm">{referralCode}</span>
+                        {copied ? (
+                          <div className="flex items-center gap-1.5 text-emerald-500">
+                            <span className="text-[8px] font-black uppercase">{t('code_copied')}</span>
+                            <CheckCircle2 size={14} />
+                          </div>
+                        ) : (
+                          <Copy size={14} className="text-[var(--text-secondary)] opacity-40 group-hover:opacity-100 transition-opacity" />
+                        )}
+                     </div>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-[var(--border-color)]">
+                     <div className="flex items-center gap-2 mb-0.5">
+                        <Users size={10} className="text-[var(--color-primary)]" />
+                        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('friends_referred')}</p>
+                     </div>
+                     <p className="text-base font-black text-[var(--text-primary)]">{referralStats.friends}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-[var(--border-color)]">
+                     <div className="flex items-center gap-2 mb-0.5">
+                        <Award size={10} className="text-amber-500" />
+                        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('credits_earned')}</p>
+                     </div>
+                     <p className="text-base font-black text-[var(--text-primary)]">${referralStats.credits.toFixed(2)}</p>
+                  </div>
+               </div>
             </div>
           </div>
-        )}
-      </motion.div>
+        </section>
+
+        <div className="space-y-4">
+           <div className="flex items-center justify-between px-2">
+             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('upcoming')}</h3>
+             <span className="text-[10px] font-black text-[var(--color-primary)]">{upcomingTickets.length} active</span>
+           </div>
+           {upcomingTickets.map(ticket => (
+             <TicketCard
+              key={ticket.id}
+              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}}
+              onClick={() => setSelectedBooking(ticket)}
+             />
+           ))}
+        </div>
+
+        <div className="space-y-4">
+           <div className="flex items-center justify-between px-2">
+             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('past')}</h3>
+           </div>
+           {pastTickets.map(ticket => (
+             <TicketCard key={ticket.id} ticket={ticket} isPast />
+           ))}
+        </div>
+
+        <div className="bg-[var(--color-primary)]/5 rounded-[40px] p-8 border border-[var(--color-primary)]/10 text-center relative overflow-hidden">
+           <div className="relative z-10">
+              <div className="w-16 h-16 rounded-[24px] bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] mx-auto mb-4">
+                 <Sparkles size={28} />
+              </div>
+              <h4 className="text-lg font-black text-[var(--text-primary)] mb-2">{t('member_rewards')}</h4>
+              <p className="text-sm font-medium text-[var(--text-secondary)] opacity-70 leading-relaxed mb-6">
+                 Attend 3 more events to unlock your exclusive VIP collector badge.
+              </p>
+              <button className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all shadow-sm">
+                 {t('view_badges')}
+              </button>
+           </div>
+           {/* Decorative elements */}
+           <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+           <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+        </div>
+      </main>
     </div>
   );
 }
