@@ -8,6 +8,7 @@ import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
 import ColorPickerModal from '../../components/ColorPickerModal';
+import BurgerLoader from '../../components/BurgerLoader';
 import { clearAuth } from '../../utils/storage';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import './Settings.css';
@@ -67,7 +68,7 @@ const DEFAULTS = {
 };
 
 const Settings = () => {
-    const { tenantData: tenant, businessId, refreshTenantData } = useTenant();
+    const { tenantData: tenant, businessId, refreshTenantData, loading: tenantLoading } = useTenant();
     const { t } = useLanguage();
     const navigate = useNavigate();
     
@@ -79,6 +80,7 @@ const Settings = () => {
 
     // Track the last businessId we've initialized for to prevent re-initialization
     const initializedForBusinessRef = useRef(null);
+    const [isDraftReady, setIsDraftReady] = useState(false);
 
     // ============================================================
     // SINGLE SOURCE OF TRUTH: All editable data lives here
@@ -226,6 +228,7 @@ const Settings = () => {
         
         initializedForBusinessRef.current = tenant.business_id;
         setHasChanges(false);
+        setIsDraftReady(true);
         
     }, [tenant?.business_id]); // Only depend on business_id, not the entire tenant object
 
@@ -508,7 +511,7 @@ const Settings = () => {
         );
     };
 
-    if (!tenant) return <div className="p-4 text-center text-gray-500">{t('loading_vault')}</div>;
+    if (tenantLoading || !tenant || !isDraftReady) return <BurgerLoader />;
 
     const heroIconMode = draft.hero_icon_mode || 'black';
     const navIconMode = draft.nav_icon_mode || 'white';
