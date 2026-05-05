@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ClipboardList as Assignment, Ticket, Sun, Moon } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ClipboardList as Assignment, Ticket, Sun, Moon, ChevronLeft } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
 import MyTickets from '../pages/customer/events/views/MyTickets';
 
@@ -42,6 +43,8 @@ const DARK_TOKENS = {
 };
 
 export default function EventThemeWrapper() {
+  const navigate = useNavigate();
+  const { tenantSlug } = useParams();
   const [view, setView] = useState('events'); // 'events' | 'status'
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -88,6 +91,17 @@ export default function EventThemeWrapper() {
         ...style,
       }}
     >
+      {/* Back to Home */}
+      <div className="fixed top-4 left-4 z-[160]">
+        <button
+          onClick={() => navigate(`/${tenantSlug || ''}`)}
+          className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg active:scale-95 transition-all"
+          aria-label="Back to Home"
+        >
+          <ChevronLeft size={20} className="text-[var(--text-primary)]" />
+        </button>
+      </div>
+
       {/* Floating Theme Toggle */}
       <div className="fixed bottom-24 left-6 z-[160] flex flex-col gap-3">
         <button
