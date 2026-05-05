@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, ChefHat, ClipboardList, Bike, User } from 'lucide-react';
+import { LayoutDashboard, ChefHat, ClipboardList, Bike, Package } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,7 +13,7 @@ export default function BottomNav() {
     { id: 'prep', icon: <ChefHat size={22} strokeWidth={2.2} />, labelKey: 'kitchen' },
     { id: 'order', icon: <ClipboardList size={22} strokeWidth={2.2} />, labelKey: 'take_order' },
     { id: 'logistics', icon: <Bike size={22} strokeWidth={2.2} />, labelKey: 'logistics_title' },
-    { id: 'profile', icon: <User size={22} strokeWidth={2.2} />, labelKey: 'profile_title' },
+    { id: 'inventory', icon: <Package size={22} strokeWidth={2.2} />, labelKey: 'inventory_title' },
   ];
 
   return (

@@ -10,10 +10,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import FinancialTrackerDashboard from '../../components/FinancialTrackerDashboard.jsx'
-
-
-
-
+import OwnerEventsView from '../../components/owner/OwnerEventsView.jsx'
 // ============================================
 // 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
 // ============================================
@@ -52,7 +49,7 @@ const Analytics = () => {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
-    const { t } = useLanguage()
+    const { t, lang } = useLanguage()
     // 🍃 OVERRIDE: Use Green for analytics as requested
     const primaryColor = '#10B981'
 
@@ -67,6 +64,7 @@ const Analytics = () => {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
     const [dateRange, setDateRange] = useState('today')
+    const [activeTab, setActiveTab] = useState('analytics')
 
     // FETCH ORDERS + real-time subscription
     useEffect(() => {
@@ -167,6 +165,35 @@ const Analytics = () => {
             />
 
             <div style={{ padding: 16 }}>
+                {/* MAIN TABS */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+                    {[
+                        { id: 'analytics', label: 'Analytics' },
+                        { id: 'financials', label: 'Financials' },
+                        { id: 'events', label: 'Create Events' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            style={{
+                                flex: 1,
+                                padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                                border: '1px solid',
+                                cursor: 'pointer', whiteSpace: 'nowrap',
+                                background: activeTab === tab.id ? primaryColor : '#FFFFFF',
+                                color: activeTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                borderColor: activeTab === tab.id ? primaryColor : '#E5E7EB',
+                                boxShadow: activeTab === tab.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                {activeTab === 'analytics' && (
+                <div>
                 {/* DATE RANGE TABS */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {DATE_RANGES(t).map(range => (
@@ -286,9 +313,26 @@ const Analytics = () => {
 
                     </>
                 )}
-            </div>
+                </div>
+                )}
 
-            <FinancialTrackerDashboard />
+                {activeTab === 'financials' && (
+                  <div>
+                    <FinancialTrackerDashboard />
+                  </div>
+                )}
+
+                {activeTab === 'events' && businessId && (
+                  <div>
+                    <OwnerEventsView
+                      businessId={businessId}
+                      tenantSlug={tenantSlug}
+                      lang={lang}
+                      onBack={() => setActiveTab('analytics')}
+                    />
+                  </div>
+                )}
+            </div>
 
             <BackendNav
                 role="owner"

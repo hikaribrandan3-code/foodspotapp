@@ -556,6 +556,30 @@ export const translations = {
     calculator: { es: "Calculadora", en: "Calculator", pt: "Calculadora" },
     use_result: { es: "Usar Resultado", en: "Use Result", pt: "Usar Resultado" },
     no_expenses: { es: "Sin gastos aún", en: "No expenses yet", pt: "Sem despesas ainda" },
-    no_products: { es: "Sin productos aún", en: "No products yet", pt: "Sem produtos ainda" }
+    no_products: { es: "Sin productos aún", en: "No products yet", pt: "Sem produtos ainda" },
+
+    // Events Module
+    welcome_to: { en: 'Welcome to', es: 'Bienvenido a', pt: 'Bem-vindo a' },
+    event_discovery: { en: 'Discover Events', es: 'Descubre Eventos', pt: 'Descubra Eventos' },
+    all_events: { en: 'All Events', es: 'Todos los Eventos', pt: 'Todos os Eventos' },
+    events_near_you: { en: 'Events Near You', es: 'Eventos Cerca', pt: 'Eventos Perto' },
+    select_tier: { en: 'Select Ticket', es: 'Selecciona Entrada', pt: 'Selecione Ingresso' },
+    confirm_booking: { en: 'Confirm & Pay', es: 'Confirmar y Pagar', pt: 'Confirmar e Pagar' },
+    your_ticket: { en: 'Your Ticket', es: 'Tu Entrada', pt: 'Seu Ingresso' },
+    my_tickets: { en: 'My Tickets', es: 'Mis Entradas', pt: 'Meus Ingressos' },
+    exclusive: { en: 'Exclusive', es: 'Exclusivo', pt: 'Exclusivo' },
+    date: { en: 'Date', es: 'Fecha', pt: 'Data' },
+    time: { en: 'Time', es: 'Hora', pt: 'Hora' },
+    location: { en: 'Location', es: 'Ubicación', pt: 'Localização' },
+    secret_location: { en: 'Secret Location', es: 'Ubicación Secreta', pt: 'Localização Secreta' },
+    secret_location_desc: { en: 'Location revealed 24h before the event.', es: 'Ubicación revelada 24h antes del evento.', pt: 'Localização revelada 24h antes do evento.' },
+    lineup: { en: 'Lineup', es: 'Cartel', pt: 'Lineup' },
+    confirm_payment: { en: 'Confirm Payment', es: 'Confirmar Pago', pt: 'Confirmar Pagamento' },
+    quantity: { en: 'Quantity', es: 'Cantidad', pt: 'Quantidade' },
+    total: { en: 'Total', es: 'Total', pt: 'Total' },
+    mp_todo: { en: 'Mercado Pago integration coming soon.', es: 'Integración con Mercado Pago próximamente.', pt: 'Integração com Mercado Pago em breve.' },
+    booking_confirmed: { en: 'Booking Confirmed', es: 'Reserva Confirmada', pt: 'Reserva Confirmada' },
+    ticket_id: { en: 'Ticket ID', es: 'ID de Entrada', pt: 'ID do Ingresso' },
+    tier: { en: 'Tier', es: 'Categoría', pt: 'Categoria' }
 };
 

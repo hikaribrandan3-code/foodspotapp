@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { getSession } from '../../utils/auth.js'
 // import { isInDemoMode } from '../../utils/demoSession.js' // REMOVED: File deleted
 const isInDemoMode = () => false; // STUB: Demo mode disabled for now
-import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx'
+import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon, EventsIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 import { useTenant } from '../../contexts/TenantContext'
@@ -34,10 +34,11 @@ const LONG_PRESS_DURATION = 1800
 const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
     envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
-    promos: { icon: PromosIcon, label: 'promos', path: 'promos' },
+    promos: { icon: PromosIcon, label: 'promos', path: 'promos/events' },
     rewards: { icon: PromosIcon, label: 'rewards', path: 'rewards' },
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
-    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' }  // ← Alias for 'game'
+    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' },  // ← Alias for 'game'
+    events: { icon: PromosIcon, label: 'events', path: 'promos/events' }
 }
 
 // --- MAIN COMPONENT ---

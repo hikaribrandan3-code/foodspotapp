@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { supabase, updateBranding } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
@@ -8,12 +8,15 @@ import { processAndStoreImage, formatFileSize } from '../../utils/imageOptimizer
 import { canChangeDeliveryConfig, recordDeliveryConfigChange } from '../../utils/deliveryUtils.js'
 import { useAdminIntent } from '../../contexts/AdminIntentContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import PrintMenu from '../../components/PrintMenu.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
+
+const MenuInventoryView = lazy(() => import('../../components/owner/MenuInventoryView.jsx'))
 
 /**
  * MENU MANAGER
@@ -48,6 +51,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
+    const { lang, t } = useLanguage()
     // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
@@ -244,6 +248,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [isSaving, setIsSaving] = useState(false)
     // 📦 PENDING FILE BUFFER: Holds raw File objects until save
     const [pendingFiles, setPendingFiles] = useState({})
+    // Top-level tab: menu | inventory
+    const [viewTab, setViewTab] = useState('menu')
 
     // --- FEATURED ITEMS LOGIC (MOVED HERE TO FIX TDZ) ---
     // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
@@ -957,19 +963,46 @@ function MenuManager({ config: configProp, demoMode = false }) {
     return (
         <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
             <BackendHeader
-                title={demoMode ? "Demo Menú" : "Menú"}
+                title={demoMode ? (lang === 'es' ? 'Demo Menú' : 'Demo Menu') : (lang === 'es' ? 'Menú' : 'Menu')}
                 onLogout={handleLogout}
             />
 
-            <div style={{ padding: 16, paddingBottom: 100 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', padding: 16, paddingBottom: 100 }}>
+                {/* TOP PILLS: Menu / Inventory */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: viewTab === 'inventory' ? 0 : 8 }}>
+                    {[
+                        { id: 'menu', label: 'Menu' },
+                        { id: 'inventory', label: 'Inventory' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setViewTab(tab.id)}
+                            style={{
+                                flex: 1,
+                                padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                                border: '1px solid',
+                                cursor: 'pointer', whiteSpace: 'nowrap',
+                                background: viewTab === tab.id ? '#10B981' : '#FFFFFF',
+                                color: viewTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                borderColor: viewTab === tab.id ? '#10B981' : '#E5E7EB',
+                                boxShadow: viewTab === tab.id ? '0 4px 12px rgba(16, 185, 129, 0.25)' : '0 1px 2px rgba(0,0,0,0.05)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div style={{ display: viewTab === 'menu' ? 'block' : 'none' }}>
                 {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
                 <div style={{ marginBottom: 24 }}>
                     {/* Pause Orders Toggle */}
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ Pausar pedidos</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>Desactiva temporalmente los pedidos</p>
+                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ {t('pause_orders')}</p>
+                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>{t('pause_orders_desc')}</p>
                             </div>
                             <label className="toggle">
                                 <input
@@ -1721,7 +1754,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
                 )
             }
+                </div>
 
+                {viewTab === 'inventory' && (
+                    <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>}>
+                        <MenuInventoryView lang={lang} />
+                    </Suspense>
+                )}
 
             {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
             <input

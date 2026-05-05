@@ -35,7 +35,7 @@ export interface Order {
   staffNotes?: string;
 }
 
-export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'profile';
+export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'inventory';
 
 export const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   PENDING_VERIFICATION: 'TODO',

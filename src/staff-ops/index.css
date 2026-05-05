@@ -51,6 +51,8 @@
     --btn-secondary-hover: #e2e8f0;
     --btn-secondary-active: #cbd5e1;
     --filter-active-bg: #eff6ff;
+    --filter-active-text: #3b82f6;
+    --filter-active-border: #bfdbfe;
     --filter-inactive-bg: #ffffff;
     --section-bg: #ffffff;
     --section-border: #e2e8f0;
@@ -143,6 +145,8 @@
     --btn-secondary-hover: #475569;
     --btn-secondary-active: #64748b;
     --filter-active-bg: rgba(59, 130, 246, 0.1);
+    --filter-active-text: #60a5fa;
+    --filter-active-border: rgba(59, 130, 246, 0.3);
     --filter-inactive-bg: #1e293b;
     --section-bg: #1e293b;
     --section-border: rgba(255, 255, 255, 0.05);
@@ -343,4 +347,44 @@
 
 .ripple-effect:active::after {
   animation: ripple 0.5s ease-out forwards;
+}
+
+/* Html5Qrcode Scanner Overrides */
+#reader {
+  color: white !important;
+}
+#reader * {
+  color: white !important;
+  border-color: rgba(255,255,255,0.2) !important;
+}
+#reader a {
+  color: #34d399 !important;
+}
+#reader button {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: bold !important;
+}
+#reader select {
+  background: #1e293b !important;
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 8px !important;
+}
+#reader__dashboard_section_csr span,
+#reader__dashboard_section_csr label,
+#reader__dashboard_section_csr div {
+  color: white !important;
+}
+#reader__dashboard_section_swaplink {
+  display: none !important;
+}
+#reader__filescan_input {
+  display: none !important;
+}
+#reader__dashboard_section_csr {
+  padding: 16px !important;
 }

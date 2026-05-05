@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, X } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import BoardView from '@/views/BoardView';
@@ -7,6 +8,7 @@ import PrepView from '@/views/PrepView';
 import LogisticsView from '@/views/LogisticsView';
 import ProfileView from '@/views/ProfileView';
 import OrderView from '@/views/OrderView';
+import InventoryView from '@/views/InventoryView';
 import BottomNav from '@/components/BottomNav';
 import OrderDetailDrawer from '@/components/OrderDetailDrawer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -28,7 +30,7 @@ function DesktopSidebar() {
     { id: 'prep', icon: <ChefHat size={20} strokeWidth={2.2} />, label: t('kitchen') },
     { id: 'order', icon: <ClipboardList size={20} strokeWidth={2.2} />, label: t('take_order') },
     { id: 'logistics', icon: <Bike size={20} strokeWidth={2.2} />, label: t('logistics_title') },
-    { id: 'profile', icon: <User size={20} strokeWidth={2.2} />, label: t('profile_title') },
+    { id: 'inventory', icon: <Package size={20} strokeWidth={2.2} />, label: t('inventory_title') },
   ];
   return (
     <aside
@@ -64,6 +66,7 @@ function DesktopSidebar() {
 
 export default function MobileFrame() {
   const { state } = useOrders();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const renderView = () => {
     switch (state.currentTab) {
@@ -71,7 +74,7 @@ export default function MobileFrame() {
       case 'prep': return <PrepView />;
       case 'order': return <OrderView />;
       case 'logistics': return <LogisticsView />;
-      case 'profile': return <ProfileView />;
+      case 'inventory': return <InventoryView />;
       default: return <BoardView />;
     }
   };
@@ -86,6 +89,16 @@ export default function MobileFrame() {
 
       {/* Main content */}
       <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: 'var(--app-frame)' }}>
+        {/* Profile icon — top-right corner, always visible */}
+        <button
+          onClick={() => setProfileOpen(true)}
+          className="absolute top-3 right-3 z-40 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+          style={{ backgroundColor: '#EFF6FF', color: '#3B82F6', border: '2px solid #3B82F6' }}
+          aria-label="Profile"
+        >
+          <User size={20} strokeWidth={2.2} />
+        </button>
+
         <AnimatePresence mode="wait">
           <motion.div
             key={state.currentTab}
@@ -106,6 +119,39 @@ export default function MobileFrame() {
         </div>
 
         <OrderDetailDrawer />
+
+        {/* Profile sheet — slides up from bottom */}
+        <AnimatePresence>
+          {profileOpen && (
+            <>
+              <motion.div
+                className="absolute inset-0 z-50 bg-black/50"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setProfileOpen(false)}
+              />
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 z-50 rounded-t-2xl overflow-hidden"
+                style={{ backgroundColor: 'var(--app-bg)', maxHeight: '92dvh' }}
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              >
+                <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b" style={{ borderColor: 'var(--nav-border)' }}>
+                  <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Profile</span>
+                  <button onClick={() => setProfileOpen(false)} style={{ color: 'var(--text-tertiary)' }}>
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="overflow-y-auto" style={{ maxHeight: 'calc(92dvh - 56px)' }}>
+                  <ProfileView />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
