@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Sun, Moon, ChevronLeft } from 'lucide-react';
+import { ClipboardList as Assignment, Ticket as TicketIcon, Sun, Moon, ChevronLeft, Camera } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
+import MyTickets from '../pages/customer/events/views/MyTickets';
 
 const LIGHT_TOKENS = {
   '--color-primary': '#10b981',
@@ -44,6 +45,7 @@ const DARK_TOKENS = {
 export default function EventThemeWrapper() {
   const navigate = useNavigate();
   const { tenantSlug } = useParams();
+  const [view, setView] = useState('events'); // 'events' | 'my-tickets'
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('event-theme');
@@ -77,6 +79,10 @@ export default function EventThemeWrapper() {
       ...tokens,
     };
   }, [theme]);
+
+  const openCamera = () => {
+    navigate(`/${tenantSlug || ''}/camera`);
+  };
 
   return (
     <div
@@ -113,10 +119,47 @@ export default function EventThemeWrapper() {
         </button>
       </div>
 
-      {/* Main Content — EventsView handles full flow internally */}
+      {/* Main Content Area */}
       <div className="pb-24">
-        <EventsView />
+        {view === 'events' && (
+          <EventsView onViewTickets={() => setView('my-tickets')} />
+        )}
+        {view === 'my-tickets' && <MyTickets />}
       </div>
+
+      {/* Bottom Navigation: Events | Camera | My Tickets */}
+      <nav
+        className="fixed bottom-0 w-full z-50 flex justify-around items-center h-20 pb-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <button
+          onClick={() => setView('events')}
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+        >
+          <TicketIcon size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
+        </button>
+
+        {/* Center Camera Button */}
+        <div className="w-20 flex justify-center -translate-y-5 relative">
+          <div className="absolute inset-x-0 -bottom-3 h-8 bg-black/20 rounded-full blur-xl opacity-40" />
+          <button
+            onClick={openCamera}
+            className={`w-14 h-14 rounded-[24px] flex items-center justify-center shadow-[0_16px_32px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-95 border-[5px] border-[var(--canvas-bg)] dark:border-slate-950 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white`}
+          >
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Camera size={24} strokeWidth={2.5} className="relative z-10" />
+          </button>
+        </div>
+
+        <button
+          onClick={() => setView('my-tickets')}
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'my-tickets' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+        >
+          <Assignment size={24} strokeWidth={view === 'my-tickets' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">My Tickets</span>
+        </button>
+      </nav>
     </div>
   );
 }

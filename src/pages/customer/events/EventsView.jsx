@@ -184,7 +184,7 @@ const mockEvents = [
   }
 ];
 
-export default function EventsView() {
+export default function EventsView({ onViewTickets }) {
   const [stage, setStage] = useState('discovery'); // 'discovery' | 'detail' | 'checkout' | 'ticket' | 'my-tickets'
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
@@ -257,10 +257,10 @@ export default function EventsView() {
             <EventDiscovery 
               events={mockEvents} 
               onSelectEvent={handleSelectEvent} 
-              onViewTickets={() => setStage('my-tickets')}
+              onViewTickets={onViewTickets || (() => setStage('my-tickets'))}
             />
           )}
-          {stage === 'my-tickets' && (
+          {!onViewTickets && stage === 'my-tickets' && (
             <div className="relative h-screen flex flex-col">
               <button 
                 onClick={handleBack}
