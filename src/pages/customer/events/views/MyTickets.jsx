@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2 } from 'lucide-react';
+import { Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import EventTicket from './EventTicket';
 

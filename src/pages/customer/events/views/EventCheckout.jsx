@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Ticket, CreditCard, Info } from 'lucide-react';
+import { ChevronLeft, CreditCard, Info } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
