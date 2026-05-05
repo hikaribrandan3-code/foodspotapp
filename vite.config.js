@@ -20,6 +20,12 @@ export default defineConfig({
         main: path.resolve(__dirname, 'index.html'),
         'staff-ops': path.resolve(__dirname, 'staff-ops.html'),
       },
+      output: {
+        manualChunks: {
+          'html5-qrcode': ['html5-qrcode'],
+          'lucide': ['lucide-react'],
+        },
+      },
     },
     minify: 'terser',
     terserOptions: {
