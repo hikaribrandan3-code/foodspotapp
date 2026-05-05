@@ -137,9 +137,9 @@ export default function EventThemeWrapper() {
       >
         <button
           onClick={() => setView('events')}
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`flex flex-col items-center gap-1.5 py-3 transition-all ${view === 'events' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
         >
-          <TicketIcon size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
+          <TicketIcon size={28} strokeWidth={view === 'events' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
         </button>
 
@@ -151,15 +151,15 @@ export default function EventThemeWrapper() {
             className="w-14 h-14 rounded-[24px] flex items-center justify-center shadow-[0_16px_32px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-95 border-[5px] border-[var(--canvas-bg)] dark:border-slate-950 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Camera size={24} strokeWidth={2.5} className="relative z-10" />
+            <Camera size={28} strokeWidth={2.5} className="relative z-10" />
           </button>
         </div>
 
         <button
           onClick={() => setView('my-tickets')}
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'my-tickets' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`flex flex-col items-center gap-1.5 py-3 transition-all ${view === 'my-tickets' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
         >
-          <Assignment size={24} strokeWidth={view === 'my-tickets' ? 2.5 : 2} />
+          <Assignment size={28} strokeWidth={view === 'my-tickets' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-tighter">My Tickets</span>
         </button>
       </nav>

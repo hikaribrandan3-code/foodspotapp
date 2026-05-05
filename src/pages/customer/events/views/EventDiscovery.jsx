@@ -92,23 +92,14 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
     .filter(e => selectedCategory === 'All' || e.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
   return (
-    <div className="flex flex-col h-full pb-20">
-      <header className="px-6 pt-10 pb-4 flex items-center justify-between">
-        <div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">
-            {t('welcome_to')}
-          </span>
-          <h1 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">
-            {t('event_discovery')}
-          </h1>
-        </div>
-        <button 
-          onClick={onViewTickets}
-          className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shadow-sm active:scale-95 transition-all relative overflow-hidden group"
-        >
-          <Ticket size={20} className="relative z-10 transition-transform group-hover:-rotate-12" />
-          <div className="absolute inset-0 bg-[var(--color-primary)] opacity-0 group-hover:opacity-5 transition-opacity" />
-        </button>
+    <div className="w-full">
+      <header className="px-6 pt-10 pb-4">
+        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">
+          {t('welcome_to')}
+        </span>
+        <h1 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">
+          {t('event_discovery')}
+        </h1>
       </header>
 
       <div className="px-6">
@@ -131,7 +122,7 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
         ))}
       </div>
 
-      <main className="flex-1 overflow-y-auto px-6 space-y-6 hide-scrollbar">
+      <main className="px-6 space-y-6 pb-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-black uppercase tracking-widest text-[var(--text-secondary)]">
             {t('all_events')}
