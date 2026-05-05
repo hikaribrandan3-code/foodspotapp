@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Ticket, ClipboardList } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
 import { useTenant } from '../../../contexts/TenantContext';
 import EventDiscovery from './views/EventDiscovery';
 import EventDetail from './views/EventDetail';
 import EventCheckout from './views/EventCheckout';
 import EventTicket from './views/EventTicket';
-import MyTickets from './views/MyTickets';
 
 // 🎨 MOCKS - Real data comes from Supabase later
 const BASE_MOCK_EVENTS = [
@@ -105,7 +103,6 @@ const STAGES = {
   DETAIL: 'detail',
   CHECKOUT: 'checkout',
   TICKET: 'ticket',
-  TICKETS: 'tickets'
 };
 
 export default function EventsView() {
@@ -114,7 +111,6 @@ export default function EventsView() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
   const [booking, setBooking] = useState(null);
-  const [activeTab, setActiveTab] = useState('events');
   const [filter, setFilter] = useState('All');
 
   // Inject business_id into mock events so filtering works
@@ -148,7 +144,6 @@ export default function EventsView() {
       setBooking(null);
       setSelectedEvent(null);
       setSelectedTier(null);
-      setActiveTab('tickets');
     } else if (stage === STAGES.CHECKOUT) {
       setStage(STAGES.DETAIL);
     } else if (stage === STAGES.DETAIL) {
@@ -164,71 +159,36 @@ export default function EventsView() {
 
   // ─── RENDER ───
   return (
-    <div className="flex flex-col h-screen bg-[var(--canvas-bg)] overflow-hidden">
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {stage === STAGES.DISCOVERY && activeTab === 'events' && (
-          <EventDiscovery
-            events={filteredEvents}
-            categories={CATEGORIES}
-            activeFilter={filter}
-            onFilterChange={setFilter}
-            onEventSelect={handleEventSelect}
-          />
-        )}
-        {stage === STAGES.DETAIL && selectedEvent && (
-          <EventDetail
-            event={selectedEvent}
-            onBook={handleBook}
-            onBack={handleBack}
-          />
-        )}
-        {stage === STAGES.CHECKOUT && selectedEvent && selectedTier && (
-          <EventCheckout
-            event={selectedEvent}
-            tier={selectedTier}
-            onPurchase={handlePurchase}
-            onBack={handleBack}
-          />
-        )}
-        {stage === STAGES.TICKET && booking && (
-          <EventTicket
-            booking={booking}
-            onClose={handleBack}
-          />
-        )}
-        {activeTab === 'tickets' && stage === STAGES.DISCOVERY && (
-          <MyTickets onViewTicket={(b) => { setBooking(b); setStage(STAGES.TICKET); }} />
-        )}
-      </div>
-
-      {/* Custom Bottom Nav: Events / My Tickets */}
+    <div className="max-w-lg mx-auto min-h-screen">
       {stage === STAGES.DISCOVERY && (
-        <nav
-          className="shrink-0 w-full flex justify-around items-center h-20 pb-4 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
-          style={{
-            backgroundColor: 'var(--canvas-bg)',
-            borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))'
-          }}
-        >
-          <button
-            onClick={() => { setActiveTab('events'); setStage(STAGES.DISCOVERY); }}
-            className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'events' ? 'scale-110' : 'opacity-40'}`}
-            style={{ color: activeTab === 'events' ? 'var(--color-primary, #8B7355)' : 'var(--icon-muted, #9CA3AF)' }}
-          >
-            <Ticket size={24} strokeWidth={activeTab === 'events' ? 2.5 : 2} />
-            <span className="text-[10px] font-black uppercase tracking-tighter">Events</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('tickets'); setStage(STAGES.DISCOVERY); }}
-            className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'tickets' ? 'scale-110' : 'opacity-40'}`}
-            style={{ color: activeTab === 'tickets' ? 'var(--color-primary, #8B7355)' : 'var(--icon-muted, #9CA3AF)' }}
-          >
-            <ClipboardList size={24} strokeWidth={activeTab === 'tickets' ? 2.5 : 2} />
-            <span className="text-[10px] font-black uppercase tracking-tighter">My Tickets</span>
-          </button>
-        </nav>
+        <EventDiscovery
+          events={filteredEvents}
+          categories={CATEGORIES}
+          activeFilter={filter}
+          onFilterChange={setFilter}
+          onEventSelect={handleEventSelect}
+        />
+      )}
+      {stage === STAGES.DETAIL && selectedEvent && (
+        <EventDetail
+          event={selectedEvent}
+          onBook={handleBook}
+          onBack={handleBack}
+        />
+      )}
+      {stage === STAGES.CHECKOUT && selectedEvent && selectedTier && (
+        <EventCheckout
+          event={selectedEvent}
+          tier={selectedTier}
+          onPurchase={handlePurchase}
+          onBack={handleBack}
+        />
+      )}
+      {stage === STAGES.TICKET && booking && (
+        <EventTicket
+          booking={booking}
+          onClose={handleBack}
+        />
       )}
     </div>
   );

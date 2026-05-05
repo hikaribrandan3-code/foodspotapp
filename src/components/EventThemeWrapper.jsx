@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { ClipboardList as Assignment, Ticket, Sun, Moon } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
+import MyTickets from '../pages/customer/events/views/MyTickets';
 
 const LIGHT_TOKENS = {
   '--color-primary': '#10b981',
@@ -41,6 +42,7 @@ const DARK_TOKENS = {
 };
 
 export default function EventThemeWrapper() {
+  const [view, setView] = useState('events'); // 'events' | 'status'
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('event-theme');
@@ -64,7 +66,7 @@ export default function EventThemeWrapper() {
 
   return (
     <div
-      className={`${theme === 'dark' ? 'dark' : ''} min-h-screen`}
+      className={`${theme === 'dark' ? 'dark' : ''} min-h-screen relative`}
       style={{
         backgroundColor: style['--canvas-bg'],
         ...style,
@@ -85,7 +87,32 @@ export default function EventThemeWrapper() {
         </button>
       </div>
 
-      <EventsView />
+      {/* Main Content Area */}
+      <div className="pb-24">
+        {view === 'events' && <EventsView />}
+        {view === 'status' && <MyTickets />}
+      </div>
+
+      {/* Simplified Navigation for Events & Tickets */}
+      <nav
+        className="fixed bottom-0 w-full z-50 flex justify-around items-center h-20 pb-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
+        <button
+          onClick={() => setView('events')}
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+        >
+          <Ticket size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
+        </button>
+        <button
+          onClick={() => setView('status')}
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'status' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+        >
+          <Assignment size={24} strokeWidth={view === 'status' ? 2.5 : 2} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">My Tickets</span>
+        </button>
+      </nav>
     </div>
   );
 }
