@@ -43,19 +43,20 @@ const DARK_TOKENS = {
 };
 
 /* ─── Responsive nav constants (single source of truth) ─── */
-const NAV_HEIGHT = 'clamp(72px, 10vh, 96px)';
-const NAV_GAP = 'clamp(24px, 4vw, 40px)';
+const NAV_HEIGHT = 'clamp(80px, 12vh, 110px)';
+const NAV_GAP = 'clamp(28px, 5vw, 48px)';
 const NAV_PB = 'clamp(12px, 2vh, 24px)';
-const ICON_SIZE = 'clamp(24px, 3.5vw, 32px)';
-const LABEL_SIZE = 'clamp(10px, 1.2vw, 13px)';
-const BTN_GAP = 'clamp(4px, 1vh, 8px)';
-const BTN_PY = 'clamp(8px, 1.5vh, 16px)';
-const FAB_SIZE = 'clamp(52px, 8vw, 64px)';
-const FAB_OFFSET = 'clamp(16px, 3vh, 24px)';
-const FAB_RADIUS = 'clamp(20px, 3vw, 28px)';
-const FAB_BORDER = 'clamp(4px, 0.8vw, 6px)';
-const DROP_H = 'clamp(6px, 1.5vh, 10px)';
-const DROP_BLUR = 'clamp(12px, 2vw, 24px)';
+const ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';        // Events / My Tickets  +20%
+const CAM_ICON_SIZE = 'clamp(30px, 4.5vw, 40px)';   // Camera icon  +25%
+const LABEL_SIZE = 'clamp(11px, 1.4vw, 16px)';
+const BTN_GAP = 'clamp(5px, 1.2vh, 10px)';
+const BTN_PY = 'clamp(10px, 1.8vh, 20px)';
+const FAB_SIZE = 'clamp(60px, 10vw, 80px)';         // Camera button  +25%
+const FAB_OFFSET = 'clamp(24px, 5vh, 40px)';        // Elevated higher
+const FAB_RADIUS = 'clamp(24px, 3.5vw, 34px)';
+const FAB_BORDER = 'clamp(5px, 1vw, 8px)';
+const DROP_H = 'clamp(8px, 2vh, 12px)';
+const DROP_BLUR = 'clamp(16px, 3vw, 32px)';
 
 export default function EventThemeWrapper() {
   const navigate = useNavigate();
@@ -204,7 +205,7 @@ export default function EventThemeWrapper() {
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <Camera
-              style={{ width: ICON_SIZE, height: ICON_SIZE }}
+              style={{ width: CAM_ICON_SIZE, height: CAM_ICON_SIZE }}
               strokeWidth={2.5}
               className="relative z-10"
             />
