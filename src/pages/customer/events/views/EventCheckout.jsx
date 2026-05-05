@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Ticket as TicketIcon, CreditCard, Info, Smartphone, Coins, Fingerprint } from 'lucide-react';
+import { ChevronLeft, Ticket, CreditCard, Info, Smartphone, Wallet, Zap, Coins, Fingerprint } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
@@ -10,7 +10,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' | 'crypto' | 'wristband' | 'wallet'
 
   if (!event || !tier) return null;
 
@@ -23,7 +23,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const total = (tier.price * qty) + addonsTotal;
 
   const toggleAddon = (id) => {
-    setSelectedAddons(prev =>
+    setSelectedAddons(prev => 
       prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
     );
   };
@@ -45,7 +45,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       purchase_date: new Date().toISOString(),
       venue_name: event.venue_name,
       date: event.date,
-      time: event.time,
       image: event.image,
       description: event.description,
       category: event.category,
@@ -63,7 +62,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   return (
     <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
       <header className="px-6 pt-12 pb-6 flex items-center gap-4 bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
-        <button
+        <button 
           onClick={onBack}
           className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[var(--canvas-bg)] text-[var(--text-primary)] active:scale-90 transition-all border border-[var(--border-color)]"
         >
@@ -95,12 +94,12 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
              <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('quantity')}</span>
                 <div className="flex items-center gap-5 bg-[var(--canvas-bg)] px-4 py-2 rounded-2xl border border-[var(--border-color)]">
-                   <button
+                   <button 
                     onClick={() => setQty(Math.max(1, qty - 1))}
                     className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-[var(--text-primary)] font-black active:scale-90 transition-all border border-[var(--border-color)] shadow-sm"
                    >-</button>
                    <span className="text-sm font-black w-4 text-center">{qty}</span>
-                   <button
+                   <button 
                     onClick={() => setQty(qty + 1)}
                     className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-[var(--text-primary)] font-black active:scale-90 transition-all border border-[var(--border-color)] shadow-sm"
                    >+</button>
@@ -118,68 +117,79 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
              </div>
           </div>
         </div>
-
-        {/* Add-ons */}
-        <div className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('addons_title') || 'Experience Add-ons'}</h3>
-          <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-40 px-2">{t('addons_desc') || 'Pre-purchase vouchers to skip the line.'}</p>
-          <div className="space-y-2">
-            {addons.map(addon => {
-              const isSelected = selectedAddons.includes(addon.id);
-              return (
+        
+        {/* Experience Add-ons Section */}
+        <div className="space-y-4">
+           <div className="flex flex-col px-2">
+             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('addons_title')}</h3>
+             <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-30 uppercase tracking-widest mt-1">{t('addons_desc')}</p>
+           </div>
+           
+           <div className="grid grid-cols-2 gap-3">
+              {addons.map((addon) => (
                 <button
                   key={addon.id}
                   onClick={() => toggleAddon(addon.id)}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
-                    isSelected
-                      ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30'
-                      : 'bg-white dark:bg-slate-900 border-[var(--border-color)]'
+                  className={`flex flex-col items-start p-4 rounded-[28px] border transition-all text-left relative overflow-hidden ${
+                    selectedAddons.includes(addon.id)
+                    ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20 shadow-slate-900/20'
+                    : 'bg-white dark:bg-slate-900 border-[var(--border-color)] text-[var(--text-primary)] hover:border-[var(--color-primary)] shadow-sm'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl">{addon.icon}</span>
-                    <div>
-                      <p className="text-xs font-black text-[var(--text-primary)]">{addon.name}</p>
-                      <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-50">+${addon.price}</p>
+                  <span className="text-xl mb-2">{addon.icon}</span>
+                  <p className="text-[10px] font-black uppercase tracking-tight leading-tight mb-1">{addon.name}</p>
+                  <p className={`text-xs font-black ${selectedAddons.includes(addon.id) ? 'text-white/80' : 'text-[var(--color-primary)]'}`}>
+                    ${addon.price}
+                  </p>
+                  
+                  {selectedAddons.includes(addon.id) && (
+                    <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                       <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div>
                     </div>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
-                    isSelected ? 'bg-emerald-500 text-white' : 'bg-[var(--canvas-bg)] text-[var(--text-secondary)]'
-                  }`}>
-                    {isSelected ? '✓' : '+'}
-                  </div>
+                  )}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+           </div>
         </div>
 
-        {/* Payment Method */}
-        <div className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('payment_method') || 'Payment Method'}</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {paymentOptions.map(opt => (
-              <button
-                key={opt.id}
-                onClick={() => setPaymentMethod(opt.id)}
-                className={`flex items-center gap-2 p-3 rounded-2xl border transition-all text-left ${
-                  paymentMethod === opt.id
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
-                    : 'bg-white dark:bg-slate-900 text-[var(--text-primary)] border-[var(--border-color)]'
-                }`}
-              >
-                <span className={paymentMethod === opt.id ? 'text-white dark:text-slate-900' : 'text-[var(--text-secondary)]'}>{opt.icon}</span>
-                <span className="text-[9px] font-black uppercase tracking-widest">{opt.name}</span>
-              </button>
-            ))}
-          </div>
+        {/* Futuristic Payment Methods */}
+        <div className="space-y-4">
+           <div className="flex flex-col px-2">
+             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">Checkout Methods</h3>
+             <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-30 uppercase tracking-widest mt-1">Select your preferred way to pay</p>
+           </div>
+           
+           <div className="grid grid-cols-2 gap-3">
+              {paymentOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setPaymentMethod(opt.id)}
+                  className={`flex items-center gap-3 p-4 rounded-[24px] border transition-all text-left relative ${
+                    paymentMethod === opt.id
+                    ? opt.id === 'mercado' 
+                      ? 'bg-[#FFF059] border-[#FFF059] text-[#009EE3] shadow-lg shadow-yellow-500/20' 
+                      : 'bg-slate-900 border-slate-900 text-white shadow-lg'
+                    : 'bg-white dark:bg-slate-900 border-[var(--border-color)] text-[var(--text-primary)] hover:border-slate-400'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                    paymentMethod === opt.id 
+                    ? opt.id === 'mercado' ? 'bg-[#009EE3]/10' : 'bg-white/10' 
+                    : 'bg-slate-100 dark:bg-slate-800'
+                  }`}>
+                    {opt.icon}
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-tight">{opt.name}</span>
+                </button>
+              ))}
+           </div>
         </div>
 
         <div className="space-y-3">
            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('email_label')}</h3>
            <div className={`flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border transition-all shadow-sm ${email && !isValidEmail(email) ? 'border-rose-500' : 'border-[var(--border-color)]'}`}>
-              <input
-                type="email"
+              <input 
+                type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('email_placeholder')}
@@ -193,20 +203,20 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">Promo Code</h3>
              {applied && (
                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-                 {promoCode.startsWith('FOOD-') || promoCode.startsWith('REF-') ? t('referral_bonus') : 'Code Applied!'}
+                 {promoCode.startsWith('FOOD-') || promoCode.startsWith('REF-') ? (t('referral_bonus') || 'Referral Bonus Applied') : 'Code Applied!'}
                </span>
              )}
            </div>
            <div className={`flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border transition-all shadow-sm ${applied ? 'border-emerald-500/50 ring-1 ring-emerald-500/10' : 'border-[var(--border-color)]'}`}>
-              <input
-                type="text"
+              <input 
+                type="text" 
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 placeholder="Enter code"
                 disabled={applied}
                 className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)] placeholder:opacity-30 disabled:opacity-50"
               />
-              <button
+              <button 
                 onClick={() => {
                   if (!promoCode) return;
                   setIsApplying(true);
@@ -219,8 +229,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                 }}
                 disabled={applied || !promoCode || isApplying}
                 className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  applied
-                  ? 'bg-emerald-500 text-white'
+                  applied 
+                  ? 'bg-emerald-500 text-white' 
                   : 'bg-slate-900 dark:bg-slate-700 text-white active:scale-95 disabled:opacity-50'
                 }`}
               >
@@ -229,28 +239,33 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
            </div>
         </div>
 
-        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl p-5 border border-emerald-100 dark:border-emerald-900/30 flex gap-4">
-           <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
-              <Info size={18} />
+        <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl p-5 border border-amber-100 dark:border-amber-900/30 flex gap-4">
+           <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-amber-600 shrink-0 shadow-sm">
+              <Zap size={18} />
            </div>
            <div>
-              <h4 className="text-[11px] font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-400 mb-1">Mercado Pago Integration</h4>
-              <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500/80 leading-relaxed">
-                {t('mp_todo')}
+              <h4 className="text-[11px] font-black uppercase tracking-tight text-amber-700 dark:text-amber-400 mb-1">Futuristic Checkout</h4>
+              <p className="text-[10px] font-medium text-amber-600 dark:text-amber-500/80 leading-relaxed">
+                Syncing to your wristband allows you to leave your phone behind. Just scan and enjoy.
               </p>
            </div>
         </div>
-
-        <div className="mt-auto pb-4">
-          <button
-            onClick={handleConfirm}
-            className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl shadow-slate-900/10"
-          >
-            <CreditCard size={18} />
-            {t('confirm_payment')}
-          </button>
-        </div>
       </main>
+
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
+        <button 
+          onClick={handleConfirm}
+          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-slate-900/20"
+        >
+          {paymentMethod === 'wristband' ? <Fingerprint size={18} /> : 
+           paymentMethod === 'crypto' ? <Coins size={18} /> : 
+           paymentMethod === 'mercado' ? <Smartphone size={18} /> : 
+           <CreditCard size={18} />}
+          {paymentMethod === 'wristband' ? 'Sync & Confirm' : 
+           paymentMethod === 'mercado' ? 'Pay with Mercado Pago' : 
+           t('confirm_payment')}
+        </button>
+      </div>
     </div>
   );
 }

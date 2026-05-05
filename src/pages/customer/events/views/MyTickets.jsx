@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket as TicketIcon, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
+import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import EventTicket from './EventTicket';
 
 const TicketCard = ({ ticket, isPast = false, onClick }) => {
   const { t } = useLanguage();
   return (
-    <div
+    <div 
       onClick={!isPast ? onClick : undefined}
       className={`relative overflow-hidden rounded-[32px] border group transition-all cursor-pointer bg-white dark:bg-slate-900 h-28 ${isPast ? 'border-slate-100 dark:border-slate-800 opacity-60 grayscale' : 'border-[var(--border-color)] shadow-sm active:scale-[0.98]'}`}
     >
@@ -18,7 +18,7 @@ const TicketCard = ({ ticket, isPast = false, onClick }) => {
 
       <div className="relative z-10 p-5 flex items-center h-full gap-5">
         <div className="flex-1 min-w-0">
-          <h4 className="font-black text-white text-base truncate uppercase tracking-tight mb-1">{ticket.name || ticket.event_name}</h4>
+          <h4 className="font-black text-white text-base truncate uppercase tracking-tight mb-1">{ticket.name}</h4>
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-1.5 text-white/70">
                 <Calendar size={10} className="text-[var(--color-primary)]" />
@@ -29,12 +29,12 @@ const TicketCard = ({ ticket, isPast = false, onClick }) => {
              {!isPast && (
                <div className="flex items-center gap-1.5 text-white/70">
                   <MapPin size={10} className="text-[var(--color-primary)]" />
-                  <span className="text-[10px] font-bold uppercase tracking-tight truncate max-w-[120px]">{ticket.venue || ticket.venue_name}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-tight truncate max-w-[120px]">{ticket.venue}</span>
                </div>
              )}
           </div>
         </div>
-
+        
         <div className="flex flex-col items-end gap-2">
            {isPast ? (
              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm">Past</span>
@@ -77,7 +77,7 @@ export default function MyTickets() {
   };
 
   const savedBookings = JSON.parse(localStorage.getItem('event_bookings') || '[]');
-
+  
   // Combine real bookings with any static ones if desired, or just use real
   const upcomingTickets = savedBookings;
 
@@ -106,9 +106,9 @@ export default function MyTickets() {
 
   if (selectedBooking) {
     return (
-      <EventTicket
-        booking={selectedBooking}
-        onClose={() => setSelectedBooking(null)}
+      <EventTicket 
+        booking={selectedBooking} 
+        onClose={() => setSelectedBooking(null)} 
       />
     );
   }
@@ -134,7 +134,7 @@ export default function MyTickets() {
           <div className="bg-slate-900 rounded-[32px] p-5 text-white relative overflow-hidden shadow-2xl group active:scale-[0.98] transition-all cursor-pointer">
              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700" />
              <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
+             
              <div className="relative z-10 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                    <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
@@ -151,7 +151,7 @@ export default function MyTickets() {
                       </div>
                    </div>
                 </div>
-
+                
                 <div className="-mt-1">
                    <p className="text-[7px] font-black uppercase tracking-[0.2em] opacity-40 mb-0">Digital Balance</p>
                    <div className="flex items-baseline gap-1">
@@ -159,7 +159,7 @@ export default function MyTickets() {
                       <span className="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Credits</span>
                    </div>
                 </div>
-
+ 
                 <div className="flex items-center justify-between pt-3 border-t border-white/5">
                    <div className="flex flex-col items-start">
                       <div className="bg-[#FFF059] px-2.5 py-1 rounded-lg border border-yellow-400 flex items-center gap-1.5 shadow-[0_4px_12px_rgba(255,240,89,0.15)] scale-90 origin-left">
@@ -167,11 +167,11 @@ export default function MyTickets() {
                          <span className="text-[8px] font-black uppercase tracking-widest text-[#009EE3]">MP Linked</span>
                       </div>
                    </div>
-                   <button
+                   <button 
                     onClick={(e) => { e.stopPropagation(); handleTopUp(); }}
                     className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 px-4 py-2 rounded-xl border transition-all ${
-                      isToppingUp
-                      ? 'bg-white text-slate-900 border-white'
+                      isToppingUp 
+                      ? 'bg-white text-slate-900 border-white' 
                       : 'text-emerald-400 bg-emerald-400/5 border-emerald-400/10 hover:bg-emerald-400/20'
                     }`}
                    >
@@ -240,9 +240,9 @@ export default function MyTickets() {
              <span className="text-[10px] font-black text-[var(--color-primary)]">{upcomingTickets.length} active</span>
            </div>
            {upcomingTickets.map(ticket => (
-             <TicketCard
-              key={ticket.id}
-              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}}
+             <TicketCard 
+              key={ticket.id} 
+              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}} 
               onClick={() => setSelectedBooking(ticket)}
              />
            ))}
@@ -266,7 +266,7 @@ export default function MyTickets() {
               <p className="text-sm font-medium text-[var(--text-secondary)] opacity-70 leading-relaxed mb-6">
                  Attend 3 more events to unlock your exclusive VIP collector badge.
               </p>
-              <button
+              <button 
                 onClick={() => setShowBadges(true)}
                 className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all shadow-sm"
               >
@@ -282,14 +282,14 @@ export default function MyTickets() {
       {/* Badges Modal Overlay */}
       {showBadges && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-           <div
-            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+           <div 
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" 
             onClick={() => setShowBadges(false)}
            />
            <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] shadow-2xl animate-in slide-in-from-bottom duration-500 max-h-[95vh] overflow-y-auto">
               <div className="p-8 pb-12">
                  <div className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 sm:hidden" />
-
+                 
                  <div className="flex flex-col items-center text-center mb-10">
                     <div className="w-20 h-20 rounded-[30px] bg-gradient-to-tr from-[var(--color-primary)] to-indigo-600 flex items-center justify-center text-white shadow-2xl mb-6 transform -rotate-6">
                        <Award size={40} />
@@ -301,14 +301,14 @@ export default function MyTickets() {
                  <div className="space-y-4 mb-10">
                     <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4">
                        <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                          <TicketIcon size={24} />
+                          <Ticket size={24} />
                        </div>
                        <div className="flex-1">
                           <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Last Milestone</p>
                           <p className="text-sm font-bold">Techno Pioneer Badge</p>
                        </div>
                     </div>
-
+                    
                     <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4 border-l-4 border-l-[var(--color-primary)]">
                        <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
                           <Sparkles size={24} />
@@ -326,7 +326,7 @@ export default function MyTickets() {
                     </div>
                  </div>
 
-                 <button
+                 <button 
                   onClick={() => setShowBadges(false)}
                   className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-5 rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all"
                  >

@@ -1,6 +1,6 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
-import { MapPin, Calendar, ArrowRight, Cloud, Sun, Thermometer, Sparkles, Languages } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight, Cloud, Sun, Droplets, Thermometer, Sparkles, Languages, Ticket } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 
@@ -87,46 +87,28 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
     { code: 'pt', name: 'PT' }
   ];
 
-  // Multi-tenancy filter + category filter
+  // Category filter
   const filteredEvents = events
-    .filter(e => !businessId || e.business_id === businessId)
     .filter(e => selectedCategory === 'All' || e.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
   return (
     <div className="flex flex-col h-screen pb-20">
-      <header className="px-6 pt-16 pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">
-              {t('welcome_to')}
-            </span>
-            <h1 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">
-              {t('event_discovery')}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                const currentIndex = languages.findIndex(l => l.code === language);
-                const nextIndex = (currentIndex + 1) % languages.length;
-                setLanguage(languages[nextIndex].code);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm"
-            >
-              <Languages size={14} className="text-[var(--color-primary)]" />
-              <span className="text-[10px] font-black text-[var(--text-primary)]">{languages.find(l => l.code === language)?.name || 'EN'}</span>
-            </button>
-            {onViewTickets && (
-              <button
-                onClick={onViewTickets}
-                className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shadow-sm active:scale-95 transition-all relative overflow-hidden group"
-              >
-                <Ticket size={20} className="relative z-10 transition-transform group-hover:-rotate-12" />
-                <div className="absolute inset-0 bg-[var(--color-primary)] opacity-0 group-hover:opacity-5 transition-opacity" />
-              </button>
-            )}
-          </div>
+      <header className="px-6 pt-10 pb-4 flex items-center justify-between">
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">
+            {t('welcome_to')}
+          </span>
+          <h1 className="text-2xl font-black tracking-tight text-[var(--text-primary)]">
+            {t('event_discovery')}
+          </h1>
         </div>
+        <button 
+          onClick={onViewTickets}
+          className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shadow-sm active:scale-95 transition-all relative overflow-hidden group"
+        >
+          <Ticket size={20} className="relative z-10 transition-transform group-hover:-rotate-12" />
+          <div className="absolute inset-0 bg-[var(--color-primary)] opacity-0 group-hover:opacity-5 transition-opacity" />
+        </button>
       </header>
 
       <div className="px-6">
@@ -139,8 +121,8 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
             key={cat}
             onClick={() => setSelectedCategory(cat)}
             className={`px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${
-              selectedCategory === cat
-              ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg'
+              selectedCategory === cat 
+              ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-[var(--color-primary)]/20' 
               : 'bg-white dark:bg-slate-900 text-[var(--text-secondary)] border-[var(--border-color)]'
             }`}
           >
@@ -160,20 +142,25 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
         </div>
 
         {filteredEvents.map(event => (
-          <div
+          <div 
             key={event.id}
             onClick={() => onSelectEvent(event)}
             className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm active:scale-[0.98] transition-all cursor-pointer group"
           >
             <div className="relative h-56 overflow-hidden">
-              <img
-                src={event.image}
-                alt={event.name}
+              <img 
+                src={event.image} 
+                alt={event.name} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-
-              <div className="absolute top-4 left-4 flex gap-1.5">
-                <EventCountdown startDate={event.date} />
+              
+              <div className="absolute top-4 left-4 flex gap-1.5 flex-col items-start">
+                 <EventCountdown startDate={event.date} />
+                 {event.referrable && (
+                   <span className="bg-amber-500/90 backdrop-blur-md px-2 py-1 rounded-lg text-[7px] font-black text-white uppercase tracking-widest border border-white/20 shadow-lg flex items-center gap-1">
+                     <Sparkles size={8} /> Refer & Earn $10
+                   </span>
+                 )}
               </div>
 
               <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-3 py-1.5 rounded-full text-[11px] font-black text-[var(--color-primary)] shadow-lg border border-white/20">
@@ -192,10 +179,16 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
                   <span className="bg-white/10 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 text-white font-black drop-shadow-sm">
                     {event.category}
                   </span>
+                  {event.tiers.some(t => t.price > 0) && (
+                    <span className="bg-white/10 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-white/10 text-white font-black drop-shadow-sm flex items-center gap-1.5">
+                      <Ticket size={10} className="text-[var(--color-primary)]" />
+                      Add-ons Available
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-
+            
             <div className="p-6">
               <div className="flex justify-between items-start mb-3">
                 <h4 className="font-black text-lg leading-tight text-[var(--text-primary)] pr-4">
@@ -205,7 +198,7 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
                   <ArrowRight size={18} />
                 </div>
               </div>
-
+              
               <div className="flex items-center gap-1.5 text-[var(--text-secondary)] opacity-80">
                 <MapPin size={14} className="shrink-0 text-[var(--color-primary)]" />
                 <span className="text-[11px] font-black uppercase tracking-tight truncate">{event.venue_name}</span>
@@ -217,9 +210,9 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
         {filteredEvents.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-20 h-20 rounded-[32px] bg-[var(--border-color)]/30 flex items-center justify-center text-[var(--text-secondary)] mb-6 opacity-40">
-              <Sparkles size={32} />
+               <Sparkles size={32} />
             </div>
-            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">{t('no_events_found')}</p>
+            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">No events found in this category</p>
           </div>
         )}
       </main>
