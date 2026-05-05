@@ -162,6 +162,7 @@ export default function Menu({ config: configProp }) {
     const { t } = useLanguage()
     const { addToCart, removeFromCart, cart, cartTotal } = useCart()
     const navigate = useNavigate()
+    const { tenantSlug } = useParams()
 
     // VISUAL FEEDBACK STATE
     const [addedItem, setAddedItem] = useState(null)
