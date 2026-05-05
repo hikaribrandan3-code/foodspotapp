@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CreditCard, Banknote, DollarSign, MapPin, Link as LinkIcon, Globe,
     Settings, Phone, ChevronRight, ChevronDown, RefreshCw, BarChart3,
-    Shield, Check, X, Users
+    Shield, Check, X, Users, Moon, Sun
 } from 'lucide-react'
 import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -14,6 +14,7 @@ import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { useTheme } from '../../contexts/ThemeContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js'
 import { PAYMENT_METHOD } from '../../constants/database.js'
 
@@ -26,6 +27,7 @@ function OwnerSummary() {
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
     const { lang, t, changeLanguage } = useLanguage()
+    const { theme, setTheme } = useTheme()
     const appConfig = tenantData?.app_config || {}
     const [showAuditor, setShowAuditor] = useState(false)
     const debounceTimerRef = useRef(null)
@@ -295,6 +297,30 @@ function OwnerSummary() {
                                 <span className="text-[10px] text-gray-400 dark:text-[#64748b]">Syncing...</span>
                             )}
                         </div>
+                    </div>
+                </motion.div>
+
+                {/* Preferences */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+                    <SectionHeader
+                        icon={<Settings size={14} />}
+                        title="Preferences"
+                        isOpen={true}
+                    />
+                    <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5">
+                        <button
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            className="w-full flex items-center gap-3 px-4 py-3.5"
+                        >
+                            <span className="text-gray-400 dark:text-[#64748b]">
+                                {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+                            </span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-[#f8fafc] flex-1 text-left">Theme</span>
+                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 dark:bg-[#334155] text-gray-500 dark:text-[#94a3b8]">
+                                {theme === 'dark' ? 'Dark' : 'Light'}
+                            </span>
+                            <ChevronRight size={16} className="text-gray-300 dark:text-[#475569]" />
+                        </button>
                     </div>
                 </motion.div>
 
