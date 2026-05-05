@@ -52,11 +52,6 @@ import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
 import Info from './pages/customer/Info.jsx'
 import Promos from './pages/customer/Promos.jsx'
-import EventDiscovery from './pages/customer/events/views/EventDiscovery.jsx'
-import EventDetail from './pages/customer/events/views/EventDetail.jsx'
-import EventCheckout from './pages/customer/events/views/EventCheckout.jsx'
-import EventTicket from './pages/customer/events/views/EventTicket.jsx'
-import MyTickets from './pages/customer/events/views/MyTickets.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
@@ -72,7 +67,6 @@ import MenuManager from './pages/owner/MenuManager.jsx'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
-
 import FoodSpotAI from './pages/owner/FoodSpotAI.jsx'
 import DeliveryManager from './pages/owner/DeliveryManager.jsx'
 import Dashboard from './pages/owner/Dashboard.jsx'
@@ -492,7 +486,6 @@ function App() {
     };
 
     const routeArea = getRouteArea();
-    const showBottomNav = !pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade');
 
     return (
         <AdminIntentProvider>
@@ -529,11 +522,6 @@ function App() {
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                                             <Route path="/:tenantSlug/promos" element={<Promos />} />
-                                            <Route path="/:tenantSlug/promos/events" element={<EventDiscovery />} />
-                                            <Route path="/:tenantSlug/promos/events/my-tickets" element={<MyTickets />} />
-                                            <Route path="/:tenantSlug/promos/events/:eventId" element={<EventDetail />} />
-                                            <Route path="/:tenantSlug/promos/events/:eventId/checkout" element={<EventCheckout />} />
-                                            <Route path="/:tenantSlug/promos/events/ticket/:ticketId" element={<EventTicket />} />
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
@@ -547,7 +535,6 @@ function App() {
                                             <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
-
                                             <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
@@ -563,7 +550,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {showBottomNav && !pathname.includes('/promos/events') && <BottomNav config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.startsWith('/promos') && <BottomNav config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>

@@ -1,196 +1,151 @@
 import React, { useState } from 'react';
-import { ChevronLeft, CreditCard, Info } from 'lucide-react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowLeft, CreditCard, Lock, User, Mail, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
-import { useTenant } from '../../../../contexts/TenantContext';
-import { getMockEvents } from '../../../../utils/mockEvents.js';
 
-export default function EventCheckout() {
-  const navigate = useNavigate();
-  const { tenantSlug, eventId } = useParams();
-  const [searchParams] = useSearchParams();
+export default function EventCheckout({ event, tier, onPurchase, onBack }) {
   const { t } = useLanguage();
-  const { businessId } = useTenant();
+  const [form, setForm] = useState({ name: '', email: '', phone: '' });
+  const [submitted, setSubmitted] = useState(false);
 
-  const events = getMockEvents(businessId);
-  const event = events.find(e => e.id === eventId);
-  const tierId = searchParams.get('tier');
-  const tier = event?.tiers.find(t => t.id === tierId);
-
-  const [email, setEmail] = useState('');
-  const [qty, setQty] = useState(1);
-  const [promoCode, setPromoCode] = useState('');
-  const [isApplying, setIsApplying] = useState(false);
-  const [applied, setApplied] = useState(false);
-
-  if (!event || !tier) return null;
-
-  const total = tier.price * qty;
-  const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-
-  const handleConfirm = () => {
-    if (!isValidEmail(email)) return;
-    const ticketId = 'TKT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    navigate(`/${tenantSlug}/promos/events/ticket/${ticketId}`, {
-      state: {
-        booking: {
-          id: ticketId,
-          email,
-          event_id: event.id,
-          event_name: event.name,
-          tier_name: tier.name,
-          tier_id: tier.id,
-          quantity: qty,
-          total,
-          purchase_date: new Date().toISOString(),
-          venue_name: event.venue_name,
-          date: event.date,
-          image: event.image,
-          description: event.description,
-          category: event.category
-        }
-      }
-    });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const booking = {
+      id: 'BK-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
+      event_id: event.id,
+      event_name: event.name,
+      venue_name: event.location,
+      tier_id: tier.id,
+      tier_name: tier.name,
+      price: tier.price,
+      date: event.date,
+      time: event.time,
+      image: event.image,
+      customer: form,
+      purchased_at: new Date().toISOString()
+    };
+    setSubmitted(true);
+    setTimeout(() => onPurchase(booking), 600);
   };
 
-  return (
-    <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
-      <header className="px-6 pt-12 pb-6 flex items-center gap-4 bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
-        <button
-          onClick={() => navigate(`/${tenantSlug}/promos/events/${eventId}`)}
-          className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[var(--canvas-bg)] text-[var(--text-primary)] active:scale-90 transition-all border border-[var(--border-color)]"
+  if (submitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="h-full flex flex-col items-center justify-center p-8 text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+          style={{ backgroundColor: 'var(--color-primary, #8B7355)', color: '#fff' }}
         >
-          <ChevronLeft size={20} />
+          <CheckCircle2 size={40} />
+        </motion.div>
+        <h2 className="text-2xl font-black tracking-tight mb-2">{t('purchase_success') || 'Booking Confirmed!'}</h2>
+        <p className="text-sm font-medium opacity-50 mb-8">{t('check_email') || 'Check your email for the ticket.'}</p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto">
+      <header className="px-6 pt-6 pb-4 flex items-center gap-3">
+        <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-transform"
+          style={{ backgroundColor: 'var(--surface-bg, #fff)', color: 'var(--canvas-text, #000)' }}
+        >
+          <ArrowLeft size={20} strokeWidth={2.5} />
         </button>
-        <h1 className="text-xl font-black tracking-tight text-[var(--text-primary)]">
-          {t('confirm_payment')}
-        </h1>
+        <h1 className="text-xl font-black">{t('checkout') || 'Checkout'}</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col">
-        {/* Immersive Event Summary Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm flex flex-col">
-          <div className="relative h-32 w-full">
-            <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/40 dark:via-slate-900/40 to-transparent"></div>
-            <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
-              <div>
-                <h3 className="font-black text-lg text-[var(--text-primary)] leading-tight">{event.name}</h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-primary)] mt-0.5">{tier.name}</p>
-              </div>
-              <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
-                <span className="text-[10px] font-black text-[var(--text-primary)]">${tier.price} <span className="opacity-40">ea</span></span>
-              </div>
+      <div className="px-6 pb-24 space-y-6">
+        {/* Order Summary */}
+        <div className="p-5 rounded-[32px] border space-y-4"
+          style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
+        >
+          <div className="flex gap-4">
+            <img src={event.image} alt="" className="w-20 h-20 rounded-2xl object-cover" />
+            <div className="flex-1">
+              <h3 className="text-sm font-black leading-tight mb-1">{event.name}</h3>
+              <p className="text-[10px] font-bold opacity-40">{tier.name}</p>
             </div>
           </div>
-
-          <div className="p-6 space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('quantity')}</span>
-              <div className="flex items-center gap-5 bg-[var(--canvas-bg)] px-4 py-2 rounded-2xl border border-[var(--border-color)]">
-                <button
-                  onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-[var(--text-primary)] font-black active:scale-90 transition-all border border-[var(--border-color)] shadow-sm"
-                >-</button>
-                <span className="text-sm font-black w-4 text-center">{qty}</span>
-                <button
-                  onClick={() => setQty(qty + 1)}
-                  className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-[var(--text-primary)] font-black active:scale-90 transition-all border border-[var(--border-color)] shadow-sm"
-                >+</button>
-              </div>
-            </div>
-
-            <div className="h-px bg-[var(--border-color)] my-4 border-dashed opacity-50"></div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xl font-black text-[var(--text-primary)] tracking-tight">{t('total')}</span>
-              <div className="text-right">
-                <span className="text-2xl font-black text-[var(--color-primary)] tracking-tighter">${total.toFixed(2)}</span>
-                <p className="text-[9px] font-black text-[var(--text-secondary)] opacity-40 uppercase tracking-widest mt-0.5">Admin fees included</p>
-              </div>
-            </div>
+          <div className="pt-3 border-t flex justify-between items-center"
+            style={{ borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
+          >
+            <span className="text-xs font-black uppercase tracking-wider opacity-50">{t('total') || 'Total'}</span>
+            <span className="text-2xl font-black" style={{ color: 'var(--color-primary, #8B7355)' }}>${tier.price}</span>
           </div>
         </div>
 
-        {/* Email field */}
-        <div className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('email_label')}</h3>
-          <div className={`flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border transition-all shadow-sm ${email && !isValidEmail(email) ? 'border-rose-500' : 'border-[var(--border-color)]'}`}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('email_placeholder')}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)]"
-            />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('full_name') || 'Full Name'}</label>
+            <div className="relative">
+              <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+              <input
+                type="text"
+                required
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                className="w-full pl-11 pr-4 py-4 rounded-[24px] border text-sm font-bold outline-none focus:ring-2"
+                style={{
+                  backgroundColor: 'var(--surface-bg, #fff)',
+                  borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))',
+                  color: 'var(--canvas-text, #000)',
+                  '--tw-ring-color': 'var(--color-primary, #8B7355)'
+                }}
+                placeholder="John Doe"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Promo / Referral Code */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">Promo Code</h3>
-            {applied && (
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-                {promoCode.startsWith('FOOD-') || promoCode.startsWith('REF-') ? t('referral_bonus') : 'Code Applied!'}
-              </span>
-            )}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">{t('email') || 'Email'}</label>
+            <div className="relative">
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 opacity-30" />
+              <input
+                type="email"
+                required
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                className="w-full pl-11 pr-4 py-4 rounded-[24px] border text-sm font-bold outline-none focus:ring-2"
+                style={{
+                  backgroundColor: 'var(--surface-bg, #fff)',
+                  borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))',
+                  color: 'var(--canvas-text, #000)'
+                }}
+                placeholder="john@example.com"
+              />
+            </div>
           </div>
-          <div className={`flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border transition-all shadow-sm ${applied ? 'border-emerald-500/50 ring-1 ring-emerald-500/10' : 'border-[var(--border-color)]'}`}>
-            <input
-              type="text"
-              value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
-              placeholder="Enter code"
-              disabled={applied}
-              className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)] placeholder:opacity-30 disabled:opacity-50"
-            />
-            <button
-              onClick={() => {
-                if (!promoCode) return;
-                setIsApplying(true);
-                setTimeout(() => {
-                  const isReferral = promoCode.toUpperCase().startsWith('FOOD-') || promoCode.toUpperCase().startsWith('REF-');
-                  setIsApplying(false);
-                  setApplied(true);
-                  if (isReferral) setPromoCode(promoCode.toUpperCase());
-                }, 800);
-              }}
-              disabled={applied || !promoCode || isApplying}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                applied
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-900 dark:bg-slate-700 text-white active:scale-95 disabled:opacity-50'
-              }`}
-            >
-              {isApplying ? 'Applying...' : applied ? 'Applied' : 'Apply'}
-            </button>
-          </div>
-        </div>
 
-        <div className="bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl p-5 border border-emerald-100 dark:border-emerald-900/30 flex gap-4">
-          <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
-            <Info size={18} />
-          </div>
-          <div>
-            <h4 className="text-[11px] font-black uppercase tracking-tight text-emerald-700 dark:text-emerald-400 mb-1">Mercado Pago Integration</h4>
-            <p className="text-[10px] font-medium text-emerald-600 dark:text-emerald-500/80 leading-relaxed">
-              {t('mp_todo')}
+          <div className="p-5 rounded-[24px] border space-y-3"
+            style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Lock size={14} className="opacity-30" />
+              <span className="text-[10px] font-black uppercase tracking-wider opacity-40">{t('secure_payment') || 'Secure Payment'}</span>
+            </div>
+            <p className="text-[10px] font-bold opacity-30 leading-relaxed">
+              {t('payment_processed_securely') || 'Your payment is processed securely. We do not store your card details.'}
             </p>
           </div>
-        </div>
 
-        <div className="mt-auto pb-4">
           <button
-            onClick={handleConfirm}
-            disabled={!isValidEmail(email)}
-            className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-xl shadow-slate-900/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            type="submit"
+            className="w-full py-4 rounded-[24px] text-sm font-black uppercase tracking-widest text-white active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+            style={{ backgroundColor: 'var(--color-primary, #8B7355)' }}
           >
             <CreditCard size={18} />
-            {t('confirm_payment')}
+            {t('pay_now') || 'Pay'} ${tier.price}
           </button>
-        </div>
-      </main>
+        </form>
+      </div>
     </div>
   );
 }

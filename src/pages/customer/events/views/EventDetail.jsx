@@ -1,271 +1,207 @@
-import * as React from 'react';
-const { useState, useEffect } = React;
-import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Ticket } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useLanguage } from '../../../../contexts/LanguageContext';
-import { useTenant } from '../../../../contexts/TenantContext';
-import { getMockEvents } from '../../../../utils/mockEvents.js';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Calendar, MapPin, Clock, Ticket, Zap, Info } from 'lucide-react';
 import { VenueMap } from '../../../../components/VenueMap';
+import { useLanguage } from '../../../../contexts/LanguageContext';
 
-const EventCountdown = ({ startDate }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const calculate = () => {
-      const difference = +new Date(startDate) - +new Date();
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      }
-    };
-    calculate();
-    const timer = setInterval(calculate, 1000);
-    return () => clearInterval(timer);
-  }, [startDate]);
-
-  return (
-    <div className="flex gap-4">
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold text-[var(--color-primary)]">{timeLeft.days}</span>
-        <span className="text-[7px] font-black uppercase tracking-[0.1em] opacity-40">Days</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold text-[var(--color-primary)]">{timeLeft.hours}</span>
-        <span className="text-[7px] font-black uppercase tracking-[0.1em] opacity-40">Hrs</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold text-[var(--color-primary)]">{timeLeft.minutes}</span>
-        <span className="text-[7px] font-black uppercase tracking-[0.1em] opacity-40">Mins</span>
-      </div>
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold text-rose-500">{timeLeft.seconds}</span>
-        <span className="text-[7px] font-black uppercase tracking-[0.1em] opacity-40">Secs</span>
-      </div>
-    </div>
-  );
-};
-
-export default function EventDetail() {
-  const navigate = useNavigate();
-  const { tenantSlug, eventId } = useParams();
+export default function EventDetail({ event, onBook, onBack }) {
   const { t } = useLanguage();
-  const { businessId } = useTenant();
-  const events = getMockEvents(businessId);
-  const event = events.find(e => e.id === eventId);
-  const [selectedZone, setSelectedZone] = useState(null);
-
-  if (!event) return null;
-
-  const handleZoneSelect = (zoneId) => {
-    setSelectedZone(zoneId);
-  };
+  const [selectedTier, setSelectedTier] = useState(null);
+  const [showMap, setShowMap] = useState(false);
+  const eventDate = new Date(event.date);
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
-      <div className="relative h-[420px] shrink-0">
-        <img
-          src={event.image}
-          alt={event.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-950 via-transparent to-transparent"></div>
-
+    <div className="h-full overflow-y-auto">
+      {/* Sticky Back Button */}
+      <div className="sticky top-0 z-50 px-4 pt-4 pb-2">
         <button
-          onClick={() => navigate(`/${tenantSlug}`)}
-          className="absolute top-12 left-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[var(--text-primary)] shadow-xl active:scale-90 transition-all border border-white/20"
+          onClick={onBack}
+          className="w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center active:scale-90 transition-transform"
+          style={{ backgroundColor: 'var(--surface-bg, #fff)', color: 'var(--canvas-text, #000)' }}
         >
-          <ChevronLeft size={24} />
+          <ArrowLeft size={20} strokeWidth={2.5} />
         </button>
+      </div>
 
-        <div className="absolute bottom-10 left-6 right-6">
-          <div className="flex gap-2 mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20">
-              <Sparkles size={10} />
-              {t('exclusive')}
+      {/* Hero Image */}
+      <div className="relative -mt-14">
+        <div className="h-72 overflow-hidden">
+          <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 p-6">
+          <span className="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-white/90 backdrop-blur-md mb-3"
+            style={{ color: 'var(--color-primary, #8B7355)' }}
+          >
+            {event.category}
+          </span>
+          <h1 className="text-3xl font-black text-white tracking-tight leading-tight mb-2">{event.name}</h1>
+          <div className="flex items-center gap-3 text-white/70">
+            <div className="flex items-center gap-1">
+              <MapPin size={12} />
+              <span className="text-[10px] font-bold">{event.location}</span>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
-              {event.category}
+            <div className="flex items-center gap-1">
+              <Calendar size={12} />
+              <span className="text-[10px] font-bold">
+                {eventDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock size={12} />
+              <span className="text-[10px] font-bold">{event.time}</span>
             </div>
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-[var(--text-primary)] leading-tight">
-            {event.name}
-          </h1>
         </div>
       </div>
 
-      <main className="px-6 py-6 flex flex-col gap-6 pb-24">
-        <div className="bg-[var(--canvas-bg)] p-4 rounded-[28px] border border-[var(--border-color)] shadow-sm">
-          <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 mb-3 text-center">Event Starts In</h3>
-          <div className="flex justify-center">
-            <EventCountdown startDate={event.date} />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between bg-[var(--canvas-bg)] p-5 rounded-[28px] border border-[var(--border-color)]">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-[var(--color-primary)] shadow-sm border border-[var(--border-color)]">
-              <Calendar size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('date')}</p>
-              <p className="text-sm font-black text-[var(--text-primary)]">{new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })}</p>
-            </div>
-          </div>
-          <div className="h-10 w-px bg-[var(--border-color)]"></div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-[var(--color-primary)] shadow-sm border border-[var(--border-color)]">
-              <Clock size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('time')}</p>
-              <p className="text-sm font-black text-[var(--text-primary)]">{event.time}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('location')}</h3>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start gap-3 bg-[var(--canvas-bg)] p-4 rounded-3xl border border-[var(--border-color)]">
-              <div className="w-8 h-8 rounded-xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] shrink-0">
-                <MapPin size={16} />
-              </div>
-              <p className="text-sm font-bold text-[var(--text-secondary)] leading-relaxed">
-                {event.location}
-              </p>
-            </div>
-
-            {event.category === 'Pop-ups' && (
-              <div className="bg-amber-50 dark:bg-amber-900/10 p-5 rounded-[28px] border border-amber-200 dark:border-amber-900/20 flex items-start gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-800 flex items-center justify-center text-amber-600 shrink-0">
-                  <Info size={20} />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-amber-950 dark:text-amber-200 mb-1">{t('secret_location')}</h4>
-                  <p className="text-xs font-bold text-amber-800 dark:text-amber-400 opacity-80 leading-relaxed">
-                    {t('secret_location_desc')}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Festival Lineup & Schedule */}
-        {event.category === 'Festivals' && event.lineup && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('lineup_schedule')}</h3>
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/5 border border-emerald-500/10">
-                <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[8px] font-black text-emerald-600 uppercase tracking-wider">Live Now</span>
-              </div>
-            </div>
-
-            <div className="relative space-y-4 px-2">
-              {/* Timeline Line */}
-              <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-slate-100 dark:bg-slate-900" />
-
-              {event.lineup.map((slot, i) => (
-                <div key={i} className="relative flex items-center gap-6 group">
-                  <div className={`relative z-10 w-12 h-12 flex flex-col items-center justify-center rounded-2xl border bg-white dark:bg-slate-900 shadow-sm transition-all ${
-                    slot.live ? 'border-emerald-500 ring-4 ring-emerald-500/10' : 'border-[var(--border-color)]'
-                  }`}>
-                    <span className={`text-[10px] font-black ${slot.live ? 'text-emerald-600' : 'text-[var(--text-primary)]'}`}>{slot.time}</span>
-                  </div>
-
-                  <div className={`flex-1 p-4 rounded-3xl border transition-all ${
-                    slot.live
-                    ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30'
-                    : 'bg-[var(--canvas-bg)] border-[var(--border-color)] group-hover:border-[var(--color-primary)]/30'
-                  }`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--color-primary)] opacity-60">{slot.stage}</span>
-                      {slot.live && <Sparkles size={12} className="text-emerald-500" />}
-                    </div>
-                    <h4 className={`text-base font-black ${slot.live ? 'text-emerald-950 dark:text-emerald-100' : 'text-[var(--text-primary)]'}`}>
-                      {slot.artist}
-                    </h4>
-                    <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50">{slot.genre}</p>
-                  </div>
+      <div className="px-6 py-6 space-y-8">
+        {/* Countdown */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-[32px] p-6 text-white relative overflow-hidden"
+          style={{ backgroundColor: 'var(--color-primary, #8B7355)' }}
+        >
+          <div className="relative z-10">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-3">{t('event_starts_in') || 'Event Starts In'}</p>
+            <div className="flex gap-4">
+              {['days','hours','minutes'].map(unit => (
+                <div key={unit} className="flex-1">
+                  <div className="text-3xl font-black">{unit === 'days' ? '12' : unit === 'hours' ? '04' : '32'}</div>
+                  <div className="text-[9px] font-black uppercase tracking-wider opacity-60">{unit}</div>
                 </div>
               ))}
             </div>
           </div>
+          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+        </motion.div>
+
+        {/* Description */}
+        <section>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-2">{t('about') || 'About'}</h3>
+          <p className="text-sm font-medium leading-relaxed opacity-80">{event.description}</p>
+        </section>
+
+        {/* Festival Lineup (if exists) */}
+        {event.lineup && (
+          <section>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-3">{t('lineup') || 'Festival Lineup'}</h3>
+            <div className="space-y-3">
+              {event.lineup.map((item, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex items-center gap-4 p-4 rounded-[24px] border"
+                  style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
+                >
+                  <div className="text-center min-w-[50px]">
+                    <p className="text-xs font-black opacity-50">{item.time}</p>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-black">{item.artist}</h4>
+                    <p className="text-[10px] font-bold opacity-40">{item.genre} • {item.stage} Stage</p>
+                  </div>
+                  {item.live && (
+                    <span className="px-2 py-1 rounded-full bg-red-500 text-white text-[8px] font-black uppercase tracking-wider animate-pulse">Live</span>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </section>
         )}
 
-        <div className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">About Event</h3>
-          <p className="text-sm text-[var(--text-secondary)] leading-relaxed font-medium">
-            {event.description}
+        {/* Venue Map Toggle */}
+        <section>
+          <button
+            onClick={() => setShowMap(!showMap)}
+            className="w-full flex items-center justify-between p-4 rounded-[24px] border active:scale-[0.98] transition-transform"
+            style={{ backgroundColor: 'var(--surface-bg, #fff)', borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-primary, #8B7355)', color: '#fff' }}
+              >
+                <Zap size={18} />
+              </div>
+              <div className="text-left">
+                <h4 className="text-sm font-black">{t('venue_map') || 'Venue Map'}</h4>
+                <p className="text-[10px] font-bold opacity-40">{t('select_seating') || 'Select your seating zone'}</p>
+              </div>
+            </div>
+            <div className={`transition-transform ${showMap ? 'rotate-180' : ''}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+          </button>
+          {showMap && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mt-3">
+              <VenueMap selectedZone={selectedTier?.id || null} onSelectZone={(id) => {
+                const tier = event.tiers.find(t => t.id === id);
+                if (tier) setSelectedTier(tier);
+              }} />
+            </motion.div>
+          )}
+        </section>
+
+        {/* Ticket Tiers */}
+        <section>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-3">{t('select_tier') || 'Select Tier'}</h3>
+          <div className="space-y-3">
+            {event.tiers.map((tier) => (
+              <motion.button
+                key={tier.id}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedTier(tier)}
+                className={`w-full p-5 rounded-[32px] border-2 text-left transition-all ${
+                  selectedTier?.id === tier.id ? '' : ''
+                }`}
+                style={selectedTier?.id === tier.id ? {
+                  borderColor: 'var(--color-primary, #8B7355)',
+                  backgroundColor: 'var(--surface-bg, #fff)'
+                } : {
+                  borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))',
+                  backgroundColor: 'var(--surface-bg, #fff)'
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      selectedTier?.id === tier.id ? '' : ''
+                    }`}
+                    style={selectedTier?.id === tier.id ? { borderColor: 'var(--color-primary, #8B7355)' } : { borderColor: 'var(--border-subtle, rgba(0,0,0,0.06))' }}
+                    >
+                      {selectedTier?.id === tier.id && (
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--color-primary, #8B7355)' }} />
+                      )}
+                    </div>
+                    <h4 className="text-base font-black">{tier.name}</h4>
+                  </div>
+                  <span className="text-xl font-black" style={{ color: 'var(--color-primary, #8B7355)' }}>${tier.price}</span>
+                </div>
+                <p className="text-[10px] font-bold opacity-40 pl-8">{t('per_person') || 'Per person'}</p>
+              </motion.button>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <div className="pt-4 pb-8">
+          <button
+            onClick={() => selectedTier && onBook(selectedTier)}
+            disabled={!selectedTier}
+            className="w-full py-4 rounded-[24px] text-sm font-black uppercase tracking-widest text-white active:scale-[0.98] transition-transform disabled:opacity-30"
+            style={{ backgroundColor: 'var(--color-primary, #8B7355)' }}
+          >
+            {selectedTier ? `${t('book_now') || 'Book Now'} — $${selectedTier.price}` : t('select_tier') || 'Select a Tier'}
+          </button>
+          <p className="text-center text-[9px] font-bold opacity-30 mt-3 flex items-center justify-center gap-1">
+            <Info size={10} />
+            {t('tickets_non_refundable') || 'Tickets are non-refundable'}
           </p>
         </div>
-
-        {/* Venue Layout for Festivals */}
-        {event.category === 'Festivals' && (
-          <div className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">Venue Layout</h3>
-            <VenueMap
-              selectedZone={selectedZone}
-              onSelectZone={handleZoneSelect}
-            />
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('select_tier')}</h3>
-          <div className="grid gap-4">
-            {event.tiers.map(tier => {
-              const isSelected = selectedZone && (
-                tier.id.toLowerCase().includes(selectedZone.toLowerCase()) ||
-                (selectedZone === 'Tables' && tier.name.toLowerCase().includes('table')) ||
-                (selectedZone === 'VIP_L' && tier.name.includes('VIP')) ||
-                (selectedZone === 'VIP_R' && tier.name.includes('VIP'))
-              );
-
-              return (
-                <button
-                  key={tier.id}
-                  onClick={() => navigate(`/${tenantSlug}/promos/events/${eventId}/checkout?tier=${tier.id}`)}
-                  className={`group relative flex items-center justify-between p-6 rounded-[32px] bg-white dark:bg-slate-900 border transition-all text-left shadow-sm overflow-hidden ${
-                    isSelected
-                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-4 ring-[var(--color-primary)]/10 scale-[1.02]'
-                      : 'border-[var(--border-color)] hover:border-[var(--color-primary)]/30 active:scale-[0.98]'
-                  }`}
-                >
-                  <div className="relative z-10 flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                      tier.name.toLowerCase().includes('table')
-                        ? 'bg-purple-100 text-purple-600'
-                        : tier.name.includes('VIP')
-                          ? 'bg-orange-100 text-orange-600'
-                          : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      <Ticket size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-[var(--text-primary)] text-sm mb-0.5">{tier.name}</h4>
-                      <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50">
-                        {tier.name.toLowerCase().includes('table')
-                          ? 'Includes reserved premium seating'
-                          : 'Admission for 1 person'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="relative z-10 text-right">
-                    <p className="text-xl font-black text-[var(--color-primary)]">${tier.price}</p>
-                    <p className="text-[9px] font-black uppercase tracking-tight text-[var(--text-secondary)] opacity-50">Available</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
