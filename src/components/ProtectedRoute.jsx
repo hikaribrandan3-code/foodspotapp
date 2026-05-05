@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import { useTenant } from '../contexts/TenantContext.jsx'
+import BurgerLoader from './BurgerLoader.jsx'
 
 // Role hierarchy: higher index = more access
 const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']
@@ -142,29 +143,7 @@ function ProtectedRoute({ children, requiredRole }) {
     // Show spinner while waiting for BOTH Supabase session AND TenantContext to resolve
     // This prevents false redirects and premature Silo Guard evaluation
     if (isLoading || (tenantSlug && !tenantLoaded)) {
-        return (
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                background: 'var(--canvas-bg, #fff)'
-            }}>
-                <div style={{
-                    width: 32,
-                    height: 32,
-                    border: '3px solid #E5E7EB',
-                    borderTopColor: '#3B82F6',
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite'
-                }} />
-                <style>{`
-                    @keyframes spin {
-                        to { transform: rotate(360deg); }
-                    }
-                `}</style>
-            </div>
-        )
+        return <BurgerLoader />
     }
 
     // ============================================
