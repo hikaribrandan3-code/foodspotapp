@@ -94,7 +94,7 @@ export default function EventDiscovery({ events, onSelectEvent }) {
 
   return (
     <div className="flex flex-col h-screen pb-20">
-      <header className="px-6 pt-10 pb-4">
+      <header className="px-6 pt-16 pb-4">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">
