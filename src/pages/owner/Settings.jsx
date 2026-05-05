@@ -10,6 +10,7 @@ import CoverImageEditor from '../../components/CoverImageEditor';
 import ColorPickerModal from '../../components/ColorPickerModal';
 import { clearAuth } from '../../utils/storage';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
+import BurgerLoader from '../../components/BurgerLoader';
 import './Settings.css';
 
 // --- MINI NAV ICONS (24px versions for compact preview) ---
@@ -508,7 +509,7 @@ const Settings = () => {
         );
     };
 
-    if (!tenant) return <div className="p-4 text-center text-gray-500">{t('loading_vault')}</div>;
+    if (!tenant) return <BurgerLoader />;
 
     const heroIconMode = draft.hero_icon_mode || 'black';
     const navIconMode = draft.nav_icon_mode || 'white';
