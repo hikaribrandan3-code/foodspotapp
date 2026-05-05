@@ -1,17 +1,54 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText } from 'lucide-react';
+import { Download, Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText, ChevronLeft } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { VenueMap } from '../../../../components/VenueMap';
+
+function generateICS(booking) {
+  const date = booking.date.replace(/-/g, '');
+  const time = (booking.time || '00:00').replace(':', '');
+  const dtStart = `${date}T${time}00`;
+
+  // Default 4-hour event duration
+  const start = new Date(`${booking.date}T${booking.time || '00:00'}`);
+  const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  const dtEnd = end.toISOString().replace(/[-:]/g, '').slice(0, 15);
+
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Foodspot//Event//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `SUMMARY:${booking.event_name}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `LOCATION:${booking.venue_name || ''}`,
+    `DESCRIPTION:${(booking.description || 'Foodspot Event').replace(/\n/g, '\\n')}`,
+    `UID:ticket-${booking.id}@foodspot.app`,
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
 
 export default function EventTicket({ booking, onClose }) {
   const { t } = useLanguage();
   const { theme } = useTheme();
   const ticketRef = useRef(null);
+  const [showMap, setShowMap] = useState(false);
+  const [selectedZone, setSelectedZone] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const showToastMsg = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
 
   useEffect(() => {
     const duration = 3 * 1000;
@@ -59,6 +96,76 @@ export default function EventTicket({ booking, onClose }) {
       pdf.save(`Ticket_${booking.event_name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
+      showToastMsg('Failed to generate PDF');
+    }
+  };
+
+  const handleAddToCalendar = () => {
+    try {
+      const icsContent = generateICS(booking);
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${booking.event_name.replace(/\s+/g, '_')}.ics`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToastMsg('Calendar file downloaded!');
+    } catch (error) {
+      console.error('Error generating ICS:', error);
+      showToastMsg('Failed to generate calendar file');
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: booking.event_name,
+      text: `I'm going to ${booking.event_name} on ${booking.date} at ${booking.venue_name}! 🎟️`,
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          showToastMsg('Share failed');
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        showToastMsg('Link copied to clipboard!');
+      } catch {
+        showToastMsg('Could not copy link');
+      }
+    }
+  };
+
+  const handleAddToWallet = async () => {
+    if (navigator.canShare && navigator.canShare({ files: [] }) && ticketRef.current) {
+      try {
+        const canvas = await html2canvas(ticketRef.current, {
+          scale: 1,
+          useCORS: true,
+          backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff'
+        });
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        const file = new File([blob], `ticket-${booking.id}.png`, { type: 'image/png' });
+        await navigator.share({
+          title: booking.event_name,
+          text: `Your ticket for ${booking.event_name}`,
+          files: [file]
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          showToastMsg('Save the ticket image to add it to your wallet');
+        }
+      }
+    } else {
+      showToastMsg('Save the ticket image to add it to your wallet');
     }
   };
 
@@ -66,6 +173,48 @@ export default function EventTicket({ booking, onClose }) {
 
   return (
     <div className="flex flex-col h-screen bg-[var(--canvas-bg)] overflow-y-auto hide-scrollbar">
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[200] bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-5 py-3 rounded-2xl shadow-2xl text-[11px] font-black uppercase tracking-widest"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Venue Map Modal */}
+      <AnimatePresence>
+        {showMap && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] bg-[var(--canvas-bg)] flex flex-col"
+          >
+            <header className="px-6 pt-12 pb-4 flex items-center gap-4 bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
+              <button
+                onClick={() => setShowMap(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[var(--canvas-bg)] text-[var(--text-primary)] active:scale-90 transition-all border border-[var(--border-color)]"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div>
+                <h1 className="text-xl font-black tracking-tight text-[var(--text-primary)]">Grounds Map</h1>
+                <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-50 uppercase tracking-widest">{booking.venue_name}</p>
+              </div>
+            </header>
+            <main className="flex-1 overflow-y-auto px-4 py-6">
+              <VenueMap selectedZone={selectedZone} onSelectZone={setSelectedZone} />
+            </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <header className="px-6 pt-12 pb-6 flex items-center justify-between bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
         <div className="flex items-center gap-3">
           <motion.div
@@ -122,7 +271,7 @@ export default function EventTicket({ booking, onClose }) {
                {booking.event_name}
              </h2>
              <div className="flex items-center justify-center gap-3 text-[var(--text-secondary)] font-bold text-[9px] opacity-70 mb-1.5">
-                <span className="flex items-center gap-1"><Calendar size={9} /> {booking.date}</span>
+                <span className="flex items-center gap-1"><Calendar size={9} /> {booking.date}{booking.time ? ` • ${booking.time}` : ''}</span>
                 <span>•</span>
                 <span className="flex items-center gap-1"><MapPin size={9} /> {booking.venue_name}</span>
              </div>
@@ -169,7 +318,10 @@ export default function EventTicket({ booking, onClose }) {
                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                    <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Site Map Ready</span>
                  </div>
-                 <button className="text-[9px] font-black text-[var(--color-primary)] underline underline-offset-4 decoration-2">
+                 <button
+                   onClick={() => setShowMap(true)}
+                   className="text-[9px] font-black text-[var(--color-primary)] underline underline-offset-4 decoration-2 active:opacity-70 transition-opacity"
+                 >
                    Open Grounds Map
                  </button>
                </div>
@@ -196,21 +348,30 @@ export default function EventTicket({ booking, onClose }) {
             <FileText size={16} /> {t('download_pdf_ticket')}
           </button>
 
-          <button className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all">
+          <button
+            onClick={handleAddToCalendar}
+            className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all"
+          >
              <div className="text-[var(--color-primary)]">
                 <Calendar size={16} />
              </div>
              <span className="text-[8px] font-black uppercase tracking-widest">{t('add_to_calendar')}</span>
           </button>
 
-          <button className="bg-black text-white rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all shadow-lg">
+          <button
+            onClick={handleAddToWallet}
+            className="bg-black text-white rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all shadow-lg"
+          >
              <div className="text-white">
                 <Ticket size={16} />
              </div>
              <span className="text-[8px] font-black uppercase tracking-widest">{t('add_to_wallet')}</span>
           </button>
 
-          <button className="col-span-2 bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest">
+          <button
+            onClick={handleShare}
+            className="col-span-2 bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest"
+          >
             <Share2 size={16} /> {t('share')}
           </button>
         </div>

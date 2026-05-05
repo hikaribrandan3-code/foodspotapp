@@ -30,6 +30,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       purchase_date: new Date().toISOString(),
       venue_name: event.venue_name,
       date: event.date,
+      time: event.time,
       image: event.image,
       description: event.description,
       category: event.category
