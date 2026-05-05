@@ -167,6 +167,16 @@ export default function Menu({ config: configProp }) {
     // VISUAL FEEDBACK STATE
     const [addedItem, setAddedItem] = useState(null)
 
+    // MENU DISPLAY MODE TOGGLE
+    const [displayMode, setDisplayMode] = useState(
+        () => localStorage.getItem(`fs_menu_display_mode_${tenantSlug}`) || 'simple'
+    )
+    const handleToggleMode = () => {
+        const newMode = displayMode === 'simple' ? 'detailed' : 'simple'
+        setDisplayMode(newMode)
+        localStorage.setItem(`fs_menu_display_mode_${tenantSlug}`, newMode)
+    }
+
     // =========================================================================
     // 1. DATA STATE (With Seed Fallback)
     // =========================================================================
@@ -307,20 +317,6 @@ export default function Menu({ config: configProp }) {
     const longPressTimerRef = useRef(null)
     const [activeCategory, setActiveCategory] = useState('')
     const categoryRefs = useRef({})
-
-    // 🍔 MENU DISPLAY MODE: Simple (grid) vs Detailed (card)
-    const lsKey = tenantSlug ? `fs_menu_display_mode_${tenantSlug}` : 'fs_menu_display_mode'
-    const [displayMode, setDisplayMode] = useState(() => {
-        try { return localStorage.getItem(lsKey) || 'simple' } catch { return 'simple' }
-    })
-    const isDetailedMode = displayMode === 'detailed'
-
-    // Only show toggle if at least one item has a description
-    const hasAnyDescriptions = useMemo(() => {
-        return menu.categories?.some(cat =>
-            cat.items?.some(item => item.description && item.description.trim().length > 0)
-        )
-    }, [menu])
     // ATOMIC SAVE STATE
     const [hasChanges, setHasChanges] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -446,12 +442,6 @@ export default function Menu({ config: configProp }) {
         })
         dragItemRef.current = target
     }, [])
-
-    const toggleDisplayMode = () => {
-        const next = displayMode === 'simple' ? 'detailed' : 'simple'
-        setDisplayMode(next)
-        try { localStorage.setItem(lsKey, next) } catch {}
-    }
 
     const handleDragMove = useCallback((e) => {
         if (!dragState) return
@@ -794,7 +784,7 @@ export default function Menu({ config: configProp }) {
                     position: 'sticky', top: 52, zIndex: 900, background: 'rgba(255,255,255,0.95)',
                     backdropFilter: 'blur(8px)', padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
                 }}>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none' }}>
                         {enabledCategories.map(cat => (
                             <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                                 padding: '7px 15px', borderRadius: 18, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
@@ -802,32 +792,6 @@ export default function Menu({ config: configProp }) {
                                 fontWeight: 600, fontSize: 14, flexShrink: 0, boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
                             }}>{cat.name}</button>
                         ))}
-                        {/* Display Mode Toggle */}
-                        {hasAnyDescriptions && !isEditMode && !isOwnerMode && (
-                            <button
-                                onClick={toggleDisplayMode}
-                                style={{
-                                    marginLeft: 'auto',
-                                    padding: '6px 12px',
-                                    borderRadius: 14,
-                                    border: '1px solid #E5E7EB',
-                                    background: 'white',
-                                    color: '#374151',
-                                    fontWeight: 600,
-                                    fontSize: 12,
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 4
-                                }}
-                                title={isDetailedMode ? 'Switch to simple view' : 'Switch to detailed view'}
-                            >
-                                <span style={{ opacity: isDetailedMode ? 0.5 : 1 }}>Simple</span>
-                                <span style={{ color: '#D1D5DB' }}>|</span>
-                                <span style={{ opacity: isDetailedMode ? 1 : 0.5 }}>Detailed</span>
-                            </button>
-                        )}
                     </div>
                 </div>
             )}
@@ -836,33 +800,40 @@ export default function Menu({ config: configProp }) {
             <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                            {/* <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon || '🍽️'}</span> */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
+                            {category === enabledCategories[0] && (
+                                <button
+                                    onClick={handleToggleMode}
+                                    style={{
+                                        fontSize: 11,
+                                        fontWeight: 600,
+                                        padding: '6px 12px',
+                                        border: '1px solid #D1D5DB',
+                                        background: 'white',
+                                        borderRadius: 6,
+                                        cursor: 'pointer',
+                                        color: '#374151',
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {displayMode === 'simple' ? 'Simple | Detailed' : 'Detailed | Simple'}
+                                </button>
+                            )}
                         </div>
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: isDetailedMode
-                                ? 'repeat(auto-fill, minmax(280px, 1fr))'
-                                : 'repeat(3, 1fr)',
-                            gap: isDetailedMode ? 16 : 12
-                        }}>
+                        <div style={{ display: displayMode === 'detailed' ? 'grid' : 'grid', gridTemplateColumns: displayMode === 'detailed' ? 'minmax(280px, 1fr)' : 'repeat(3, 1fr)', gap: displayMode === 'detailed' ? 16 : 12 }}>
                             {category.items.map((item, index) => {
                                 // 🛡️ PHYSICS VISUALS: Green Frame & Ghost Opacity
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
 
-                                if (isDetailedMode && !isEditMode && !isOwnerMode) {
-                                    return (
-                                        <DetailedMenuItemCard
-                                            key={item.id}
-                                            item={item}
-                                            onAddToCart={handleTapToAdd}
-                                        />
-                                    )
-                                }
-
-                                return (
+                                return displayMode === 'detailed' ? (
+                                    <DetailedMenuItemCard
+                                        key={item.id}
+                                        item={item}
+                                        onAddToCart={handleTapToAdd}
+                                    />
+                                ) : (
                                     <ItemCard
                                         key={item.id}
                                         item={item}
