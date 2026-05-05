@@ -54,7 +54,22 @@ export default function EventThemeWrapper() {
 
   useEffect(() => {
     localStorage.setItem('event-theme', theme);
+    // Sync dark class on body for scoped CSS overrides
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
   }, [theme]);
+
+  useEffect(() => {
+    // Add event-route class to body for isolated styling
+    document.body.classList.add('event-route');
+    return () => {
+      document.body.classList.remove('event-route');
+      document.body.classList.remove('dark');
+    };
+  }, []);
 
   const style = useMemo(() => {
     const tokens = theme === 'dark' ? DARK_TOKENS : LIGHT_TOKENS;

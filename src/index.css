@@ -10,6 +10,26 @@
 }
 
 /* =============================================
+   EVENT MODULE ISOLATION
+   Overrides global foodspot styles when on /promos
+   ============================================= */
+body.event-route {
+  --canvas-bg: #f0f4f8 !important;
+  --canvas-text: #1e293b !important;
+  background-color: #f0f4f8 !important;
+  color: #1e293b !important;
+  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+body.event-route.dark {
+  --canvas-bg: #020617 !important;
+  --canvas-text: #f1f5f9 !important;
+  background-color: #020617 !important;
+  color: #f1f5f9 !important;
+}
+
+/* =============================================
    GRUB CLUB - Design System
    Mobile-first: 360×640 primary viewport
    ============================================= */
