@@ -8,42 +8,35 @@ import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
-import { ORDER_STATUS } from '../../constants/database.js';
-import { PAYMENT_METHOD } from '../../constants/database.js';
+import { ORDER_STATUS } from '../../constants/database.js'
+import { PAYMENT_METHOD } from '../../constants/database.js'
 
-
-
-/**
- * OwnerSummary - Summary dashboard for Owner
- * P0 #11: Cloud-first — All stats from Supabase, no localStorage.
- */
 function OwnerSummary() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
     const { lang, t, changeLanguage } = useLanguage()
     const appConfig = tenantData?.app_config || {}
-    const [showAuditor, setShowAuditor] = useState(false)
-    const debounceTimerRef = useRef(null)
-    const [mpAliasInput, setMpAliasInput] = useState('')
-    const [mpAliasSaved, setMpAliasSaved] = useState(false)
-    const [mpAliasSaving, setMpAliasSaving] = useState(false)
-    const mpAliasInitialized = useRef(false)
-    const [discordWebhookInput, setDiscordWebhookInput] = useState('')
-    const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
-    const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
-    const discordWebhookInitialized = useRef(false)
 
-    // 🌍 LANGUAGE SAVE STATE
+    const [orders, setOrders] = useState([])
+    const [ordersLoading, setOrdersLoading] = useState(true)
+    const [session, setSession] = useState(null)
+    const [savingConfig, setSavingConfig] = useState(false)
     const [pendingLanguage, setPendingLanguage] = useState(null)
     const [languageSaving, setLanguageSaving] = useState(false)
     const [languageSaveStatus, setLanguageSaveStatus] = useState(null)
+    const [mpAliasInput, setMpAliasInput] = useState('')
+    const [mpAliasSaved, setMpAliasSaved] = useState(false)
+    const [mpAliasSaving, setMpAliasSaving] = useState(false)
+    const [discordWebhookInput, setDiscordWebhookInput] = useState('')
+    const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
+    const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
+    const [showAuditor, setShowAuditor] = useState(false)
 
-    // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
-    const [orders, setOrders] = useState([])
-    const [ordersLoading, setOrdersLoading] = useState(true)
+    const debounceTimerRef = useRef(null)
+    const mpAliasInitialized = useRef(false)
+    const discordWebhookInitialized = useRef(false)
 
-    // Fetch today's + recent orders from Supabase
     useEffect(() => {
         if (!businessId) return
         let cancelled = false
@@ -69,7 +62,6 @@ function OwnerSummary() {
 
         fetchOrders()
 
-        // Subscribe to real-time changes (SILO-FILTERED)
         const subscription = supabase
             .channel(`summary-orders-${businessId}`)
             .on(
@@ -78,7 +70,7 @@ function OwnerSummary() {
                     event: '*',
                     schema: 'public',
                     table: 'orders',
-                    filter: `business_id=eq.${businessId}` // 🔐 SILO FILTER
+                    filter: `business_id=eq.${businessId}`
                 },
                 () => {
                     if (!cancelled) fetchOrders()
@@ -86,7 +78,6 @@ function OwnerSummary() {
             )
             .subscribe()
 
-        // Fallback poll every 30s if subscription fails
         const interval = setInterval(fetchOrders, 30000)
         return () => {
             cancelled = true
@@ -95,17 +86,48 @@ function OwnerSummary() {
         }
     }, [businessId])
 
-    // Ghost Wall scroll lock
+    useEffect(() => {
+        getSession().then(s => setSession(s)).catch(() => setSession(null))
+    }, [])
+
+    useEffect(() => {
+        if (!mpAliasInitialized.current && appConfig?.payments?.mercadoPagoAlias !== undefined) {
+            setMpAliasInput(appConfig.payments.mercadoPagoAlias || '')
+            mpAliasInitialized.current = true
+        }
+    }, [appConfig?.payments?.mercadoPagoAlias])
+
+    useEffect(() => {
+        if (!discordWebhookInitialized.current && appConfig?.notifications?.discordWebhookUrl !== undefined) {
+            setDiscordWebhookInput(appConfig.notifications?.discordWebhookUrl || '')
+            discordWebhookInitialized.current = true
+        }
+    }, [appConfig?.notifications?.discordWebhookUrl])
+
     useEffect(() => {
         document.body.style.overflow = showAuditor ? 'hidden' : 'unset'
         return () => { document.body.style.overflow = 'unset' }
     }, [showAuditor])
 
-    // Session for superadmin detection
-    const [session, setSession] = useState(null)
-    useEffect(() => {
-        getSession().then(s => setSession(s)).catch(() => setSession(null))
-    }, [])
+    const stats = useMemo(() => {
+        const today = new Date().toDateString()
+        const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
+
+        const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
+        const mpOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO)
+        const cashOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.CASH)
+        const mpTotal = mpOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+        const cashTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+
+        const weekOrders = orders.filter(o => new Date(o.created_at) >= weekAgo)
+
+        return {
+            todayOrders, mpOrders, cashOrders, mpTotal, cashTotal,
+            totalToday: mpTotal + cashTotal,
+            weekCount: weekOrders.length,
+            monthCount: orders.length
+        }
+    }, [orders])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -134,69 +156,6 @@ function OwnerSummary() {
         } finally {
             setLanguageSaving(false)
         }
-    }
-
-    // Stats calculations (from Supabase data)
-    const stats = useMemo(() => {
-        const today = new Date().toDateString()
-        const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
-
-        const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
-        const mpOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO)
-        const cashOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.CASH)
-        const mpTotal = mpOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
-        const cashTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
-
-        const weekOrders = orders.filter(o => new Date(o.created_at) >= weekAgo)
-
-        return {
-            todayOrders, mpOrders, cashOrders, mpTotal, cashTotal,
-            totalToday: mpTotal + cashTotal,
-            weekCount: weekOrders.length,
-            monthCount: orders.length
-        }
-    }, [orders])
-
-    // ☁️ CLOUD SAVE for business info
-    const [savingConfig, setSavingConfig] = useState(false)
-    const updateBusinessInfo = async (field, value) => {
-        const newInfo = { ...appConfig?.businessInfo, [field]: value }
-        const updatedConfig = { ...appConfig, businessInfo: newInfo }
-        setSavingConfig(true)
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-        await refreshTenantData()
-        setSavingConfig(false)
-    }
-
-    const updateExternalOrdering = async (updates) => {
-        const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-        await refreshTenantData()
-    }
-
-    // Sync mpAliasInput from server only on first load
-    useEffect(() => {
-        if (!mpAliasInitialized.current && appConfig?.payments?.mercadoPagoAlias !== undefined) {
-            setMpAliasInput(appConfig.payments.mercadoPagoAlias || '')
-            mpAliasInitialized.current = true
-        }
-    }, [appConfig?.payments?.mercadoPagoAlias])
-
-    // Sync discordWebhookInput from server only on first load
-    useEffect(() => {
-        if (!discordWebhookInitialized.current && appConfig?.notifications?.discordWebhookUrl !== undefined) {
-            setDiscordWebhookInput(appConfig.notifications?.discordWebhookUrl || '')
-            discordWebhookInitialized.current = true
-        }
-    }, [appConfig?.notifications?.discordWebhookUrl])
-
-    const updatePayments = (updates) => {
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-        debounceTimerRef.current = setTimeout(async () => {
-            const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, ...updates } }
-            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-            await refreshTenantData()
-        }, 1000)
     }
 
     const saveMpAlias = async () => {
@@ -233,6 +192,30 @@ function OwnerSummary() {
         }
     }
 
+    const updateBusinessInfo = async (field, value) => {
+        const newInfo = { ...appConfig?.businessInfo, [field]: value }
+        const updatedConfig = { ...appConfig, businessInfo: newInfo }
+        setSavingConfig(true)
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+        await refreshTenantData()
+        setSavingConfig(false)
+    }
+
+    const updateExternalOrdering = async (updates) => {
+        const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
+        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+        await refreshTenantData()
+    }
+
+    const updatePayments = (updates) => {
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = setTimeout(async () => {
+            const updatedConfig = { ...appConfig, payments: { ...appConfig?.payments, ...updates } }
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            await refreshTenantData()
+        }, 1000)
+    }
+
     const updateBrandingCloud = async (field, value) => {
         const columnMap = {
             mercadoPagoAccessToken: 'mp_access_token'
@@ -244,13 +227,8 @@ function OwnerSummary() {
         await refreshTenantData()
     }
 
-    // Card style helper
-    const cardStyle = { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }
-    const labelStyle = { fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
-    const inputStyle = { width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }
-
     return (
-        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-900 min-h-screen">
             <BackendHeader
                 title={t('summary')}
                 onLogout={handleLogout}
@@ -259,676 +237,245 @@ function OwnerSummary() {
                 showAvatar={false}
             />
 
-            {/* Sync Button */}
-            <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', gap: 8 }}>
-                <button
-                    onClick={async () => {
-                        setOrdersLoading(true)
-                        const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
-                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', ORDER_STATUS.CANCELLED).order('created_at', { ascending: false })
-                        if (data) setOrders(data)
-                        setOrdersLoading(false)
-                    }}
-                    style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        border: 'none',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        background: '#3B82F6',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}
-                >
-                    🔄 {t('update')}
-                </button>
-                <button
-                    onClick={() => setShowAuditor(true)}
-                    style={{
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        border: '2px solid #1F2937',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        background: '#1F2937',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}
-                >
-                    📊 {t('auditor')}
-                </button>
-            </div>
+            <main className="p-4 space-y-3 pb-24">
+                {/* TOP BAR: Sync + Auditor buttons */}
+                <div className="flex gap-2">
+                    <button
+                        onClick={async () => {
+                            setOrdersLoading(true)
+                            const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
+                            const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', ORDER_STATUS.CANCELLED).order('created_at', { ascending: false })
+                            if (data) setOrders(data)
+                            setOrdersLoading(false)
+                        }}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                    >
+                        🔄 {t('update')}
+                    </button>
+                    <button
+                        onClick={() => setShowAuditor(true)}
+                        className="flex-1 bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
+                    >
+                        📊 Backend Auditor
+                    </button>
+                </div>
 
-            {/* Content - with bottom padding for BackendNav */}
-            <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
+                {/* KEY METRICS: Always visible */}
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Daily Revenue */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Daily Revenue</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalToday)}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.todayOrders.length} orders</p>
+                    </div>
 
-                {/* ==================== PAGOS DEL DÍA ==================== */}
-                <h3 style={labelStyle}>{t('daily_payments')}</h3>
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 10, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#00695C' }}>MP</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.mpOrders.length} {t('orders_count')}</p></div>
+                    {/* Sessions This Week */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">This Week</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.weekCount}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">orders</p>
+                    </div>
+                </div>
+
+                {/* ACCORDION SECTIONS */}
+                <AccordionSection title="Payment Breakdown" icon="💰">
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">Mercado Pago</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{stats.mpOrders.length} orders</p>
+                            </div>
+                            <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatPrice(stats.mpTotal)}</p>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.mpTotal)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#B45309' }}>$</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>{t(PAYMENT_METHOD.CASH)}</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.cashOrders.length} {t('orders_count')}</p></div>
+                        <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">Cash</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{stats.cashOrders.length} orders</p>
+                            </div>
+                            <p className="text-lg font-bold text-green-600 dark:text-green-400">{formatPrice(stats.cashTotal)}</p>
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.cashTotal)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                        <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>{t('total_day')}</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.todayOrders.length} {t('orders_count')}</p></div>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>{formatPrice(stats.totalToday)}</span>
+                </AccordionSection>
+
+                <AccordionSection title="Venue Info" icon="📍">
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">WhatsApp</label>
+                            <input
+                                type="text"
+                                placeholder="ex: +54 9 351 123-4567"
+                                defaultValue={appConfig?.businessInfo?.whatsapp || ''}
+                                onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Address</label>
+                            <input
+                                type="text"
+                                defaultValue={appConfig?.businessInfo?.address || ''}
+                                onChange={(e) => updateBusinessInfo('address', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Google Maps Link</label>
+                            <input
+                                type="text"
+                                defaultValue={appConfig?.businessInfo?.mapsLink || ''}
+                                onChange={(e) => updateBusinessInfo('mapsLink', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
                     </div>
-                </div>
+                </AccordionSection>
 
-                {/* ==================== SESIONES ==================== */}
-                <h3 style={labelStyle}>{t('sessions')}</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.weekCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>{t('this_week')}</p></div>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.monthCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>{t('this_month')}</p></div>
-                </div>
-
-                {/* ==================== INFORMACIÓN DEL LOCAL ==================== */}
-                <h3 style={labelStyle}>📍 {t('venue_info')}</h3>
-                <div style={cardStyle}>
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('whatsapp_contact')}</label>
-                    <input type="text" placeholder={t('phone_placeholder')} value={appConfig?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
-
-                    {/* 📍 HYBRID LOCATION GROUP */}
-                    <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 12 }}>📍 {t('location_label')}</label>
-
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('address_label')}</label>
-                        <input type="text" placeholder={t('address_placeholder')} value={appConfig?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
-
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('maps_link')}</label>
-                        <input type="text" placeholder={t('maps_placeholder')} value={appConfig?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
-                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
-                            ℹ️ {t('maps_info')}
-                        </p>
+                <AccordionSection title="External Links" icon="🔗">
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">📸 Instagram</label>
+                            <input
+                                type="text"
+                                defaultValue={appConfig?.externalOrdering?.instagram || ''}
+                                onChange={(e) => updateExternalOrdering({ instagram: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">🎵 TikTok</label>
+                            <input
+                                type="text"
+                                defaultValue={appConfig?.externalOrdering?.tiktok || ''}
+                                onChange={(e) => updateExternalOrdering({ tiktok: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">🧡 Rappi</label>
+                            <input
+                                type="text"
+                                defaultValue={appConfig?.externalOrdering?.rappi || ''}
+                                onChange={(e) => updateExternalOrdering({ rappi: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                        </div>
                     </div>
+                </AccordionSection>
 
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('notes')}</label>
-                    <input type="text" placeholder={t('notes_placeholder')} value={appConfig?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
-                </div>
-
-                {/* ==================== LINKS EXTERNOS ==================== */}
-                <h3 style={labelStyle}>🔗 {t('external_links')}</h3>
-                <div style={cardStyle}>
-                    {/* Instagram */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>📸 Instagram</span>
-                    </div>
-                    <input type="text" placeholder="https://instagram.com/yourrestaurant" value={appConfig?.externalOrdering?.instagramUrl || ''} onChange={(e) => updateExternalOrdering({ instagramUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    {/* TikTok */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>🎵 TikTok</span>
-                    </div>
-                    <input type="text" placeholder="https://tiktok.com/@yourrestaurant" value={appConfig?.externalOrdering?.tiktokUrl || ''} onChange={(e) => updateExternalOrdering({ tiktokUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                        <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.rappiEnabled ?? false} onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })} /><span className="toggle-slider"></span></label>
-                    </div>
-                    <input type="text" placeholder={t('rappi_placeholder')} value={appConfig?.externalOrdering?.rappiUrl || ''} onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                        <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })} /><span className="toggle-slider"></span></label>
-                    </div>
-                    <input type="text" placeholder={t('pedidosya_placeholder')} value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    {/* Mercado Pago Setup - Premium Card */}
-                    <div style={{ paddingTop: 14, borderTop: '1px solid #F3F4F6', marginTop: 16 }}>
-                        <div style={{ background: '#F0F9FF', borderRadius: 14, padding: 16, border: '2px solid #E0F2FE', marginBottom: 16 }}>
-                            <div style={{ display: 'flex', alignItems: 'start', gap: 12, marginBottom: 12 }}>
-                                <span style={{ fontSize: 28 }}>💳</span>
-                                <div>
-                                    <h4 style={{ fontSize: 15, fontWeight: 700, color: '#0369A1', margin: '0 0 4px 0' }}>{t('mp_connect_title')}</h4>
-                                    <p style={{ fontSize: 13, color: '#0C4A6E', margin: 0, lineHeight: 1.4 }}>{t('mp_connect_subtitle')}</p>
-                                </div>
-                            </div>
-
-                            {/* Why Section */}
-                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid #BAE6FD' }}>
-                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 6px 0' }}>{t('mp_why_title')}</p>
-                                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: '#064E3B' }}>
-                                    <li>{t('mp_benefit_1')}</li>
-                                    <li>{t('mp_benefit_2')}</li>
-                                    <li>{t('mp_benefit_3')}</li>
-                                </ul>
-                            </div>
-
-                            {/* Steps */}
-                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 14, border: '1px solid #BAE6FD' }}>
-                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 10px 0' }}>{t('mp_how_to_title')}</p>
-                                <div style={{ fontSize: 12, color: '#075985', lineHeight: 1.6 }}>
-                                    <div style={{ marginBottom: 8 }}><strong>1.</strong> {t('mp_step_1')}</div>
-                                    <div style={{ marginBottom: 8 }}><strong>2.</strong> {t('mp_step_2')}</div>
-                                    <div style={{ marginBottom: 8 }}><strong>3.</strong> {t('mp_step_3')}</div>
-                                    <div style={{ marginBottom: 8 }}><strong>4.</strong> {t('mp_step_4')} <code style={{ background: '#F5F5F5', padding: '2px 6px', borderRadius: 4 }}>APP_</code></div>
-                                    <div><strong>5.</strong> {t('mp_step_5')}</div>
-                                </div>
-                            </div>
-
-                            {/* Input Field */}
-                            <label style={{ fontSize: 12, color: '#0369A1', display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('mp_access_token')}</label>
+                <AccordionSection title="Mercado Pago Setup" icon="💳">
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Access Token</label>
                             <input
                                 type="password"
-                                placeholder="APP_1234567890abcdef..."
-                                value={tenantData?.mp_access_token || ''}
-                                onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
-                                style={{ ...inputStyle, borderColor: tenantData?.mp_access_token ? '#10B981' : '#E5E7EB' }}
+                                defaultValue={appConfig?.payments?.mercadoPagoAccessToken || ''}
+                                onChange={(e) => updatePayments({ mercadoPagoAccessToken: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="APP_xxx..."
                             />
-                            {tenantData?.mp_access_token && <p style={{ fontSize: 11, color: '#059669', margin: 0, marginBottom: 12 }}>{t('mp_token_saved')}</p>}
-                            {!tenantData?.mp_access_token && <p style={{ fontSize: 11, color: '#DC2626', margin: 0, marginBottom: 12 }}>{t('mp_token_required')}</p>}
-
-                            {/* Alias (Optional) */}
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('mp_alias_optional')}</label>
-                            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                                <input
-                                    type="text"
-                                    placeholder="yourstore.mp"
-                                    value={mpAliasInput}
-                                    onChange={(e) => setMpAliasInput(e.target.value)}
-                                    style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
-                                />
-                                <button
-                                    onClick={saveMpAlias}
-                                    disabled={mpAliasSaving}
-                                    style={{
-                                        padding: '12px 16px',
-                                        border: 'none',
-                                        borderRadius: 10,
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        cursor: mpAliasSaving ? 'not-allowed' : 'pointer',
-                                        background: mpAliasSaved ? '#10B981' : '#3B82F6',
-                                        color: '#fff',
-                                        opacity: mpAliasSaving ? 0.7 : 1,
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {mpAliasSaved ? '✓' : 'Save'}
-                                </button>
-                            </div>
-                            {mpAliasSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0, marginBottom: 12 }}>✓ Alias saved</p>}
-                            {!mpAliasSaved && <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, marginBottom: 12 }}>{t('mp_alias_info')}</p>}
-
-                            {/* Discord Webhook for Delivery Payments */}
-                            <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 14, marginTop: 14 }}>
-                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>🤖 Discord Webhook (Delivery Payments)</label>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 8px 0' }}>Send payment requests to Discord channel when drivers deliver</p>
-                                <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                                    <input
-                                        type="password"
-                                        placeholder="https://discord.com/api/webhooks/..."
-                                        value={discordWebhookInput}
-                                        onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                        style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
-                                    />
-                                    <button
-                                        onClick={saveDiscordWebhook}
-                                        disabled={discordWebhookSaving}
-                                        style={{
-                                            padding: '12px 16px',
-                                            border: 'none',
-                                            borderRadius: 10,
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            cursor: discordWebhookSaving ? 'not-allowed' : 'pointer',
-                                            background: discordWebhookSaved ? '#10B981' : '#8B5CF6',
-                                            color: '#fff',
-                                            opacity: discordWebhookSaving ? 0.7 : 1,
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {discordWebhookSaved ? '✓' : 'Save'}
-                                    </button>
-                                </div>
-                                {discordWebhookSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0 }}>✓ Webhook saved</p>}
-                            </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* 🌎 LANGUAGE TOGGLE */}
-                <div style={{ marginTop: 24 }}>
-                    <h3 style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        🌍 {t('language_setting') || 'Language / Idioma'}
-                    </h3>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: 24,
-                        padding: '12px 0'
-                    }}>
-                        {['EN', 'ES', 'PT'].map((l) => {
-                            const isSelected = (pendingLanguage || lang) === l.toLowerCase()
-                            const isPending = pendingLanguage === l.toLowerCase()
-                            return (
-                                <button
-                                    key={l}
-                                    onClick={() => handleLanguageChange(l.toLowerCase())}
-                                    style={{
-                                        background: isPending ? '#3B82F6' : 'none',
-                                        border: isPending ? '2px solid #3B82F6' : 'none',
-                                        fontWeight: isSelected ? 700 : 500,
-                                        fontSize: 13,
-                                        letterSpacing: '0.1em',
-                                        cursor: 'pointer',
-                                        padding: isPending ? '4px 8px' : '4px 8px',
-                                        transition: 'all 0.2s',
-                                        borderRadius: isPending ? 8 : 0,
-                                        color: isPending ? 'white' : isSelected ? '#111827' : '#9CA3AF'
-                                    }}
-                                >
-                                    {l}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-
-            </div>
-
-            {/* 🔐 GHOST ADMIN: Hidden Super Admin Portal (superadmin only) */}
-            {session?.role === 'superadmin' && (
-                <div style={{ marginTop: 24 }}>
-                    <button
-                        onClick={() => navigate('/admin')}
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            border: '1px solid rgba(124, 58, 237, 0.3)',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            background: 'rgba(124, 58, 237, 0.1)',
-                            color: '#7C3AED',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8
-                        }}
-                    >
-                        {t('system_admin')}
-                    </button>
-                </div>
-            )}
-
-            {/* 🌍 LANGUAGE SAVE TOAST */}
-            {languageSaveStatus && (
-                <div style={{
-                    position: 'fixed', bottom: 24, left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: languageSaveStatus.type === 'error' ? '#EF4444' : '#22C55E', color: 'white',
-                    padding: '10px 24px', borderRadius: 50,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                    fontWeight: 600, fontSize: 14, zIndex: 9999,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <span>{languageSaveStatus.type === 'error' ? '⚠️' : '✓'}</span> {languageSaveStatus.message}
-                </div>
-            )}
-
-            {/* 🌍 LANGUAGE UNSAVED CHANGES BAR */}
-            {pendingLanguage && (
-                <div style={{
-                    position: 'fixed', bottom: 95, left: 12, right: 12,
-                    background: '#1E293B', color: 'white', padding: '14px 20px',
-                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>🌍 {t('unsaved_changes_warning') || 'Cambios sin guardar'}</div>
-                    <button
-                        onClick={saveLanguage}
-                        disabled={languageSaving}
-                        style={{
-                            background: '#3B82F6', color: 'white', border: 'none',
-                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                            fontSize: 14, cursor: 'pointer',
-                            opacity: languageSaving ? 0.7 : 1
-                        }}
-                    >
-                        {languageSaving ? t('saving_btn') || 'Guardando...' : t('save') || 'Guardar'}
-                    </button>
-                </div>
-            )}
-
-            {/* Backend Navigation */}
-            <BackendNav
-                role="owner"
-                useRoutes={true}
-            />
-
-            {/* 📊 Backend Auditor - Side Drawer */}
-            {showAuditor && (
-                <div
-                    onClick={() => setShowAuditor(false)}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'stretch',
-                        justifyContent: 'flex-end',
-                        pointerEvents: 'auto'
-                    }}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: '#1F2937',
-                            width: '85%',
-                            maxWidth: 400,
-                            height: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflow: 'hidden',
-                            boxShadow: '-4px 0 24px rgba(0,0,0,0.3)'
-                        }}
-                    >
-                        <div style={{
-                            padding: 16,
-                            borderBottom: '1px solid #374151',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            position: 'relative',
-                            zIndex: 10001
-                        }}>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 {t('cloud_vault')}</span>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                placeholder="MP Alias (optional)"
+                                value={mpAliasInput}
+                                onChange={(e) => setMpAliasInput(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowAuditor(false);
-                                }}
-                                style={{
-                                    background: '#EF4444',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    padding: '8px 16px',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    zIndex: 999999,
-                                    position: 'absolute',
-                                    top: 12,
-                                    right: 12
-                                }}
+                                onClick={saveMpAlias}
+                                disabled={mpAliasSaving}
+                                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
                             >
-                                ✕ {t('close')}
+                                {mpAliasSaving ? '...' : 'Save'}
                             </button>
                         </div>
-                        <div style={{
-                            flex: 1,
-                            overflow: 'auto',
-                            padding: 16,
-                            WebkitOverflowScrolling: 'touch'
-                        }}>
-                            <pre style={{
-                                color: '#10B981',
-                                fontSize: 11,
-                                fontFamily: 'monospace',
-                                margin: 0,
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word'
-                            }}>
-                                {JSON.stringify(tenantData, (key, value) => {
-                                    // 🔒 TRUNCATE BASE64: Make Auditor usable
-                                    if (typeof value === 'string' && value.length > 100) {
-                                        if (value.startsWith('data:image')) {
-                                            return `[BASE64 IMAGE - ${value.length} chars]`;
-                                        }
-                                        if (value.startsWith('http')) {
-                                            return value.substring(0, 80) + '...';
-                                        }
-                                        return value.substring(0, 100) + '...';
-                                    }
-                                    return value;
-                                }, 2)}
-                            </pre>
-                        </div>
+                        {mpAliasSaved && <p className="text-xs text-green-600 dark:text-green-400">✓ Saved</p>}
                     </div>
-                </div>
-            )}
+                </AccordionSection>
 
-            {/* TEAM MANAGEMENT SECTION */}
-            <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} />
+                <AccordionSection title="Discord Webhook" icon="🤖">
+                    <div className="space-y-3">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Send delivery notifications to Discord</p>
+                        <div className="flex gap-2">
+                            <input
+                                type="password"
+                                placeholder="Webhook URL"
+                                value={discordWebhookInput}
+                                onChange={(e) => setDiscordWebhookInput(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <button
+                                onClick={saveDiscordWebhook}
+                                disabled={discordWebhookSaving}
+                                className="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                            >
+                                {discordWebhookSaving ? '...' : 'Save'}
+                            </button>
+                        </div>
+                        {discordWebhookSaved && <p className="text-xs text-green-600 dark:text-green-400">✓ Saved</p>}
+                    </div>
+                </AccordionSection>
 
+                <AccordionSection title="Language" icon="🌐">
+                    <div className="flex gap-2 justify-center py-2">
+                        {['en', 'es', 'pt'].map(lng => (
+                            <button
+                                key={lng}
+                                onClick={() => handleLanguageChange(lng)}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                                    pendingLanguage === lng || lang === lng
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                }`}
+                            >
+                                {lng.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                    {pendingLanguage && pendingLanguage !== lang && (
+                        <button
+                            onClick={saveLanguage}
+                            disabled={languageSaving}
+                            className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 mt-2"
+                        >
+                            {languageSaving ? t('saving') : 'Save Language'}
+                        </button>
+                    )}
+                    {languageSaveStatus && <p className={`text-xs mt-2 ${languageSaveStatus.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>{languageSaveStatus.message}</p>}
+                </AccordionSection>
+            </main>
+
+            <BackendNav role="owner" useRoutes={true} />
         </div>
     )
 }
 
-function TeamManagement({ businessId, t, primaryColor }) {
-    const [showTeamPanel, setShowTeamPanel] = useState(false)
-    const [staffList, setStaffList] = useState([])
-    const [loading, setLoading] = useState(false)
-    const [showAddForm, setShowAddForm] = useState(false)
-    const [newStaff, setNewStaff] = useState({ name: '', email: '', pin: '', role: 'cook' })
-    const [saving, setSaving] = useState(false)
-
-    const fetchStaff = async () => {
-        if (!businessId) return
-        setLoading(true)
-        const { data, error } = await supabase
-            .from('staff')
-            .select('*')
-            .eq('business_id', businessId)
-            .order('name')
-        
-        if (!error && data) setStaffList(data)
-        setLoading(false)
-    }
-
-    useEffect(() => {
-        if (showTeamPanel) fetchStaff()
-    }, [showTeamPanel, businessId])
-
-    const handleAddStaff = async () => {
-        if (!newStaff.name || !newStaff.email || !newStaff.pin) return
-        setSaving(true)
-        
-        const simpleHash = (str) => {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            return Math.abs(hash).toString(16);
-        }
-
-        const { error } = await supabase
-            .from('staff')
-            .insert({
-                business_id: businessId,
-                name: newStaff.name,
-                email: newStaff.email.toLowerCase().trim(),
-                pin: simpleHash(newStaff.pin),
-                role: newStaff.role,
-                status: 'active'
-            })
-
-        if (!error) {
-            setNewStaff({ name: '', email: '', pin: '', role: 'cook' })
-            setShowAddForm(false)
-            fetchStaff()
-        }
-        setSaving(false)
-    }
-
-    const handleDeleteStaff = async (staffId) => {
-        if (!confirm(t('confirm_delete') || '¿Eliminar este miembro?')) return
-        
-        await supabase
-            .from('staff')
-            .update({ status: 'inactive' })
-            .eq('id', staffId)
-        
-        fetchStaff()
-    }
-
-    const roles = [
-        { id: 'admin', label: t('role_admin') || 'Admin' },
-        { id: 'manager', label: t('role_manager') || 'Manager' },
-        { id: 'cook', label: t('role_cook') || 'Cocinero' },
-        { id: 'cashier', label: t('role_cashier') || 'Cajero' },
-        { id: 'runner', label: t('role_runner') || 'Runner' }
-    ]
+function AccordionSection({ title, icon, children }) {
+    const [isOpen, setIsOpen] = useState(false)
 
     return (
-        <div style={{ marginTop: 2, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer',
-                padding: '12px 0'
-            }}
-            onClick={() => setShowTeamPanel(!showTeamPanel)}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
-                    {t('team_management') || 'Gestión de Equipo'}
-                </span>
-                <span style={{ fontSize: 20, transform: showTeamPanel ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }}>▼</span>
-            </div>
-
-            {showTeamPanel && (
-                <div style={{ paddingTop: 16 }}>
-                    {!showAddForm ? (
-                        <button
-                            onClick={() => setShowAddForm(true)}
-                            style={{
-                                width: '100%',
-                                padding: 14,
-                                background: primaryColor || '#C4856A',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: 12,
-                                fontSize: 15,
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                marginBottom: 16
-                            }}
-                        >
-                            + {t('add_staff') || 'Agregar Personal'}
-                        </button>
-                    ) : (
-                        <div style={{ background: 'white', padding: 16, borderRadius: 12, marginBottom: 16 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('name') || 'Name'}</label>
-                            <input
-                                type="text"
-                                placeholder="Juan García"
-                                value={newStaff.name}
-                                onChange={(e) => setNewStaff(p => ({ ...p, name: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            />
-
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('username') || 'Username'}</label>
-                            <input
-                                type="text"
-                                placeholder="juan_kitchen"
-                                value={newStaff.email}
-                                onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            />
-
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>PIN ({t('4_digits') || '4 digits'})</label>
-                            <input
-                                type="password"
-                                placeholder="1234"
-                                value={newStaff.pin}
-                                onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
-                                maxLength={4}
-                                inputMode="numeric"
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            />
-
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('role') || 'Role'}</label>
-                            <select
-                                value={newStaff.role}
-                                onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            >
-                                {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                            </select>
-
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                <button
-                                    onClick={handleAddStaff}
-                                    disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
-                                    style={{ flex: 1, padding: 12, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-                                >
-                                    {saving ? '...' : (t('save') || 'Save')}
-                                </button>
-                                <button
-                                    onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                    style={{ flex: 1, padding: 12, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-                                >
-                                    {t('cancel') || 'Cancel'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {loading ? (
-                        <div style={{ textAlign: 'center', padding: 20, color: '#6B7280' }}>...</div>
-                    ) : staffList.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: 20, color: '#6B7280' }}>
-                            {t('no_staff') || 'No hay personal registrado'}
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {staffList.map(staff => (
-                                <div key={staff.id} style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: 12,
-                                    background: 'white',
-                                    borderRadius: 10,
-                                    border: '1px solid #E5E7EB'
-                                }}>
-                                    <div>
-                                        <div style={{ fontWeight: 600, color: '#1F2937' }}>{staff.name}</div>
-                                        <div style={{ fontSize: 12, color: '#6B7280' }}>@{staff.email} • {staff.role}</div>
-                                    </div>
-                                    <button
-                                        onClick={() => handleDeleteStaff(staff.id)}
-                                        style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
-                                    >
-                                        {t('remove') || 'Eliminar'}
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                <div className="flex items-center gap-3">
+                    <span className="text-lg">{icon}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
+                </div>
+                <svg
+                    className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+            {isOpen && (
+                <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700/50">
+                    {children}
                 </div>
             )}
         </div>
