@@ -60,7 +60,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
+    <div className="flex flex-col h-full bg-[var(--canvas-bg)]">
       <header className="px-6 pt-12 pb-6 flex items-center gap-4 bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
         <button 
           onClick={onBack}

@@ -92,7 +92,7 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
     .filter(e => selectedCategory === 'All' || e.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
   return (
-    <div className="flex flex-col h-screen pb-20">
+    <div className="flex flex-col h-full pb-20">
       <header className="px-6 pt-10 pb-4 flex items-center justify-between">
         <div>
           <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-70">

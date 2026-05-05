@@ -114,7 +114,7 @@ export default function MyTickets() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
+    <div className="flex flex-col h-full bg-[var(--canvas-bg)]">
       <header className="px-6 pt-12 pb-6 flex items-end justify-between">
         <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">
           {t('my_tickets')}

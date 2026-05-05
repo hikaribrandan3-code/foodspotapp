@@ -251,7 +251,7 @@ export default function EventsView({ onViewTickets }) {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--canvas-bg)] text-[var(--text-primary)] font-sans transition-colors duration-300">
+    <div className="h-full bg-[var(--canvas-bg)] text-[var(--text-primary)] font-sans transition-colors duration-300">
       <div className="h-full w-full max-w-lg mx-auto">
           {stage === 'discovery' && (
             <EventDiscovery 
@@ -261,7 +261,7 @@ export default function EventsView({ onViewTickets }) {
             />
           )}
           {!onViewTickets && stage === 'my-tickets' && (
-            <div className="relative h-screen flex flex-col">
+            <div className="relative h-full flex flex-col">
               <button 
                 onClick={handleBack}
                 className="absolute top-12 right-6 z-50 w-10 h-10 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm text-[var(--text-primary)] active:scale-90 transition-all"

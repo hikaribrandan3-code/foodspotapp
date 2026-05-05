@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ClipboardList as Assignment, Ticket as TicketIcon, Sun, Moon, ChevronLeft, Camera } from 'lucide-react';
+import { ClipboardList as Assignment, Ticket as TicketIcon, Sun, Moon, Home, Camera } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
 import MyTickets from '../pages/customer/events/views/MyTickets';
 
@@ -93,14 +93,17 @@ export default function EventThemeWrapper() {
         ...style,
       }}
     >
-      {/* Back to Home */}
-      <div className="fixed top-4 left-4 z-[160]">
+      {/* Green Home Button */}
+      <div className="fixed top-4 right-4 z-[160]">
         <button
           onClick={() => navigate(`/${tenantSlug || ''}`)}
-          className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg active:scale-95 transition-all"
-          aria-label="Back to Home"
+          className="flex flex-col items-center gap-0.5 active:scale-95 transition-all"
+          aria-label="Home"
         >
-          <ChevronLeft size={20} className="text-[var(--text-primary)]" />
+          <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/20">
+            <Home size={20} className="text-white" />
+          </div>
+          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Home</span>
         </button>
       </div>
 
@@ -119,8 +122,8 @@ export default function EventThemeWrapper() {
         </button>
       </div>
 
-      {/* Main Content Area */}
-      <div className="pb-24">
+      {/* Main Content Area — isolated scroll */}
+      <div className="pt-4 h-[calc(100dvh-88px)] overflow-y-auto">
         {view === 'events' && (
           <EventsView onViewTickets={() => setView('my-tickets')} />
         )}
@@ -129,12 +132,12 @@ export default function EventThemeWrapper() {
 
       {/* Bottom Navigation: Events | Camera | My Tickets */}
       <nav
-        className="fixed bottom-0 w-full z-50 flex justify-around items-center h-20 pb-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        className="fixed bottom-0 w-full z-50 flex justify-center items-center gap-8 h-20 pb-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
         style={{ borderColor: 'var(--border-color)' }}
       >
         <button
           onClick={() => setView('events')}
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
         >
           <TicketIcon size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
@@ -145,7 +148,7 @@ export default function EventThemeWrapper() {
           <div className="absolute inset-x-0 -bottom-3 h-8 bg-black/20 rounded-full blur-xl opacity-40" />
           <button
             onClick={openCamera}
-            className={`w-14 h-14 rounded-[24px] flex items-center justify-center shadow-[0_16px_32px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-95 border-[5px] border-[var(--canvas-bg)] dark:border-slate-950 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white`}
+            className="w-14 h-14 rounded-[24px] flex items-center justify-center shadow-[0_16px_32px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-95 border-[5px] border-[var(--canvas-bg)] dark:border-slate-950 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <Camera size={24} strokeWidth={2.5} className="relative z-10" />
@@ -154,7 +157,7 @@ export default function EventThemeWrapper() {
 
         <button
           onClick={() => setView('my-tickets')}
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'my-tickets' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`flex flex-col items-center gap-1 transition-all ${view === 'my-tickets' ? 'text-[var(--color-primary)]' : 'text-slate-300 dark:text-slate-600'}`}
         >
           <Assignment size={24} strokeWidth={view === 'my-tickets' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-tighter">My Tickets</span>
