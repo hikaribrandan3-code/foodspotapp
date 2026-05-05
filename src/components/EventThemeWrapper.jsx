@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ClipboardList as Assignment, Tickets, Sun, Moon, ChevronLeft } from 'lucide-react';
+import { ClipboardList as Assignment, Ticket as TicketIcon, Sun, Moon, Home, Camera } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
 import MyTickets from '../pages/customer/events/views/MyTickets';
 
@@ -42,10 +42,26 @@ const DARK_TOKENS = {
   '--shadow-raised': '0px 12px 32px rgba(0,0,0,0.6)',
 };
 
+/* ─── Responsive nav constants (single source of truth) ─── */
+const NAV_HEIGHT = 'clamp(80px, 12vh, 110px)';
+const NAV_GAP = 'clamp(24px, 4vw, 40px)';
+const NAV_PB = 'clamp(12px, 2vh, 24px)';
+const ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';        // Events / My Tickets  +20%
+const CAM_ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';   // Camera icon  same +20% as events
+const LABEL_SIZE = 'clamp(11px, 1.4vw, 16px)';
+const BTN_GAP = 'clamp(5px, 1.2vh, 10px)';
+const BTN_PY = 'clamp(10px, 1.8vh, 20px)';
+const FAB_SIZE = 'clamp(56px, 8.4vw, 76px)';        // Camera button  same +20% as events
+const FAB_OFFSET = 'clamp(20px, 4vh, 32px)';        // Elevated higher
+const FAB_RADIUS = 'clamp(24px, 3.5vw, 34px)';
+const FAB_BORDER = 'clamp(5px, 1vw, 8px)';
+const DROP_H = 'clamp(8px, 2vh, 12px)';
+const DROP_BLUR = 'clamp(16px, 3vw, 32px)';
+
 export default function EventThemeWrapper() {
   const navigate = useNavigate();
   const { tenantSlug } = useParams();
-  const [view, setView] = useState('events'); // 'events' | 'status'
+  const [view, setView] = useState('events'); // 'events' | 'my-tickets'
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('event-theme');
@@ -57,7 +73,6 @@ export default function EventThemeWrapper() {
 
   useEffect(() => {
     localStorage.setItem('event-theme', theme);
-    // Sync dark class on body for scoped CSS overrides
     if (theme === 'dark') {
       document.body.classList.add('dark');
     } else {
@@ -66,7 +81,6 @@ export default function EventThemeWrapper() {
   }, [theme]);
 
   useEffect(() => {
-    // Add event-route class to body for isolated styling
     document.body.classList.add('event-route');
     return () => {
       document.body.classList.remove('event-route');
@@ -82,6 +96,14 @@ export default function EventThemeWrapper() {
     };
   }, [theme]);
 
+  const openCamera = () => {
+    navigate(`/${tenantSlug || ''}/camera`);
+  };
+
+  const navBtnBase = 'flex flex-col items-center transition-all';
+  const navBtnActive = 'text-[var(--color-primary)]';
+  const navBtnInactive = 'text-slate-300 dark:text-slate-600';
+
   return (
     <div
       className={`${theme === 'dark' ? 'dark' : ''} min-h-[100dvh] relative`}
@@ -91,14 +113,17 @@ export default function EventThemeWrapper() {
         ...style,
       }}
     >
-      {/* Back to Home */}
-      <div className="fixed top-4 left-4 z-[160]">
+      {/* Green Home Button */}
+      <div className="fixed top-4 right-4 z-[160]">
         <button
           onClick={() => navigate(`/${tenantSlug || ''}`)}
-          className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200 dark:border-slate-800 shadow-lg active:scale-95 transition-all"
-          aria-label="Back to Home"
+          className="flex flex-col items-center gap-0.5 active:scale-95 transition-all"
+          aria-label="Home"
         >
-          <ChevronLeft size={20} className="text-[var(--text-primary)]" />
+          <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/20">
+            <Home size={20} className="text-white" />
+          </div>
+          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Home</span>
         </button>
       </div>
 
@@ -117,43 +142,92 @@ export default function EventThemeWrapper() {
         </button>
       </div>
 
-      {/* Main Content Area */}
-      <div className="pb-32">
-        {view === 'events' && <EventsView />}
-        {view === 'status' && <MyTickets />}
+      {/* Main Content Area — fluid height minus responsive nav */}
+      <div
+        className="pt-4 overflow-y-auto"
+        style={{ height: `calc(100dvh - ${NAV_HEIGHT})` }}
+      >
+        {view === 'events' && (
+          <EventsView onViewTickets={() => setView('my-tickets')} />
+        )}
+        {view === 'my-tickets' && <MyTickets />}
       </div>
 
-      {/* TikTok/Insta-Style Bottom Nav (Center Camera, Side Tabs) */}
+      {/* Bottom Navigation: Events | Camera | My Tickets */}
       <nav
-        className="fixed bottom-0 w-full z-50 flex justify-around items-end h-24 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
-        style={{ borderColor: 'var(--border-color)' }}
+        className="fixed bottom-0 w-full z-50 flex justify-center items-center px-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        style={{
+          borderColor: 'var(--border-color)',
+          height: NAV_HEIGHT,
+          gap: NAV_GAP,
+          paddingBottom: `calc(${NAV_PB} + env(safe-area-inset-bottom))`,
+        }}
       >
-        {/* Left Tab: Events */}
+        {/* Events Button */}
         <button
           onClick={() => setView('events')}
-          className={`flex flex-col items-center gap-1 pb-4 transition-all ${view === 'events' ? 'text-[var(--color-primary)]' : 'text-slate-400 dark:text-slate-600'}`}
+          className={`${navBtnBase} ${view === 'events' ? navBtnActive : navBtnInactive}`}
+          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44 }}
         >
-          <Tickets size={20} strokeWidth={2} />
-          <span className="text-[9px] font-bold uppercase tracking-tighter opacity-70">Events</span>
+          <TicketIcon
+            style={{ width: ICON_SIZE, height: ICON_SIZE }}
+            strokeWidth={view === 'events' ? 2.5 : 2}
+          />
+          <span
+            className="font-bold uppercase"
+            style={{ fontSize: LABEL_SIZE, letterSpacing: 'clamp(0.05em, 0.1vw, 0.15em)' }}
+          >
+            Events
+          </span>
         </button>
 
-        {/* Center: Elevated Camera Button (Larger) */}
-        <div className="relative -top-6">
+        {/* Center Camera Button */}
+        <div
+          className="flex justify-center relative"
+          style={{ width: 'clamp(72px, 10vw, 96px)', transform: `translateY(-${FAB_OFFSET})` }}
+        >
+          <div
+            className="absolute inset-x-0 bg-black/20 rounded-full opacity-40"
+            style={{ bottom: -12, height: DROP_H, filter: `blur(${DROP_BLUR})` }}
+          />
           <button
-            className="w-16 h-16 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-2xl shadow-[var(--color-primary)]/30 active:scale-90 transition-all hover:scale-110 border-4 border-white dark:border-slate-900"
+            onClick={openCamera}
+            className="flex items-center justify-center transition-all duration-500 active:scale-95 cursor-pointer overflow-hidden relative group bg-[var(--color-primary)] text-white"
+            style={{
+              width: FAB_SIZE,
+              height: FAB_SIZE,
+              borderRadius: FAB_RADIUS,
+              border: `${FAB_BORDER} solid var(--canvas-bg)`,
+              boxShadow: '0 clamp(12px, 2vh, 20px) clamp(24px, 4vh, 40px) rgba(0,0,0,0.3)',
+              minWidth: 44,
+              minHeight: 44,
+            }}
           >
-            {/* Camera icon or content would go here */}
-            <span className="text-2xl">📷</span>
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Camera
+              style={{ width: CAM_ICON_SIZE, height: CAM_ICON_SIZE }}
+              strokeWidth={2.5}
+              className="relative z-10"
+            />
           </button>
         </div>
 
-        {/* Right Tab: My Tickets */}
+        {/* My Tickets Button */}
         <button
-          onClick={() => setView('status')}
-          className={`flex flex-col items-center gap-1 pb-4 transition-all ${view === 'status' ? 'text-[var(--color-primary)]' : 'text-slate-400 dark:text-slate-600'}`}
+          onClick={() => setView('my-tickets')}
+          className={`${navBtnBase} ${view === 'my-tickets' ? navBtnActive : navBtnInactive}`}
+          style={{ gap: BTN_GAP, paddingTop: BTN_PY, paddingBottom: BTN_PY, minWidth: 44, minHeight: 44 }}
         >
-          <Assignment size={20} strokeWidth={2} />
-          <span className="text-[9px] font-bold uppercase tracking-tighter opacity-70">Tickets</span>
+          <Assignment
+            style={{ width: ICON_SIZE, height: ICON_SIZE }}
+            strokeWidth={view === 'my-tickets' ? 2.5 : 2}
+          />
+          <span
+            className="font-bold uppercase"
+            style={{ fontSize: LABEL_SIZE, letterSpacing: 'clamp(0.05em, 0.1vw, 0.15em)' }}
+          >
+            My Tickets
+          </span>
         </button>
       </nav>
     </div>
