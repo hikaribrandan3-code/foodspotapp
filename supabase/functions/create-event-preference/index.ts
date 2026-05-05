@@ -49,7 +49,7 @@ serve(async (req: Request) => {
         const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspotapp.vercel.app";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // ── 1. Fetch event with row lock ──
+        // ── 1. Fetch event (capacity check will validate tier availability) ──
         const { data: event, error: eventError } = await supabase
             .from('events')
             .select('id, business_id, name, description, image_url, status, ticket_tiers, is_free')
@@ -129,7 +129,26 @@ serve(async (req: Request) => {
 
         const totalCents = Math.max(0, subtotalCents - discountCents);
 
-        // ── 4. Create pending order ──
+        // ── 4. Final capacity check (race condition protection) ──
+        // Re-fetch event to ensure tier capacity hasn't changed since step 2
+        const { data: eventFresh } = await supabase
+            .from('events')
+            .select('ticket_tiers')
+            .eq('id', event_id)
+            .single();
+
+        if (eventFresh?.ticket_tiers) {
+            const tierFresh = eventFresh.ticket_tiers.find((t: any) => t.id === tier_id);
+            const remainingFresh = (tierFresh?.capacity || 0) - (tierFresh?.sold || 0);
+            if (remainingFresh < quantity) {
+                return new Response(
+                    JSON.stringify({ error: "SOLD_OUT", detail: `Only ${remainingFresh} tickets remaining` }),
+                    { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+        }
+
+        // ── 6. Create pending order ──
         const ticketCode = generateTicketCode();
         const { data: order, error: orderError } = await supabase
             .from('event_orders')
@@ -160,7 +179,7 @@ serve(async (req: Request) => {
             );
         }
 
-        // ── 5. Free event? Skip MP and mark paid ──
+        // ── 7. Free event? Skip MP and mark paid ──
         if (event.is_free || totalCents === 0) {
             await supabase
                 .from('event_orders')
@@ -173,7 +192,7 @@ serve(async (req: Request) => {
                     order_id: order.id,
                     ticket_code: ticketCode,
                     guest_token: order.guest_token,
-                    redirect_url: `${APP_BASE_URL}/receipt?event_order_id=${order.id}&payment=success`
+                    redirect_url: `${APP_BASE_URL}/${branding.slug || 'demo'}/events/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`
                 }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
@@ -197,7 +216,8 @@ serve(async (req: Request) => {
         const businessName = branding.business_name || "FoodSpot";
         const externalReference = `${event.business_id}:${order.id}`;
 
-        // ── 7. Create MP preference ──
+        // ── 8. Create MP preference ──
+        const baseUrl = `${APP_BASE_URL}/${branding.slug || 'demo'}/events`;
         const preferenceBody = {
             items: [{
                 title: `${event.name} - ${tier.name}`,
@@ -207,9 +227,9 @@ serve(async (req: Request) => {
                 currency_id: branding.currency || "ARS"
             }],
             back_urls: {
-                success: `${APP_BASE_URL}/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=success`,
-                failure: `${APP_BASE_URL}/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=failure`,
-                pending: `${APP_BASE_URL}/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=pending`
+                success: `${baseUrl}/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`,
+                failure: `${baseUrl}/ticket?order_id=${order.id}&payment=failure&guest_token=${order.guest_token}`,
+                pending: `${baseUrl}/ticket?order_id=${order.id}&payment=pending&guest_token=${order.guest_token}`
             },
             auto_return: "approved",
             external_reference: externalReference,

@@ -58,7 +58,6 @@ import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
 
 // Staff Pages
-import StaffLogin from './pages/staff/StaffLogin.jsx'
 import StaffKDS from './pages/staff/StaffKDS.jsx'
 
 // Owner Pages
@@ -504,7 +503,6 @@ function App() {
                                             <Route path="/start-trial" element={<TrialSignup />} />
                                             <Route path="/login" element={<OwnerLogin />} />
                                             <Route path="/login/owner" element={<OwnerLogin />} />
-                                            <Route path="/login/staff" element={<StaffLogin />} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
@@ -528,7 +526,7 @@ function App() {
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
-                                            <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
+                                            <Route path="/:tenantSlug/staff" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />

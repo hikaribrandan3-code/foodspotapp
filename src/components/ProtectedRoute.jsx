@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import { useTenant } from '../contexts/TenantContext.jsx'
-import BurgerLoader from './BurgerLoader'
+import BurgerLoader from './BurgerLoader.jsx'
 
 // Role hierarchy: higher index = more access
 const ROLE_HIERARCHY = ['staff', 'owner', 'superadmin']

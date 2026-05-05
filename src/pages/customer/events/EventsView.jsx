@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { supabase } from '../../../lib/supabaseClient';
 import { useEvents } from '../../../hooks/useEvents';
 import EventDiscovery from './views/EventDiscovery';
 import EventDetail from './views/EventDetail';
@@ -217,6 +218,7 @@ function normalizeEvent(event) {
 
 export default function EventsView({ onViewTickets }) {
   const { tenantSlug } = useParams();
+  const [searchParams] = useSearchParams();
   const { events: dbEvents, loading: eventsLoading } = useEvents(tenantSlug);
 
   // Normalize DB events to frontend shape; fallback to mock if no DB data
@@ -226,6 +228,55 @@ export default function EventsView({ onViewTickets }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
   const [bookingData, setBookingData] = useState(null);
+  const [allBookings, setAllBookings] = useState([]);
+
+  // Load ticket if returning from MP payment
+  useEffect(() => {
+    const orderId = searchParams.get('order_id');
+    const guestToken = searchParams.get('guest_token');
+
+    if (orderId && guestToken) {
+      localStorage.setItem('event_guest_token', guestToken);
+
+      const fetchOrder = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('event_orders')
+            .select(`
+              *,
+              events:event_id (
+                name, image_url, venue_name, start_date, description
+              )
+            `)
+            .eq('id', orderId)
+            .eq('guest_token', guestToken)
+            .single();
+
+          if (!error && data) {
+            const booking = {
+              id: data.ticket_code,
+              event_id: data.event_id,
+              event_name: data.events?.name || 'Event',
+              tier_name: data.tier_snapshot?.name || '',
+              quantity: data.quantity,
+              total: data.total_cents / 100,
+              purchase_date: data.created_at,
+              venue_name: data.events?.venue_name || '',
+              image: data.events?.image_url || '',
+              description: data.events?.description || '',
+              guest_token: guestToken
+            };
+            setBookingData(booking);
+            setStage('ticket');
+          }
+        } catch (err) {
+          console.error('Failed to load order:', err);
+        }
+      };
+
+      fetchOrder();
+    }
+  }, [searchParams]);
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);

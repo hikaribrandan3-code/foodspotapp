@@ -68,7 +68,7 @@ const DEFAULTS = {
 };
 
 const Settings = () => {
-    const { tenantData: tenant, businessId, refreshTenantData, loading: tenantLoading } = useTenant();
+    const { tenantData: tenant, businessId, refreshTenantData, loading } = useTenant();
     const { t } = useLanguage();
     const navigate = useNavigate();
     
@@ -511,7 +511,7 @@ const Settings = () => {
         );
     };
 
-    if (tenantLoading || !tenant || !isDraftReady) return <BurgerLoader />;
+    if (loading || !tenant || !isDraftReady) return <BurgerLoader />;
 
     const heroIconMode = draft.hero_icon_mode || 'black';
     const navIconMode = draft.nav_icon_mode || 'white';
