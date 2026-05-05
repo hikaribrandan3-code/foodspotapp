@@ -78,13 +78,14 @@ import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
+import BurgerLoader from './components/BurgerLoader.jsx'
 
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
 
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
-    const { tenantData, businessId } = useTenant();
+    const { tenantData, businessId, loading: tenantLoading } = useTenant();
     const slug = tenantData?.slug || window.location.pathname.split('/')[1] || '';
     const bid = businessId || localStorage.getItem('fs_business_id') || '';
     window.location.replace(`/staff-ops.html?slug=${slug}&bid=${bid}`);
@@ -486,6 +487,11 @@ function App() {
     };
 
     const routeArea = getRouteArea();
+
+    // 🍔 GLOBAL LOADING: Prevent any page from flashing broken UI while tenant hydrates
+    if (tenantLoading) {
+        return <BurgerLoader />;
+    }
 
     return (
         <AdminIntentProvider>
