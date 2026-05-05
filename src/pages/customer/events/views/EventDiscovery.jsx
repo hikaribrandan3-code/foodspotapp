@@ -89,7 +89,7 @@ export default function EventDiscovery({ events, onSelectEvent }) {
 
   // Multi-tenancy filter + category filter
   const filteredEvents = events
-    .filter(e => e.business_id === businessId)
+    .filter(e => !businessId || e.business_id === businessId)
     .filter(e => selectedCategory === 'All' || e.category.toLowerCase().includes(selectedCategory.toLowerCase()));
 
   return (
@@ -129,7 +129,7 @@ export default function EventDiscovery({ events, onSelectEvent }) {
             onClick={() => setSelectedCategory(cat)}
             className={`px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm border ${
               selectedCategory === cat
-              ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg shadow-[var(--color-primary)]/20'
+              ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)] shadow-lg'
               : 'bg-white dark:bg-slate-900 text-[var(--text-secondary)] border-[var(--border-color)]'
             }`}
           >

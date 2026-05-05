@@ -5,6 +5,8 @@ module.exports = {
     './index.html',
     './staff-ops.html',
     './src/**/*.{js,ts,jsx,tsx}',
+    './src/pages/customer/events/**/*.{js,jsx}',
+    './src/components/EventThemeWrapper.jsx',
   ],
   theme: {
     extend: {

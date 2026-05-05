@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Hide scrollbar utility (Event Module) */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
@@ -14,6 +18,10 @@
    Overrides global foodspot styles when on /promos
    ============================================= */
 body.event-route {
+  --color-primary: #10b981 !important;
+  --text-primary: #1e293b !important;
+  --text-secondary: #64748b !important;
+  --border-color: #e2e8f0 !important;
   --canvas-bg: #f0f4f8 !important;
   --canvas-text: #1e293b !important;
   background-color: #f0f4f8 !important;
@@ -23,6 +31,10 @@ body.event-route {
   -moz-osx-font-smoothing: grayscale !important;
 }
 body.event-route.dark {
+  --color-primary: #10b981 !important;
+  --text-primary: #f1f5f9 !important;
+  --text-secondary: #94a3b8 !important;
+  --border-color: #1e293b !important;
   --canvas-bg: #020617 !important;
   --canvas-text: #f1f5f9 !important;
   background-color: #020617 !important;
@@ -34,8 +46,8 @@ body.event-route.dark {
    Mobile-first: 360×640 primary viewport
    ============================================= */
 
-/* Material Design 3 Theme (Tailwind v4) */
-@theme {
+/* Material Design 3 Theme Tokens */
+:root {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Manrope", sans-serif;
 
@@ -72,8 +84,6 @@ body.event-route.dark {
   --color-template-surface: #051a3e;
   --color-template-surface-variant: #434654;
 }
-
-@variant dark (&:where(.dark, .dark *));
 
 /* CSS Custom Properties */
 :root {

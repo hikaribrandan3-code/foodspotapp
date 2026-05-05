@@ -79,7 +79,7 @@ export default function EventDetail({ event, onBook, onBack }) {
 
         <div className="absolute bottom-10 left-6 right-6">
           <div className="flex gap-2 mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg">
               <Sparkles size={10} />
               {t('exclusive')}
             </div>

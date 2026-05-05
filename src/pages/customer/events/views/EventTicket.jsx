@@ -191,7 +191,7 @@ export default function EventTicket({ booking, onClose }) {
         <div className="w-full grid grid-cols-2 gap-2 mt-4 pb-10">
           <button
             onClick={handleDownloadPDF}
-            className="col-span-2 bg-[var(--color-primary)] text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-[var(--color-primary)]/10"
+            className="col-span-2 bg-[var(--color-primary)] text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl"
           >
             <FileText size={16} /> {t('download_pdf_ticket')}
           </button>
