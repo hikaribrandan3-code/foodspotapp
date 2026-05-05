@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ItemEditorModal({
@@ -11,14 +11,11 @@ export default function ItemEditorModal({
   isUploading,
   fileInputRef,
   activeFeaturedSlotRef,
-  activeCategoryItemRef,
-  onGenerateDescription
+  activeCategoryItemRef
 }) {
   const { t } = useLanguage();
 
   if (!editingItem) return null;
-
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const handleImageButtonClick = () => {
     if (editingItem.isFeaturedSlot) {
