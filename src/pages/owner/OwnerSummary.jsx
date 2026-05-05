@@ -294,7 +294,7 @@ function OwnerSummary() {
                                 Active
                             </span>
                             {ordersLoading && (
-                                <span className="text-[10px] text-gray-400 dark:text-gray-400">Syncing...</span>
+                                <span className="text-[10px] text-gray-400 dark:text-gray-300">Syncing...</span>
                             )}
                         </div>
                     </div>
@@ -375,11 +375,11 @@ function OwnerSummary() {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
                             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.weekCount}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{t('this_week') || 'This Week'}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-300 mt-1">{t('this_week') || 'This Week'}</p>
                         </div>
                         <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
                             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.monthCount}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{t('this_month') || 'This Month'}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-300 mt-1">{t('this_month') || 'This Month'}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -408,7 +408,7 @@ function OwnerSummary() {
                                         placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                     />
                                     <div className="bg-gray-50 dark:bg-[#0f172a] rounded-xl p-4 space-y-3 border border-gray-200 dark:border-white/5">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400">{t('location_label') || 'Location'}</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <InputField
                                             label={t('address_label') || 'Address'}
                                             value={appConfig?.businessInfo?.address || ''}
@@ -421,7 +421,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
                                             placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
                                         />
-                                        <p className="text-[11px] text-gray-400 dark:text-gray-400">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
+                                        <p className="text-[11px] text-gray-400 dark:text-gray-300">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
                                     </div>
                                     <InputField
                                         label={t('notes') || 'Notes'}
@@ -585,7 +585,7 @@ function OwnerSummary() {
                                     {/* Discord Webhook */}
                                     <div className="border-t border-gray-100 dark:border-white/5 pt-4">
                                         <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400 block mb-1.5">Discord Webhook</label>
-                                        <p className="text-xs text-gray-400 dark:text-gray-400 mb-2">Send payment requests to Discord when drivers deliver</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-300 mb-2">Send payment requests to Discord when drivers deliver</p>
                                         <div className="flex gap-2">
                                             <input
                                                 type="password"
@@ -640,7 +640,7 @@ function OwnerSummary() {
                                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                                         : isSelected
                                                             ? 'text-gray-900 dark:text-white'
-                                                            : 'text-gray-400 dark:text-gray-400'
+                                                            : 'text-gray-400 dark:text-gray-300'
                                                 }`}
                                             >
                                                 <span>{l}</span>
@@ -797,10 +797,10 @@ function MenuRow({ icon, label, subValue, value, highlight }) {
     return (
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-white/5 last:border-0">
             <div className="flex items-center gap-3">
-                <span className="text-gray-400 dark:text-gray-400">{icon}</span>
+                <span className="text-gray-400 dark:text-gray-300">{icon}</span>
                 <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-                    {subValue && <p className="text-xs text-gray-400 dark:text-gray-400">{subValue}</p>}
+                    {subValue && <p className="text-xs text-gray-400 dark:text-gray-300">{subValue}</p>}
                 </div>
             </div>
             {value && (
@@ -999,7 +999,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                             )}
 
                             {loading ? (
-                                <div className="text-center py-6 text-gray-400 dark:text-gray-400 text-sm">...</div>
+                                <div className="text-center py-6 text-gray-400 dark:text-gray-300 text-sm">...</div>
                             ) : staffList.length === 0 ? (
                                 <div className="text-center py-6 text-gray-400 dark:text-gray-400 text-sm">
                                     {t('no_staff') || 'No staff registered'}
@@ -1010,7 +1010,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         <div key={staff.id} className="flex items-center justify-between px-4 py-3">
                                             <div>
                                                 <div className="text-sm font-medium text-gray-900 dark:text-white">{staff.name}</div>
-                                                <div className="text-xs text-gray-400 dark:text-gray-400">@{staff.email} • {staff.role}</div>
+                                                <div className="text-xs text-gray-400 dark:text-gray-300">@{staff.email} • {staff.role}</div>
                                             </div>
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
