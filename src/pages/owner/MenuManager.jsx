@@ -235,7 +235,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // =========================================================
 
     const [editingItem, setEditingItem] = useState(null)
-    const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
+    const [editForm, setEditForm] = useState({ name: '', price: '', image: null, description: '', calories: '' })
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const activeFeaturedSlotRef = useRef(null)
@@ -588,10 +588,19 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // --- 🛠️ PURE STATE HELPER: Generate IDs ---
     const generateId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
+    const [aiPreview, setAiPreview] = useState(null)
+
     const handleEdit = (categoryId, item) => {
         setEditingItem({ categoryId, itemId: item.id })
-        setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
+        setEditForm({
+            name: item.name,
+            price: item.price.toString(),
+            image: item.image || null,
+            description: item.description || '',
+            calories: item.calories?.toString() || ''
+        })
         setUploadStatus(null)
+        setAiPreview(null)
     }
 
     const handleBoxTap = (categoryId, item) => {
@@ -743,6 +752,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 if (editForm.image) {
                     item.image = editForm.image
                 }
+                item.description = editForm.description || ''
+                item.calories = editForm.calories ? parseInt(editForm.calories) : undefined
                 // 🛡️ CLOUD-ONLY: saveMenu removed
                 setMenu(updatedMenu)
                 setHasChanges(true)
@@ -934,7 +945,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setEditForm({
             name: slot.name || 'Destacado',
             price: slot.price ? slot.price.toString() : '', // 🛡️ NO STICKY ZERO
-            image: slot.image || null
+            image: slot.image || null,
+            description: '',
+            calories: ''
         })
 
         // 2. 🛡️ NO AUTO-TRIGGER: We now wait for user to interact with the modal
@@ -1681,6 +1694,128 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     className="form-input"
                                     value={editForm.price}
                                     onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Descripción</label>
+                                <textarea
+                                    className="form-input"
+                                    rows={3}
+                                    value={editForm.description || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                    placeholder="Breve descripción apetitosa..."
+                                />
+                                {!editingItem.isFeaturedSlot && (
+                                    <button
+                                        className="btn btn-secondary btn-block"
+                                        style={{ marginTop: 8, fontSize: 13 }}
+                                        onClick={async () => {
+                                            const category = menu.categories.find(c => c.id === editingItem.categoryId)
+                                            const item = category?.items.find(i => i.id === editingItem.itemId)
+                                            if (!item) return
+                                            setAiPreview({ loading: true })
+                                            try {
+                                                const { data, error } = await supabase.functions.invoke('stitch-generate-description', {
+                                                    body: {
+                                                        menu_item_id: item.id,
+                                                        menu_item_name: item.name,
+                                                        category: category?.name || '',
+                                                        current_description: item.description || ''
+                                                    }
+                                                })
+                                                if (error) throw error
+                                                setAiPreview({
+                                                    loading: false,
+                                                    description: data?.description || '',
+                                                    calories: data?.calories || 0
+                                                })
+                                            } catch (err) {
+                                                console.error('AI generation failed:', err)
+                                                setAiPreview({ loading: false, error: err.message })
+                                            }
+                                        }}
+                                        disabled={aiPreview?.loading}
+                                    >
+                                        {aiPreview?.loading ? (
+                                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                                                <span style={{
+                                                    width: 14, height: 14, border: '2px solid #E5E7EB',
+                                                    borderTopColor: '#3B82F6', borderRadius: '50%',
+                                                    animation: 'spin 0.8s linear infinite', display: 'inline-block'
+                                                }} />
+                                                Generando...
+                                            </span>
+                                        ) : (
+                                            <span>✨ Generar Descripción</span>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* AI Preview Modal */}
+                            {aiPreview && !aiPreview.loading && !aiPreview.error && (
+                                <div className="form-group" style={{
+                                    background: '#f0fdf4',
+                                    border: '1px solid #bbf7d0',
+                                    borderRadius: 12,
+                                    padding: 12
+                                }}>
+                                    <label className="form-label" style={{ color: '#166534', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                        Vista previa AI
+                                    </label>
+                                    <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.5, margin: '8px 0' }}>
+                                        {aiPreview.description}
+                                    </p>
+                                    {aiPreview.calories > 0 && (
+                                        <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 10 }}>
+                                            ~{aiPreview.calories} cal
+                                        </p>
+                                    )}
+                                    <button
+                                        className="btn btn-primary btn-block"
+                                        style={{ background: '#22C55E', borderColor: '#22C55E' }}
+                                        onClick={() => {
+                                            setEditForm(prev => ({
+                                                ...prev,
+                                                description: aiPreview.description,
+                                                calories: aiPreview.calories?.toString() || prev.calories
+                                            }))
+                                            setAiPreview(null)
+                                        }}
+                                    >
+                                        Aprobar y usar
+                                    </button>
+                                </div>
+                            )}
+                            {aiPreview?.error && (
+                                <div className="form-group" style={{
+                                    background: '#fef2f2',
+                                    border: '1px solid #fecaca',
+                                    borderRadius: 12,
+                                    padding: 12,
+                                    color: '#991b1b',
+                                    fontSize: 13
+                                }}>
+                                    Error: {aiPreview.error}
+                                    <button
+                                        className="btn btn-secondary btn-block"
+                                        style={{ marginTop: 8 }}
+                                        onClick={() => setAiPreview(null)}
+                                    >
+                                        Reintentar
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="form-group">
+                                <label className="form-label">Calorías</label>
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={editForm.calories || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, calories: e.target.value })}
+                                    placeholder="ej. 420"
                                 />
                             </div>
 
