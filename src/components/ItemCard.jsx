@@ -67,7 +67,7 @@ const ItemCard = ({
                 boxShadow: isPlaceholder ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
                 position: 'relative',
                 cursor: readOnly ? 'default' : (isEditMode ? 'grab' : 'pointer'),
-                touchAction: 'none',
+                touchAction: isEditMode ? 'none' : 'manipulation',
                 ...shakeStyle
             }}
         >
