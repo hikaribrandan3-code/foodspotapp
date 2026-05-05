@@ -9,15 +9,9 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react
 
 export const FILTER_STYLES = {
     original: 'none',
-    warm: 'sepia(0.3) saturate(1.4) brightness(1.1)',
-    cool: 'saturate(0.9) hue-rotate(10deg) brightness(1.05)',
-    vibrant: 'saturate(1.6) contrast(1.1) brightness(1.05)',
-    vintage: 'sepia(0.4) contrast(0.9) brightness(0.95) saturate(0.8)',
-    pastel: 'saturate(0.7) brightness(1.15) contrast(0.9)',
     mono: 'grayscale(1) contrast(1.1)',
-    soft: 'brightness(1.08) contrast(0.92) saturate(0.95)',
-    crisp: 'contrast(1.15) saturate(1.1) brightness(1.02)',
-    fade: 'contrast(0.85) saturate(0.75) brightness(1.1)'
+    pastel: 'saturate(0.7) brightness(1.15) contrast(0.9)',
+    soft: 'brightness(1.08) contrast(0.92) saturate(0.95)'
 }
 
 const FLASH_MODES = ['off', 'on', 'auto', 'torch']
