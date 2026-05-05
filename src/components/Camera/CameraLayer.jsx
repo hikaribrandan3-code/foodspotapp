@@ -12,7 +12,6 @@ import './CameraLayer.css'
 const FILTERS = [
     { id: 'original', label: 'Original', color: '#888' },
     { id: 'mono', label: 'Mono', color: '#666' },
-    { id: 'pastel', label: 'Pastel', color: '#f8c8dc' },
     { id: 'soft', label: 'Soft', color: '#d4c8b8' }
 ]
 

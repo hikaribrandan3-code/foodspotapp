@@ -10,7 +10,6 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react
 export const FILTER_STYLES = {
     original: 'none',
     mono: 'grayscale(1) contrast(1.1)',
-    pastel: 'saturate(0.7) brightness(1.15) contrast(0.9)',
     soft: 'brightness(1.08) contrast(0.92) saturate(0.95)'
 }
 
@@ -223,16 +222,6 @@ export function useCamera() {
                     const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
                     const final = clamp((gray - 128) * 1.1 + 128)
                     data[i] = data[i + 1] = data[i + 2] = final
-                }
-                break
-            }
-            case 'pastel': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    r = clamp(r * 1.1 + 10)
-                    g = clamp(g * 1.15 + 5)
-                    b = clamp(b * 1.05)
-                    data[i] = r; data[i + 1] = g; data[i + 2] = b
                 }
                 break
             }
