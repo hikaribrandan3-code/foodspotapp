@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
+import { Ticket as TicketIcon, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import EventTicket from './EventTicket';
 
@@ -301,7 +301,7 @@ export default function MyTickets() {
                  <div className="space-y-4 mb-10">
                     <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4">
                        <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                          <Ticket size={24} />
+                          <TicketIcon size={24} />
                        </div>
                        <div className="flex-1">
                           <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Last Milestone</p>

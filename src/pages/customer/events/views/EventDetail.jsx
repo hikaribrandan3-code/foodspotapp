@@ -1,6 +1,6 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
-import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Ticket } from 'lucide-react';
+import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Ticket as TicketIcon } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { VenueMap } from '../../../../components/VenueMap';
 
@@ -244,7 +244,7 @@ export default function EventDetail({ event, onBook, onBack }) {
                         ? 'bg-orange-100 text-orange-600'
                         : 'bg-slate-100 text-slate-600'
                   }`}>
-                    <Ticket size={20} />
+                    <TicketIcon size={20} />
                   </div>
                   <div>
                     <h4 className="font-black text-[var(--text-primary)] text-sm mb-0.5">{tier.name}</h4>

@@ -23,7 +23,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           'html5-qrcode': ['html5-qrcode'],
-          'lucide': ['lucide-react'],
         },
       },
     },

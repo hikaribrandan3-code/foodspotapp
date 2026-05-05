@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
-  Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText,
+  Share2, X, MapPin, Calendar, Ticket as TicketIcon, CheckCircle2, FileText,
   ChevronLeft, Copy, Check, Mail, MessageCircle, Twitter,
   Fingerprint, Zap
 } from 'lucide-react';
@@ -638,7 +638,7 @@ export default function EventTicket({ booking, onClose }) {
             className="bg-black text-white rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all shadow-lg"
           >
             <div className="text-white">
-              <Ticket size={16} />
+              <TicketIcon size={16} />
             </div>
             <span className="text-[8px] font-black uppercase tracking-widest">{t('add_to_wallet')}</span>
           </button>

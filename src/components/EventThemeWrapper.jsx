@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ClipboardList as Assignment, Ticket, Sun, Moon, ChevronLeft, Camera } from 'lucide-react';
+import { ClipboardList as Assignment, Ticket as TicketIcon, Sun, Moon, ChevronLeft, Camera } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
 import MyTickets from '../pages/customer/events/views/MyTickets';
 
@@ -132,7 +132,7 @@ export default function EventThemeWrapper() {
           onClick={() => setView('events')}
           className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
         >
-          <Ticket size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
+          <TicketIcon size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
         </button>
 
