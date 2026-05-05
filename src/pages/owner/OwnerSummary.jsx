@@ -285,16 +285,16 @@ function OwnerSummary() {
                         <User size={28} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="font-semibold text-lg text-gray-900 dark:text-[#f8fafc] truncate">
+                        <h2 className="font-semibold text-lg text-gray-900 dark:text-white truncate">
                             {tenantData?.venue_name || tenantData?.business_name || 'Owner'}
                         </h2>
-                        <p className="text-sm capitalize text-gray-500 dark:text-[#94a3b8]">Owner</p>
+                        <p className="text-sm capitalize text-gray-500 dark:text-gray-300">Owner</p>
                         <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 Active
                             </span>
                             {ordersLoading && (
-                                <span className="text-[10px] text-gray-400 dark:text-[#64748b]">Syncing...</span>
+                                <span className="text-[10px] text-gray-400 dark:text-gray-400">Syncing...</span>
                             )}
                         </div>
                     </div>
@@ -312,11 +312,11 @@ function OwnerSummary() {
                             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                             className="w-full flex items-center gap-3 px-4 py-3.5"
                         >
-                            <span className="text-gray-400 dark:text-[#64748b]">
+                            <span className="text-gray-400 dark:text-gray-400">
                                 {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
                             </span>
-                            <span className="text-sm font-medium text-gray-900 dark:text-[#f8fafc] flex-1 text-left">Theme</span>
-                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 dark:bg-[#334155] text-gray-500 dark:text-[#94a3b8]">
+                            <span className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-left">Theme</span>
+                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 dark:bg-[#334155] text-gray-500 dark:text-gray-300">
                                 {theme === 'dark' ? 'Dark' : 'Light'}
                             </span>
                             <ChevronRight size={16} className="text-gray-300 dark:text-[#475569]" />
@@ -356,8 +356,8 @@ function OwnerSummary() {
                                         highlight
                                     />
                                     <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-100 dark:border-white/10">
-                                        <span className="text-sm font-semibold text-gray-900 dark:text-[#f8fafc]">{t('total_day') || 'Total'}</span>
-                                        <span className="text-base font-bold text-gray-900 dark:text-[#f8fafc]">{formatPrice(stats.totalToday)}</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{t('total_day') || 'Total'}</span>
+                                        <span className="text-base font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalToday)}</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -375,11 +375,11 @@ function OwnerSummary() {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
                             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.weekCount}</p>
-                            <p className="text-xs text-gray-400 dark:text-[#64748b] mt-1">{t('this_week') || 'This Week'}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{t('this_week') || 'This Week'}</p>
                         </div>
                         <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
                             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.monthCount}</p>
-                            <p className="text-xs text-gray-400 dark:text-[#64748b] mt-1">{t('this_month') || 'This Month'}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{t('this_month') || 'This Month'}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -408,7 +408,7 @@ function OwnerSummary() {
                                         placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                     />
                                     <div className="bg-gray-50 dark:bg-[#0f172a] rounded-xl p-4 space-y-3 border border-gray-200 dark:border-white/5">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b]">{t('location_label') || 'Location'}</p>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400">{t('location_label') || 'Location'}</p>
                                         <InputField
                                             label={t('address_label') || 'Address'}
                                             value={appConfig?.businessInfo?.address || ''}
@@ -421,7 +421,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
                                             placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
                                         />
-                                        <p className="text-[11px] text-gray-400 dark:text-[#64748b]">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
+                                        <p className="text-[11px] text-gray-400 dark:text-gray-400">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
                                     </div>
                                     <InputField
                                         label={t('notes') || 'Notes'}
@@ -466,7 +466,7 @@ function OwnerSummary() {
                                     />
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">Rappi</span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">Rappi</span>
                                             <ToggleSwitch
                                                 checked={appConfig?.externalOrdering?.rappiEnabled ?? false}
                                                 onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
@@ -480,7 +480,7 @@ function OwnerSummary() {
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">PedidosYa</span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">PedidosYa</span>
                                             <ToggleSwitch
                                                 checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false}
                                                 onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
@@ -560,14 +560,14 @@ function OwnerSummary() {
 
                                     {/* Alias */}
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400 block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 placeholder="yourstore.mp"
                                                 value={mpAliasInput}
                                                 onChange={(e) => setMpAliasInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
@@ -579,20 +579,20 @@ function OwnerSummary() {
                                             </motion.button>
                                         </div>
                                         {mpAliasSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
-                                        {!mpAliasSaved && <p className="text-xs text-gray-400 dark:text-[#64748b] mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
+                                        {!mpAliasSaved && <p className="text-xs text-gray-400 dark:text-gray-400 mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
                                     </div>
 
                                     {/* Discord Webhook */}
                                     <div className="border-t border-gray-100 dark:border-white/5 pt-4">
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">Discord Webhook</label>
-                                        <p className="text-xs text-gray-400 dark:text-[#64748b] mb-2">Send payment requests to Discord when drivers deliver</p>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400 block mb-1.5">Discord Webhook</label>
+                                        <p className="text-xs text-gray-400 dark:text-gray-400 mb-2">Send payment requests to Discord when drivers deliver</p>
                                         <div className="flex gap-2">
                                             <input
                                                 type="password"
                                                 placeholder="https://discord.com/api/webhooks/..."
                                                 value={discordWebhookInput}
                                                 onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
@@ -639,8 +639,8 @@ function OwnerSummary() {
                                                     isPending
                                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                                         : isSelected
-                                                            ? 'text-gray-900 dark:text-[#f8fafc]'
-                                                            : 'text-gray-400 dark:text-[#64748b]'
+                                                            ? 'text-gray-900 dark:text-white'
+                                                            : 'text-gray-400 dark:text-gray-400'
                                                 }`}
                                             >
                                                 <span>{l}</span>
@@ -780,13 +780,13 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
             className="w-full flex items-center justify-between px-1 mb-2"
             disabled={!onToggle}
         >
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#64748b] flex items-center gap-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-400 flex items-center gap-2">
                 {icon}{title}
             </h3>
             {onToggle && (
                 <ChevronDown
                     size={14}
-                    className={`text-gray-400 dark:text-[#64748b] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`text-gray-400 dark:text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 />
             )}
         </button>
@@ -797,14 +797,14 @@ function MenuRow({ icon, label, subValue, value, highlight }) {
     return (
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-white/5 last:border-0">
             <div className="flex items-center gap-3">
-                <span className="text-gray-400 dark:text-[#64748b]">{icon}</span>
+                <span className="text-gray-400 dark:text-gray-400">{icon}</span>
                 <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">{label}</p>
-                    {subValue && <p className="text-xs text-gray-400 dark:text-[#64748b]">{subValue}</p>}
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
+                    {subValue && <p className="text-xs text-gray-400 dark:text-gray-400">{subValue}</p>}
                 </div>
             </div>
             {value && (
-                <span className={`text-sm font-semibold ${highlight ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-[#94a3b8]'}`}>
+                <span className={`text-sm font-semibold ${highlight ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-300'}`}>
                     {value}
                 </span>
             )}
@@ -815,7 +815,7 @@ function MenuRow({ icon, label, subValue, value, highlight }) {
 function InputField({ label, value, onChange, placeholder, type = 'text' }) {
     return (
         <div>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400 block mb-1.5">
                 {label}
             </label>
             <input
@@ -823,7 +823,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text' }) {
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
             />
         </div>
     )
@@ -969,11 +969,11 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         placeholder="1234"
                                     />
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">{t('role') || 'Role'}</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-400 block mb-1.5">{t('role') || 'Role'}</label>
                                         <select
                                             value={newStaff.role}
                                             onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] outline-none focus:border-emerald-500/50 transition-colors"
+                                            className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white outline-none focus:border-emerald-500/50 transition-colors"
                                         >
                                             {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                                         </select>
@@ -990,7 +990,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
                                             onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-[#334155] text-gray-600 dark:text-[#94a3b8] hover:bg-gray-200 dark:hover:bg-[#475569] transition-colors"
+                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-[#334155] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#475569] transition-colors"
                                         >
                                             {t('cancel') || 'Cancel'}
                                         </motion.button>
@@ -999,9 +999,9 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                             )}
 
                             {loading ? (
-                                <div className="text-center py-6 text-gray-400 dark:text-[#64748b] text-sm">...</div>
+                                <div className="text-center py-6 text-gray-400 dark:text-gray-400 text-sm">...</div>
                             ) : staffList.length === 0 ? (
-                                <div className="text-center py-6 text-gray-400 dark:text-[#64748b] text-sm">
+                                <div className="text-center py-6 text-gray-400 dark:text-gray-400 text-sm">
                                     {t('no_staff') || 'No staff registered'}
                                 </div>
                             ) : (
@@ -1009,8 +1009,8 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                     {staffList.map(staff => (
                                         <div key={staff.id} className="flex items-center justify-between px-4 py-3">
                                             <div>
-                                                <div className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">{staff.name}</div>
-                                                <div className="text-xs text-gray-400 dark:text-[#64748b]">@{staff.email} • {staff.role}</div>
+                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{staff.name}</div>
+                                                <div className="text-xs text-gray-400 dark:text-gray-400">@{staff.email} • {staff.role}</div>
                                             </div>
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
