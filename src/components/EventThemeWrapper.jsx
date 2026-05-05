@@ -51,7 +51,7 @@ const CAM_ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';   // Camera icon  same +20% as
 const LABEL_SIZE = 'clamp(11px, 1.4vw, 16px)';
 const BTN_GAP = 'clamp(5px, 1.2vh, 10px)';
 const BTN_PY = 'clamp(10px, 1.8vh, 20px)';
-const FAB_SIZE = 'clamp(56px, 8.568vw, 76px)';      // Camera button +2% larger
+const FAB_SIZE = 'clamp(120px, 18.42vw, 163px)';   // Camera button 215% bigger
 const FAB_OFFSET = 'clamp(20px, 4vh, 32px)';        // Elevated higher
 const FAB_RADIUS = 'clamp(24px, 3.5vw, 34px)';
 const FAB_BORDER = 'clamp(5px, 1vw, 8px)';
@@ -198,7 +198,7 @@ export default function EventThemeWrapper() {
               height: FAB_SIZE,
               borderRadius: FAB_RADIUS,
               border: `${FAB_BORDER} solid var(--canvas-bg)`,
-              boxShadow: '0 clamp(12px, 2vh, 20px) clamp(24px, 4vh, 40px) rgba(0,0,0,0.3)',
+              boxShadow: '0 clamp(6px, 1.2vh, 12px) clamp(12px, 2vh, 20px) rgba(0,0,0,0.15)',
               minWidth: 44,
               minHeight: 44,
             }}
