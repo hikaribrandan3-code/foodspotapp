@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText,
-  ChevronLeft, Copy, Check, Mail, MessageCircle, Twitter
+  ChevronLeft, Copy, Check, Mail, MessageCircle, Twitter,
+  Fingerprint, Zap
 } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
@@ -281,6 +282,7 @@ export default function EventTicket({ booking, onClose }) {
   const [toast, setToast] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('ticket');
 
   const showToastMsg = useCallback((msg) => {
     setToast(msg);
@@ -417,11 +419,43 @@ export default function EventTicket({ booking, onClose }) {
         </button>
       </header>
 
+      {/* Tab Switcher - Only shows if there are addons */}
+      {booking.addons && booking.addons.length > 0 && (
+        <div className="px-8 pt-4">
+          <div className="bg-slate-100 dark:bg-slate-900/50 p-1 rounded-2xl flex items-center gap-1 border border-[var(--border-color)]">
+            <button
+              onClick={() => setActiveTab('ticket')}
+              className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                activeTab === 'ticket'
+                ? 'bg-white dark:bg-slate-800 text-[var(--color-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] opacity-50'
+              }`}
+            >
+              {t('entry_ticket') || 'Entry Ticket'}
+            </button>
+            <button
+              onClick={() => setActiveTab('vouchers')}
+              className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                activeTab === 'vouchers'
+                ? 'bg-white dark:bg-slate-800 text-[var(--color-primary)] shadow-sm'
+                : 'text-[var(--text-secondary)] opacity-50'
+              }`}
+            >
+              {t('vouchers') || 'Vouchers'}
+              <span className="bg-[var(--color-primary)] text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px]">
+                {booking.addons.length}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 px-8 py-4 flex flex-col items-center">
+        {activeTab === 'ticket' ? (
         <motion.div
           ref={ticketRef}
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
           className="w-full bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl shadow-slate-900/5 relative flex flex-col items-center overflow-hidden border border-[var(--border-color)]"
         >
           {/* Ticket Flyer / Header Decor */}
@@ -432,6 +466,18 @@ export default function EventTicket({ booking, onClose }) {
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-transparent to-transparent"></div>
+            
+            {/* Futuristic Sync Badge */}
+            <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
+              {booking.payment_method === 'wristband' && (
+                <span className="bg-emerald-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                  <Fingerprint size={8} /> Synced to Wristband
+                </span>
+              )}
+              <span className="bg-slate-900/40 backdrop-blur-md text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1 border border-white/20">
+                <Zap size={8} className="text-amber-400" /> Instant Entry
+              </span>
+            </div>
           </div>
 
           <div className="pt-3 pb-4 px-6 text-center">
@@ -505,7 +551,7 @@ export default function EventTicket({ booking, onClose }) {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-6 w-full border-t border-[var(--border-color)] pt-4 mt-0">
+            <div className="grid grid-cols-2 gap-6 w-full border-t border-[var(--border-color)] pt-4 mt-0 pb-2">
               <div>
                 <p className="text-[7px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-0.5">{t('tier')}</p>
                 <p className="text-[9px] font-black text-[var(--text-primary)] uppercase">{booking.tier_name}</p>
@@ -517,6 +563,57 @@ export default function EventTicket({ booking, onClose }) {
             </div>
           </div>
         </motion.div>
+        ) : (
+          <div className="w-full space-y-4 pb-12">
+            {booking.addons.map((addon, index) => (
+              <motion.div
+                key={addon.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="w-full bg-white dark:bg-slate-900 rounded-[32px] overflow-hidden border border-[var(--border-color)] shadow-sm flex flex-col"
+              >
+                <div className="p-5 flex items-center justify-between border-b border-[var(--border-color)] bg-slate-50/50 dark:bg-slate-800/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                      {addon.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-tight text-[var(--text-primary)]">{addon.name}</h3>
+                      <p className="text-[8px] font-bold text-[var(--color-primary)] uppercase tracking-widest">Digital Voucher</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[7px] font-black text-[var(--text-secondary)] opacity-40 uppercase tracking-[0.2em] mb-0.5">Value</p>
+                    <p className="text-sm font-black text-[var(--text-primary)]">${addon.price}</p>
+                  </div>
+                </div>
+
+                <div className="p-6 flex flex-col items-center gap-5">
+                   <div className="p-4 bg-white rounded-xl shadow-md border border-slate-100">
+                      <QRCodeSVG
+                         value={`${booking.id}-addon-${addon.id}`}
+                         size={120}
+                         level="H"
+                         includeMargin={false}
+                         fgColor="#0f172a"
+                      />
+                   </div>
+                   
+                   <div className="text-center">
+                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 mb-1">Voucher Security Code</p>
+                      <p className="text-[10px] font-mono font-bold tracking-widest text-[var(--text-secondary)]">VCH-{booking.id.split('-')[1]}-{addon.id.toUpperCase()}</p>
+                   </div>
+                   
+                   <div className="w-full bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl p-3 border border-emerald-100 dark:border-emerald-900/30 flex items-center gap-3">
+                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                      <p className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 leading-tight">Present this QR at any participating stand to redeem your {addon.name.toLowerCase()}.</p>
+                   </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         <div className="w-full grid grid-cols-2 gap-2 mt-4 pb-10">
           <button
@@ -552,6 +649,26 @@ export default function EventTicket({ booking, onClose }) {
           >
             <Share2 size={16} /> {t('share')}
           </button>
+          
+          {/* Futuristic Wristband Sync UI */}
+          <div className="col-span-2 bg-slate-900 dark:bg-white p-6 rounded-[32px] mt-2 flex flex-col items-center text-center gap-3 border border-white/10 shadow-2xl relative overflow-hidden group">
+            <div className="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
+            
+            <div className="w-12 h-12 rounded-2xl bg-white/10 dark:bg-slate-900/10 flex items-center justify-center text-emerald-400 mb-1 relative">
+              <div className="absolute inset-0 bg-emerald-400 opacity-20 blur-lg animate-pulse" />
+              <Fingerprint size={28} className="relative z-10" />
+            </div>
+            
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-widest text-white dark:text-slate-900">Futuristic Wristband</h3>
+              <p className="text-[10px] font-bold text-white/40 dark:text-slate-900/40 uppercase tracking-tight mt-1">Leave your phone behind. Sync with a smart wristband at the gate.</p>
+            </div>
+            
+            <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
+              {booking.payment_method === 'wristband' ? 'Voucher Synced' : 'Sync Ticket & Vouchers'}
+            </button>
+          </div>
         </div>
       </main>
     </div>

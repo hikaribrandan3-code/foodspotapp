@@ -74,7 +74,7 @@ const WeatherWidget = () => {
   );
 };
 
-export default function EventDiscovery({ events, onSelectEvent }) {
+export default function EventDiscovery({ events, onSelectEvent, onViewTickets }) {
   const { t, language, setLanguage } = useLanguage();
   const { businessId } = useTenant();
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -104,17 +104,28 @@ export default function EventDiscovery({ events, onSelectEvent }) {
               {t('event_discovery')}
             </h1>
           </div>
-          <button
-            onClick={() => {
-              const currentIndex = languages.findIndex(l => l.code === language);
-              const nextIndex = (currentIndex + 1) % languages.length;
-              setLanguage(languages[nextIndex].code);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm"
-          >
-            <Languages size={14} className="text-[var(--color-primary)]" />
-            <span className="text-[10px] font-black text-[var(--text-primary)]">{languages.find(l => l.code === language)?.name || 'EN'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const currentIndex = languages.findIndex(l => l.code === language);
+                const nextIndex = (currentIndex + 1) % languages.length;
+                setLanguage(languages[nextIndex].code);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-[var(--border-color)] shadow-sm"
+            >
+              <Languages size={14} className="text-[var(--color-primary)]" />
+              <span className="text-[10px] font-black text-[var(--text-primary)]">{languages.find(l => l.code === language)?.name || 'EN'}</span>
+            </button>
+            {onViewTickets && (
+              <button
+                onClick={onViewTickets}
+                className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 border border-[var(--border-color)] flex items-center justify-center text-[var(--text-secondary)] shadow-sm active:scale-95 transition-all relative overflow-hidden group"
+              >
+                <Ticket size={20} className="relative z-10 transition-transform group-hover:-rotate-12" />
+                <div className="absolute inset-0 bg-[var(--color-primary)] opacity-0 group-hover:opacity-5 transition-opacity" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

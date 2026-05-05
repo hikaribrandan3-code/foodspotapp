@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Ticket, CreditCard, Info } from 'lucide-react';
+import { ChevronLeft, Ticket, CreditCard, Info, Smartphone, Coins, Fingerprint } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
@@ -9,10 +9,24 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const [promoCode, setPromoCode] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
   if (!event || !tier) return null;
 
-  const total = tier.price * qty;
+  const addons = [
+    { id: 'drink', name: t('drink_tokens') || 'Drink Tokens', price: 15, icon: '🍺' },
+    { id: 'food', name: t('tasting_platter') || 'Tasting Platter', price: 45, icon: '🍱' }
+  ];
+
+  const addonsTotal = selectedAddons.reduce((sum, id) => sum + addons.find(a => a.id === id).price, 0);
+  const total = (tier.price * qty) + addonsTotal;
+
+  const toggleAddon = (id) => {
+    setSelectedAddons(prev =>
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    );
+  };
 
   const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
@@ -26,6 +40,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       tier_name: tier.name,
       tier_id: tier.id,
       quantity: qty,
+      addons: selectedAddons.map(id => addons.find(a => a.id === id)),
       total: total,
       purchase_date: new Date().toISOString(),
       venue_name: event.venue_name,
@@ -33,9 +48,17 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       time: event.time,
       image: event.image,
       description: event.description,
-      category: event.category
+      category: event.category,
+      payment_method: paymentMethod
     });
   };
+
+  const paymentOptions = [
+    { id: 'card', name: 'Credit Card', icon: <CreditCard size={16} />, color: 'slate' },
+    { id: 'mercado', name: 'Mercado Pago', icon: <Smartphone size={16} />, color: 'sky' },
+    { id: 'crypto', name: 'Crypto Pay', icon: <Coins size={16} />, color: 'indigo' },
+    { id: 'wristband', name: 'Sync Wristband', icon: <Fingerprint size={16} />, color: 'emerald' }
+  ];
 
   return (
     <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
@@ -51,9 +74,9 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         </h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-6 py-6 space-y-6 flex flex-col">
+      <main className="flex-1 overflow-y-auto px-6 py-6 space-y-8 flex flex-col pb-32">
         {/* Immersive Event Summary Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm flex flex-col">
+        <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm flex flex-col shrink-0">
           <div className="relative h-32 w-full">
             <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/40 dark:via-slate-900/40 to-transparent"></div>
@@ -93,6 +116,62 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                   <p className="text-[9px] font-black text-[var(--text-secondary)] opacity-40 uppercase tracking-widest mt-0.5">Admin fees included</p>
                 </div>
              </div>
+          </div>
+        </div>
+
+        {/* Add-ons */}
+        <div className="space-y-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('addons_title') || 'Experience Add-ons'}</h3>
+          <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-40 px-2">{t('addons_desc') || 'Pre-purchase vouchers to skip the line.'}</p>
+          <div className="space-y-2">
+            {addons.map(addon => {
+              const isSelected = selectedAddons.includes(addon.id);
+              return (
+                <button
+                  key={addon.id}
+                  onClick={() => toggleAddon(addon.id)}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all text-left ${
+                    isSelected
+                      ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30'
+                      : 'bg-white dark:bg-slate-900 border-[var(--border-color)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{addon.icon}</span>
+                    <div>
+                      <p className="text-xs font-black text-[var(--text-primary)]">{addon.name}</p>
+                      <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-50">+${addon.price}</p>
+                    </div>
+                  </div>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
+                    isSelected ? 'bg-emerald-500 text-white' : 'bg-[var(--canvas-bg)] text-[var(--text-secondary)]'
+                  }`}>
+                    {isSelected ? '✓' : '+'}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Payment Method */}
+        <div className="space-y-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('payment_method') || 'Payment Method'}</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {paymentOptions.map(opt => (
+              <button
+                key={opt.id}
+                onClick={() => setPaymentMethod(opt.id)}
+                className={`flex items-center gap-2 p-3 rounded-2xl border transition-all text-left ${
+                  paymentMethod === opt.id
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
+                    : 'bg-white dark:bg-slate-900 text-[var(--text-primary)] border-[var(--border-color)]'
+                }`}
+              >
+                <span className={paymentMethod === opt.id ? 'text-white dark:text-slate-900' : 'text-[var(--text-secondary)]'}>{opt.icon}</span>
+                <span className="text-[9px] font-black uppercase tracking-widest">{opt.name}</span>
+              </button>
+            ))}
           </div>
         </div>
 

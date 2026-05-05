@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ClipboardList as Assignment, Ticket, Sun, Moon, ChevronLeft } from 'lucide-react';
+import { ClipboardList as Assignment, Ticket, Sun, Moon, ChevronLeft, Camera } from 'lucide-react';
 import EventsView from '../pages/customer/events/EventsView';
 import MyTickets from '../pages/customer/events/views/MyTickets';
 
@@ -119,7 +119,7 @@ export default function EventThemeWrapper() {
 
       {/* Main Content Area */}
       <div className="pb-24">
-        {view === 'events' && <EventsView />}
+        {view === 'events' && <EventsView onViewTickets={() => setView('status')} />}
         {view === 'status' && <MyTickets />}
       </div>
 
@@ -135,6 +135,23 @@ export default function EventThemeWrapper() {
           <Ticket size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
           <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
         </button>
+
+        {/* Center Camera Button */}
+        <div className="w-20 flex justify-center -translate-y-5 relative">
+          <div className="absolute inset-x-0 -bottom-3 h-8 bg-black/20 rounded-full blur-xl opacity-40" />
+          <button
+            onClick={() => navigate(`/${tenantSlug}/camera`)}
+            className={`w-14 h-14 rounded-[24px] flex items-center justify-center shadow-[0_16px_32px_rgba(0,0,0,0.3)] transition-all duration-500 active:scale-95 border-[5px] border-[var(--canvas-bg)] dark:border-slate-950 cursor-pointer overflow-hidden relative group ${
+              view === 'camera'
+              ? 'bg-slate-900 text-white'
+              : 'bg-[var(--color-primary)] text-white'
+            }`}
+          >
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Camera size={24} strokeWidth={2.5} className="relative z-10" />
+          </button>
+        </div>
+
         <button
           onClick={() => setView('status')}
           className={`flex flex-col items-center gap-1 transition-all ${view === 'status' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
