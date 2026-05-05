@@ -9,15 +9,8 @@ import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react
 
 export const FILTER_STYLES = {
     original: 'none',
-    warm: 'sepia(0.3) saturate(1.4) brightness(1.1)',
-    cool: 'saturate(0.9) hue-rotate(10deg) brightness(1.05)',
-    vibrant: 'saturate(1.6) contrast(1.1) brightness(1.05)',
-    vintage: 'sepia(0.4) contrast(0.9) brightness(0.95) saturate(0.8)',
-    pastel: 'saturate(0.7) brightness(1.15) contrast(0.9)',
     mono: 'grayscale(1) contrast(1.1)',
-    soft: 'brightness(1.08) contrast(0.92) saturate(0.95)',
-    crisp: 'contrast(1.15) saturate(1.1) brightness(1.02)',
-    fade: 'contrast(0.85) saturate(0.75) brightness(1.1)'
+    soft: 'brightness(1.08) contrast(0.92) saturate(0.95)'
 }
 
 const FLASH_MODES = ['off', 'on', 'auto', 'torch']
@@ -232,50 +225,11 @@ export function useCamera() {
                 }
                 break
             }
-            case 'warm': {
+            case 'soft': {
                 for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = gray + (r - gray) * 1.15 + 15
-                    g = gray + (g - gray) * 1.1 + 8
-                    b = gray + (b - gray) * 0.9 - 20
-                    data[i] = clamp(r * 1.08); data[i + 1] = clamp(g * 1.05); data[i + 2] = clamp(b)
-                }
-                break
-            }
-            case 'cool': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = gray + (r - gray) * 0.9 - 10
-                    g = gray + (g - gray) * 1.0 + 5
-                    b = gray + (b - gray) * 1.1 + 20
-                    data[i] = clamp(r * 1.02); data[i + 1] = clamp(g * 1.05); data[i + 2] = clamp(b * 1.08)
-                }
-                break
-            }
-            case 'vibrant': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = (gray + (r - gray) * 1.5 - 128) * 1.1 + 128
-                    g = (gray + (g - gray) * 1.5 - 128) * 1.1 + 128
-                    b = (gray + (b - gray) * 1.5 - 128) * 1.1 + 128
-                    data[i] = clamp(r * 1.03); data[i + 1] = clamp(g * 1.03); data[i + 2] = clamp(b * 1.03)
-                }
-                break
-            }
-            case 'vintage': {
-                for (let i = 0; i < len; i += 4) {
-                    let r = data[i], g = data[i + 1], b = data[i + 2]
-                    const gray = (r + g + b) / 3
-                    r = gray + (r - gray) * 0.7
-                    g = gray + (g - gray) * 0.7
-                    b = gray + (b - gray) * 0.7
-                    r = (r * 1.1 + 10 - 128) * 0.85 + 128 + 15
-                    g = (g * 1.0 + 5 - 128) * 0.85 + 128 + 10
-                    b = (b * 0.85 - 5 - 128) * 0.85 + 128 + 5
-                    data[i] = clamp(r); data[i + 1] = clamp(g); data[i + 2] = clamp(b)
+                    data[i] = clamp(data[i] * 1.08 + 5)
+                    data[i + 1] = clamp(data[i + 1] * 1.08 + 3)
+                    data[i + 2] = clamp(data[i + 2] * 1.05 + 2)
                 }
                 break
             }

@@ -54,23 +54,24 @@ export default function EventDetail({ event, onBook, onBack }) {
 
   const handleZoneSelect = (zoneId) => {
     setSelectedZone(zoneId);
+    // Find the tier that matches this zone and scroll to it or highlight it
     const matchingTier = event.tiers.find(t => t.id.includes(zoneId.toLowerCase()) || (zoneId === 'Tables' && t.name.toLowerCase().includes('table')));
     if (matchingTier) {
-      // Auto-select tier when zone is clicked
+      // We could automatically select it or just highlight it
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
       <div className="relative h-[420px] shrink-0">
-        <img
-          src={event.image}
-          alt={event.name}
+        <img 
+          src={event.image} 
+          alt={event.name} 
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-950 via-transparent to-transparent"></div>
-
-        <button
+        
+        <button 
           onClick={onBack}
           className="absolute top-12 left-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[var(--text-primary)] shadow-xl active:scale-90 transition-all border border-white/20"
         >
@@ -79,7 +80,7 @@ export default function EventDetail({ event, onBook, onBack }) {
 
         <div className="absolute bottom-10 left-6 right-6">
           <div className="flex gap-2 mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20">
               <Sparkles size={10} />
               {t('exclusive')}
             </div>
@@ -162,11 +163,11 @@ export default function EventDetail({ event, onBook, onBack }) {
                 <span className="text-[8px] font-black text-emerald-600 uppercase tracking-wider">Live Now</span>
               </div>
             </div>
-
+            
             <div className="relative space-y-4 px-2">
               {/* Timeline Line */}
               <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-slate-100 dark:bg-slate-900" />
-
+              
               {event.lineup.map((slot, i) => (
                 <div key={i} className="relative flex items-center gap-6 group">
                   {/* Time Marker */}
@@ -175,11 +176,11 @@ export default function EventDetail({ event, onBook, onBack }) {
                   }`}>
                     <span className={`text-[10px] font-black ${slot.live ? 'text-emerald-600' : 'text-[var(--text-primary)]'}`}>{slot.time}</span>
                   </div>
-
+                  
                   {/* Artist Card */}
                   <div className={`flex-1 p-4 rounded-3xl border transition-all ${
-                    slot.live
-                    ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30'
+                    slot.live 
+                    ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/30' 
                     : 'bg-[var(--canvas-bg)] border-[var(--border-color)] group-hover:border-[var(--color-primary)]/30'
                   }`}>
                     <div className="flex items-center justify-between mb-1">
@@ -208,9 +209,9 @@ export default function EventDetail({ event, onBook, onBack }) {
         {event.category === 'Festivals' && (
           <div className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">Venue Layout</h3>
-            <VenueMap
-              selectedZone={selectedZone}
-              onSelectZone={handleZoneSelect}
+            <VenueMap 
+              selectedZone={selectedZone} 
+              onSelectZone={handleZoneSelect} 
             />
           </div>
         )}
@@ -220,28 +221,28 @@ export default function EventDetail({ event, onBook, onBack }) {
           <div className="grid gap-4">
             {event.tiers.map(tier => {
               const isSelected = selectedZone && (
-                tier.id.toLowerCase().includes(selectedZone.toLowerCase()) ||
+                tier.id.toLowerCase().includes(selectedZone.toLowerCase()) || 
                 (selectedZone === 'Tables' && tier.name.toLowerCase().includes('table')) ||
                 (selectedZone === 'VIP_L' && tier.name.includes('VIP')) ||
                 (selectedZone === 'VIP_R' && tier.name.includes('VIP'))
               );
-
+              
               return (
               <button
                 key={tier.id}
                 onClick={() => onBook(tier)}
                 className={`group relative flex items-center justify-between p-6 rounded-[32px] bg-white dark:bg-slate-900 border transition-all text-left shadow-sm overflow-hidden ${
-                  isSelected
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-4 ring-[var(--color-primary)]/10 scale-[1.02]'
+                  isSelected 
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-4 ring-[var(--color-primary)]/10 scale-[1.02]' 
                     : 'border-[var(--border-color)] hover:border-[var(--color-primary)]/30 active:scale-[0.98]'
                 }`}
               >
                 <div className="relative z-10 flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                    tier.name.toLowerCase().includes('table')
-                      ? 'bg-purple-100 text-purple-600'
-                      : tier.name.includes('VIP')
-                        ? 'bg-orange-100 text-orange-600'
+                    tier.name.toLowerCase().includes('table') 
+                      ? 'bg-purple-100 text-purple-600' 
+                      : tier.name.includes('VIP') 
+                        ? 'bg-orange-100 text-orange-600' 
                         : 'bg-slate-100 text-slate-600'
                   }`}>
                     <Tickets size={20} />
@@ -249,8 +250,8 @@ export default function EventDetail({ event, onBook, onBack }) {
                   <div>
                     <h4 className="font-black text-[var(--text-primary)] text-sm mb-0.5">{tier.name}</h4>
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50">
-                      {tier.name.toLowerCase().includes('table')
-                        ? 'Includes reserved premium seating'
+                      {tier.name.toLowerCase().includes('table') 
+                        ? 'Includes reserved premium seating' 
                         : 'Admission for 1 person'}
                     </p>
                   </div>

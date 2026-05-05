@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import EventTicket from './EventTicket';
 
 const TicketCard = ({ ticket, isPast = false, onClick }) => {
   const { t } = useLanguage();
   return (
-    <div
+    <div 
       onClick={!isPast ? onClick : undefined}
       className={`relative overflow-hidden rounded-[32px] border group transition-all cursor-pointer bg-white dark:bg-slate-900 h-28 ${isPast ? 'border-slate-100 dark:border-slate-800 opacity-60 grayscale' : 'border-[var(--border-color)] shadow-sm active:scale-[0.98]'}`}
     >
@@ -34,7 +34,7 @@ const TicketCard = ({ ticket, isPast = false, onClick }) => {
              )}
           </div>
         </div>
-
+        
         <div className="flex flex-col items-end gap-2">
            {isPast ? (
              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm">Past</span>
@@ -52,10 +52,32 @@ const TicketCard = ({ ticket, isPast = false, onClick }) => {
 export default function MyTickets() {
   const { t } = useLanguage();
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showBadges, setShowBadges] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(125.50);
+  const [isToppingUp, setIsToppingUp] = useState(false);
+
+  useEffect(() => {
+    if (showBadges) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showBadges]);
+
+  const handleTopUp = () => {
+    setIsToppingUp(true);
+    setTimeout(() => {
+      setWalletBalance(prev => prev + 50);
+      setIsToppingUp(false);
+    }, 1500);
+  };
 
   const savedBookings = JSON.parse(localStorage.getItem('event_bookings') || '[]');
-
+  
   // Combine real bookings with any static ones if desired, or just use real
   const upcomingTickets = savedBookings;
 
@@ -84,68 +106,128 @@ export default function MyTickets() {
 
   if (selectedBooking) {
     return (
-      <EventTicket
-        booking={selectedBooking}
-        onClose={() => setSelectedBooking(null)}
+      <EventTicket 
+        booking={selectedBooking} 
+        onClose={() => setSelectedBooking(null)} 
       />
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--canvas-bg)]">
-      <header className="px-6 pt-12 pb-6">
+    <div className="flex flex-col h-full bg-[var(--canvas-bg)]">
+      <header className="px-6 pt-12 pb-6 flex items-end justify-between">
         <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">
           {t('my_tickets')}
         </h1>
+        <div className="flex flex-col items-end">
+           <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-1">Wallet</span>
+           <div className="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-[var(--border-color)] shadow-sm flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-black text-[var(--text-primary)]">${walletBalance.toFixed(2)}</span>
+           </div>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto px-6 space-y-8 pb-32">
+        {/* Futuristic Digital Wallet Card */}
+        <section>
+          <div className="bg-slate-900 rounded-[32px] p-5 text-white relative overflow-hidden shadow-2xl group active:scale-[0.98] transition-all cursor-pointer">
+             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700" />
+             <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+             
+             <div className="relative z-10 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                   <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+                      <Wallet size={20} className="text-emerald-400" />
+                   </div>
+                   <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/15 scale-90 origin-right">
+                         <Fingerprint size={10} className="text-emerald-400" />
+                         <span className="text-[8px] font-black uppercase tracking-widest">Active Wristband</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 opacity-30 mt-0.5">
+                         <CreditCard size={8} />
+                         <span className="text-[6px] font-bold uppercase tracking-widest">Linked: Visa •••• 4242</span>
+                      </div>
+                   </div>
+                </div>
+                
+                <div className="-mt-1">
+                   <p className="text-[7px] font-black uppercase tracking-[0.2em] opacity-40 mb-0">Digital Balance</p>
+                   <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black tracking-tighter">${walletBalance.toFixed(2)}</span>
+                      <span className="text-[9px] font-bold opacity-30 uppercase tracking-widest ml-1">Credits</span>
+                   </div>
+                </div>
+ 
+                <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                   <div className="flex flex-col items-start">
+                      <div className="bg-[#FFF059] px-2.5 py-1 rounded-lg border border-yellow-400 flex items-center gap-1.5 shadow-[0_4px_12px_rgba(255,240,89,0.15)] scale-90 origin-left">
+                         <div className="w-1.5 h-1.5 rounded-full bg-[#009EE3] animate-pulse" />
+                         <span className="text-[8px] font-black uppercase tracking-widest text-[#009EE3]">MP Linked</span>
+                      </div>
+                   </div>
+                   <button 
+                    onClick={(e) => { e.stopPropagation(); handleTopUp(); }}
+                    className={`text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 px-4 py-2 rounded-xl border transition-all ${
+                      isToppingUp 
+                      ? 'bg-white text-slate-900 border-white' 
+                      : 'text-emerald-400 bg-emerald-400/5 border-emerald-400/10 hover:bg-emerald-400/20'
+                    }`}
+                   >
+                      {isToppingUp ? 'SYNCING' : 'Top-Up'} <Zap size={10} className={isToppingUp ? 'animate-spin' : ''} />
+                   </button>
+                </div>
+             </div>
+          </div>
+        </section>
+
         {/* Referral Dashboard Section */}
         <section>
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-[var(--border-color)] overflow-hidden shadow-sm">
-            <div className="p-5 bg-gradient-to-br from-[var(--color-primary)] to-slate-900 text-white relative overflow-hidden">
+            <div className="p-4 bg-gradient-to-br from-emerald-500 to-emerald-700 text-white relative overflow-hidden">
               <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Award size={14} />
-                  <h2 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-90">{t('refer_earn')}</h2>
+                <div className="flex items-center gap-2 mb-1">
+                  <Award size={12} />
+                  <h2 className="text-[8px] font-black uppercase tracking-[0.2em] opacity-80">{t('refer_earn')}</h2>
                 </div>
-                <p className="text-[13px] font-bold leading-relaxed opacity-95">{t('refer_desc')}</p>
+                <p className="text-[11px] font-bold leading-tight opacity-95">{t('refer_desc')}</p>
               </div>
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-4 space-y-3">
                <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                     <p className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-1.5">{t('your_code')}</p>
-                     <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-[var(--border-color)] group active:scale-[0.98] transition-all cursor-pointer" onClick={handleCopy}>
-                        <span className="font-black tracking-widest text-[var(--text-primary)] text-sm">{referralCode}</span>
+                     <p className="text-[6px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-1">{t('your_code')}</p>
+                     <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 px-2.5 py-2 rounded-xl border border-[var(--border-color)] group active:scale-[0.98] transition-all cursor-pointer" onClick={handleCopy}>
+                        <span className="font-black tracking-widest text-[var(--text-primary)] text-[10px]">{referralCode}</span>
                         {copied ? (
-                          <div className="flex items-center gap-1.5 text-emerald-500">
-                            <span className="text-[8px] font-black uppercase">{t('code_copied')}</span>
-                            <CheckCircle2 size={14} />
+                          <div className="flex items-center gap-1 text-emerald-500">
+                            <span className="text-[6px] font-black uppercase">{t('code_copied')}</span>
+                            <CheckCircle2 size={10} />
                           </div>
                         ) : (
-                          <Copy size={14} className="text-[var(--text-secondary)] opacity-40 group-hover:opacity-100 transition-opacity" />
+                          <Copy size={10} className="text-[var(--text-secondary)] opacity-30 group-hover:opacity-100 transition-opacity" />
                         )}
                      </div>
                   </div>
                </div>
 
-               <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-[var(--border-color)]">
-                     <div className="flex items-center gap-2 mb-0.5">
-                        <Users size={10} className="text-[var(--color-primary)]" />
-                        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('friends_referred')}</p>
+               <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-[var(--border-color)]">
+                     <div className="flex items-center gap-1.5 mb-0.5">
+                        <Users size={9} className="text-[var(--color-primary)]" />
+                        <p className="text-[7px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-40">{t('friends_referred')}</p>
                      </div>
-                     <p className="text-base font-black text-[var(--text-primary)]">{referralStats.friends}</p>
+                     <p className="text-sm font-black text-[var(--text-primary)]">{referralStats.friends}</p>
                   </div>
-                  <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-[var(--border-color)]">
-                     <div className="flex items-center gap-2 mb-0.5">
-                        <Award size={10} className="text-amber-500" />
-                        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('credits_earned')}</p>
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-[var(--border-color)]">
+                     <div className="flex items-center gap-1.5 mb-0.5">
+                        <Award size={9} className="text-amber-500" />
+                        <p className="text-[7px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-40">{t('credits_earned')}</p>
                      </div>
-                     <p className="text-base font-black text-[var(--text-primary)]">${referralStats.credits.toFixed(2)}</p>
+                     <p className="text-sm font-black text-[var(--text-primary)]">${referralStats.credits.toFixed(2)}</p>
                   </div>
                </div>
             </div>
@@ -158,9 +240,9 @@ export default function MyTickets() {
              <span className="text-[10px] font-black text-[var(--color-primary)]">{upcomingTickets.length} active</span>
            </div>
            {upcomingTickets.map(ticket => (
-             <TicketCard
-              key={ticket.id}
-              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}}
+             <TicketCard 
+              key={ticket.id} 
+              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}} 
               onClick={() => setSelectedBooking(ticket)}
              />
            ))}
@@ -184,7 +266,10 @@ export default function MyTickets() {
               <p className="text-sm font-medium text-[var(--text-secondary)] opacity-70 leading-relaxed mb-6">
                  Attend 3 more events to unlock your exclusive VIP collector badge.
               </p>
-              <button className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all shadow-sm">
+              <button 
+                onClick={() => setShowBadges(true)}
+                className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-all shadow-sm"
+              >
                  {t('view_badges')}
               </button>
            </div>
@@ -193,6 +278,64 @@ export default function MyTickets() {
            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
         </div>
       </main>
+
+      {/* Badges Modal Overlay */}
+      {showBadges && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+           <div 
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setShowBadges(false)}
+           />
+           <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] shadow-2xl animate-in slide-in-from-bottom duration-500 max-h-[95vh] overflow-y-auto">
+              <div className="p-8 pb-12">
+                 <div className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 sm:hidden" />
+                 
+                 <div className="flex flex-col items-center text-center mb-10">
+                    <div className="w-20 h-20 rounded-[30px] bg-gradient-to-tr from-[var(--color-primary)] to-indigo-600 flex items-center justify-center text-white shadow-2xl mb-6 transform -rotate-6">
+                       <Award size={40} />
+                    </div>
+                    <h3 className="text-2xl font-black text-[var(--text-primary)] mb-2 uppercase tracking-tighter italic">Collector Status</h3>
+                    <p className="text-sm font-medium text-[var(--text-secondary)] opacity-60">Level 4: Night Explorer</p>
+                 </div>
+
+                 <div className="space-y-4 mb-10">
+                    <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                          <Ticket size={24} />
+                       </div>
+                       <div className="flex-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Last Milestone</p>
+                          <p className="text-sm font-bold">Techno Pioneer Badge</p>
+                       </div>
+                    </div>
+                    
+                    <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4 border-l-4 border-l-[var(--color-primary)]">
+                       <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
+                          <Sparkles size={24} />
+                       </div>
+                       <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                             <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Next Reward</p>
+                             <p className="text-[10px] font-black text-[var(--color-primary)] tracking-widest">70%</p>
+                          </div>
+                          <p className="text-sm font-bold mb-2">After-Hours Legend</p>
+                          <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                             <div className="h-full bg-[var(--color-primary)] w-[70%]" />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <button 
+                  onClick={() => setShowBadges(false)}
+                  className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-5 rounded-3xl font-black uppercase tracking-widest text-xs shadow-xl active:scale-95 transition-all"
+                 >
+                    Close Rewards
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
