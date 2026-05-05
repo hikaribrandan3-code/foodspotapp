@@ -14,8 +14,8 @@ import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
-import { ORDER_STATUS } from '../../constants/database.js';
-import { PAYMENT_METHOD } from '../../constants/database.js';
+import { ORDER_STATUS } from '../../constants/database.js'
+import { PAYMENT_METHOD } from '../../constants/database.js'
 
 /**
  * OwnerSummary - Summary dashboard for Owner
@@ -260,7 +260,7 @@ function OwnerSummary() {
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] font-sans antialiased">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#020617] font-sans antialiased">
             <BackendHeader
                 title={t('summary')}
                 onLogout={handleLogout}
@@ -268,32 +268,6 @@ function OwnerSummary() {
                 showNotifications={false}
                 showAvatar={false}
             />
-
-            {/* Action Bar */}
-            <div className="px-4 py-3 flex gap-3 border-b border-white/5">
-                <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={async () => {
-                        setOrdersLoading(true)
-                        const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
-                        const { data } = await supabase.from('orders').select('id, total, status, payment_method, created_at').eq('business_id', businessId).gte('created_at', monthAgo.toISOString()).neq('status', ORDER_STATUS.CANCELLED).order('created_at', { ascending: false })
-                        if (data) setOrders(data)
-                        setOrdersLoading(false)
-                    }}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-[#1e293b] border border-white/5 text-[#f8fafc] hover:bg-[#334155] transition-colors"
-                >
-                    <RefreshCw size={16} className={ordersLoading ? 'animate-spin' : ''} />
-                    {t('update')}
-                </motion.button>
-                <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setShowAuditor(true)}
-                    className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                >
-                    <BarChart3 size={16} />
-                    {t('auditor')}
-                </motion.button>
-            </div>
 
             {/* Main Content */}
             <main className="px-4 pt-5 pb-36 space-y-5">
@@ -303,22 +277,22 @@ function OwnerSummary() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-xl p-4 flex items-center gap-4 bg-[#1e293b] border border-white/5"
+                    className="rounded-xl p-4 flex items-center gap-4 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5"
                 >
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center bg-emerald-500/10 shrink-0">
-                        <User size={28} className="text-emerald-400" />
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 shrink-0">
+                        <User size={28} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="font-semibold text-lg text-[#f8fafc] truncate">
+                        <h2 className="font-semibold text-lg text-gray-900 dark:text-[#f8fafc] truncate">
                             {tenantData?.venue_name || tenantData?.business_name || 'Owner'}
                         </h2>
-                        <p className="text-sm capitalize text-[#94a3b8]">Owner</p>
+                        <p className="text-sm capitalize text-gray-500 dark:text-[#94a3b8]">Owner</p>
                         <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-emerald-500/10 text-emerald-400">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 Active
                             </span>
                             {ordersLoading && (
-                                <span className="text-[10px] text-[#64748b]">Syncing...</span>
+                                <span className="text-[10px] text-gray-400 dark:text-[#64748b]">Syncing...</span>
                             )}
                         </div>
                     </div>
@@ -340,7 +314,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5">
+                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5">
                                     <MenuRow
                                         icon={<CreditCard size={18} />}
                                         label="Mercado Pago"
@@ -355,9 +329,9 @@ function OwnerSummary() {
                                         value={formatPrice(stats.cashTotal)}
                                         highlight
                                     />
-                                    <div className="flex items-center justify-between px-4 py-3.5 border-t border-white/10">
-                                        <span className="text-sm font-semibold text-[#f8fafc]">{t('total_day') || 'Total'}</span>
-                                        <span className="text-base font-bold text-[#f8fafc]">{formatPrice(stats.totalToday)}</span>
+                                    <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-100 dark:border-white/10">
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-[#f8fafc]">{t('total_day') || 'Total'}</span>
+                                        <span className="text-base font-bold text-gray-900 dark:text-[#f8fafc]">{formatPrice(stats.totalToday)}</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -373,13 +347,13 @@ function OwnerSummary() {
                         isOpen={true}
                     />
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-[#1e293b] border border-white/5 rounded-xl p-4">
-                            <p className="text-2xl font-bold text-emerald-400">{stats.weekCount}</p>
-                            <p className="text-xs text-[#64748b] mt-1">{t('this_week') || 'This Week'}</p>
+                        <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
+                            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.weekCount}</p>
+                            <p className="text-xs text-gray-400 dark:text-[#64748b] mt-1">{t('this_week') || 'This Week'}</p>
                         </div>
-                        <div className="bg-[#1e293b] border border-white/5 rounded-xl p-4">
-                            <p className="text-2xl font-bold text-emerald-400">{stats.monthCount}</p>
-                            <p className="text-xs text-[#64748b] mt-1">{t('this_month') || 'This Month'}</p>
+                        <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
+                            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.monthCount}</p>
+                            <p className="text-xs text-gray-400 dark:text-[#64748b] mt-1">{t('this_month') || 'This Month'}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -400,15 +374,15 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-4 space-y-4">
+                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-4 space-y-4">
                                     <InputField
                                         label={t('whatsapp_contact') || 'WhatsApp'}
                                         value={appConfig?.businessInfo?.whatsapp || ''}
                                         onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
                                         placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                     />
-                                    <div className="bg-[#0f172a] rounded-xl p-4 space-y-3 border border-white/5">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b]">{t('location_label') || 'Location'}</p>
+                                    <div className="bg-gray-50 dark:bg-[#0f172a] rounded-xl p-4 space-y-3 border border-gray-200 dark:border-white/5">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b]">{t('location_label') || 'Location'}</p>
                                         <InputField
                                             label={t('address_label') || 'Address'}
                                             value={appConfig?.businessInfo?.address || ''}
@@ -421,7 +395,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
                                             placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
                                         />
-                                        <p className="text-[11px] text-[#64748b]">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
+                                        <p className="text-[11px] text-gray-400 dark:text-[#64748b]">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
                                     </div>
                                     <InputField
                                         label={t('notes') || 'Notes'}
@@ -451,7 +425,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-4 space-y-4">
+                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-4 space-y-4">
                                     <InputField
                                         label="Instagram"
                                         value={appConfig?.externalOrdering?.instagramUrl || ''}
@@ -466,7 +440,7 @@ function OwnerSummary() {
                                     />
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-[#f8fafc]">Rappi</span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">Rappi</span>
                                             <ToggleSwitch
                                                 checked={appConfig?.externalOrdering?.rappiEnabled ?? false}
                                                 onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
@@ -480,7 +454,7 @@ function OwnerSummary() {
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-[#f8fafc]">PedidosYa</span>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">PedidosYa</span>
                                             <ToggleSwitch
                                                 checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false}
                                                 onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
@@ -514,31 +488,31 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-4 space-y-4">
+                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-4 space-y-4">
                                     {/* MP Setup Card */}
-                                    <div className="bg-emerald-500/5 rounded-xl p-4 border border-emerald-500/20 space-y-3">
+                                    <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-xl p-4 border border-emerald-200 dark:border-emerald-500/20 space-y-3">
                                         <div className="flex items-start gap-3">
                                             <span className="text-2xl">💳</span>
                                             <div>
-                                                <h4 className="text-sm font-bold text-emerald-400">{t('mp_connect_title') || 'Connect Mercado Pago'}</h4>
-                                                <p className="text-xs text-emerald-300/70 mt-0.5">{t('mp_connect_subtitle') || 'Accept online payments'}</p>
+                                                <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{t('mp_connect_title') || 'Connect Mercado Pago'}</h4>
+                                                <p className="text-xs text-emerald-600/70 dark:text-emerald-300/70 mt-0.5">{t('mp_connect_subtitle') || 'Accept online payments'}</p>
                                             </div>
                                         </div>
-                                        <div className="bg-[#0f172a] rounded-lg p-3 border border-emerald-500/10">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400 mb-1.5">{t('mp_why_title') || 'Why connect?'}</p>
-                                            <ul className="text-xs text-emerald-300/80 space-y-1 list-disc pl-4">
+                                        <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-emerald-200 dark:border-emerald-500/10">
+                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-1.5">{t('mp_why_title') || 'Why connect?'}</p>
+                                            <ul className="text-xs text-emerald-700/80 dark:text-emerald-300/70 space-y-1 list-disc pl-4">
                                                 <li>{t('mp_benefit_1') || 'Instant payment confirmation'}</li>
                                                 <li>{t('mp_benefit_2') || 'Automatic order status updates'}</li>
                                                 <li>{t('mp_benefit_3') || 'Secure transactions'}</li>
                                             </ul>
                                         </div>
-                                        <div className="bg-[#0f172a] rounded-lg p-3 border border-emerald-500/10 space-y-1.5">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400 mb-1">{t('mp_how_to_title') || 'How to connect'}</p>
-                                            <p className="text-xs text-emerald-300/70"><strong>1.</strong> {t('mp_step_1') || 'Go to Mercado Pago Developers'}</p>
-                                            <p className="text-xs text-emerald-300/70"><strong>2.</strong> {t('mp_step_2') || 'Create an application'}</p>
-                                            <p className="text-xs text-emerald-300/70"><strong>3.</strong> {t('mp_step_3') || 'Get your credentials'}</p>
-                                            <p className="text-xs text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
-                                            <p className="text-xs text-emerald-300/70"><strong>5.</strong> {t('mp_step_5') || 'Paste it below'}</p>
+                                        <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-emerald-200 dark:border-emerald-500/10 space-y-1.5">
+                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-1">{t('mp_how_to_title') || 'How to connect'}</p>
+                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>1.</strong> {t('mp_step_1') || 'Go to Mercado Pago Developers'}</p>
+                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>2.</strong> {t('mp_step_2') || 'Create an application'}</p>
+                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>3.</strong> {t('mp_step_3') || 'Get your credentials'}</p>
+                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-gray-100 dark:bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
+                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>5.</strong> {t('mp_step_5') || 'Paste it below'}</p>
                                         </div>
                                     </div>
 
@@ -551,23 +525,23 @@ function OwnerSummary() {
                                         placeholder="APP_1234567890abcdef..."
                                     />
                                     {tenantData?.mp_access_token ? (
-                                        <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                        <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                             <Check size={12} /> {t('mp_token_saved') || 'Token saved'}
                                         </p>
                                     ) : (
-                                        <p className="text-xs text-red-400">{t('mp_token_required') || 'Token required for payments'}</p>
+                                        <p className="text-xs text-red-500 dark:text-red-400">{t('mp_token_required') || 'Token required for payments'}</p>
                                     )}
 
                                     {/* Alias */}
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 placeholder="yourstore.mp"
                                                 value={mpAliasInput}
                                                 onChange={(e) => setMpAliasInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
@@ -578,21 +552,21 @@ function OwnerSummary() {
                                                 {mpAliasSaved ? <Check size={16} /> : (mpAliasSaving ? '...' : 'Save')}
                                             </motion.button>
                                         </div>
-                                        {mpAliasSaved && <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
-                                        {!mpAliasSaved && <p className="text-xs text-[#64748b] mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
+                                        {mpAliasSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
+                                        {!mpAliasSaved && <p className="text-xs text-gray-400 dark:text-[#64748b] mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
                                     </div>
 
                                     {/* Discord Webhook */}
-                                    <div className="border-t border-white/5 pt-4">
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">Discord Webhook</label>
-                                        <p className="text-xs text-[#64748b] mb-2">Send payment requests to Discord when drivers deliver</p>
+                                    <div className="border-t border-gray-100 dark:border-white/5 pt-4">
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">Discord Webhook</label>
+                                        <p className="text-xs text-gray-400 dark:text-[#64748b] mb-2">Send payment requests to Discord when drivers deliver</p>
                                         <div className="flex gap-2">
                                             <input
                                                 type="password"
                                                 placeholder="https://discord.com/api/webhooks/..."
                                                 value={discordWebhookInput}
                                                 onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
@@ -603,7 +577,7 @@ function OwnerSummary() {
                                                 {discordWebhookSaved ? <Check size={16} /> : (discordWebhookSaving ? '...' : 'Save')}
                                             </motion.button>
                                         </div>
-                                        {discordWebhookSaved && <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Webhook saved</p>}
+                                        {discordWebhookSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Webhook saved</p>}
                                     </div>
                                 </div>
                             </motion.div>
@@ -627,7 +601,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-2">
+                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-2">
                                     {['EN', 'ES', 'PT'].map((l) => {
                                         const isSelected = (pendingLanguage || lang) === l.toLowerCase()
                                         const isPending = pendingLanguage === l.toLowerCase()
@@ -635,16 +609,16 @@ function OwnerSummary() {
                                             <button
                                                 key={l}
                                                 onClick={() => handleLanguageChange(l.toLowerCase())}
-                                                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-white/5 last:border-0 transition-colors ${
+                                                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-gray-100 dark:border-white/5 last:border-0 transition-colors ${
                                                     isPending
-                                                        ? 'bg-emerald-500/10 text-emerald-400'
+                                                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                                         : isSelected
-                                                            ? 'text-[#f8fafc]'
-                                                            : 'text-[#64748b]'
+                                                            ? 'text-gray-900 dark:text-[#f8fafc]'
+                                                            : 'text-gray-400 dark:text-[#64748b]'
                                                 }`}
                                             >
                                                 <span>{l}</span>
-                                                {isPending && <Check size={16} className="text-emerald-400" />}
+                                                {isPending && <Check size={16} className="text-emerald-600 dark:text-emerald-400" />}
                                             </button>
                                         )
                                     })}
@@ -662,7 +636,7 @@ function OwnerSummary() {
                     <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={() => navigate('/admin')}
-                        className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 transition-colors"
+                        className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
                     >
                         <Shield size={16} />
                         {t('system_admin') || 'System Admin'}
@@ -701,7 +675,7 @@ function OwnerSummary() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="fixed bottom-24 left-4 right-4 bg-[#1e293b] border border-white/10 text-white px-5 py-4 rounded-2xl flex justify-between items-center shadow-2xl z-[10000]"
+                        className="fixed bottom-24 left-4 right-4 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-5 py-4 rounded-2xl flex justify-between items-center shadow-2xl z-[10000]"
                     >
                         <span className="text-sm font-semibold">🌍 {t('unsaved_changes_warning') || 'Unsaved changes'}</span>
                         <motion.button
@@ -732,23 +706,23 @@ function OwnerSummary() {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-[#0f172a] border-l border-white/5 z-[10000] flex flex-col overflow-hidden"
+                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-white dark:bg-[#0f172a] border-l border-gray-200 dark:border-white/5 z-[10000] flex flex-col overflow-hidden"
                         >
-                            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-                                <span className="text-white font-bold text-base flex items-center gap-2">
-                                    <BarChart3 size={18} className="text-emerald-400" />
+                            <div className="px-5 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
+                                <span className="text-gray-900 dark:text-white font-bold text-base flex items-center gap-2">
+                                    <BarChart3 size={18} className="text-emerald-600 dark:text-emerald-400" />
                                     {t('cloud_vault') || 'Cloud Vault'}
                                 </span>
                                 <motion.button
                                     whileTap={{ scale: 0.9 }}
                                     onClick={() => setShowAuditor(false)}
-                                    className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                                    className="p-2 rounded-lg bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
                                 >
                                     <X size={18} />
                                 </motion.button>
                             </div>
                             <div className="flex-1 overflow-auto p-4">
-                                <pre className="text-emerald-400 text-xs font-mono whitespace-pre-wrap break-words">
+                                <pre className="text-emerald-600 dark:text-emerald-400 text-xs font-mono whitespace-pre-wrap break-words">
                                     {JSON.stringify(tenantData, (key, value) => {
                                         if (typeof value === 'string' && value.length > 100) {
                                             if (value.startsWith('data:image')) {
@@ -780,13 +754,13 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
             className="w-full flex items-center justify-between px-1 mb-2"
             disabled={!onToggle}
         >
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#64748b] flex items-center gap-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-[#64748b] flex items-center gap-2">
                 {icon}{title}
             </h3>
             {onToggle && (
                 <ChevronDown
                     size={14}
-                    className={`text-[#64748b] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`text-gray-400 dark:text-[#64748b] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 />
             )}
         </button>
@@ -795,16 +769,16 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
 
 function MenuRow({ icon, label, subValue, value, highlight }) {
     return (
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 last:border-0">
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-white/5 last:border-0">
             <div className="flex items-center gap-3">
-                <span className="text-[#64748b]">{icon}</span>
+                <span className="text-gray-400 dark:text-[#64748b]">{icon}</span>
                 <div>
-                    <p className="text-sm font-medium text-[#f8fafc]">{label}</p>
-                    {subValue && <p className="text-xs text-[#64748b]">{subValue}</p>}
+                    <p className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">{label}</p>
+                    {subValue && <p className="text-xs text-gray-400 dark:text-[#64748b]">{subValue}</p>}
                 </div>
             </div>
             {value && (
-                <span className={`text-sm font-semibold ${highlight ? 'text-emerald-400' : 'text-[#94a3b8]'}`}>
+                <span className={`text-sm font-semibold ${highlight ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-[#94a3b8]'}`}>
                     {value}
                 </span>
             )}
@@ -815,7 +789,7 @@ function MenuRow({ icon, label, subValue, value, highlight }) {
 function InputField({ label, value, onChange, placeholder, type = 'text' }) {
     return (
         <div>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">
                 {label}
             </label>
             <input
@@ -823,7 +797,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text' }) {
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
             />
         </div>
     )
@@ -834,7 +808,7 @@ function ToggleSwitch({ checked, onChange }) {
         <button
             onClick={onChange}
             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                checked ? 'bg-emerald-500' : 'bg-[#334155]'
+                checked ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-[#334155]'
             }`}
         >
             <span
@@ -939,16 +913,16 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5">
+                        <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5">
                             {!showAddForm ? (
                                 <button
                                     onClick={() => setShowAddForm(true)}
-                                    className="w-full py-3.5 text-sm font-semibold text-emerald-400 border-b border-white/5 hover:bg-emerald-500/5 transition-colors"
+                                    className="w-full py-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 border-b border-gray-100 dark:border-white/5 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 transition-colors"
                                 >
                                     + {t('add_staff') || 'Add Staff Member'}
                                 </button>
                             ) : (
-                                <div className="p-4 space-y-3 border-b border-white/5">
+                                <div className="p-4 space-y-3 border-b border-gray-100 dark:border-white/5">
                                     <InputField
                                         label={t('name') || 'Name'}
                                         value={newStaff.name}
@@ -969,11 +943,11 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         placeholder="1234"
                                     />
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">{t('role') || 'Role'}</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-[#64748b] block mb-1.5">{t('role') || 'Role'}</label>
                                         <select
                                             value={newStaff.role}
                                             onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] outline-none focus:border-emerald-500/50 transition-colors"
+                                            className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[#f8fafc] outline-none focus:border-emerald-500/50 transition-colors"
                                         >
                                             {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                                         </select>
@@ -990,7 +964,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
                                             onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[#334155] text-[#94a3b8] hover:bg-[#475569] transition-colors"
+                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-[#334155] text-gray-600 dark:text-[#94a3b8] hover:bg-gray-200 dark:hover:bg-[#475569] transition-colors"
                                         >
                                             {t('cancel') || 'Cancel'}
                                         </motion.button>
@@ -999,23 +973,23 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                             )}
 
                             {loading ? (
-                                <div className="text-center py-6 text-[#64748b] text-sm">...</div>
+                                <div className="text-center py-6 text-gray-400 dark:text-[#64748b] text-sm">...</div>
                             ) : staffList.length === 0 ? (
-                                <div className="text-center py-6 text-[#64748b] text-sm">
+                                <div className="text-center py-6 text-gray-400 dark:text-[#64748b] text-sm">
                                     {t('no_staff') || 'No staff registered'}
                                 </div>
                             ) : (
-                                <div className="divide-y divide-white/5">
+                                <div className="divide-y divide-gray-100 dark:divide-white/5">
                                     {staffList.map(staff => (
                                         <div key={staff.id} className="flex items-center justify-between px-4 py-3">
                                             <div>
-                                                <div className="text-sm font-medium text-[#f8fafc]">{staff.name}</div>
-                                                <div className="text-xs text-[#64748b]">@{staff.email} • {staff.role}</div>
+                                                <div className="text-sm font-medium text-gray-900 dark:text-[#f8fafc]">{staff.name}</div>
+                                                <div className="text-xs text-gray-400 dark:text-[#64748b]">@{staff.email} • {staff.role}</div>
                                             </div>
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
                                                 onClick={() => handleDeleteStaff(staff.id)}
-                                                className="text-xs font-medium text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+                                                className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors"
                                             >
                                                 {t('remove') || 'Remove'}
                                             </motion.button>
