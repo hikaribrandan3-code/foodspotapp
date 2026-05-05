@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -308,10 +308,18 @@ export default function Menu({ config: configProp }) {
     const categoryRefs = useRef({})
 
     // 🍔 MENU DISPLAY MODE: Simple (grid) vs Detailed (card)
+    const lsKey = tenantSlug ? `fs_menu_display_mode_${tenantSlug}` : 'fs_menu_display_mode'
     const [displayMode, setDisplayMode] = useState(() => {
-        try { return localStorage.getItem('fs_menu_display_mode') || 'simple' } catch { return 'simple' }
+        try { return localStorage.getItem(lsKey) || 'simple' } catch { return 'simple' }
     })
     const isDetailedMode = displayMode === 'detailed'
+
+    // Only show toggle if at least one item has a description
+    const hasAnyDescriptions = useMemo(() => {
+        return menu.categories?.some(cat =>
+            cat.items?.some(item => item.description && item.description.trim().length > 0)
+        )
+    }, [menu])
     // ATOMIC SAVE STATE
     const [hasChanges, setHasChanges] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -441,7 +449,7 @@ export default function Menu({ config: configProp }) {
     const toggleDisplayMode = () => {
         const next = displayMode === 'simple' ? 'detailed' : 'simple'
         setDisplayMode(next)
-        try { localStorage.setItem('fs_menu_display_mode', next) } catch {}
+        try { localStorage.setItem(lsKey, next) } catch {}
     }
 
     const handleDragMove = useCallback((e) => {
@@ -794,7 +802,7 @@ export default function Menu({ config: configProp }) {
                             }}>{cat.name}</button>
                         ))}
                         {/* Display Mode Toggle */}
-                        {!isEditMode && !isOwnerMode && (
+                        {hasAnyDescriptions && !isEditMode && !isOwnerMode && (
                             <button
                                 onClick={toggleDisplayMode}
                                 style={{
@@ -843,10 +851,7 @@ export default function Menu({ config: configProp }) {
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
 
-                                const hasDetails = item.description || item.calories
-                                const useDetailed = isDetailedMode && hasDetails && !isEditMode && !isOwnerMode
-
-                                if (useDetailed) {
+                                if (isDetailedMode && !isEditMode && !isOwnerMode) {
                                     return (
                                         <DetailedMenuItemCard
                                             key={item.id}
