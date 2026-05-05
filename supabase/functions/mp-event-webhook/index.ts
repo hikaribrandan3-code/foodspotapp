@@ -241,7 +241,7 @@ serve(async (req: Request) => {
         // ============================================
         const { data: eventOrder, error: orderError } = await supabase
             .from("event_orders")
-            .select("id, payment_status, mp_payment_id, business_id, event_id, total_cents")
+            .select("id, payment_status, mp_payment_id, business_id, event_id, total_cents, promo_code")
             .eq("id", orderId)
             .single();
 
@@ -293,6 +293,20 @@ serve(async (req: Request) => {
 
             if (!ledgerResult.success) {
                 console.error(`[mp-event-webhook] Ledger entry failed: ${ledgerResult.error}`);
+            }
+
+            // Increment promo code used_count if applicable
+            if (eventOrder.promo_code) {
+                const { error: promoUpdateError } = await supabase
+                    .rpc('increment_promo_used_count', {
+                        p_event_id: eventOrder.event_id,
+                        p_code: eventOrder.promo_code.toUpperCase()
+                    });
+                if (promoUpdateError) {
+                    console.error(`[mp-event-webhook] Promo increment error:`, promoUpdateError);
+                } else {
+                    console.log(`[mp-event-webhook] Promo ${eventOrder.promo_code} used_count incremented`);
+                }
             }
 
             console.log(`🎉 Event Order #${orderId} PAID! Ledger: ${ledgerResult.ledgerId || 'FAILED'}`);

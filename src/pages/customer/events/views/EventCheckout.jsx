@@ -10,6 +10,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const [promoCode, setPromoCode] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [promoError, setPromoError] = useState(null);
+
+  // Calculate max available quantity
+  const maxQty = Math.max(1, (tier.qty || 0) - (tier.sold || 0));
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' | 'crypto' | 'wristband' | 'wallet'
 
@@ -138,6 +142,11 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
               <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
                 <span className="text-[10px] font-black text-[var(--text-primary)]">${tier.price} <span className="opacity-40">ea</span></span>
               </div>
+              {maxQty <= 3 && maxQty > 0 && (
+                <div className="bg-orange-500/90 px-3 py-1 rounded-full">
+                  <span className="text-[10px] font-black text-white">Only {maxQty} left!</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -151,8 +160,9 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                    >-</button>
                    <span className="text-sm font-black w-4 text-center">{qty}</span>
                    <button 
-                    onClick={() => setQty(qty + 1)}
-                    className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-[var(--text-primary)] font-black active:scale-90 transition-all border border-[var(--border-color)] shadow-sm"
+                    onClick={() => setQty(Math.min(qty + 1, maxQty))}
+                    disabled={qty >= maxQty}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg bg-white dark:bg-slate-800 text-[var(--text-primary)] font-black active:scale-90 transition-all border border-[var(--border-color)] shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
                    >+</button>
                 </div>
              </div>
@@ -268,15 +278,22 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                 className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)] placeholder:opacity-30 disabled:opacity-50"
               />
               <button 
-                onClick={() => {
-                  if (!promoCode) return;
+                onClick={async () => {
+                  if (!promoCode.trim()) return;
                   setIsApplying(true);
-                  setTimeout(() => {
+                  setPromoError(null);
+                  try {
+                    // Validation happens server-side in create-event-preference
+                    // For now, mark as applied; edge function will reject if invalid
                     const isReferral = promoCode.toUpperCase().startsWith('FOOD-') || promoCode.toUpperCase().startsWith('REF-');
-                    setIsApplying(false);
-                    setApplied(true);
                     if (isReferral) setPromoCode(promoCode.toUpperCase());
-                  }, 800);
+                    setApplied(true);
+                  } catch (err) {
+                    console.error('Promo error:', err);
+                    setPromoError(err.message || 'Invalid code');
+                  } finally {
+                    setIsApplying(false);
+                  }
                 }}
                 disabled={applied || !promoCode || isApplying}
                 className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
@@ -288,6 +305,9 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                 {isApplying ? 'Applying...' : applied ? 'Applied' : 'Apply'}
               </button>
            </div>
+           {promoError && (
+             <p className="text-[10px] font-bold text-rose-500 px-2 mt-1">{promoError}</p>
+           )}
         </div>
 
         <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl p-5 border border-amber-100 dark:border-amber-900/30 flex gap-4">

@@ -46,6 +46,7 @@ serve(async (req: Request) => {
 
         const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+        const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspotapp.vercel.app";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         // ── 1. Fetch event with row lock ──
@@ -107,9 +108,23 @@ serve(async (req: Request) => {
             });
         }
 
-        // Apply promo code (simple flat discount for MVP)
-        if (promo_code && promo_code.toUpperCase() === 'FRIEND10') {
-            discountCents = Math.round(subtotalCents * 0.10);
+        // Apply promo code from database
+        if (promo_code) {
+            const { data: promoData, error: promoError } = await supabase
+                .from('event_promo_codes')
+                .select('discount_percent, max_uses, used_count')
+                .eq('event_id', event_id)
+                .eq('code', promo_code.toUpperCase())
+                .single();
+
+            if (promoData && (!promoData.max_uses || promoData.used_count < promoData.max_uses)) {
+                discountCents = Math.round(subtotalCents * (promoData.discount_percent / 100));
+            } else {
+                return new Response(
+                    JSON.stringify({ error: "INVALID_PROMO", detail: "Promo code not found or expired" }),
+                    { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
         }
 
         const totalCents = Math.max(0, subtotalCents - discountCents);
@@ -158,7 +173,7 @@ serve(async (req: Request) => {
                     order_id: order.id,
                     ticket_code: ticketCode,
                     guest_token: order.guest_token,
-                    redirect_url: `https://foodspotapp.vercel.app/receipt?event_order_id=${order.id}&payment=success`
+                    redirect_url: `${APP_BASE_URL}/receipt?event_order_id=${order.id}&payment=success`
                 }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
@@ -192,9 +207,9 @@ serve(async (req: Request) => {
                 currency_id: branding.currency || "ARS"
             }],
             back_urls: {
-                success: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=success`,
-                failure: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=failure`,
-                pending: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=pending`
+                success: `${APP_BASE_URL}/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=success`,
+                failure: `${APP_BASE_URL}/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=failure`,
+                pending: `${APP_BASE_URL}/${branding.slug || 'demo'}/promos/receipt?event_order_id=${order.id}&payment=pending`
             },
             auto_return: "approved",
             external_reference: externalReference,
