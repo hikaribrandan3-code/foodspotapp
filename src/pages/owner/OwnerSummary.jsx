@@ -1,5 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+    User, CreditCard, Banknote, DollarSign, MapPin, Link as LinkIcon, Globe,
+    Settings, Phone, ChevronRight, ChevronDown, RefreshCw, BarChart3,
+    Shield, Check, X, Users
+} from 'lucide-react'
 import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
@@ -10,8 +16,6 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
-
-
 
 /**
  * OwnerSummary - Summary dashboard for Owner
@@ -33,6 +37,17 @@ function OwnerSummary() {
     const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
     const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
     const discordWebhookInitialized = useRef(false)
+
+    // Collapsible sections
+    const [openSections, setOpenSections] = useState({
+        payments: true,
+        venue: true,
+        links: false,
+        mp: false,
+        language: false,
+        team: false,
+    })
+    const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
 
     // 🌍 LANGUAGE SAVE STATE
     const [pendingLanguage, setPendingLanguage] = useState(null)
@@ -244,13 +259,8 @@ function OwnerSummary() {
         await refreshTenantData()
     }
 
-    // Card style helper
-    const cardStyle = { background: 'white', borderRadius: 12, padding: 16, marginBottom: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }
-    const labelStyle = { fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
-    const inputStyle = { width: '100%', padding: '12px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', marginBottom: 12 }
-
     return (
-        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F5F2EE', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+        <div className="min-h-screen bg-[#020617] font-sans antialiased">
             <BackendHeader
                 title={t('summary')}
                 onLogout={handleLogout}
@@ -259,9 +269,10 @@ function OwnerSummary() {
                 showAvatar={false}
             />
 
-            {/* Sync Button */}
-            <div style={{ padding: '12px 16px', background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', gap: 8 }}>
-                <button
+            {/* Action Bar */}
+            <div className="px-4 py-3 flex gap-3 border-b border-white/5">
+                <motion.button
+                    whileTap={{ scale: 0.97 }}
                     onClick={async () => {
                         setOrdersLoading(true)
                         const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30)
@@ -269,351 +280,396 @@ function OwnerSummary() {
                         if (data) setOrders(data)
                         setOrdersLoading(false)
                     }}
-                    style={{
-                        flex: 1,
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        border: 'none',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        background: '#3B82F6',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold bg-[#1e293b] border border-white/5 text-[#f8fafc] hover:bg-[#334155] transition-colors"
                 >
-                    🔄 {t('update')}
-                </button>
-                <button
+                    <RefreshCw size={16} className={ordersLoading ? 'animate-spin' : ''} />
+                    {t('update')}
+                </motion.button>
+                <motion.button
+                    whileTap={{ scale: 0.97 }}
                     onClick={() => setShowAuditor(true)}
-                    style={{
-                        padding: '10px 16px',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        border: '2px solid #1F2937',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        background: '#1F2937',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}
+                    className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
                 >
-                    📊 {t('auditor')}
-                </button>
+                    <BarChart3 size={16} />
+                    {t('auditor')}
+                </motion.button>
             </div>
 
-            {/* Content - with bottom padding for BackendNav */}
-            <div style={{ padding: 16, paddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))' }}>
+            {/* Main Content */}
+            <main className="px-4 pt-5 pb-36 space-y-5">
 
-                {/* ==================== PAGOS DEL DÍA ==================== */}
-                <h3 style={labelStyle}>{t('daily_payments')}</h3>
-                <div style={cardStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, borderBottom: '1px solid #F3F4F6' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 10, background: '#E0F2F1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#00695C' }}>MP</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>Mercado Pago</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.mpOrders.length} {t('orders_count')}</p></div>
+                {/* Profile Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05 }}
+                    className="rounded-xl p-4 flex items-center gap-4 bg-[#1e293b] border border-white/5"
+                >
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center bg-emerald-500/10 shrink-0">
+                        <User size={28} className="text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="font-semibold text-lg text-[#f8fafc] truncate">
+                            {tenantData?.venue_name || tenantData?.business_name || 'Owner'}
+                        </h2>
+                        <p className="text-sm capitalize text-[#94a3b8]">Owner</p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-emerald-500/10 text-emerald-400">
+                                Active
+                            </span>
+                            {ordersLoading && (
+                                <span className="text-[10px] text-[#64748b]">Syncing...</span>
+                            )}
                         </div>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.mpTotal)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F3F4F6' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 32, height: 32, borderRadius: 10, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#B45309' }}>$</div>
-                            <div><p style={{ fontSize: 14, fontWeight: 500, color: '#1F2937', margin: 0 }}>{t(PAYMENT_METHOD.CASH)}</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.cashOrders.length} {t('orders_count')}</p></div>
-                        </div>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#22C55E' }}>{formatPrice(stats.cashTotal)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12 }}>
-                        <div><p style={{ fontSize: 14, fontWeight: 600, color: '#1F2937', margin: 0 }}>{t('total_day')}</p><p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>{stats.todayOrders.length} {t('orders_count')}</p></div>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>{formatPrice(stats.totalToday)}</span>
-                    </div>
-                </div>
+                </motion.div>
 
-                {/* ==================== SESIONES ==================== */}
-                <h3 style={labelStyle}>{t('sessions')}</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.weekCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>{t('this_week')}</p></div>
-                    <div style={cardStyle}><p style={{ fontSize: 24, fontWeight: 700, color: '#22C55E', margin: 0 }}>{stats.monthCount}</p><p style={{ fontSize: 12, color: '#6B7280', margin: '4px 0 0' }}>{t('this_month')}</p></div>
-                </div>
-
-                {/* ==================== INFORMACIÓN DEL LOCAL ==================== */}
-                <h3 style={labelStyle}>📍 {t('venue_info')}</h3>
-                <div style={cardStyle}>
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('whatsapp_contact')}</label>
-                    <input type="text" placeholder={t('phone_placeholder')} value={appConfig?.businessInfo?.whatsapp || ''} onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)} style={inputStyle} />
-
-                    {/* 📍 HYBRID LOCATION GROUP */}
-                    <div style={{ background: '#F9FAFB', borderRadius: 12, padding: 16, marginBottom: 12, border: '1px solid #E5E7EB', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
-                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 12 }}>📍 {t('location_label')}</label>
-
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('address_label')}</label>
-                        <input type="text" placeholder={t('address_placeholder')} value={appConfig?.businessInfo?.address || ''} onChange={(e) => updateBusinessInfo('address', e.target.value)} style={{ ...inputStyle, marginBottom: 12 }} />
-
-                        <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 6 }}>{t('maps_link')}</label>
-                        <input type="text" placeholder={t('maps_placeholder')} value={appConfig?.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)} style={{ ...inputStyle, marginBottom: 8 }} />
-                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
-                            ℹ️ {t('maps_info')}
-                        </p>
-                    </div>
-
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('notes')}</label>
-                    <input type="text" placeholder={t('notes_placeholder')} value={appConfig?.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfo('directions', e.target.value)} style={inputStyle} />
-                </div>
-
-                {/* ==================== LINKS EXTERNOS ==================== */}
-                <h3 style={labelStyle}>🔗 {t('external_links')}</h3>
-                <div style={cardStyle}>
-                    {/* Instagram */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>📸 Instagram</span>
-                    </div>
-                    <input type="text" placeholder="https://instagram.com/yourrestaurant" value={appConfig?.externalOrdering?.instagramUrl || ''} onChange={(e) => updateExternalOrdering({ instagramUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    {/* TikTok */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>🎵 TikTok</span>
-                    </div>
-                    <input type="text" placeholder="https://tiktok.com/@yourrestaurant" value={appConfig?.externalOrdering?.tiktokUrl || ''} onChange={(e) => updateExternalOrdering({ tiktokUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                        <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.rappiEnabled ?? false} onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })} /><span className="toggle-slider"></span></label>
-                    </div>
-                    <input type="text" placeholder={t('rappi_placeholder')} value={appConfig?.externalOrdering?.rappiUrl || ''} onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                        <label className="toggle"><input type="checkbox" checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })} /><span className="toggle-slider"></span></label>
-                    </div>
-                    <input type="text" placeholder={t('pedidosya_placeholder')} value={appConfig?.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                    {/* Mercado Pago Setup - Premium Card */}
-                    <div style={{ paddingTop: 14, borderTop: '1px solid #F3F4F6', marginTop: 16 }}>
-                        <div style={{ background: '#F0F9FF', borderRadius: 14, padding: 16, border: '2px solid #E0F2FE', marginBottom: 16 }}>
-                            <div style={{ display: 'flex', alignItems: 'start', gap: 12, marginBottom: 12 }}>
-                                <span style={{ fontSize: 28 }}>💳</span>
-                                <div>
-                                    <h4 style={{ fontSize: 15, fontWeight: 700, color: '#0369A1', margin: '0 0 4px 0' }}>{t('mp_connect_title')}</h4>
-                                    <p style={{ fontSize: 13, color: '#0C4A6E', margin: 0, lineHeight: 1.4 }}>{t('mp_connect_subtitle')}</p>
-                                </div>
-                            </div>
-
-                            {/* Why Section */}
-                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 12, border: '1px solid #BAE6FD' }}>
-                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 6px 0' }}>{t('mp_why_title')}</p>
-                                <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: '#064E3B' }}>
-                                    <li>{t('mp_benefit_1')}</li>
-                                    <li>{t('mp_benefit_2')}</li>
-                                    <li>{t('mp_benefit_3')}</li>
-                                </ul>
-                            </div>
-
-                            {/* Steps */}
-                            <div style={{ background: 'white', borderRadius: 8, padding: 12, marginBottom: 14, border: '1px solid #BAE6FD' }}>
-                                <p style={{ fontSize: 12, fontWeight: 600, color: '#0369A1', margin: '0 0 10px 0' }}>{t('mp_how_to_title')}</p>
-                                <div style={{ fontSize: 12, color: '#075985', lineHeight: 1.6 }}>
-                                    <div style={{ marginBottom: 8 }}><strong>1.</strong> {t('mp_step_1')}</div>
-                                    <div style={{ marginBottom: 8 }}><strong>2.</strong> {t('mp_step_2')}</div>
-                                    <div style={{ marginBottom: 8 }}><strong>3.</strong> {t('mp_step_3')}</div>
-                                    <div style={{ marginBottom: 8 }}><strong>4.</strong> {t('mp_step_4')} <code style={{ background: '#F5F5F5', padding: '2px 6px', borderRadius: 4 }}>APP_</code></div>
-                                    <div><strong>5.</strong> {t('mp_step_5')}</div>
-                                </div>
-                            </div>
-
-                            {/* Input Field */}
-                            <label style={{ fontSize: 12, color: '#0369A1', display: 'block', marginBottom: 6, fontWeight: 600 }}>{t('mp_access_token')}</label>
-                            <input
-                                type="password"
-                                placeholder="APP_1234567890abcdef..."
-                                value={tenantData?.mp_access_token || ''}
-                                onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
-                                style={{ ...inputStyle, borderColor: tenantData?.mp_access_token ? '#10B981' : '#E5E7EB' }}
-                            />
-                            {tenantData?.mp_access_token && <p style={{ fontSize: 11, color: '#059669', margin: 0, marginBottom: 12 }}>{t('mp_token_saved')}</p>}
-                            {!tenantData?.mp_access_token && <p style={{ fontSize: 11, color: '#DC2626', margin: 0, marginBottom: 12 }}>{t('mp_token_required')}</p>}
-
-                            {/* Alias (Optional) */}
-                            <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>{t('mp_alias_optional')}</label>
-                            <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                                <input
-                                    type="text"
-                                    placeholder="yourstore.mp"
-                                    value={mpAliasInput}
-                                    onChange={(e) => setMpAliasInput(e.target.value)}
-                                    style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
-                                />
-                                <button
-                                    onClick={saveMpAlias}
-                                    disabled={mpAliasSaving}
-                                    style={{
-                                        padding: '12px 16px',
-                                        border: 'none',
-                                        borderRadius: 10,
-                                        fontSize: 14,
-                                        fontWeight: 600,
-                                        cursor: mpAliasSaving ? 'not-allowed' : 'pointer',
-                                        background: mpAliasSaved ? '#10B981' : '#3B82F6',
-                                        color: '#fff',
-                                        opacity: mpAliasSaving ? 0.7 : 1,
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                >
-                                    {mpAliasSaved ? '✓' : 'Save'}
-                                </button>
-                            </div>
-                            {mpAliasSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0, marginBottom: 12 }}>✓ Alias saved</p>}
-                            {!mpAliasSaved && <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, marginBottom: 12 }}>{t('mp_alias_info')}</p>}
-
-                            {/* Discord Webhook for Delivery Payments */}
-                            <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: 14, marginTop: 14 }}>
-                                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 500 }}>🤖 Discord Webhook (Delivery Payments)</label>
-                                <p style={{ fontSize: 11, color: '#9CA3AF', margin: '0 0 8px 0' }}>Send payment requests to Discord channel when drivers deliver</p>
-                                <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                                    <input
-                                        type="password"
-                                        placeholder="https://discord.com/api/webhooks/..."
-                                        value={discordWebhookInput}
-                                        onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                        style={{ ...inputStyle, flex: 1, marginBottom: 0 }}
+                {/* Payment Breakdown */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                    <SectionHeader
+                        icon={<DollarSign size={14} />}
+                        title={t('daily_payments') || 'Payment Breakdown'}
+                        isOpen={openSections.payments}
+                        onToggle={() => toggleSection('payments')}
+                    />
+                    <AnimatePresence>
+                        {openSections.payments && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5">
+                                    <MenuRow
+                                        icon={<CreditCard size={18} />}
+                                        label="Mercado Pago"
+                                        subValue={`${stats.mpOrders.length} ${t('orders_count') || 'orders'}`}
+                                        value={formatPrice(stats.mpTotal)}
+                                        highlight
                                     />
-                                    <button
-                                        onClick={saveDiscordWebhook}
-                                        disabled={discordWebhookSaving}
-                                        style={{
-                                            padding: '12px 16px',
-                                            border: 'none',
-                                            borderRadius: 10,
-                                            fontSize: 14,
-                                            fontWeight: 600,
-                                            cursor: discordWebhookSaving ? 'not-allowed' : 'pointer',
-                                            background: discordWebhookSaved ? '#10B981' : '#8B5CF6',
-                                            color: '#fff',
-                                            opacity: discordWebhookSaving ? 0.7 : 1,
-                                            whiteSpace: 'nowrap'
-                                        }}
-                                    >
-                                        {discordWebhookSaved ? '✓' : 'Save'}
-                                    </button>
+                                    <MenuRow
+                                        icon={<Banknote size={18} />}
+                                        label={t(PAYMENT_METHOD.CASH) || 'Cash'}
+                                        subValue={`${stats.cashOrders.length} ${t('orders_count') || 'orders'}`}
+                                        value={formatPrice(stats.cashTotal)}
+                                        highlight
+                                    />
+                                    <div className="flex items-center justify-between px-4 py-3.5 border-t border-white/10">
+                                        <span className="text-sm font-semibold text-[#f8fafc]">{t('total_day') || 'Total'}</span>
+                                        <span className="text-base font-bold text-[#f8fafc]">{formatPrice(stats.totalToday)}</span>
+                                    </div>
                                 </div>
-                                {discordWebhookSaved && <p style={{ fontSize: 11, color: '#10B981', margin: 0 }}>✓ Webhook saved</p>}
-                            </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Sessions */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                    <SectionHeader
+                        icon={<BarChart3 size={14} />}
+                        title={t('sessions') || 'Sessions'}
+                        isOpen={true}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[#1e293b] border border-white/5 rounded-xl p-4">
+                            <p className="text-2xl font-bold text-emerald-400">{stats.weekCount}</p>
+                            <p className="text-xs text-[#64748b] mt-1">{t('this_week') || 'This Week'}</p>
+                        </div>
+                        <div className="bg-[#1e293b] border border-white/5 rounded-xl p-4">
+                            <p className="text-2xl font-bold text-emerald-400">{stats.monthCount}</p>
+                            <p className="text-xs text-[#64748b] mt-1">{t('this_month') || 'This Month'}</p>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
-                {/* 🌎 LANGUAGE TOGGLE */}
-                <div style={{ marginTop: 24 }}>
-                    <h3 style={{ fontSize: 11, fontWeight: 600, color: '#6B7280', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        🌍 {t('language_setting') || 'Language / Idioma'}
-                    </h3>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: 24,
-                        padding: '12px 0'
-                    }}>
-                        {['EN', 'ES', 'PT'].map((l) => {
-                            const isSelected = (pendingLanguage || lang) === l.toLowerCase()
-                            const isPending = pendingLanguage === l.toLowerCase()
-                            return (
-                                <button
-                                    key={l}
-                                    onClick={() => handleLanguageChange(l.toLowerCase())}
-                                    style={{
-                                        background: isPending ? '#3B82F6' : 'none',
-                                        border: isPending ? '2px solid #3B82F6' : 'none',
-                                        fontWeight: isSelected ? 700 : 500,
-                                        fontSize: 13,
-                                        letterSpacing: '0.1em',
-                                        cursor: 'pointer',
-                                        padding: isPending ? '4px 8px' : '4px 8px',
-                                        transition: 'all 0.2s',
-                                        borderRadius: isPending ? 8 : 0,
-                                        color: isPending ? 'white' : isSelected ? '#111827' : '#9CA3AF'
-                                    }}
-                                >
-                                    {l}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
+                {/* Venue Info */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                    <SectionHeader
+                        icon={<MapPin size={14} />}
+                        title={t('venue_info') || 'Venue Info'}
+                        isOpen={openSections.venue}
+                        onToggle={() => toggleSection('venue')}
+                    />
+                    <AnimatePresence>
+                        {openSections.venue && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-4 space-y-4">
+                                    <InputField
+                                        label={t('whatsapp_contact') || 'WhatsApp'}
+                                        value={appConfig?.businessInfo?.whatsapp || ''}
+                                        onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
+                                        placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
+                                    />
+                                    <div className="bg-[#0f172a] rounded-xl p-4 space-y-3 border border-white/5">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b]">{t('location_label') || 'Location'}</p>
+                                        <InputField
+                                            label={t('address_label') || 'Address'}
+                                            value={appConfig?.businessInfo?.address || ''}
+                                            onChange={(e) => updateBusinessInfo('address', e.target.value)}
+                                            placeholder={t('address_placeholder') || '123 Main St'}
+                                        />
+                                        <InputField
+                                            label={t('maps_link') || 'Google Maps'}
+                                            value={appConfig?.businessInfo?.googleMapsLink || ''}
+                                            onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
+                                            placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
+                                        />
+                                        <p className="text-[11px] text-[#64748b]">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
+                                    </div>
+                                    <InputField
+                                        label={t('notes') || 'Notes'}
+                                        value={appConfig?.businessInfo?.directions || ''}
+                                        onChange={(e) => updateBusinessInfo('directions', e.target.value)}
+                                        placeholder={t('notes_placeholder') || 'Additional directions...'}
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
 
-            </div>
+                {/* External Links */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                    <SectionHeader
+                        icon={<LinkIcon size={14} />}
+                        title={t('external_links') || 'External Links'}
+                        isOpen={openSections.links}
+                        onToggle={() => toggleSection('links')}
+                    />
+                    <AnimatePresence>
+                        {openSections.links && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-4 space-y-4">
+                                    <InputField
+                                        label="Instagram"
+                                        value={appConfig?.externalOrdering?.instagramUrl || ''}
+                                        onChange={(e) => updateExternalOrdering({ instagramUrl: e.target.value })}
+                                        placeholder="https://instagram.com/yourrestaurant"
+                                    />
+                                    <InputField
+                                        label="TikTok"
+                                        value={appConfig?.externalOrdering?.tiktokUrl || ''}
+                                        onChange={(e) => updateExternalOrdering({ tiktokUrl: e.target.value })}
+                                        placeholder="https://tiktok.com/@yourrestaurant"
+                                    />
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-[#f8fafc]">Rappi</span>
+                                            <ToggleSwitch
+                                                checked={appConfig?.externalOrdering?.rappiEnabled ?? false}
+                                                onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
+                                            />
+                                        </div>
+                                        <InputField
+                                            value={appConfig?.externalOrdering?.rappiUrl || ''}
+                                            onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })}
+                                            placeholder={t('rappi_placeholder') || 'Rappi URL'}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-[#f8fafc]">PedidosYa</span>
+                                            <ToggleSwitch
+                                                checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false}
+                                                onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
+                                            />
+                                        </div>
+                                        <InputField
+                                            value={appConfig?.externalOrdering?.pedidosYaUrl || ''}
+                                            onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })}
+                                            placeholder={t('pedidosya_placeholder') || 'PedidosYa URL'}
+                                        />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
 
-            {/* 🔐 GHOST ADMIN: Hidden Super Admin Portal (superadmin only) */}
-            {session?.role === 'superadmin' && (
-                <div style={{ marginTop: 24 }}>
-                    <button
+                {/* Mercado Pago & Discord */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                    <SectionHeader
+                        icon={<CreditCard size={14} />}
+                        title={t('mp_connect_title') || 'Payments'}
+                        isOpen={openSections.mp}
+                        onToggle={() => toggleSection('mp')}
+                    />
+                    <AnimatePresence>
+                        {openSections.mp && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-4 space-y-4">
+                                    {/* MP Setup Card */}
+                                    <div className="bg-emerald-500/5 rounded-xl p-4 border border-emerald-500/20 space-y-3">
+                                        <div className="flex items-start gap-3">
+                                            <span className="text-2xl">💳</span>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-emerald-400">{t('mp_connect_title') || 'Connect Mercado Pago'}</h4>
+                                                <p className="text-xs text-emerald-300/70 mt-0.5">{t('mp_connect_subtitle') || 'Accept online payments'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-[#0f172a] rounded-lg p-3 border border-emerald-500/10">
+                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400 mb-1.5">{t('mp_why_title') || 'Why connect?'}</p>
+                                            <ul className="text-xs text-emerald-300/80 space-y-1 list-disc pl-4">
+                                                <li>{t('mp_benefit_1') || 'Instant payment confirmation'}</li>
+                                                <li>{t('mp_benefit_2') || 'Automatic order status updates'}</li>
+                                                <li>{t('mp_benefit_3') || 'Secure transactions'}</li>
+                                            </ul>
+                                        </div>
+                                        <div className="bg-[#0f172a] rounded-lg p-3 border border-emerald-500/10 space-y-1.5">
+                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400 mb-1">{t('mp_how_to_title') || 'How to connect'}</p>
+                                            <p className="text-xs text-emerald-300/70"><strong>1.</strong> {t('mp_step_1') || 'Go to Mercado Pago Developers'}</p>
+                                            <p className="text-xs text-emerald-300/70"><strong>2.</strong> {t('mp_step_2') || 'Create an application'}</p>
+                                            <p className="text-xs text-emerald-300/70"><strong>3.</strong> {t('mp_step_3') || 'Get your credentials'}</p>
+                                            <p className="text-xs text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
+                                            <p className="text-xs text-emerald-300/70"><strong>5.</strong> {t('mp_step_5') || 'Paste it below'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Access Token */}
+                                    <InputField
+                                        label={t('mp_access_token') || 'Access Token'}
+                                        type="password"
+                                        value={tenantData?.mp_access_token || ''}
+                                        onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
+                                        placeholder="APP_1234567890abcdef..."
+                                    />
+                                    {tenantData?.mp_access_token ? (
+                                        <p className="text-xs text-emerald-400 flex items-center gap-1">
+                                            <Check size={12} /> {t('mp_token_saved') || 'Token saved'}
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-red-400">{t('mp_token_required') || 'Token required for payments'}</p>
+                                    )}
+
+                                    {/* Alias */}
+                                    <div>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="yourstore.mp"
+                                                value={mpAliasInput}
+                                                onChange={(e) => setMpAliasInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={saveMpAlias}
+                                                disabled={mpAliasSaving}
+                                                className="px-4 py-3 rounded-xl text-sm font-semibold bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {mpAliasSaved ? <Check size={16} /> : (mpAliasSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {mpAliasSaved && <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
+                                        {!mpAliasSaved && <p className="text-xs text-[#64748b] mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
+                                    </div>
+
+                                    {/* Discord Webhook */}
+                                    <div className="border-t border-white/5 pt-4">
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">Discord Webhook</label>
+                                        <p className="text-xs text-[#64748b] mb-2">Send payment requests to Discord when drivers deliver</p>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="password"
+                                                placeholder="https://discord.com/api/webhooks/..."
+                                                value={discordWebhookInput}
+                                                onChange={(e) => setDiscordWebhookInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={saveDiscordWebhook}
+                                                disabled={discordWebhookSaving}
+                                                className="px-4 py-3 rounded-xl text-sm font-semibold bg-[#8b5cf6] text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {discordWebhookSaved ? <Check size={16} /> : (discordWebhookSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {discordWebhookSaved && <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Webhook saved</p>}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Language */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+                    <SectionHeader
+                        icon={<Globe size={14} />}
+                        title={t('language_setting') || 'Language'}
+                        isOpen={openSections.language}
+                        onToggle={() => toggleSection('language')}
+                    />
+                    <AnimatePresence>
+                        {openSections.language && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5 p-2">
+                                    {['EN', 'ES', 'PT'].map((l) => {
+                                        const isSelected = (pendingLanguage || lang) === l.toLowerCase()
+                                        const isPending = pendingLanguage === l.toLowerCase()
+                                        return (
+                                            <button
+                                                key={l}
+                                                onClick={() => handleLanguageChange(l.toLowerCase())}
+                                                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-white/5 last:border-0 transition-colors ${
+                                                    isPending
+                                                        ? 'bg-emerald-500/10 text-emerald-400'
+                                                        : isSelected
+                                                            ? 'text-[#f8fafc]'
+                                                            : 'text-[#64748b]'
+                                                }`}
+                                            >
+                                                <span>{l}</span>
+                                                {isPending && <Check size={16} className="text-emerald-400" />}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Team Management */}
+                <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} />
+
+                {/* Superadmin */}
+                {session?.role === 'superadmin' && (
+                    <motion.button
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => navigate('/admin')}
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            border: '1px solid rgba(124, 58, 237, 0.3)',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            background: 'rgba(124, 58, 237, 0.1)',
-                            color: '#7C3AED',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 8
-                        }}
+                        className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold bg-violet-500/10 border border-violet-500/20 text-violet-400 hover:bg-violet-500/20 transition-colors"
                     >
-                        {t('system_admin')}
-                    </button>
-                </div>
-            )}
+                        <Shield size={16} />
+                        {t('system_admin') || 'System Admin'}
+                    </motion.button>
+                )}
 
-            {/* 🌍 LANGUAGE SAVE TOAST */}
-            {languageSaveStatus && (
-                <div style={{
-                    position: 'fixed', bottom: 24, left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: languageSaveStatus.type === 'error' ? '#EF4444' : '#22C55E', color: 'white',
-                    padding: '10px 24px', borderRadius: 50,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                    fontWeight: 600, fontSize: 14, zIndex: 9999,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <span>{languageSaveStatus.type === 'error' ? '⚠️' : '✓'}</span> {languageSaveStatus.message}
-                </div>
-            )}
-
-            {/* 🌍 LANGUAGE UNSAVED CHANGES BAR */}
-            {pendingLanguage && (
-                <div style={{
-                    position: 'fixed', bottom: 95, left: 12, right: 12,
-                    background: '#1E293B', color: 'white', padding: '14px 20px',
-                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>🌍 {t('unsaved_changes_warning') || 'Cambios sin guardar'}</div>
-                    <button
-                        onClick={saveLanguage}
-                        disabled={languageSaving}
-                        style={{
-                            background: '#3B82F6', color: 'white', border: 'none',
-                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                            fontSize: 14, cursor: 'pointer',
-                            opacity: languageSaving ? 0.7 : 1
-                        }}
-                    >
-                        {languageSaving ? t('saving_btn') || 'Guardando...' : t('save') || 'Guardar'}
-                    </button>
-                </div>
-            )}
+            </main>
 
             {/* Backend Navigation */}
             <BackendNav
@@ -621,111 +677,176 @@ function OwnerSummary() {
                 useRoutes={true}
             />
 
-            {/* 📊 Backend Auditor - Side Drawer */}
-            {showAuditor && (
-                <div
-                    onClick={() => setShowAuditor(false)}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        zIndex: 9999,
-                        display: 'flex',
-                        alignItems: 'stretch',
-                        justifyContent: 'flex-end',
-                        pointerEvents: 'auto'
-                    }}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: '#1F2937',
-                            width: '85%',
-                            maxWidth: 400,
-                            height: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            overflow: 'hidden',
-                            boxShadow: '-4px 0 24px rgba(0,0,0,0.3)'
-                        }}
+            {/* 🌍 LANGUAGE SAVE TOAST */}
+            <AnimatePresence>
+                {languageSaveStatus && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg text-sm font-semibold text-white flex items-center gap-2 z-[9999] ${
+                            languageSaveStatus.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'
+                        }`}
                     >
-                        <div style={{
-                            padding: 16,
-                            borderBottom: '1px solid #374151',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            position: 'relative',
-                            zIndex: 10001
-                        }}>
-                            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>📊 {t('cloud_vault')}</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowAuditor(false);
-                                }}
-                                style={{
-                                    background: '#EF4444',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    padding: '8px 16px',
-                                    color: 'white',
-                                    cursor: 'pointer',
-                                    fontSize: 14,
-                                    fontWeight: 600,
-                                    zIndex: 999999,
-                                    position: 'absolute',
-                                    top: 12,
-                                    right: 12
-                                }}
-                            >
-                                ✕ {t('close')}
-                            </button>
-                        </div>
-                        <div style={{
-                            flex: 1,
-                            overflow: 'auto',
-                            padding: 16,
-                            WebkitOverflowScrolling: 'touch'
-                        }}>
-                            <pre style={{
-                                color: '#10B981',
-                                fontSize: 11,
-                                fontFamily: 'monospace',
-                                margin: 0,
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word'
-                            }}>
-                                {JSON.stringify(tenantData, (key, value) => {
-                                    // 🔒 TRUNCATE BASE64: Make Auditor usable
-                                    if (typeof value === 'string' && value.length > 100) {
-                                        if (value.startsWith('data:image')) {
-                                            return `[BASE64 IMAGE - ${value.length} chars]`;
-                                        }
-                                        if (value.startsWith('http')) {
-                                            return value.substring(0, 80) + '...';
-                                        }
-                                        return value.substring(0, 100) + '...';
-                                    }
-                                    return value;
-                                }, 2)}
-                            </pre>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        {languageSaveStatus.type === 'error' ? <X size={14} /> : <Check size={14} />}
+                        {languageSaveStatus.message}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* TEAM MANAGEMENT SECTION */}
-            <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} />
+            {/* 🌍 LANGUAGE UNSAVED CHANGES BAR */}
+            <AnimatePresence>
+                {pendingLanguage && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="fixed bottom-24 left-4 right-4 bg-[#1e293b] border border-white/10 text-white px-5 py-4 rounded-2xl flex justify-between items-center shadow-2xl z-[10000]"
+                    >
+                        <span className="text-sm font-semibold">🌍 {t('unsaved_changes_warning') || 'Unsaved changes'}</span>
+                        <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={saveLanguage}
+                            disabled={languageSaving}
+                            className="bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+                        >
+                            {languageSaving ? (t('saving_btn') || 'Saving...') : (t('save') || 'Save')}
+                        </motion.button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
+            {/* 📊 Backend Auditor - Side Drawer */}
+            <AnimatePresence>
+                {showAuditor && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/60 z-[9999]"
+                            onClick={() => setShowAuditor(false)}
+                        />
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-[#0f172a] border-l border-white/5 z-[10000] flex flex-col overflow-hidden"
+                        >
+                            <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+                                <span className="text-white font-bold text-base flex items-center gap-2">
+                                    <BarChart3 size={18} className="text-emerald-400" />
+                                    {t('cloud_vault') || 'Cloud Vault'}
+                                </span>
+                                <motion.button
+                                    whileTap={{ scale: 0.9 }}
+                                    onClick={() => setShowAuditor(false)}
+                                    className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                                >
+                                    <X size={18} />
+                                </motion.button>
+                            </div>
+                            <div className="flex-1 overflow-auto p-4">
+                                <pre className="text-emerald-400 text-xs font-mono whitespace-pre-wrap break-words">
+                                    {JSON.stringify(tenantData, (key, value) => {
+                                        if (typeof value === 'string' && value.length > 100) {
+                                            if (value.startsWith('data:image')) {
+                                                return `[BASE64 IMAGE - ${value.length} chars]`;
+                                            }
+                                            if (value.startsWith('http')) {
+                                                return value.substring(0, 80) + '...';
+                                            }
+                                            return value.substring(0, 100) + '...';
+                                        }
+                                        return value;
+                                    }, 2)}
+                                </pre>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     )
 }
 
-function TeamManagement({ businessId, t, primaryColor }) {
+/* ── Sub-components ── */
+
+function SectionHeader({ icon, title, isOpen, onToggle }) {
+    return (
+        <button
+            onClick={onToggle}
+            className="w-full flex items-center justify-between px-1 mb-2"
+            disabled={!onToggle}
+        >
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#64748b] flex items-center gap-2">
+                {icon}{title}
+            </h3>
+            {onToggle && (
+                <ChevronDown
+                    size={14}
+                    className={`text-[#64748b] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                />
+            )}
+        </button>
+    )
+}
+
+function MenuRow({ icon, label, subValue, value, highlight }) {
+    return (
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 last:border-0">
+            <div className="flex items-center gap-3">
+                <span className="text-[#64748b]">{icon}</span>
+                <div>
+                    <p className="text-sm font-medium text-[#f8fafc]">{label}</p>
+                    {subValue && <p className="text-xs text-[#64748b]">{subValue}</p>}
+                </div>
+            </div>
+            {value && (
+                <span className={`text-sm font-semibold ${highlight ? 'text-emerald-400' : 'text-[#94a3b8]'}`}>
+                    {value}
+                </span>
+            )}
+        </div>
+    )
+}
+
+function InputField({ label, value, onChange, placeholder, type = 'text' }) {
+    return (
+        <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">
+                {label}
+            </label>
+            <input
+                type={type}
+                value={value || ''}
+                onChange={onChange}
+                placeholder={placeholder}
+                className="w-full px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+            />
+        </div>
+    )
+}
+
+function ToggleSwitch({ checked, onChange }) {
+    return (
+        <button
+            onClick={onChange}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                checked ? 'bg-emerald-500' : 'bg-[#334155]'
+            }`}
+        >
+            <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                    checked ? 'translate-x-6' : 'translate-x-1'
+                }`}
+            />
+        </button>
+    )
+}
+
+function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
     const [showTeamPanel, setShowTeamPanel] = useState(false)
     const [staffList, setStaffList] = useState([])
     const [loading, setLoading] = useState(false)
@@ -741,7 +862,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
             .select('*')
             .eq('business_id', businessId)
             .order('name')
-        
+
         if (!error && data) setStaffList(data)
         setLoading(false)
     }
@@ -753,7 +874,7 @@ function TeamManagement({ businessId, t, primaryColor }) {
     const handleAddStaff = async () => {
         if (!newStaff.name || !newStaff.email || !newStaff.pin) return
         setSaving(true)
-        
+
         const simpleHash = (str) => {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
@@ -785,12 +906,12 @@ function TeamManagement({ businessId, t, primaryColor }) {
 
     const handleDeleteStaff = async (staffId) => {
         if (!confirm(t('confirm_delete') || '¿Eliminar este miembro?')) return
-        
+
         await supabase
             .from('staff')
             .update({ status: 'inactive' })
             .eq('id', staffId)
-        
+
         fetchStaff()
     }
 
@@ -803,135 +924,110 @@ function TeamManagement({ businessId, t, primaryColor }) {
     ]
 
     return (
-        <div style={{ marginTop: 2, padding: 20, background: '#F9FAFB', borderRadius: 16 }}>
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer',
-                padding: '12px 0'
-            }}
-            onClick={() => setShowTeamPanel(!showTeamPanel)}
-            >
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#1F2937' }}>
-                    {t('team_management') || 'Gestión de Equipo'}
-                </span>
-                <span style={{ fontSize: 20, transform: showTeamPanel ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }}>▼</span>
-            </div>
-
-            {showTeamPanel && (
-                <div style={{ paddingTop: 16 }}>
-                    {!showAddForm ? (
-                        <button
-                            onClick={() => setShowAddForm(true)}
-                            style={{
-                                width: '100%',
-                                padding: 14,
-                                background: primaryColor || '#C4856A',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: 12,
-                                fontSize: 15,
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                marginBottom: 16
-                            }}
-                        >
-                            + {t('add_staff') || 'Agregar Personal'}
-                        </button>
-                    ) : (
-                        <div style={{ background: 'white', padding: 16, borderRadius: 12, marginBottom: 16 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('name') || 'Name'}</label>
-                            <input
-                                type="text"
-                                placeholder="Juan García"
-                                value={newStaff.name}
-                                onChange={(e) => setNewStaff(p => ({ ...p, name: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            />
-
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('username') || 'Username'}</label>
-                            <input
-                                type="text"
-                                placeholder="juan_kitchen"
-                                value={newStaff.email}
-                                onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            />
-
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>PIN ({t('4_digits') || '4 digits'})</label>
-                            <input
-                                type="password"
-                                placeholder="1234"
-                                value={newStaff.pin}
-                                onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
-                                maxLength={4}
-                                inputMode="numeric"
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            />
-
-                            <label style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 4 }}>{t('role') || 'Role'}</label>
-                            <select
-                                value={newStaff.role}
-                                onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                style={{ width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
-                            >
-                                {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                            </select>
-
-                            <div style={{ display: 'flex', gap: 8 }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <SectionHeader
+                icon={<Users size={14} />}
+                title={t('team_management') || 'Team Management'}
+                isOpen={isOpen}
+                onToggle={onToggle}
+            />
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="rounded-xl overflow-hidden bg-[#1e293b] border border-white/5">
+                            {!showAddForm ? (
                                 <button
-                                    onClick={handleAddStaff}
-                                    disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
-                                    style={{ flex: 1, padding: 12, background: '#22C55E', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
+                                    onClick={() => setShowAddForm(true)}
+                                    className="w-full py-3.5 text-sm font-semibold text-emerald-400 border-b border-white/5 hover:bg-emerald-500/5 transition-colors"
                                 >
-                                    {saving ? '...' : (t('save') || 'Save')}
+                                    + {t('add_staff') || 'Add Staff Member'}
                                 </button>
-                                <button
-                                    onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                    style={{ flex: 1, padding: 12, background: '#E5E7EB', color: '#374151', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}
-                                >
-                                    {t('cancel') || 'Cancel'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {loading ? (
-                        <div style={{ textAlign: 'center', padding: 20, color: '#6B7280' }}>...</div>
-                    ) : staffList.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: 20, color: '#6B7280' }}>
-                            {t('no_staff') || 'No hay personal registrado'}
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            {staffList.map(staff => (
-                                <div key={staff.id} style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    padding: 12,
-                                    background: 'white',
-                                    borderRadius: 10,
-                                    border: '1px solid #E5E7EB'
-                                }}>
+                            ) : (
+                                <div className="p-4 space-y-3 border-b border-white/5">
+                                    <InputField
+                                        label={t('name') || 'Name'}
+                                        value={newStaff.name}
+                                        onChange={(e) => setNewStaff(p => ({ ...p, name: e.target.value }))}
+                                        placeholder="Juan García"
+                                    />
+                                    <InputField
+                                        label={t('username') || 'Username'}
+                                        value={newStaff.email}
+                                        onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
+                                        placeholder="juan_kitchen"
+                                    />
+                                    <InputField
+                                        label={`PIN (${t('4_digits') || '4 digits'})`}
+                                        type="password"
+                                        value={newStaff.pin}
+                                        onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
+                                        placeholder="1234"
+                                    />
                                     <div>
-                                        <div style={{ fontWeight: 600, color: '#1F2937' }}>{staff.name}</div>
-                                        <div style={{ fontSize: 12, color: '#6B7280' }}>@{staff.email} • {staff.role}</div>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-[#64748b] block mb-1.5">{t('role') || 'Role'}</label>
+                                        <select
+                                            value={newStaff.role}
+                                            onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
+                                            className="w-full px-4 py-3 rounded-xl text-sm bg-[#334155] border border-white/10 text-[#f8fafc] outline-none focus:border-emerald-500/50 transition-colors"
+                                        >
+                                            {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+                                        </select>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteStaff(staff.id)}
-                                        style={{ background: '#FEE2E2', color: '#DC2626', border: 'none', padding: '6px 12px', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
-                                    >
-                                        {t('remove') || 'Eliminar'}
-                                    </button>
+                                    <div className="flex gap-2 pt-1">
+                                        <motion.button
+                                            whileTap={{ scale: 0.97 }}
+                                            onClick={handleAddStaff}
+                                            disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
+                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {saving ? '...' : (t('save') || 'Save')}
+                                        </motion.button>
+                                        <motion.button
+                                            whileTap={{ scale: 0.97 }}
+                                            onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
+                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-[#334155] text-[#94a3b8] hover:bg-[#475569] transition-colors"
+                                        >
+                                            {t('cancel') || 'Cancel'}
+                                        </motion.button>
+                                    </div>
                                 </div>
-                            ))}
+                            )}
+
+                            {loading ? (
+                                <div className="text-center py-6 text-[#64748b] text-sm">...</div>
+                            ) : staffList.length === 0 ? (
+                                <div className="text-center py-6 text-[#64748b] text-sm">
+                                    {t('no_staff') || 'No staff registered'}
+                                </div>
+                            ) : (
+                                <div className="divide-y divide-white/5">
+                                    {staffList.map(staff => (
+                                        <div key={staff.id} className="flex items-center justify-between px-4 py-3">
+                                            <div>
+                                                <div className="text-sm font-medium text-[#f8fafc]">{staff.name}</div>
+                                                <div className="text-xs text-[#64748b]">@{staff.email} • {staff.role}</div>
+                                            </div>
+                                            <motion.button
+                                                whileTap={{ scale: 0.9 }}
+                                                onClick={() => handleDeleteStaff(staff.id)}
+                                                className="text-xs font-medium text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors"
+                                            >
+                                                {t('remove') || 'Remove'}
+                                            </motion.button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            )}
-        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     )
 }
 
