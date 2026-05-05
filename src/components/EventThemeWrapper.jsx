@@ -118,29 +118,42 @@ export default function EventThemeWrapper() {
       </div>
 
       {/* Main Content Area */}
-      <div className="pb-24">
+      <div className="pb-32">
         {view === 'events' && <EventsView />}
         {view === 'status' && <MyTickets />}
       </div>
 
-      {/* Simplified Navigation for Events & Tickets */}
+      {/* TikTok/Insta-Style Bottom Nav (Center Camera, Side Tabs) */}
       <nav
-        className="fixed bottom-0 w-full z-50 flex justify-around items-center h-20 pb-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        className="fixed bottom-0 w-full z-50 flex justify-around items-end h-24 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
         style={{ borderColor: 'var(--border-color)' }}
       >
+        {/* Left Tab: Events */}
         <button
           onClick={() => setView('events')}
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'events' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`flex flex-col items-center gap-1 pb-4 transition-all ${view === 'events' ? 'text-[var(--color-primary)]' : 'text-slate-400 dark:text-slate-600'}`}
         >
-          <Tickets size={24} strokeWidth={view === 'events' ? 2.5 : 2} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
+          <Tickets size={20} strokeWidth={2} />
+          <span className="text-[9px] font-bold uppercase tracking-tighter opacity-70">Events</span>
         </button>
+
+        {/* Center: Elevated Camera Button (Larger) */}
+        <div className="relative -top-6">
+          <button
+            className="w-16 h-16 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center shadow-2xl shadow-[var(--color-primary)]/30 active:scale-90 transition-all hover:scale-110 border-4 border-white dark:border-slate-900"
+          >
+            {/* Camera icon or content would go here */}
+            <span className="text-2xl">📷</span>
+          </button>
+        </div>
+
+        {/* Right Tab: My Tickets */}
         <button
           onClick={() => setView('status')}
-          className={`flex flex-col items-center gap-1 transition-all ${view === 'status' ? 'text-[var(--color-primary)] scale-110' : 'text-slate-300 dark:text-slate-600'}`}
+          className={`flex flex-col items-center gap-1 pb-4 transition-all ${view === 'status' ? 'text-[var(--color-primary)]' : 'text-slate-400 dark:text-slate-600'}`}
         >
-          <Assignment size={24} strokeWidth={view === 'status' ? 2.5 : 2} />
-          <span className="text-[10px] font-bold uppercase tracking-tighter">My Tickets</span>
+          <Assignment size={20} strokeWidth={2} />
+          <span className="text-[9px] font-bold uppercase tracking-tighter opacity-70">Tickets</span>
         </button>
       </nav>
     </div>
