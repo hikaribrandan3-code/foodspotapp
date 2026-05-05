@@ -53,7 +53,7 @@ const BTN_GAP = 'clamp(5px, 1.2vh, 10px)';
 const BTN_PY = 'clamp(10px, 1.8vh, 20px)';
 const FAB_SIZE = 'clamp(120px, 18.42vw, 163px)';   // Camera button 215% bigger
 const FAB_OFFSET = 'clamp(20px, 4vh, 32px)';        // Elevated higher
-const FAB_RADIUS = 'clamp(24px, 3.5vw, 34px)';
+const FAB_RADIUS = 'clamp(60px, 9.21vw, 81.5px)';  // Half of FAB_SIZE for perfect circle
 const FAB_BORDER = 'clamp(5px, 1vw, 8px)';
 const DROP_H = 'clamp(8px, 2vh, 12px)';
 const DROP_BLUR = 'clamp(16px, 3vw, 32px)';
@@ -198,7 +198,9 @@ export default function EventThemeWrapper() {
               height: FAB_SIZE,
               borderRadius: FAB_RADIUS,
               border: `${FAB_BORDER} solid var(--canvas-bg)`,
-              boxShadow: '0 clamp(6px, 1.2vh, 12px) clamp(12px, 2vh, 20px) rgba(0,0,0,0.15)',
+              boxShadow: theme === 'dark'
+                ? '0 clamp(6px, 1.2vh, 12px) clamp(12px, 2vh, 20px) rgba(0,0,0,0.15), 0 0 clamp(20px, 3vh, 32px) rgba(16, 185, 129, 0.4)'
+                : '0 clamp(6px, 1.2vh, 12px) clamp(12px, 2vh, 20px) rgba(0,0,0,0.15)',
               minWidth: 44,
               minHeight: 44,
             }}
