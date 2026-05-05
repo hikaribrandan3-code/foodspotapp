@@ -53,8 +53,8 @@ const ItemCard = ({
             data-item-id={item.id}
             onClick={() => !readOnly && !isEditMode && !dragState && onTap && onTap(item)}
             onTouchStart={!readOnly && isEditMode && onTouchStart ? (e) => onTouchStart(e, category?.id, item, index, category?.items) : undefined}
-            onTouchEnd={!readOnly && onTouchEnd}
-            onTouchMove={!readOnly && onTouchEnd}
+            onTouchEnd={!readOnly && isEditMode ? onTouchEnd : undefined}
+            onTouchMove={!readOnly && isEditMode ? onTouchEnd : undefined}
             onMouseDown={!readOnly && isEditMode && onMouseDown ? (e) => onMouseDown(e, category?.id, item, index, category?.items) : undefined}
             style={{
                 // 🛡️ VISUAL LOGIC
