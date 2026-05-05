@@ -12,6 +12,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const [applied, setApplied] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' | 'crypto' | 'wristband' | 'wallet'
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
   if (!event || !tier) return null;
 
@@ -30,12 +32,12 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   };
 
   const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleConfirm = async () => {
     if (!isValidEmail(email)) return;
     if (isProcessing) return;
     setIsProcessing(true);
+    setPaymentError(null);
 
     try {
       const addonItems = selectedAddons.map(id => {
@@ -56,14 +58,22 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
       if (error || data?.error) {
         console.error('Checkout error:', error || data?.error);
-        alert(data?.error?.detail || error?.message || 'Payment failed. Please try again.');
+        const errorMsg = data?.error?.detail || error?.message || 'Payment failed. Please try again.';
+        setPaymentError(errorMsg);
         setIsProcessing(false);
         return;
       }
 
+      // Store guest token and order ID for reference
+      if (data.guest_token) {
+        localStorage.setItem('event_guest_token', data.guest_token);
+      }
+      if (data.order_id) {
+        localStorage.setItem('event_pending_order_id', data.order_id);
+      }
+
       // Free event — no MP redirect needed
       if (data.free_order) {
-        localStorage.setItem('event_guest_token', data.guest_token);
         onConfirm({
           id: data.ticket_code,
           email,
@@ -86,18 +96,16 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         return;
       }
 
-      // Mercado Pago — store guest token and redirect
+      // Mercado Pago — redirect to payment
       if (data.init_point || data.redirect_url) {
-        localStorage.setItem('event_guest_token', data.guest_token);
-        localStorage.setItem('event_pending_order_id', data.order_id);
         window.location.href = data.redirect_url || data.init_point;
         return;
       }
 
-      alert('Unexpected response from payment server.');
+      setPaymentError('Unexpected response from payment server.');
     } catch (err) {
       console.error('Checkout exception:', err);
-      alert('Something went wrong. Please try again.');
+      setPaymentError('Network error. Please check your connection and try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -304,7 +312,12 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
-        <button 
+        {paymentError && (
+          <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
+            <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
+          </div>
+        )}
+        <button
           onClick={handleConfirm}
           disabled={isProcessing || !isValidEmail(email)}
           className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
