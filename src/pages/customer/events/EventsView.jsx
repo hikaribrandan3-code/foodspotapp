@@ -167,7 +167,7 @@ export default function EventsView() {
             categories={CATEGORIES}
             activeFilter={filter}
             onFilterChange={setFilter}
-            onEventSelect={handleEventSelect}
+            onSelectEvent={handleEventSelect}
           />
         )}
         {stage === STAGES.DETAIL && selectedEvent && (
@@ -181,7 +181,7 @@ export default function EventsView() {
           <EventCheckout
             event={selectedEvent}
             tier={selectedTier}
-            onPurchase={handlePurchase}
+            onConfirm={handlePurchase}
             onBack={handleBack}
           />
         )}

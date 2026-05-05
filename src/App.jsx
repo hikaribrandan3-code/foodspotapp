@@ -11,6 +11,7 @@ import { CartProvider } from './contexts/CartContext.jsx'
 import { supabase, getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 import { StrategyDraftProvider } from './contexts/StrategyDraftContext.jsx'
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext.jsx'
+import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { StaffProvider } from './contexts/StaffContext.jsx'
 
@@ -491,7 +492,8 @@ function App() {
         <AdminIntentProvider>
             <StaffProvider>
                 <LanguageProvider>
-                    <StrategyDraftProvider>
+                    <ThemeProvider>
+                        <StrategyDraftProvider>
                         <CartProvider>
                             <SessionProvider>
                                 <div className="app-container">
@@ -555,6 +557,7 @@ function App() {
                             </SessionProvider>
                         </CartProvider>
                     </StrategyDraftProvider>
+                    </ThemeProvider>
                 </LanguageProvider>
             </StaffProvider>
         </AdminIntentProvider>
