@@ -188,14 +188,8 @@
   --accent-teal: #FFFFFF !important;
 }
 
-/* Force white backgrounds on green elements */
-.bg-green, .bg-emerald, .bg-teal,
-[class*="green"], [class*="emerald"], [class*="teal"],
-[style*="22C55E"], [style*="10B981"], [style*="14B8A6"] {
-  background-color: #FFFFFF !important;
-  color: #1F2937 !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
+/* Note: Removed global green-destruction rule that was breaking event module emerald UI.
+   If any specific green elements need styling, target them explicitly. */
 
 /* Professional borders for contrast */
 .pro-border {

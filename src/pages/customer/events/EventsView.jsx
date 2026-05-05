@@ -159,37 +159,39 @@ export default function EventsView() {
 
   // ─── RENDER ───
   return (
-    <div className="max-w-lg mx-auto min-h-screen">
-      {stage === STAGES.DISCOVERY && (
-        <EventDiscovery
-          events={filteredEvents}
-          categories={CATEGORIES}
-          activeFilter={filter}
-          onFilterChange={setFilter}
-          onEventSelect={handleEventSelect}
-        />
-      )}
-      {stage === STAGES.DETAIL && selectedEvent && (
-        <EventDetail
-          event={selectedEvent}
-          onBook={handleBook}
-          onBack={handleBack}
-        />
-      )}
-      {stage === STAGES.CHECKOUT && selectedEvent && selectedTier && (
-        <EventCheckout
-          event={selectedEvent}
-          tier={selectedTier}
-          onPurchase={handlePurchase}
-          onBack={handleBack}
-        />
-      )}
-      {stage === STAGES.TICKET && booking && (
-        <EventTicket
-          booking={booking}
-          onClose={handleBack}
-        />
-      )}
+    <div className="min-h-screen bg-[var(--canvas-bg)] text-[var(--text-primary)] transition-colors duration-300">
+      <div className="h-full w-full max-w-lg mx-auto">
+        {stage === STAGES.DISCOVERY && (
+          <EventDiscovery
+            events={filteredEvents}
+            categories={CATEGORIES}
+            activeFilter={filter}
+            onFilterChange={setFilter}
+            onEventSelect={handleEventSelect}
+          />
+        )}
+        {stage === STAGES.DETAIL && selectedEvent && (
+          <EventDetail
+            event={selectedEvent}
+            onBook={handleBook}
+            onBack={handleBack}
+          />
+        )}
+        {stage === STAGES.CHECKOUT && selectedEvent && selectedTier && (
+          <EventCheckout
+            event={selectedEvent}
+            tier={selectedTier}
+            onPurchase={handlePurchase}
+            onBack={handleBack}
+          />
+        )}
+        {stage === STAGES.TICKET && booking && (
+          <EventTicket
+            booking={booking}
+            onClose={handleBack}
+          />
+        )}
+      </div>
     </div>
   );
 }

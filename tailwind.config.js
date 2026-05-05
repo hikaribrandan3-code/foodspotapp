@@ -119,6 +119,7 @@ module.exports = {
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
         heading: ['Manrope', 'system-ui', 'sans-serif'],
         data: ['Inter', 'ui-monospace', 'system-ui', 'sans-serif'],
+        outfit: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
   },

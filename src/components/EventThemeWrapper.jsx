@@ -66,9 +66,10 @@ export default function EventThemeWrapper() {
 
   return (
     <div
-      className={`${theme === 'dark' ? 'dark' : ''} min-h-screen relative`}
+      className={`${theme === 'dark' ? 'dark' : ''} min-h-[100dvh] relative`}
       style={{
         backgroundColor: style['--canvas-bg'],
+        fontFamily: '"Outfit", ui-sans-serif, system-ui, sans-serif',
         ...style,
       }}
     >
