@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useEventOrders } from '../../../../hooks/useEventOrders';
 import EventTicket from './EventTicket';
 
 const TicketCard = ({ ticket, isPast = false, onClick }) => {
@@ -57,6 +58,9 @@ export default function MyTickets() {
   const [walletBalance, setWalletBalance] = useState(125.50);
   const [isToppingUp, setIsToppingUp] = useState(false);
 
+  const guestToken = localStorage.getItem('event_guest_token');
+  const { orders: dbOrders, loading: ordersLoading } = useEventOrders(guestToken);
+
   useEffect(() => {
     if (showBadges) {
       document.body.style.overflow = 'hidden';
@@ -76,9 +80,38 @@ export default function MyTickets() {
     }, 1500);
   };
 
-  const savedBookings = JSON.parse(localStorage.getItem('event_bookings') || '[]');
-  
-  // Combine real bookings with any static ones if desired, or just use real
+  // Transform DB orders to frontend booking shape
+  const savedBookings = dbOrders.length > 0
+    ? dbOrders.map(order => {
+        const event = order.events || {};
+        const tier = order.tier_snapshot || {};
+        const startDate = event.start_date ? new Date(event.start_date) : new Date();
+        return {
+          id: order.ticket_code,
+          event_id: order.event_id,
+          event_name: event.name || 'Unknown Event',
+          date: startDate.toISOString().split('T')[0],
+          time: startDate.toTimeString().slice(0, 5),
+          venue_name: event.venue_name || '',
+          image: event.image_url || '',
+          tier_name: tier.name || 'General',
+          tier_id: tier.id || '',
+          quantity: order.quantity || 1,
+          addons: (order.addons_snapshot || []).map(a => ({
+            id: a.id,
+            name: a.name,
+            price: (a.price_cents || 0) / 100,
+            qty: a.qty || 1
+          })),
+          total: (order.total_cents || 0) / 100,
+          purchase_date: order.created_at,
+          email: order.customer_email || '',
+          category: 'Events',
+          guest_token: order.guest_token
+        };
+      })
+    : JSON.parse(localStorage.getItem('event_bookings') || '[]');
+
   const upcomingTickets = savedBookings;
 
   // Mock Referral Data

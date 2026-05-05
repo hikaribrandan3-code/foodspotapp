@@ -7,6 +7,7 @@ import {
   ChevronRight, Trash2, Users, Check, AlertCircle, X, Trophy, Clock,
   Tag, Share2, CheckCircle2, PartyPopper
 } from 'lucide-react'
+import { supabase } from '../../lib/supabaseClient'
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const theme = {
@@ -90,41 +91,38 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
   const fetchEvents = async () => {
     setLoading(true)
-    // TODO: replace mock with real Supabase query
-    // const { data } = await supabase.from('events').select('*, event_orders(count)').eq('business_id', businessId).order('start_date', { ascending: false })
-    setEvents([
-      {
-        id: 'evt_001',
-        business_id: businessId,
-        name: 'Summer Night Market',
-        description: 'Live music and local vendors — a night to remember.',
-        category: 'Food',
-        start_date: '2026-06-15T19:00:00',
-        end_date: '2026-06-15T23:00:00',
-        venue_name: 'Central Park',
-        address: '123 Park Ave',
-        image_url: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=800',
-        is_free: false,
-        status: 'live',
-        ticket_tiers: [
-          { id: 't1', name: 'General', price: 2500, capacity: 100, sold: 45, remaining: 55 },
-          { id: 't2', name: 'VIP',     price: 5000, capacity: 20,  sold: 18, remaining: 2  },
-        ],
-        total_capacity: 120,
-        tickets_sold: 63,
-        total_revenue: 137500,
-        checkins: 32,
-        created_at: new Date().toISOString(),
-      },
-    ])
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('start_date', { ascending: false })
+
+      if (error) {
+        console.error('fetchEvents error:', error)
+        setEvents([])
+      } else {
+        setEvents(data || [])
+      }
+    } catch (err) {
+      console.error('fetchEvents exception:', err)
+      setEvents([])
+    }
     setLoading(false)
   }
 
   const handleDelete = async () => {
     if (!window.confirm('Archive this event? This cannot be undone.')) return
-    // TODO: await supabase.from('events').update({ status: 'archived' }).eq('id', selectedEvent.id)
-    fetchEvents()
-    setView('list')
+    try {
+      await supabase
+        .from('events')
+        .update({ status: 'archived', updated_at: new Date().toISOString() })
+        .eq('id', selectedEvent.id)
+      fetchEvents()
+      setView('list')
+    } catch (err) {
+      console.error('handleDelete error:', err)
+    }
   }
 
   if (view === 'create') return (
@@ -461,11 +459,54 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
   const handlePublish = async () => {
     if (!form.name.trim() || !form.start_date) { alert('Name and start date are required'); return }
     setSaving(true)
-    // TODO: await supabase.from('events').insert([{ business_id: businessId, ...form, status: 'live', tickets_sold: 0, total_revenue: 0, checkins: 0, total_capacity: form.ticket_tiers.reduce((a, t) => a + Number(t.capacity), 0) }])
-    setSaving(false)
-    setShowSuccess(true)
-    confetti({ particleCount: 140, spread: 80, origin: { y: 0.55 }, colors: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6'] })
-    setTimeout(() => { setShowSuccess(false); onSuccess() }, 2800)
+    try {
+      const ticketTiers = form.ticket_tiers.map(t => ({
+        id: t.id || crypto.randomUUID(),
+        name: t.name,
+        price_cents: Math.round(parseFloat(t.price) * 100),
+        capacity: Number(t.capacity),
+        sold: 0
+      }));
+
+      const totalCapacity = ticketTiers.reduce((a, t) => a + t.capacity, 0);
+
+      const { error } = await supabase
+        .from('events')
+        .insert([{
+          business_id: businessId,
+          name: form.name.trim(),
+          description: form.description,
+          category: form.category,
+          start_date: form.start_date,
+          end_date: form.end_date || null,
+          venue_name: form.venue_name,
+          address: form.address,
+          image_url: form.image_url,
+          is_free: form.is_free,
+          status: 'live',
+          ticket_tiers: ticketTiers,
+          total_capacity: totalCapacity,
+          tickets_sold: 0,
+          total_revenue_cents: 0,
+          checkins_count: 0
+        }]);
+
+      if (error) {
+        console.error('handlePublish error:', error);
+        alert('Failed to create event: ' + error.message);
+        setSaving(false);
+        return;
+      }
+
+      setShowSuccess(true)
+      confetti({ particleCount: 140, spread: 80, origin: { y: 0.55 }, colors: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6'] })
+      setTimeout(() => { setShowSuccess(false); onSuccess() }, 2800)
+    } catch (err) {
+      console.error('handlePublish exception:', err);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (showSuccess) return (
@@ -736,9 +777,33 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
 
   const handleSave = async () => {
     setSaving(true)
-    // TODO: await supabase.from('events').update(form).eq('id', event.id)
-    setSaving(false)
-    onSuccess()
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          name: form.name,
+          description: form.description,
+          venue_name: form.venue_name,
+          address: form.address,
+          image_url: form.image_url,
+          start_date: form.start_date,
+          end_date: form.end_date,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', event.id);
+
+      if (error) {
+        console.error('handleSave error:', error);
+        alert('Failed to save: ' + error.message);
+      } else {
+        onSuccess()
+      }
+    } catch (err) {
+      console.error('handleSave exception:', err);
+      alert('Something went wrong.');
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -774,12 +839,36 @@ function AttendeeListView({ event, businessId, onBack }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: real fetch from event_orders
-    setAttendees([
-      { id: 'o1', customer_name: 'John Smith', customer_email: 'john@example.com', tier_name: 'VIP',     quantity: 2, status: 'paid', created_at: new Date().toISOString() },
-      { id: 'o2', customer_name: 'Jane Doe',   customer_email: 'jane@example.com', tier_name: 'General', quantity: 1, status: 'paid', created_at: new Date().toISOString() },
-    ])
-    setLoading(false)
+    const fetchAttendees = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('event_orders')
+          .select('*')
+          .eq('event_id', event.id)
+          .eq('payment_status', 'paid')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('fetchAttendees error:', error);
+          setAttendees([]);
+        } else {
+          setAttendees((data || []).map(o => ({
+            id: o.id,
+            customer_name: o.customer_name || 'Guest',
+            customer_email: o.customer_email || '',
+            tier_name: o.tier_snapshot?.name || 'General',
+            quantity: o.quantity || 1,
+            status: o.payment_status,
+            created_at: o.created_at
+          })));
+        }
+      } catch (err) {
+        console.error('fetchAttendees exception:', err);
+        setAttendees([]);
+      }
+      setLoading(false);
+    };
+    fetchAttendees();
   }, [event.id])
 
   return (
@@ -852,12 +941,65 @@ function CheckinView({ event, businessId, onBack }) {
     setScanning(false)
   }
 
-  const handleCheckin = (ticketId) => {
-    // TODO: validate ticket against event_checkins in Supabase
-    setResult({ success: true, ticketId })
-    setCheckedIn(n => n + 1)
-    confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6'] })
-    setTimeout(() => setResult(null), 3000)
+  const handleCheckin = async (ticketId) => {
+    try {
+      // Look up order by ticket_code
+      const { data: order, error: orderError } = await supabase
+        .from('event_orders')
+        .select('id, event_id, customer_name, tier_snapshot, payment_status')
+        .eq('ticket_code', ticketId)
+        .eq('event_id', event.id)
+        .single();
+
+      if (orderError || !order) {
+        setResult({ success: false, ticketId, message: 'Invalid ticket' })
+        setTimeout(() => setResult(null), 3000)
+        return;
+      }
+
+      if (order.payment_status !== 'paid') {
+        setResult({ success: false, ticketId, message: 'Payment pending' })
+        setTimeout(() => setResult(null), 3000)
+        return;
+      }
+
+      // Check if already checked in
+      const { data: existingCheckin, error: checkinError } = await supabase
+        .from('event_checkins')
+        .select('id')
+        .eq('order_id', order.id)
+        .eq('event_id', event.id)
+        .single();
+
+      if (existingCheckin) {
+        setResult({ success: false, ticketId, message: 'Already checked in' })
+        setTimeout(() => setResult(null), 3000)
+        return;
+      }
+
+      // Record check-in
+      await supabase
+        .from('event_checkins')
+        .insert({
+          event_id: event.id,
+          order_id: order.id,
+          checkin_method: 'qr_scan'
+        });
+
+      setResult({
+        success: true,
+        ticketId,
+        name: order.customer_name || 'Guest',
+        tier: order.tier_snapshot?.name || 'General'
+      });
+      setCheckedIn(n => n + 1);
+      confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6'] });
+      setTimeout(() => setResult(null), 3000);
+    } catch (err) {
+      console.error('handleCheckin error:', err);
+      setResult({ success: false, ticketId, message: 'Check-in failed' });
+      setTimeout(() => setResult(null), 3000);
+    }
   }
 
   useEffect(() => () => { stopScanner() }, [])
