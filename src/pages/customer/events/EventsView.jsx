@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useParams } from 'react-router-dom';
+import { useEvents } from '../../../hooks/useEvents';
 import EventDiscovery from './views/EventDiscovery';
 import EventDetail from './views/EventDetail';
 import EventCheckout from './views/EventCheckout';
@@ -184,43 +186,45 @@ const mockEvents = [
   }
 ];
 
+// Transform Supabase event shape to frontend mock shape
+function normalizeEvent(event) {
+  const startDate = new Date(event.start_date);
+  const date = startDate.toISOString().split('T')[0];
+  const time = startDate.toTimeString().slice(0, 5);
+
+  return {
+    id: event.id,
+    name: event.name,
+    date,
+    time,
+    description: event.description || '',
+    location: event.address || event.venue_name || '',
+    venue_name: event.venue_name || '',
+    image: event.image_url || '',
+    category: event.category || 'All',
+    business_id: event.business_id,
+    referrable: true,
+    tiers: (event.ticket_tiers || []).map(t => ({
+      id: t.id,
+      name: t.name,
+      price: (t.price_cents || 0) / 100,
+      qty: t.capacity || 0
+    })),
+    lineup: event.lineup || undefined
+  };
+}
+
 export default function EventsView({ onViewTickets }) {
+  const { tenantSlug } = useParams();
+  const { events: dbEvents, loading: eventsLoading } = useEvents(tenantSlug);
+
+  // Normalize DB events to frontend shape; fallback to mock if no DB data
+  const events = dbEvents.length > 0 ? dbEvents.map(normalizeEvent) : mockEvents;
+
   const [stage, setStage] = useState('discovery'); // 'discovery' | 'detail' | 'checkout' | 'ticket' | 'my-tickets'
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTier, setSelectedTier] = useState(null);
   const [bookingData, setBookingData] = useState(null);
-  const [allBookings, setAllBookings] = useState(() => {
-    const saved = localStorage.getItem('event_bookings');
-    // If we have saved data, use it. If not, seed with the demo.
-    if (saved && JSON.parse(saved).length > 0) return JSON.parse(saved);
-    
-    // Seed with a demo booking that has addons
-    const demoBooking = {
-      id: 'TKT-DEMO-99',
-      event_id: 'evt_006',
-      event_name: 'Gourmet Food Truck Rally',
-      date: '2026-06-05',
-      time: '11:00',
-      venue_name: 'The Great Lawn',
-      image: 'https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?q=80&w=800&auto=format&fit=crop',
-      tier_name: 'Entry Pass',
-      tier_id: 'tier_entry',
-      quantity: 2,
-      addons: [
-        { id: 'drink', name: 'Drink Tokens', price: 15, icon: '🍺' },
-        { id: 'food', name: 'VIP Tasting Platter', price: 45, icon: '🍱' }
-      ],
-      total: 75,
-      purchase_date: new Date().toISOString(),
-      email: 'demo@foodspot.com',
-      category: 'Festivals'
-    };
-    return [demoBooking];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('event_bookings', JSON.stringify(allBookings));
-  }, [allBookings]);
 
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
@@ -255,7 +259,7 @@ export default function EventsView({ onViewTickets }) {
       <div className="h-full w-full max-w-lg mx-auto">
           {stage === 'discovery' && (
             <EventDiscovery 
-              events={mockEvents} 
+              events={events} 
               onSelectEvent={handleSelectEvent} 
               onViewTickets={onViewTickets || (() => setStage('my-tickets'))}
             />

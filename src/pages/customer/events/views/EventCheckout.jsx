@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Ticket, CreditCard, Info, Smartphone, Wallet, Zap, Coins, Fingerprint } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { supabase } from '../../../../lib/supabaseClient';
 
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const { t } = useLanguage();
@@ -29,27 +30,77 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   };
 
   const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!isValidEmail(email)) return;
-    onConfirm({
-      id: 'TKT-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      email,
-      event_id: event.id,
-      event_name: event.name,
-      tier_name: tier.name,
-      tier_id: tier.id,
-      quantity: qty,
-      addons: selectedAddons.map(id => addons.find(a => a.id === id)),
-      total: total,
-      purchase_date: new Date().toISOString(),
-      venue_name: event.venue_name,
-      date: event.date,
-      image: event.image,
-      description: event.description,
-      category: event.category,
-      payment_method: paymentMethod
-    });
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      const addonItems = selectedAddons.map(id => {
+        const a = addons.find(x => x.id === id);
+        return { id: a.id, name: a.name, price: a.price };
+      });
+
+      const { data, error } = await supabase.functions.invoke('create-event-preference', {
+        body: {
+          event_id: event.id,
+          tier_id: tier.id,
+          quantity: qty,
+          addons: addonItems,
+          customer: { name: '', email, phone: '' },
+          promo_code: applied ? promoCode : null
+        }
+      });
+
+      if (error || data?.error) {
+        console.error('Checkout error:', error || data?.error);
+        alert(data?.error?.detail || error?.message || 'Payment failed. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
+
+      // Free event — no MP redirect needed
+      if (data.free_order) {
+        localStorage.setItem('event_guest_token', data.guest_token);
+        onConfirm({
+          id: data.ticket_code,
+          email,
+          event_id: event.id,
+          event_name: event.name,
+          tier_name: tier.name,
+          tier_id: tier.id,
+          quantity: qty,
+          addons: addonItems,
+          total: total,
+          purchase_date: new Date().toISOString(),
+          venue_name: event.venue_name,
+          date: event.date,
+          image: event.image,
+          description: event.description,
+          category: event.category,
+          payment_method: 'free',
+          guest_token: data.guest_token
+        });
+        return;
+      }
+
+      // Mercado Pago — store guest token and redirect
+      if (data.init_point || data.redirect_url) {
+        localStorage.setItem('event_guest_token', data.guest_token);
+        localStorage.setItem('event_pending_order_id', data.order_id);
+        window.location.href = data.redirect_url || data.init_point;
+        return;
+      }
+
+      alert('Unexpected response from payment server.');
+    } catch (err) {
+      console.error('Checkout exception:', err);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const paymentOptions = [
@@ -255,15 +306,22 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
         <button 
           onClick={handleConfirm}
-          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-slate-900/20"
+          disabled={isProcessing || !isValidEmail(email)}
+          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {paymentMethod === 'wristband' ? <Fingerprint size={18} /> : 
-           paymentMethod === 'crypto' ? <Coins size={18} /> : 
-           paymentMethod === 'mercado' ? <Smartphone size={18} /> : 
-           <CreditCard size={18} />}
-          {paymentMethod === 'wristband' ? 'Sync & Confirm' : 
-           paymentMethod === 'mercado' ? 'Pay with Mercado Pago' : 
-           t('confirm_payment')}
+          {isProcessing ? (
+            <span className="animate-pulse">Processing...</span>
+          ) : (
+            <>
+              {paymentMethod === 'wristband' ? <Fingerprint size={18} /> : 
+               paymentMethod === 'crypto' ? <Coins size={18} /> : 
+               paymentMethod === 'mercado' ? <Smartphone size={18} /> : 
+               <CreditCard size={18} />}
+              {paymentMethod === 'wristband' ? 'Sync & Confirm' : 
+               paymentMethod === 'mercado' ? 'Pay with Mercado Pago' : 
+               t('confirm_payment')}
+            </>
+          )}
         </button>
       </div>
     </div>
