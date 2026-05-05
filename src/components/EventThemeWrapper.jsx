@@ -44,15 +44,15 @@ const DARK_TOKENS = {
 
 /* ─── Responsive nav constants (single source of truth) ─── */
 const NAV_HEIGHT = 'clamp(80px, 12vh, 110px)';
-const NAV_GAP = 'clamp(28px, 5vw, 48px)';
+const NAV_GAP = 'clamp(24px, 4vw, 40px)';
 const NAV_PB = 'clamp(12px, 2vh, 24px)';
 const ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';        // Events / My Tickets  +20%
-const CAM_ICON_SIZE = 'clamp(30px, 4.5vw, 40px)';   // Camera icon  +25%
+const CAM_ICON_SIZE = 'clamp(28px, 4.2vw, 38px)';   // Camera icon  same +20% as events
 const LABEL_SIZE = 'clamp(11px, 1.4vw, 16px)';
 const BTN_GAP = 'clamp(5px, 1.2vh, 10px)';
 const BTN_PY = 'clamp(10px, 1.8vh, 20px)';
-const FAB_SIZE = 'clamp(60px, 10vw, 80px)';         // Camera button  +25%
-const FAB_OFFSET = 'clamp(24px, 5vh, 40px)';        // Elevated higher
+const FAB_SIZE = 'clamp(56px, 8.4vw, 76px)';        // Camera button  same +20% as events
+const FAB_OFFSET = 'clamp(20px, 4vh, 32px)';        // Elevated higher
 const FAB_RADIUS = 'clamp(24px, 3.5vw, 34px)';
 const FAB_BORDER = 'clamp(5px, 1vw, 8px)';
 const DROP_H = 'clamp(8px, 2vh, 12px)';
@@ -155,7 +155,7 @@ export default function EventThemeWrapper() {
 
       {/* Bottom Navigation: Events | Camera | My Tickets */}
       <nav
-        className="fixed bottom-0 w-full z-50 flex justify-center items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+        className="fixed bottom-0 w-full z-50 flex justify-center items-center px-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
         style={{
           borderColor: 'var(--border-color)',
           height: NAV_HEIGHT,
