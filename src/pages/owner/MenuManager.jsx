@@ -1612,6 +1612,20 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                     </div>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                    <button
+                                                        onClick={() => handleBoxTap(category.id, item)}
+                                                        style={{
+                                                            fontSize: 12, fontWeight: 600,
+                                                            color: item.description ? '#22C55E' : '#9CA3AF',
+                                                            background: 'none', border: 'none',
+                                                            cursor: 'pointer', padding: '2px 0',
+                                                            display: 'flex', alignItems: 'center', gap: 4
+                                                        }}
+                                                        title={item.description || 'Agregar descripción'}
+                                                    >
+                                                        <span>✏️</span>
+                                                        {item.description ? 'Editar descripción' : 'Agregar descripción'}
+                                                    </button>
                                                     <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
                                                         Agotado
                                                         <input
