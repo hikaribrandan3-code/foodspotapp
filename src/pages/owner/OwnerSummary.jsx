@@ -780,7 +780,7 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
             className="w-full flex items-center justify-between px-1 mb-2"
             disabled={!onToggle}
         >
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-[10px] font-extrabold uppercase tracking-wider text-gray-900 dark:!text-white flex items-center gap-2">
                 {icon}{title}
             </h3>
             {onToggle && (
