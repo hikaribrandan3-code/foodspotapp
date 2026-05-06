@@ -235,7 +235,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // =========================================================
 
     const [editingItem, setEditingItem] = useState(null)
-    const [editForm, setEditForm] = useState({ name: '', price: '', image: null })
+    const [editForm, setEditForm] = useState({ name: '', price: '', image: null, description: '', calories: '' })
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const activeFeaturedSlotRef = useRef(null)
@@ -402,6 +402,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     price: typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0,
                     image: item.image || null,
                     description: item.description || '',
+                    calories: item.calories || null,
                     available: item.available !== false
                 }))
             }))
@@ -590,7 +591,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
     const handleEdit = (categoryId, item) => {
         setEditingItem({ categoryId, itemId: item.id })
-        setEditForm({ name: item.name, price: item.price.toString(), image: item.image || null })
+        setEditForm({
+            name: item.name,
+            price: item.price.toString(),
+            image: item.image || null,
+            description: item.description || '',
+            calories: item.calories?.toString() || ''
+        })
         setUploadStatus(null)
     }
 
@@ -732,7 +739,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
             return
         }
 
-        // PATH B: REGULAR MENU ITEM
+        // PATH B: REGULAR MENU ITEM — description + calories focused save
         const updatedMenu = { ...menu }
         const category = updatedMenu.categories.find(c => c.id === editingItem.categoryId)
         if (category) {
@@ -743,11 +750,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 if (editForm.image) {
                     item.image = editForm.image
                 }
-                // 🛡️ CLOUD-ONLY: saveMenu removed
+                item.description = editForm.description || ''
+                item.calories = editForm.calories ? parseInt(editForm.calories) : undefined
                 setMenu(updatedMenu)
-                setHasChanges(true)
-                setSaveStatus({ message: 'Guardado correctamente' })
-                setTimeout(() => setSaveStatus(null), 2000)
+                setSaveStatus({ message: 'Guardado' })
+                setTimeout(() => setSaveStatus(null), 1500)
+                // ☁️ Auto-sync to cloud on description save
+                syncMenuToCloud(updatedMenu)
             }
         }
         setEditingItem(null)
@@ -934,7 +943,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setEditForm({
             name: slot.name || 'Destacado',
             price: slot.price ? slot.price.toString() : '', // 🛡️ NO STICKY ZERO
-            image: slot.image || null
+            image: slot.image || null,
+            description: '',
+            calories: ''
         })
 
         // 2. 🛡️ NO AUTO-TRIGGER: We now wait for user to interact with the modal
@@ -1601,6 +1612,20 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                     </div>
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                                    <button
+                                                        onClick={() => handleBoxTap(category.id, item)}
+                                                        style={{
+                                                            fontSize: 12, fontWeight: 600,
+                                                            color: item.description ? '#22C55E' : '#9CA3AF',
+                                                            background: 'none', border: 'none',
+                                                            cursor: 'pointer', padding: '2px 0',
+                                                            display: 'flex', alignItems: 'center', gap: 4
+                                                        }}
+                                                        title={item.description || 'Agregar descripción'}
+                                                    >
+                                                        <span>✏️</span>
+                                                        {item.description ? 'Editar descripción' : 'Agregar descripción'}
+                                                    </button>
                                                     <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
                                                         Agotado
                                                         <input
@@ -1657,103 +1682,155 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 })}
             </div>
 
-            {/* Edit Modal */}
-            {
-                editingItem && (
-                    <div className="modal-overlay" onClick={() => setEditingItem(null)}>
-                        <div className="modal" onClick={e => e.stopPropagation()}>
-                            <h2 className="modal-title">Editar item</h2>
+            {/* Description Editor Modal */}
+            {editingItem && (
+                <div
+                    className="modal-overlay"
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 9999,
+                        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: 16
+                    }}
+                    onClick={() => setEditingItem(null)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            background: 'white', borderRadius: 16,
+                            width: '100%', maxWidth: 600,
+                            maxHeight: '90vh', overflowY: 'auto',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                            display: 'flex', flexDirection: 'column'
+                        }}
+                    >
+                        {/* Header with thumb */}
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: 16,
+                            padding: '20px 20px 12px', borderBottom: '1px solid #f3f4f6'
+                        }}>
+                            {editForm.image && (
+                                <img
+                                    src={editForm.image}
+                                    alt=""
+                                    style={{
+                                        width: 120, height: 80, borderRadius: 10,
+                                        objectFit: 'cover', flexShrink: 0
+                                    }}
+                                />
+                            )}
+                            <div style={{ minWidth: 0 }}>
+                                <h3 style={{
+                                    margin: 0, fontSize: 20, fontWeight: 700,
+                                    color: '#111827', lineHeight: 1.2,
+                                    wordBreak: 'break-word'
+                                }}>
+                                    {editForm.name}
+                                </h3>
+                                <p style={{
+                                    margin: '4px 0 0', fontSize: 14,
+                                    color: '#6b7280', fontWeight: 500
+                                }}>
+                                    {formatPrice(parseInt(editForm.price) || 0)}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setEditingItem(null)}
+                                style={{
+                                    marginLeft: 'auto', width: 32, height: 32,
+                                    borderRadius: '50%', border: 'none',
+                                    background: '#f3f4f6', color: '#6b7280',
+                                    cursor: 'pointer', display: 'flex',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 18, lineHeight: 1, flexShrink: 0
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Nombre</label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    value={editForm.name}
-                                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        {/* Form */}
+                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                            <div>
+                                <label style={{
+                                    display: 'block', fontSize: 14, fontWeight: 600,
+                                    color: '#374151', marginBottom: 6
+                                }}>
+                                    Descripción
+                                </label>
+                                <textarea
+                                    value={editForm.description || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                                    placeholder="Appetizing description for customers..."
+                                    style={{
+                                        width: '100%', padding: 12, borderRadius: 10,
+                                        border: '1.5px solid #e5e7eb', fontSize: 14,
+                                        lineHeight: 1.5, color: '#111827',
+                                        background: '#fafafa', resize: 'vertical',
+                                        minHeight: 90, fontFamily: 'inherit',
+                                        outline: 'none', boxSizing: 'border-box'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary, #B8956A)'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                                 />
                             </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Precio (ARS)</label>
+                            <div>
+                                <label style={{
+                                    display: 'block', fontSize: 14, fontWeight: 600,
+                                    color: '#374151', marginBottom: 6
+                                }}>
+                                    Calorías
+                                </label>
                                 <input
                                     type="number"
-                                    className="form-input"
-                                    value={editForm.price}
-                                    onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                                    value={editForm.calories || ''}
+                                    onChange={(e) => setEditForm({ ...editForm, calories: e.target.value })}
+                                    placeholder="e.g. 450"
+                                    style={{
+                                        width: '100%', padding: '10px 12px', borderRadius: 10,
+                                        border: '1.5px solid #e5e7eb', fontSize: 14,
+                                        color: '#111827', background: '#fafafa',
+                                        fontFamily: 'inherit', outline: 'none',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary, #B8956A)'}
+                                    onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                                 />
                             </div>
+                        </div>
 
-                            <div className="form-group">
-                                <label className="form-label">Imagen (JPG/PNG)</label>
-                                {editForm.image && (
-                                    <div style={{ marginBottom: 8 }}>
-                                        <img
-                                            src={editForm.image}
-                                            alt="Preview"
-                                            onClick={() => {
-                                                // 🛡️ CLICK-TO-OVERWRITE
-                                                if (editingItem.isFeaturedSlot) {
-                                                    activeFeaturedSlotRef.current = editingItem.index
-                                                } else if (editingItem.categoryId) {
-                                                    activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
-                                                }
-                                                fileInputRef.current?.click()
-                                            }}
-                                            style={{
-                                                width: '100%',
-                                                maxHeight: 120,
-                                                objectFit: 'cover',
-                                                borderRadius: 10,
-                                                cursor: 'pointer' // Hand cursor for interactivity
-                                            }}
-                                            title="Clic para cambiar imagen"
-                                        />
-                                    </div>
-                                )}
-                                {/* File Input moved to root */}
-                                <button
-                                    className="btn btn-secondary btn-block"
-                                    onClick={() => {
-                                        if (editingItem.isFeaturedSlot) {
-                                            activeFeaturedSlotRef.current = editingItem.index
-                                        } else if (editingItem.categoryId) {
-                                            activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
-                                        }
-                                        fileInputRef.current?.click()
-                                    }}
-                                    disabled={isUploading}
-                                >
-                                    {isUploading ? 'Optimizando...' : (editForm.image ? 'Cambiar imagen' : 'Subir imagen')}
-                                </button>
-                                {uploadStatus && (
-                                    <p style={{
-                                        fontSize: 12,
-                                        color: uploadStatus.success ? '#22C55E' : '#EF4444',
-                                        marginTop: 6
-                                    }}>
-                                        {uploadStatus.message}
-                                    </p>
-                                )}
-                            </div>
-
+                        {/* Footer buttons */}
+                        <div style={{
+                            display: 'flex', gap: 12,
+                            padding: '0 20px 20px'
+                        }}>
                             <button
-                                className="btn btn-primary btn-block"
-                                onClick={handleSave}
-                            >
-                                Guardar
-                            </button>
-                            <button
-                                className="btn btn-secondary btn-block"
-                                style={{ marginTop: 8 }}
                                 onClick={() => setEditingItem(null)}
+                                style={{
+                                    flex: 1, padding: '12px 16px', borderRadius: 12,
+                                    border: '1.5px solid #e5e7eb', background: 'white',
+                                    color: '#374151', fontSize: 15, fontWeight: 600,
+                                    cursor: 'pointer', fontFamily: 'inherit'
+                                }}
                             >
                                 Cancelar
                             </button>
+                            <button
+                                onClick={handleSave}
+                                style={{
+                                    flex: 1, padding: '12px 16px', borderRadius: 12,
+                                    border: 'none', background: '#111827',
+                                    color: 'white', fontSize: 15, fontWeight: 700,
+                                    cursor: 'pointer', fontFamily: 'inherit'
+                                }}
+                            >
+                                Guardar
+                            </button>
                         </div>
                     </div>
-                )
-            }
+                </div>
+            )}
                 </div>
 
                 {viewTab === 'inventory' && (

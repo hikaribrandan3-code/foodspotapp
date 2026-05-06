@@ -2,12 +2,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import HeaderClamp from '../../components/HeaderClamp.jsx';
+import BurgerLoader from '../../components/BurgerLoader';
 
 const Info = ({ config }) => {
     const navigate = useNavigate();
     const { tenantSlug } = useParams();
-    const { tenantData } = useTenant();
+    const { tenantData, loading } = useTenant();
     const { t } = useLanguage();
+
+    if (loading) return <BurgerLoader />;
 
     const businessName = tenantData?.venue_name || tenantData?.name || "FOODSPOT";
     const primaryColor = tenantData?.primary_color || '#DB0007';

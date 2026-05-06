@@ -11,6 +11,7 @@ import { CartProvider } from './contexts/CartContext.jsx'
 import { supabase, getBranding, subscribeToOrders, getOrdersByGuestToken, getOrdersByPhone } from './lib/supabaseClient.js'
 import { StrategyDraftProvider } from './contexts/StrategyDraftContext.jsx'
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext.jsx'
+import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { StaffProvider } from './contexts/StaffContext.jsx'
 
@@ -51,13 +52,12 @@ import Rewards from './pages/customer/Rewards.jsx'
 import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
 import Info from './pages/customer/Info.jsx'
-import Promos from './pages/customer/Promos.jsx'
+import EventThemeWrapper from './components/EventThemeWrapper.jsx'
 import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
 
 // Staff Pages
-import StaffLogin from './pages/staff/StaffLogin.jsx'
 import StaffKDS from './pages/staff/StaffKDS.jsx'
 
 // Owner Pages
@@ -78,13 +78,14 @@ import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
+import BurgerLoader from './components/BurgerLoader.jsx'
 
 // Camera Suite
 import Camera from './components/Camera/index.jsx'
 
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
-    const { tenantData, businessId } = useTenant();
+    const { tenantData, businessId, loading: tenantLoading } = useTenant();
     const slug = tenantData?.slug || window.location.pathname.split('/')[1] || '';
     const bid = businessId || localStorage.getItem('fs_business_id') || '';
     window.location.replace(`/staff-ops.html?slug=${slug}&bid=${bid}`);
@@ -94,7 +95,7 @@ function StaffOpsRedirect() {
 function App() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { tenantData, businessId } = useTenant();
+    const { tenantData, businessId, loading: tenantLoading } = useTenant();
     const [authUser, setAuthUser] = useState(null);
 
     // Safe pathname extraction
@@ -487,11 +488,17 @@ function App() {
 
     const routeArea = getRouteArea();
 
+    // 🍔 GLOBAL LOADING: Prevent any page from flashing broken UI while tenant hydrates
+    if (tenantLoading) {
+        return <BurgerLoader />;
+    }
+
     return (
         <AdminIntentProvider>
             <StaffProvider>
                 <LanguageProvider>
-                    <StrategyDraftProvider>
+                    <ThemeProvider>
+                        <StrategyDraftProvider>
                         <CartProvider>
                             <SessionProvider>
                                 <div className="app-container">
@@ -502,7 +509,6 @@ function App() {
                                             <Route path="/start-trial" element={<TrialSignup />} />
                                             <Route path="/login" element={<OwnerLogin />} />
                                             <Route path="/login/owner" element={<OwnerLogin />} />
-                                            <Route path="/login/staff" element={<StaffLogin />} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
@@ -521,12 +527,12 @@ function App() {
                                             <Route path="/:tenantSlug/game" element={<PerfectPour />} />
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/promos" element={<Promos />} />
+                                            <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} />
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
-                                            <Route path="/:tenantSlug/staff" element={<StaffLogin />} />
+                                            <Route path="/:tenantSlug/staff" element={<OwnerLogin />} />
                                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
@@ -550,11 +556,12 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.startsWith('/promos') && <BottomNav config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/promos') && <BottomNav config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>
                     </StrategyDraftProvider>
+                    </ThemeProvider>
                 </LanguageProvider>
             </StaffProvider>
         </AdminIntentProvider>

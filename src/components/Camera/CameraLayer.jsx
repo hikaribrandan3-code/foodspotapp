@@ -11,15 +11,8 @@ import './CameraLayer.css'
 
 const FILTERS = [
     { id: 'original', label: 'Original', color: '#888' },
-    { id: 'warm', label: 'Warm', color: '#e8a87c' },
-    { id: 'cool', label: 'Cool', color: '#7ec8e8' },
-    { id: 'vibrant', label: 'Vibrant', color: '#c77dff' },
-    { id: 'vintage', label: 'Vintage', color: '#d4a574' },
-    { id: 'pastel', label: 'Pastel', color: '#f8c8dc' },
     { id: 'mono', label: 'Mono', color: '#666' },
-    { id: 'soft', label: 'Soft', color: '#d4c8b8' },
-    { id: 'crisp', label: 'Crisp', color: '#94b8d4' },
-    { id: 'fade', label: 'Fade', color: '#a8a0b4' }
+    { id: 'soft', label: 'Soft', color: '#d4c8b8' }
 ]
 
 const FLASH_ICONS = {

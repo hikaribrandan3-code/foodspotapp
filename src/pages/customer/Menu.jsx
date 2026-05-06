@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -8,6 +8,7 @@ import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
 import ItemCard from '../../components/ItemCard'
+import DetailedMenuItemCard from '../../components/DetailedMenuItemCard'
 
 // Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
 function parseHeroUrl(heroUrl) {
@@ -161,9 +162,20 @@ export default function Menu({ config: configProp }) {
     const { t } = useLanguage()
     const { addToCart, removeFromCart, cart, cartTotal } = useCart()
     const navigate = useNavigate()
+    const { tenantSlug } = useParams()
 
     // VISUAL FEEDBACK STATE
     const [addedItem, setAddedItem] = useState(null)
+
+    // MENU DISPLAY MODE TOGGLE
+    const [displayMode, setDisplayMode] = useState(
+        () => localStorage.getItem(`fs_menu_display_mode_${tenantSlug}`) || 'simple'
+    )
+    const handleToggleMode = () => {
+        const newMode = displayMode === 'simple' ? 'detailed' : 'simple'
+        setDisplayMode(newMode)
+        localStorage.setItem(`fs_menu_display_mode_${tenantSlug}`, newMode)
+    }
 
     // =========================================================================
     // 1. DATA STATE (With Seed Fallback)
@@ -775,9 +787,9 @@ export default function Menu({ config: configProp }) {
                     <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none' }}>
                         {enabledCategories.map(cat => (
                             <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
-                                padding: '8px 16px', borderRadius: 20, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
+                                padding: '7px 15px', borderRadius: 18, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
                                 background: activeCategory === cat.id ? '#111827' : 'white', color: activeCategory === cat.id ? 'white' : '#374151',
-                                fontWeight: 600, flexShrink: 0, boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                                fontWeight: 600, fontSize: 14, flexShrink: 0, boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
                             }}>{cat.name}</button>
                         ))}
                     </div>
@@ -788,17 +800,40 @@ export default function Menu({ config: configProp }) {
             <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-                            {/* <span style={{ fontSize: 20, marginRight: 8 }}>{category.icon || '🍽️'}</span> */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
+                            {category === enabledCategories[0] && (
+                                <button
+                                    onClick={handleToggleMode}
+                                    style={{
+                                        fontSize: 11,
+                                        fontWeight: 600,
+                                        padding: '6px 12px',
+                                        border: '1px solid #D1D5DB',
+                                        background: 'white',
+                                        borderRadius: 6,
+                                        cursor: 'pointer',
+                                        color: '#374151',
+                                        textTransform: 'capitalize'
+                                    }}
+                                >
+                                    {displayMode === 'simple' ? 'Simple | Detailed' : 'Detailed | Simple'}
+                                </button>
+                            )}
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                        <div style={{ display: displayMode === 'detailed' ? 'grid' : 'grid', gridTemplateColumns: displayMode === 'detailed' ? 'minmax(280px, 1fr)' : 'repeat(3, 1fr)', gap: displayMode === 'detailed' ? 16 : 12 }}>
                             {category.items.map((item, index) => {
                                 // 🛡️ PHYSICS VISUALS: Green Frame & Ghost Opacity
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
 
-                                return (
+                                return displayMode === 'detailed' ? (
+                                    <DetailedMenuItemCard
+                                        key={item.id}
+                                        item={item}
+                                        onAddToCart={handleTapToAdd}
+                                    />
+                                ) : (
                                     <ItemCard
                                         key={item.id}
                                         item={item}
