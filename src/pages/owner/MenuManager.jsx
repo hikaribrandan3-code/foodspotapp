@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChefHat, Plus, Trash2, Edit, Sun, Moon, Save, ChevronDown } from 'lucide-react'
 import { supabase, updateBranding } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
@@ -12,24 +14,16 @@ import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import PrintMenu from '../../components/PrintMenu.jsx'
+import ItemEditorModal from '../../components/owner/MenuManager/ItemEditorModal.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
 import './MenuStyles.css'
 
 const MenuInventoryView = lazy(() => import('../../components/owner/MenuInventoryView.jsx'))
 
-/**
- * MENU MANAGER
- *
- * ARCHITECTURAL INVARIANT: Config MUST come from props, NOT getConfig().
- * This ensures Single Source of Truth from App.jsx.
- */
-
-// 🛡️ SANITIZER: Purges dead blob URLs that cause WebKit crashes
 const sanitizeMenu = (menuData) => {
     if (!menuData || !menuData.categories) return menuData
     const cleanMenu = JSON.parse(JSON.stringify(menuData))
-
     cleanMenu.categories.forEach(cat => {
         if (cat.items) {
             cat.items.forEach(item => {
@@ -46,44 +40,28 @@ const sanitizeMenu = (menuData) => {
 function MenuManager({ config: configProp, demoMode = false }) {
     const config = configProp || {};
     const navigate = useNavigate()
-    const { tenantSlug } = useParams() // 🏢 Get tenant from URL for logout redirect
+    const { tenantSlug } = useParams()
     const { isSimulated, impersonatingBusinessId } = useAdminIntent()
-
-    // 🛡️ REFACTOR: Use TenantContext as Source of Truth (replaces broken getAuth() from storage)
     const { businessId: tenantBusinessId, tenantData, isLoaded: tenantLoaded, refreshTenantData } = useTenant()
     const { lang, t } = useLanguage()
-    // 🛡️ RESOLVED ID: Handles Simulation + Fallback for Dev
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
-    // 🛡️ STATE LOCK (Anti-Gravity V3.0 - Amnesia Killer)
-    // Menu state is initialized as EMPTY STRUCTURE to prevent null-pointer crashes.
-    // It will be populated by cloud data when tenantData arrives.
     const [menu, setMenu] = useState({ categories: [] })
-    const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
-
-    // 🔒 HYDRATION LOCK: Prevents sync until cloud data is loaded
+    const [localConfig, setLocalConfig] = useState(config)
     const isHydratedRef = useRef(false)
-    // 🛡️ ANTI-BOUNCE: Blocks hydration if we just saved (Replica Lag Guard)
     const ignoreCloudUpdateRef = useRef(false)
 
-    // SYNC: Update menu when tenantData loads from cloud (Gatekeeper Bypass)
     useEffect(() => {
         if (tenantLoaded) {
-            // 🛡️ ANTI-BOUNCE GUARD: If we just saved, TRUST LOCAL STATE
             if (ignoreCloudUpdateRef.current) {
                 console.log('[MenuManager] 🛡️ IGNORING STALE CLOUD DATA (Anti-Bounce Active)')
                 ignoreCloudUpdateRef.current = false
                 return
             }
 
-            // 🛡️ DATA INTEGRITY: Hard-Check for menu_data
             if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
                 console.log('[MenuManager] 🎯 HYDRATING FROM CLOUD:', tenantData.menu_data)
-
-                // 🛡️ SANITIZE FIRST: Remove dead blobs
                 const cleanMenu = sanitizeMenu(tenantData.menu_data)
-
-                // 🛡️ BOUNCER GUARD: Sanitize items to ensure they are arrays
                 const sanitizedCategories = cleanMenu.categories.map(cat => ({
                     ...cat,
                     items: Array.isArray(cat.items) ? cat.items : []
@@ -93,146 +71,39 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 console.log('[MenuManager] 🌱 NO CLOUD DATA: Seeding Default Menu')
                 setMenu({
                     categories: [
-                        // 1. BAKERY (6 Items)
                         {
                             id: 'cat-bakery', name: 'Bakery & Patisserie', icon: '🥐', enabled: true,
                             items: [
                                 { id: 'item-bak-1', name: 'Panes Rústicos', price: 4500, image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&q=80', available: true },
                                 { id: 'item-bak-2', name: 'Croissants', price: 3200, image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&q=80', available: true },
-                                { id: 'item-bak-3', name: 'Masa Madre', price: 5600, image: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=500&q=80', available: true },
-                                { id: 'item-bak-4', name: 'Pastelería Fina', price: 7800, image: 'https://images.unsplash.com/photo-1579306194872-64d3b7bac4c2?w=500&q=80', available: true },
-                                { id: 'item-bak-5', name: 'Sourdough Loaf', price: 4200, image: 'https://images.unsplash.com/photo-1585478402481-4552700bc50e?w=500&q=80', available: true },
-                                { id: 'item-bak-6', name: 'Almond Croissant', price: 3800, image: 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?w=500&q=80', available: true }
                             ]
                         },
-                        // 2. CAFE (6 Items)
-                        {
-                            id: 'cat-cafe', name: 'Specialty Coffee', icon: '☕', enabled: true,
-                            items: [
-                                { id: 'item-cafe-1', name: 'Granos Tostados', price: 12000, image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=500&q=80', available: true },
-                                { id: 'item-cafe-2', name: 'Latte Art', price: 4200, image: 'https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&q=80', available: true },
-                                { id: 'item-cafe-3', name: 'Espresso Bar', price: 2800, image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&q=80', available: true },
-                                { id: 'item-cafe-4', name: 'Pour Over', price: 3500, image: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=500&q=80', available: true },
-                                { id: 'item-cafe-5', name: 'Flat White', price: 3900, image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=500&q=80', available: true },
-                                { id: 'item-cafe-6', name: 'Caramel Macchiato', price: 4500, image: 'https://images.unsplash.com/photo-1485808191679-5f8c7c860695?w=500&q=80', available: true }
-                            ]
-                        },
-                        // 3. CANDY (6 Items)
-                        {
-                            id: 'cat-candy', name: 'Candy & Sweets', icon: '🍬', enabled: true,
-                            items: [
-                                { id: 'item-candy-1', name: 'Golosinas Coloridas', price: 1500, image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=500&q=80', available: true },
-                                { id: 'item-candy-2', name: 'Chocolates Finos', price: 6500, image: 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=500&q=80', available: true },
-                                { id: 'item-candy-3', name: 'Macarons Box', price: 8200, image: 'https://images.unsplash.com/photo-1569864358642-9d1684040f43?w=500&q=80', available: true },
-                                { id: 'item-candy-4', name: 'Donuts Glaseadas', price: 2100, image: 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500&q=80', available: true },
-                                { id: 'item-candy-5', name: 'Artisanal Truffles', price: 5400, image: 'https://images.unsplash.com/photo-1621939514649-28b12e81658b?w=500&q=80', available: true },
-                                { id: 'item-candy-6', name: 'Sea Salt Caramels', price: 4200, image: 'https://images.unsplash.com/photo-1533221946892-5ebcdfd0495f?w=500&q=80', available: true }
-                            ]
-                        },
-                        // 4. BUILDING (6 Items)
-                        {
-                            id: 'cat-building', name: 'Architecture & Spaces', icon: '🏛️', enabled: true,
-                            items: [
-                                { id: 'item-bldg-1', name: 'Fachada Clásica', price: 0, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80', available: true },
-                                { id: 'item-bldg-2', name: 'Moderno Iluminado', price: 0, image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=500&q=80', available: true },
-                                { id: 'item-bldg-3', name: 'Interior Acogedor', price: 0, image: 'https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=500&q=80', available: true },
-                                { id: 'item-bldg-4', name: 'Patio Urbano', price: 0, image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500&q=80', available: true },
-                                { id: 'item-bldg-5', name: 'Industrial Vibes', price: 0, image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&q=80', available: true },
-                                { id: 'item-bldg-6', name: 'Modern Pavilion', price: 0, image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&q=80', available: true },
-                            ]
-                        },
-                        // 5. NIGHTLIFE (6 Items)
-                        {
-                            id: 'cat-nightlife', name: 'The Vault (Nightlife)', icon: '🍾', enabled: true,
-                            items: [
-                                { id: 'item-night-1', name: 'Dom Pérignon Luminous', price: 350000, image: 'https://images.unsplash.com/photo-1598155523122-38423bb4d6c1?w=500&q=80', available: true },
-                                { id: 'item-night-2', name: 'Grey Goose Magnum', price: 180000, image: 'https://images.unsplash.com/photo-1606836521683-16781be599ab?w=500&q=80', available: true },
-                                { id: 'item-night-3', name: 'Macallan 18 Years', price: 420000, image: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=500&q=80', available: true },
-                                { id: 'item-night-4', name: 'Signature Cocktail', price: 12000, image: 'https://images.unsplash.com/photo-1514362545857-3bc16549766b?w=500&q=80', available: true },
-                                { id: 'item-night-5', name: 'VIP Table Service', price: 500000, image: 'https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=500&q=80', available: true },
-                                { id: 'item-night-6', name: 'Champagne Parade', price: 850000, image: 'https://images.unsplash.com/photo-1594968155453-cae85b9b4781?w=500&q=80', available: true }
-                            ]
-                        },
-                        // 6. EVENT PLANNING (6 Items)
-                        {
-                            id: 'cat-events', name: 'Catering & Packs', icon: '🎉', enabled: true,
-                            items: [
-                                { id: 'item-evt-1', name: 'Party Slider Box (24)', price: 45000, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80', available: true },
-                                { id: 'item-evt-2', name: '50-Wing Platter', price: 38000, image: 'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=500&q=80', available: true },
-                                { id: 'item-evt-3', name: 'Office Lunch Bundle', price: 58000, image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=500&q=80', available: true },
-                                { id: 'item-evt-4', name: 'Wedding Station', price: 150000, image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500&q=80', available: true },
-                                { id: 'item-evt-5', name: 'Continental Breakfast', price: 42000, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', available: true },
-                                { id: 'item-evt-6', name: 'Birthday Cake XL', price: 32000, image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80', available: true }
-                            ]
-                        },
-                        // 7. STREET FOOD (6 Items)
-                        {
-                            id: 'cat-street', name: 'Truck Exclusives', icon: '🚚', enabled: true,
-                            items: [
-                                { id: 'item-str-1', name: 'Choripán Premium', price: 6500, image: 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=500&q=80', available: true },
-                                { id: 'item-str-2', name: 'Loaded Kimchi Fries', price: 8200, image: 'https://images.unsplash.com/photo-1573080496982-b73a83e91b9f?w=500&q=80', available: true },
-                                { id: 'item-str-3', name: 'Birria Tacos (3)', price: 9500, image: 'https://images.unsplash.com/photo-1599321492590-9eb157c83f2e?w=500&q=80', available: true },
-                                { id: 'item-str-4', name: 'Gourmet Hot Dog', price: 7200, image: 'https://images.unsplash.com/photo-1627042633145-d766d08912e7?w=500&q=80', available: true },
-                                { id: 'item-str-5', name: 'Arepas Rellenas', price: 6800, image: 'https://images.unsplash.com/photo-1565060169194-192770280b0f?w=500&q=80', available: true },
-                                { id: 'item-str-6', name: 'Mexican Elote', price: 3500, image: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=500&q=80', available: true }
-                            ]
-                        },
-                        // 8. FINE DINING (6 Items)
-                        {
-                            id: 'cat-finedining', name: 'The Fancy Touch', icon: '🍽️', enabled: true,
-                            items: [
-                                { id: 'item-fine-1', name: 'Chef\'s 7-Course', price: 95000, image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=500&q=80', available: true },
-                                { id: 'item-fine-2', name: 'Wine Pairing Flight', price: 42000, image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&q=80', available: true },
-                                { id: 'item-fine-3', name: 'Truffle Exploration', price: 78000, image: 'https://images.unsplash.com/photo-1481931098730-318b6f776db0?w=500&q=80', available: true },
-                                { id: 'item-fine-4', name: 'Wagyu A5 Steak', price: 120000, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', available: true },
-                                { id: 'item-fine-5', name: 'Lobster Thermidor', price: 88000, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', available: true },
-                                { id: 'item-fine-6', name: 'Royal Caviar', price: 150000, image: 'https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=500&q=80', available: true }
-                            ]
-                        }
                     ]
                 })
             }
-
-            // 🔓 UNLOCK: Cloud data received, syncing is now safe
             isHydratedRef.current = true
             console.log('[MenuManager] 🔓 HYDRATION COMPLETE: Sync now allowed')
         }
     }, [tenantLoaded, tenantData])
 
-    // 🛡️ THE AMNESIA KILLER: Only hydrate local state if Cloud data is richer than local state
     useEffect(() => {
         if (tenantLoaded && tenantData?.app_config) {
             setLocalConfig(prev => {
                 const cloudPhotos = tenantData.app_config.featuredPhotos || []
-                // Preserve local if cloud is empty but we have data locally
                 if (cloudPhotos.length === 0 && prev.featuredPhotos?.length > 0) return prev
-
-                return {
-                    ...prev,
-                    ...tenantData.app_config
-                }
+                return { ...prev, ...tenantData.app_config }
             })
         }
     }, [tenantLoaded, tenantData?.app_config])
 
-    // 🛡️ ANTI-RECURSION GUARD: Only sync prop to state on actual identity change
-    // Prevents "Hurricane" re-renders caused by object reference changes
     useEffect(() => {
-        // 🛡️ STRICT PRIMITIVE COMPARISON: Only reset if the ID string actually changes
         const incomingId = config?.businessId || tenantBusinessId
         const localId = localConfig?.businessId
-
         if (incomingId && localId && String(incomingId) !== String(localId)) {
             console.log('[MenuManager] 🛡️ Cross-Tenant Move: Re-hydrating')
             setLocalConfig(config)
         }
     }, [config?.businessId])
-
-    // =========================================================
-    // 🚫 AUTO-MIGRATION REMOVED (Anti-Gravity V3.0)
-    // The "Bridge" was causing empty localStorage to overwrite Cloud Vault.
-    // All persistence now goes through syncMenuToCloud() only.
-    // =========================================================
 
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({ name: '', price: '', image: null, description: '', calories: '' })
@@ -241,19 +112,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const activeFeaturedSlotRef = useRef(null)
     const activeCategoryItemRef = useRef(null)
     const [saveStatus, setSaveStatus] = useState(null)
-    // 🛡️ SESSION-PERSISTENT DIRTY STATE: Survives tab switches
-    const [hasChanges, setHasChanges] = useState(
-        () => sessionStorage.getItem(`dirty_${targetBusinessId}`) === 'true'
-    )
+    const [hasChanges, setHasChanges] = useState(() => sessionStorage.getItem(`dirty_${targetBusinessId}`) === 'true')
     const [isSaving, setIsSaving] = useState(false)
-    // 📦 PENDING FILE BUFFER: Holds raw File objects until save
     const [pendingFiles, setPendingFiles] = useState({})
-    // Top-level tab: menu | inventory
     const [viewTab, setViewTab] = useState('menu')
+    const [activeCategory, setActiveCategory] = useState(null)
+    const [darkMode, setDarkMode] = useState(false)
 
-    // --- FEATURED ITEMS LOGIC (MOVED HERE TO FIX TDZ) ---
-    // 🛡️ DEFAULT TO 4 SLOTS: Ensure UI is always clickable even if cloud array is empty/null
-    // MEMOIZED: Prevent heavy array ops on every render
     const activeFeaturedItems = React.useMemo(() => {
         const photos = localConfig?.featuredPhotos || []
         const slots = [...photos]
@@ -261,10 +126,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
         return slots.slice(0, 4)
     }, [localConfig?.featuredPhotos])
 
-    // 🛡️ VAULT-SEAL: Blob URL tracker for memory management
     const { createBlobUrl, revokeBlobUrl, revokeAllBlobUrls } = useBlobUrlTracker()
 
-    // 🚀 VAULT-SEAL: Thumbnail URL optimizer for backend menu manager
     const getThumbUrl = (url, size = 80) => {
         if (!url || url.startsWith('blob:')) return url
         if (url.includes('unsplash.com')) {
@@ -274,61 +137,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
         return `${url}${sep}width=${size}&quality=60&format=webp`
     }
 
-    // 🚀 Preload featured item thumbnails (priority)
-    useEffect(() => {
-        if (!activeFeaturedItems?.length) return
-
-        const preloadUrls = activeFeaturedItems
-            .filter(slot => slot?.image && !slot.image.startsWith('blob:'))
-            .map(slot => getThumbUrl(slot.image, 200))
-
-        if (preloadUrls.length === 0) return
-
-        // Low priority preload
-        const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1))
-        schedulePrefetch(() => {
-            preloadUrls.forEach(url => {
-                const img = new Image()
-                img.fetchPriority = 'low'
-                img.src = url
-            })
-        }, { timeout: 2000 })
-    }, [activeFeaturedItems])
-
-    // 🛡️ Cleanup blob URLs on unmount
-    useEffect(() => {
-        return () => {
-            revokeAllBlobUrls()
-        }
-    }, [])
-
-    // 💾 Persist dirty state to sessionStorage
-    useEffect(() => {
-        sessionStorage.setItem(`dirty_${targetBusinessId}`, hasChanges)
-    }, [hasChanges, targetBusinessId])
-    const fileInputRef = useRef(null)
-
-    const [inputKey, setInputKey] = useState(0)
-
-    // Category creation/editing
-    const [showAddCategory, setShowAddCategory] = useState(false)
-    const [newCategoryName, setNewCategoryName] = useState('')
-    const [newCategoryIcon, setNewCategoryIcon] = useState('📦')
-    const [editingCategory, setEditingCategory] = useState(null)
-
-    // Operational controls
-    const [pauseMessage, setPauseMessage] = useState(config?.pauseOrdersMessage || '')
-
-    // 🚀 SILO-AWARE LOGOUT
     const handleLogout = async () => {
         await supabase.auth.signOut()
         clearAuth()
         window.location.href = demoMode ? '/' : `/${tenantSlug}`
     }
 
-    // --- 🛡️ SAFE-SYNC: Sync Logic (Final Boss Fix) ---
-
-    // 🔴 BLOB GUARD: Reject save if any blob URLs detected
     const hasBlobUrls = (menuData) => {
         if (!menuData?.categories) return false
         for (const cat of menuData.categories) {
@@ -343,7 +157,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
         return false
     }
 
-    // 🔴 PENDING UPLOAD GUARD: Check if images still uploading
     const hasPendingUploads = () => {
         const pendingCount = Object.keys(pendingFiles).length
         if (pendingCount > 0) {
@@ -354,48 +167,38 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     const syncMenuToCloud = async (updatedMenu) => {
-        // 🔒 HYDRATION GUARD: Block sync until cloud data is loaded
         if (!isHydratedRef.current) {
-            console.warn('⚠️ SYNC BLOCKED: Hydration not complete. Waiting for cloud data before allowing writes.')
+            console.warn('⚠️ SYNC BLOCKED: Hydration not complete.')
             return
         }
 
-        // 🛡️ AMNESIA GUARD: NEVER sync null or empty data
         if (!updatedMenu || !Array.isArray(updatedMenu.categories)) {
-            console.warn('⚠️ SYNC BLOCKED: Attempted to sync null/invalid menu. Aborting to protect Cloud Vault.')
+            console.warn('⚠️ SYNC BLOCKED: Attempted to sync null/invalid menu.')
             return
         }
 
-        // 🔴 BLOB GUARD: Hard block on blob URLs
         if (hasBlobUrls(updatedMenu)) {
-            window.alert('⏳ Imágenes aún cargando...\n\nEspera a que las fotos terminen de subir antes de guardar.\n\n(Error: BLOB_URL_BLOCKED)')
-            setSaveStatus({ message: '⏳ Esperando imágenes...', error: true })
+            window.alert('⏳ Images still loading...')
+            setSaveStatus({ message: '⏳ Waiting for images...', error: true })
             setTimeout(() => setSaveStatus(null), 3000)
             return
         }
 
-        // 🔴 PENDING UPLOAD GUARD: Block if files still uploading
         if (hasPendingUploads()) {
-            window.alert('⏳ Subida en progreso...\n\nHay fotos que aún se están subiendo. Espera unos segundos e intenta de nuevo.')
-            setSaveStatus({ message: '⏳ Subiendo imágenes...', error: true })
+            window.alert('⏳ Upload in progress...')
+            setSaveStatus({ message: '⏳ Uploading images...', error: true })
             setTimeout(() => setSaveStatus(null), 3000)
             return
         }
 
-        // 🛡️ CATEGORY VALIDATION: Ensure all items have valid category references
         const validCategories = updatedMenu.categories.filter(cat =>
             cat && cat.id && typeof cat.id === 'string' && Array.isArray(cat.items)
         )
-
-        if (validCategories.length !== updatedMenu.categories.length) {
-            console.warn('⚠️ SYNC BLOCKED: Invalid categories detected. Filtering...')
-        }
 
         const sanitizedMenu = {
             ...updatedMenu,
             categories: validCategories.map(cat => ({
                 ...cat,
-                // Ensure each item has required fields
                 items: (cat.items || []).filter(item => item && item.id).map(item => ({
                     id: item.id,
                     name: item.name || 'Sin nombre',
@@ -408,34 +211,30 @@ function MenuManager({ config: configProp, demoMode = false }) {
             }))
         }
 
-        console.log('☁️ Syncing Menu to Supabase (JSONB Strict)... Target:', targetBusinessId)
+        console.log('☁️ Syncing Menu to Supabase...', targetBusinessId)
 
-        // ⚡ STRICT UPDATE: Partial update to avoid wiping other fields
         const { error } = await supabase
             .from('branding')
             .update({
                 menu_data: sanitizedMenu,
                 updated_at: new Date()
             })
-            .eq('business_id', targetBusinessId) // 🛡️ GLOBAL PLATFORM STANDARD
+            .eq('business_id', targetBusinessId)
 
         if (error) {
             console.error('❌ Cloud Sync Failed:', error)
-            window.alert(`❌ ERROR DE SINCRONIZACIÓN:\n\n${error.message}\n\nCódigo: ${error.code || 'N/A'}\n\nDetalles: ${error.details || 'Contacta soporte si persiste.'}`)
-            setSaveStatus({ message: '❌ Error al guardar', error: true })
+            window.alert(`❌ Sync Error: ${error.message}`)
+            setSaveStatus({ message: '❌ Error saving', error: true })
             setTimeout(() => setSaveStatus(null), 5000)
         } else {
             console.log('✅ Cloud Sync Validated')
-            // 💧 FORCE STATE HYDRATION: Immediately update local state to match saved data
             setMenu(sanitizedMenu)
-            setSaveStatus({ message: '✅ Guardado en nube' })
+            setSaveStatus({ message: '✅ Saved to cloud' })
             setTimeout(() => setSaveStatus(null), 2000)
         }
     }
-    // --------------------------------
 
     const syncConfigToCloud = async (updatedConfig) => {
-        // 🛡️ NO BANDAIDS: Dynamic ID mapping
         const { error } = await supabase
             .from('branding')
             .update({
@@ -449,11 +248,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
         else console.log('✅ Platform Sync Success')
     }
 
-    // ⚡ THE IMAGE PROCESSOR: Upload from Pending Buffer (Raw File)
     const processMenuImages = async (currentMenu, fileBuffer) => {
         const updatedMenu = JSON.parse(JSON.stringify(currentMenu))
 
-        // 🛡️ REFACTOR: Use explicit indexing to guarantee mutation
         if (updatedMenu.categories) {
             for (let c = 0; c < updatedMenu.categories.length; c++) {
                 const cat = updatedMenu.categories[c]
@@ -461,11 +258,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     for (let i = 0; i < cat.items.length; i++) {
                         const item = cat.items[i]
                         const fileToUpload = fileBuffer[item.id]
-
-                        // 🔍 DEBUG: Check if we have a file for this item
-                        if (fileBuffer[item.id]) {
-                            console.log(`[ImageProcessor] 📸 Found pending file for: ${item.name} (${item.id})`)
-                        }
 
                         if (fileToUpload) {
                             try {
@@ -480,7 +272,6 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                     .from('menu-images')
                                     .getPublicUrl(filePath)
 
-                                // ⚡ MUTATION: Explicitly update the object in the array
                                 cat.items[i].image = data.publicUrl
                                 console.log(`[ImageProcessor] ✅ REPLACED BLOB for ${item.name}: ${data.publicUrl}`)
                             } catch (err) {
@@ -494,11 +285,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
         return updatedMenu
     }
 
-    // 🛡️ THE ADDER (Category): Instant-add with unique ID
     const addCategory = () => {
         const newCat = {
             id: `cat-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-            name: 'Nueva Categoría',
+            name: 'New Category',
             items: [],
             icon: '🍽️',
             enabled: true
@@ -507,86 +297,69 @@ function MenuManager({ config: configProp, demoMode = false }) {
         setHasChanges(true)
     }
 
-    // 🗑️ THE DELETER (Category Purge): Removes category from local state
-    // 🛡️ FK GUARD: Blocks deletion if category contains items
     const handleDeleteCategory = (catId) => {
         const category = menu.categories.find(c => c.id === catId)
         if (!category) return
-
-        if (!confirm('¿Eliminar categoría?')) return
+        if (!confirm(`Delete "${category.name}"?`)) return
         setMenu(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== catId) }))
         setHasChanges(true)
     }
 
-    // 💾 THE ATOMIC SAVE ("Microsoft Word" Button) - Storage-First Edition
     const handlePlatformSave = async () => {
         setIsSaving(true)
         console.log('💾 SAVING VAULT:', targetBusinessId)
 
-        // 🔴 PENDING UPLOAD GUARD: Block if files still uploading
         if (hasPendingUploads()) {
-            window.alert('⏳ Subida en progreso...\n\nHay fotos que aún se están subiendo. Espera unos segundos e intenta de nuevo.')
-            setSaveStatus({ message: '⏳ Subiendo imágenes...', error: true })
+            window.alert('⏳ Upload in progress...')
+            setSaveStatus({ message: '⏳ Uploading images...', error: true })
             setIsSaving(false)
             setTimeout(() => setSaveStatus(null), 3000)
             return
         }
 
-        // 0. 🖼️ STORAGE-FIRST: Process all pending files before DB write
         const processedMenu = await processMenuImages(menu, pendingFiles)
 
-        // 🔴 BLOB GUARD: Hard block on blob URLs after processing
         if (hasBlobUrls(processedMenu)) {
-            window.alert('⏳ Imágenes aún cargando...\n\nAlgunas fotos no terminaron de subir. Revisa que todas las imágenes se vean correctamente antes de guardar.')
-            setSaveStatus({ message: '⏳ Esperando imágenes...', error: true })
+            window.alert('⏳ Some images still uploading...')
+            setSaveStatus({ message: '⏳ Waiting for images...', error: true })
             setIsSaving(false)
             setTimeout(() => setSaveStatus(null), 3000)
             return
         }
 
-        // 0.5. 🛡️ BOUNCER GUARD: Filter invalid categories
         const validCategories = processedMenu.categories.filter(cat =>
             cat && cat.id && Array.isArray(cat.items)
         )
         const menuToSave = { ...processedMenu, categories: validCategories }
 
-        // 1. SYNC BRANDING (Including Processed Menu)
         const { error: brandingError } = await supabase
             .from('branding')
             .update({
-                is_paused: localConfig.pauseOrders,
-                delivery_radius: localConfig.delivery?.radiusKm,
-                delivery_fee: localConfig.delivery?.flatFee,
-                free_delivery_threshold: localConfig.delivery?.freeDeliveryThreshold,
                 app_config: localConfig,
-                menu_data: menuToSave,         // 🛡️ LOCKS FOOD with processed images
+                menu_data: menuToSave,
                 updated_at: new Date()
             })
             .eq('business_id', targetBusinessId)
 
         if (brandingError) {
             console.error('❌ Branding Sync Error:', brandingError)
-            window.alert(`❌ ERROR AL GUARDAR:\n\n${brandingError.message}\n\nCódigo: ${brandingError.code || 'N/A'}`)
+            window.alert(`❌ Error: ${brandingError.message}`)
             setIsSaving(false)
             return
         }
 
-        // 2. FINALIZE (menu_data JSONB in branding is source of truth)
-        setMenu(menuToSave) // Update local state with processed URLs
-        setPendingFiles({}) // 🗑️ CLEANUP: Clear the file buffer
+        setMenu(menuToSave)
+        setPendingFiles({})
         setHasChanges(false)
         sessionStorage.removeItem(`dirty_${targetBusinessId}`)
-        setSaveStatus({ message: '✓ Sistema Sincronizado' })
+        setSaveStatus({ message: '✓ Synced' })
         setTimeout(() => setSaveStatus(null), 3000)
 
-        // 🔄 GLOBAL REFRESH
-        ignoreCloudUpdateRef.current = true // 🛡️ ACTIVATE ANTI-BOUNCE
+        ignoreCloudUpdateRef.current = true
         await refreshTenantData()
-
         setIsSaving(false)
     }
 
-    // --- 🛠️ PURE STATE HELPER: Generate IDs ---
     const generateId = (prefix) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
     const handleEdit = (categoryId, item) => {
@@ -621,21 +394,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
         const targetSlot = activeFeaturedSlotRef.current
         const targetItem = activeCategoryItemRef.current
 
-        // Optimistic UI
         if (targetSlot !== null) {
             setLocalConfig(prev => {
                 const newFeatured = [...(prev.featuredPhotos || [])]
                 while (newFeatured.length <= targetSlot) newFeatured.push(null)
                 newFeatured[targetSlot] = {
-                    ...(newFeatured[targetSlot] || { name: 'Cargando...', price: 0 }),
+                    ...(newFeatured[targetSlot] || { name: 'Featured', price: 0 }),
                     image: previewUrl
                 }
                 return { ...prev, featuredPhotos: newFeatured }
             })
-            // 🛡️ FIX: Sync Modal with Optimistic Image
             setEditForm(prev => ({ ...prev, image: previewUrl }))
         } else if (targetItem) {
-            // 📦 BUFFER: Store raw file for later upload
             setPendingFiles(prev => ({ ...prev, [targetItem.itemId]: file }))
             setMenu(prevMenu => {
                 const newMenu = { ...prevMenu }
@@ -658,7 +428,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 setLocalConfig(prevConfig => {
                     const currentFeatured = [...(prevConfig.featuredPhotos || [])]
                     currentFeatured[targetSlot] = {
-                        ...(currentFeatured[targetSlot] || { name: 'Destacado', price: 0 }), // Preserve edit
+                        ...(currentFeatured[targetSlot] || { name: 'Featured', price: 0 }),
                         image: result.publicUrl
                     }
                     const newConfig = { ...prevConfig, featuredPhotos: currentFeatured }
@@ -667,9 +437,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     setHasChanges(true)
                     return newConfig
                 })
-                // 🛡️ FIX: Sync Modal with Final URL
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Guardado' })
+                setUploadStatus({ success: true, message: '✔ Saved' })
             } else if (targetItem) {
                 const finalMenu = await new Promise(resolve => {
                     setMenu(prevMenu => {
@@ -681,25 +450,19 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         return newMenu
                     })
                 })
-                // 🛡️ CLOUD-ONLY: saveMenu removed (Anti-Gravity V3.0)
                 setHasChanges(true)
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Guardado' })
+                setUploadStatus({ success: true, message: '✔ Saved' })
             } else {
                 setEditForm(prev => ({ ...prev, image: result.publicUrl }))
-                setUploadStatus({ success: true, message: '✔ Listo' })
+                setUploadStatus({ success: true, message: '✔ Ready' })
             }
-
         } catch (error) {
             console.error('Upload failed:', error)
-            setUploadStatus({ success: false, message: 'Error de subida' })
-            // Revert omitted for brevity, user wants aggressive sync
+            setUploadStatus({ success: false, message: 'Upload error' })
         } finally {
             setIsUploading(false)
-            setInputKey(prev => prev + 1)
-            // 🛡️ Revoke the blob URL after upload completes (replaced with public URL)
             revokeBlobUrl(previewUrl)
-            // 🛡️ REMOVE FROM PENDING: Clear this file from upload buffer
             if (targetItem?.itemId) {
                 setPendingFiles(prev => {
                     const newPending = { ...prev }
@@ -715,13 +478,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const handleSave = () => {
         if (!editingItem) return
 
-        // PATH A: FEATURED SLOT EDIT (Top 4)
         if (editingItem.isFeaturedSlot) {
             const newFeatured = [...(localConfig.featuredPhotos || [])]
             while (newFeatured.length <= editingItem.index) newFeatured.push(null)
 
             newFeatured[editingItem.index] = {
-                name: editForm.name || 'Destacado',
+                name: editForm.name || 'Featured',
                 price: parseInt(editForm.price) || 0,
                 image: editForm.image
             }
@@ -733,13 +495,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
             setHasChanges(true)
 
             setEditingItem(null)
-            setSaveStatus({ message: 'Destacado actualizado' })
+            setSaveStatus({ message: 'Featured updated' })
             setTimeout(() => setSaveStatus(null), 2000)
             setUploadStatus(null)
             return
         }
 
-        // PATH B: REGULAR MENU ITEM — description + calories focused save
         const updatedMenu = { ...menu }
         const category = updatedMenu.categories.find(c => c.id === editingItem.categoryId)
         if (category) {
@@ -747,15 +508,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (item) {
                 item.name = editForm.name
                 item.price = parseInt(editForm.price) || item.price
-                if (editForm.image) {
-                    item.image = editForm.image
-                }
+                if (editForm.image) item.image = editForm.image
                 item.description = editForm.description || ''
                 item.calories = editForm.calories ? parseInt(editForm.calories) : undefined
                 setMenu(updatedMenu)
-                setSaveStatus({ message: 'Guardado' })
+                setSaveStatus({ message: 'Saved' })
                 setTimeout(() => setSaveStatus(null), 1500)
-                // ☁️ Auto-sync to cloud on description save
                 syncMenuToCloud(updatedMenu)
             }
         }
@@ -770,53 +528,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
             const item = category.items.find(i => i.id === itemId)
             if (item) {
                 item.available = !item.available
-                // 🛡️ CLOUD-ONLY: saveMenu removed
                 setMenu(updatedMenu)
                 setHasChanges(true)
             }
         }
     }
 
-    const handleSetFeatured = (categoryId, itemId) => {
-        const updatedMenu = { ...menu }
-        // Reset all featured
-        updatedMenu.categories.forEach(cat => {
-            cat.items.forEach(i => i.featured = false)
-        })
-        // Set new featured
-        const category = updatedMenu.categories.find(c => c.id === categoryId)
-        if (category) {
-            const item = category.items.find(i => i.id === itemId)
-            if (item) item.featured = true
-        }
-        setMenu(updatedMenu)
-        setHasChanges(true)
-    }
-
-    const handleToggleCategory = (categoryId) => {
-        const updatedMenu = { ...menu }
-        const category = updatedMenu.categories.find(c => c.id === categoryId)
-        if (category) {
-            category.enabled = category.enabled === undefined ? true : !category.enabled
-            setMenu(updatedMenu)
-            setHasChanges(true)
-        }
-    }
-
-    const handleRenameCategory = (categoryId) => {
-        if (editingCategory && editingCategory.name.trim()) {
-            const updatedMenu = { ...menu }
-            const category = updatedMenu.categories.find(c => c.id === categoryId)
-            if (category) {
-                category.name = editingCategory.name.trim()
-                setMenu(updatedMenu)
-                setHasChanges(true)
-            }
-        }
-        setEditingCategory(null)
-    }
-
-    // --- DIRECT PRICE EDIT ---
     const handlePriceUpdate = (categoryId, itemId, newPrice) => {
         const price = parseInt(newPrice)
         if (isNaN(price)) return
@@ -828,15 +545,13 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (item) {
                 item.price = price
                 setMenu(updatedMenu)
-                // 🛡️ CLOUD-ONLY: saveMenu removed
                 setHasChanges(true)
-                setSaveStatus({ message: 'Precio actualizado' })
+                setSaveStatus({ message: 'Price updated' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
     }
 
-    // --- DIRECT NAME EDIT (The Unlock) ---
     const handleNameUpdate = (categoryId, itemId, newName) => {
         if (!newName.trim()) return
 
@@ -847,16 +562,15 @@ function MenuManager({ config: configProp, demoMode = false }) {
             if (item) {
                 item.name = newName
                 setMenu(updatedMenu)
-                // 🛡️ CLOUD-ONLY: saveMenu removed
                 setHasChanges(true)
-                setSaveStatus({ message: 'Nombre actualizado' })
+                setSaveStatus({ message: 'Name updated' })
                 setTimeout(() => setSaveStatus(null), 2000)
             }
         }
     }
 
     const handleRemoveItem = (categoryId, item) => {
-        if (confirm(`¿Eliminar ítem "${item.name}"?`)) {
+        if (confirm(`Delete "${item.name}"?`)) {
             const updatedMenu = { ...menu }
             const category = updatedMenu.categories.find(c => c.id === categoryId)
             if (category) {
@@ -873,7 +587,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
         if (category) {
             const newItem = {
                 id: generateId('item'),
-                name: 'Nuevo ítem',
+                name: 'New item',
                 price: 0,
                 available: true,
                 featured: false,
@@ -885,75 +599,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
         }
     }
 
-    // --- FEATURED ITEMS FUNCTIONS ---
-    const isFeatured = (item) => activeFeaturedItems.some(f => f && f.name === item.name)
+    const fileInputRef = useRef(null)
+    const [inputKey, setInputKey] = useState(0)
 
-    const handleToggleFeatured = (item) => {
-        const currentFeatured = [...activeFeaturedItems]
-        const idx = currentFeatured.findIndex(f => f && f.name === item.name)
-
-        if (idx !== -1) {
-            currentFeatured.splice(idx, 1)
-        } else {
-            if (currentFeatured.length < 4) {
-                currentFeatured.push({
-                    name: item.name,
-                    price: item.price,
-                    image: item.image
-                })
-            } else {
-                alert('Máximo 4 destacados. Elimina uno para agregar otro.')
-                return
-            }
-        }
-
-        const newConfig = { ...localConfig, featuredPhotos: currentFeatured }
-        updateConfig(newConfig)
-        setLocalConfig(newConfig)
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-        setHasChanges(true)
-    }
-
-    // --- DIRECT INLINE FEATURED UPDATE ---
-    const handleFeaturedUpdate = (index, field, value) => {
-        const newFeatured = [...(localConfig.featuredPhotos || [])]
-        // Ensure array is padded if we are editing a slot that doesn't exist yet in the config
-        while (newFeatured.length <= index) newFeatured.push(null)
-
-        newFeatured[index] = {
-            ...(newFeatured[index] || { name: 'Destacado', price: 0, image: null }),
-            [field]: value
-        }
-
-        const newConfig = { ...localConfig, featuredPhotos: newFeatured }
-        // ⚡ INSTANT UPDATE
-        updateConfig(newConfig)
-        setLocalConfig(newConfig)
-        window.dispatchEvent(new CustomEvent('frontendSync'))
-        setHasChanges(true)
-    }
-
-    // --- DIRECT FEATURED UPLOAD LOGIC ---
-    const handleFeaturedTap = (index) => {
-        const slot = activeFeaturedItems[index] || { name: '', price: 0, image: null }
-        console.log('🎯 EXPLICIT TRIGGER: Opening Highlight Slot', index)
-
-        // 1. Open the Modal first
-        setEditingItem({ isFeaturedSlot: true, index })
-        setEditForm({
-            name: slot.name || 'Destacado',
-            price: slot.price ? slot.price.toString() : '', // 🛡️ NO STICKY ZERO
-            image: slot.image || null,
-            description: '',
-            calories: ''
-        })
-
-        // 2. 🛡️ NO AUTO-TRIGGER: We now wait for user to interact with the modal
-        // The "Subir Imagen" button in the modal will handle the file picker routing.
-    }
-
-    // 🚧 THE GATEKEEPER (Bypass Mode): Only block if tenant context is NOT loaded.
-    // If loaded but empty, LET US IN to add initial data.
     if (!tenantLoaded) {
         return (
             <div style={{
@@ -966,21 +614,24 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 gap: 12
             }}>
                 <div style={{ fontSize: 32 }}>☁️</div>
-                <div style={{ color: '#64748B', fontWeight: 500 }}>Sincronizando con la Nube...</div>
+                <div style={{ color: '#64748B', fontWeight: 500 }}>Syncing with cloud...</div>
             </div>
         )
     }
 
+    const firstCategory = activeCategory || menu.categories[0]?.id
+    const currentCategoryItems = menu.categories.find(c => c.id === firstCategory)?.items || []
+
     return (
-        <div className="backend-surface" style={{ minHeight: '100vh', background: '#F8FAFC' }}>
+        <div className="backend-surface dark:bg-gray-900" style={{ minHeight: '100vh', background: darkMode ? '#111827' : '#F8FAFC' }}>
             <BackendHeader
-                title={demoMode ? (lang === 'es' ? 'Demo Menú' : 'Demo Menu') : (lang === 'es' ? 'Menú' : 'Menu')}
+                title="FoodSpot Kitchen System"
                 onLogout={handleLogout}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', padding: 16, paddingBottom: 100 }}>
-                {/* TOP PILLS: Menu / Inventory */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: viewTab === 'inventory' ? 0 : 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 60px)' }}>
+                {/* TOP TABS */}
+                <div style={{ display: 'flex', gap: 8, padding: '16px 16px', borderBottom: '1px solid #E5E7EB', background: darkMode ? '#1F2937' : '#FFFFFF' }}>
                     {[
                         { id: 'menu', label: 'Menu' },
                         { id: 'inventory', label: 'Inventory' },
@@ -988,16 +639,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         <button
                             key={tab.id}
                             onClick={() => setViewTab(tab.id)}
+                            className="transition-all duration-200"
                             style={{
                                 flex: 1,
-                                padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
-                                border: '1px solid',
-                                cursor: 'pointer', whiteSpace: 'nowrap',
-                                background: viewTab === tab.id ? '#10B981' : '#FFFFFF',
-                                color: viewTab === tab.id ? '#FFFFFF' : '#4B5563',
-                                borderColor: viewTab === tab.id ? '#10B981' : '#E5E7EB',
-                                boxShadow: viewTab === tab.id ? '0 4px 12px rgba(16, 185, 129, 0.25)' : '0 1px 2px rgba(0,0,0,0.05)',
-                                transition: 'all 0.2s'
+                                padding: '10px 16px',
+                                borderRadius: 8,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                border: 'none',
+                                cursor: 'pointer',
+                                background: viewTab === tab.id ? 'var(--color-primary, #10B981)' : 'transparent',
+                                color: viewTab === tab.id ? 'white' : (darkMode ? '#9CA3AF' : '#4B5563'),
+                                boxShadow: viewTab === tab.id ? '0 4px 12px rgba(16, 185, 129, 0.25)' : 'none'
                             }}
                         >
                             {tab.label}
@@ -1005,841 +658,363 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     ))}
                 </div>
 
-                <div style={{ display: viewTab === 'menu' ? 'block' : 'none' }}>
-                {/* ==================== OPERATIONAL COMMAND CENTER ==================== */}
-                <div style={{ marginBottom: 24 }}>
-                    {/* Pause Orders Toggle */}
-                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: 0 }}>⏸️ {t('pause_orders')}</p>
-                                <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 0' }}>{t('pause_orders_desc')}</p>
-                            </div>
-                            <label className="toggle">
-                                <input
-                                    type="checkbox"
-                                    checked={localConfig.pauseOrders}
-                                    onChange={(e) => {
-                                        const newPauseState = e.target.checked
-                                        setLocalConfig(prev => ({ ...prev, pauseOrders: newPauseState }))
-                                        setHasChanges(true)
-                                    }}
-                                />
-                                <span className="toggle-slider"></span>
-                            </label>
-                        </div>
-                        {/* Pause Message */}
-                        {localConfig.pauseOrders && (
-                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 6 }}>Mensaje para clientes</label>
-                                <input
-                                    type="text"
-                                    value={pauseMessage}
-                                    onChange={(e) => {
-                                        setPauseMessage(e.target.value)
-                                        setHasChanges(true)
-                                    }}
-                                    onBlur={() => {
-                                        setLocalConfig(prev => ({ ...prev, pauseOrdersMessage: pauseMessage }))
-                                    }}
-                                    placeholder="Ej: Estamos con muchos pedidos"
-                                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Archive Info */}
-                    <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
-                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
-                    </div>
-
-                    {/* Delivery Configuration */}
-                    <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
-
-                        <div style={{ marginBottom: 12 }}>
-                            {/* SaaS-Scale Static Map & Radius Visualizer */}
-                            <div style={{
-                                height: 160,
-                                background: "url('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=600&q=80') center/cover",
-                                borderRadius: 10,
-                                marginBottom: 16,
-                                position: 'relative',
-                                overflow: 'hidden',
-                                border: '1px solid #CBD5E1'
-                            }}>
-                                {/* Dark overlay for contrast */}
-                                <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.2)' }} />
-
-                                {/* Center Pin */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%', left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    zIndex: 10,
-                                    fontSize: 24,
-                                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                                }}>
-                                    🏪
-                                </div>
-
-                                {/* Dynamic Radius Circle */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '50%', left: '50%',
-                                    width: 40, height: 40,
-                                    marginLeft: -20, marginTop: -20,
-                                    borderRadius: '50%',
-                                    border: '2px solid #22C55E',
-                                    background: 'rgba(34, 197, 94, 0.15)',
-                                    transform: `scale(${localConfig.delivery?.radiusKm || 5})`,
-                                    willChange: 'transform',
-                                    transition: 'transform 0.1s linear',
-                                    pointerEvents: 'none',
-                                    boxShadow: '0 0 0 1000px rgba(0,0,0,0.1)'
-                                }} />
-                            </div>
-
-                            <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Radio de entrega: {localConfig.delivery?.radiusKm || 5} km</label>
-                            <input
-                                type="range"
-                                min="1"
-                                max="50"
-                                value={localConfig.delivery?.radiusKm || 5}
-                                onChange={(e) => {
-                                    const newValue = parseInt(e.target.value)
-                                    const oldValue = localConfig.delivery?.radiusKm || 5
-                                    if (newValue !== oldValue) {
-                                        recordDeliveryConfigChange('radiusKm', oldValue, newValue)
-                                    }
-                                    // Instant Local Update
-                                    setLocalConfig(prev => ({
-                                        ...prev,
-                                        delivery: { ...prev.delivery, radiusKm: newValue }
-                                    }))
-                                    updateConfig({ delivery: { ...localConfig.delivery, radiusKm: newValue } })
-                                    window.dispatchEvent(new CustomEvent('frontendSync'))
-                                    setHasChanges(true)
-                                }}
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <div>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Tarifa fija ($)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="50"
-                                    value={localConfig.delivery?.flatFee === 0 ? '' : localConfig.delivery?.flatFee} // 🛡️ KILL STICKY ZERO
-                                    onChange={(e) => {
-                                        const val = e.target.value === '' ? 0 : parseInt(e.target.value)
-                                        setLocalConfig(prev => ({ ...prev, delivery: { ...prev.delivery, flatFee: val } }))
-                                        updateConfig({ delivery: { ...localConfig.delivery, flatFee: val } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        setHasChanges(true)
-                                    }}
-                                    placeholder="0"
-                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 14, boxSizing: 'border-box' }}
-                                />
-                            </div>
-                            <div>
-                                <label style={{ fontSize: 12, color: '#64748B', display: 'block', marginBottom: 4 }}>Gratis desde ($)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="100"
-                                    value={localConfig.delivery?.freeDeliveryThreshold ?? ''}
-                                    onChange={(e) => {
-                                        // 🛡️ STICKY ZERO FIX
-                                        const val = e.target.value
-                                        const newValue = val === '' ? 0 : parseInt(val)
-
-                                        setLocalConfig(prev => ({
-                                            ...prev,
-                                            delivery: { ...prev.delivery, freeDeliveryThreshold: val === '' ? '' : newValue }
-                                        }))
-
-                                        updateConfig({ delivery: { ...localConfig.delivery, freeDeliveryThreshold: newValue } })
-                                        window.dispatchEvent(new CustomEvent('frontendSync'))
-                                        setHasChanges(true)
-                                    }}
-                                    placeholder="0"
-                                    style={{ width: '100%', padding: '10px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ==================== PRINT MENU ==================== */}
-                {false && (
-                <div style={{ marginTop: 24 }}>
-                    <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '0 0 24px 0' }} />
-                    <PrintMenu menu={menu} tenantData={tenantData} tenantSlug={tenantSlug} />
-                </div>
-                )}
-
-                {/* ==================== BRIDGED BRANDING SECTION - HIDDEN FOR MVP ==================== */}
-                {false && (
-                <div>
-                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Estilo de Menú (Píldora)
-                </h3>
-                <div style={{ background: 'white', padding: '20px', borderRadius: 16, border: '1px solid #E2E8F0', marginBottom: 24 }}>
-                    {/* Visual Preset Picker - iPhone Wallpaper Style */}
-                    {(() => {
-                        // Group presets by category
-                        const grouped = DIVIDER_PRESETS.reduce((acc, preset) => {
-                            const cat = preset.category || 'Varios'
-                            if (!acc[cat]) acc[cat] = []
-                            acc[cat].push(preset)
-                            return acc
-                        }, {})
-
-                        const categories = Object.keys(grouped)
-
-                        return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                                {categories.map(cat => (
-                                    <div key={cat}>
-                                        <h4 style={{
-                                            fontSize: 12, fontWeight: 800, color: '#9CA3AF',
-                                            textTransform: 'uppercase', marginBottom: 12,
-                                            letterSpacing: '0.05em'
-                                        }}>
-                                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                        </h4>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                                            gap: 12
-                                        }}>
-                                            {grouped[cat].map(preset => {
-                                                const isActive = (localConfig.dividerPresetId || 'coffee-1') === preset.id
-
-                                                return (
-                                                    <div
-                                                        key={preset.id}
-                                                        onClick={() => {
-                                                            const newConfig = { ...localConfig, dividerPresetId: preset.id }
-                                                            updateConfig(newConfig)
-                                                            setLocalConfig(newConfig)
-                                                            window.dispatchEvent(new CustomEvent('frontendSync'))
-                                                            setHasChanges(true)
-                                                        }}
-                                                        style={{
-                                                            position: 'relative',
-                                                            aspectRatio: '3/1',
-                                                            borderRadius: 8,
-                                                            overflow: 'hidden',
-                                                            cursor: 'pointer',
-                                                            border: isActive ? '3px solid #22C55E' : '1px solid #E5E7EB',
-                                                            transition: 'all 0.2s ease',
-                                                            transform: isActive ? 'scale(1.02)' : 'scale(1)',
-                                                            boxShadow: isActive ? '0 4px 12px rgba(34, 197, 94, 0.2)' : 'none'
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src={preset.url}
-                                                            alt={preset.name}
-                                                            loading="lazy"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        />
-
-                                                        {/* Checkmark Overlay */}
-                                                        {isActive && (
-                                                            <div style={{
-                                                                position: 'absolute',
-                                                                top: 0, left: 0, right: 0, bottom: 0,
-                                                                background: 'rgba(34, 197, 94, 0.2)',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                            }}>
-                                                                <div style={{
-                                                                    background: '#22C55E', color: 'white',
-                                                                    borderRadius: '50%', width: 24, height: 24,
-                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                    fontSize: 14, boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                                                                }}>
-                                                                    ✓
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Hover Label */}
-                                                        {!isActive && (
-                                                            <div className="hover-label" style={{
-                                                                position: 'absolute', bottom: 0, left: 0, right: 0,
-                                                                background: 'rgba(0,0,0,0.6)', color: 'white',
-                                                                fontSize: 10, padding: '4px', textAlign: 'center',
-                                                                opacity: 0, transition: 'opacity 0.2s'
-                                                            }}>
-                                                                {preset.name}
-                                                            </div>
-                                                        )}
-                                                        <style>{`
-                                                            div:hover > .hover-label { opacity: 1; }
-                                                        `}</style>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )
-                    })()}
-                </div>
-                </div>
-                )}
-
-                {/* ==================== VISUAL DIVIDER ==================== */}
-                <hr style={{ border: 'none', height: 1, background: '#E2E8F0', margin: '24px 0' }} />
-
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: '#4B5563', marginBottom: 16, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Menú Principal
-                </h3>
-
-                {/* Add Category Button / Form */}
-                {!showAddCategory ? (
-                    <button
-                        onClick={() => setShowAddCategory(true)}
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            marginBottom: 16,
-                            background: '#F1F5F9',
-                            border: '2px dashed #CBD5E1',
-                            borderRadius: 10,
-                            fontSize: 14,
-                            fontWeight: 500,
-                            color: '#64748B',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 6
-                        }}
-                    >
-                        ➕ Agregar Categoría
-                    </button>
-                ) : (
-                    <div style={{
-                        background: '#FFFFFF',
-                        borderRadius: 10,
-                        border: '2px solid #22C55E',
-                        padding: 16,
-                        marginBottom: 16
-                    }}>
-                        <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                            <input
-                                type="text"
-                                placeholder="Nombre de categoría"
-                                value={newCategoryName}
-                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                autoFocus
-                                style={{
-                                    flex: 1,
-                                    padding: '10px 14px',
-                                    border: '1px solid #E2E8F0',
-                                    borderRadius: 8,
-                                    fontSize: 14
-                                }}
-                            />
-                            <input
-                                type="text"
-                                placeholder="📦"
-                                value={newCategoryIcon}
-                                onChange={(e) => setNewCategoryIcon(e.target.value)}
-                                style={{
-                                    width: 50,
-                                    padding: '10px',
-                                    border: '1px solid #E2E8F0',
-                                    borderRadius: 8,
-                                    fontSize: 14,
-                                    textAlign: 'center'
-                                }}
-                                maxLength={2}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <button
-                                onClick={() => {
-                                    if (newCategoryName.trim()) {
-                                        // 🛡️ NULL-POINTER DEFENSE: Ensure object exists
-                                        const updatedMenu = menu ? { ...menu } : { categories: [] }
-                                        if (!updatedMenu.categories) updatedMenu.categories = []
-
-                                        updatedMenu.categories.push({
-                                            id: generateId('category'),
-                                            name: newCategoryName.trim(),
-                                            icon: newCategoryIcon || '📦',
-                                            enabled: true,
-                                            items: []
-                                        })
-                                        setMenu(updatedMenu)
-                                        syncMenuToCloud(updatedMenu)
-                                        setNewCategoryName('')
-                                        setNewCategoryIcon('📦')
-                                        setShowAddCategory(false)
-                                    }
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '10px 16px',
-                                    background: '#22C55E',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Crear
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowAddCategory(false)
-                                    setNewCategoryName('')
-                                    setNewCategoryIcon('📦')
-                                }}
-                                style={{
-                                    padding: '10px 16px',
-                                    background: '#F1F5F9',
-                                    color: '#64748B',
-                                    border: 'none',
-                                    borderRadius: 8,
-                                    fontWeight: 500,
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
-                {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
-                {(menu?.categories || []).map(category => {
-                    const isEnabled = category.enabled !== false
-                    return (
-                        <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: 8
-                            }}>
-                                <div style={{ flex: 1 }}>
-                                    {editingCategory?.id === category.id ? (
-                                        <input
-                                            type="text"
-                                            value={editingCategory.name}
-                                            onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                                            onBlur={() => handleRenameCategory(category.id)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleRenameCategory(category.id)}
-                                            autoFocus
-                                            style={{
-                                                fontSize: 14,
-                                                fontWeight: 600,
-                                                color: '#374151',
-                                                border: '1px solid #3B82F6',
-                                                borderRadius: 4,
-                                                padding: '2px 6px',
-                                                width: '100%',
-                                                maxWidth: 200,
-                                                outline: 'none'
-                                            }}
-                                        />
-                                    ) : (
-                                        <h3
-                                            onClick={() => setEditingCategory({ id: category.id, name: category.name })}
-                                            style={{
-                                                fontSize: 14,
-                                                fontWeight: 600,
-                                                color: '#374151',
-                                                margin: 0,
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 8
-                                            }}
-                                            title="Clic para renombrar"
-                                        >
-                                            {category.name}
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M12 20h9"></path>
-                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                                            </svg>
-                                            {!isEnabled && <span style={{ fontSize: 11, marginLeft: 8, color: '#EF4444', opacity: 1 }}>(oculta)</span>}
-                                        </h3>
-                                    )}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <button
-                                        onClick={() => handleDeleteCategory(category.id)}
-                                        title="Eliminar categoría"
-                                        style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            padding: 4,
-                                            borderRadius: 6,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: '#EF4444',
-                                            transition: 'background 0.15s ease'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#FEE2E2'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                                        </svg>
-                                    </button>
-                                    <label className="toggle">
-                                        <input
-                                            type="checkbox"
-                                            checked={isEnabled}
-                                            onChange={() => handleToggleCategory(category.id)}
-                                        />
-                                        <span className="toggle-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div style={{
-                                background: '#FFFFFF',
-                                borderRadius: 12,
-                                border: '1px solid #E2E8F0',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                            }}>
-                                {(category.items || []).map((item, idx) => (
-                                    <div key={item.id} style={{
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        padding: '12px 14px',
-                                        borderBottom: idx < category.items.length - 1 ? '1px solid #F1F5F9' : 'none',
-                                        gap: 10
-                                    }}>
-                                        {/* Image Placeholder - SuperAdmin Style (always visible, clickable) */}
-                                        <div style={{ width: 60, flexShrink: 0 }}>
-                                            <div
-                                                onClick={() => handleBoxTap(category.id, item)}
-                                                className="empty-box"
-                                                style={{
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 10,
-                                                    background: item.image ? 'none' : '#F3F4F6',
-                                                    border: '2px dashed #D1D5DB',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    overflow: 'hidden',
-                                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-                                                }}
-                                            >
-                                                {item.image ? (
-                                                    <img
-                                                        src={getThumbUrl(item.image, 80)}
-                                                        alt=""
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover',
-                                                            pointerEvents: 'none',
-                                                            animation: 'fadeIn 0.3s ease'
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textTransform: 'uppercase', pointerEvents: 'none', userSelect: 'none' }}>VACÍO</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        {/* Item Details - SuperAdmin Style */}
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                                                        {/* 🛡️ UNLOCKED NAME INPUT */}
-                                                        <input
-                                                            type="text"
-                                                            defaultValue={item.name}
-                                                            onBlur={(e) => handleNameUpdate(category.id, item.id, e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()} // Prevent card tap
-                                                            style={{
-                                                                fontWeight: 500,
-                                                                fontSize: 14,
-                                                                color: '#1E293B',
-                                                                margin: 0,
-                                                                border: 'none',
-                                                                background: 'transparent',
-                                                                width: '100%',
-                                                                outline: 'none',
-                                                                pointerEvents: 'auto',
-                                                                zIndex: 10
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                        <span style={{ fontSize: 13, color: '#22C55E', fontWeight: 600 }}>$</span>
-                                                        <input
-                                                            type="number"
-                                                            defaultValue={item.price}
-                                                            onBlur={(e) => handlePriceUpdate(category.id, item.id, e.target.value)}
-                                                            onClick={(e) => e.stopPropagation()} // Prevent card tap
-                                                            style={{
-                                                                fontSize: 13,
-                                                                color: '#22C55E',
-                                                                fontWeight: 600,
-                                                                border: 'none',
-                                                                background: 'transparent',
-                                                                width: 60,
-                                                                outline: 'none',
-                                                                padding: 0
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                                                    <button
-                                                        onClick={() => handleBoxTap(category.id, item)}
-                                                        style={{
-                                                            fontSize: 12, fontWeight: 600,
-                                                            color: item.description ? '#22C55E' : '#9CA3AF',
-                                                            background: 'none', border: 'none',
-                                                            cursor: 'pointer', padding: '2px 0',
-                                                            display: 'flex', alignItems: 'center', gap: 4
-                                                        }}
-                                                        title={item.description || 'Agregar descripción'}
-                                                    >
-                                                        <span>✏️</span>
-                                                        {item.description ? 'Editar descripción' : 'Agregar descripción'}
-                                                    </button>
-                                                    <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
-                                                        Agotado
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={!item.available}
-                                                            onChange={() => handleToggleAvailability(category.id, item.id)}
-                                                            style={{ width: 18, height: 18, accentColor: '#EF4444' }}
-                                                        />
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* Delete Button - SuperAdmin Style */}
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                handleRemoveItem(category.id, item)
-                                            }}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: '#EF4444',
-                                                fontSize: 18,
-                                                cursor: 'pointer',
-                                                padding: 4,
-                                                alignSelf: 'flex-start',
-                                                marginLeft: 8
-                                            }}
-                                            title="Eliminar ítem"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                                {/* Add Item Button (New) */}
-                                <div
-                                    onClick={() => handleAddItem(category.id)}
+                {/* MAIN CONTENT */}
+                {viewTab === 'menu' && (
+                    <div style={{ display: 'flex', flex: 1, overflow: 'hidden', background: darkMode ? '#111827' : '#F8FAFC' }}>
+                        {/* SIDEBAR: Categories */}
+                        <motion.div
+                            initial={{ x: -300, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                            style={{
+                                width: 280,
+                                borderRight: `1px solid ${darkMode ? '#374151' : '#E5E7EB'}`,
+                                overflowY: 'auto',
+                                padding: '16px',
+                                background: darkMode ? '#1F2937' : '#FFFFFF'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                                <h3 style={{ margin: 0, fontSize: 12, fontWeight: 800, color: darkMode ? '#F3F4F6' : '#111827', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categories</h3>
+                                <button
+                                    onClick={addCategory}
                                     style={{
-                                        padding: '12px',
-                                        background: '#F8FAFC',
-                                        borderTop: '1px solid #E2E8F0',
-                                        color: '#3B82F6',
-                                        fontSize: 13,
-                                        fontWeight: 600,
+                                        width: 28,
+                                        height: 28,
+                                        borderRadius: '50%',
+                                        background: 'var(--color-primary, #10B981)',
+                                        border: 'none',
+                                        color: 'white',
                                         cursor: 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
                                     }}
                                 >
-                                    ➕ Agregar Ítem
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                {menu.categories.map((cat) => (
+                                    <motion.button
+                                        key={cat.id}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => setActiveCategory(cat.id)}
+                                        style={{
+                                            padding: '12px 16px',
+                                            borderRadius: 12,
+                                            border: 'none',
+                                            background: activeCategory === cat.id || (!activeCategory && menu.categories[0]?.id === cat.id)
+                                                ? 'rgba(16, 185, 129, 0.1)'
+                                                : darkMode ? '#374151' : '#F3F4F6',
+                                            color: activeCategory === cat.id || (!activeCategory && menu.categories[0]?.id === cat.id)
+                                                ? 'var(--color-primary, #10B981)'
+                                                : darkMode ? '#D1D5DB' : '#6B7280',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            fontWeight: 600,
+                                            fontSize: 14,
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <span>{cat.icon} {cat.name}</span>
+                                        <span style={{ fontSize: 11, fontWeight: 700, background: activeCategory === cat.id || (!activeCategory && menu.categories[0]?.id === cat.id) ? 'var(--color-primary, #10B981)' : darkMode ? '#4B5563' : '#D1D5DB', color: activeCategory === cat.id || (!activeCategory && menu.categories[0]?.id === cat.id) ? 'white' : darkMode ? '#F3F4F6' : '#1F2937', padding: '4px 8px', borderRadius: 6 }}>{cat.items?.length || 0}</span>
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </motion.div>
+
+                        {/* MAIN GRID: Items */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            style={{
+                                flex: 1,
+                                overflow: 'auto',
+                                padding: '24px',
+                                background: darkMode ? '#111827' : '#F8FAFC'
+                            }}
+                        >
+                            {/* HEADER & CONTROLS */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                                <div>
+                                    <h2 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: darkMode ? '#F3F4F6' : '#111827' }}>
+                                        {firstCategory ? menu.categories.find(c => c.id === firstCategory)?.name : 'Menu'}
+                                    </h2>
+                                    <p style={{ margin: '4px 0 0', fontSize: 14, color: darkMode ? '#9CA3AF' : '#6B7280' }}>
+                                        {currentCategoryItems.length} items
+                                    </p>
                                 </div>
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
-
-            {/* Description Editor Modal */}
-            {editingItem && (
-                <div
-                    className="modal-overlay"
-                    style={{
-                        position: 'fixed', inset: 0, zIndex: 9999,
-                        background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        padding: 16
-                    }}
-                    onClick={() => setEditingItem(null)}
-                >
-                    <div
-                        onClick={e => e.stopPropagation()}
-                        style={{
-                            background: 'white', borderRadius: 16,
-                            width: '100%', maxWidth: 600,
-                            maxHeight: '90vh', overflowY: 'auto',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-                            display: 'flex', flexDirection: 'column'
-                        }}
-                    >
-                        {/* Header with thumb */}
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: 16,
-                            padding: '20px 20px 12px', borderBottom: '1px solid #f3f4f6'
-                        }}>
-                            {editForm.image && (
-                                <img
-                                    src={editForm.image}
-                                    alt=""
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => firstCategory && handleAddItem(firstCategory)}
                                     style={{
-                                        width: 120, height: 80, borderRadius: 10,
-                                        objectFit: 'cover', flexShrink: 0
+                                        padding: '12px 24px',
+                                        borderRadius: 50,
+                                        border: 'none',
+                                        background: 'var(--color-primary, #10B981)',
+                                        color: 'white',
+                                        fontWeight: 700,
+                                        fontSize: 14,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)'
                                     }}
-                                />
+                                >
+                                    <Plus size={18} />
+                                    Add Item
+                                </motion.button>
+                            </div>
+
+                            {/* ITEM GRID */}
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                                gap: 16
+                            }}>
+                                <AnimatePresence>
+                                    {currentCategoryItems.map((item) => (
+                                        <motion.div
+                                            key={item.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            whileHover={{ y: -4 }}
+                                            style={{
+                                                borderRadius: 24,
+                                                overflow: 'hidden',
+                                                background: darkMode ? '#1F2937' : '#FFFFFF',
+                                                border: `1px solid ${darkMode ? '#374151' : '#E5E7EB'}`,
+                                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                                                opacity: item.available ? 1 : 0.6
+                                            }}
+                                        >
+                                            {/* IMAGE */}
+                                            <div style={{
+                                                width: '100%',
+                                                height: 160,
+                                                background: item.image ? `url(${item.image})` : (darkMode ? '#374151' : '#F3F4F6'),
+                                                backgroundSize: 'cover',
+                                                backgroundPosition: 'center',
+                                                position: 'relative',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => handleBoxTap(firstCategory, item)}
+                                            >
+                                                {!item.available && (
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        inset: 0,
+                                                        background: 'rgba(0, 0, 0, 0.5)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        color: 'white',
+                                                        fontWeight: 700
+                                                    }}>
+                                                        {t('out_of_stock') || 'Out of Stock'}
+                                                    </div>
+                                                )}
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: 8,
+                                                    right: 8,
+                                                    background: 'rgba(255, 255, 255, 0.9)',
+                                                    padding: '6px 12px',
+                                                    borderRadius: 20,
+                                                    fontSize: 11,
+                                                    fontWeight: 700,
+                                                    color: darkMode ? '#111827' : '#1F2937'
+                                                }}>
+                                                    {item.calories || '—'} kcal
+                                                </div>
+                                            </div>
+
+                                            {/* CONTENT */}
+                                            <div style={{ padding: '16px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+                                                    <div>
+                                                        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: darkMode ? '#F3F4F6' : '#111827' }}>
+                                                            {item.name}
+                                                        </h4>
+                                                    </div>
+                                                    <span style={{
+                                                        fontSize: 15,
+                                                        fontWeight: 700,
+                                                        color: 'var(--color-primary, #10B981)',
+                                                        background: 'rgba(16, 185, 129, 0.1)',
+                                                        padding: '6px 12px',
+                                                        borderRadius: 8
+                                                    }}>
+                                                        ${(item.price / 100).toFixed(2)}
+                                                    </span>
+                                                </div>
+
+                                                {item.description && (
+                                                    <p style={{
+                                                        margin: '0 0 12px',
+                                                        fontSize: 13,
+                                                        color: darkMode ? '#D1D5DB' : '#6B7280',
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        overflow: 'hidden'
+                                                    }}>
+                                                        {item.description}
+                                                    </p>
+                                                )}
+
+                                                {/* AVAILABILITY TOGGLE */}
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: `1px solid ${darkMode ? '#374151' : '#E5E7EB'}` }}>
+                                                    <span style={{ fontSize: 12, fontWeight: 600, color: darkMode ? '#9CA3AF' : '#6B7280' }}>
+                                                        {item.available ? 'In Stock' : 'Out of Stock'}
+                                                    </span>
+                                                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={item.available}
+                                                            onChange={() => handleToggleAvailability(firstCategory, item.id)}
+                                                            style={{ display: 'none' }}
+                                                        />
+                                                        <div style={{
+                                                            width: 44,
+                                                            height: 24,
+                                                            borderRadius: 12,
+                                                            background: item.available ? 'var(--color-primary, #10B981)' : (darkMode ? '#4B5563' : '#D1D5DB'),
+                                                            position: 'relative',
+                                                            transition: 'all 0.2s'
+                                                        }}>
+                                                            <div style={{
+                                                                position: 'absolute',
+                                                                top: 2,
+                                                                left: item.available ? 22 : 2,
+                                                                width: 20,
+                                                                height: 20,
+                                                                borderRadius: '50%',
+                                                                background: 'white',
+                                                                transition: 'left 0.2s'
+                                                            }} />
+                                                        </div>
+                                                    </label>
+                                                </div>
+
+                                                {/* ACTIONS */}
+                                                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={() => handleEdit(firstCategory, item)}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '8px 12px',
+                                                            borderRadius: 8,
+                                                            border: 'none',
+                                                            background: 'rgba(16, 185, 129, 0.1)',
+                                                            color: 'var(--color-primary, #10B981)',
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        <Edit size={14} style={{ display: 'inline', marginRight: 4 }} />
+                                                        Edit
+                                                    </motion.button>
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        onClick={() => handleRemoveItem(firstCategory, item)}
+                                                        style={{
+                                                            flex: 1,
+                                                            padding: '8px 12px',
+                                                            borderRadius: 8,
+                                                            border: 'none',
+                                                            background: 'rgba(239, 68, 68, 0.1)',
+                                                            color: '#EF4444',
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        <Trash2 size={14} style={{ display: 'inline', marginRight: 4 }} />
+                                                        Delete
+                                                    </motion.button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </AnimatePresence>
+                            </div>
+
+                            {currentCategoryItems.length === 0 && (
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '60px 20px',
+                                    color: darkMode ? '#9CA3AF' : '#6B7280'
+                                }}>
+                                    <p style={{ fontSize: 14, fontWeight: 600 }}>No items in this category yet</p>
+                                    <button
+                                        onClick={() => firstCategory && handleAddItem(firstCategory)}
+                                        style={{
+                                            marginTop: 16,
+                                            padding: '10px 20px',
+                                            borderRadius: 8,
+                                            border: 'none',
+                                            background: 'var(--color-primary, #10B981)',
+                                            color: 'white',
+                                            fontWeight: 600,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Add First Item
+                                    </button>
+                                </div>
                             )}
-                            <div style={{ minWidth: 0 }}>
-                                <h3 style={{
-                                    margin: 0, fontSize: 20, fontWeight: 700,
-                                    color: '#111827', lineHeight: 1.2,
-                                    wordBreak: 'break-word'
-                                }}>
-                                    {editForm.name}
-                                </h3>
-                                <p style={{
-                                    margin: '4px 0 0', fontSize: 14,
-                                    color: '#6b7280', fontWeight: 500
-                                }}>
-                                    {formatPrice(parseInt(editForm.price) || 0)}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setEditingItem(null)}
-                                style={{
-                                    marginLeft: 'auto', width: 32, height: 32,
-                                    borderRadius: '50%', border: 'none',
-                                    background: '#f3f4f6', color: '#6b7280',
-                                    cursor: 'pointer', display: 'flex',
-                                    alignItems: 'center', justifyContent: 'center',
-                                    fontSize: 18, lineHeight: 1, flexShrink: 0
-                                }}
-                            >
-                                ×
-                            </button>
-                        </div>
-
-                        {/* Form */}
-                        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-                            <div>
-                                <label style={{
-                                    display: 'block', fontSize: 14, fontWeight: 600,
-                                    color: '#374151', marginBottom: 6
-                                }}>
-                                    Descripción
-                                </label>
-                                <textarea
-                                    value={editForm.description || ''}
-                                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                                    placeholder="Appetizing description for customers..."
-                                    style={{
-                                        width: '100%', padding: 12, borderRadius: 10,
-                                        border: '1.5px solid #e5e7eb', fontSize: 14,
-                                        lineHeight: 1.5, color: '#111827',
-                                        background: '#fafafa', resize: 'vertical',
-                                        minHeight: 90, fontFamily: 'inherit',
-                                        outline: 'none', boxSizing: 'border-box'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary, #B8956A)'}
-                                    onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                                />
-                            </div>
-
-                            <div>
-                                <label style={{
-                                    display: 'block', fontSize: 14, fontWeight: 600,
-                                    color: '#374151', marginBottom: 6
-                                }}>
-                                    Calorías
-                                </label>
-                                <input
-                                    type="number"
-                                    value={editForm.calories || ''}
-                                    onChange={(e) => setEditForm({ ...editForm, calories: e.target.value })}
-                                    placeholder="e.g. 450"
-                                    style={{
-                                        width: '100%', padding: '10px 12px', borderRadius: 10,
-                                        border: '1.5px solid #e5e7eb', fontSize: 14,
-                                        color: '#111827', background: '#fafafa',
-                                        fontFamily: 'inherit', outline: 'none',
-                                        boxSizing: 'border-box'
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = 'var(--color-primary, #B8956A)'}
-                                    onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Footer buttons */}
-                        <div style={{
-                            display: 'flex', gap: 12,
-                            padding: '0 20px 20px'
-                        }}>
-                            <button
-                                onClick={() => setEditingItem(null)}
-                                style={{
-                                    flex: 1, padding: '12px 16px', borderRadius: 12,
-                                    border: '1.5px solid #e5e7eb', background: 'white',
-                                    color: '#374151', fontSize: 15, fontWeight: 600,
-                                    cursor: 'pointer', fontFamily: 'inherit'
-                                }}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                style={{
-                                    flex: 1, padding: '12px 16px', borderRadius: 12,
-                                    border: 'none', background: '#111827',
-                                    color: 'white', fontSize: 15, fontWeight: 700,
-                                    cursor: 'pointer', fontFamily: 'inherit'
-                                }}
-                            >
-                                Guardar
-                            </button>
-                        </div>
+                        </motion.div>
                     </div>
-                </div>
-            )}
-                </div>
+                )}
 
                 {viewTab === 'inventory' && (
                     <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading...</div>}>
                         <MenuInventoryView lang={lang} />
                     </Suspense>
                 )}
+            </div>
 
-            {/* Hidden File Input (Always Mounted for "Vacío" Tap) */}
+            {/* MODALS & INPUTS */}
+            <ItemEditorModal
+                editingItem={editingItem}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                onClose={() => {
+                    setEditingItem(null)
+                    setUploadStatus(null)
+                }}
+                onImageClick={() => {
+                    if (editingItem?.categoryId) {
+                        activeCategoryItemRef.current = { categoryId: editingItem.categoryId, itemId: editingItem.itemId }
+                    } else if (editingItem?.isFeaturedSlot) {
+                        activeFeaturedSlotRef.current = editingItem.index
+                    }
+                    fileInputRef.current?.click()
+                }}
+                uploadStatus={uploadStatus}
+                isUploading={isUploading}
+                fileInputRef={fileInputRef}
+                activeFeaturedSlotRef={activeFeaturedSlotRef}
+                activeCategoryItemRef={activeCategoryItemRef}
+                onSave={handleSave}
+                t={t}
+            />
+
             <input
                 key={inputKey}
                 ref={fileInputRef}
@@ -1849,57 +1024,84 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 style={{ display: 'none' }}
             />
 
-            {/* Backend Navigation */}
-            <BackendNav
-                role={demoMode ? 'demo' : 'owner'}
-                useRoutes={true}
-            />
-            {/* SAVE SUCCESS TOAST */}
+            <BackendNav role={demoMode ? 'demo' : 'owner'} useRoutes={true} />
+
+            {/* TOAST MESSAGES */}
             {saveStatus && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: 24,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: saveStatus.error ? '#EF4444' : '#22C55E', color: 'white',
-                    padding: '10px 24px', borderRadius: 50,
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                    fontWeight: 600, fontSize: 14, zIndex: 9999,
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
-                </div>
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    style={{
+                        position: 'fixed',
+                        bottom: 24,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: saveStatus.error ? '#EF4444' : '#22C55E',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: 50,
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                        fontWeight: 600,
+                        fontSize: 14,
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                    }}
+                >
+                    <span>{saveStatus.error ? '⚠️' : '✓'}</span>
+                    {saveStatus.message}
+                </motion.div>
             )}
 
-            {/* 💾 FLOATING SAVE BAR (Strike 1) */}
+            {/* FLOATING SAVE BAR */}
             {hasChanges && (
-                <div style={{
-                    position: 'fixed', bottom: 95, left: 12, right: 12,
-                    background: '#1E293B', color: 'white', padding: '14px 20px',
-                    borderRadius: 16, display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-                    zIndex: 10000, animation: 'slideUp 0.3s ease-out',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
-                    <button
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    style={{
+                        position: 'fixed',
+                        bottom: 95,
+                        left: 12,
+                        right: 12,
+                        background: darkMode ? '#1F2937' : '#1E293B',
+                        color: 'white',
+                        padding: '14px 20px',
+                        borderRadius: 16,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.6)',
+                        zIndex: 10000,
+                        border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                >
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Unsaved changes</div>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handlePlatformSave}
                         disabled={isSaving}
                         style={{
-                            background: '#3B82F6', color: 'white', border: 'none',
-                            padding: '10px 24px', borderRadius: 12, fontWeight: 800,
-                            fontSize: 14, cursor: 'pointer'
+                            background: 'var(--color-primary, #10B981)',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 24px',
+                            borderRadius: 12,
+                            fontWeight: 800,
+                            fontSize: 14,
+                            cursor: isSaving ? 'not-allowed' : 'pointer',
+                            opacity: isSaving ? 0.6 : 1
                         }}
                     >
-                        {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
-                    </button>
-                </div>
+                        {isSaving ? 'SAVING...' : 'SAVE'}
+                    </motion.button>
+                </motion.div>
             )}
-        </div >
+        </div>
     )
 }
-
-
 
 export default MenuManager
