@@ -187,13 +187,9 @@ export default function MenuTab({
               {heldCategoryId === cat.id ? '🗑️ Delete?' : `${cat.name} (${cat.count})`}
             </button>
             {heldCategoryId === cat.id && (
-              <div className="absolute top-full mt-2 left-0 flex gap-2 z-50">
+              <div className="absolute top-full mt-2 left-0 flex gap-2 z-50" onClick={(e) => e.stopPropagation()}>
                 <button
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    handleCategoryDelete(cat.id, cat.name);
-                  }}
-                  onTouchEnd={(e) => {
+                  onClick={(e) => {
                     e.stopPropagation();
                     handleCategoryDelete(cat.id, cat.name);
                   }}
@@ -202,11 +198,7 @@ export default function MenuTab({
                   Delete
                 </button>
                 <button
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    setHeldCategoryId(null);
-                  }}
-                  onTouchEnd={(e) => {
+                  onClick={(e) => {
                     e.stopPropagation();
                     setHeldCategoryId(null);
                   }}

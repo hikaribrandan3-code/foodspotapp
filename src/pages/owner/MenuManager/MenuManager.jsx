@@ -166,8 +166,6 @@ export default function MenuManager() {
   }, [businessId, t]);
 
   const handleDeleteCategory = useCallback(async (categoryId, categoryName) => {
-    if (!window.confirm(`Delete category "${categoryName}"? This will not delete items in it.`)) return;
-
     const { error } = await supabase
       .from('categories')
       .delete()
@@ -176,9 +174,9 @@ export default function MenuManager() {
 
     if (error) {
       console.error('[MenuManager] Delete category error:', error);
-      setSaveStatus({ error: true, message: t('category_delete_error') || 'Failed to delete category.' });
+      setSaveStatus({ error: true, message: 'Failed to delete category.' });
     } else {
-      setSaveStatus({ error: false, message: t('category_deleted') || 'Category deleted' });
+      setSaveStatus({ error: false, message: 'Category deleted' });
       setTimeout(() => setSaveStatus(null), 2000);
       if (activeCategory === categoryId) {
         setActiveCategory('');
