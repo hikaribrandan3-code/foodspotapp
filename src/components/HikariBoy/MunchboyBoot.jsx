@@ -7,16 +7,27 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './MunchboyBoot.css';
 
-// Shared AudioContext — created once at module level, resumed on first user gesture
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-export default function MunchboyBoot({ onComplete }) {
+export default function MunchboyBoot({ audioCtx: propAudioCtx, onComplete }) {
   const [lettersDropped, setLettersDropped] = useState(false);
   const [showFooter, setShowFooter] = useState(false);
   const [showPressStart, setShowPressStart] = useState(false);
+  const [shake, setShake] = useState(false);
   const chimeStartedRef = useRef(false);
+  const fallbackAudioCtx = useRef(null);
+
+  const getAudioCtx = () => {
+    if (propAudioCtx && propAudioCtx.state !== 'closed') {
+      return propAudioCtx;
+    }
+    // Fallback: create a new one (may be blocked on iOS without gesture)
+    if (!fallbackAudioCtx.current) {
+      fallbackAudioCtx.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return fallbackAudioCtx.current;
+  };
 
   const playGbaChime = () => {
+    const audioCtx = getAudioCtx();
     const now = audioCtx.currentTime;
     
     // Frequency constants
@@ -47,8 +58,6 @@ export default function MunchboyBoot({ onComplete }) {
     }, 80);
   };
 
-  const [shake, setShake] = useState(false);
-
   // Auto-start on mount following the exact original logic
   useEffect(() => {
     // 1. Start letter drops immediately
@@ -57,6 +66,7 @@ export default function MunchboyBoot({ onComplete }) {
     // Hardcode: 8 letters * 110ms = 770ms total drop time for last letter
     const SHAKE_DELAY = 770;
     const FOOTER_DELAY = SHAKE_DELAY + 400; // 1170ms
+    const CHIME_DELAY = SHAKE_DELAY + 150;   // ~920ms — chime as logo settles
     const FINISH_DELAY = FOOTER_DELAY + 750; // "PRESS START" appears
 
     const shakeTimer = setTimeout(() => {
@@ -68,6 +78,23 @@ export default function MunchboyBoot({ onComplete }) {
       setShowFooter(true);
     }, FOOTER_DELAY);
 
+    // 🎵 BOOT CHIME: Auto-play during startup if audio was unlocked in AudioGate
+    const chimeTimer = setTimeout(() => {
+      if (!chimeStartedRef.current) {
+        chimeStartedRef.current = true;
+        const ctx = getAudioCtx();
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(() => playGbaChime()).catch(() => {});
+        } else {
+          try {
+            playGbaChime();
+          } catch (e) {
+            // iOS may still block — fallback click handler will catch it
+          }
+        }
+      }
+    }, CHIME_DELAY);
+
     const finishTimer = setTimeout(() => {
       setShowPressStart(true);
     }, FINISH_DELAY);
@@ -75,6 +102,7 @@ export default function MunchboyBoot({ onComplete }) {
     return () => {
       clearTimeout(shakeTimer);
       clearTimeout(footerTimer);
+      clearTimeout(chimeTimer);
       clearTimeout(finishTimer);
     };
   }, [onComplete]);
@@ -82,12 +110,14 @@ export default function MunchboyBoot({ onComplete }) {
   const handleClick = async () => {
     if (!showPressStart) return;
 
-    // ⚡ AUDIO UNLOCK: Resume the shared AudioContext on user gesture (iOS Safari)
-    if (audioCtx.state === 'suspended') {
-      await audioCtx.resume();
+    const ctx = getAudioCtx();
+
+    // ⚡ AUDIO UNLOCK: Resume the AudioContext on user gesture (iOS Safari fallback)
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
     }
 
-    // Play chime once on first interaction
+    // Play chime once on first interaction (fallback if auto-play was blocked)
     if (!chimeStartedRef.current) {
       chimeStartedRef.current = true;
       playGbaChime();
