@@ -13,6 +13,31 @@ import { clearAuth } from '../../utils/storage';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import './Settings.css';
 
+const boostSaturation = (hex) => {
+  const rgb = parseInt(hex.slice(1), 16);
+  let r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (510 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  s = Math.min(1, s * 1.6);
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const m = l - c / 2;
+  let r2 = 0, g2 = 0, b2 = 0;
+  if (h < 1/6) { r2 = c; g2 = x; } else if (h < 2/6) { r2 = x; g2 = c; } else if (h < 3/6) { g2 = c; b2 = x; } else if (h < 4/6) { g2 = x; b2 = c; } else if (h < 5/6) { r2 = x; b2 = c; } else { r2 = c; b2 = x; }
+  const toHex = (v) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return '#' + toHex(r2) + toHex(g2) + toHex(b2);
+};
+
 // --- MINI NAV ICONS (24px versions for compact preview) ---
 const NavHomeIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -913,7 +938,7 @@ const Settings = () => {
                                     onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', draft.munchboy_b_color)}
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
-                                        background: draft.munchboy_b_color,
+                                        background: boostSaturation(draft.munchboy_b_color),
                                         border: '2px solid #1a1a1a',
                                         boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -925,7 +950,7 @@ const Settings = () => {
                                     onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', draft.munchboy_a_color)}
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
-                                        background: draft.munchboy_a_color,
+                                        background: boostSaturation(draft.munchboy_a_color),
                                         border: '2px solid #1a1a1a',
                                         boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -950,21 +975,21 @@ const Settings = () => {
                                 }}
                                 title="Shell"
                             />
-                            <div 
+                            <div
                                 onClick={() => openColorPicker('A Button', 'munchboy_a_color', '', draft.munchboy_a_color)}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    background: draft.munchboy_a_color,
+                                    background: boostSaturation(draft.munchboy_a_color),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
                                 title="A Button"
                             />
-                            <div 
+                            <div
                                 onClick={() => openColorPicker('B Button', 'munchboy_b_color', '', draft.munchboy_b_color)}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    background: draft.munchboy_b_color,
+                                    background: boostSaturation(draft.munchboy_b_color),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
