@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, Link, useLocation, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, Edit, Sun, Moon, Save } from 'lucide-react'
+import { Plus, Trash2, Edit, Save } from 'lucide-react'
 import { supabase, updateBranding } from '../../lib/supabaseClient.js'
 import { getAuth, clearAuth } from '../../utils/storage.js'
 import { formatPrice } from '../../config/menuData.js'
@@ -17,7 +17,6 @@ import PrintMenu from '../../components/PrintMenu.jsx'
 import ItemEditorModal from '../../components/owner/MenuManager/ItemEditorModal.jsx'
 import { DIVIDER_PRESETS } from '../../config/dividerPresets.js'
 import { useBlobUrlTracker } from '../../hooks/useBlobUrlTracker'
-import './MenuStyles.css'
 
 const MenuInventoryView = lazy(() => import('../../components/owner/MenuInventoryView.jsx'))
 
@@ -46,11 +45,9 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const targetBusinessId = (isSimulated ? impersonatingBusinessId : tenantBusinessId) || '00470a1a-f5c4-4fb8-a4a5-2ab0d8d758fd'
 
     const [menu, setMenu] = useState({ categories: [] })
-    const [localConfig, setLocalConfig] = useState(config)
     const [activeCategoryId, setActiveCategoryId] = useState(null)
     const [editingItem, setEditingItem] = useState(null)
     const [editForm, setEditForm] = useState({})
-    const [darkMode, setDarkMode] = useState(false)
     const [hasChanges, setHasChanges] = useState(false)
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
@@ -157,62 +154,92 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     return (
-        <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-white'}`}>
+        <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
             <BackendHeader />
 
-            <div className="max-w-6xl mx-auto px-4 py-6">
-                {/* Title */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                            FoodSpot Kitchen System
-                        </h1>
-                        <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            Manage your menu items and categories
-                        </p>
-                    </div>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#111827', marginBottom: '8px' }}>
+                        Menu
+                    </h1>
+                    <p style={{ fontSize: '16px', color: '#6b7280' }}>
+                        Organize and update your restaurant offerings with real-time feedback.
+                    </p>
+                </div>
+
+                {/* Actions Bar */}
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
                     <button
-                        onClick={() => setDarkMode(!darkMode)}
-                        className={`p-3 rounded-full ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-100 text-gray-600'}`}
+                        onClick={handleAddItem}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 20px',
+                            backgroundColor: '#f3f4f6',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '24px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e5e7eb'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
                     >
-                        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        <Plus size={16} /> Category
+                    </button>
+                    <button
+                        onClick={handleAddItem}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 20px',
+                            backgroundColor: '#5b5bff',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '24px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4747d4'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5b5bff'}
+                    >
+                        <Plus size={16} /> Add Item
                     </button>
                 </div>
 
-                {/* Category Tabs */}
-                <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-                    <button
-                        onClick={handleAddItem}
-                        className="flex-shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-full flex items-center gap-2 font-medium transition"
-                    >
-                        <Plus size={18} /> Category
-                    </button>
+                {/* Category Pills */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', overflowX: 'auto', paddingBottom: '12px' }}>
                     {menu.categories.map(cat => (
                         <button
                             key={cat.id}
                             onClick={() => setActiveCategoryId(cat.id)}
-                            className={`flex-shrink-0 px-4 py-2 rounded-full font-medium transition ${
-                                activeCategoryId === cat.id
-                                    ? 'bg-blue-500 text-white'
-                                    : darkMode
-                                        ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: activeCategoryId === cat.id ? '#5b5bff' : '#ffffff',
+                                color: activeCategoryId === cat.id ? '#ffffff' : '#374151',
+                                border: activeCategoryId === cat.id ? 'none' : '1px solid #e5e7eb',
+                                borderRadius: '20px',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                                transition: 'all 0.2s',
+                                whiteSpace: 'nowrap'
+                            }}
                         >
-                            {cat.name} <span className="text-xs ml-1">({cat.items?.length || 0})</span>
+                            {cat.name}
                         </button>
                     ))}
                 </div>
 
                 {/* Items Grid */}
-                <div className="space-y-4">
-                    <button
-                        onClick={handleAddItem}
-                        className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition"
-                    >
-                        <Plus size={20} /> Add Item
-                    </button>
-
+                <div style={{ display: 'grid', gap: '16px' }}>
                     <AnimatePresence>
                         {activeItems.map(item => (
                             <motion.div
@@ -220,82 +247,110 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className={`rounded-lg p-4 ${darkMode ? 'bg-gray-800' : 'bg-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
+                                style={{
+                                    display: 'flex',
+                                    gap: '16px',
+                                    padding: '16px',
+                                    backgroundColor: '#ffffff',
+                                    borderRadius: '12px',
+                                    border: '1px solid #e5e7eb',
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                }}
                             >
-                                <div className="flex gap-4">
-                                    {/* Image */}
-                                    {item.image && (
-                                        <div className="flex-shrink-0">
-                                            <img
-                                                src={item.image}
-                                                alt={item.name}
-                                                className="w-24 h-24 rounded-lg object-cover"
-                                            />
-                                        </div>
-                                    )}
+                                {item.image && (
+                                    <div style={{ flexShrink: 0 }}>
+                                        <img
+                                            src={item.image}
+                                            alt={item.name}
+                                            style={{
+                                                width: '96px',
+                                                height: '96px',
+                                                borderRadius: '8px',
+                                                objectFit: 'cover'
+                                            }}
+                                        />
+                                    </div>
+                                )}
 
-                                    {/* Content */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                                    {item.name}
-                                                </h3>
-                                                <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                                                    {item.description || 'No description'}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '16px', marginBottom: '8px' }}>
+                                        <div>
+                                            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#111827', margin: 0 }}>
+                                                {item.name}
+                                            </h3>
+                                            <p style={{ fontSize: '14px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                                                {item.description || 'No description'}
+                                            </p>
+                                            {item.calories && (
+                                                <p style={{ fontSize: '12px', color: '#9ca3af', margin: '6px 0 0 0' }}>
+                                                    💧 {item.calories} kcal
                                                 </p>
-                                                {item.calories && (
-                                                    <p className={`text-xs mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                                                        {item.calories} kcal
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <span className="text-blue-500 font-bold text-lg flex-shrink-0">
-                                                {formatPrice(item.price)}
-                                            </span>
+                                            )}
                                         </div>
+                                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#5b5bff', flexShrink: 0 }}>
+                                            {formatPrice(item.price)}
+                                        </span>
+                                    </div>
 
-                                        {/* Availability & Actions */}
-                                        <div className="flex items-center gap-3 mt-4">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.available}
-                                                    onChange={(e) => {
-                                                        const updated = menu.categories.map(cat =>
-                                                            cat.id === activeCategory.id
-                                                                ? {
-                                                                    ...cat,
-                                                                    items: cat.items.map(i =>
-                                                                        i.id === item.id ? { ...i, available: e.target.checked } : i
-                                                                    )
-                                                                }
-                                                                : cat
-                                                        )
-                                                        setMenu({ categories: updated })
-                                                        setHasChanges(true)
-                                                    }}
-                                                    className="w-4 h-4 rounded"
-                                                />
-                                                <span className={`text-sm ${item.available ? 'text-green-600' : 'text-gray-500'}`}>
-                                                    {item.available ? 'In Stock' : 'Out of Stock'}
-                                                </span>
-                                            </label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={item.available}
+                                                onChange={(e) => {
+                                                    const updated = menu.categories.map(cat =>
+                                                        cat.id === activeCategory.id
+                                                            ? {
+                                                                ...cat,
+                                                                items: cat.items.map(i =>
+                                                                    i.id === item.id ? { ...i, available: e.target.checked } : i
+                                                                )
+                                                            }
+                                                            : cat
+                                                    )
+                                                    setMenu({ categories: updated })
+                                                    setHasChanges(true)
+                                                }}
+                                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                            />
+                                            <span style={{ color: item.available ? '#10b981' : '#9ca3af' }}>
+                                                {item.available ? 'In Stock' : 'Out of Stock'}
+                                            </span>
+                                        </label>
 
-                                            <div className="flex gap-2 ml-auto">
-                                                <button
-                                                    onClick={() => handleEdit(item)}
-                                                    className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 transition"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(item)}
-                                                    className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
+                                        <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto' }}>
+                                            <button
+                                                onClick={() => handleEdit(item)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    backgroundColor: '#dbeafe',
+                                                    color: '#2563eb',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#bfdbfe'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dbeafe'}
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(item)}
+                                                style={{
+                                                    padding: '8px 12px',
+                                                    backgroundColor: '#fee2e2',
+                                                    color: '#dc2626',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fecaca'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -304,16 +359,31 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </AnimatePresence>
                 </div>
 
-                {/* Floating Save Bar */}
+                {/* Save Bar */}
                 {hasChanges && (
                     <motion.div
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        className="fixed bottom-20 left-0 right-0 flex justify-center"
+                        style={{ position: 'fixed', bottom: '80px', left: 0, right: 0, textAlign: 'center' }}
                     >
                         <button
                             onClick={syncMenuToCloud}
-                            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '12px 24px',
+                                backgroundColor: '#10b981',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '24px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                         >
                             <Save size={18} /> Save Changes
                         </button>
@@ -326,9 +396,18 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className={`fixed bottom-10 left-1/2 -translate-x-1/2 px-4 py-3 rounded-lg text-white font-medium ${
-                            toast.success ? 'bg-green-500' : 'bg-red-500'
-                        }`}
+                        style={{
+                            position: 'fixed',
+                            bottom: '20px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            padding: '12px 20px',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            color: '#ffffff',
+                            backgroundColor: toast.success ? '#10b981' : '#ef4444'
+                        }}
                     >
                         {toast.message}
                     </motion.div>
