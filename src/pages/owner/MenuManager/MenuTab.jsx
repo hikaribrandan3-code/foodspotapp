@@ -263,7 +263,7 @@ export default function MenuTab({
 
                 <button
                   onClick={handleAddRecipe}
-                  className="w-full bg-stone-950 text-white font-['Outfit',sans-serif] font-black uppercase tracking-[0.15em] italic py-4 rounded-2xl hover:bg-emerald-600 transition-all flex items-center justify-center"
+                  className="w-full bg-emerald-600 text-white font-['Outfit',sans-serif] font-black uppercase tracking-[0.15em] italic py-4 rounded-2xl hover:bg-emerald-500 transition-all flex items-center justify-center"
                 >
                   {t('add_to_menu') || 'Add to Menu'}
                 </button>
