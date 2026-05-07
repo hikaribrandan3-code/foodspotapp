@@ -1,5 +1,5 @@
-import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useState } from 'react';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 export default function ItemEditorModal({
   editingItem,
@@ -11,9 +11,11 @@ export default function ItemEditorModal({
   isUploading,
   fileInputRef,
   activeFeaturedSlotRef,
-  activeCategoryItemRef
+  activeCategoryItemRef,
+  onGenerateDescription
 }) {
   const { t } = useLanguage();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   if (!editingItem) return null;
 
