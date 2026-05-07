@@ -431,13 +431,15 @@
   margin-top: -3%;
 }
 
+/* D-pad cross container — chunky cartoon drop shadow */
 .dpad-cross {
   position: relative;
   width: 100%;
   height: 100%;
+  filter: drop-shadow(0 4px 0 #1a1a1a);
 }
 
-/* Horizontal arm with black outline and button depth */
+/* Horizontal arm — solid color, thick border, inner highlight */
 .dpad-cross::before {
   content: '';
   position: absolute;
@@ -448,16 +450,11 @@
   height: 38%;
   background: var(--button-gray);
   border-radius: 6px;
-  /* Black outline like A/B buttons */
   border: 3px solid #1a1a1a;
-  /* Outer + inner shadow for button depth */
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.15),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.12),
-    inset 0 1px 1.5px rgba(255,255,255,0.4);
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.35);
 }
 
-/* Vertical arm with black outline and button depth */
+/* Vertical arm — solid color, thick border, inner highlight */
 .dpad-cross::after {
   content: '';
   position: absolute;
@@ -468,13 +465,8 @@
   height: 100%;
   background: var(--button-gray);
   border-radius: 6px;
-  /* Black outline like A/B buttons */
   border: 3px solid #1a1a1a;
-  /* Outer + inner shadow for button depth */
-  box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.15),
-    inset -1px 0 3px rgba(0, 0, 0, 0.12),
-    inset 1px 0 1.5px rgba(255,255,255,0.4);
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.35);
   z-index: 1;
 }
 
@@ -485,7 +477,7 @@
   filter: brightness(0.97);
 }
 
-/* Center circle in D-pad - darker than arms with inner shadow */
+/* Center circle — cartoon dimple */
 .dpad-center {
   position: absolute;
   top: 50%;
@@ -493,13 +485,11 @@
   transform: translate(-50%, -50%);
   width: 28%;
   height: 28%;
-  background: linear-gradient(180deg, #B8B8B8 0%, #A0A0A0 100%);
+  background: var(--button-gray);
   border: 3px solid #1a1a1a;
   border-radius: 50%;
   z-index: 2;
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.15),
-    0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.25);
 }
 
 /* Directional hit-boxes with larger triangle arrows */
