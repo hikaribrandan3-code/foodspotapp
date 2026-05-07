@@ -378,7 +378,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
     )
 }
 
-export function FoodSpotAI({ context = {} }) {
+export function FoodSpotAI() {
     const navigate = useNavigate()
     const { businessId, tenantData } = useTenant()
 
