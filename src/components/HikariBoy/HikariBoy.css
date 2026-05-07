@@ -351,9 +351,9 @@
 
 .shoulder-l, .shoulder-r {
   position: absolute;
-  top: 6px;
-  height: calc(100% + 2px);
-  width: 26%;
+  top: 4px;
+  height: calc(100% + 8%);
+  width: 30%;
   /* Cartoon 3D bevel: highlight on top, shadow on bottom */
   background: linear-gradient(
     180deg,
@@ -379,19 +379,19 @@
     inset 0 2px 1px rgba(255, 255, 255, 0.6);
 }
 
-/* L trigger: tab hanging from top-left */
+/* L trigger: flush left, longer tab */
 .shoulder-l {
-  left: 6px;
-  border-radius: 4px 4px 18px 4px;
-  padding-left: 18px;
+  left: 0;
+  border-radius: 2px 4px 20px 2px;
+  padding-left: 20px;
   justify-content: flex-start;
 }
 
-/* R trigger: tab hanging from top-right */
+/* R trigger: flush right, longer tab */
 .shoulder-r {
-  right: 6px;
-  border-radius: 4px 4px 4px 18px;
-  padding-right: 18px;
+  right: 0;
+  border-radius: 4px 2px 2px 20px;
+  padding-right: 20px;
   justify-content: flex-end;
 }
 
