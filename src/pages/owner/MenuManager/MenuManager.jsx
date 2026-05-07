@@ -253,20 +253,6 @@ export default function MenuManager() {
         ) : (
           <div className="space-y-20">
             <InventoryTab />
-            <DeliverySettingsTab
-              deliveryRadius={deliveryRadius}
-              setDeliveryRadius={setDeliveryRadius}
-              deliveryFee={deliveryFee}
-              setDeliveryFee={setDeliveryFee}
-              freeDeliveryThreshold={freeDeliveryThreshold}
-              setFreeDeliveryThreshold={setFreeDeliveryThreshold}
-              isDeliveryFeeEnabled={isDeliveryFeeEnabled}
-              setIsDeliveryFeeEnabled={setIsDeliveryFeeEnabled}
-              isFreeDeliveryEnabled={isFreeDeliveryEnabled}
-              setIsFreeDeliveryEnabled={setIsFreeDeliveryEnabled}
-              isDeliveryPaused={isDeliveryPaused}
-              setIsDeliveryPaused={setIsDeliveryPaused}
-            />
           </div>
         )}
       </main>
