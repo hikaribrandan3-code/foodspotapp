@@ -85,7 +85,9 @@ const TRANSLATIONS = {
     codeSent: 'Check your email for the reset code',
     passwordUpdated: 'Password updated! Log in now.',
     resetTitle: 'Reset Password',
-    enterEmail: 'Enter your email'
+    enterEmail: 'Enter your email',
+    needHelp: 'Need help?',
+    contactSupport: 'Contact support on WhatsApp'
   },
   es: {
     createAccount: 'Crear cuenta empresarial',
@@ -134,7 +136,9 @@ const TRANSLATIONS = {
     codeSent: 'Revisa tu email para el código',
     passwordUpdated: '¡Contraseña actualizada! Inicia sesión ahora.',
     resetTitle: 'Restablecer Contraseña',
-    enterEmail: 'Ingresa tu email'
+    enterEmail: 'Ingresa tu email',
+    needHelp: '¿Necesitas ayuda?',
+    contactSupport: 'Contacta soporte en WhatsApp'
   },
   pt: {
     createAccount: 'Criar conta empresarial',
@@ -183,7 +187,9 @@ const TRANSLATIONS = {
     codeSent: 'Verifique seu email para o código',
     passwordUpdated: 'Senha atualizada! Faça login agora.',
     resetTitle: 'Redefinir Senha',
-    enterEmail: 'Insira seu email'
+    enterEmail: 'Insira seu email',
+    needHelp: 'Precisa de ajuda?',
+    contactSupport: 'Contato com suporte no WhatsApp'
   }
 }
 
@@ -827,6 +833,15 @@ const TrialSignup = () => {
                   </p>
                 </div>
               )}
+
+              <div className="dm-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '20px' }}>
+                <p className="dm-footer__text">
+                  {l.needHelp}{' '}
+                  <a href="https://wa.me/543512122600?text=I need help with FoodSpot" target="_blank" rel="noopener noreferrer" className="dm-footer__link">
+                    {l.contactSupport}
+                  </a>
+                </p>
+              </div>
             </div>
 
             {isSignup && <FloatingBadge number={l.trialDays} text={l.trialText} />}
