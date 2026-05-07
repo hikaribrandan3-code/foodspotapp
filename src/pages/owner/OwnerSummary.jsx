@@ -42,6 +42,33 @@ function OwnerSummary() {
     const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
     const discordWebhookInitialized = useRef(false)
 
+    // External Links local state
+    const [instagramInput, setInstagramInput] = useState('')
+    const [instagramSaving, setInstagramSaving] = useState(false)
+    const [instagramSaved, setInstagramSaved] = useState(false)
+    const instagramInitialized = useRef(false)
+
+    const [tiktokInput, setTiktokInput] = useState('')
+    const [tiktokSaving, setTiktokSaving] = useState(false)
+    const [tiktokSaved, setTiktokSaved] = useState(false)
+    const tiktokInitialized = useRef(false)
+
+    const [rappiInput, setRappiInput] = useState('')
+    const [rappiSaving, setRappiSaving] = useState(false)
+    const [rappiSaved, setRappiSaved] = useState(false)
+    const rappiInitialized = useRef(false)
+
+    const [pedidosyaInput, setPedidosyaInput] = useState('')
+    const [pedidosyaSaving, setPedidosyaSaving] = useState(false)
+    const [pedidosyaSaved, setPedidosyaSaved] = useState(false)
+    const pedidosyaInitialized = useRef(false)
+
+    // MP Access Token local state
+    const [mpTokenInput, setMpTokenInput] = useState('')
+    const [mpTokenSaving, setMpTokenSaving] = useState(false)
+    const [mpTokenSaved, setMpTokenSaved] = useState(false)
+    const mpTokenInitialized = useRef(false)
+
     // Business Currency
     const [businessCurrency, setBusinessCurrency] = useState('ARS')
     const [currencySaving, setCurrencySaving] = useState(false)
@@ -235,6 +262,43 @@ function OwnerSummary() {
         }
     }, [appConfig?.businessCurrency, appConfig])
 
+    // Sync external links from server on first load
+    useEffect(() => {
+        if (!instagramInitialized.current && appConfig?.externalOrdering?.instagramUrl !== undefined) {
+            setInstagramInput(appConfig.externalOrdering.instagramUrl || '')
+            instagramInitialized.current = true
+        }
+    }, [appConfig?.externalOrdering?.instagramUrl])
+
+    useEffect(() => {
+        if (!tiktokInitialized.current && appConfig?.externalOrdering?.tiktokUrl !== undefined) {
+            setTiktokInput(appConfig.externalOrdering.tiktokUrl || '')
+            tiktokInitialized.current = true
+        }
+    }, [appConfig?.externalOrdering?.tiktokUrl])
+
+    useEffect(() => {
+        if (!rappiInitialized.current && appConfig?.externalOrdering?.rappiUrl !== undefined) {
+            setRappiInput(appConfig.externalOrdering.rappiUrl || '')
+            rappiInitialized.current = true
+        }
+    }, [appConfig?.externalOrdering?.rappiUrl])
+
+    useEffect(() => {
+        if (!pedidosyaInitialized.current && appConfig?.externalOrdering?.pedidosYaUrl !== undefined) {
+            setPedidosyaInput(appConfig.externalOrdering.pedidosYaUrl || '')
+            pedidosyaInitialized.current = true
+        }
+    }, [appConfig?.externalOrdering?.pedidosYaUrl])
+
+    // Sync MP Token from server on first load
+    useEffect(() => {
+        if (!mpTokenInitialized.current && tenantData?.mp_access_token !== undefined) {
+            setMpTokenInput(tenantData.mp_access_token || '')
+            mpTokenInitialized.current = true
+        }
+    }, [tenantData?.mp_access_token])
+
     const updatePayments = (updates) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = setTimeout(async () => {
@@ -307,15 +371,34 @@ function OwnerSummary() {
         saveBusinessCurrency(currencyCode)
     }
 
-    const updateBrandingCloud = async (field, value) => {
-        const columnMap = {
-            mercadoPagoAccessToken: 'mp_access_token'
+    const saveExternalLink = async (field, input, setSaving, setSaved) => {
+        setSaving(true)
+        setSaved(false)
+        try {
+            const updates = { [field]: input }
+            const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            setSaved(true)
+            setTimeout(() => setSaved(false), 2000)
+        } catch (err) {
+            console.error('Failed to save:', err)
+        } finally {
+            setSaving(false)
         }
-        const column = columnMap[field]
-        if (!column) return
+    }
 
-        await supabase.from('branding').update({ [column]: value }).eq('business_id', businessId)
-        await refreshTenantData()
+    const saveMpToken = async () => {
+        setMpTokenSaving(true)
+        setMpTokenSaved(false)
+        try {
+            await supabase.from('branding').update({ mp_access_token: mpTokenInput }).eq('business_id', businessId)
+            setMpTokenSaved(true)
+            setTimeout(() => setMpTokenSaved(false), 2000)
+        } catch (err) {
+            console.error('Failed to save MP token:', err)
+        } finally {
+            setMpTokenSaving(false)
+        }
     }
 
     return (
@@ -509,19 +592,51 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <InputField
-                                        label="Instagram"
-                                        value={appConfig?.externalOrdering?.instagramUrl || ''}
-                                        onChange={(e) => updateExternalOrdering({ instagramUrl: e.target.value })}
-                                        placeholder="https://instagram.com/yourrestaurant"
-                                    />
-                                    <InputField
-                                        label="TikTok"
-                                        value={appConfig?.externalOrdering?.tiktokUrl || ''}
-                                        onChange={(e) => updateExternalOrdering({ tiktokUrl: e.target.value })}
-                                        placeholder="https://tiktok.com/@yourrestaurant"
-                                    />
-                                    <div className="space-y-2">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Instagram</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="https://instagram.com/yourrestaurant"
+                                                value={instagramInput}
+                                                onChange={(e) => setInstagramInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={() => saveExternalLink('instagramUrl', instagramInput, setInstagramSaving, setInstagramSaved)}
+                                                disabled={instagramSaving}
+                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {instagramSaved ? <Check size={16} /> : (instagramSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {instagramSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">TikTok</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="https://tiktok.com/@yourrestaurant"
+                                                value={tiktokInput}
+                                                onChange={(e) => setTiktokInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={() => saveExternalLink('tiktokUrl', tiktokInput, setTiktokSaving, setTiktokSaved)}
+                                                disabled={tiktokSaving}
+                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {tiktokSaved ? <Check size={16} /> : (tiktokSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {tiktokSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
+                                    </div>
+
+                                    <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-white/5">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-stone-950 dark:text-white">Rappi</span>
                                             <ToggleSwitch
@@ -529,12 +644,26 @@ function OwnerSummary() {
                                                 onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
                                             />
                                         </div>
-                                        <InputField
-                                            value={appConfig?.externalOrdering?.rappiUrl || ''}
-                                            onChange={(e) => updateExternalOrdering({ rappiUrl: e.target.value })}
-                                            placeholder={t('rappi_placeholder') || 'Rappi URL'}
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder={t('rappi_placeholder') || 'Rappi URL'}
+                                                value={rappiInput}
+                                                onChange={(e) => setRappiInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={() => saveExternalLink('rappiUrl', rappiInput, setRappiSaving, setRappiSaved)}
+                                                disabled={rappiSaving}
+                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {rappiSaved ? <Check size={16} /> : (rappiSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {rappiSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
                                     </div>
+
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-stone-950 dark:text-white">PedidosYa</span>
@@ -543,11 +672,24 @@ function OwnerSummary() {
                                                 onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
                                             />
                                         </div>
-                                        <InputField
-                                            value={appConfig?.externalOrdering?.pedidosYaUrl || ''}
-                                            onChange={(e) => updateExternalOrdering({ pedidosYaUrl: e.target.value })}
-                                            placeholder={t('pedidosya_placeholder') || 'PedidosYa URL'}
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder={t('pedidosya_placeholder') || 'PedidosYa URL'}
+                                                value={pedidosyaInput}
+                                                onChange={(e) => setPedidosyaInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={() => saveExternalLink('pedidosYaUrl', pedidosyaInput, setPedidosyaSaving, setPedidosyaSaved)}
+                                                disabled={pedidosyaSaving}
+                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {pedidosyaSaved ? <Check size={16} /> : (pedidosyaSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {pedidosyaSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
                                     </div>
                                 </div>
                             </motion.div>
@@ -600,20 +742,29 @@ function OwnerSummary() {
                                     </div>
 
                                     {/* Access Token */}
-                                    <InputField
-                                        label={t('mp_access_token') || 'Access Token'}
-                                        type="password"
-                                        value={tenantData?.mp_access_token || ''}
-                                        onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)}
-                                        placeholder="APP_1234567890abcdef..."
-                                    />
-                                    {tenantData?.mp_access_token ? (
-                                        <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                            <Check size={12} /> {t('mp_token_saved') || 'Token saved'}
-                                        </p>
-                                    ) : (
-                                        <p className="text-xs text-red-500 dark:text-red-400">{t('mp_token_required') || 'Token required for payments'}</p>
-                                    )}
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('mp_access_token') || 'Access Token'}</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="password"
+                                                placeholder="APP_1234567890abcdef..."
+                                                value={mpTokenInput}
+                                                onChange={(e) => setMpTokenInput(e.target.value)}
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={saveMpToken}
+                                                disabled={mpTokenSaving}
+                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                            >
+                                                {mpTokenSaved ? <Check size={16} /> : (mpTokenSaving ? '...' : 'Save')}
+                                            </motion.button>
+                                        </div>
+                                        {mpTokenSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Token saved</p>}
+                                        {!mpTokenSaved && mpTokenInput && <p className="text-xs text-stone-400 dark:text-white mt-1">Click Save to update</p>}
+                                        {!mpTokenSaved && !mpTokenInput && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{t('mp_token_required') || 'Token required for payments'}</p>}
+                                    </div>
 
                                     {/* Alias */}
                                     <div>
