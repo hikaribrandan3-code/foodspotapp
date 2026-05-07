@@ -1054,19 +1054,23 @@ const Settings = () => {
 
                                     {/* Content Input */}
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{labels[pillId]}</span>
-                                            <label className="switch-label">
-                                                <span style={{ color: isActive ? '#22C55E' : '#94A3B8' }}>
-                                                    {isActive ? t('visible') : t('hidden')}
-                                                </span>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!isActive}
-                                                    onChange={(e) => updateInfoPill(pillId, { enabled: e.target.checked })}
-                                                    style={{ accentColor: '#10B981' }}
-                                                />
-                                            </label>
+                                            {pillId !== 'adminAccess' ? (
+                                                <label className="switch-label">
+                                                    <span style={{ color: isActive ? '#10B981' : '#94A3B8', fontWeight: 600 }}>
+                                                        {isActive ? t('visible') : t('hidden')}
+                                                    </span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!isActive}
+                                                        onChange={(e) => updateInfoPill(pillId, { enabled: e.target.checked })}
+                                                        style={{ accentColor: '#10B981' }}
+                                                    />
+                                                </label>
+                                            ) : (
+                                                <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>Always visible</span>
+                                            )}
                                         </div>
                                         {pillId !== 'adminAccess' && (
                                             <input
