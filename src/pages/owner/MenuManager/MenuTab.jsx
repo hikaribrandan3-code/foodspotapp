@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Camera, X, Flame } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -14,6 +14,7 @@ export default function MenuTab({
   businessId
 }) {
   const { t } = useLanguage();
+  const fileInputRef = useRef(null);
   const [isAdding, setIsAdding] = useState(false);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
@@ -27,6 +28,17 @@ export default function MenuTab({
   const filteredItems = activeCategory
     ? menuItems.filter((item) => item.category === activeCategory)
     : menuItems;
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setNewRecipe({ ...newRecipe, image: event.target?.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleAddRecipe = () => {
     if (!newRecipe.name || !newRecipe.price) return;
@@ -162,7 +174,17 @@ export default function MenuTab({
               className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[2.5rem] md:rounded-[3rem] shadow-2xl relative z-10 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row"
             >
               {/* Photo Upload Side */}
-              <div className="w-full md:w-2/5 bg-stone-100 flex flex-col items-center justify-center p-8 border-b md:border-b-0 md:border-r border-stone-200 group/upload cursor-pointer relative overflow-hidden">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full md:w-2/5 bg-stone-100 flex flex-col items-center justify-center p-8 border-b md:border-b-0 md:border-r border-stone-200 group/upload cursor-pointer relative overflow-hidden"
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoSelect}
+                  className="hidden"
+                />
                 <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `radial-gradient(circle, #000 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
                 <div className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg mb-4 text-stone-300 group-hover/upload:text-emerald-500 transition-colors z-10">
                   <Camera className="h-10 w-10" />

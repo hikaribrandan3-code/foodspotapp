@@ -41,7 +41,7 @@ export default function MenuItemCard({ item, onUpdate }) {
         !inStock ? 'opacity-60 saturate-[0.2]' : ''
       }`}
     >
-      <div className="relative h-72 w-full overflow-hidden">
+      <div className="relative h-56 w-full overflow-hidden">
         <img
           src={item.image_url || item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
           alt={item.name}
@@ -108,7 +108,7 @@ export default function MenuItemCard({ item, onUpdate }) {
         </div>
       </div>
 
-      <div className="flex flex-grow flex-col gap-6 p-8 md:p-12">
+      <div className="flex flex-grow flex-col gap-4 p-6 md:p-12">
         <div className="flex justify-between items-start gap-4">
           <h4 className="flex-grow font-['Outfit',sans-serif] text-3xl md:text-4xl font-black text-stone-950 leading-[1.1] italic">
             {item.name}
@@ -124,7 +124,7 @@ export default function MenuItemCard({ item, onUpdate }) {
           value={description}
           onChange={handleDescriptionChange}
           placeholder="Briefly describe the flavor profile..."
-          className="w-full h-24 bg-transparent text-base md:text-lg font-medium leading-relaxed text-stone-500 italic resize-none border-none outline-none focus:text-stone-900 transition-colors"
+          className="w-full h-16 bg-transparent text-base md:text-lg font-medium leading-relaxed text-stone-500 italic resize-none border-none outline-none focus:text-stone-900 transition-colors"
         />
 
         <div className="flex items-center justify-between mt-auto pt-6 border-t border-stone-100">
