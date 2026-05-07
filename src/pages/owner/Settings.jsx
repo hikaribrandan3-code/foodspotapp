@@ -1019,8 +1019,8 @@ const Settings = () => {
                             </button>
                         </div>
                     </div>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('info_pills_desc')}</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, marginTop: -4 }}>{t('info_pills_desc')}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                         {['whatsapp', 'rappi', 'mercadoPago', 'pedidosYa', 'adminAccess'].map(pillId => {
                             const pillData = draft.info_pills[pillId] || {};
                             const isActive = pillData.enabled;
