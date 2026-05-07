@@ -18,6 +18,7 @@ export default function MenuManager() {
   const [activeTab, setActiveTab] = useState('menu');
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [categoryMap, setCategoryMap] = useState({});
   const [activeCategory, setActiveCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState(null);
@@ -35,8 +36,28 @@ export default function MenuManager() {
   useEffect(() => {
     if (!businessId) return;
     fetchMenuItems();
+    fetchCategories();
     loadDeliverySettings();
   }, [businessId]);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('business_id', businessId);
+
+      if (!error && data) {
+        const map = {};
+        data.forEach((cat) => {
+          map[cat.name] = cat.id;
+        });
+        setCategoryMap(map);
+      }
+    } catch (err) {
+      console.error('[MenuManager] Error fetching categories:', err);
+    }
+  };
 
   const fetchMenuItems = async () => {
     setIsLoading(true);
@@ -246,6 +267,7 @@ export default function MenuManager() {
             <MenuTab
               menuItems={menuItems}
               categories={categories}
+              categoryMap={categoryMap}
               activeCategory={activeCategory}
               onSelectCategory={setActiveCategory}
               onItemUpdate={saveItemField}

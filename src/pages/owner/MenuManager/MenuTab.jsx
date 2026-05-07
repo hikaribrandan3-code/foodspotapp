@@ -7,6 +7,7 @@ import MenuItemCard from './MenuItemCard';
 export default function MenuTab({
   menuItems,
   categories,
+  categoryMap,
   activeCategory,
   onSelectCategory,
   onItemUpdate,
@@ -43,6 +44,9 @@ export default function MenuTab({
   const handleAddRecipe = () => {
     if (!newRecipe.name || !newRecipe.price) return;
 
+    const categoryName = newRecipe.category || activeCategory || 'General';
+    const categoryId = categoryMap[categoryName] || categoryName;
+
     const item = {
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9),
       business_id: businessId,
@@ -56,7 +60,7 @@ export default function MenuTab({
       is_vegan: false,
       is_gluten_free: false,
       is_spicy: false,
-      category_id: newRecipe.category || activeCategory || 'General'
+      category_id: categoryId
     };
 
     onAddItem(item);
