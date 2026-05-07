@@ -13,11 +13,14 @@ export default function MenuTab({
   onItemUpdate,
   onAddItem,
   onAddCategory,
+  onDeleteCategory,
   businessId
 }) {
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [heldCategoryId, setHeldCategoryId] = useState(null);
+  const longPressTimerRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -44,6 +47,23 @@ export default function MenuTab({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCategoryMouseDown = (categoryId) => {
+    longPressTimerRef.current = setTimeout(() => {
+      setHeldCategoryId(categoryId);
+    }, 2000);
+  };
+
+  const handleCategoryMouseUp = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+  };
+
+  const handleCategoryDelete = (categoryId, categoryName) => {
+    setHeldCategoryId(null);
+    onDeleteCategory(categoryId, categoryName);
   };
 
   const handleAddRecipe = () => {
@@ -137,17 +157,43 @@ export default function MenuTab({
           All Categories
         </button>
         {categoryList && categoryList.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => onSelectCategory(cat.id)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
-              activeCategory === cat.id
-                ? 'bg-emerald-600 text-white shadow-lg'
-                : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
-            }`}
-          >
-            {cat.name} ({cat.count})
-          </button>
+          <div key={cat.id} className="relative">
+            <button
+              onMouseDown={() => handleCategoryMouseDown(cat.id)}
+              onMouseUp={handleCategoryMouseUp}
+              onMouseLeave={handleCategoryMouseUp}
+              onClick={() => {
+                if (heldCategoryId !== cat.id) {
+                  onSelectCategory(cat.id);
+                }
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+                heldCategoryId === cat.id
+                  ? 'bg-red-100 text-red-700 border border-red-300'
+                  : activeCategory === cat.id
+                  ? 'bg-emerald-600 text-white shadow-lg'
+                  : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
+              }`}
+            >
+              {heldCategoryId === cat.id ? '🗑️ Delete?' : `${cat.name} (${cat.count})`}
+            </button>
+            {heldCategoryId === cat.id && (
+              <div className="absolute top-full mt-2 left-0 flex gap-2 z-20">
+                <button
+                  onClick={() => handleCategoryDelete(cat.id, cat.name)}
+                  className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setHeldCategoryId(null)}
+                  className="px-3 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 hover:bg-stone-400 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         ))}
         <button
           onClick={onAddCategory}

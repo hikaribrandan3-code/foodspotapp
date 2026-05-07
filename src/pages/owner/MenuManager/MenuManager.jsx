@@ -165,6 +165,28 @@ export default function MenuManager() {
     }
   }, [businessId, t]);
 
+  const handleDeleteCategory = useCallback(async (categoryId, categoryName) => {
+    if (!window.confirm(`Delete category "${categoryName}"? This will not delete items in it.`)) return;
+
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', categoryId)
+      .eq('business_id', businessId);
+
+    if (error) {
+      console.error('[MenuManager] Delete category error:', error);
+      setSaveStatus({ error: true, message: t('category_delete_error') || 'Failed to delete category.' });
+    } else {
+      setSaveStatus({ error: false, message: t('category_deleted') || 'Category deleted' });
+      setTimeout(() => setSaveStatus(null), 2000);
+      if (activeCategory === categoryId) {
+        setActiveCategory('');
+      }
+      fetchCategories();
+    }
+  }, [businessId, activeCategory, t]);
+
   // Keep menu_data JSONB in sync for backward compatibility with customer Menu.jsx
   const syncMenuDataToJsonb = async (items) => {
     if (!businessId) return;
@@ -275,6 +297,7 @@ export default function MenuManager() {
               onItemUpdate={saveItemField}
               onAddItem={handleAddItem}
               onAddCategory={handleAddCategory}
+              onDeleteCategory={handleDeleteCategory}
               businessId={businessId}
             />
             <DeliverySettingsTab
