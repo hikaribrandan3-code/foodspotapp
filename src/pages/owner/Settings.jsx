@@ -914,12 +914,13 @@ const Settings = () => {
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_b_color,
-                                        border: '3px solid #000',
-                                        boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                                        border: 'none',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#000',
+                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
                                         opacity: 1,
-                                        filter: 'none'
+                                        filter: 'saturate(1.2)',
+                                        textShadow: '0 0 2px rgba(255,255,255,0.5)'
                                     }}
                                 >B</div>
                                 <div
@@ -927,12 +928,13 @@ const Settings = () => {
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_a_color,
-                                        border: '3px solid #000',
-                                        boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                                        border: 'none',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#000',
+                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
                                         opacity: 1,
-                                        filter: 'none'
+                                        filter: 'saturate(1.2)',
+                                        textShadow: '0 0 2px rgba(255,255,255,0.5)'
                                     }}
                                 >A</div>
                             </div>
