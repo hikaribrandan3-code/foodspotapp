@@ -9,6 +9,7 @@ import {
 import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
@@ -31,6 +32,7 @@ function OwnerSummary() {
     const appConfig = tenantData?.app_config || {}
     const [businessInfoLocal, setBusinessInfoLocal] = useState({})
     const [showAuditor, setShowAuditor] = useState(false)
+    const [showOnboarding, setShowOnboarding] = useState(false)
     const debounceTimerRef = useRef(null)
     const businessInfoDebounceRef = useRef(null)
     const [mpAliasInput, setMpAliasInput] = useState('')
@@ -147,6 +149,26 @@ function OwnerSummary() {
     useEffect(() => {
         getSession().then(s => setSession(s)).catch(() => setSession(null))
     }, [])
+
+    // Check if onboarding is complete
+    useEffect(() => {
+        if (tenantData?.branding && !tenantData.branding.onboarding_data) {
+            setShowOnboarding(true)
+        }
+    }, [tenantData?.branding?.onboarding_data])
+
+    const handleOnboardingComplete = async (formData) => {
+        try {
+            await supabase
+                .from('branding')
+                .update({ onboarding_data: formData })
+                .eq('business_id', businessId)
+            setShowOnboarding(false)
+            await refreshTenantData()
+        } catch (err) {
+            console.error('Failed to save onboarding:', err)
+        }
+    }
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -397,6 +419,7 @@ function OwnerSummary() {
 
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-[#020617] font-sans antialiased">
+            <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
             <BackendHeader
                 title={t('summary')}
                 onLogout={handleLogout}
