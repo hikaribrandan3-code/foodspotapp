@@ -659,14 +659,15 @@ Question: ${userText}`;
                             />
                             <button
                                 onClick={() => fileInputRef.current.click()}
+                                disabled
                                 style={{
                                     width: 44,
                                     height: 44,
                                     background: 'transparent',
                                     border: 'none',
                                     fontSize: 28,
-                                    cursor: 'pointer',
-                                    display: 'flex',
+                                    cursor: 'not-allowed',
+                                    display: 'none',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: '#6b7280',
