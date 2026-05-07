@@ -146,7 +146,7 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
-    const justSavedRef = useRef(false); // 🛡️ Blocks Data Pump from overwriting after save
+    const justSavedRef = useRef(false); // Guard: Blocks Data Pump from overwriting after save
 
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
@@ -388,13 +388,13 @@ const Settings = () => {
         window.location.href = `/${tenant?.slug || ''}`;
     };
 
-    // 💾 ATOMIC SAVE (v7 — Self-Healing via updateBranding)
+    // ATOMIC SAVE (v7 — Self-Healing via updateBranding)
     const handlePlatformSave = async () => {
         if (!businessId) return;
         setIsSaving(true);
-        console.log('💾 SAVING BRANDING — business:', businessId);
+        console.log('SAVING BRANDING — business:', businessId);
 
-        // 🛡️ GUARD: Prevent Data Pump from overwriting local state with stale DB data
+        // GUARD: Prevent Data Pump from overwriting local state with stale DB data
         justSavedRef.current = true;
 
         try {
@@ -429,15 +429,15 @@ const Settings = () => {
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
 
-            // 🛡️ STRICT CHECK: Only show success if data was actually written
+            // STRICT CHECK: Only show success if data was actually written
             if (saveError || !savedData) {
                 throw saveError || new Error('Save returned no data');
             }
 
-            // ✅ Apply confirmed data to context + cache
+            // Apply confirmed data to context + cache
             Object.assign(tenant, savedData);
 
-            // 🗺️ FRONTEND SYNC: Map flat DB rows to nested UI config
+            // FRONTEND SYNC: Map flat DB rows to nested UI config
             const frontendSyncData = {
                 ...savedData,
                 colors: {
@@ -474,9 +474,9 @@ const Settings = () => {
             setTimeout(() => { justSavedRef.current = false; }, 2000);
 
         } catch (error) {
-            console.error('💾 Save failed:', error);
+            console.error('Save failed:', error);
             justSavedRef.current = false;
-            setSaveStatus({ error: true, message: t('save_error') || 'Save failed. Please try again.' });
+            setSaveStatus({ error: true, message: t('save_failed') });
         } finally {
             setIsSaving(false);
         }
@@ -554,7 +554,7 @@ const Settings = () => {
                                                 style={{ fontFamily: font }}
                                             >
                                                 {font}
-                                                {draft.font_family === font && <span className="check">✓</span>}
+                                                {draft.font_family === font && <span className="check">{t('selected')}</span>}
                                             </div>
                                         ))}
                                     </div>
@@ -593,7 +593,7 @@ const Settings = () => {
                                                 style={{ fontWeight: option.value }}
                                             >
                                                 {option.label}
-                                                {draft.font_weight === option.value && <span className="check">✓</span>}
+                                                {draft.font_weight === option.value && <span className="check">{t('selected')}</span>}
                                             </div>
                                         ))}
                                     </div>
@@ -651,7 +651,7 @@ const Settings = () => {
                             className="hero-preview-text"
                             style={{ fontFamily: draft.font_family, fontWeight: draft.font_weight }}
                         >
-                            {draft.business_name || 'Business Name'}
+                            {draft.business_name || t('business_name_placeholder')}
                         </div>
                     )}
 
@@ -682,7 +682,7 @@ const Settings = () => {
                         onSave={(data) => {
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
-                            // 🚀 NEW STANDARD: px/py for percentage based positioning
+                            // NEW STANDARD: px/py for percentage based positioning
                             const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&px=${data.posX}&py=${data.posY}`;
                             updateDraftField('hero_url', finalUrl);
                             setShowCoverEditor(false);
@@ -910,7 +910,7 @@ const Settings = () => {
                             {/* A/B Buttons */}
                             <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
                                 <div
-                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', draft.munchboy_b_color)}
+                                    onClick={() => openColorPicker(t('munchboy_b_button_color'), 'munchboy_b_color', '', draft.munchboy_b_color)}
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_b_color,
@@ -922,7 +922,7 @@ const Settings = () => {
                                     }}
                                 >B</div>
                                 <div
-                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', draft.munchboy_a_color)}
+                                    onClick={() => openColorPicker(t('munchboy_a_button_color'), 'munchboy_a_color', '', draft.munchboy_a_color)}
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_a_color,
@@ -941,34 +941,34 @@ const Settings = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                         <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                             <div 
-                                onClick={() => openColorPicker('Shell', 'munchboy_shell_color', '', draft.munchboy_shell_color)}
+                                onClick={() => openColorPicker(t('munchboy_shell'), 'munchboy_shell_color', '', draft.munchboy_shell_color)}
                                 style={{
                                     width: 36, height: 36, borderRadius: 8,
                                     background: draft.munchboy_shell_color,
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
-                                title="Shell"
+                                title={t('munchboy_shell')}
                             />
                             <div 
-                                onClick={() => openColorPicker('A Button', 'munchboy_a_color', '', draft.munchboy_a_color)}
+                                onClick={() => openColorPicker(t('munchboy_a_button'), 'munchboy_a_color', '', draft.munchboy_a_color)}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
                                     background: draft.munchboy_a_color,
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
-                                title="A Button"
+                                title={t('munchboy_a_button')}
                             />
                             <div 
-                                onClick={() => openColorPicker('B Button', 'munchboy_b_color', '', draft.munchboy_b_color)}
+                                onClick={() => openColorPicker(t('munchboy_b_button'), 'munchboy_b_color', '', draft.munchboy_b_color)}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
                                     background: draft.munchboy_b_color,
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
-                                title="B Button"
+                                title={t('munchboy_b_button')}
                             />
                         </div>
                         
@@ -1006,19 +1006,19 @@ const Settings = () => {
                             const content = pillData.content || '';
 
                             const labels = {
-                                whatsapp: 'WhatsApp',
-                                rappi: 'Rappi',
-                                mercadoPago: 'Mercado Pago',
-                                pedidosYa: 'PedidosYa',
-                                adminAccess: 'Admin Login'
+                                whatsapp: t('label_whatsapp'),
+                                rappi: t('label_rappi'),
+                                mercadoPago: t('label_mercado_pago'),
+                                pedidosYa: t('label_pedidosya'),
+                                adminAccess: t('admin_login')
                             };
 
                             const placeHolders = {
-                                whatsapp: '+54 9 11 1234 5678',
-                                rappi: 'https://rappi.com/...',
-                                mercadoPago: 'ALIAS.MP',
-                                pedidosYa: 'https://pedidosya.com/...',
-                                adminAccess: 'N/A'
+                                whatsapp: t('phone_placeholder'),
+                                rappi: t('rappi_placeholder'),
+                                mercadoPago: t('mp_alias_placeholder'),
+                                pedidosYa: t('pedidosya_placeholder'),
+                                adminAccess: t('not_applicable')
                             };
 
                             return (
@@ -1079,10 +1079,10 @@ const Settings = () => {
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             {[
-                                { key: 'pickup',   label: 'Pickup',   defaultOn: true  },
-                                { key: 'delivery', label: 'Delivery', defaultOn: true  },
-                                { key: 'dineIn',   label: 'Dine In',  defaultOn: false },
-                                { key: 'events',   label: 'Events',   defaultOn: false },
+                                { key: 'pickup',   label: t('pickup'),   defaultOn: true  },
+                                { key: 'delivery', label: t('delivery'), defaultOn: true  },
+                                { key: 'dineIn',   label: t('dine_in'),  defaultOn: false },
+                                { key: 'events',   label: t('events'),   defaultOn: false },
                             ].map(({ key, label, defaultOn }) => {
                                 const on = draft.service_modes?.[key] ?? defaultOn;
                                 return (
@@ -1117,8 +1117,8 @@ const Settings = () => {
                             </p>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 {[
-                                    { value: 'before', label: 'Pay Before (Upfront)' },
-                                    { value: 'after',  label: 'Pay After (At End)'  },
+                                    { value: 'before', label: t('pay_before_upfront') },
+                                    { value: 'after',  label: t('pay_after_table')  },
                                 ].map(({ value, label }) => {
                                     const active = draft.service_modes?.dineInPayment === value;
                                     return (
@@ -1150,8 +1150,8 @@ const Settings = () => {
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             {[
-                                { key: 'cash',         label: 'Cash'         },
-                                { key: 'mercado_pago', label: 'Mercado Pago' },
+                                { key: 'cash',         label: t('cash')         },
+                                { key: 'mercado_pago', label: t('label_mercado_pago') },
                             ].map(({ key, label }) => {
                                 const on = draft.payment_methods?.[key] ?? true;
                                 return (
@@ -1205,7 +1205,7 @@ const Settings = () => {
                     display: 'flex', alignItems: 'center', gap: 8,
                     animation: 'fadeIn 0.2s ease-out'
                 }}>
-                    <span style={{ fontWeight: 700 }}>{saveStatus.error ? '!' : '✓'}</span> {saveStatus.message}
+                    <span style={{ fontWeight: 700 }}>{saveStatus.error ? '!' : ''}</span> {saveStatus.message}
                 </div>
             )}
 
