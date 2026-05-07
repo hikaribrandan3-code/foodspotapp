@@ -185,11 +185,21 @@ export default function MenuTab({
                   onChange={handlePhotoSelect}
                   className="hidden"
                 />
-                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `radial-gradient(circle, #000 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
-                <div className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg mb-4 text-stone-300 group-hover/upload:text-emerald-500 transition-colors z-10">
-                  <Camera className="h-10 w-10" />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 z-10">{t('add_food_photo') || 'Add Food Photo'}</p>
+                {newRecipe.image && !newRecipe.image.startsWith('https') ? (
+                  <img
+                    src={newRecipe.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover absolute inset-0"
+                  />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `radial-gradient(circle, #000 1px, transparent 1px)`, backgroundSize: '20px 20px' }}></div>
+                    <div className="h-20 w-20 rounded-full bg-white flex items-center justify-center shadow-lg mb-4 text-stone-300 group-hover/upload:text-emerald-500 transition-colors z-10">
+                      <Camera className="h-10 w-10" />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 z-10">{t('add_food_photo') || 'Add Food Photo'}</p>
+                  </>
+                )}
                 <div className="absolute inset-0 bg-emerald-50 opacity-0 group-hover/upload:opacity-100 transition-opacity"></div>
               </div>
 
