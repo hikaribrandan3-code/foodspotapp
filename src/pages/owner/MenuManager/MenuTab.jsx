@@ -56,7 +56,7 @@ export default function MenuTab({
       is_vegan: false,
       is_gluten_free: false,
       is_spicy: false,
-      category: newRecipe.category || activeCategory || 'General'
+      category_id: newRecipe.category || activeCategory || 'General'
     };
 
     onAddItem(item);
