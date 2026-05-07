@@ -470,10 +470,15 @@
   z-index: 1;
 }
 
-/* D-pad press state */
+/* D-pad press state — entire cross drops like A/B buttons */
+.dpad-cross.pressed {
+  transform: translateY(4px);
+  filter: none;
+  transition: transform 0.05s ease, filter 0.05s ease;
+}
+
 .dpad-area:active,
 .dpad-diagonal:active {
-  transform: scale(0.97) translateY(2px);
   filter: brightness(0.97);
 }
 

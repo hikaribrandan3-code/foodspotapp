@@ -55,6 +55,8 @@ export function HikariBoy({
   const gameFrameRef = useRef(null);
   const loaderStartRef = useRef(0);
   const gameStartedRef = useRef(false);
+  const dpadCrossRef = useRef(null);
+  const dpadPressCount = useRef(0);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -168,6 +170,20 @@ export function HikariBoy({
       return () => clearTimeout(timer);
     }
   }, [showLoader]);
+
+  const pressDpad = (button) => {
+    dpadPressCount.current += 1;
+    dpadCrossRef.current?.classList.add('pressed');
+    handleButtonPress(button);
+  };
+
+  const releaseDpad = (button) => {
+    dpadPressCount.current = Math.max(0, dpadPressCount.current - 1);
+    if (dpadPressCount.current === 0) {
+      dpadCrossRef.current?.classList.remove('pressed');
+    }
+    handleButtonRelease(button);
+  };
 
   const handleButtonPress = (button) => {
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
@@ -313,63 +329,63 @@ export function HikariBoy({
         <div className="hb-controls-main">
           {/* D-Pad — Cross-Shaped with black outline and center circle */}
           <div className="hb-dpad">
-            <div className="dpad-cross">
+            <div className="dpad-cross" ref={dpadCrossRef}>
               {/* Center circle */}
               <div className="dpad-center"></div>
               <button 
                 className="dpad-area dpad-up"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP); }}
-                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP); }}
-                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP); }}
-                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP); }}
+                onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP); }}
+                onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP); }}
+                onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP); }}
               ></button>
               <button 
                 className="dpad-area dpad-left"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_LEFT); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_LEFT); }}
-                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_LEFT); }}
-                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_LEFT); }}
-                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_LEFT); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_LEFT); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_LEFT); }}
+                onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_LEFT); }}
+                onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_LEFT); }}
+                onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_LEFT); }}
               ></button>
               <button 
                 className="dpad-area dpad-right"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_RIGHT); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_RIGHT); }}
-                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_RIGHT); }}
-                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_RIGHT); }}
-                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_RIGHT); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_RIGHT); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_RIGHT); }}
+                onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_RIGHT); }}
+                onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_RIGHT); }}
+                onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_RIGHT); }}
               ></button>
               <button 
                 className="dpad-area dpad-down"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN); }}
-                onMouseDown={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN); }}
-                onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN); }}
-                onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN); }}
+                onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN); }}
+                onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN); }}
+                onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN); }}
               ></button>
               <button 
                 className="dpad-diagonal dpad-up-left"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP_LEFT); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP_LEFT); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP_LEFT); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP_LEFT); }}
                 aria-label="up-left"
               />
               <button 
                 className="dpad-diagonal dpad-up-right"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_UP_RIGHT); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_UP_RIGHT); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP_RIGHT); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP_RIGHT); }}
                 aria-label="up-right"
               />
               <button 
                 className="dpad-diagonal dpad-down-left"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN_LEFT); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN_LEFT); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN_LEFT); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN_LEFT); }}
                 aria-label="down-left"
               />
               <button 
                 className="dpad-diagonal dpad-down-right"
-                onTouchStart={(e) => { e.preventDefault(); handleButtonPress(BUTTONS.DPAD_DOWN_RIGHT); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(BUTTONS.DPAD_DOWN_RIGHT); }}
+                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN_RIGHT); }}
+                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN_RIGHT); }}
                 aria-label="down-right"
               />
             </div>
