@@ -643,7 +643,7 @@ function OwnerLogin() {
                                 fontSize: '16px', 
                                 fontWeight: 900, 
                                 letterSpacing: '0.15em', 
-                                boxShadow: loading ? 'none' : '0 8px 24px rgba(255, 152, 0, 0.35)', 
+                                boxShadow: loading ? 'none' : '0 8px 24px rgba(16, 185, 129, 0.2)', 
                                 border: 'none', 
                                 cursor: loading ? 'wait' : 'pointer', 
                                 transition: 'all 0.2s ease', 
