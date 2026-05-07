@@ -217,12 +217,32 @@ function OwnerSummary() {
             const updatedConfig = { ...appConfig, businessInfo: newBusinessInfo }
             try {
                 await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-                setAutoSaveStatus({ type: 'venue', timestamp: Date.now() })
-                setTimeout(() => setAutoSaveStatus(null), 2000)
             } catch (e) {
                 console.error('Save failed:', e)
             }
         }, 800)
+    }
+
+    // Trigger pill on blur
+    const showVenueSavedPill = () => {
+        setTimeout(() => {
+            setAutoSaveStatus({ type: 'venue', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
+        }, 300)
+    }
+
+    const showLinksSavedPill = () => {
+        setTimeout(() => {
+            setAutoSaveStatus({ type: 'links', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
+        }, 300)
+    }
+
+    const showCurrencySavedPill = () => {
+        setTimeout(() => {
+            setAutoSaveStatus({ type: 'currency', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
+        }, 300)
     }
 
     const updateExternalOrdering = async (updates) => {
@@ -369,8 +389,6 @@ function OwnerSummary() {
             const updates = { [field]: input }
             const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
             await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-            setAutoSaveStatus({ type: 'links', timestamp: Date.now() })
-            setTimeout(() => setAutoSaveStatus(null), 2000)
         } catch (err) {
             console.error('Failed to save:', err)
         }
@@ -530,34 +548,62 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <InputField
-                                        label={t('whatsapp_contact') || 'WhatsApp'}
-                                        value={businessInfoLocal?.whatsapp || ''}
-                                        onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
-                                        placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
-                                    />
+                                    <div>
+                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                            {t('whatsapp_contact') || 'WhatsApp'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={businessInfoLocal?.whatsapp || ''}
+                                            onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
+                                            onBlur={showVenueSavedPill}
+                                            placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                        />
+                                    </div>
                                     <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-6 md:p-8 space-y-4 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
-                                        <InputField
-                                            label={t('address_label') || 'Address'}
-                                            value={businessInfoLocal?.address || ''}
-                                            onChange={(e) => updateBusinessInfo('address', e.target.value)}
-                                            placeholder={t('address_placeholder') || '123 Main St'}
-                                        />
-                                        <InputField
-                                            label={t('maps_link') || 'Google Maps'}
-                                            value={businessInfoLocal?.googleMapsLink || ''}
-                                            onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
-                                            placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
-                                        />
+                                        <div>
+                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                                {t('address_label') || 'Address'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={businessInfoLocal?.address || ''}
+                                                onChange={(e) => updateBusinessInfo('address', e.target.value)}
+                                                onBlur={showVenueSavedPill}
+                                                placeholder={t('address_placeholder') || '123 Main St'}
+                                                className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                                {t('maps_link') || 'Google Maps'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={businessInfoLocal?.googleMapsLink || ''}
+                                                onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
+                                                onBlur={showVenueSavedPill}
+                                                placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
+                                                className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            />
+                                        </div>
                                         <p className="text-[11px] text-stone-400 dark:text-white">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
                                     </div>
-                                    <InputField
-                                        label={t('notes') || 'Notes'}
-                                        value={businessInfoLocal?.directions || ''}
-                                        onChange={(e) => updateBusinessInfo('directions', e.target.value)}
-                                        placeholder={t('notes_placeholder') || 'Additional directions...'}
-                                    />
+                                    <div>
+                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                            {t('notes') || 'Notes'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={businessInfoLocal?.directions || ''}
+                                            onChange={(e) => updateBusinessInfo('directions', e.target.value)}
+                                            onBlur={showVenueSavedPill}
+                                            placeholder={t('notes_placeholder') || 'Additional directions...'}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                        />
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
@@ -581,25 +627,35 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <InputField
-                                        label="Instagram"
-                                        value={instagramInput}
-                                        onChange={(e) => {
-                                            setInstagramInput(e.target.value)
-                                            saveExternalLink('instagramUrl', e.target.value)
-                                        }}
-                                        placeholder="https://instagram.com/yourrestaurant"
-                                    />
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Instagram</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://instagram.com/yourrestaurant"
+                                            value={instagramInput}
+                                            onChange={(e) => {
+                                                setInstagramInput(e.target.value)
+                                                saveExternalLink('instagramUrl', e.target.value)
+                                            }}
+                                            onBlur={showLinksSavedPill}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                        />
+                                    </div>
 
-                                    <InputField
-                                        label="TikTok"
-                                        value={tiktokInput}
-                                        onChange={(e) => {
-                                            setTiktokInput(e.target.value)
-                                            saveExternalLink('tiktokUrl', e.target.value)
-                                        }}
-                                        placeholder="https://tiktok.com/@yourrestaurant"
-                                    />
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">TikTok</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://tiktok.com/@yourrestaurant"
+                                            value={tiktokInput}
+                                            onChange={(e) => {
+                                                setTiktokInput(e.target.value)
+                                                saveExternalLink('tiktokUrl', e.target.value)
+                                            }}
+                                            onBlur={showLinksSavedPill}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                        />
+                                    </div>
 
                                     <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-white/5">
                                         <div className="flex items-center justify-between">
@@ -609,13 +665,16 @@ function OwnerSummary() {
                                                 onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
                                             />
                                         </div>
-                                        <InputField
+                                        <input
+                                            type="text"
+                                            placeholder={t('rappi_placeholder') || 'https://rappi.com.br/...'}
                                             value={rappiInput}
                                             onChange={(e) => {
                                                 setRappiInput(e.target.value)
                                                 saveExternalLink('rappiUrl', e.target.value)
                                             }}
-                                            placeholder={t('rappi_placeholder') || 'Rappi URL'}
+                                            onBlur={showLinksSavedPill}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -627,13 +686,16 @@ function OwnerSummary() {
                                                 onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
                                             />
                                         </div>
-                                        <InputField
+                                        <input
+                                            type="text"
+                                            placeholder={t('pedidosya_placeholder') || 'https://pedidosya.com/...'}
                                             value={pedidosyaInput}
                                             onChange={(e) => {
                                                 setPedidosyaInput(e.target.value)
                                                 saveExternalLink('pedidosYaUrl', e.target.value)
                                             }}
-                                            placeholder={t('pedidosya_placeholder') || 'PedidosYa URL'}
+                                            onBlur={showLinksSavedPill}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
                                 </div>
