@@ -51,8 +51,22 @@ export default function MenuManager() {
         console.error('[MenuManager] Error fetching menu items:', error);
         setSaveStatus({ error: true, message: t('fetch_error') || 'Failed to load menu items.' });
       } else if (data) {
-        setMenuItems(data);
-        const cats = [...new Set(data.map((i) => i.category).filter(Boolean))];
+        // Populate category from menu_data JSONB if items lack category field
+        const enrichedData = data.map((item) => {
+          if (item.category) return item;
+          // Fallback: find category from tenantData.menu_data
+          if (tenantData?.menu_data?.categories) {
+            for (const cat of tenantData.menu_data.categories) {
+              const found = cat.items?.find((i) => i.id === item.id);
+              if (found) {
+                return { ...item, category: cat.name };
+              }
+            }
+          }
+          return item;
+        });
+        setMenuItems(enrichedData);
+        const cats = [...new Set(enrichedData.map((i) => i.category).filter(Boolean))];
         setCategories(cats);
         if (cats.length && !activeCategory) {
           setActiveCategory(cats[0]);
