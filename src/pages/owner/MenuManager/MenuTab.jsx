@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Camera, X, Flame, Leaf, Wheat, Star } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -22,6 +22,7 @@ export default function MenuTab({
   const [heldCategoryId, setHeldCategoryId] = useState(null);
   const [confirmingCategoryId, setConfirmingCategoryId] = useState(null);
   const longPressTimerRef = useRef(null);
+  const confirmationRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -50,24 +51,20 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryPress = (categoryId, e) => {
-    if (e?.type?.includes('touch')) {
-      e.preventDefault();
-    }
+  const handleCategoryPress = (categoryId) => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => {
       setHeldCategoryId(categoryId);
+      setConfirmingCategoryId(null);
     }, 1300);
   };
 
-  const handleCategoryRelease = (e) => {
-    if (e?.type?.includes('touch')) {
-      e.preventDefault();
-    }
+  const handleCategoryRelease = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
   };
-
 
   const handleCategoryDelete = (categoryId, categoryName) => {
     setHeldCategoryId(null);
@@ -113,6 +110,30 @@ export default function MenuTab({
     });
   };
 
+  // Close confirmation when tapping outside
+  useEffect(() => {
+    if (!confirmingCategoryId) return;
+    const handleOutside = (e) => {
+      if (confirmationRef.current && !confirmationRef.current.contains(e.target)) {
+        setHeldCategoryId(null);
+        setConfirmingCategoryId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, [confirmingCategoryId]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    };
+  }, []);
+
   const categoryList = categories.map((cat) => ({
     id: cat.id,
     name: cat.name,
@@ -154,9 +175,9 @@ export default function MenuTab({
       </div>
 
       {/* Category Filter Pills */}
-      <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
+      <div className={`flex gap-3 mb-8 overflow-x-auto ${confirmingCategoryId ? 'pb-14' : 'pb-2'}`}>
         <button
-          onClick={() => onSelectCategory('')}
+          onClick={() => { setHeldCategoryId(null); setConfirmingCategoryId(null); onSelectCategory(''); }}
           className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
             !activeCategory
               ? 'bg-emerald-600 text-white shadow-lg'
@@ -166,25 +187,28 @@ export default function MenuTab({
           All Categories
         </button>
         {categoryList && categoryList.map((cat) => (
-          <div key={cat.id} className="relative">
+          <div key={cat.id} className="relative flex flex-col items-center">
             <button
-              onMouseDown={(e) => handleCategoryPress(cat.id, e)}
-              onMouseUp={(e) => handleCategoryRelease(e)}
-              onMouseLeave={(e) => handleCategoryRelease(e)}
-              onTouchStart={(e) => handleCategoryPress(cat.id, e)}
-              onTouchEnd={(e) => handleCategoryRelease(e)}
+              onMouseDown={() => handleCategoryPress(cat.id)}
+              onMouseUp={handleCategoryRelease}
+              onMouseLeave={handleCategoryRelease}
+              onTouchStart={() => handleCategoryPress(cat.id)}
+              onTouchEnd={handleCategoryRelease}
               onContextMenu={(e) => e.preventDefault()}
               onClick={(e) => {
                 if (heldCategoryId === cat.id) {
                   e.stopPropagation();
                   setConfirmingCategoryId(cat.id);
                 } else {
+                  setHeldCategoryId(null);
+                  setConfirmingCategoryId(null);
                   onSelectCategory(cat.id);
                 }
               }}
+              style={{ touchAction: 'manipulation' }}
               className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all select-none ${
                 heldCategoryId === cat.id
-                  ? 'bg-red-100 text-red-700 border border-red-300'
+                  ? 'bg-red-500 text-white shadow-lg animate-pulse'
                   : activeCategory === cat.id
                   ? 'bg-emerald-600 text-white shadow-lg'
                   : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
@@ -193,23 +217,19 @@ export default function MenuTab({
               {heldCategoryId === cat.id ? '🗑️ Delete' : `${cat.name} (${cat.count})`}
             </button>
             {confirmingCategoryId === cat.id && (
-              <div className="absolute top-full mt-2 left-0 flex gap-2 z-50" onClick={(e) => e.stopPropagation()}>
+              <div ref={confirmationRef} className="absolute top-full mt-2 flex gap-2 z-50 bg-white border border-stone-200 rounded-xl p-2 shadow-2xl whitespace-nowrap min-w-[180px]">
+                <span className="text-xs font-bold text-stone-500 self-center mr-1">Delete?</span>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCategoryDelete(cat.id, cat.name);
-                  }}
-                  className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
+                  onClick={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
+                  onTouchStart={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
+                  className="flex-1 px-4 py-2 bg-red-500 text-white text-sm font-bold rounded-lg hover:bg-red-600 transition-colors active:scale-95"
                 >
                   Yes
                 </button>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmingCategoryId(null);
-                    setHeldCategoryId(null);
-                  }}
-                  className="px-2 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 hover:bg-stone-400 transition-all"
+                  onClick={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
+                  onTouchStart={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
+                  className="flex-1 px-4 py-2 bg-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-300 transition-colors active:scale-95"
                 >
                   No
                 </button>
@@ -218,7 +238,7 @@ export default function MenuTab({
           </div>
         ))}
         <button
-          onClick={onAddCategory}
+          onClick={() => { setHeldCategoryId(null); setConfirmingCategoryId(null); onAddCategory(); }}
           className="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white border border-dashed border-stone-300 text-stone-600 hover:bg-stone-50 transition-all"
         >
           + Add Category
