@@ -29,8 +29,10 @@ function OwnerSummary() {
     const { lang, t, changeLanguage } = useLanguage()
     const { theme, setTheme } = useTheme()
     const appConfig = tenantData?.app_config || {}
+    const [businessInfoLocal, setBusinessInfoLocal] = useState({})
     const [showAuditor, setShowAuditor] = useState(false)
     const debounceTimerRef = useRef(null)
+    const businessInfoDebounceRef = useRef(null)
     const [mpAliasInput, setMpAliasInput] = useState('')
     const [mpAliasSaved, setMpAliasSaved] = useState(false)
     const [mpAliasSaving, setMpAliasSaving] = useState(false)
@@ -183,13 +185,21 @@ function OwnerSummary() {
 
     // ☁️ CLOUD SAVE for business info
     const [savingConfig, setSavingConfig] = useState(false)
-    const updateBusinessInfo = async (field, value) => {
-        const newInfo = { ...appConfig?.businessInfo, [field]: value }
-        const updatedConfig = { ...appConfig, businessInfo: newInfo }
-        setSavingConfig(true)
-        await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-        await refreshTenantData()
-        setSavingConfig(false)
+
+    // Sync local businessInfo from server on mount
+    useEffect(() => {
+        setBusinessInfoLocal(appConfig?.businessInfo || {})
+    }, [appConfig?.businessInfo])
+
+    // Optimistic + debounced save
+    const updateBusinessInfo = (field, value) => {
+        setBusinessInfoLocal(prev => ({ ...prev, [field]: value }))
+
+        if (businessInfoDebounceRef.current) clearTimeout(businessInfoDebounceRef.current)
+        businessInfoDebounceRef.current = setTimeout(async () => {
+            const updatedConfig = { ...appConfig, businessInfo: { ...appConfig?.businessInfo, ...businessInfoLocal, [field]: value } }
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId).catch(e => console.error('Save failed:', e))
+        }, 800)
     }
 
     const updateExternalOrdering = async (updates) => {
@@ -450,7 +460,7 @@ function OwnerSummary() {
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <InputField
                                         label={t('whatsapp_contact') || 'WhatsApp'}
-                                        value={appConfig?.businessInfo?.whatsapp || ''}
+                                        value={businessInfoLocal?.whatsapp || ''}
                                         onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
                                         placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                     />
@@ -458,13 +468,13 @@ function OwnerSummary() {
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <InputField
                                             label={t('address_label') || 'Address'}
-                                            value={appConfig?.businessInfo?.address || ''}
+                                            value={businessInfoLocal?.address || ''}
                                             onChange={(e) => updateBusinessInfo('address', e.target.value)}
                                             placeholder={t('address_placeholder') || '123 Main St'}
                                         />
                                         <InputField
                                             label={t('maps_link') || 'Google Maps'}
-                                            value={appConfig?.businessInfo?.googleMapsLink || ''}
+                                            value={businessInfoLocal?.googleMapsLink || ''}
                                             onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
                                             placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
                                         />
@@ -472,7 +482,7 @@ function OwnerSummary() {
                                     </div>
                                     <InputField
                                         label={t('notes') || 'Notes'}
-                                        value={appConfig?.businessInfo?.directions || ''}
+                                        value={businessInfoLocal?.directions || ''}
                                         onChange={(e) => updateBusinessInfo('directions', e.target.value)}
                                         placeholder={t('notes_placeholder') || 'Additional directions...'}
                                     />
