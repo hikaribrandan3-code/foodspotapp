@@ -262,7 +262,7 @@ function OwnerSummary() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-[#020617] font-sans antialiased">
+        <div className="min-h-screen bg-stone-50 dark:bg-[#020617] font-sans antialiased">
             <BackendHeader
                 title={t('summary')}
                 onLogout={handleLogout}
@@ -272,29 +272,29 @@ function OwnerSummary() {
             />
 
             {/* Main Content */}
-            <main className="px-4 pt-5 pb-36 space-y-5">
+            <main className="px-4 md:px-12 pt-8 md:pt-16 pb-36 space-y-8 md:space-y-12 max-w-7xl mx-auto w-full">
 
                 {/* Profile Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-xl p-4 flex items-center gap-4 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5"
+                    className="rounded-[2.5rem] p-6 md:p-8 flex items-center gap-4 bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]"
                 >
                     <div className="w-14 h-14 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 shrink-0">
                         <User size={28} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="font-semibold text-lg text-gray-900 dark:text-white truncate">
+                        <h2 className="font-['Outfit',sans-serif] font-black text-xl text-stone-950 dark:text-white truncate">
                             {tenantData?.venue_name || tenantData?.business_name || 'Owner'}
                         </h2>
-                        <p className="text-sm capitalize text-gray-500 dark:text-white">Owner</p>
+                        <p className="text-sm capitalize text-stone-500 dark:text-white">Owner</p>
                         <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            <span className="text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 Active
                             </span>
                             {ordersLoading && (
-                                <span className="text-[10px] text-gray-400 dark:text-white">Syncing...</span>
+                                <span className="text-[10px] text-stone-400 dark:text-white">Syncing...</span>
                             )}
                         </div>
                     </div>
@@ -307,19 +307,19 @@ function OwnerSummary() {
                         title="Preferences"
                         isOpen={true}
                     />
-                    <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5">
+                    <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                         <button
                             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                             className="w-full flex items-center gap-3 px-4 py-3.5"
                         >
-                            <span className="text-gray-400 dark:text-white">
+                            <span className="text-stone-400 dark:text-white">
                                 {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
                             </span>
-                            <span className="text-sm font-medium text-gray-900 dark:text-white flex-1 text-left">Theme</span>
-                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-gray-100 dark:bg-[#334155] text-gray-500 dark:text-white">
+                            <span className="text-sm font-medium text-stone-950 dark:text-white flex-1 text-left">Theme</span>
+                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-stone-100 dark:bg-[#334155] text-stone-500 dark:text-white">
                                 {theme === 'dark' ? 'Dark' : 'Light'}
                             </span>
-                            <ChevronRight size={16} className="text-gray-300 dark:text-[#475569]" />
+                            <ChevronRight size={16} className="text-stone-300 dark:text-[#475569]" />
                         </button>
                     </div>
                 </motion.div>
@@ -340,7 +340,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <MenuRow
                                         icon={<CreditCard size={18} />}
                                         label="Mercado Pago"
@@ -355,9 +355,9 @@ function OwnerSummary() {
                                         value={formatPrice(stats.cashTotal)}
                                         highlight
                                     />
-                                    <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-100 dark:border-white/10">
-                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{t('total_day') || 'Total'}</span>
-                                        <span className="text-base font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalToday)}</span>
+                                    <div className="flex items-center justify-between px-4 py-3.5 border-t border-stone-100 dark:border-white/10">
+                                        <span className="text-sm font-semibold text-stone-950 dark:text-white">{t('total_day') || 'Total'}</span>
+                                        <span className="text-base font-bold text-stone-950 dark:text-white">{formatPrice(stats.totalToday)}</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -372,14 +372,14 @@ function OwnerSummary() {
                         title={t('sessions') || 'Sessions'}
                         isOpen={true}
                     />
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
-                            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.weekCount}</p>
-                            <p className="text-xs text-gray-400 dark:text-white mt-1">{t('this_week') || 'This Week'}</p>
+                    <div className="grid grid-cols-2 gap-4 md:gap-6">
+                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                            <p className="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.weekCount}</p>
+                            <p className="text-xs text-stone-400 dark:text-white mt-2 font-bold uppercase tracking-widest">{t('this_week') || 'This Week'}</p>
                         </div>
-                        <div className="bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 rounded-xl p-4">
-                            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.monthCount}</p>
-                            <p className="text-xs text-gray-400 dark:text-white mt-1">{t('this_month') || 'This Month'}</p>
+                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                            <p className="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.monthCount}</p>
+                            <p className="text-xs text-stone-400 dark:text-white mt-2 font-bold uppercase tracking-widest">{t('this_month') || 'This Month'}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -400,15 +400,15 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-4 space-y-4">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <InputField
                                         label={t('whatsapp_contact') || 'WhatsApp'}
                                         value={appConfig?.businessInfo?.whatsapp || ''}
                                         onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
                                         placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                     />
-                                    <div className="bg-gray-50 dark:bg-[#0f172a] rounded-xl p-4 space-y-3 border border-gray-200 dark:border-white/5">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
+                                    <div className="bg-stone-50 dark:bg-[#0f172a] rounded-2xl p-5 space-y-3 border border-stone-200 dark:border-white/5">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <InputField
                                             label={t('address_label') || 'Address'}
                                             value={appConfig?.businessInfo?.address || ''}
@@ -421,7 +421,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
                                             placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
                                         />
-                                        <p className="text-[11px] text-gray-400 dark:text-white">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
+                                        <p className="text-[11px] text-stone-400 dark:text-white">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
                                     </div>
                                     <InputField
                                         label={t('notes') || 'Notes'}
@@ -451,7 +451,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-4 space-y-4">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <InputField
                                         label="Instagram"
                                         value={appConfig?.externalOrdering?.instagramUrl || ''}
@@ -466,7 +466,7 @@ function OwnerSummary() {
                                     />
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-900 dark:text-white">Rappi</span>
+                                            <span className="text-sm font-medium text-stone-950 dark:text-white">Rappi</span>
                                             <ToggleSwitch
                                                 checked={appConfig?.externalOrdering?.rappiEnabled ?? false}
                                                 onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
@@ -480,7 +480,7 @@ function OwnerSummary() {
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-gray-900 dark:text-white">PedidosYa</span>
+                                            <span className="text-sm font-medium text-stone-950 dark:text-white">PedidosYa</span>
                                             <ToggleSwitch
                                                 checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false}
                                                 onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
@@ -514,9 +514,9 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-4 space-y-4">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     {/* MP Setup Card */}
-                                    <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-xl p-4 border border-emerald-200 dark:border-emerald-500/20 space-y-3">
+                                    <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-[2.5rem] p-6 md:p-8 border border-emerald-200 dark:border-emerald-500/20 space-y-3 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                         <div className="flex items-start gap-3">
                                             <span className="text-2xl">💳</span>
                                             <div>
@@ -537,7 +537,7 @@ function OwnerSummary() {
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>1.</strong> {t('mp_step_1') || 'Go to Mercado Pago Developers'}</p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>2.</strong> {t('mp_step_2') || 'Create an application'}</p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>3.</strong> {t('mp_step_3') || 'Get your credentials'}</p>
-                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-gray-100 dark:bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
+                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-stone-100 dark:bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>5.</strong> {t('mp_step_5') || 'Paste it below'}</p>
                                         </div>
                                     </div>
@@ -560,45 +560,45 @@ function OwnerSummary() {
 
                                     {/* Alias */}
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-emerald-400 block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400 block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 placeholder="yourstore.mp"
                                                 value={mpAliasInput}
                                                 onChange={(e) => setMpAliasInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
                                                 onClick={saveMpAlias}
                                                 disabled={mpAliasSaving}
-                                                className="px-4 py-3 rounded-xl text-sm font-semibold bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                                className="px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                                             >
                                                 {mpAliasSaved ? <Check size={16} /> : (mpAliasSaving ? '...' : 'Save')}
                                             </motion.button>
                                         </div>
                                         {mpAliasSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
-                                        {!mpAliasSaved && <p className="text-xs text-gray-400 dark:text-white mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
+                                        {!mpAliasSaved && <p className="text-xs text-stone-400 dark:text-white mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
                                     </div>
 
                                     {/* Discord Webhook */}
-                                    <div className="border-t border-gray-100 dark:border-white/5 pt-4">
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-emerald-400 block mb-1.5">Discord Webhook</label>
-                                        <p className="text-xs text-gray-400 dark:text-white mb-2">Send payment requests to Discord when drivers deliver</p>
+                                    <div className="border-t border-stone-100 dark:border-white/5 pt-4">
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400 block mb-1.5">Discord Webhook</label>
+                                        <p className="text-xs text-stone-400 dark:text-white mb-2">Send payment requests to Discord when drivers deliver</p>
                                         <div className="flex gap-2">
                                             <input
                                                 type="password"
                                                 placeholder="https://discord.com/api/webhooks/..."
                                                 value={discordWebhookInput}
                                                 onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
                                                 onClick={saveDiscordWebhook}
                                                 disabled={discordWebhookSaving}
-                                                className="px-4 py-3 rounded-xl text-sm font-semibold bg-[#8b5cf6] text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                                className="px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-stone-900 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                                             >
                                                 {discordWebhookSaved ? <Check size={16} /> : (discordWebhookSaving ? '...' : 'Save')}
                                             </motion.button>
@@ -627,7 +627,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5 p-2">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-2 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     {['EN', 'ES', 'PT'].map((l) => {
                                         const isSelected = (pendingLanguage || lang) === l.toLowerCase()
                                         const isPending = pendingLanguage === l.toLowerCase()
@@ -635,12 +635,12 @@ function OwnerSummary() {
                                             <button
                                                 key={l}
                                                 onClick={() => handleLanguageChange(l.toLowerCase())}
-                                                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-gray-100 dark:border-white/5 last:border-0 transition-colors ${
+                                                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-stone-100 dark:border-white/5 last:border-0 transition-colors ${
                                                     isPending
                                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                                                         : isSelected
-                                                            ? 'text-gray-900 dark:text-white'
-                                                            : 'text-gray-400 dark:text-white'
+                                                            ? 'text-stone-950 dark:text-white'
+                                                            : 'text-stone-400 dark:text-white'
                                                 }`}
                                             >
                                                 <span>{l}</span>
@@ -662,7 +662,7 @@ function OwnerSummary() {
                     <motion.button
                         whileTap={{ scale: 0.98 }}
                         onClick={() => navigate('/admin')}
-                        className="w-full py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
+                        className="w-full py-4 rounded-[2.5rem] flex items-center justify-center gap-2 text-sm font-black uppercase tracking-[0.2em] bg-stone-950 dark:bg-violet-500/10 border border-stone-900 dark:border-violet-500/20 text-white dark:text-violet-400 hover:bg-stone-800 dark:hover:bg-violet-500/20 transition-colors shadow-lg"
                     >
                         <Shield size={16} />
                         {t('system_admin') || 'System Admin'}
@@ -701,14 +701,14 @@ function OwnerSummary() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="fixed bottom-24 left-4 right-4 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-5 py-4 rounded-2xl flex justify-between items-center shadow-2xl z-[10000]"
+                        className="fixed bottom-24 left-4 right-4 bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white px-5 py-4 rounded-2xl flex justify-between items-center shadow-2xl z-[10000]"
                     >
                         <span className="text-sm font-semibold">🌍 {t('unsaved_changes_warning') || 'Unsaved changes'}</span>
                         <motion.button
                             whileTap={{ scale: 0.97 }}
                             onClick={saveLanguage}
                             disabled={languageSaving}
-                            className="bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+                            className="bg-emerald-600 text-white px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] disabled:opacity-50"
                         >
                             {languageSaving ? (t('saving_btn') || 'Saving...') : (t('save') || 'Save')}
                         </motion.button>
@@ -732,10 +732,10 @@ function OwnerSummary() {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-white dark:bg-[#0f172a] border-l border-gray-200 dark:border-white/5 z-[10000] flex flex-col overflow-hidden"
+                            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-white dark:bg-[#0f172a] border-l border-stone-200 dark:border-white/5 z-[10000] flex flex-col overflow-hidden"
                         >
-                            <div className="px-5 py-4 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
-                                <span className="text-gray-900 dark:text-white font-bold text-base flex items-center gap-2">
+                            <div className="px-5 py-4 border-b border-stone-200 dark:border-white/10 flex items-center justify-between">
+                                <span className="text-stone-950 dark:text-white font-bold text-base flex items-center gap-2">
                                     <BarChart3 size={18} className="text-emerald-600 dark:text-emerald-400" />
                                     {t('cloud_vault') || 'Cloud Vault'}
                                 </span>
@@ -777,16 +777,19 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
     return (
         <button
             onClick={onToggle}
-            className="w-full flex items-center justify-between px-1 mb-2"
+            className="w-full flex items-center justify-between px-1 mb-3"
             disabled={!onToggle}
         >
-            <h3 className="text-[10px] font-extrabold uppercase tracking-wider text-gray-900 dark:!text-white flex items-center gap-2">
-                {icon}{title}
-            </h3>
+            <div className="flex items-center gap-3 mb-1">
+                <div className="h-6 w-1 bg-emerald-600 rounded-full" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 dark:!text-white flex items-center gap-2">
+                    {title}
+                </h3>
+            </div>
             {onToggle && (
                 <ChevronDown
                     size={14}
-                    className={`text-gray-400 dark:text-emerald-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`text-stone-400 dark:text-emerald-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 />
             )}
         </button>
@@ -795,16 +798,16 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
 
 function MenuRow({ icon, label, subValue, value, highlight }) {
     return (
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100 dark:border-white/5 last:border-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100 dark:border-white/5 last:border-0">
             <div className="flex items-center gap-3">
-                <span className="text-gray-400 dark:text-white">{icon}</span>
+                <span className="text-stone-400 dark:text-white">{icon}</span>
                 <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-                    {subValue && <p className="text-xs text-gray-400 dark:text-white">{subValue}</p>}
+                    <p className="text-sm font-bold text-stone-950 dark:text-white">{label}</p>
+                    {subValue && <p className="text-xs text-stone-400 dark:text-white font-medium">{subValue}</p>}
                 </div>
             </div>
             {value && (
-                <span className={`text-sm font-semibold ${highlight ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-white'}`}>
+                <span className={`text-sm font-black ${highlight ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-500 dark:text-white'}`}>
                     {value}
                 </span>
             )}
@@ -815,7 +818,7 @@ function MenuRow({ icon, label, subValue, value, highlight }) {
 function InputField({ label, value, onChange, placeholder, type = 'text' }) {
     return (
         <div>
-            <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-emerald-400 block mb-1.5">
+            <label className="text-[9px] font-black uppercase tracking-widest text-stone-400 dark:text-emerald-400 block mb-2">
                 {label}
             </label>
             <input
@@ -823,7 +826,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text' }) {
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
             />
         </div>
     )
@@ -834,7 +837,7 @@ function ToggleSwitch({ checked, onChange }) {
         <button
             onClick={onChange}
             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                checked ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-[#334155]'
+                checked ? 'bg-emerald-500' : 'bg-stone-200 dark:bg-[#334155]'
             }`}
         >
             <span
@@ -939,16 +942,16 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="rounded-xl overflow-hidden bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-white/5">
+                        <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                             {!showAddForm ? (
                                 <button
                                     onClick={() => setShowAddForm(true)}
-                                    className="w-full py-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 border-b border-gray-100 dark:border-white/5 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 transition-colors"
+                                    className="w-full py-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 border-b border-stone-100 dark:border-white/5 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 transition-colors"
                                 >
                                     + {t('add_staff') || 'Add Staff Member'}
                                 </button>
                             ) : (
-                                <div className="p-4 space-y-3 border-b border-gray-100 dark:border-white/5">
+                                <div className="p-4 space-y-3 border-b border-stone-100 dark:border-white/5">
                                     <InputField
                                         label={t('name') || 'Name'}
                                         value={newStaff.name}
@@ -969,11 +972,11 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         placeholder="1234"
                                     />
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-emerald-400 block mb-1.5">{t('role') || 'Role'}</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400 block mb-1.5">{t('role') || 'Role'}</label>
                                         <select
                                             value={newStaff.role}
                                             onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-xl text-sm bg-gray-100 dark:bg-[#334155] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white outline-none focus:border-emerald-500/50 transition-colors"
+                                            className="w-full px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-500/50 transition-colors"
                                         >
                                             {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                                         </select>
@@ -983,14 +986,14 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                             whileTap={{ scale: 0.97 }}
                                             onClick={handleAddStaff}
                                             disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
-                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex-1 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {saving ? '...' : (t('save') || 'Save')}
                                         </motion.button>
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
                                             onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
-                                            className="flex-1 py-3 rounded-xl text-sm font-semibold bg-gray-100 dark:bg-[#334155] text-gray-600 dark:text-white hover:bg-gray-200 dark:hover:bg-[#475569] transition-colors"
+                                            className="flex-1 py-3 rounded-2xl text-sm font-bold bg-stone-100 dark:bg-[#334155] text-stone-600 dark:text-white hover:bg-stone-200 dark:hover:bg-[#475569] transition-colors"
                                         >
                                             {t('cancel') || 'Cancel'}
                                         </motion.button>
@@ -999,9 +1002,9 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                             )}
 
                             {loading ? (
-                                <div className="text-center py-6 text-gray-400 dark:text-white text-sm">...</div>
+                                <div className="text-center py-6 text-stone-400 dark:text-white text-sm">...</div>
                             ) : staffList.length === 0 ? (
-                                <div className="text-center py-6 text-gray-400 dark:text-white text-sm">
+                                <div className="text-center py-6 text-stone-400 dark:text-white text-sm">
                                     {t('no_staff') || 'No staff registered'}
                                 </div>
                             ) : (
@@ -1009,8 +1012,8 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                     {staffList.map(staff => (
                                         <div key={staff.id} className="flex items-center justify-between px-4 py-3">
                                             <div>
-                                                <div className="text-sm font-medium text-gray-900 dark:text-white">{staff.name}</div>
-                                                <div className="text-xs text-gray-400 dark:text-white">@{staff.email} • {staff.role}</div>
+                                                <div className="text-sm font-medium text-stone-950 dark:text-white">{staff.name}</div>
+                                                <div className="text-xs text-stone-400 dark:text-white">@{staff.email} • {staff.role}</div>
                                             </div>
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
