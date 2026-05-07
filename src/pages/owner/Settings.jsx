@@ -524,7 +524,7 @@ const Settings = () => {
             <div className="settings-vault">
                 {/* ========== 1. IDENTITY & TYPOGRAPHY ========== */}
                 <section className="branding-card">
-                    <h3>1. {t('identity_typography')}</h3>
+                    <h3 style={{ color: '#10B981', fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>1. {t('identity_typography')}</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <input
                             type="text"
@@ -744,12 +744,12 @@ const Settings = () => {
                                         position: 'relative'
                                     }}
                                 >
-                                    <div style={{ color: iconColor }}><Icon /></div>
+                                    <div style={{ color: iconColor, fontSize: '28px' }}><Icon /></div>
                                     <span style={{
-                                        fontSize: 11,
+                                        fontSize: 13,
                                         fontWeight: 600,
                                         color: iconColor,
-                                        opacity: 0.9
+                                        opacity: 0.95
                                     }}>{label}</span>
                                     {/* Color dot indicator */}
                                     <div style={{
