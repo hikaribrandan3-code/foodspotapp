@@ -413,23 +413,7 @@ export function FoodSpotAI({ context = {} }) {
         setPreviewUrl(null)
 
         try {
-            const contextInfo = context.order ? `
-Current Order Context:
-- Order ID: ${context.order.id}
-- Items: ${context.order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-- Status: ${context.order.status}
-` : '';
-
-            // Get system prompt in owner's language
-            const ownerPrompt = getOwnerSystemPrompt(lang, businessName, tenantData?.category);
-
-            const fullPrompt = `${ownerPrompt}
-
-Additional Context: ${contextInfo}
-
-Question: ${userText}`;
-
-            // Call Supabase edge function (API key stays server-side)
+            // Edge function handles context fetching + system prompt building server-side
             const response = await supabase.functions.invoke('foodspot-ai', {
                 body: {
                     messages: newMessages.map(m => {
@@ -439,7 +423,9 @@ Question: ${userText}`;
                         }
                         return msg;
                     }),
-                    systemPrompt: ownerPrompt
+                    businessId: businessId,
+                    businessName: businessName,
+                    language: lang,
                 }
             });
 
