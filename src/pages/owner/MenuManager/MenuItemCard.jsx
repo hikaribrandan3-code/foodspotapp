@@ -91,7 +91,7 @@ export default function MenuItemCard({ item, onUpdate }) {
                 className="flex items-center justify-center h-8 w-8 rounded-full bg-stone-900/90 backdrop-blur-md text-white shadow-xl border border-white/10"
                 title="Gluten Free"
               >
-                <Wheat className="h-4 w-4" />
+                <Wheat className="h-3.5 w-3.5" />
               </motion.div>
             )}
             {isSpicy && (
@@ -108,13 +108,13 @@ export default function MenuItemCard({ item, onUpdate }) {
         </div>
       </div>
 
-      <div className="flex flex-grow flex-col gap-4 p-6 md:p-12">
+      <div className="flex flex-col gap-3 p-6">
         <div className="flex justify-between items-start gap-4">
-          <h4 className="flex-grow font-['Outfit',sans-serif] text-3xl md:text-4xl font-black text-stone-950 leading-[1.1] italic">
+          <h4 className="flex-grow font-['Outfit',sans-serif] text-2xl md:text-3xl font-bold text-stone-950 leading-[1.1] italic">
             {item.name}
           </h4>
           <div className="flex-shrink-0">
-            <span className="text-2xl md:text-3xl font-black text-emerald-600 font-['Outfit',sans-serif]">
+            <span className="text-2xl md:text-3xl font-bold text-emerald-600 font-['Outfit',sans-serif]">
               ${priceDisplay}
             </span>
           </div>
@@ -124,38 +124,38 @@ export default function MenuItemCard({ item, onUpdate }) {
           value={description}
           onChange={handleDescriptionChange}
           placeholder="Briefly describe the flavor profile..."
-          className="w-full h-16 bg-transparent text-base md:text-lg font-medium leading-relaxed text-stone-500 italic resize-none border-none outline-none focus:text-stone-900 transition-colors"
+          className="w-full bg-stone-50 rounded-xl border border-stone-100 px-4 py-3 text-base md:text-lg font-medium leading-relaxed text-stone-500 italic resize-none outline-none focus:text-stone-900 focus:bg-white focus:border-emerald-200 transition-colors" rows={1} style={{ minHeight: '48px' }}
         />
 
-        <div className="flex items-center justify-between mt-auto pt-6 border-t border-stone-100">
+        <div className="flex items-center justify-between pt-4 border-t border-stone-100">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleToggle('is_vegan', !isVegan, setIsVegan)}
-              className={`p-2 rounded-full border transition-all ${isVegan ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`p-1.5 rounded-full border transition-all ${isVegan ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
               title="Toggle Natural/Vegan"
             >
-              <Leaf className={`h-4 w-4 ${isVegan ? 'fill-current' : ''}`} />
+              <Leaf className={`h-3.5 w-3.5 ${isVegan ? 'fill-current' : ''}`} />
             </button>
             <button
               onClick={() => handleToggle('is_gluten_free', !isGlutenFree, setIsGlutenFree)}
-              className={`p-2 rounded-full border transition-all ${isGlutenFree ? 'bg-stone-900 border-stone-900 text-white' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`p-1.5 rounded-full border transition-all ${isGlutenFree ? 'bg-stone-900 border-stone-900 text-white' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
               title="Toggle Gluten Free"
             >
               <Wheat className="h-4 w-4" />
             </button>
             <button
               onClick={() => handleToggle('is_spicy', !isSpicy, setIsSpicy)}
-              className={`p-2 rounded-full border transition-all ${isSpicy ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`p-1.5 rounded-full border transition-all ${isSpicy ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
               title="Toggle Spicy"
             >
-              <Flame className={`h-4 w-4 ${isSpicy ? 'fill-current' : ''}`} />
+              <Flame className={`h-3.5 w-3.5 ${isSpicy ? 'fill-current' : ''}`} />
             </button>
             <button
               onClick={() => handleToggle('featured', !isFeatured, setIsFeatured)}
-              className={`p-2 rounded-full border transition-all ${isFeatured ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`p-1.5 rounded-full border transition-all ${isFeatured ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
               title="Toggle Featured"
             >
-              <Star className={`h-4 w-4 ${isFeatured ? 'fill-current' : ''}`} />
+              <Star className={`h-3.5 w-3.5 ${isFeatured ? 'fill-current' : ''}`} />
             </button>
             <div className="h-8 w-px bg-stone-100 mx-1" />
             <div className="flex items-center gap-2">
