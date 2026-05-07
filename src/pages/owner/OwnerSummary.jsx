@@ -44,23 +44,15 @@ function OwnerSummary() {
 
     // External Links local state
     const [instagramInput, setInstagramInput] = useState('')
-    const [instagramSaving, setInstagramSaving] = useState(false)
-    const [instagramSaved, setInstagramSaved] = useState(false)
     const instagramInitialized = useRef(false)
 
     const [tiktokInput, setTiktokInput] = useState('')
-    const [tiktokSaving, setTiktokSaving] = useState(false)
-    const [tiktokSaved, setTiktokSaved] = useState(false)
     const tiktokInitialized = useRef(false)
 
     const [rappiInput, setRappiInput] = useState('')
-    const [rappiSaving, setRappiSaving] = useState(false)
-    const [rappiSaved, setRappiSaved] = useState(false)
     const rappiInitialized = useRef(false)
 
     const [pedidosyaInput, setPedidosyaInput] = useState('')
-    const [pedidosyaSaving, setPedidosyaSaving] = useState(false)
-    const [pedidosyaSaved, setPedidosyaSaved] = useState(false)
     const pedidosyaInitialized = useRef(false)
 
     // MP Access Token local state
@@ -72,7 +64,6 @@ function OwnerSummary() {
     // Business Currency
     const [businessCurrency, setBusinessCurrency] = useState('ARS')
     const [currencySaving, setCurrencySaving] = useState(false)
-    const [currencySaved, setCurrencySaved] = useState(false)
     const businessCurrencyInitialized = useRef(false)
 
     // Collapsible sections
@@ -173,17 +164,14 @@ function OwnerSummary() {
     const saveLanguage = async () => {
         if (!pendingLanguage) return
         setLanguageSaving(true)
-        setLanguageSaveStatus(null)
 
         try {
             await changeLanguage(pendingLanguage)
-            setLanguageSaveStatus({ message: t('language_saved') || 'Idioma guardado', type: 'success' })
             setPendingLanguage(null)
-            setTimeout(() => setLanguageSaveStatus(null), 3000)
+            setAutoSaveStatus({ type: 'language', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
         } catch (err) {
             console.error('Language save failed:', err)
-            setLanguageSaveStatus({ message: t('save_error') || 'Error al guardar', type: 'error' })
-            setTimeout(() => setLanguageSaveStatus(null), 3000)
         } finally {
             setLanguageSaving(false)
         }
@@ -212,6 +200,7 @@ function OwnerSummary() {
 
     // ☁️ CLOUD SAVE for business info
     const [savingConfig, setSavingConfig] = useState(false)
+    const [autoSaveStatus, setAutoSaveStatus] = useState(null) // { type: 'venue'|'links'|'currency'|'language', timestamp }
 
     // Sync local businessInfo from server on mount
     useEffect(() => {
@@ -228,6 +217,8 @@ function OwnerSummary() {
             const updatedConfig = { ...appConfig, businessInfo: newBusinessInfo }
             try {
                 await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+                setAutoSaveStatus({ type: 'venue', timestamp: Date.now() })
+                setTimeout(() => setAutoSaveStatus(null), 2000)
             } catch (e) {
                 console.error('Save failed:', e)
             }
@@ -349,7 +340,6 @@ function OwnerSummary() {
 
     const saveBusinessCurrency = async (currencyCode) => {
         setCurrencySaving(true)
-        setCurrencySaved(false)
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
 
         try {
@@ -359,11 +349,9 @@ function OwnerSummary() {
                 .update({ app_config: updatedConfig })
                 .eq('business_id', businessId)
 
-            await refreshTenantData()
             setBusinessCurrency(currencyCode)
-            setCurrencySaved(true)
-
-            setTimeout(() => setCurrencySaved(false), 2000)
+            setAutoSaveStatus({ type: 'currency', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
         } catch (err) {
             console.error('[OwnerSummary] Failed to save business currency:', err)
         } finally {
@@ -376,19 +364,15 @@ function OwnerSummary() {
         saveBusinessCurrency(currencyCode)
     }
 
-    const saveExternalLink = async (field, input, setSaving, setSaved) => {
-        setSaving(true)
-        setSaved(false)
+    const saveExternalLink = async (field, input) => {
         try {
             const updates = { [field]: input }
             const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
             await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-            setSaved(true)
-            setTimeout(() => setSaved(false), 2000)
+            setAutoSaveStatus({ type: 'links', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
         } catch (err) {
             console.error('Failed to save:', err)
-        } finally {
-            setSaving(false)
         }
     }
 
@@ -597,49 +581,25 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Instagram</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="https://instagram.com/yourrestaurant"
-                                                value={instagramInput}
-                                                onChange={(e) => setInstagramInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
-                                            />
-                                            <motion.button
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={() => saveExternalLink('instagramUrl', instagramInput, setInstagramSaving, setInstagramSaved)}
-                                                disabled={instagramSaving}
-                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                            >
-                                                {instagramSaved ? <Check size={16} /> : (instagramSaving ? '...' : 'Save')}
-                                            </motion.button>
-                                        </div>
-                                        {instagramSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
-                                    </div>
+                                    <InputField
+                                        label="Instagram"
+                                        value={instagramInput}
+                                        onChange={(e) => {
+                                            setInstagramInput(e.target.value)
+                                            saveExternalLink('instagramUrl', e.target.value)
+                                        }}
+                                        placeholder="https://instagram.com/yourrestaurant"
+                                    />
 
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">TikTok</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="https://tiktok.com/@yourrestaurant"
-                                                value={tiktokInput}
-                                                onChange={(e) => setTiktokInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
-                                            />
-                                            <motion.button
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={() => saveExternalLink('tiktokUrl', tiktokInput, setTiktokSaving, setTiktokSaved)}
-                                                disabled={tiktokSaving}
-                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                            >
-                                                {tiktokSaved ? <Check size={16} /> : (tiktokSaving ? '...' : 'Save')}
-                                            </motion.button>
-                                        </div>
-                                        {tiktokSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
-                                    </div>
+                                    <InputField
+                                        label="TikTok"
+                                        value={tiktokInput}
+                                        onChange={(e) => {
+                                            setTiktokInput(e.target.value)
+                                            saveExternalLink('tiktokUrl', e.target.value)
+                                        }}
+                                        placeholder="https://tiktok.com/@yourrestaurant"
+                                    />
 
                                     <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-white/5">
                                         <div className="flex items-center justify-between">
@@ -649,24 +609,14 @@ function OwnerSummary() {
                                                 onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
                                             />
                                         </div>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder={t('rappi_placeholder') || 'Rappi URL'}
-                                                value={rappiInput}
-                                                onChange={(e) => setRappiInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
-                                            />
-                                            <motion.button
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={() => saveExternalLink('rappiUrl', rappiInput, setRappiSaving, setRappiSaved)}
-                                                disabled={rappiSaving}
-                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                            >
-                                                {rappiSaved ? <Check size={16} /> : (rappiSaving ? '...' : 'Save')}
-                                            </motion.button>
-                                        </div>
-                                        {rappiSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
+                                        <InputField
+                                            value={rappiInput}
+                                            onChange={(e) => {
+                                                setRappiInput(e.target.value)
+                                                saveExternalLink('rappiUrl', e.target.value)
+                                            }}
+                                            placeholder={t('rappi_placeholder') || 'Rappi URL'}
+                                        />
                                     </div>
 
                                     <div className="space-y-2">
@@ -677,24 +627,14 @@ function OwnerSummary() {
                                                 onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
                                             />
                                         </div>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder={t('pedidosya_placeholder') || 'PedidosYa URL'}
-                                                value={pedidosyaInput}
-                                                onChange={(e) => setPedidosyaInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
-                                            />
-                                            <motion.button
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={() => saveExternalLink('pedidosYaUrl', pedidosyaInput, setPedidosyaSaving, setPedidosyaSaved)}
-                                                disabled={pedidosyaSaving}
-                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                            >
-                                                {pedidosyaSaved ? <Check size={16} /> : (pedidosyaSaving ? '...' : 'Save')}
-                                            </motion.button>
-                                        </div>
-                                        {pedidosyaSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Saved</p>}
+                                        <InputField
+                                            value={pedidosyaInput}
+                                            onChange={(e) => {
+                                                setPedidosyaInput(e.target.value)
+                                                saveExternalLink('pedidosYaUrl', e.target.value)
+                                            }}
+                                            placeholder={t('pedidosya_placeholder') || 'PedidosYa URL'}
+                                        />
                                     </div>
                                 </div>
                             </motion.div>
@@ -947,19 +887,17 @@ function OwnerSummary() {
                 useRoutes={true}
             />
 
-            {/* 🌍 LANGUAGE SAVE TOAST */}
+            {/* ✅ GLOBAL AUTO-SAVE PILL */}
             <AnimatePresence>
-                {languageSaveStatus && (
+                {autoSaveStatus && (
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg text-sm font-semibold text-white flex items-center gap-2 z-[9999] ${
-                            languageSaveStatus.type === 'error' ? 'bg-red-500' : 'bg-emerald-500'
-                        }`}
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full shadow-lg text-sm font-semibold text-white bg-emerald-600 flex items-center gap-2 z-[9999]"
                     >
-                        {languageSaveStatus.type === 'error' ? <X size={14} /> : <Check size={14} />}
-                        {languageSaveStatus.message}
+                        <Check size={14} />
+                        Saved
                     </motion.div>
                 )}
             </AnimatePresence>
