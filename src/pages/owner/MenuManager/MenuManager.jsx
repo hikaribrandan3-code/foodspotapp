@@ -147,7 +147,7 @@ export default function MenuManager() {
   }, [businessId, menuItems, t]);
 
   const handleAddCategory = useCallback(async () => {
-    const categoryName = prompt(t('enter_category_name') || 'Enter category name:');
+    const categoryName = prompt('Enter category name:');
     if (!categoryName || !categoryName.trim()) return;
 
     const { data, error } = await supabase
