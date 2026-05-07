@@ -914,12 +914,11 @@ const Settings = () => {
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_b_color,
-                                        border: '3px solid #000',
-                                        boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                                        border: '2px solid #1a1a1a',
+                                        boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#000',
-                                        opacity: 1,
-                                        filter: 'none'
+                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
+                                        opacity: 1
                                     }}
                                 >B</div>
                                 <div
@@ -927,12 +926,11 @@ const Settings = () => {
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_a_color,
-                                        border: '3px solid #000',
-                                        boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                                        border: '2px solid #1a1a1a',
+                                        boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#000',
-                                        opacity: 1,
-                                        filter: 'none'
+                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
+                                        opacity: 1
                                     }}
                                 >A</div>
                             </div>
