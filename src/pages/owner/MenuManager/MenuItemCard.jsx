@@ -98,7 +98,7 @@ export default function MenuItemCard({ item, onUpdate }) {
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                className="flex items-center justify-center h-8 w-8 rounded-full bg-emerald-600 text-white shadow-xl"
+                className="flex items-center justify-center h-8 w-8 rounded-full bg-red-500 text-white shadow-xl"
                 title="Spicy"
               >
                 <Flame className="h-4 w-4 fill-current" />
@@ -145,7 +145,7 @@ export default function MenuItemCard({ item, onUpdate }) {
             </button>
             <button
               onClick={() => handleToggle('is_spicy', !isSpicy, setIsSpicy)}
-              className={`p-1.5 rounded-full border transition-all ${isSpicy ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`p-1.5 rounded-full border transition-all ${isSpicy ? 'bg-red-50 border-red-100 text-red-500' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
               title="Toggle Spicy"
             >
               <Flame className={`h-3.5 w-3.5 ${isSpicy ? 'fill-current' : ''}`} />
@@ -157,24 +157,17 @@ export default function MenuItemCard({ item, onUpdate }) {
             >
               <Star className={`h-3.5 w-3.5 ${isFeatured ? 'fill-current' : ''}`} />
             </button>
-            <div className="h-8 w-px bg-stone-100 mx-1" />
-            <div className="flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${inStock ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' : 'bg-stone-300'}`} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-stone-400">
-                {inStock ? 'In Kitchen' : 'Sold Out'}
-              </span>
-            </div>
           </div>
 
           <button
             onClick={() => handleToggle('available', !inStock, setInStock)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full border-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.1em] shadow-sm ${
+            className={`flex items-center gap-2 px-5 py-2 rounded-full border-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.1em] shadow-sm ${
               inStock
                 ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
                 : 'bg-stone-900 text-white border-stone-900 hover:bg-stone-800'
             }`}
           >
-            {inStock ? 'Sold Out' : 'Available'}
+            {inStock ? 'In Kitchen' : 'Sold Out'}
           </button>
         </div>
       </div>
