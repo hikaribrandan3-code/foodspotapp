@@ -217,22 +217,24 @@ export default function MenuTab({
               {heldCategoryId === cat.id ? '🗑️ Delete' : `${cat.name} (${cat.count})`}
             </button>
             {confirmingCategoryId === cat.id && (
-              <div ref={confirmationRef} className="absolute top-full mt-2 flex gap-2 z-50 bg-white border border-stone-200 rounded-xl p-2 shadow-2xl whitespace-nowrap min-w-[180px]">
-                <span className="text-xs font-bold text-stone-500 self-center mr-1">Delete?</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
-                  onTouchStart={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
-                  className="flex-1 px-4 py-2 bg-red-500 text-white text-sm font-bold rounded-lg hover:bg-red-600 transition-colors active:scale-95"
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
-                  onTouchStart={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
-                  className="flex-1 px-4 py-2 bg-stone-200 text-stone-700 text-sm font-bold rounded-lg hover:bg-stone-300 transition-colors active:scale-95"
-                >
-                  No
-                </button>
+              <div ref={confirmationRef} className="absolute top-full mt-2 z-50 bg-white border border-stone-200 rounded-2xl p-3 shadow-2xl whitespace-nowrap min-w-[200px]">
+                <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 text-center">Delete "{cat.name}"?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
+                    onTouchStart={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
+                    className="flex-1 px-4 py-2.5 bg-red-500 text-white text-sm font-black rounded-xl border border-red-600 shadow-sm hover:bg-red-600 hover:shadow-md transition-all active:scale-95"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
+                    onTouchStart={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
+                    className="flex-1 px-4 py-2.5 bg-white text-stone-700 text-sm font-black rounded-xl border border-stone-300 shadow-sm hover:bg-stone-50 hover:shadow-md transition-all active:scale-95"
+                  >
+                    No
+                  </button>
+                </div>
               </div>
             )}
           </div>
