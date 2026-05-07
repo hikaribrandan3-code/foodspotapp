@@ -187,17 +187,18 @@ export function HikariBoy({
 
   const updateDpadTransform = () => {
     const { up, down, left, right } = dpadDir.current;
-    let x = 0, y = 0;
-    if (up)    y -= 4;
-    if (down)  y += 4;
-    if (left)  x -= 4;
-    if (right) x += 4;
+    let x = 0, y = 0, rotX = 0, rotY = 0;
+    if (up)    { y -= 5; rotX = -8; }
+    if (down)  { y += 5; rotX = 8; }
+    if (left)  { x -= 5; rotY = 8; }
+    if (right) { x += 5; rotY = -8; }
     if (dpadCrossRef.current) {
       if (x === 0 && y === 0) {
         dpadCrossRef.current.style.transform = '';
         dpadCrossRef.current.style.filter = '';
       } else {
-        dpadCrossRef.current.style.transform = `translate(${x}px, ${y}px)`;
+        dpadCrossRef.current.style.transform =
+          `translate3d(${x}px, ${y}px, 0) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(0.97)`;
         dpadCrossRef.current.style.filter = 'none';
       }
     }

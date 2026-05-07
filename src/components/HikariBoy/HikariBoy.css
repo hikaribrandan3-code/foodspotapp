@@ -429,6 +429,7 @@
   padding: 0;
   z-index: 2;
   margin-top: -3%;
+  perspective: 500px;
 }
 
 /* D-pad cross container — chunky cartoon drop shadow */
@@ -438,6 +439,7 @@
   height: 100%;
   filter: drop-shadow(0 4px 0 #1a1a1a);
   transition: transform 0.05s ease, filter 0.05s ease;
+  transform-style: preserve-3d;
 }
 
 /* Horizontal arm — solid color, thick border, inner highlight */
