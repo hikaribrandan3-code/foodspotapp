@@ -78,10 +78,7 @@ function OwnerSummary() {
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
 
-    // 🌍 LANGUAGE SAVE STATE
-    const [pendingLanguage, setPendingLanguage] = useState(null)
-    const [languageSaving, setLanguageSaving] = useState(false)
-    const [languageSaveStatus, setLanguageSaveStatus] = useState(null)
+    // 🌍 LANGUAGE — now auto-saves via changeLanguage() directly
 
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
     const [orders, setOrders] = useState([])
@@ -892,22 +889,19 @@ function OwnerSummary() {
                             >
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-2 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     {['EN', 'ES', 'PT'].map((l) => {
-                                        const isSelected = (pendingLanguage || lang) === l.toLowerCase()
-                                        const isPending = pendingLanguage === l.toLowerCase()
+                                        const isSelected = lang === l.toLowerCase()
                                         return (
                                             <button
                                                 key={l}
                                                 onClick={() => handleLanguageChange(l.toLowerCase())}
                                                 className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-stone-100 dark:border-white/5 last:border-0 transition-colors ${
-                                                    isPending
-                                                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                                        : isSelected
-                                                            ? 'text-stone-950 dark:text-white'
-                                                            : 'text-stone-400 dark:text-white'
+                                                    isSelected
+                                                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
+                                                        : 'text-stone-400 dark:text-white hover:bg-stone-50 dark:hover:bg-white/5'
                                                 }`}
                                             >
                                                 <span>{l}</span>
-                                                {isPending && <Check size={16} className="text-emerald-600 dark:text-emerald-400" />}
+                                                {isSelected && <Check size={16} className="text-emerald-600 dark:text-emerald-400" />}
                                             </button>
                                         )
                                     })}
@@ -918,7 +912,7 @@ function OwnerSummary() {
                 </motion.div>
 
                 {/* Team Management */}
-                <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} />
+                <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} onSaved={() => { setAutoSaveStatus({ type: 'team', timestamp: Date.now() }); setTimeout(() => setAutoSaveStatus(null), 2000) }} />
 
                 {/* Superadmin */}
                 {session?.role === 'superadmin' && (
@@ -955,27 +949,7 @@ function OwnerSummary() {
                 )}
             </AnimatePresence>
 
-            {/* 🌍 LANGUAGE UNSAVED CHANGES BAR */}
-            <AnimatePresence>
-                {pendingLanguage && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        className="fixed bottom-24 left-4 right-4 bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white px-5 py-4 rounded-2xl flex justify-between items-center shadow-2xl z-[10000]"
-                    >
-                        <span className="text-sm font-semibold">🌍 {t('unsaved_changes_warning') || 'Unsaved changes'}</span>
-                        <motion.button
-                            whileTap={{ scale: 0.97 }}
-                            onClick={saveLanguage}
-                            disabled={languageSaving}
-                            className="bg-emerald-600 text-white px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] disabled:opacity-50"
-                        >
-                            {languageSaving ? (t('saving_btn') || 'Saving...') : (t('save') || 'Save')}
-                        </motion.button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* 🌍 Language now auto-saves — no manual save bar needed */}
 
             {/* 📊 Backend Auditor - Side Drawer */}
             <AnimatePresence>
@@ -1110,7 +1084,7 @@ function ToggleSwitch({ checked, onChange }) {
     )
 }
 
-function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
+function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved }) {
     const [showTeamPanel, setShowTeamPanel] = useState(false)
     const [staffList, setStaffList] = useState([])
     const [loading, setLoading] = useState(false)
@@ -1164,6 +1138,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
             setNewStaff({ name: '', email: '', pin: '', role: 'cook' })
             setShowAddForm(false)
             fetchStaff()
+            onSaved?.()
         }
         setSaving(false)
     }
@@ -1177,6 +1152,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
             .eq('id', staffId)
 
         fetchStaff()
+        onSaved?.()
     }
 
     const roles = [
