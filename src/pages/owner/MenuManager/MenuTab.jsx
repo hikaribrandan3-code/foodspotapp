@@ -174,8 +174,9 @@ export default function MenuTab({
               onTouchStart={(e) => handleCategoryPress(cat.id, e)}
               onTouchEnd={(e) => handleCategoryRelease(e)}
               onContextMenu={(e) => e.preventDefault()}
-              onClick={() => {
+              onClick={(e) => {
                 if (heldCategoryId === cat.id) {
+                  e.stopPropagation();
                   setConfirmingCategoryId(cat.id);
                 } else {
                   onSelectCategory(cat.id);
