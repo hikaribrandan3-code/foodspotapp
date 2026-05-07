@@ -142,7 +142,6 @@ const Info = ({ config }) => {
                             style={{ ...buttonBase, background: getPillColor('adminAccess') }}
                             onClick={() => navigate(`/${tenantSlug}/owner`)}
                         >
-                            <span style={{ marginRight: '8px' }}>🔒</span>
                             {t('info_admin_access')}
                         </button>
                     )}
