@@ -52,6 +52,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     const [uploadStatus, setUploadStatus] = useState(null)
     const [isUploading, setIsUploading] = useState(false)
     const [toast, setToast] = useState(null)
+    const [view, setView] = useState('menu')
     const fileInputRef = useRef(null)
 
     useEffect(() => {
@@ -158,7 +159,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
             <BackendHeader />
 
             <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 24px' }}>
+                {/* Toggle */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
+                    <button onClick={() => setView('menu')} style={{ padding: '8px 16px', backgroundColor: view === 'menu' ? '#3b82f6' : '#ffffff', color: view === 'menu' ? '#ffffff' : '#374151', border: view === 'menu' ? 'none' : '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>Menu</button>
+                    <button onClick={() => setView('inventory')} style={{ padding: '8px 16px', backgroundColor: view === 'inventory' ? '#3b82f6' : '#ffffff', color: view === 'inventory' ? '#ffffff' : '#374151', border: view === 'inventory' ? 'none' : '1px solid #e5e7eb', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>Inventory</button>
+                </div>
+
                 {/* Header */}
+                {view === 'menu' && (
                 <div style={{ marginBottom: '40px' }}>
                     <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#111827', marginBottom: '8px' }}>
                         Menu
@@ -167,7 +175,10 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         Organize and update your restaurant offerings with real-time feedback.
                     </p>
                 </div>
+                )}
 
+                {view === 'menu' && (
+                <>
                 {/* Actions Bar */}
                 <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
                     <button
@@ -197,7 +208,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             alignItems: 'center',
                             gap: '8px',
                             padding: '10px 20px',
-                            backgroundColor: '#5b5bff',
+                            backgroundColor: '#3b82f6',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '24px',
@@ -207,7 +218,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             transition: 'all 0.2s'
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4747d4'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#5b5bff'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
                     >
                         <Plus size={16} /> Add Item
                     </button>
@@ -221,7 +232,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                             onClick={() => setActiveCategoryId(cat.id)}
                             style={{
                                 padding: '8px 16px',
-                                backgroundColor: activeCategoryId === cat.id ? '#5b5bff' : '#ffffff',
+                                backgroundColor: activeCategoryId === cat.id ? '#3b82f6' : '#ffffff',
                                 color: activeCategoryId === cat.id ? '#ffffff' : '#374151',
                                 border: activeCategoryId === cat.id ? 'none' : '1px solid #e5e7eb',
                                 borderRadius: '20px',
@@ -287,7 +298,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                 </p>
                                             )}
                                         </div>
-                                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#5b5bff', flexShrink: 0 }}>
+                                        <span style={{ fontSize: '16px', fontWeight: 700, color: '#3b82f6', flexShrink: 0 }}>
                                             {formatPrice(item.price)}
                                         </span>
                                     </div>
@@ -358,6 +369,14 @@ function MenuManager({ config: configProp, demoMode = false }) {
                         ))}
                     </AnimatePresence>
                 </div>
+                </>
+                )}
+
+                {view === 'inventory' && (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280' }}>
+                        <p style={{ fontSize: '16px' }}>Inventory management coming soon</p>
+                    </div>
+                )}
 
                 {/* Save Bar */}
                 {hasChanges && (
