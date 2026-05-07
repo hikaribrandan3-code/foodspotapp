@@ -908,23 +908,10 @@ const Settings = () => {
                             </div>
                             
                             {/* A/B Buttons */}
-                            <div style={{ position: 'relative', width: 60, height: 58 }}>
-                                <div 
-                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', draft.munchboy_a_color)}
-                                    style={{
-                                        position: 'absolute', top: 0, right: 0,
-                                        width: 44, height: 44, borderRadius: '50%',
-                                        background: draft.munchboy_a_color,
-                                        border: '3px solid #1a1a1a',
-                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
-                                    }}
-                                >A</div>
-                                <div 
+                            <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div
                                     onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', draft.munchboy_b_color)}
                                     style={{
-                                        position: 'absolute', bottom: 0, left: 0,
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_b_color,
                                         border: '3px solid #1a1a1a',
@@ -933,6 +920,17 @@ const Settings = () => {
                                         cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
                                     }}
                                 >B</div>
+                                <div
+                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', draft.munchboy_a_color)}
+                                    style={{
+                                        width: 44, height: 44, borderRadius: '50%',
+                                        background: draft.munchboy_a_color,
+                                        border: '3px solid #1a1a1a',
+                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
+                                    }}
+                                >A</div>
                             </div>
                         </div>
                     </div>
@@ -984,21 +982,6 @@ const Settings = () => {
                                 style={{ accentColor: '#22C55E' }}
                             />
                         </label>
-                    </div>
-                    
-                    {/* Display Name */}
-                    <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                            Display Name
-                        </label>
-                        <input
-                            type="text"
-                            className="pill-input"
-                            value={draft.munchboy_name}
-                            placeholder="MUNCHBOY"
-                            onChange={(e) => updateDraftField('munchboy_name', e.target.value)}
-                            style={{ width: '100%', fontSize: 14 }}
-                        />
                     </div>
                 </section>
 
