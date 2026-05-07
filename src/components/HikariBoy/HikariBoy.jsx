@@ -56,7 +56,7 @@ export function HikariBoy({
   const loaderStartRef = useRef(0);
   const gameStartedRef = useRef(false);
   const dpadCrossRef = useRef(null);
-  const dpadPressCount = useRef(0);
+  const dpadDir = useRef({ up: false, down: false, left: false, right: false });
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -171,17 +171,47 @@ export function HikariBoy({
     }
   }, [showLoader]);
 
+  const mapButtonToDirs = (button) => {
+    switch (button) {
+      case BUTTONS.DPAD_UP:        return ['up'];
+      case BUTTONS.DPAD_DOWN:      return ['down'];
+      case BUTTONS.DPAD_LEFT:      return ['left'];
+      case BUTTONS.DPAD_RIGHT:     return ['right'];
+      case BUTTONS.DPAD_UP_LEFT:   return ['up', 'left'];
+      case BUTTONS.DPAD_UP_RIGHT:  return ['up', 'right'];
+      case BUTTONS.DPAD_DOWN_LEFT: return ['down', 'left'];
+      case BUTTONS.DPAD_DOWN_RIGHT:return ['down', 'right'];
+      default: return [];
+    }
+  };
+
+  const updateDpadTransform = () => {
+    const { up, down, left, right } = dpadDir.current;
+    let x = 0, y = 0;
+    if (up)    y -= 4;
+    if (down)  y += 4;
+    if (left)  x -= 4;
+    if (right) x += 4;
+    if (dpadCrossRef.current) {
+      if (x === 0 && y === 0) {
+        dpadCrossRef.current.style.transform = '';
+        dpadCrossRef.current.style.filter = '';
+      } else {
+        dpadCrossRef.current.style.transform = `translate(${x}px, ${y}px)`;
+        dpadCrossRef.current.style.filter = 'none';
+      }
+    }
+  };
+
   const pressDpad = (button) => {
-    dpadPressCount.current += 1;
-    dpadCrossRef.current?.classList.add('pressed');
+    mapButtonToDirs(button).forEach(d => dpadDir.current[d] = true);
+    updateDpadTransform();
     handleButtonPress(button);
   };
 
   const releaseDpad = (button) => {
-    dpadPressCount.current = Math.max(0, dpadPressCount.current - 1);
-    if (dpadPressCount.current === 0) {
-      dpadCrossRef.current?.classList.remove('pressed');
-    }
+    mapButtonToDirs(button).forEach(d => dpadDir.current[d] = false);
+    updateDpadTransform();
     handleButtonRelease(button);
   };
 
