@@ -247,6 +247,23 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 function lerpRGB(a,b,t){ const hr=h=>parseInt(h.slice(1,3),16),hg=h=>parseInt(h.slice(3,5),16),hb=h=>parseInt(h.slice(5,7),16); return `rgb(${Math.round(lerp(hr(a),hr(b),t))},${Math.round(lerp(hg(a),hg(b),t))},${Math.round(lerp(hb(a),hb(b),t))})`; }
 function drawStar(x,y,pts,or,ir){ cx.beginPath(); for(let i=0;i<pts*2;i++){ const r=i%2===0?or:ir,a=i*Math.PI/pts-Math.PI/2; i===0?cx.moveTo(x+r*Math.cos(a),y+r*Math.sin(a)):cx.lineTo(x+r*Math.cos(a),y+r*Math.sin(a)); } cx.closePath(); cx.fill(); }
 
+const Haptics={
+  lastTime:0,minGap:80,
+  canFire(){return Date.now()-this.lastTime>=this.minGap;},
+  fire(pat,force){
+    if(!navigator.vibrate)return;
+    const now=Date.now();
+    if(!force&&now-this.lastTime<this.minGap)return;
+    this.lastTime=now;
+    try{navigator.vibrate(pat);}catch(e){}
+  },
+  shoot:20,land:15,match:30,great:[25,10,40],amazing:[30,15,30,15,50],
+  cascade:[20,10,30],combo2:20,combo3:35,combo4:50,
+  lightning:[30,10,30],bomb:[40,20,60],fireball:[35,15,50],freeze:[25,10,25,10,40],
+  ceiling:50,lifeLost:60,levelClear:[20,10,40],outOfShots:60,
+  gameOver:[50,30,50,30,100]
+};
+
 // ── PARALLAX LAYERS ───────────────────────────────────────────────
 function initParallax(){
   paralaxA=[]; paralaxB=[];
@@ -1223,6 +1240,7 @@ function doFreeze(){
 }
 
 function cascadeDrop(sources,bonusPts){
+  Haptics.fire(Haptics.cascade);
   const fl=findFloat();
   fl.sort((a,b)=>{
     const da=sources.reduce((m,s)=>Math.min(m,Math.sqrt((a.b.x-s.x)**2+(a.b.y-s.y)**2)),9999);
@@ -1270,7 +1288,7 @@ function spawnBoba(){
 function fire(){
   if(proj||gameState!=='playing')return;
   proj=new Proj(curBoba,aimAngle);
-  playFX('shoot');cannonCharge=0;orbCrack=1;launchBeam=1;launchBeamAngle=aimAngle;spawnBoba();
+  playFX('shoot');Haptics.fire(Haptics.shoot);cannonCharge=0;orbCrack=1;launchBeam=1;launchBeamAngle=aimAngle;spawnBoba();
 }
 function checkObjective(){
   // Win: reached target score OR cleared the board early
@@ -1291,14 +1309,15 @@ function onStop(){
     rings.push(new Ring(x,y,'rgba(255,255,255,0.8)'));
     getNbrs(spot.r,spot.c).forEach(n=>{if(grid[n.r][n.c])grid[n.r][n.c].hit();});
     // POWER-UPS
-    if(ct.name==='lightning'){ doLightning(spot.r); grid[spot.r][spot.c]=null; madeMatch=true; }
-    else if(ct.name==='bomb'){ grid[spot.r][spot.c]=null; doBomb(spot.r,spot.c,x,y); madeMatch=true; }
-    else if(ct.name==='fireball'){ grid[spot.r][spot.c]=null; doFireball(spot.c,y,x,y); madeMatch=true; }
-    else if(ct.name==='freeze'){ grid[spot.r][spot.c]=null; doFreeze(); madeMatch=true; }
+    if(ct.name==='lightning'){ doLightning(spot.r); grid[spot.r][spot.c]=null; madeMatch=true; Haptics.fire(Haptics.lightning,true); }
+    else if(ct.name==='bomb'){ grid[spot.r][spot.c]=null; doBomb(spot.r,spot.c,x,y); madeMatch=true; Haptics.fire(Haptics.bomb,true); }
+    else if(ct.name==='fireball'){ grid[spot.r][spot.c]=null; doFireball(spot.c,y,x,y); madeMatch=true; Haptics.fire(Haptics.fireball,true); }
+    else if(ct.name==='freeze'){ grid[spot.r][spot.c]=null; doFreeze(); madeMatch=true; Haptics.fire(Haptics.freeze,true); }
     else {
       const matches=findMatch(spot.r,spot.c,ct);
       if(matches.length>=3){
         madeMatch=true;
+        Haptics.fire(matches.length>=5?Haptics.amazing:matches.length>=4?Haptics.great:Haptics.match);
         matchesThisCascade++; // Track for combo freeze
         shotsSincePowerUp=0; // Reset pity timer on match
         combo++;comboMeterTarget=Math.min(1,combo/6);
@@ -1312,13 +1331,14 @@ function onStop(){
         if(matches.length>=5){shake(9);flashAlpha=.35;flashCol='#FFF';shockwaves.push(new Shockwave(mx,my));for(let i=0;i<40;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,H*.3));ftexts.push(new FloatText(W/2,H*.44,'AMAZING! 🎉','#FFE040',true));mascot=new Mascot(Math.random()<.5?'left':'right');mascot.expr='surprised';}
         else if(matches.length>=4){shake(5);shockwaves.push(new Shockwave(mx,my));ftexts.push(new FloatText(W/2,CNY-R*4,'GREAT! ✨','#FFE040',false));if(!mascot){mascot=new Mascot(Math.random()<.5?'left':'right');mascot.expr='happy';}}
         else if(combo>=2&&!mascot)mascot=new Mascot(Math.random()<.5?'left':'right');
-        if(combo>1){ftexts.push(new FloatText(W/2,CNY-R*7,`${combo}x COMBO!`,'#FF6EB4',combo>=3));pushComboStack(combo);playFX('combo');}
+        if(combo>1){ftexts.push(new FloatText(W/2,CNY-R*7,`${combo}x COMBO!`,'#FF6EB4',combo>=3));pushComboStack(combo);playFX('combo');Haptics.fire(combo>=4?Haptics.combo4:combo>=3?Haptics.combo3:Haptics.combo2);}
         score+=pts;scoreBounce=1;
         ftexts.push(new FloatText(mx,my-R*2,`+${pts}`,combo>=3?'#FFE040':'#FFF',combo>=3));
         if(score>hiScore){hiScore=score;try{localStorage.setItem('bbt_hi',hiScore);}catch(e){}}
         cascadeDrop(matches.map(m=>({x:m.b.x,y:m.b.y})),0);
       } else { 
-        combo=0;comboMeterTarget=Math.max(0,comboMeterTarget-.2); 
+        combo=0;comboMeterTarget=Math.max(0,comboMeterTarget-.2);
+        Haptics.fire(Haptics.land);
       }
     }
   }
@@ -1361,7 +1381,7 @@ function onStop(){
   
   // TARGET SCORE system: reach target OR clear board
   if(checkObjective()){
-    gameState='levelcomplete';lvlStars=calcStars();lcTimer=0;lcSA2=[0,0,0];
+    gameState='levelcomplete';Haptics.fire(Haptics.levelClear,true);lvlStars=calcStars();lcTimer=0;lcSA2=[0,0,0];
     lcScDisp=lvlScStart;lvlScStart=score;lvlShStart=shots;
     for(let i=0;i<60;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,Math.random()*H*.5));
   } else if(shotsThisLevel>=shotBudget){
@@ -1373,11 +1393,12 @@ function onStop(){
     initGrid();updPos();spawnBoba();calcAim();
     shotsThisLevel=Math.max(0,shotBudget-5); // 5-shot penalty
     ftexts.push(new FloatText(W/2,H*.44,'OUT OF SHOTS!','#FF4400',true));
-    shake(10);
+    Haptics.fire(Haptics.outOfShots,true);shake(10);
   } else if(checkGO())endGame();
 }
 
 function dropCeiling(){
+  Haptics.fire(Haptics.ceiling,true);
   ceilOff+=R*1.732;
   const nr=[],cols=colsInRow(0);
   for(let c=0;c<cols;c++){const p=bobaXY(0,c);p.y-=R*1.732;nr.push(new Boba(rndCol(),p.x,p.y));}
@@ -1388,11 +1409,11 @@ function dropCeiling(){
   // Classic: No "survive drops" win condition - you MUST clear the board
 }
 function checkGO(){
-  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>CNY-R*3){lives--;livesAnim[lives<0?0:lives]=1.6;if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>CNY-R*3){lives--;livesAnim[lives<0?0:lives]=1.6;Haptics.fire(Haptics.lifeLost,true);if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
   return false;
 }
 function endGame(){
-  playFX('gameover');shake(20);flashAlpha=.8;flashCol='#FF0000';
+  Haptics.fire(Haptics.gameOver,true);playFX('gameover');shake(20);flashAlpha=.8;flashCol='#FF0000';
   // Explode all remaining bubbles
   for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;for(let i=0;i<12;i++)parts.push(new Particle(b.x,b.y,b.ct.c||'#FFF',true,2));rings.push(new Ring(b.x,b.y,b.ct.c||'#FFF'));shockwaves.push(new Shockwave(b.x,b.y));grid[r][c]=null;}
   for(let i=0;i<80;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,Math.random()*H*.5));
