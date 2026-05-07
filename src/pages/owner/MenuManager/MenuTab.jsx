@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, X, Flame } from 'lucide-react';
+import { Plus, Camera, X, Flame, Leaf, Wheat, Star } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import MenuItemCard from './MenuItemCard';
 
@@ -23,7 +23,11 @@ export default function MenuTab({
     price: '',
     kcal: '',
     category: activeCategory || '',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'
+    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
+    is_vegan: false,
+    is_gluten_free: false,
+    is_spicy: false,
+    featured: false
   });
 
   const filteredItems = activeCategory
@@ -56,10 +60,10 @@ export default function MenuTab({
       kcal: parseInt(newRecipe.kcal) || 0,
       image_url: newRecipe.image,
       available: true,
-      featured: false,
-      is_vegan: false,
-      is_gluten_free: false,
-      is_spicy: false,
+      featured: newRecipe.featured,
+      is_vegan: newRecipe.is_vegan,
+      is_gluten_free: newRecipe.is_gluten_free,
+      is_spicy: newRecipe.is_spicy,
       category_id: categoryId
     };
 
@@ -71,7 +75,11 @@ export default function MenuTab({
       price: '',
       kcal: '',
       category: activeCategory || '',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'
+      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
+      is_vegan: false,
+      is_gluten_free: false,
+      is_spicy: false,
+      featured: false
     });
   };
 
@@ -262,6 +270,44 @@ export default function MenuTab({
                       value={newRecipe.description}
                       onChange={(e) => setNewRecipe({ ...newRecipe, description: e.target.value })}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest">{t('dietary_tags') || 'Dietary Tags'}</label>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setNewRecipe({ ...newRecipe, is_vegan: !newRecipe.is_vegan })}
+                        className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${newRecipe.is_vegan ? 'bg-emerald-50 border-emerald-100 text-emerald-600 px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
+                      >
+                        <Leaf className={`h-3.5 w-3.5 ${newRecipe.is_vegan ? 'fill-current' : ''}`} />
+                        {newRecipe.is_vegan && <span>Natural</span>}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewRecipe({ ...newRecipe, is_gluten_free: !newRecipe.is_gluten_free })}
+                        className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${newRecipe.is_gluten_free ? 'bg-stone-900 border-stone-900 text-white px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
+                      >
+                        <Wheat className="h-3.5 w-3.5" />
+                        {newRecipe.is_gluten_free && <span>Tacc</span>}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewRecipe({ ...newRecipe, is_spicy: !newRecipe.is_spicy })}
+                        className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${newRecipe.is_spicy ? 'bg-red-50 border-red-100 text-red-500 px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
+                      >
+                        <Flame className={`h-3.5 w-3.5 ${newRecipe.is_spicy ? 'fill-current' : ''}`} />
+                        {newRecipe.is_spicy && <span>Spicy</span>}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewRecipe({ ...newRecipe, featured: !newRecipe.featured })}
+                        className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${newRecipe.featured ? 'bg-amber-50 border-amber-100 text-amber-500 px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
+                      >
+                        <Star className={`h-3.5 w-3.5 ${newRecipe.featured ? 'fill-current' : ''}`} />
+                        {newRecipe.featured && <span>Special</span>}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
