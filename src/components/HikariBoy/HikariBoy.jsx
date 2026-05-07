@@ -12,7 +12,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './HikariBoy.css';
 import MunchboyBoot from './MunchboyBoot';
-import AudioGate from './AudioGate';
 
 const BUTTONS = {
   DPAD_UP: 'dpad-up',
@@ -48,8 +47,6 @@ export function HikariBoy({
   munchboyAColor,
   munchboyBColor
 }) {
-  const [audioGatePassed, setAudioGatePassed] = useState(false);
-  const [unlockedAudioCtx, setUnlockedAudioCtx] = useState(null);
   const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -239,23 +236,12 @@ export function HikariBoy({
     setIsBooting(false);
   };
 
-  const handleEnableAudio = (ctx) => {
-    setUnlockedAudioCtx(ctx);
-    setAudioGatePassed(true);
-  };
-
-  const handleDisableAudio = () => {
-    setAudioGatePassed(true);
-  };
-
   return (
     <div className="hikariboy-emulator">
       {/* Screen Container (55%) - FULL WIDTH, NO FRAME */}
       <div className="hb-screen">
-        {!audioGatePassed ? (
-          <AudioGate onEnableAudio={handleEnableAudio} onDisableAudio={handleDisableAudio} />
-        ) : isBooting ? (
-          <MunchboyBoot audioCtx={unlockedAudioCtx} onComplete={handleBootComplete} />
+        {isBooting ? (
+          <MunchboyBoot onComplete={handleBootComplete} />
         ) : !currentGame ? (
           <GameSelector 
             games={GAMES} 
