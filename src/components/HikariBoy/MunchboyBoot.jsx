@@ -7,13 +7,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './MunchboyBoot.css';
 
-// Lazy AudioContext — created INSIDE user gesture (iOS 18 requirement)
-const getAudioCtx = () => {
-  if (!window.__munchboyAudioCtx) {
-    window.__munchboyAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  return window.__munchboyAudioCtx;
-};
+// Shared AudioContext — created once at module level, resumed on first user gesture
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 export default function MunchboyBoot({ onComplete }) {
   const [lettersDropped, setLettersDropped] = useState(false);
@@ -21,15 +16,8 @@ export default function MunchboyBoot({ onComplete }) {
   const [showPressStart, setShowPressStart] = useState(false);
   const chimeStartedRef = useRef(false);
 
-  const playGbaChime = async () => {
-    const ctx = getAudioCtx();
-    
-    // Resume inside user gesture (required for iOS 18)
-    if (ctx.state === 'suspended') {
-      await ctx.resume();
-    }
-    
-    const now = ctx.currentTime;
+  const playGbaChime = () => {
+    const now = audioCtx.currentTime;
     
     // Frequency constants
     const f1 = 523.25; // C5
@@ -37,15 +25,15 @@ export default function MunchboyBoot({ onComplete }) {
     const f3 = 2093.00; // C7
     
     const pulse = (freq, start, duration, vol, type = 'square') => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, start);
       gain.gain.setValueAtTime(0, start);
       gain.gain.linearRampToValueAtTime(vol, start + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioCtx.destination);
       osc.start(start);
       osc.stop(start + duration);
     };
@@ -94,10 +82,15 @@ export default function MunchboyBoot({ onComplete }) {
   const handleClick = async () => {
     if (!showPressStart) return;
 
-    // Play chime once on first interaction (creates + resumes AudioContext inside gesture)
+    // ⚡ AUDIO UNLOCK: Resume the shared AudioContext on user gesture (iOS Safari)
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+
+    // Play chime once on first interaction
     if (!chimeStartedRef.current) {
       chimeStartedRef.current = true;
-      await playGbaChime();
+      playGbaChime();
     }
 
     onComplete?.();
