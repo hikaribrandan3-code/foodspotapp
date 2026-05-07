@@ -966,36 +966,21 @@ function drawLevelComplete(t){
   const scBG=cx.createLinearGradient(cx2-scPanelW/2,scPanelY,cx2+scPanelW/2,scPanelY+scPanelH);
   scBG.addColorStop(0,'rgba(60,0,100,0.95)');scBG.addColorStop(1,'rgba(20,0,50,0.98)');
   cx.fillStyle=scBG;cx.beginPath();cx.roundRect(cx2-scPanelW/2,scPanelY,scPanelW,scPanelH,R*.7);cx.fill();
-  // Neon border
-  const scBorder=cx.createLinearGradient(cx2-scPanelW/2,0,cx2+scPanelW/2,0);
-  scBorder.addColorStop(0,'#FF6EB4');scBorder.addColorStop(.5,'#FFE040');scBorder.addColorStop(1,'#00E5A0');
-  cx.strokeStyle=scBorder;cx.lineWidth=3;cx.shadowColor='#FFE040';cx.shadowBlur=5;
+  // Clean white border
+  cx.strokeStyle='rgba(255,255,255,0.85)';cx.lineWidth=3;cx.shadowColor='#FFF';cx.shadowBlur=4;
   cx.beginPath();cx.roundRect(cx2-scPanelW/2,scPanelY,scPanelW,scPanelH,R*.7);cx.stroke();cx.shadowBlur=0;
   // "SCORE" label
   cx.font=`900 ${Math.round(R*.72)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.fillStyle='rgba(255,200,80,0.85)';cx.fillText('★  SCORE  ★',cx2,scPanelY+R*.95);
-  // Score number — huge, colored
+  cx.fillStyle='rgba(255,255,255,0.9)';cx.fillText('★  SCORE  ★',cx2,scPanelY+R*.95);
+  // Score number — white bold, black outline
   cx.font=`900 ${Math.round(R*2.5)}px Arial Black`;
-  cx.strokeStyle='#000';cx.lineWidth=4;cx.lineJoin='round';cx.strokeText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
-  const snG=cx.createLinearGradient(0,scPanelY+R*.8,0,scPanelY+scPanelH);
-  snG.addColorStop(0,'#FFFFFF');snG.addColorStop(.3,'#FFE040');snG.addColorStop(.7,'#FF8C00');snG.addColorStop(1,'#FF4400');
-  cx.fillStyle=snG;cx.shadowColor='#FF8C00';cx.shadowBlur=3;cx.fillText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
-  cx.restore();
-
-  // ── "LEVEL X COMPLETE!" ──
-  const lvlTxtY=scPanelY+scPanelH+R*2.2;
-  cx.save();cx.translate(cx2,lvlTxtY);
-  const lvlPulse=1+Math.sin(t*.006)*.05;cx.scale(lvlPulse,lvlPulse);
-  cx.font=`900 ${Math.round(R*1.85)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.strokeStyle='#000';cx.lineWidth=9;cx.lineJoin='round';cx.strokeText(`LEVEL ${lvl} COMPLETE!`,0,0);
-  const ltG=cx.createLinearGradient(-R*8,0,R*8,0);
-  ltG.addColorStop(0,'#FF6EB4');ltG.addColorStop(.35,'#FFFFFF');ltG.addColorStop(.65,'#FFE040');ltG.addColorStop(1,'#00E5A0');
-  cx.fillStyle=ltG;cx.shadowColor='#FF69B4';cx.shadowBlur=6;cx.fillText(`LEVEL ${lvl} COMPLETE!`,0,0);
+  cx.strokeStyle='#000';cx.lineWidth=6;cx.lineJoin='round';cx.strokeText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
+  cx.fillStyle='#FFF';cx.shadowColor='#FFF';cx.shadowBlur=4;cx.fillText(`${lcScDisp}`,cx2,scPanelY+scPanelH*.72);
   cx.restore();
 
   // ── NEXT LEVEL BUTTON ──
   if(lcTimer>60){
-    const btnY=lvlTxtY+R*2.8,btnW=pw*.78,btnH=R*2.8;
+    const btnY=scPanelY+scPanelH+R*2.2,btnW=pw*.78,btnH=R*2.8;
     const pulse=Math.sin(t*.007)*.06+.94;
     cx.save();cx.translate(cx2,btnY+btnH/2);cx.scale(pulse,pulse);cx.translate(-cx2,-(btnY+btnH/2));
     // Shadow
@@ -1267,17 +1252,18 @@ function cascadeDrop(sources,bonusPts){
 // ── GAME LOGIC ────────────────────────────────────────────────────
 function spawnBoba(){
   shotsSincePowerUp++;
-  // Pity timer: guaranteed power-up every 25 shots, else 3% chance
-  const shouldGivePowerUp=shotsSincePowerUp>=25||Math.random()<0.03;
+  // No power-ups on levels 1-2 (learn the basics first)
+  const noPowerUp=lvl<=2;
+  const shouldGivePowerUp=!noPowerUp&&(shotsSincePowerUp>=25||Math.random()<0.03);
   if(shouldGivePowerUp) shotsSincePowerUp=0;
   
   curBoba=nxtBoba||new Boba(rndCol(shouldGivePowerUp));
   
-  const nextIsPowerUp=shotsSincePowerUp>=25||Math.random()<0.03;
+  const nextIsPowerUp=!noPowerUp&&(shotsSincePowerUp>=25||Math.random()<0.03);
   if(nextIsPowerUp) shotsSincePowerUp=0;
   nxtBoba=nxt2Boba||new Boba(rndCol(nextIsPowerUp));
   
-  const next2IsPowerUp=shotsSincePowerUp>=25||Math.random()<0.03;
+  const next2IsPowerUp=!noPowerUp&&(shotsSincePowerUp>=25||Math.random()<0.03);
   if(next2IsPowerUp) shotsSincePowerUp=0;
   nxt2Boba=new Boba(rndCol(next2IsPowerUp));
 }
