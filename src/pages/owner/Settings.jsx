@@ -914,10 +914,10 @@ const Settings = () => {
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_b_color,
-                                        border: '3px solid #1a1a1a',
-                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
+                                        border: '2px solid rgba(0,0,0,0.1)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#fff'
                                     }}
                                 >B</div>
                                 <div
@@ -925,10 +925,10 @@ const Settings = () => {
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
                                         background: draft.munchboy_a_color,
-                                        border: '3px solid #1a1a1a',
-                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
+                                        border: '2px solid rgba(0,0,0,0.1)',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#fff'
                                     }}
                                 >A</div>
                             </div>
