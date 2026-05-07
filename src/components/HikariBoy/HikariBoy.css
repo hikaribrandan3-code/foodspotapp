@@ -354,16 +354,10 @@
   top: 0;
   height: 100%;
   width: 27%;
-  /* 3D gradient: top highlight, bottom shadow */
-  background: linear-gradient(
-    180deg,
-    #E8E8E8 0%,
-    #D1D5DB 30%,
-    #B8B8B8 70%,
-    #A0A0A0 100%
-  );
-  border: none;
-  color: #888;
+  /* Cartoon flat color */
+  background: var(--button-gray);
+  border: 3px solid #1a1a1a;
+  color: #555;
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
@@ -373,11 +367,10 @@
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   z-index: 2;
-  /* 3D shadow for raised effect */
+  /* Cartoon drop shadow */
   box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.35),
-    0 1px 2px rgba(0, 0, 0, 0.25),
-    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    0 4px 0 #1a1a1a,
+    inset 0 2px 2px rgba(255, 255, 255, 0.35);
 }
 
 .shoulder-l {
@@ -397,9 +390,9 @@
 /* Active/pressed state for shoulders */
 .shoulder-l:active,
 .shoulder-r:active {
-  transform: translateY(2px);
+  transform: translateY(4px);
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 0 #1a1a1a,
     inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
@@ -651,26 +644,32 @@
     inset 0 1px 2px rgba(255, 255, 255, 0.6);
 }
 
-/* A button — customizable color */
+/* A button — cartoon flat color */
 .btn-a {
   width: var(--action-a-size);
   height: var(--action-a-size);
   font-size: calc(28px * var(--btn-scale));
   top: 0;
   right: 0;
-  background: radial-gradient(circle at 35% 35%, var(--button-a-color) 0%, var(--button-a-color) 40%, var(--button-gray-dark) 100%);
-  border-color: var(--button-a-outline);
+  background: var(--button-a-color);
+  border: 3px solid #1a1a1a;
+  box-shadow:
+    0 4px 0 #1a1a1a,
+    inset 0 2px 2px rgba(255,255,255,0.35);
 }
 
-/* B button — customizable color */
+/* B button — cartoon flat color */
 .btn-b {
   width: var(--action-b-size);
   height: var(--action-b-size);
   font-size: calc(28px * var(--btn-scale));
   bottom: 12px;
   left: 12px;
-  background: radial-gradient(circle at 35% 35%, var(--button-b-color) 0%, var(--button-b-color) 40%, var(--button-gray-dark) 100%);
-  border-color: var(--button-b-outline);
+  background: var(--button-b-color);
+  border: 3px solid #1a1a1a;
+  box-shadow:
+    0 4px 0 #1a1a1a,
+    inset 0 2px 2px rgba(255,255,255,0.35);
   color: var(--button-b-label-color, var(--button-gray-dark));
 }
 
