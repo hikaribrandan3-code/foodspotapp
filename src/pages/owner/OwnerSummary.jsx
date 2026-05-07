@@ -154,23 +154,13 @@ function OwnerSummary() {
         window.location.href = `/${tenantSlug}`
     }
 
-    const handleLanguageChange = (newLang) => {
-        setPendingLanguage(newLang)
-    }
-
-    const saveLanguage = async () => {
-        if (!pendingLanguage) return
-        setLanguageSaving(true)
-
+    const handleLanguageChange = async (newLang) => {
         try {
-            await changeLanguage(pendingLanguage)
-            setPendingLanguage(null)
+            await changeLanguage(newLang)
             setAutoSaveStatus({ type: 'language', timestamp: Date.now() })
             setTimeout(() => setAutoSaveStatus(null), 2000)
         } catch (err) {
             console.error('Language save failed:', err)
-        } finally {
-            setLanguageSaving(false)
         }
     }
 
