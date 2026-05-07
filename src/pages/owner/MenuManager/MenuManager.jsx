@@ -44,8 +44,9 @@ export default function MenuManager() {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('id, name')
+        .select('id, name, sort_order')
         .eq('business_id', businessId)
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('name', { ascending: true });
 
       if (!error && data) {
@@ -185,6 +186,49 @@ export default function MenuManager() {
     }
   }, [businessId, activeCategory, t]);
 
+  const handleEditCategory = useCallback(async (categoryId, newName) => {
+    const { error } = await supabase
+      .from('categories')
+      .update({ name: newName })
+      .eq('id', categoryId)
+      .eq('business_id', businessId);
+
+    if (error) {
+      console.error('[MenuManager] Edit category error:', error);
+      setSaveStatus({ error: true, message: 'Failed to edit category.' });
+    } else {
+      setSaveStatus({ error: false, message: 'Category updated' });
+      setTimeout(() => setSaveStatus(null), 2000);
+      fetchCategories();
+    }
+  }, [businessId, t]);
+
+  const handleMoveCategory = useCallback(async (categoryId, direction) => {
+    const currentIndex = categories.findIndex(c => c.id === categoryId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= categories.length) return;
+
+    const swapId = categories[newIndex].id;
+    const currentSort = categories[currentIndex].sort_order || currentIndex;
+    const swapSort = categories[newIndex].sort_order || newIndex;
+
+    await supabase
+      .from('categories')
+      .update({ sort_order: swapSort })
+      .eq('id', categoryId)
+      .eq('business_id', businessId);
+
+    await supabase
+      .from('categories')
+      .update({ sort_order: currentSort })
+      .eq('id', swapId)
+      .eq('business_id', businessId);
+
+    fetchCategories();
+  }, [businessId, categories]);
+
   // Keep menu_data JSONB in sync for backward compatibility with customer Menu.jsx
   const syncMenuDataToJsonb = async (items) => {
     if (!businessId) return;
@@ -296,6 +340,8 @@ export default function MenuManager() {
               onAddItem={handleAddItem}
               onAddCategory={handleAddCategory}
               onDeleteCategory={handleDeleteCategory}
+              onEditCategory={handleEditCategory}
+              onMoveCategory={handleMoveCategory}
               businessId={businessId}
             />
             <DeliverySettingsTab

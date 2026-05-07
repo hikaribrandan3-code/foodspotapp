@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, X, Flame, Leaf, Wheat, Star } from 'lucide-react';
+import { Plus, Camera, X, Flame, Leaf, Wheat, Star, Edit2 } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import MenuItemCard from './MenuItemCard';
 
@@ -14,15 +14,18 @@ export default function MenuTab({
   onAddItem,
   onAddCategory,
   onDeleteCategory,
+  onEditCategory,
+  onMoveCategory,
   businessId
 }) {
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [heldCategoryId, setHeldCategoryId] = useState(null);
-  const [confirmingCategoryId, setConfirmingCategoryId] = useState(null);
+  const [actionCategoryId, setActionCategoryId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
   const longPressTimerRef = useRef(null);
-  const confirmationRef = useRef(null);
+  const actionModalRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -51,11 +54,12 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryPress = (categoryId) => {
+  const handleCategoryPress = (categoryId, categoryName) => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     longPressTimerRef.current = setTimeout(() => {
-      setHeldCategoryId(categoryId);
-      setConfirmingCategoryId(null);
+      setActionCategoryId(categoryId);
+      setEditName(categoryName);
+      setIsEditing(false);
     }, 1300);
   };
 
@@ -66,9 +70,26 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryDelete = (categoryId, categoryName) => {
-    setHeldCategoryId(null);
-    setConfirmingCategoryId(null);
+  const handleEditCategory = () => {
+    if (!editName.trim() || !actionCategoryId) return;
+    onEditCategory(actionCategoryId, editName.trim());
+    setActionCategoryId(null);
+    setIsEditing(false);
+  };
+
+  const handleMoveCategory = (direction) => {
+    const currentIndex = categories.findIndex(c => c.id === actionCategoryId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= categories.length) return;
+
+    onMoveCategory(actionCategoryId, direction);
+  };
+
+  const handleDeleteCategory = (categoryId, categoryName) => {
+    setActionCategoryId(null);
+    setIsEditing(false);
     onDeleteCategory(categoryId, categoryName);
   };
 
@@ -110,13 +131,13 @@ export default function MenuTab({
     });
   };
 
-  // Close confirmation when tapping outside
+  // Close modal when tapping outside
   useEffect(() => {
-    if (!confirmingCategoryId) return;
+    if (!actionCategoryId) return;
     const handleOutside = (e) => {
-      if (confirmationRef.current && !confirmationRef.current.contains(e.target)) {
-        setHeldCategoryId(null);
-        setConfirmingCategoryId(null);
+      if (actionModalRef.current && !actionModalRef.current.contains(e.target)) {
+        setActionCategoryId(null);
+        setIsEditing(false);
       }
     };
     document.addEventListener('mousedown', handleOutside);
@@ -125,7 +146,7 @@ export default function MenuTab({
       document.removeEventListener('mousedown', handleOutside);
       document.removeEventListener('touchstart', handleOutside);
     };
-  }, [confirmingCategoryId]);
+  }, [actionCategoryId]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -175,9 +196,9 @@ export default function MenuTab({
       </div>
 
       {/* Category Filter Pills */}
-      <div className={`flex gap-3 mb-8 overflow-x-auto ${confirmingCategoryId ? 'pb-14' : 'pb-2'}`}>
+      <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
         <button
-          onClick={() => { setHeldCategoryId(null); setConfirmingCategoryId(null); onSelectCategory(''); }}
+          onClick={() => { setActionCategoryId(null); onSelectCategory(''); }}
           className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
             !activeCategory
               ? 'bg-emerald-600 text-white shadow-lg'
@@ -187,65 +208,128 @@ export default function MenuTab({
           All Categories
         </button>
         {categoryList && categoryList.map((cat) => (
-          <div key={cat.id} className="relative flex flex-col items-center">
-            <button
-              onMouseDown={() => handleCategoryPress(cat.id)}
-              onMouseUp={handleCategoryRelease}
-              onMouseLeave={handleCategoryRelease}
-              onTouchStart={() => handleCategoryPress(cat.id)}
-              onTouchEnd={handleCategoryRelease}
-              onContextMenu={(e) => e.preventDefault()}
-              onClick={(e) => {
-                if (heldCategoryId === cat.id) {
-                  e.stopPropagation();
-                  setConfirmingCategoryId(cat.id);
-                } else {
-                  setHeldCategoryId(null);
-                  setConfirmingCategoryId(null);
-                  onSelectCategory(cat.id);
-                }
-              }}
-              style={{ touchAction: 'manipulation' }}
-              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all select-none ${
-                heldCategoryId === cat.id
-                  ? 'bg-red-500 text-white shadow-lg animate-pulse'
-                  : activeCategory === cat.id
-                  ? 'bg-emerald-600 text-white shadow-lg'
-                  : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
-              }`}
-            >
-              {heldCategoryId === cat.id ? '🗑️ Delete' : `${cat.name} (${cat.count})`}
-            </button>
-            {confirmingCategoryId === cat.id && (
-              <div ref={confirmationRef} className="absolute top-full mt-2 z-50 bg-white border border-stone-200 rounded-2xl p-3 shadow-2xl whitespace-nowrap min-w-[200px]">
-                <p className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 text-center">Delete "{cat.name}"?</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
-                    onTouchStart={(e) => { e.stopPropagation(); handleCategoryDelete(cat.id, cat.name); }}
-                    className="flex-1 px-4 py-2.5 bg-red-500 text-white text-sm font-black rounded-xl border border-red-600 shadow-sm hover:bg-red-600 hover:shadow-md transition-all active:scale-95"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
-                    onTouchStart={(e) => { e.stopPropagation(); setConfirmingCategoryId(null); setHeldCategoryId(null); }}
-                    className="flex-1 px-4 py-2.5 bg-white text-stone-700 text-sm font-black rounded-xl border border-stone-300 shadow-sm hover:bg-stone-50 hover:shadow-md transition-all active:scale-95"
-                  >
-                    No
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            key={cat.id}
+            onMouseDown={() => handleCategoryPress(cat.id, cat.name)}
+            onMouseUp={handleCategoryRelease}
+            onMouseLeave={handleCategoryRelease}
+            onTouchStart={() => handleCategoryPress(cat.id, cat.name)}
+            onTouchEnd={handleCategoryRelease}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={() => {
+              if (actionCategoryId !== cat.id) {
+                setActionCategoryId(null);
+                onSelectCategory(cat.id);
+              }
+            }}
+            style={{ touchAction: 'manipulation' }}
+            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all select-none ${
+              activeCategory === cat.id
+                ? 'bg-emerald-600 text-white shadow-lg'
+                : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
+            }`}
+          >
+            {cat.name} ({cat.count})
+          </button>
         ))}
         <button
-          onClick={() => { setHeldCategoryId(null); setConfirmingCategoryId(null); onAddCategory(); }}
+          onClick={() => { setActionCategoryId(null); onAddCategory(); }}
           className="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white border border-dashed border-stone-300 text-stone-600 hover:bg-stone-50 transition-all"
         >
           + Add Category
         </button>
       </div>
+
+      {/* Category Action Modal */}
+      <AnimatePresence>
+        {actionCategoryId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActionCategoryId(null)}
+              className="absolute inset-0 bg-stone-950/60 backdrop-blur-md"
+            />
+            <motion.div
+              ref={actionModalRef}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-sm rounded-[2.5rem] shadow-2xl relative z-10 p-8 space-y-6"
+            >
+              <div className="text-center">
+                {isEditing ? (
+                  <>
+                    <p className="text-xs font-black text-stone-400 uppercase tracking-widest mb-3">Edit Category</p>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-3 font-bold text-stone-950 outline-none focus:bg-stone-100 transition-all"
+                      autoFocus
+                    />
+                  </>
+                ) : (
+                  <p className="text-lg font-bold text-stone-950">{editName}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleMoveCategory('left')}
+                  disabled={categories.findIndex(c => c.id === actionCategoryId) === 0}
+                  className="px-4 py-3 bg-emerald-50 text-emerald-600 font-black text-lg rounded-2xl border border-emerald-200 hover:bg-emerald-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => handleMoveCategory('right')}
+                  disabled={categories.findIndex(c => c.id === actionCategoryId) === categories.length - 1}
+                  className="px-4 py-3 bg-emerald-50 text-emerald-600 font-black text-lg rounded-2xl border border-emerald-200 hover:bg-emerald-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleEditCategory}
+                      className="px-4 py-3 bg-green-50 text-green-600 font-black text-sm rounded-2xl border border-green-200 hover:bg-green-100 transition-all"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-3 bg-stone-100 text-stone-600 font-black text-sm rounded-2xl border border-stone-200 hover:bg-stone-200 transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="px-4 py-3 bg-green-50 text-green-600 font-black text-sm rounded-2xl border border-green-200 hover:bg-green-100 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCategory(actionCategoryId, editName)}
+                      className="px-4 py-3 bg-red-50 text-red-600 font-black text-sm rounded-2xl border border-red-200 hover:bg-red-100 transition-all"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
           {filteredItems.map((item) => (
