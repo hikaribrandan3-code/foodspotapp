@@ -40,6 +40,12 @@ function OwnerSummary() {
     const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
     const discordWebhookInitialized = useRef(false)
 
+    // Business Currency
+    const [businessCurrency, setBusinessCurrency] = useState('ARS')
+    const [currencySaving, setCurrencySaving] = useState(false)
+    const [currencySaved, setCurrencySaved] = useState(false)
+    const businessCurrencyInitialized = useRef(false)
+
     // Collapsible sections
     const [openSections, setOpenSections] = useState({
         payments: true,
@@ -207,6 +213,17 @@ function OwnerSummary() {
         }
     }, [appConfig?.notifications?.discordWebhookUrl])
 
+    // Sync businessCurrency from app_config on first load (default: ARS)
+    useEffect(() => {
+        if (!businessCurrencyInitialized.current && appConfig?.businessCurrency !== undefined) {
+            setBusinessCurrency(appConfig.businessCurrency || 'ARS')
+            businessCurrencyInitialized.current = true
+        } else if (!businessCurrencyInitialized.current && appConfig) {
+            setBusinessCurrency('ARS')
+            businessCurrencyInitialized.current = true
+        }
+    }, [appConfig?.businessCurrency, appConfig])
+
     const updatePayments = (updates) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = setTimeout(async () => {
@@ -248,6 +265,35 @@ function OwnerSummary() {
         } finally {
             setDiscordWebhookSaving(false)
         }
+    }
+
+    const saveBusinessCurrency = async (currencyCode) => {
+        setCurrencySaving(true)
+        setCurrencySaved(false)
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+
+        try {
+            const updatedConfig = { ...appConfig, businessCurrency: currencyCode }
+            await supabase
+                .from('branding')
+                .update({ app_config: updatedConfig })
+                .eq('business_id', businessId)
+
+            await refreshTenantData()
+            setBusinessCurrency(currencyCode)
+            setCurrencySaved(true)
+
+            setTimeout(() => setCurrencySaved(false), 2000)
+        } catch (err) {
+            console.error('[OwnerSummary] Failed to save business currency:', err)
+        } finally {
+            setCurrencySaving(false)
+        }
+    }
+
+    const handleCurrencyChange = (currencyCode) => {
+        setBusinessCurrency(currencyCode)
+        saveBusinessCurrency(currencyCode)
     }
 
     const updateBrandingCloud = async (field, value) => {
@@ -540,6 +586,49 @@ function OwnerSummary() {
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-stone-100 dark:bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>5.</strong> {t('mp_step_5') || 'Paste it below'}</p>
                                         </div>
+                                    </div>
+
+                                    {/* Business Currency */}
+                                    <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-6 md:p-8 space-y-4 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('business_currency') || 'Business Currency'}</p>
+                                                <p className="text-xs text-stone-400 dark:text-white mt-1">Select your operating currency for all transactions</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                            {[
+                                                { code: 'ARS', label: 'ARS - Argentina 🇦🇷', flag: '🇦🇷' },
+                                                { code: 'USD', label: 'USD - US Dollar $', flag: '$' },
+                                                { code: 'COP', label: 'COP - Colombia 🇨🇴', flag: '🇨🇴' },
+                                                { code: 'CLP', label: 'CLP - Chile 🇨🇱', flag: '🇨🇱' },
+                                                { code: 'PEN', label: 'PEN - Peru 🇵🇪', flag: '🇵🇪' },
+                                                { code: 'UYU', label: 'UYU - Uruguay 🇺🇾', flag: '🇺🇾' }
+                                            ].map((currency) => (
+                                                <motion.button
+                                                    key={currency.code}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    onClick={() => handleCurrencyChange(currency.code)}
+                                                    disabled={currencySaving}
+                                                    className={`p-3 rounded-2xl text-sm font-bold transition-all border-2 ${
+                                                        businessCurrency === currency.code
+                                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400'
+                                                            : 'bg-stone-50 dark:bg-[#334155] border-stone-200 dark:border-white/5 text-stone-600 dark:text-white hover:border-emerald-300 dark:hover:border-emerald-500/30'
+                                                    }`}
+                                                >
+                                                    <span>{currency.flag}</span> {currency.code}
+                                                </motion.button>
+                                            ))}
+                                        </div>
+                                        {currencySaved && (
+                                            <motion.p
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
+                                            >
+                                                <Check size={12} /> Currency saved
+                                            </motion.p>
+                                        )}
                                     </div>
 
                                     {/* Access Token */}
