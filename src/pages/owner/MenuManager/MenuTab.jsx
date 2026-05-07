@@ -111,7 +111,7 @@ export default function MenuTab({
         >
           All Categories
         </button>
-        {categoryList.map((cat) => (
+        {categoryList && categoryList.map((cat) => (
           <button
             key={cat.id}
             onClick={() => onSelectCategory(cat.id)}
@@ -124,6 +124,12 @@ export default function MenuTab({
             {cat.name} ({cat.count})
           </button>
         ))}
+        <button
+          onClick={() => onAddItem({ category: 'New Category', name: '', price: '', kcal: '', description: '', image: '', available: true, featured: false })}
+          className="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white border border-dashed border-stone-300 text-stone-600 hover:bg-stone-50 transition-all"
+        >
+          + Add
+        </button>
       </div>
 
       <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
