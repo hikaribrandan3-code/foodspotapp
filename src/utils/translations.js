@@ -448,6 +448,9 @@ export const translations = {
     add_error: { es: "Error al agregar item.", en: "Failed to add item.", pt: "Falha ao adicionar item." },
     item_added: { es: "Item agregado", en: "Item added", pt: "Item adicionado" },
     loading_menu: { es: "Cargando menú...", en: "Loading menu...", pt: "Carregando cardápio..." },
+    inventory_management_title: { es: "Gestión de Inventario", en: "Inventory Management", pt: "Gerenciamento de Inventário" },
+    inventory_management_subtitle: { es: "Controlá stock, escaneá códigos, auditá existencias. Visibilidad total de la estantería a la cocina—a tu manera.", en: "Track counts, scan barcodes, audit stock. Full visibility from shelf to kitchen—your way.", pt: "Controle estoque, escaneie códigos, audite existências. Visibilidade total da prateleira à cozinha—do seu jeito." },
+    add_inventory_item: { es: "Agregar Item", en: "Add Item", pt: "Adicionar Item" },
 
     // Order Form Fields
     your_order: { es: "Tu Pedido", en: "Your Order", pt: "Seu Pedido" },
