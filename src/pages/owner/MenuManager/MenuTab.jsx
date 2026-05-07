@@ -49,13 +49,22 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryPress = (categoryId) => {
+  const handleCategoryPress = (categoryId, e) => {
+    if (e?.type?.includes('touch')) {
+      e.preventDefault();
+    }
+    console.log('🟢 Long-press started for:', categoryId);
     longPressTimerRef.current = setTimeout(() => {
+      console.log('🔴 Long-press triggered! Setting heldCategoryId to:', categoryId);
       setHeldCategoryId(categoryId);
     }, 2000);
   };
 
-  const handleCategoryRelease = () => {
+  const handleCategoryRelease = (e) => {
+    if (e?.type?.includes('touch')) {
+      e.preventDefault();
+    }
+    console.log('🟡 Released before timer completed');
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
     }
@@ -159,11 +168,12 @@ export default function MenuTab({
         {categoryList && categoryList.map((cat) => (
           <div key={cat.id} className="relative">
             <button
-              onMouseDown={() => handleCategoryPress(cat.id)}
-              onMouseUp={handleCategoryRelease}
-              onMouseLeave={handleCategoryRelease}
-              onTouchStart={() => handleCategoryPress(cat.id)}
-              onTouchEnd={handleCategoryRelease}
+              onMouseDown={(e) => handleCategoryPress(cat.id, e)}
+              onMouseUp={(e) => handleCategoryRelease(e)}
+              onMouseLeave={(e) => handleCategoryRelease(e)}
+              onTouchStart={(e) => handleCategoryPress(cat.id, e)}
+              onTouchEnd={(e) => handleCategoryRelease(e)}
+              onContextMenu={(e) => e.preventDefault()}
               onClick={() => {
                 if (heldCategoryId !== cat.id) {
                   onSelectCategory(cat.id);
