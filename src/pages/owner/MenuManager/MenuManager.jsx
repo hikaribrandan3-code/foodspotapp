@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { supabase, updateBranding } from '../../../lib/supabaseClient';
+import BackendNav from '../../../components/BackendNav';
 import PortalHeader from './PortalHeader';
 import MenuTab from './MenuTab';
 import InventoryTab from './InventoryTab';
@@ -257,15 +258,11 @@ export default function MenuManager() {
         )}
       </main>
 
-      {/* Back button */}
-      <div className="px-4 md:px-12 pb-8 max-w-7xl mx-auto w-full">
-        <button
-          onClick={() => navigate(`/${tenantSlug || ''}/owner`)}
-          className="text-stone-400 hover:text-stone-600 text-[11px] font-black uppercase tracking-[0.2em] transition-colors"
-        >
-          ← {t('back_to_dashboard') || 'Back to Dashboard'}
-        </button>
-      </div>
+      {/* Backend Navigation */}
+      <BackendNav
+        role="owner"
+        useRoutes={true}
+      />
 
       <footer className="py-12 border-t border-stone-200 text-center" />
     </div>

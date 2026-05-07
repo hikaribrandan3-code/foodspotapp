@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Camera, X, Flame } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import CategorySidebar from './CategorySidebar';
 import MenuItemCard from './MenuItemCard';
 
 export default function MenuTab({
@@ -100,13 +99,34 @@ export default function MenuTab({
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-12 md:gap-20">
-        <CategorySidebar
-          categories={categoryList}
-          activeCategory={activeCategory}
-          onSelectCategory={onSelectCategory}
-        />
-        <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
+      {/* Category Filter Pills */}
+      <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
+        <button
+          onClick={() => onSelectCategory('')}
+          className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+            !activeCategory
+              ? 'bg-emerald-600 text-white shadow-lg'
+              : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
+          }`}
+        >
+          All Categories
+        </button>
+        {categoryList.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => onSelectCategory(cat.id)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+              activeCategory === cat.id
+                ? 'bg-emerald-600 text-white shadow-lg'
+                : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
+            }`}
+          >
+            {cat.name} ({cat.count})
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
           {filteredItems.map((item) => (
             <MenuItemCard key={item.id} item={item} onUpdate={onItemUpdate} />
           ))}
