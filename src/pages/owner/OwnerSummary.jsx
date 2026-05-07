@@ -806,15 +806,6 @@ function OwnerSummary() {
                                             </motion.button>
                                         ))}
                                     </div>
-                                    {currencySaved && (
-                                        <motion.p
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-3"
-                                        >
-                                            <Check size={12} /> Saved
-                                        </motion.p>
-                                    )}
                                 </div>
                             </motion.div>
                         )}
