@@ -159,7 +159,7 @@ export default function MenuManager() {
       console.error('[MenuManager] Add category error:', error);
       setSaveStatus({ error: true, message: t('category_add_error') || 'Failed to add category.' });
     } else {
-      setSaveStatus({ error: false, message: t('category_added') || 'Category added' });
+      setSaveStatus({ error: false, message: 'Category added' });
       setTimeout(() => setSaveStatus(null), 2000);
       fetchCategories();
     }
