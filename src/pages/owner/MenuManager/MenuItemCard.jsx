@@ -131,31 +131,35 @@ export default function MenuItemCard({ item, onUpdate }) {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleToggle('is_vegan', !isVegan, setIsVegan)}
-              className={`p-1.5 rounded-full border transition-all ${isVegan ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${isVegan ? 'bg-emerald-50 border-emerald-100 text-emerald-600 px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
               title="Toggle Natural/Vegan"
             >
               <Leaf className={`h-3.5 w-3.5 ${isVegan ? 'fill-current' : ''}`} />
+              {isVegan && <span>Natural</span>}
             </button>
             <button
               onClick={() => handleToggle('is_gluten_free', !isGlutenFree, setIsGlutenFree)}
-              className={`p-1.5 rounded-full border transition-all ${isGlutenFree ? 'bg-stone-900 border-stone-900 text-white' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${isGlutenFree ? 'bg-stone-900 border-stone-900 text-white px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
               title="Toggle Gluten Free"
             >
-              <Wheat className="h-4 w-4" />
+              <Wheat className="h-3.5 w-3.5" />
+              {isGlutenFree && <span>Tacc</span>}
             </button>
             <button
               onClick={() => handleToggle('is_spicy', !isSpicy, setIsSpicy)}
-              className={`p-1.5 rounded-full border transition-all ${isSpicy ? 'bg-red-50 border-red-100 text-red-500' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${isSpicy ? 'bg-red-50 border-red-100 text-red-500 px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
               title="Toggle Spicy"
             >
               <Flame className={`h-3.5 w-3.5 ${isSpicy ? 'fill-current' : ''}`} />
+              {isSpicy && <span>Spicy</span>}
             </button>
             <button
               onClick={() => handleToggle('featured', !isFeatured, setIsFeatured)}
-              className={`p-1.5 rounded-full border transition-all ${isFeatured ? 'bg-amber-50 border-amber-100 text-amber-500' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400'}`}
+              className={`flex items-center gap-1.5 rounded-full border transition-all text-[10px] font-bold uppercase tracking-wider ${isFeatured ? 'bg-amber-50 border-amber-100 text-amber-500 px-3 py-1.5' : 'bg-stone-50 border-stone-200 text-stone-300 hover:text-stone-400 p-1.5'}`}
               title="Toggle Featured"
             >
               <Star className={`h-3.5 w-3.5 ${isFeatured ? 'fill-current' : ''}`} />
+              {isFeatured && <span>Special</span>}
             </button>
           </div>
 
