@@ -20,7 +20,9 @@ export default function MenuTab({
   const fileInputRef = useRef(null);
   const [isAdding, setIsAdding] = useState(false);
   const [heldCategoryId, setHeldCategoryId] = useState(null);
+  const [confirmingCategoryId, setConfirmingCategoryId] = useState(null);
   const longPressTimerRef = useRef(null);
+  const lastTapRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -55,7 +57,7 @@ export default function MenuTab({
     }
     longPressTimerRef.current = setTimeout(() => {
       setHeldCategoryId(categoryId);
-    }, 2000);
+    }, 1300);
   };
 
   const handleCategoryRelease = (e) => {
@@ -67,8 +69,19 @@ export default function MenuTab({
     }
   };
 
+  const handleCategoryDoubleTap = (categoryId) => {
+    const now = Date.now();
+    if (lastTapRef.current && now - lastTapRef.current < 300) {
+      setConfirmingCategoryId(categoryId);
+      lastTapRef.current = null;
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   const handleCategoryDelete = (categoryId, categoryName) => {
     setHeldCategoryId(null);
+    setConfirmingCategoryId(null);
     onDeleteCategory(categoryId, categoryName);
   };
 
@@ -172,7 +185,9 @@ export default function MenuTab({
               onTouchEnd={(e) => handleCategoryRelease(e)}
               onContextMenu={(e) => e.preventDefault()}
               onClick={() => {
-                if (heldCategoryId !== cat.id) {
+                if (heldCategoryId === cat.id) {
+                  handleCategoryDoubleTap(cat.id);
+                } else {
                   onSelectCategory(cat.id);
                 }
               }}
@@ -184,27 +199,28 @@ export default function MenuTab({
                   : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
               }`}
             >
-              {heldCategoryId === cat.id ? '🗑️ Delete?' : `${cat.name} (${cat.count})`}
+              {heldCategoryId === cat.id ? '🗑️ Delete' : `${cat.name} (${cat.count})`}
             </button>
-            {heldCategoryId === cat.id && (
+            {confirmingCategoryId === cat.id && (
               <div className="absolute top-full mt-2 left-0 flex gap-2 z-50" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCategoryDelete(cat.id, cat.name);
                   }}
-                  className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white active:bg-red-600 transition-all"
+                  className="px-2 py-1 rounded-full text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
                 >
-                  Delete
+                  Yes
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    setConfirmingCategoryId(null);
                     setHeldCategoryId(null);
                   }}
-                  className="px-3 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 active:bg-stone-400 transition-all"
+                  className="px-2 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 hover:bg-stone-400 transition-all"
                 >
-                  Cancel
+                  No
                 </button>
               </div>
             )}
