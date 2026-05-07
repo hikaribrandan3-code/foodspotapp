@@ -432,10 +432,13 @@ Question: ${userText}`;
             // Call Supabase edge function (API key stays server-side)
             const response = await supabase.functions.invoke('foodspot-ai', {
                 body: {
-                    messages: newMessages.map(m => ({
-                        role: m.role,
-                        content: m.content
-                    })),
+                    messages: newMessages.map(m => {
+                        const msg = { role: m.role, content: m.content };
+                        if (m.attachedImage) {
+                            msg.image = { data: m.attachedImage.split(',')[1], mimeType: 'image/jpeg' };
+                        }
+                        return msg;
+                    }),
                     systemPrompt: ownerPrompt
                 }
             });
