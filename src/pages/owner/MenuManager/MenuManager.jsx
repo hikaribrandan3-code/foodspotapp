@@ -45,14 +45,19 @@ export default function MenuManager() {
       const { data, error } = await supabase
         .from('categories')
         .select('id, name')
-        .eq('business_id', businessId);
+        .eq('business_id', businessId)
+        .order('name', { ascending: true });
 
       if (!error && data) {
+        setCategories(data);
         const map = {};
         data.forEach((cat) => {
           map[cat.name] = cat.id;
         });
         setCategoryMap(map);
+        if (data.length && !activeCategory) {
+          setActiveCategory(data[0].id);
+        }
       }
     } catch (err) {
       console.error('[MenuManager] Error fetching categories:', err);
@@ -72,26 +77,7 @@ export default function MenuManager() {
         console.error('[MenuManager] Error fetching menu items:', error);
         setSaveStatus({ error: true, message: t('fetch_error') || 'Failed to load menu items.' });
       } else if (data) {
-        // Populate category from menu_data JSONB if items lack category field
-        const enrichedData = data.map((item) => {
-          if (item.category) return item;
-          // Fallback: find category from tenantData.menu_data
-          if (tenantData?.menu_data?.categories) {
-            for (const cat of tenantData.menu_data.categories) {
-              const found = cat.items?.find((i) => i.id === item.id);
-              if (found) {
-                return { ...item, category: cat.name };
-              }
-            }
-          }
-          return item;
-        });
-        setMenuItems(enrichedData);
-        const cats = [...new Set(enrichedData.map((i) => i.category).filter(Boolean))];
-        setCategories(cats);
-        if (cats.length && !activeCategory) {
-          setActiveCategory(cats[0]);
-        }
+        setMenuItems(data);
       }
     } catch (err) {
       console.error('[MenuManager] Critical error:', err);
@@ -140,9 +126,6 @@ export default function MenuManager() {
   const handleAddItem = useCallback(async (item) => {
     // Optimistic
     setMenuItems((prev) => [item, ...prev]);
-    if (!categories.includes(item.category)) {
-      setCategories((prev) => [...prev, item.category]);
-    }
 
     const { error } = await supabase
       .from('menu_items')
@@ -161,7 +144,26 @@ export default function MenuManager() {
       // Also sync to menu_data JSONB for customer-facing compatibility
       syncMenuDataToJsonb([item, ...menuItems]);
     }
-  }, [businessId, categories, menuItems, t]);
+  }, [businessId, menuItems, t]);
+
+  const handleAddCategory = useCallback(async () => {
+    const categoryName = prompt(t('enter_category_name') || 'Enter category name:');
+    if (!categoryName || !categoryName.trim()) return;
+
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name: categoryName.trim(), business_id: businessId })
+      .select();
+
+    if (error) {
+      console.error('[MenuManager] Add category error:', error);
+      setSaveStatus({ error: true, message: t('category_add_error') || 'Failed to add category.' });
+    } else {
+      setSaveStatus({ error: false, message: t('category_added') || 'Category added' });
+      setTimeout(() => setSaveStatus(null), 2000);
+      fetchCategories();
+    }
+  }, [businessId, t]);
 
   // Keep menu_data JSONB in sync for backward compatibility with customer Menu.jsx
   const syncMenuDataToJsonb = async (items) => {
@@ -272,6 +274,7 @@ export default function MenuManager() {
               onSelectCategory={setActiveCategory}
               onItemUpdate={saveItemField}
               onAddItem={handleAddItem}
+              onAddCategory={handleAddCategory}
               businessId={businessId}
             />
             <DeliverySettingsTab

@@ -12,6 +12,7 @@ export default function MenuTab({
   onSelectCategory,
   onItemUpdate,
   onAddItem,
+  onAddCategory,
   businessId
 }) {
   const { t } = useLanguage();
@@ -31,7 +32,7 @@ export default function MenuTab({
   });
 
   const filteredItems = activeCategory
-    ? menuItems.filter((item) => item.category === activeCategory)
+    ? menuItems.filter((item) => item.category_id === activeCategory)
     : menuItems;
 
   const handlePhotoSelect = (e) => {
@@ -83,10 +84,10 @@ export default function MenuTab({
     });
   };
 
-  const categoryList = categories.map((name) => ({
-    id: name,
-    name,
-    count: menuItems.filter((i) => i.category === name).length
+  const categoryList = categories.map((cat) => ({
+    id: cat.id,
+    name: cat.name,
+    count: menuItems.filter((i) => i.category_id === cat.id).length
   }));
 
   return (
@@ -149,10 +150,10 @@ export default function MenuTab({
           </button>
         ))}
         <button
-          onClick={() => onAddItem({ category: 'New Category', name: '', price: '', kcal: '', description: '', image: '', available: true, featured: false })}
+          onClick={onAddCategory}
           className="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white border border-dashed border-stone-300 text-stone-600 hover:bg-stone-50 transition-all"
         >
-          + Add
+          + Add Category
         </button>
       </div>
 
