@@ -834,13 +834,17 @@ const TrialSignup = () => {
                 </div>
               )}
 
-              <div className="dm-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '20px' }}>
+              <div className="dm-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '20px', marginBottom: isSignup ? '80px' : '0' }}>
                 <p className="dm-footer__text">
                   {l.needHelp}{' '}
                   <a href="https://wa.me/543512122600?text=I need help with FoodSpot" target="_blank" rel="noopener noreferrer" className="dm-footer__link">
                     {l.contactSupport}
                   </a>
                 </p>
+              </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '16px', textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                📍 Córdoba, Capital, Argentina
               </div>
             </div>
 
