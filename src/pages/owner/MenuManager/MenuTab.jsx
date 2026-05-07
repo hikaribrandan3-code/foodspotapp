@@ -137,7 +137,6 @@ export default function MenuTab({
             </div>
           )}
         </div>
-      </div>
 
       {/* New Recipe Modal */}
       <AnimatePresence>
