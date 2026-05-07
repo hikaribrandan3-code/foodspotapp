@@ -506,7 +506,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 600, color: colors.textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <h3 style={{ fontSize: 18, fontWeight: 900, fontStyle: 'italic', fontFamily: "'Outfit', sans-serif", color: colors.textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.name}
                         </h3>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
