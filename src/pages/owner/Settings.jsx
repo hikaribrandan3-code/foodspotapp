@@ -984,20 +984,7 @@ const Settings = () => {
                         </label>
                     </div>
 
-                    {/* Display Name */}
-                    <div style={{ marginTop: 16 }}>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                            Display Name
-                        </label>
-                        <input
-                            type="text"
-                            className="pill-input"
-                            value={draft.munchboy_name}
-                            placeholder="Munchboy"
-                            onChange={(e) => updateDraftField('munchboy_name', e.target.value)}
-                            style={{ width: '100%', fontSize: 14 }}
-                        />
-                    </div>
+                    {/* Display Name — hidden until frontend sync is fixed */}
                 </section>
 
                 {/* ========== 7. INFO PILLS ========== */}
