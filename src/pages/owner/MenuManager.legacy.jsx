@@ -60,6 +60,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // It will be populated by cloud data when tenantData arrives.
     const [menu, setMenu] = useState({ categories: [] })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
+    const [selectedCategory, setSelectedCategory] = useState(null) // Category filter for pills
 
     // 🔒 HYDRATION LOCK: Prevents sync until cloud data is loaded
     const isHydratedRef = useRef(false)
@@ -1421,9 +1422,52 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
                 )}
 
+                {/* 🛡️ CATEGORY FILTER PILLS */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 8 }}>
+                    <button
+                        onClick={() => setSelectedCategory(null)}
+                        style={{
+                            padding: '10px 16px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            fontWeight: 600,
+                            border: '1px solid',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            background: selectedCategory === null ? '#10B981' : '#FFFFFF',
+                            color: selectedCategory === null ? '#FFFFFF' : '#4B5563',
+                            borderColor: selectedCategory === null ? '#10B981' : '#E5E7EB'
+                        }}
+                    >
+                        All
+                    </button>
+                    {(menu?.categories || []).map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            style={{
+                                padding: '10px 16px',
+                                borderRadius: 12,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                border: '1px solid',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                background: selectedCategory === cat.id ? '#10B981' : '#FFFFFF',
+                                color: selectedCategory === cat.id ? '#FFFFFF' : '#4B5563',
+                                borderColor: selectedCategory === cat.id ? '#10B981' : '#E5E7EB'
+                            }}
+                        >
+                            {cat.name}
+                        </button>
+                    ))}
+                </div>
+
                 {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
                 {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
-                {(menu?.categories || []).map(category => {
+                {(menu?.categories || [])
+                    .filter(cat => selectedCategory === null || cat.id === selectedCategory)
+                    .map(category => {
                     const isEnabled = category.enabled !== false
                     return (
                         <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
