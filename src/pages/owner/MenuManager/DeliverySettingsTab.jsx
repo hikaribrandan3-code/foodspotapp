@@ -19,15 +19,15 @@ export default function DeliverySettingsTab({
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-stone-200 pt-16 md:pt-24 mb-16 md:mb-32">
-      <div className="bg-white border-2 border-stone-100 rounded-[2.5rem] p-6 md:p-12 mb-10 shadow-sm relative overflow-hidden">
+    <section className="border-t border-stone-200 pt-8 md:pt-24 mb-16 md:mb-32">
+      <div className="bg-white border-2 border-stone-100 rounded-[2.5rem] p-6 md:p-12 mb-6 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <Leaf className="w-48 h-48 text-amber-500 -rotate-12" />
         </div>
 
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 md:gap-12 relative z-10">
           <div className="max-w-2xl">
-            <h2 className="font-['Outfit',sans-serif] text-3xl md:text-6xl text-stone-950 mb-4 font-black tracking-tight leading-none italic">
+            <h2 className="font-['Outfit',sans-serif] text-2xl md:text-6xl text-stone-950 mb-3 font-black tracking-tight leading-none italic">
               {t('delivery_system_title') || 'Delivery System'}
             </h2>
             <p className="text-sm md:text-lg text-stone-500 leading-relaxed font-medium">
@@ -59,7 +59,7 @@ export default function DeliverySettingsTab({
         {/* Map & Radius */}
         <div className="col-span-12 group">
           <div className="bg-white rounded-[2.5rem] border border-stone-200 overflow-hidden flex flex-col md:flex-row shadow-sm transition-all hover:shadow-md h-auto md:h-[30rem]">
-            <div className="h-[20rem] md:h-full w-full md:w-2/3 relative bg-stone-50 flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-stone-100">
+            <div className="h-48 md:h-full w-full md:w-2/3 relative bg-stone-50 flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-stone-100">
               <div className="absolute inset-0 opacity-[0.03]"
                 style={{ backgroundImage: `radial-gradient(circle, #059669 2px, transparent 2px)`, backgroundSize: '50px 50px' }}></div>
 
@@ -81,15 +81,15 @@ export default function DeliverySettingsTab({
               </motion.div>
             </div>
 
-            <div className="p-8 md:p-12 w-full md:w-1/3 flex flex-col justify-center">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-['Outfit',sans-serif] font-black text-stone-950 uppercase tracking-tight italic">{t('radius') || 'Radius'}</h3>
+            <div className="p-5 md:p-12 w-full md:w-1/3 flex flex-col justify-center">
+              <div className="flex justify-between items-center mb-5">
+                <h3 className="text-lg md:text-xl font-['Outfit',sans-serif] font-black text-stone-950 uppercase tracking-tight italic">{t('radius') || 'Radius'}</h3>
                 <div className="flex items-center gap-2 px-4 py-2 bg-stone-100 rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-600">{t('active') || 'Active'}</span>
                 </div>
               </div>
-              <div className="space-y-8">
+              <div className="space-y-5">
                 <input
                   type="range"
                   min="1"
@@ -109,12 +109,12 @@ export default function DeliverySettingsTab({
         </div>
 
         {/* Fees Grid */}
-        <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-          <div className="bg-white rounded-[2.5rem] border border-stone-200 p-10 flex flex-col shadow-sm transition-all hover:shadow-md">
-            <div className="flex justify-between items-start mb-8 text-left">
+        <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-5 mt-3">
+          <div className="bg-white rounded-[2.5rem] border border-stone-200 p-6 md:p-10 flex flex-col shadow-sm transition-all hover:shadow-md">
+            <div className="flex justify-between items-start mb-5 text-left">
               <div>
                 <p className="text-stone-400 font-bold uppercase text-[10px] tracking-[0.4em] mb-2">{t('service_fee') || 'Service Fee'}</p>
-                <h3 className="text-2xl text-stone-950 font-['Outfit',sans-serif] font-black italic">{t('base_fee') || 'Base Fee'}</h3>
+                <h3 className="text-xl md:text-2xl text-stone-950 font-['Outfit',sans-serif] font-black italic">{t('base_fee') || 'Base Fee'}</h3>
               </div>
               <label className="relative flex cursor-pointer items-center">
                 <input
@@ -130,27 +130,27 @@ export default function DeliverySettingsTab({
             </div>
 
             <div className={`relative transition-all duration-500 ${isDeliveryFeeEnabled ? 'opacity-100' : 'opacity-20 scale-95'}`}>
-              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-4xl italic">$</div>
+              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-3xl md:text-4xl italic">$</div>
               <input
                 type="text"
                 value={deliveryFee}
                 disabled={!isDeliveryFeeEnabled}
                 onChange={(e) => setDeliveryFee(e.target.value)}
-                className="w-full bg-stone-50 text-stone-950 font-['Outfit',sans-serif] font-black pl-14 py-8 rounded-3xl focus:bg-white transition-all text-5xl outline-none"
+                className="w-full bg-stone-50 text-stone-950 font-['Outfit',sans-serif] font-black pl-14 py-5 md:py-8 rounded-3xl focus:bg-white transition-all text-4xl md:text-5xl outline-none"
                 placeholder="0.00"
               />
             </div>
           </div>
 
-          <div className="bg-emerald-600 rounded-[2.5rem] p-10 flex flex-col shadow-xl shadow-emerald-900/10 relative overflow-hidden">
+          <div className="bg-emerald-600 rounded-[2.5rem] p-6 md:p-10 flex flex-col shadow-xl shadow-emerald-900/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-6 opacity-10 drop-shadow-2xl">
               <Gift className="w-32 h-32 text-white -rotate-12" />
             </div>
 
-            <div className="flex justify-between items-start mb-8 relative z-10 text-left">
+            <div className="flex justify-between items-start mb-5 relative z-10 text-left">
               <div>
                 <p className="text-white/60 font-bold uppercase text-[10px] tracking-[0.4em] mb-2">{t('complimentary') || 'Complimentary'}</p>
-                <h3 className="text-2xl text-white font-['Outfit',sans-serif] font-black italic">{t('free_delivery_above') || 'Free Delivery Above'}</h3>
+                <h3 className="text-xl md:text-2xl text-white font-['Outfit',sans-serif] font-black italic">{t('free_delivery_above') || 'Free Delivery Above'}</h3>
               </div>
               <label className="relative flex cursor-pointer items-center">
                 <input
@@ -166,13 +166,13 @@ export default function DeliverySettingsTab({
             </div>
 
             <div className={`relative z-10 transition-all duration-500 ${isFreeDeliveryEnabled ? 'opacity-100' : 'opacity-20 scale-95'}`}>
-              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-emerald-400 font-['Outfit',sans-serif] font-black text-4xl italic">$</div>
+              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-emerald-400 font-['Outfit',sans-serif] font-black text-3xl md:text-4xl italic">$</div>
               <input
                 type="text"
                 value={freeDeliveryThreshold}
                 disabled={!isFreeDeliveryEnabled}
                 onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
-                className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-14 py-8 rounded-3xl focus:bg-white/20 transition-all text-5xl outline-none placeholder-white/20"
+                className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-14 py-5 md:py-8 rounded-3xl focus:bg-white/20 transition-all text-4xl md:text-5xl outline-none placeholder-white/20"
                 placeholder="--.--"
               />
             </div>
