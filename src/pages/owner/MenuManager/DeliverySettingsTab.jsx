@@ -58,7 +58,7 @@ export default function DeliverySettingsTab({
       <div className={`grid grid-cols-12 gap-8 transition-opacity duration-500 ${isDeliveryPaused ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
         {/* Map & Radius */}
         <div className="col-span-12 group">
-          <div className="bg-white rounded-[2.5rem] border border-stone-200 overflow-hidden flex flex-col md:flex-row shadow-sm transition-all hover:shadow-md h-auto md:h-[30rem]">
+          <div className="bg-white rounded-[2.5rem] border border-stone-200 overflow-hidden flex flex-col md:flex-row shadow-sm transition-all hover:shadow-md h-auto md:h-[18rem]">
             <div className="h-48 md:h-full w-full md:w-2/3 relative bg-stone-50 flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-stone-100">
               <div className="absolute inset-0 opacity-[0.03]"
                 style={{ backgroundImage: `radial-gradient(circle, #059669 2px, transparent 2px)`, backgroundSize: '50px 50px' }}></div>
