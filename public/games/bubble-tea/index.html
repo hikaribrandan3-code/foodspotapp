@@ -91,6 +91,23 @@ const COL_FIREBALL={name:'fireball',c:'#FF7700',hi:'#FFCC44',lo:'#CC3300',out:'#
 const COL_FREEZE={name:'freeze',c:'#88EEFF',hi:'#DDFAFF',lo:'#0099CC',out:'#003366',wv:'#BBFAFF',fc:'#002244'};
 const MAX_COLORS_START=3;
 const CEILING_THRESHOLD=3; // Ceiling drops after this many consecutive misses
+
+// ── LEVEL CONFIG ─────────────────────────────────────────────────
+const LEVELS=[
+  {rows:3,targetScore:300,shots:17,colors:3,name:'First Sip'},
+  {rows:4,targetScore:500,shots:20,colors:3,name:'Sweet Spot'},
+  {rows:4,targetScore:750,shots:22,colors:4,name:'Color Rush'},
+  {rows:5,targetScore:1000,shots:25,colors:4,name:'Bubble Storm'},
+  {rows:5,targetScore:1500,shots:28,colors:5,name:'Tea Master'},
+  {rows:5,targetScore:2000,shots:30,colors:5,name:'Boba Boss'},
+  {rows:6,targetScore:2500,shots:32,colors:5,name:'Tapioca Titan'},
+  {rows:6,targetScore:3000,shots:35,colors:6,name:'Pearl Perfect'},
+  {rows:6,targetScore:3500,shots:35,colors:6,name:'Blast Master'},
+  {rows:7,targetScore:4000,shots:38,colors:6,name:'Bubble Tea God'},
+];
+let shotBudget=17,targetScore=300,levelName='First Sip';
+let lvlObjScStart=0;
+
 let actPal=[...PALETTE.slice(0,MAX_COLORS_START)];
 
 function rndCol(isPowerUp=false){
@@ -128,13 +145,14 @@ let scoreBounce=0,lvlBadgePop=0;
 // NEW
 let getReadyTimer=0;let pauseSelection=0;
 let beatTimer=0,beatPulse=0;
-let shotsThisLevel=0;
+let shotsThisLevel=0,dropsThisLevel=0;
 let comboStack=[];
 let dangerFlash=0;
 let shotsSincePowerUp=0; // Pity timer for power-ups
 let matchesThisCascade=0; // Track combo freeze
 let rayAngle=0;
 let paralaxA=[],paralaxB=[];
+let pendingActions=[];
 const isMobile=navigator.maxTouchPoints>0;
 let lastFrameTime=0;
 
@@ -486,8 +504,8 @@ function updPos(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++
 function updateLowestRow(){trackedLowestRow=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])trackedLowestRow=Math.max(trackedLowestRow,r);}
 function initGrid(){
   grid=[];
-  // Start with fewer rows, grow per level (cap at 8 for tighter pacing)
-  const sR=Math.min(5+Math.floor(lvl/2),8);
+  const cfg=LEVELS[Math.min(lvl-1,LEVELS.length-1)];
+  const sR=Math.min(cfg.rows,ROWS-4);
   for(let r=0;r<ROWS;r++){grid[r]=[];const cols=colsInRow(r);for(let c=0;c<cols;c++){if(r<sR){const p=bobaXY(r,c);grid[r][c]=new Boba(rndCol(),p.x,p.y);}else grid[r][c]=null;}}
 }
 function triggerRipple(rx,ry){ for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;const d=Math.sqrt((b.x-rx)**2+(b.y-ry)**2);setTimeout(()=>{if(grid[r]&&grid[r][c]){grid[r][c].ripOff=-R*.4;grid[r][c].wobbleV+=.3;}},d*8);} }
@@ -792,38 +810,46 @@ function drawUI(t){
   const cmY=barH-R*.55,cmX=pad,cmW=W-pad*2,cmH=R*.5,fill=Math.min(1,comboMeter);
   cx.save();cx.fillStyle='rgba(0,0,0,0.3)';cx.beginPath();cx.roundRect(cmX,cmY,cmW,cmH,cmH/2);cx.fill();
   if(fill>0){const mc=fill>.7?'#FF2200':fill>.4?'#FF8800':'#FF6EB4';const mg=cx.createLinearGradient(cmX,0,cmX+cmW*fill,0);mg.addColorStop(0,mc);mg.addColorStop(1,'#FFE040');if(fill>.9){cx.shadowColor=mc;cx.shadowBlur=8;}cx.fillStyle=mg;cx.beginPath();cx.roundRect(cmX,cmY,cmW*fill,cmH,cmH/2);cx.fill();cx.fillStyle='rgba(255,255,255,0.25)';cx.beginPath();cx.roundRect(cmX+2,cmY+1,cmW*fill*.6,cmH*.4,cmH*.2);cx.fill();}
-  // Classic: Show misses remaining until ceiling drops
-  const missesRemaining=Math.max(0,CEILING_THRESHOLD-consecutiveMisses);
-  cx.fillStyle=missesRemaining<=2?'#FF4400':'rgba(255,220,255,0.8)';cx.font=`bold ${Math.round(R*.5)}px Arial`;cx.textAlign='right';
-  cx.fillText(`▼${missesRemaining}`,cmX+cmW-2,cmY+cmH*.85);
+  // Shot budget display
+  const shotsRem=shotBudget-shotsThisLevel;
+  const shotCol=shotsRem<=3?'#FF4400':shotsRem<=7?'#FFE040':'#FFF';
+  cx.fillStyle=shotCol;cx.font=`bold ${Math.round(R*.62)}px Arial Black`;cx.textAlign='right';
+  cx.shadowColor=shotCol;cx.shadowBlur=shotsRem<=3?8:0;
+  cx.fillText(`⚡ ${shotsRem}`,cmX+cmW-2,cmY+cmH*.85);
+  cx.shadowBlur=0;
   cx.restore();
 
-  // ── LEVEL INFO BOX (Classic Bubble Blast style) ──
-  const wbW=R*8,wbH=R*1.65;
-  const wbX=pad*.5,wbY=barH+R*.22;
+  // ── TARGET PROGRESS BAR ──
+  const tgbW=R*8,tgbH=R*1.65;
+  const tgbX=pad*.5,tgbY=barH+R*.22;
   cx.save();
   // bg
-  const wbBG=cx.createLinearGradient(wbX,wbY,wbX+wbW,wbY);
-  wbBG.addColorStop(0,'rgba(20,0,45,0.95)');wbBG.addColorStop(.5,'rgba(40,0,80,0.98)');wbBG.addColorStop(1,'rgba(20,0,45,0.95)');
-  cx.fillStyle=wbBG;cx.beginPath();cx.roundRect(wbX,wbY,wbW,wbH,R*.45);cx.fill();
+  const tgbBG=cx.createLinearGradient(tgbX,tgbY,tgbX+tgbW,tgbY);
+  tgbBG.addColorStop(0,'rgba(20,0,45,0.95)');tgbBG.addColorStop(.5,'rgba(40,0,80,0.98)');tgbBG.addColorStop(1,'rgba(20,0,45,0.95)');
+  cx.fillStyle=tgbBG;cx.beginPath();cx.roundRect(tgbX,tgbY,tgbW,tgbH,R*.45);cx.fill();
   // border
-  const wbPulse=(Math.sin(t*.007)+1)/2;
-  cx.strokeStyle=`rgba(255,${Math.round(120+wbPulse*80)},0,${0.8+wbPulse*.2})`;
-  cx.lineWidth=2.5;cx.shadowColor='#FF6600';cx.shadowBlur=8+wbPulse*8;
-  cx.beginPath();cx.roundRect(wbX,wbY,wbW,wbH,R*.45);cx.stroke();cx.shadowBlur=0;
-  // COLORS label + dots showing active colors
-  const wbCY=wbY+wbH*.5;
-  cx.font=`900 ${Math.round(R*.75)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
-  cx.fillStyle='rgba(255,180,80,0.85)';cx.fillText('COLORS',wbX+R*.6,wbCY);
-  // Show active color count as dots
-  const dotSpacing=R*.7;
-  const dotStartX=wbX+R*5.5;
+  const tgbPulse=(Math.sin(t*.007)+1)/2;
+  cx.strokeStyle=`rgba(255,${Math.round(120+tgbPulse*80)},0,${0.8+tgbPulse*.2})`;
+  cx.lineWidth=2.5;cx.shadowColor='#FF6600';cx.shadowBlur=8+tgbPulse*8;
+  cx.beginPath();cx.roundRect(tgbX,tgbY,tgbW,tgbH,R*.45);cx.stroke();cx.shadowBlur=0;
+  // Progress fill
+  const prog=Math.min(1,(score-lvlObjScStart)/targetScore);
+  if(prog>0){
+    const pg=cx.createLinearGradient(tgbX,0,tgbX+tgbW*prog,0);
+    pg.addColorStop(0,'#FF6EB4');pg.addColorStop(1,'#FFE040');
+    cx.fillStyle=pg;cx.beginPath();cx.roundRect(tgbX,tgbY,tgbW*prog,tgbH,R*.45);cx.fill();
+  }
+  // Text
+  cx.font=`900 ${Math.round(R*.72)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillStyle='#FFF';cx.fillText(`${score-lvlObjScStart}/${targetScore}`,tgbX+tgbW/2,tgbY+tgbH*.52);
+  // Colors dots (compact, right side)
+  const cdY=tgbY+tgbH*.52;
   for(let i=0;i<6;i++){
-    const dx=dotStartX+i*dotSpacing,dy=wbCY;
+    const dx=tgbX+tgbW-R*1.8+i*R*.55,dy=cdY;
     const filled=i<actPal.length;
-    if(filled){cx.fillStyle=actPal[i].c;cx.shadowColor=actPal[i].c;cx.shadowBlur=8;}
+    if(filled){cx.fillStyle=actPal[i].c;cx.shadowColor=actPal[i].c;cx.shadowBlur=6;}
     else{cx.fillStyle='rgba(255,255,255,0.1)';cx.shadowBlur=0;}
-    cx.beginPath();cx.arc(dx,dy,R*.22,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.arc(dx,dy,R*.16,0,Math.PI*2);cx.fill();
     cx.shadowBlur=0;
   }
   cx.restore();cx.restore();
@@ -867,13 +893,12 @@ function drawNextPreview(){
 // ── LEVEL COMPLETE ────────────────────────────────────────────────
 let lcSA2=[0,0,0];
 function calcStars(){
-  // Tighter star rating for faster session pacing
-  const levelShots=shots-lvlShStart;
-  const levelScore=score-lvlScStart;
-  // 3 stars: Perfect run - high score AND very efficient
-  if(levelScore>=350&&levelShots<=10) return 3;
-  // 2 stars: Good score OR decent efficiency
-  if(levelScore>=200||levelShots<=16) return 2;
+  // Star rating based on shots remaining (efficiency = skill)
+  const shotsRem=shotBudget-shotsThisLevel;
+  // 3 stars: Completed with 6+ shots remaining (masterful)
+  if(shotsRem>=6) return 3;
+  // 2 stars: Completed with 3+ shots remaining
+  if(shotsRem>=3) return 2;
   // 1 star: Completed the level
   return 1;
 }
@@ -1032,11 +1057,11 @@ function drawSplash(t){
 }
 function drawPause(){
   cx.save();cx.fillStyle='rgba(20,0,40,0.72)';cx.fillRect(0,0,W,H);
-  const pw=Math.min(W-R*4,280),ph=R*14,px=(W-pw)/2,py=(H-ph)/2;
+  const pw=Math.min(W-R*4,280),ph=R*15,px=(W-pw)/2,py=(H-ph)/2;
   const pg=cx.createLinearGradient(px,py,px+pw,py+ph);pg.addColorStop(0,'#3D006A');pg.addColorStop(1,'#7B0080');cx.fillStyle=pg;cx.beginPath();cx.roundRect(px,py,pw,ph,R*.9);cx.fill();cx.strokeStyle='rgba(255,255,255,0.4)';cx.lineWidth=2.5;cx.stroke();
   cx.fillStyle='#FFF';cx.textAlign='center';cx.font=`bold ${Math.round(R*1.5)}px Arial Rounded MT Bold,Arial`;cx.fillText('⏸ PAUSED',W/2,py+R*2.8);
-  cx.font=`${Math.round(R*.95)}px Arial`;cx.fillStyle='rgba(255,220,255,0.9)';cx.fillText(`Score: ${score}`,W/2,py+R*4.8);cx.fillText(`Level: ${lvl}`,W/2,py+R*6.2);
-  [['▶ RESUME',py+R*8.5,'#FF6EB4'],['↺ RESTART',py+R*11,'#C084FC']].forEach(([label,by,col],idx)=>{const bw=pw*.7,bx=W/2-bw/2;const bg=cx.createLinearGradient(bx,by-R,bx+bw,by+R);bg.addColorStop(0,col);bg.addColorStop(1,'#7B0080');cx.fillStyle=bg;cx.beginPath();cx.roundRect(bx,by-R*.9,bw,R*1.8,R*.6);cx.fill();if(gameState==='paused'&&pauseSelection===idx){cx.strokeStyle='#FFF';cx.lineWidth=3;cx.stroke();}cx.fillStyle='#FFF';cx.font=`bold ${Math.round(R*.9)}px Arial Rounded MT Bold,Arial`;cx.fillText(label,W/2,by+R*.4);});
+  cx.font=`${Math.round(R*.95)}px Arial`;cx.fillStyle='rgba(255,220,255,0.9)';cx.fillText(`Score: ${score}`,W/2,py+R*4.8);cx.fillText(`Level: ${lvl} — ${levelName}`,W/2,py+R*6.2);cx.fillText(`Shots: ${shotBudget-shotsThisLevel}/${shotBudget}`,W/2,py+R*7.6);
+  [['▶ RESUME',py+R*9.5,'#FF6EB4'],['↺ RESTART',py+R*12,'#C084FC']].forEach(([label,by,col],idx)=>{const bw=pw*.7,bx=W/2-bw/2;const bg=cx.createLinearGradient(bx,by-R,bx+bw,by+R);bg.addColorStop(0,col);bg.addColorStop(1,'#7B0080');cx.fillStyle=bg;cx.beginPath();cx.roundRect(bx,by-R*.9,bw,R*1.8,R*.6);cx.fill();if(gameState==='paused'&&pauseSelection===idx){cx.strokeStyle='#FFF';cx.lineWidth=3;cx.stroke();}cx.fillStyle='#FFF';cx.font=`bold ${Math.round(R*.9)}px Arial Rounded MT Bold,Arial`;cx.fillText(label,W/2,by+R*.4);});
   cx.restore();
 }
 function drawGameOver(){
@@ -1261,7 +1286,12 @@ function fire(){
   proj=new Proj(curBoba,aimAngle);
   playFX('shoot');cannonCharge=0;orbCrack=1;launchBeam=1;launchBeamAngle=aimAngle;spawnBoba();
 }
-function checkClear(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])return false;return true;}
+function checkObjective(){
+  // Win: reached target score OR cleared the board early
+  if(score-lvlObjScStart>=targetScore) return true;
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])return false;
+  return true;
+}
 
 function onStop(){
   if(!proj)return;
@@ -1332,21 +1362,32 @@ function onStop(){
     }
   } else {
     consecutiveMisses=0; // Reset on match
-    // Combo freeze reward: 3+ matches in one cascade = 2 free misses
+    // Combo reward: 3+ matches in one cascade = refund 2 shots
     if(matchesThisCascade>=3){
-      freezeShots+=2;
-      ftexts.push(new FloatText(W/2,H*.35,'COMBO FREEZE! ❄️','#88EEFF',true));
+      shotsThisLevel=Math.max(0,shotsThisLevel-2);
+      ftexts.push(new FloatText(W/2,H*.35,'EXTRA SHOTS! +2','#FFE040',true));
+      playFX('combo');
     }
   }
   matchesThisCascade=0; // Reset cascade tracker
   
   if(freezeShots>0){ freezeShots--; if(freezeShots<=0) iceParticles=[]; }
   
-  // Level complete ONLY when board is clear
-  if(checkClear()){
+  // TARGET SCORE system: reach target OR clear board
+  if(checkObjective()){
     gameState='levelcomplete';lvlStars=calcStars();lcTimer=0;lcSA2=[0,0,0];
     lcScDisp=lvlScStart;lvlScStart=score;lvlShStart=shots;
     for(let i=0;i<60;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,Math.random()*H*.5));
+  } else if(shotsThisLevel>=shotBudget){
+    lives--;livesAnim[lives<0?0:lives]=1.6;
+    if(lives<=0){endGame();return;}
+    // Reset board, keep score, restore some shots
+    ceilOff=0;consecutiveMisses=0;combo=0;comboMeterTarget=0;
+    pendingActions=[];
+    initGrid();updPos();spawnBoba();calcAim();
+    shotsThisLevel=Math.max(0,shotBudget-5); // 5-shot penalty
+    ftexts.push(new FloatText(W/2,H*.44,'OUT OF SHOTS!','#FF4400',true));
+    shake(10);
   } else if(checkGO())endGame();
 }
 
@@ -1380,13 +1421,12 @@ function lvlUp(){
   consecutiveMisses=0;
   ceilOff=0;
   getReadyTimer=55;
-  // Colors per level: 3 (1-2), 4 (3-4), 5 (5-6), 6 (7+)
-  let numColors;
-  if(lvl<=2) numColors=3;
-  else if(lvl<=4) numColors=4;
-  else if(lvl<=6) numColors=5;
-  else numColors=6;
-  actPal=[...PALETTE.slice(0,numColors)];
+  const cfg=LEVELS[Math.min(lvl-1,LEVELS.length-1)];
+  shotBudget=cfg.shots;
+  targetScore=cfg.targetScore;
+  levelName=cfg.name;
+  actPal=[...PALETTE.slice(0,cfg.colors)];
+  lvlObjScStart=score;
 }
 
 function resetGame(){
@@ -1394,8 +1434,10 @@ function resetGame(){
   actPal=[...PALETTE.slice(0,MAX_COLORS_START)];cInt=CI_BASE;freezeShots=0;dropsThisLevel=0;consecutiveMisses=0;
   parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];iceParticles=[];
   proj=null;aimAngle=-Math.PI/2;mascot=null;nxt2Boba=null;
-  lvlScStart=0;lvlShStart=0;comboMeter=0;comboMeterTarget=0;bgComboPct=0;
+  lvlScStart=0;lvlShStart=0;lvlObjScStart=0;comboMeter=0;comboMeterTarget=0;bgComboPct=0;
   cannonCharge=0;flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
+  const cfg=LEVELS[0];
+  shotBudget=cfg.shots;targetScore=cfg.targetScore;levelName=cfg.name;
   resize();initParallax();initGrid();spawnBoba();calcAim();
 }
 
@@ -1460,10 +1502,14 @@ function loop(t){
     cx.save();cx.translate(W/2,H*.38);cx.scale(bounce,bounce);
     // LEVEL X
     cx.font=`900 ${Math.round(R*2.8)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-    cx.strokeStyle='#000';cx.lineWidth=14;cx.lineJoin='round';cx.strokeText(`LEVEL ${lvl}`,0,0);
+    cx.strokeStyle='#000';cx.lineWidth=14;cx.lineJoin='round';cx.strokeText(`LEVEL ${lvl}`,0,-R*1.8);
     const lg=cx.createLinearGradient(-R*6,0,R*6,0);
     lg.addColorStop(0,'#00CFFF');lg.addColorStop(.5,'#FFF');lg.addColorStop(1,'#00CFFF');
-    cx.fillStyle=lg;cx.shadowColor='#00CFFF';cx.shadowBlur=8;cx.fillText(`LEVEL ${lvl}`,0,0);
+    cx.fillStyle=lg;cx.shadowColor='#00CFFF';cx.shadowBlur=8;cx.fillText(`LEVEL ${lvl}`,0,-R*1.8);
+    // Level name
+    cx.font=`900 ${Math.round(R*.95)}px Arial Black`;
+    cx.fillStyle='#FFE040';cx.shadowColor='#FF8C00';cx.shadowBlur=6;
+    cx.fillText(levelName.toUpperCase(),0,R*.6);
     cx.restore();
     // GET READY!
     cx.save();cx.translate(W/2,H*.38+R*4.2);cx.scale(bounce*.95,bounce*.95);
