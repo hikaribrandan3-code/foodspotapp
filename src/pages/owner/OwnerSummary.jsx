@@ -224,8 +224,13 @@ function OwnerSummary() {
 
         if (businessInfoDebounceRef.current) clearTimeout(businessInfoDebounceRef.current)
         businessInfoDebounceRef.current = setTimeout(async () => {
-            const updatedConfig = { ...appConfig, businessInfo: { ...appConfig?.businessInfo, ...businessInfoLocal, [field]: value } }
-            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId).catch(e => console.error('Save failed:', e))
+            const newBusinessInfo = { ...appConfig?.businessInfo, [field]: value }
+            const updatedConfig = { ...appConfig, businessInfo: newBusinessInfo }
+            try {
+                await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            } catch (e) {
+                console.error('Save failed:', e)
+            }
         }, 800)
     }
 
