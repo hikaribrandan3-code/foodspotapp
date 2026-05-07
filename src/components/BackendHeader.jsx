@@ -155,7 +155,7 @@ function BackendHeader({ title, onLogout }) {
                 <div ref={dropdownRef} className="relative">
                     <button
                         onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                        className="flex items-center gap-1 px-3 py-2 text-[11px] font-black uppercase tracking-[0.05em] text-stone-700 bg-stone-100 border-none rounded-xl cursor-pointer hover:bg-stone-200 transition-colors"
+                        className="flex items-center gap-1 px-3 py-2 text-[11px] font-black uppercase tracking-[0.05em] text-stone-700 bg-stone-100 border-none rounded-2xl cursor-pointer hover:bg-stone-200 transition-colors"
                     >
                         {isInStaffView ? 'STAFF' : 'OWNER'}
                         <span className="text-[10px]">▾</span>
