@@ -49,13 +49,13 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryMouseDown = (categoryId) => {
+  const handleCategoryPress = (categoryId) => {
     longPressTimerRef.current = setTimeout(() => {
       setHeldCategoryId(categoryId);
     }, 2000);
   };
 
-  const handleCategoryMouseUp = () => {
+  const handleCategoryRelease = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
     }
@@ -159,15 +159,17 @@ export default function MenuTab({
         {categoryList && categoryList.map((cat) => (
           <div key={cat.id} className="relative">
             <button
-              onMouseDown={() => handleCategoryMouseDown(cat.id)}
-              onMouseUp={handleCategoryMouseUp}
-              onMouseLeave={handleCategoryMouseUp}
+              onMouseDown={() => handleCategoryPress(cat.id)}
+              onMouseUp={handleCategoryRelease}
+              onMouseLeave={handleCategoryRelease}
+              onTouchStart={() => handleCategoryPress(cat.id)}
+              onTouchEnd={handleCategoryRelease}
               onClick={() => {
                 if (heldCategoryId !== cat.id) {
                   onSelectCategory(cat.id);
                 }
               }}
-              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all select-none ${
                 heldCategoryId === cat.id
                   ? 'bg-red-100 text-red-700 border border-red-300'
                   : activeCategory === cat.id
@@ -181,13 +183,13 @@ export default function MenuTab({
               <div className="absolute top-full mt-2 left-0 flex gap-2 z-20">
                 <button
                   onClick={() => handleCategoryDelete(cat.id, cat.name)}
-                  className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
+                  className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white active:bg-red-600 transition-all"
                 >
                   Delete
                 </button>
                 <button
                   onClick={() => setHeldCategoryId(null)}
-                  className="px-3 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 hover:bg-stone-400 transition-all"
+                  className="px-3 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 active:bg-stone-400 transition-all"
                 >
                   Cancel
                 </button>
