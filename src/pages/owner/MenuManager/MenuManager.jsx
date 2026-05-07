@@ -128,8 +128,10 @@ export default function MenuManager() {
       .insert(item);
 
     if (error) {
-      console.error('[MenuManager] Add item error:', error);
-      setSaveStatus({ error: true, message: t('add_error') || 'Failed to add item.' });
+      console.error('[MenuManager] Add item error:', error.message || error);
+      console.error('[MenuManager] Item data:', item);
+      console.error('[MenuManager] Business ID:', businessId);
+      setSaveStatus({ error: true, message: `${t('add_error') || 'Failed to add item.'} - ${error.message || 'Unknown error'}` });
       // Revert optimistic
       setMenuItems((prev) => prev.filter((i) => i.id !== item.id));
     } else {
