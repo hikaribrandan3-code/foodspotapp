@@ -182,13 +182,15 @@ function BackendHeader({ title, onLogout }) {
                     <button
                         onClick={handleViewStore}
                         style={{
-                            padding: '8px 12px',
-                            fontSize: 12,
-                            fontWeight: 600,
+                            padding: '8px 16px',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
                             color: '#FFFFFF',
-                            background: '#3B82F6',
+                            background: '#10b981',
                             border: 'none',
-                            borderRadius: 8,
+                            borderRadius: 12,
                             cursor: 'pointer',
                             whiteSpace: 'nowrap'
                         }}
