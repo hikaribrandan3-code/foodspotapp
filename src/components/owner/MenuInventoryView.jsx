@@ -6,7 +6,7 @@ import { translations as staffTranslations } from '../../staff-ops/lib/translati
 import { supabase } from '../../lib/supabaseClient.js';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
-const BLUE = '#3b82f6';
+const EMERALD = '#059669';
 
 // Color tokens matching staff-ops light mode
 const colors = {
@@ -23,9 +23,9 @@ const colors = {
   filterInactiveBg: '#ffffff',
   counterBg: '#ffffff',
   counterBorder: '#e2e8f0',
-  filterActiveBg: '#eff6ff',
-  filterActiveText: '#3b82f6',
-  filterActiveBorder: '#bfdbfe',
+  filterActiveBg: '#ecfdf5',
+  filterActiveText: '#059669',
+  filterActiveBorder: '#a7f3d0',
   emptyIcon: 'rgba(100, 116, 139, 0.4)',
 };
 
@@ -236,7 +236,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '0 0 112px 0' }}>
       {/* Sub-tabs: Entry / Stock / Audit */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -285,7 +285,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
               onClick={() => setShowScanner(true)}
               style={{
                 width: 48, height: 48, borderRadius: 12,
-                backgroundColor: BLUE, color: '#fff',
+                backgroundColor: EMERALD, color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 border: 'none', cursor: 'pointer', flexShrink: 0,
               }}
@@ -353,7 +353,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
                       <div id="reader" style={{
                         width: '100%', aspectRatio: '1',
                         overflow: 'hidden', borderRadius: 24,
-                        border: `2px solid ${BLUE}`, background: 'rgba(255,255,255,0.05)',
+                        border: `2px solid ${EMERALD}`, background: 'rgba(255,255,255,0.05)',
                       }} />
                       <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Allow camera access when prompted</p>
                     </>
@@ -370,7 +370,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         <div style={{
                           width: 64, height: 64, borderRadius: 16,
-                          backgroundColor: BLUE, color: 'white',
+                          backgroundColor: EMERALD, color: 'white',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
                           {scanResult.name === t('item_not_found') ? <Search size={32} /> : <Check size={32} />}
@@ -424,7 +424,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
                           onClick={confirmScanAdd}
                           style={{
                             flex: 2, height: 56, borderRadius: 16,
-                            backgroundColor: BLUE, fontWeight: 700, color: 'white',
+                            backgroundColor: EMERALD, fontWeight: 700, color: 'white',
                             border: 'none', cursor: 'pointer',
                           }}
                         >
@@ -444,7 +444,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
               <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', color: colors.textTertiary, paddingLeft: 4 }}>Category</p>
               <button
                 onClick={addCategory}
-                style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, color: BLUE, background: 'none', border: 'none', cursor: 'pointer' }}
+                style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, color: EMERALD, background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 <Plus size={14} />
                 {t('add_category')}
@@ -529,7 +529,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
                       {!isExpanded && (
                         <div style={{ textAlign: 'right', marginLeft: 12, flexShrink: 0 }}>
-                          <p style={{ fontSize: 18, fontWeight: 700, color: BLUE, margin: 0 }}>{item.qty}</p>
+                          <p style={{ fontSize: 18, fontWeight: 700, color: EMERALD, margin: 0 }}>{item.qty}</p>
                           <p style={{ fontSize: 11, fontWeight: 500, color: colors.textTertiary, margin: 0 }}>{item.unit}</p>
                         </div>
                       )}
@@ -626,7 +626,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
                             />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: BLUE }}>Price ($)</label>
+                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: EMERALD }}>Price ($)</label>
                             <input
                               type="number"
                               step="0.01"
@@ -634,7 +634,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
                               onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
                               style={{
                                 height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${BLUE}`, backgroundColor: colors.filterBg,
+                                border: `1px solid ${EMERALD}`, backgroundColor: colors.filterBg,
                                 color: colors.textPrimary, fontSize: 14, outline: 'none', fontWeight: 600,
                               }}
                             />
@@ -672,14 +672,14 @@ export default function MenuInventoryView({ lang = 'en' }) {
                               style={{
                                 height: 44, flex: 1, background: 'transparent',
                                 border: 'none', textAlign: 'center', fontSize: 16,
-                                fontWeight: 700, color: BLUE, outline: 'none',
+                                fontWeight: 700, color: EMERALD, outline: 'none',
                               }}
                             />
                             <button
                               onClick={() => updateQty(item.id, 1)}
                               style={{
                                 height: 44, padding: '0 16px',
-                                backgroundColor: BLUE, color: 'white',
+                                backgroundColor: EMERALD, color: 'white',
                                 fontWeight: 600, fontSize: 14,
                                 display: 'flex', alignItems: 'center', gap: 8,
                                 border: 'none', cursor: 'pointer',
