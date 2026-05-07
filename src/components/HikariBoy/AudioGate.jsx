@@ -4,12 +4,13 @@
  * Tap A to enable sound, B to play silently
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import './AudioGate.css';
 
 export default function AudioGate({ onEnableAudio, onDisableAudio }) {
   const [status, setStatus] = useState('');
   const [transitioning, setTransitioning] = useState(false);
+  const respondedRef = useRef(false);
 
   const playSuccessBloop = (ctx) => {
     try {
@@ -29,41 +30,44 @@ export default function AudioGate({ onEnableAudio, onDisableAudio }) {
     }
   };
 
-  const handleResponse = useCallback(
-    (enabled) => {
-      setTransitioning(true);
+  const handleResponse = (enabled) => {
+    // Prevent double-fire from touch + click or rapid taps
+    if (respondedRef.current) return;
+    respondedRef.current = true;
 
-      if (enabled) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioContext();
-        if (ctx.state === 'suspended') {
-          ctx.resume();
-        }
-        // Play confirmation blip
-        playSuccessBloop(ctx);
-        setStatus('Audio activado! Iniciando...');
+    setTransitioning(true);
 
-        // Small delay so user sees/hears feedback before boot
-        setTimeout(() => {
-          onEnableAudio?.(ctx);
-        }, 600);
-      } else {
-        setStatus('Modo silencio. Iniciando...');
-        setTimeout(() => {
-          onDisableAudio?.();
-        }, 400);
+    if (enabled) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+
+      // Resume synchronously inside user gesture (iOS Safari requirement)
+      if (ctx.state === 'suspended') {
+        ctx.resume();
       }
-    },
-    [onEnableAudio, onDisableAudio]
-  );
+
+      playSuccessBloop(ctx);
+      setStatus('Audio activado! Iniciando...');
+
+      // Small delay so user sees/hears feedback before boot
+      setTimeout(() => {
+        onEnableAudio?.(ctx);
+      }, 500);
+    } else {
+      setStatus('Modo silencio. Iniciando...');
+      setTimeout(() => {
+        onDisableAudio?.();
+      }, 300);
+    }
+  };
 
   return (
-    <div className="audio-gate-screen">
-      <div className={`audio-gate-container ${transitioning ? 'transitioning' : ''}`}>
-        <div className="audio-gate-header">Configuracion</div>
+    <div className="ag-screen">
+      <div className={`ag-container ${transitioning ? 'ag-transitioning' : ''}`}>
+        <div className="ag-header">Configuracion</div>
 
         {/* Pixel Burger Mascot */}
-        <div className="pixel-burger-wrap animate-bounce-pixel">
+        <div className="ag-mascot ag-animate-bounce">
           <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             {/* Bun Top */}
             <rect x="3" y="2" width="10" height="4" fill="#d97706" />
@@ -88,14 +92,14 @@ export default function AudioGate({ onEnableAudio, onDisableAudio }) {
           </svg>
         </div>
 
-        <div className="dialogue-box">
+        <div className="ag-dialogue">
           ACTIVAR AUDIO PARA UNA MEJOR EXPERIENCIA?
         </div>
 
-        <div className="controls-hint">
-          <div className="btn-hint">
+        <div className="ag-controls">
+          <div className="ag-hint">
             <button
-              className="btn-circle btn-a"
+              className="ag-btn ag-btn-a"
               onTouchStart={(e) => { e.preventDefault(); handleResponse(true); }}
               onClick={() => handleResponse(true)}
             >
@@ -103,9 +107,9 @@ export default function AudioGate({ onEnableAudio, onDisableAudio }) {
             </button>
             <span>SI</span>
           </div>
-          <div className="btn-hint">
+          <div className="ag-hint">
             <button
-              className="btn-circle btn-b"
+              className="ag-btn ag-btn-b"
               onTouchStart={(e) => { e.preventDefault(); handleResponse(false); }}
               onClick={() => handleResponse(false)}
             >
@@ -115,9 +119,9 @@ export default function AudioGate({ onEnableAudio, onDisableAudio }) {
           </div>
         </div>
 
-        <div className="gate-footer-hint">Presiona las teclas A o B</div>
+        <div className="ag-footer-hint">Presiona las teclas A o B</div>
 
-        {status && <div className="status-msg">{status}</div>}
+        {status && <div className="ag-status">{status}</div>}
       </div>
     </div>
   );
