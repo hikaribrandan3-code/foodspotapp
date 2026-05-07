@@ -662,7 +662,7 @@ function OwnerSummary() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
                     <SectionHeader
                         icon={<Globe size={14} />}
-                        title={t('business_currency') || 'Business Currency'}
+                        title="Business Currency"
                         isOpen={openSections.currency}
                         onToggle={() => toggleSection('currency')}
                     />
@@ -674,30 +674,29 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <p className="text-sm text-stone-600 dark:text-white">Select your operating currency for all transactions and pricing</p>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                <div className="rounded-[2.5rem] bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    <div className="grid grid-cols-3 md:grid-cols-3 gap-2.5">
                                         {[
-                                            { code: 'ARS', label: 'ARS', flag: '🇦🇷' },
-                                            { code: 'USD', label: 'USD', flag: '💵' },
-                                            { code: 'COP', label: 'COP', flag: '🇨🇴' },
-                                            { code: 'CLP', label: 'CLP', flag: '🇨🇱' },
-                                            { code: 'PEN', label: 'PEN', flag: '🇵🇪' },
-                                            { code: 'UYU', label: 'UYU', flag: '🇺🇾' }
+                                            { code: 'ARS', flag: '🇦🇷' },
+                                            { code: 'USD', flag: '💵' },
+                                            { code: 'COP', flag: '🇨🇴' },
+                                            { code: 'CLP', flag: '🇨🇱' },
+                                            { code: 'PEN', flag: '🇵🇪' },
+                                            { code: 'UYU', flag: '🇺🇾' }
                                         ].map((currency) => (
                                             <motion.button
                                                 key={currency.code}
                                                 whileTap={{ scale: 0.95 }}
                                                 onClick={() => handleCurrencyChange(currency.code)}
                                                 disabled={currencySaving}
-                                                className={`p-4 rounded-2xl font-bold transition-all border-2 ${
+                                                className={`py-3 px-2 rounded-xl font-black text-sm transition-all border-2 flex flex-col items-center gap-1 ${
                                                     businessCurrency === currency.code
                                                         ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400'
                                                         : 'bg-stone-50 dark:bg-[#334155] border-stone-200 dark:border-white/5 text-stone-600 dark:text-white hover:border-emerald-300 dark:hover:border-emerald-500/30'
                                                 }`}
                                             >
-                                                <span className="text-lg">{currency.flag}</span>
-                                                <div className="text-xs">{currency.label}</div>
+                                                <span className="text-base">{currency.flag}</span>
+                                                <span>{currency.code}</span>
                                             </motion.button>
                                         ))}
                                     </div>
@@ -705,9 +704,9 @@ function OwnerSummary() {
                                         <motion.p
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
-                                            className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1"
+                                            className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-3"
                                         >
-                                            <Check size={12} /> Currency saved
+                                            <Check size={12} /> Saved
                                         </motion.p>
                                     )}
                                 </div>
