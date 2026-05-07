@@ -628,11 +628,22 @@ const TrialSignup = () => {
       const trialEndsAt = new Date()
       trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
+      // Generate business_id (UUID) for multi-tenant isolation
+      const businessId = crypto.randomUUID()
+
       await supabase.from('branding').insert({
+        business_id: businessId,
         user_id: authData.user.id,
         business_name: businessName,
         slug,
-        trial_ends_at: trialEndsAt.toISOString()
+        trial_ends_at: trialEndsAt.toISOString(),
+        app_config: {
+          businessInfo: {},
+          externalOrdering: {},
+          payments: {},
+          notifications: {},
+          businessCurrency: 'ARS'
+        }
       }).catch(console.error)
 
       setTenantStoragePrefix(authData.user.id)
