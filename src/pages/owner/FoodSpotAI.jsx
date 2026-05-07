@@ -387,7 +387,6 @@ export function FoodSpotAI({ context = {} }) {
     const [isLoading, setIsLoading] = useState(false)
     const [pendingImage, setPendingImage] = useState(null)
     const [previewUrl, setPreviewUrl] = useState(null)
-    const [context, setContext] = useState({ order: null })
     const fileInputRef = useRef(null)
     const chatEndRef = useRef(null)
     const { ingestAIDraft, launchStudio } = useStrategyDraft()
