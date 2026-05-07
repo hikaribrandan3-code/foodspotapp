@@ -93,7 +93,8 @@ function MenuManager({ config: configProp, demoMode = false }) {
             price: 0,
             image: null,
             available: true,
-            description: ''
+            description: '',
+            categoryId: activeCategory.id
         }
         const updatedCategories = menu.categories.map(cat =>
             cat.id === activeCategory.id
@@ -105,7 +106,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     }
 
     const handleEdit = (item) => {
-        setEditingItem(item)
+        setEditingItem({ ...item, categoryId: activeCategory.id })
         setEditForm({ ...item })
     }
 
@@ -373,10 +374,31 @@ function MenuManager({ config: configProp, demoMode = false }) {
                 )}
 
                 {view === 'inventory' && (
-                    <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280' }}>
-                        <p style={{ fontSize: '16px' }}>Inventory management coming soon</p>
-                    </div>
+                    <Suspense fallback={<div style={{ textAlign: 'center', padding: '60px 20px' }}>Loading...</div>}>
+                        <MenuInventoryView />
+                    </Suspense>
                 )}
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setIsUploading(true)
+                        try {
+                            const result = await processAndStoreImage(file, targetBusinessId)
+                            setEditForm({ ...editForm, image: result.url })
+                            setUploadStatus({ success: true, message: 'Image uploaded!' })
+                        } catch (err) {
+                            setUploadStatus({ success: false, message: 'Upload failed' })
+                        } finally {
+                            setIsUploading(false)
+                        }
+                    }}
+                />
 
                 {/* Save Bar */}
                 {hasChanges && (
