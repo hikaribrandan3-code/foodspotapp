@@ -400,15 +400,15 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <InputField
                                         label={t('whatsapp_contact') || 'WhatsApp'}
                                         value={appConfig?.businessInfo?.whatsapp || ''}
                                         onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
                                         placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                     />
-                                    <div className="bg-stone-50 dark:bg-[#0f172a] rounded-2xl p-5 space-y-3 border border-stone-200 dark:border-white/5">
-                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
+                                    <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-6 md:p-8 space-y-4 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <InputField
                                             label={t('address_label') || 'Address'}
                                             value={appConfig?.businessInfo?.address || ''}
@@ -451,7 +451,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <InputField
                                         label="Instagram"
                                         value={appConfig?.externalOrdering?.instagramUrl || ''}
@@ -514,7 +514,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     {/* MP Setup Card */}
                                     <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-[2.5rem] p-6 md:p-8 border border-emerald-200 dark:border-emerald-500/20 space-y-3 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                         <div className="flex items-start gap-3">
@@ -524,16 +524,16 @@ function OwnerSummary() {
                                                 <p className="text-xs text-emerald-600/70 dark:text-emerald-300/70 mt-0.5">{t('mp_connect_subtitle') || 'Accept online payments'}</p>
                                             </div>
                                         </div>
-                                        <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-emerald-200 dark:border-emerald-500/10">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-1.5">{t('mp_why_title') || 'Why connect?'}</p>
+                                        <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-4 border border-emerald-200 dark:border-emerald-500/10 shadow-sm">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400 mb-2">{t('mp_why_title') || 'Why connect?'}</p>
                                             <ul className="text-xs text-emerald-700/80 dark:text-emerald-300/70 space-y-1 list-disc pl-4">
                                                 <li>{t('mp_benefit_1') || 'Instant payment confirmation'}</li>
                                                 <li>{t('mp_benefit_2') || 'Automatic order status updates'}</li>
                                                 <li>{t('mp_benefit_3') || 'Secure transactions'}</li>
                                             </ul>
                                         </div>
-                                        <div className="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-emerald-200 dark:border-emerald-500/10 space-y-1.5">
-                                            <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400 mb-1">{t('mp_how_to_title') || 'How to connect'}</p>
+                                        <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-4 border border-emerald-200 dark:border-emerald-500/10 space-y-2 shadow-sm">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400 mb-2">{t('mp_how_to_title') || 'How to connect'}</p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>1.</strong> {t('mp_step_1') || 'Go to Mercado Pago Developers'}</p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>2.</strong> {t('mp_step_2') || 'Create an application'}</p>
                                             <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>3.</strong> {t('mp_step_3') || 'Get your credentials'}</p>
@@ -560,7 +560,7 @@ function OwnerSummary() {
 
                                     {/* Alias */}
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400 block mb-1.5">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
@@ -584,7 +584,7 @@ function OwnerSummary() {
 
                                     {/* Discord Webhook */}
                                     <div className="border-t border-stone-100 dark:border-white/5 pt-4">
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400 block mb-1.5">Discord Webhook</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Discord Webhook</label>
                                         <p className="text-xs text-stone-400 dark:text-white mb-2">Send payment requests to Discord when drivers deliver</p>
                                         <div className="flex gap-2">
                                             <input
@@ -777,18 +777,18 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
     return (
         <button
             onClick={onToggle}
-            className="w-full flex items-center justify-between px-1 mb-3"
+            className="w-full flex items-center justify-between px-1 mb-8 md:mb-12"
             disabled={!onToggle}
         >
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center gap-3">
                 <div className="h-6 w-1 bg-emerald-600 rounded-full" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-400 dark:!text-white flex items-center gap-2">
+                <h3 className="font-['Outfit',sans-serif] font-black text-xl md:text-2xl italic tracking-tight text-stone-950 dark:!text-white">
                     {title}
                 </h3>
             </div>
             {onToggle && (
                 <ChevronDown
-                    size={14}
+                    size={16}
                     className={`text-stone-400 dark:text-emerald-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 />
             )}
@@ -818,7 +818,7 @@ function MenuRow({ icon, label, subValue, value, highlight }) {
 function InputField({ label, value, onChange, placeholder, type = 'text' }) {
     return (
         <div>
-            <label className="text-[9px] font-black uppercase tracking-widest text-stone-400 dark:text-emerald-400 block mb-2">
+            <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
                 {label}
             </label>
             <input
@@ -826,7 +826,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text' }) {
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
             />
         </div>
     )
@@ -972,11 +972,11 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle }) {
                                         placeholder="1234"
                                     />
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-stone-400 dark:text-emerald-400 block mb-1.5">{t('role') || 'Role'}</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('role') || 'Role'}</label>
                                         <select
                                             value={newStaff.role}
                                             onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                            className="w-full px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-500/50 transition-colors"
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         >
                                             {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                                         </select>
