@@ -970,18 +970,7 @@ const Settings = () => {
                             />
                         </div>
                         
-                        {/* Enable Toggle */}
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: draft.munchboy_enabled ? '#10B981' : '#64748B' }}>
-                                {draft.munchboy_enabled ? 'ON' : 'OFF'}
-                            </span>
-                            <input
-                                type="checkbox"
-                                checked={!!draft.munchboy_enabled}
-                                onChange={(e) => updateDraftField('munchboy_enabled', e.target.checked)}
-                                style={{ accentColor: '#10B981' }}
-                            />
-                        </label>
+                        {/* Enable Toggle — hidden until wired to frontend */}
                     </div>
 
                     {/* Display Name — hidden until frontend sync is fixed */}
