@@ -641,7 +641,7 @@ const Settings = () => {
                         </div>
                         {/* Guidelines for best results */}
                         <p style={{ fontSize: 11, color: '#64748B', marginTop: 10, marginBottom: 0, textAlign: 'center' }}>
-                            📸 <strong>Tip:</strong> For best results, use images around <strong>1200×800px</strong> or <strong>16:9 ratio</strong>, under <strong>500KB</strong>.
+                            <strong>Tip:</strong> For best results, use images around <strong>1200×800px</strong> or <strong>16:9 ratio</strong>, under <strong>500KB</strong>.
                             <br />Larger files may take longer to upload on slow connections.
                         </p>
                         </>
@@ -972,14 +972,14 @@ const Settings = () => {
                         
                         {/* Enable Toggle */}
                         <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: draft.munchboy_enabled ? '#22C55E' : '#64748B' }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: draft.munchboy_enabled ? '#10B981' : '#64748B' }}>
                                 {draft.munchboy_enabled ? 'ON' : 'OFF'}
                             </span>
                             <input
                                 type="checkbox"
                                 checked={!!draft.munchboy_enabled}
                                 onChange={(e) => updateDraftField('munchboy_enabled', e.target.checked)}
-                                style={{ accentColor: '#22C55E' }}
+                                style={{ accentColor: '#10B981' }}
                             />
                         </label>
                     </div>
@@ -1064,7 +1064,7 @@ const Settings = () => {
                                                     type="checkbox"
                                                     checked={!!isActive}
                                                     onChange={(e) => updateInfoPill(pillId, { enabled: e.target.checked })}
-                                                    style={{ accentColor: '#22C55E' }}
+                                                    style={{ accentColor: '#10B981' }}
                                                 />
                                             </label>
                                         </div>
@@ -1113,13 +1113,13 @@ const Settings = () => {
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
-                                            background: on ? '#F0FDF4' : '#F9FAFB',
-                                            border: `1px solid ${on ? '#22C55E' : '#E5E7EB'}`
+                                            background: on ? '#ECFDF5' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#10B981' : '#E5E7EB'}`
                                         }}
                                     >
                                         <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
-                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#22C55E' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
-                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#10B981' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
                                         </div>
                                     </div>
                                 );
@@ -1182,13 +1182,13 @@ const Settings = () => {
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
-                                            background: on ? '#EFF6FF' : '#F9FAFB',
-                                            border: `1px solid ${on ? '#3B82F6' : '#E5E7EB'}`
+                                            background: on ? '#ECFDF5' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#10B981' : '#E5E7EB'}`
                                         }}
                                     >
                                         <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
-                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#3B82F6' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
-                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#10B981' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
                                         </div>
                                     </div>
                                 );
@@ -1223,7 +1223,7 @@ const Settings = () => {
                     display: 'flex', alignItems: 'center', gap: 8,
                     animation: 'fadeIn 0.2s ease-out'
                 }}>
-                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                    <span style={{ fontWeight: 700 }}>{saveStatus.error ? '!' : '✓'}</span> {saveStatus.message}
                 </div>
             )}
 
