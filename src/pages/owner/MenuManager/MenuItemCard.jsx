@@ -41,7 +41,7 @@ export default function MenuItemCard({ item, onUpdate }) {
         !inStock ? 'opacity-60 saturate-[0.2]' : ''
       }`}
     >
-      <div className="relative h-56 w-full overflow-hidden">
+      <div className="relative h-48 w-full overflow-hidden">
         <img
           src={item.image_url || item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
           alt={item.name}
