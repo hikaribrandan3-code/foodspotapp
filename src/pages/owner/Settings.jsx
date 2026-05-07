@@ -908,7 +908,7 @@ const Settings = () => {
                             </div>
                             
                             {/* A/B Buttons */}
-                            <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
                                 <div
                                     onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', draft.munchboy_b_color)}
                                     style={{
@@ -917,7 +917,8 @@ const Settings = () => {
                                         border: '2px solid rgba(0,0,0,0.1)',
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#fff'
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#fff',
+                                        mixBlendMode: 'normal'
                                     }}
                                 >B</div>
                                 <div
@@ -928,7 +929,8 @@ const Settings = () => {
                                         border: '2px solid rgba(0,0,0,0.1)',
                                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#fff'
+                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#fff',
+                                        mixBlendMode: 'normal'
                                     }}
                                 >A</div>
                             </div>
