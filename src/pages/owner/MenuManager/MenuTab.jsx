@@ -53,9 +53,7 @@ export default function MenuTab({
     if (e?.type?.includes('touch')) {
       e.preventDefault();
     }
-    console.log('🟢 Long-press started for:', categoryId);
     longPressTimerRef.current = setTimeout(() => {
-      console.log('🔴 Long-press triggered! Setting heldCategoryId to:', categoryId);
       setHeldCategoryId(categoryId);
     }, 2000);
   };
@@ -64,7 +62,6 @@ export default function MenuTab({
     if (e?.type?.includes('touch')) {
       e.preventDefault();
     }
-    console.log('🟡 Released before timer completed');
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
     }
@@ -190,15 +187,29 @@ export default function MenuTab({
               {heldCategoryId === cat.id ? '🗑️ Delete?' : `${cat.name} (${cat.count})`}
             </button>
             {heldCategoryId === cat.id && (
-              <div className="absolute top-full mt-2 left-0 flex gap-2 z-20">
+              <div className="absolute top-full mt-2 left-0 flex gap-2 z-50">
                 <button
-                  onClick={() => handleCategoryDelete(cat.id, cat.name)}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    handleCategoryDelete(cat.id, cat.name);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    handleCategoryDelete(cat.id, cat.name);
+                  }}
                   className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white active:bg-red-600 transition-all"
                 >
                   Delete
                 </button>
                 <button
-                  onClick={() => setHeldCategoryId(null)}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    setHeldCategoryId(null);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    setHeldCategoryId(null);
+                  }}
                   className="px-3 py-1 rounded-full text-xs font-bold bg-stone-300 text-stone-700 active:bg-stone-400 transition-all"
                 >
                   Cancel
