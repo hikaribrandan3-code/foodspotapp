@@ -63,7 +63,7 @@ import StaffKDS from './pages/staff/StaffKDS.jsx'
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin.jsx'
 import OwnerSummary from './pages/owner/OwnerSummary.jsx'
-import MenuManager from './pages/owner/MenuManager.jsx'
+import MenuManager from './pages/owner/MenuManager/index.js'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
