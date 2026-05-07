@@ -22,7 +22,6 @@ export default function MenuTab({
   const [heldCategoryId, setHeldCategoryId] = useState(null);
   const [confirmingCategoryId, setConfirmingCategoryId] = useState(null);
   const longPressTimerRef = useRef(null);
-  const lastTapRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -69,15 +68,6 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryDoubleTap = (categoryId) => {
-    const now = Date.now();
-    if (lastTapRef.current && now - lastTapRef.current < 300) {
-      setConfirmingCategoryId(categoryId);
-      lastTapRef.current = null;
-    } else {
-      lastTapRef.current = now;
-    }
-  };
 
   const handleCategoryDelete = (categoryId, categoryName) => {
     setHeldCategoryId(null);
@@ -186,7 +176,7 @@ export default function MenuTab({
               onContextMenu={(e) => e.preventDefault()}
               onClick={() => {
                 if (heldCategoryId === cat.id) {
-                  handleCategoryDoubleTap(cat.id);
+                  setConfirmingCategoryId(cat.id);
                 } else {
                   onSelectCategory(cat.id);
                 }
