@@ -206,6 +206,8 @@ function schedBeat(){
     if(jBt===0||jBt===2)rhodesChord(bar.c[0],bar.c[2],jNext);
     // Vinyl crackle occasionally
     if(Math.random()<0.25)vinylCrackle(jNext);
+    // Saxophone — upbeat phrase every 2 bars on beat 0
+    if(jBt===0&&jBar%2===0)playSaxPhrase(jBar,jNext);
     jNext+=BEAT;jBt++;
     if(jBt>=4){jBt=0;jBar=(jBar+1)%PROG.length;}
   }
@@ -293,6 +295,55 @@ function vinylCrackle(t){
   g.gain.setValueAtTime(0.012,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.05);
   s.start(t);s.stop(t+0.07);
+}
+
+// ── SAXOPHONE ─────────────────────────────────────────────
+// Professional sax with vibrato, filter, and ADSR envelope
+function saxNote(freq,t,dur){
+  if(!AC)return;
+  const now=AC.currentTime;
+  // Vibrato LFO ~5.2Hz
+  const lfo=AC.createOscillator(),lfoG=AC.createGain();
+  lfo.frequency.value=5.2;
+  lfoG.gain.value=freq*0.006;
+  lfo.connect(lfoG);
+  // Main oscillator - sawtooth for rich sax harmonics
+  const o=AC.createOscillator(),g=AC.createGain();
+  lfoG.connect(o.frequency);
+  o.type='sawtooth';
+  o.frequency.value=freq;
+  // Lowpass filter to soften
+  const f=AC.createBiquadFilter();
+  f.type='lowpass';
+  f.frequency.value=2400;
+  f.Q.value=0.6;
+  o.disconnect();o.connect(f);f.connect(g);g.connect(AC.destination);
+  // ADSR envelope
+  const atk=0.05,dec=0.1,sus=0.6;
+  g.gain.setValueAtTime(0.001,t);
+  g.gain.linearRampToValueAtTime(0.14,t+atk);
+  g.gain.linearRampToValueAtTime(0.1,t+atk+dec);
+  g.gain.setValueAtTime(0.1,t+atk+dec+(dur-atk-dec)*0.4);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  lfo.start(t);lfo.stop(t+dur);
+  o.start(t);o.stop(t+dur);
+}
+// Upbeat melodic phrases — 3-note motifs over 2-bar cycles
+const SAX_PHRASES=[
+  // Over Cm / Bb — bright and ascending
+  [{n:392.00,t:0,d:0.35},{n:466.16,t:0.45,d:0.35},{n:523.25,t:1.4,d:0.75}],
+  // Over Ab / G — plateau then resolve
+  [{n:392.00,t:0,d:0.35},{n:415.30,t:0.45,d:0.35},{n:466.16,t:1.4,d:0.75}],
+  // Over F / Eb — descending, soulful
+  [{n:349.23,t:0,d:0.35},{n:329.63,t:0.5,d:0.35},{n:311.13,t:1.4,d:0.8}],
+];
+let saxPhraseIdx=0;
+function playSaxPhrase(barIdx,t){
+  if(!AC)return;
+  const phrase=SAX_PHRASES[(barIdx/2)%SAX_PHRASES.length];
+  for(const note of phrase){
+    saxNote(note.n,t+note.t*BEAT,note.d*BEAT);
+  }
 }
 function sndHit(v){if(!AC||v<0.8)return;const t=AC.currentTime,vol=Math.min(0.5,v*0.062);const o1=AC.createOscillator(),g1=AC.createGain();o1.connect(g1);g1.connect(AC.destination);o1.type='sine';o1.frequency.setValueAtTime(1800+v*120,t);o1.frequency.exponentialRampToValueAtTime(320,t+0.035);g1.gain.setValueAtTime(vol,t);g1.gain.exponentialRampToValueAtTime(0.001,t+0.055);o1.start(t);o1.stop(t+0.06);const o2=AC.createOscillator(),g2=AC.createGain();o2.connect(g2);g2.connect(AC.destination);o2.type='triangle';o2.frequency.setValueAtTime(520+v*60,t);o2.frequency.exponentialRampToValueAtTime(110,t+0.08);g2.gain.setValueAtTime(vol*0.7,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.1);o2.start(t);o2.stop(t+0.11);}
 function sndPocket(){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type='sine';o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(55,t+0.3);g.gain.setValueAtTime(0.26,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.38);o.start(t);o.stop(t+0.42);}
