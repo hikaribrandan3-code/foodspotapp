@@ -158,77 +158,16 @@ let lastFrameTime=0;
 
 try{hiScore=parseInt(localStorage.getItem('bbt_hi')||'0');}catch(e){}
 
-// ── MUSIC ENGINE ─────────────────────────────────────────────────
-let audioCtx=null,musicOn=false,musicInterval=null;
+// ── MUSIC ENGINE (MP3) ──────────────────────────────────────────
+let audioCtx=null,musicOn=false;
+const bgMusic=new Audio('music.mp3');bgMusic.loop=true;bgMusic.volume=0.35;
 function initAudio(){ if(audioCtx) return; audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
-function note(freq,start,dur,vol=0.18,type='square'){
-  if(!audioCtx) return;
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain(),f=audioCtx.createBiquadFilter();
-  f.type='lowpass'; f.frequency.value=2200;
-  o.connect(f); f.connect(g); g.connect(audioCtx.destination);
-  o.type=type; o.frequency.value=freq;
-  g.gain.setValueAtTime(0,start); g.gain.linearRampToValueAtTime(vol,start+0.01);
-  g.gain.setValueAtTime(vol,start+dur*0.6); g.gain.linearRampToValueAtTime(0,start+dur);
-  o.start(start); o.stop(start+dur+0.05);
-}
-function playDrum(type,start){
-  if(!audioCtx) return;
-  if(type==='kick'){ const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination); o.frequency.setValueAtTime(160,start); o.frequency.exponentialRampToValueAtTime(40,start+0.15); g.gain.setValueAtTime(0.6,start); g.gain.exponentialRampToValueAtTime(0.001,start+0.2); o.start(start); o.stop(start+0.25); }
-  else if(type==='snare'){ const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*.12,audioCtx.sampleRate),d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(audioCtx.sampleRate*.04)); const src=audioCtx.createBufferSource(),g=audioCtx.createGain(); src.buffer=buf; src.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(0.28,start); g.gain.exponentialRampToValueAtTime(0.001,start+0.12); src.start(start); }
-  else if(type==='hihat'){ const buf=audioCtx.createBuffer(1,audioCtx.sampleRate*.04,audioCtx.sampleRate),d=buf.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(audioCtx.sampleRate*.015)); const src=audioCtx.createBufferSource(),g=audioCtx.createGain(),f=audioCtx.createBiquadFilter(); f.type='highpass'; f.frequency.value=7000; src.buffer=buf; src.connect(f); f.connect(g); g.connect(audioCtx.destination); g.gain.setValueAtTime(0.12,start); src.start(start); }
-}
-const MELODY=[
-  [523,0],[659,.25],[784,.5],[1047,.75],[988,1],[784,1.25],[659,1.5],[523,1.75],
-  [587,2],[740,2.25],[880,2.5],[1175,2.75],[1047,3],[880,3.25],[740,3.5],[587,3.75],
-  [659,4],[831,4.25],[988,4.5],[1319,4.75],[1175,5],[988,5.25],[831,5.5],[659,5.75],
-  [784,6],[988,6.25],[1175,6.5],[784,6.75],[659,7],[523,7.25],[392,7.5],[523,7.75],
-  // Bar 2 — variation, goes higher
-  [659,8],[784,8.25],[1047,8.5],[1319,8.75],[1568,9],[1319,9.25],[1047,9.5],[784,9.75],
-  [880,10],[1047,10.25],[1319,10.5],[1047,10.75],[880,11],[784,11.25],[659,11.5],[587,11.75],
-  [523,12],[659,12.25],[784,12.5],[880,12.75],[988,13],[1175,13.25],[1319,13.5],[1047,13.75],
-  [784,14],[659,14.25],[587,14.5],[523,14.75],[440,15],[523,15.25],[587,15.5],[523,15.75],
-  // Bar 3 — melancholic bridge
-  [392,16],[494,16.25],[587,16.5],[740,16.75],[698,17],[587,17.25],[494,17.5],[392,17.75],
-  [440,18],[554,18.25],[659,18.5],[880,18.75],[831,19],[659,19.25],[554,19.5],[440,19.75],
-  [494,20],[622,20.25],[740,20.5],[988,20.75],[880,21],[740,21.25],[622,21.5],[494,21.75],
-  [523,22],[659,22.25],[784,22.5],[1047,22.75],[988,23],[784,23.25],[659,23.5],[523,23.75],
-  // Bar 4 — big finish
-  [784,24],[988,24.25],[1175,24.5],[1568,24.75],[1480,25],[1175,25.25],[988,25.5],[784,25.75],
-  [880,26],[1047,26.25],[1319,26.5],[1047,26.75],[880,27],[784,27.25],[659,27.5],[523,27.75],
-  [659,28],[784,28.25],[988,28.5],[784,28.75],[659,29],[587,29.25],[523,29.5],[440,29.75],
-  [523,30],[659,30.25],[784,30.5],[659,30.75],[587,31],[523,31.25],[392,31.5],[523,31.75],
-];
-const BASS=[
-  [131,0],[131,.5],[165,1],[131,1.5],[147,2],[147,2.5],[175,3],[147,3.5],
-  [165,4],[165,4.5],[196,5],[165,5.5],[196,6],[175,6.5],[165,7],[131,7.5],
-  [147,8],[147,8.5],[175,9],[147,9.5],[165,10],[165,10.5],[196,11],[165,11.5],
-  [175,12],[196,12.5],[220,13],[196,13.5],[175,14],[165,14.5],[147,15],[131,15.5],
-  [110,16],[123,16.5],[131,17],[147,17.5],[123,18],[131,18.5],[147,19],[131,19.5],
-  [138,20],[147,20.5],[165,21],[147,21.5],[155,22],[165,22.5],[175,23],[155,23.5],
-  [131,24],[147,24.5],[165,25],[175,25.5],[165,26],[147,26.5],[131,27],[123,27.5],
-  [131,28],[131,28.5],[147,29],[131,29.5],[123,30],[131,30.5],[110,31],[131,31.5],
-];
-const CHORD_STABS=[
-  [[523,659,784],0],[[[587,740,880]],2],[[[659,831,988]],4],[[[784,988,1175]],6],
-  [[523,659,784],8],[[[659,831,988]],10],[[[784,988,1175]],12],[[[587,740,880]],14],
-  [[440,554,659],16],[[[494,622,740]],18],[[[523,659,784]],20],[[[587,740,880]],22],
-  [[784,988,1175],24],[[[659,831,988]],26],[[[523,659,784]],28],[[[494,622,740]],30],
-];
-function scheduleBar(bt,bd=32){
-  MELODY.forEach(([f,o])=>note(f,bt+o*(bd/32),.18,.13,'square'));
-  BASS.forEach(([f,o])=>note(f,bt+o*(bd/32),.35,.22,'triangle'));
-  CHORD_STABS.forEach(([fs,o])=>{ const t=bt+o*(bd/32); [].concat(fs).flat().forEach((f,i)=>note(f,t+i*.04,.25,.07,'sawtooth')); });
-  const step=bd/32;
-  for(let i=0;i<32;i++){ const t=bt+i*step; if(i%8===0)playDrum('kick',t); if(i%16===8)playDrum('kick',t+step*.5); if(i%8===4)playDrum('snare',t); if(i%2===0)playDrum('hihat',t); }
-}
 function startMusic(){
-  if(!audioCtx||musicOn)return;
-  stopMusic();
+  if(!audioCtx) initAudio();
+  if(bgMusic.paused){bgMusic.currentTime=0;bgMusic.play().catch(function(){});}
   musicOn=true;
-  const bd=32; let nb=audioCtx.currentTime+0.05; scheduleBar(nb,bd);
-  musicInterval=setInterval(()=>{ if(!musicOn){clearInterval(musicInterval);return;} scheduleBar(nb+=bd,bd); },(bd-.1)*1000);
 }
-function stopMusic(){ musicOn=false; if(musicInterval){clearInterval(musicInterval);musicInterval=null;} }
+function stopMusic(){ bgMusic.pause();bgMusic.currentTime=0; musicOn=false; }
 function playFX(type){
   if(!audioCtx) return; const now=audioCtx.currentTime;
   if(type==='shoot'){ note(440,now,.06,.1,'square'); note(660,now+.03,.05,.07,'square'); }

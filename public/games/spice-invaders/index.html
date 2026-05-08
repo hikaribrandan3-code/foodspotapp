@@ -138,14 +138,11 @@ function getEnemyCanvas(type,small){
   enemyCache[key]=oc;return oc;
 }
 
+const bgMusic=new Audio('music.mp3');bgMusic.loop=true;bgMusic.volume=0.08;
 class AudioEngine{
   constructor(){
     this.muted=false;
     try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){this.ctx=null;}
-    this.musicPlaying=false;this.beatTimer=null;this.seqPos=0;this.currentSeq=null;this.nextNoteTime=0;this.baseBPM=148;
-    this.titleSeq=[[0,1],[0,.5],[7,.5],[12,1],[10,.5],[9,.5],[7,1],[5,.5],[5,.5],[7,.5],[9,.5],[10,1],[9,2]];
-    this.gameSeq=[[0,.5],[3,.5],[7,.5],[10,.5],[12,.5],[10,.5],[7,.5],[3,.5],[5,.5],[8,.5],[12,.5],[8,.5],[5,1],[3,.5],[0,.5]];
-    this.bossSeq=[[0,.5],[0,.5],[7,.5],[0,.5],[8,.5],[0,.5],[7,.5],[6,.5],[5,1],[5,.5],[3,.5],[0,1],[0,.5],[0,.5],[3,.5],[5,.5]];
     this._shootCount=0;
   }
   resume(){if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();}
@@ -160,38 +157,11 @@ class AudioEngine{
     o.connect(g);g.connect(this.ctx.destination);o.start();o.stop(this.ctx.currentTime+dur);
   }
   playMusic(seq){
-    if(!this.ctx)return;this.stopMusic();
-    this.currentSeq=seq;this.seqPos=0;this.nextNoteTime=this.ctx.currentTime+0.05;this.musicPlaying=true;this._tick();
+    if(this.muted)return;
+    bgMusic.currentTime=0;
+    bgMusic.play().catch(function(){});
   }
-  _tick(){
-    if(!this.musicPlaying||!this.ctx)return;
-    while(this.nextNoteTime<this.ctx.currentTime+0.15){
-      const t=this.nextNoteTime,semi=this.currentSeq[this.seqPos][0],dur=this.currentSeq[this.seqPos][1];
-      const bl=60/this.baseBPM*dur;
-      if(!this.muted){
-        const mo=this.ctx.createOscillator(),mg=this.ctx.createGain();
-        mo.type='square';mo.frequency.value=this.n2f(semi+12);
-        mg.gain.setValueAtTime(0.12,t);mg.gain.exponentialRampToValueAtTime(0.001,t+bl*0.8);
-        mo.connect(mg);mg.connect(this.ctx.destination);mo.start(t);mo.stop(t+bl);
-        if(this.seqPos%2===0){
-          const bo=this.ctx.createOscillator(),bg=this.ctx.createGain();
-          bo.type='sawtooth';bo.frequency.value=this.n2f(semi);
-          bg.gain.setValueAtTime(0.09,t);bg.gain.exponentialRampToValueAtTime(0.001,t+bl*0.6);
-          bo.connect(bg);bg.connect(this.ctx.destination);bo.start(t);bo.stop(t+bl);
-        }
-        if(this.seqPos%4===0){
-          const ko=this.ctx.createOscillator(),kg=this.ctx.createGain();
-          ko.type='sine';ko.frequency.setValueAtTime(120,t);ko.frequency.exponentialRampToValueAtTime(30,t+0.12);
-          kg.gain.setValueAtTime(0.28,t);kg.gain.exponentialRampToValueAtTime(0.001,t+0.15);
-          ko.connect(kg);kg.connect(this.ctx.destination);ko.start(t);ko.stop(t+0.15);
-        }
-      }
-      this.nextNoteTime+=bl;
-      this.seqPos=(this.seqPos+1)%this.currentSeq.length;
-    }
-    this.beatTimer=setTimeout(()=>this._tick(),50);
-  }
-  stopMusic(){this.musicPlaying=false;if(this.beatTimer){clearTimeout(this.beatTimer);this.beatTimer=null;}}
+  stopMusic(){bgMusic.pause();bgMusic.currentTime=0;}
   shoot(){this._shootCount=(this._shootCount+1)%3;if(this._shootCount===0)this.tone(800,0.08,'square',0.07);}
   explode(){this.tone(200,0.3,'sawtooth',0.12);}
   combo(){this.tone(1400,0.06,'square',0.08);setTimeout(()=>this.tone(1800,0.05,'square',0.06),60);}

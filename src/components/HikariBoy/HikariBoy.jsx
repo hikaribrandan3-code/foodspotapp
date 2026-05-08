@@ -37,7 +37,7 @@ const GAMES = [
   { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.webp', url: '/games/spice-invaders/index.html' },
   { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.webp', url: '/games/bubble-tea/index.html' },
   { id: 'candylandflip', name: 'Candyland Flip', cover: '/games/candylandflip/cover.webp', url: '/games/candylandflip/index.html' },
-  { id: 'pool', name: 'Munchboy Billiards', cover: '/games/pool/cover.png', url: '/games/pool/index.html' },
+  { id: 'pool', name: 'Munchboy Billiards', cover: '/games/pool/cover.png', url: '/games/pool/index.html', shellPause: false },
 ];
 
 export function HikariBoy({ 
@@ -238,7 +238,7 @@ export function HikariBoy({
       if (button === BUTTONS.START) {
         if (!gameStartedRef.current) {
           gameStartedRef.current = true;
-        } else {
+        } else if (currentGame?.shellPause !== false) {
           setIsPaused(true);
         }
       }

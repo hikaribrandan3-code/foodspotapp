@@ -232,17 +232,22 @@ const isHB=window.parent!==window;
 if(isHB)setTimeout(()=>{menuState='player';menuSel=0;},300);
 function exitGame(){window.parent.postMessage({type:'GAME_EXIT',gameId:'pool'},'*');}
 let lastDpadFrame=0;
+let pausePrevState='';
 window.addEventListener('message',ev=>{
   const b=ev.data?.button,t=ev.data?.type;
   if(t==='AUDIO_UNLOCK'){initAudio();updateMusic();return;}
   if(t==='AUDIO_RESUME'){initAudio();updateMusic();if(AC&&AC.state==='suspended')AC.resume();return;}
   if(t==='BUTTON_PRESS'){
     lastDpadFrame=frameCount;
-    if(b==='select')exitGame();
+    if(b==='select'){
+      if(G.state==='paused'){G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;bgMusic.pause();return;}
+      exitGame();
+    }
     if(b==='start'){
       if(G.state==='over'){confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;}
       else if(G.state==='menu')menuSelect();
-      else startGame();
+      else if(G.state==='paused'){G.state=pausePrevState;pausePrevState='';updateMusic();}
+      else{pausePrevState=G.state;G.state='paused';bgMusic.pause();}
     }
     if(b==='dpad-left'){keys.left=true;if(G.state==='menu'&&menuFadeDir!==-1){menuSel--;if(menuSel<0)menuSel=MENU_BTNS[menuState].length-1;}}
     if(b==='dpad-right'){keys.right=true;if(G.state==='menu'&&menuFadeDir!==-1){menuSel++;if(menuSel>MENU_BTNS[menuState].length-1)menuSel=0;}}
@@ -251,6 +256,7 @@ window.addEventListener('message',ev=>{
     if(b==='a'){
       if(G.state==='over'){confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;}
       else if(G.state==='menu')menuSelect();
+      else if(G.state==='paused'){G.state=pausePrevState;pausePrevState='';updateMusic();}
       else keys.a=true;
     }
   }else if(t==='BUTTON_RELEASE'){
@@ -1168,6 +1174,7 @@ function loop(ts){
     if(menuFadeDir===-1&&menuFade<=0&&menuFadeCb){const cb=menuFadeCb;menuFadeCb=null;cb();}
     drawMenu();return;
   }
+  if(G.state==='paused'){drawPaused();ctx.restore();return;}
   const isHuman=G.turn===0||(G.gameMode==='2p'&&G.turn===1);
   if(G.state==='aim'&&isHuman){
     if(keys.left){G.ang-=0.012;lastDpadFrame=frameCount;}
@@ -1226,7 +1233,23 @@ function loop(ts){
     if(G.foulFlash>0.7){ctx.fillStyle='rgba(255,60,60,'+(G.foulFlash*0.9)+')';ctx.font='bold 28px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SCRATCH!',W/2,H/2);}
   }
   if(G.state==='over')drawOver();
+  if(G.state==='paused')drawPaused();
   ctx.restore();
+}
+function drawPaused(){
+  ctx.fillStyle='rgba(0,0,0,0.65)';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.shadowColor='rgba(212,175,55,0.8)';ctx.shadowBlur=22;
+  ctx.fillStyle='#ffd700';ctx.font='bold 32px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PAUSED',W/2,H/2-40);ctx.restore();
+  const bw=140,bh=42,bx=W/2-bw/2,by1=H/2+10,by2=H/2+64;
+  const bg1=ctx.createLinearGradient(bx,by1,bx,by1+bh);bg1.addColorStop(0,'rgba(212,175,55,0.9)');bg1.addColorStop(.5,'rgba(255,215,0,0.95)');bg1.addColorStop(1,'rgba(180,140,30,0.9)');
+  ctx.save();ctx.shadowColor='rgba(255,215,0,0.6)';ctx.shadowBlur=12;rr(bx,by1,bw,bh,8);ctx.fillStyle=bg1;ctx.fill();ctx.restore();
+  ctx.strokeStyle='rgba(255,240,180,0.9)';ctx.lineWidth=2;rr(bx,by1,bw,bh,8);ctx.stroke();
+  ctx.fillStyle='#1a1205';ctx.font='bold 16px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('▶ RESUME',W/2,by1+bh/2+1);
+  const bg2=ctx.createLinearGradient(bx,by2,bx,by2+bh);bg2.addColorStop(0,'rgba(100,100,100,0.8)');bg2.addColorStop(.5,'rgba(140,140,140,0.9)');bg2.addColorStop(1,'rgba(80,80,80,0.8)');
+  ctx.save();ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=8;rr(bx,by2,bw,bh,8);ctx.fillStyle=bg2;ctx.fill();ctx.restore();
+  ctx.strokeStyle='rgba(200,200,200,0.6)';ctx.lineWidth=2;rr(bx,by2,bw,bh,8);ctx.stroke();
+  ctx.fillStyle='#f0f0f0';ctx.font='bold 16px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↺ QUIT',W/2,by2+bh/2+1);
+  ctx.fillStyle='rgba(212,175,55,0.5)';ctx.font='9px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('START / A to resume  ·  SELECT to quit',W/2,H-30);
 }
 requestAnimationFrame(loop);
 
@@ -1244,6 +1267,13 @@ function onDown(e){
   e.preventDefault();initAudio();
   const p=getP(e);
   if(G.state==='over'){confetti=[];G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;return;}
+  if(G.state==='paused'){
+    const mx=p.x,my=p.y;
+    const bw=140,bh=42,bx=W/2-bw/2,by1=H/2+10,by2=H/2+64;
+    if(mx>=bx&&mx<=bx+bw&&my>=by1&&my<=by1+bh){G.state=pausePrevState;pausePrevState='';updateMusic();}
+    else if(mx>=bx&&mx<=bx+bw&&my>=by2&&my<=by2+bh){G.state='menu';menuState='player';menuSel=0;menuFade=1;menuFadeDir=1;bgMusic.pause();}
+    return;
+  }
   if(G.state==='menu'){
     if(menuFadeDir===-1)return;
     const mx=p.x,my=p.y-40;const btns=MENU_BTNS[menuState];
