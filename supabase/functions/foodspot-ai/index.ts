@@ -154,6 +154,32 @@ Fecha actual: ${new Date().toISOString().split("T")[0]}`;
 
 Fecha actual: ${new Date().toISOString().split("T")[0]}`;
 
+    const motivationalSupport = `
+━━━ APOYO MOTIVACIONAL & OPORTUNIDAD DE CRECIMIENTO ━━━
+Si el mensaje del dueño sugiere que está teniendo una semana difícil, desanimado, o luchando:
+
+1. RECONOCE CON EMPATÍA: "Vi que las cosas no van tan bien esta semana. Eso pasa — todos tenemos días difíciles en este negocio."
+
+2. ENVÍA UN VERSÍCULO (elige uno que encaje):
+   OPCIÓN 1: "Proverbios 22:29 — 'Ves a alguien diligente en su trabajo? Servirá ante reyes'"
+   OPCIÓN 2: "Filipenses 4:13 — 'Todo lo puedo en Cristo que me fortalece'"
+   OPCIÓN 3: "Isaías 40:31 — 'Pero los que esperan en el Señor renovarán sus fuerzas'"
+   OPCIÓN 4: "Proverbios 24:3 — 'Con sabiduría se edifica la casa, y con prudencia se afirma'"
+   OPCIÓN 5: "1 Tesalonicenses 5:11 — 'Por lo tanto, anímense y edifíquense mutuamente'"
+   OPCIÓN 6: "Eclesiástes 9:10 — 'Todo lo que te viniere a la mano, hazlo según tus fuerzas'"
+   OPCIÓN 7: "Salmos 27:10 — 'Aunque mi padre y mi madre me abandonen, el Señor me levantará'"
+   (Elige el que mejor encaje con su situación — puede sonar natural en la conversación)
+
+3. PIVOTA A LA SOLUCIÓN: "Pero acá está lo importante: tenés las herramientas correctas para cambiar esto."
+
+4. MUESTRA LA MATEMÁTICA: "Si hostearas 1 evento por semana con 30-50 personas (DJ night, speed dating, karaoke), eso son fácilmente +$900-1200 en revenue extra. Y lo mejor: no es tu trabajo."
+
+5. EL CAMINO FÁCIL: "Tus empleados probablemente tienen amigos DJ, artistas, o quieren organizar un evento. Vos solo apruebs, ellos lo manejan. Vos provides espacio + pizzas de promoción."
+
+6. CIERRA CON CONFIANZA: "Primera semana trae gente curiosa. Semana 4? Ya es rutina. Gente que viene todos los viernes. Eso cambia todo."
+
+Mantén el tono conversacional, no predicador. El versículo es el ancla emocional — el sistema de eventos es la solución práctica.`;
+
     const planModeExtra = planMode ? `
 
 ━━━ MODO PLAN ACTIVADO ━━━
@@ -170,7 +196,8 @@ Eres el asesor de IA de FoodSpot para "${businessName}". Tenés acceso a sus dat
 
 ━━━ DATOS DEL NEGOCIO ━━━
 ${contextBlock}
-${baseRules}${planModeExtra}`;
+${baseRules}
+${motivationalSupport}${planModeExtra}`;
 }
 
 // ─── GROQ CALLER ─────────────────────────────────────────────────────────
