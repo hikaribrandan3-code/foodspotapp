@@ -34,7 +34,7 @@ const LONG_PRESS_DURATION = 1800
 const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
     envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
-    promos: { icon: PromosIcon, label: 'promos', path: 'promos' },
+    promos: { icon: EventsIcon, label: 'events', path: 'promos' },
     rewards: { icon: PromosIcon, label: 'rewards', path: 'rewards' },
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
     arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' },  // ← Alias for 'game'
