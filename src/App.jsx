@@ -312,11 +312,13 @@ function App() {
         root.style.setProperty('--hero-delivery-bg', getHeroBg(delC));
         root.style.setProperty('--hero-delivery-icon', getHeroIcon(delC));
 
-        const promoC = { ...HERO_DEFAULT, ...(heroIcons.rewards || {}), ...(heroIcons.promos || {}) };
-        root.style.setProperty('--hero-promos-bg', getHeroBg(promoC));
-        root.style.setProperty('--hero-promos-icon', getHeroIcon(promoC));
-        root.style.setProperty('--hero-rewards-bg', getHeroBg(promoC));
-        root.style.setProperty('--hero-rewards-icon', getHeroIcon(promoC));
+        const eventsC = { ...HERO_DEFAULT, ...(heroIcons.events || {}), ...(heroIcons.rewards || {}), ...(heroIcons.promos || {}) };
+        root.style.setProperty('--hero-events-bg', getHeroBg(eventsC));
+        root.style.setProperty('--hero-events-icon', getHeroIcon(eventsC));
+        root.style.setProperty('--hero-promos-bg', getHeroBg(eventsC)); // Alias for backward compatibility
+        root.style.setProperty('--hero-promos-icon', getHeroIcon(eventsC)); // Alias for backward compatibility
+        root.style.setProperty('--hero-rewards-bg', getHeroBg(eventsC));
+        root.style.setProperty('--hero-rewards-icon', getHeroIcon(eventsC));
 
         const gameC = heroIcons.game || HERO_DEFAULT;
         root.style.setProperty('--hero-game-bg', getHeroBg(gameC));
@@ -527,7 +529,8 @@ function App() {
                                             <Route path="/:tenantSlug/game" element={<PerfectPour />} />
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} />
+                                            <Route path="/:tenantSlug/events" element={<EventThemeWrapper />} />
+                                            <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} /> {/* Alias for backward compatibility */}
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
@@ -556,7 +559,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/promos') && <BottomNav config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && <BottomNav config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>

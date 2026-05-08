@@ -34,11 +34,11 @@ const LONG_PRESS_DURATION = 1800
 const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
     envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
-    promos: { icon: EventsIcon, label: 'events', path: 'promos' },
-    rewards: { icon: PromosIcon, label: 'rewards', path: 'rewards' },
+    events: { icon: EventsIcon, label: 'events', path: 'events' },
+    promos: { icon: EventsIcon, label: 'events', path: 'events' }, // Alias for backward compatibility
+    rewards: { icon: EventsIcon, label: 'events', path: 'events' }, // Alias for backward compatibility
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
-    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' },  // ← Alias for 'game'
-    events: { icon: EventsIcon, label: 'events', path: 'promos/events' }
+    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' }  // ← Alias for 'game'
 }
 
 // --- MAIN COMPONENT ---

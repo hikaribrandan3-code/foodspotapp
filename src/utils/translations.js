@@ -3,7 +3,8 @@ export const translations = {
     summary: { es: "Resumen", en: "Summary", pt: "Resumo" },
     menu: { es: "Menú", en: "Menu", pt: "Cardápio" },
     orders: { es: "Pedidos", en: "Orders", pt: "Pedidos" },
-    promos: { es: "Promos", en: "Promos", pt: "Promos" },
+    events: { es: "Eventos", en: "Events", pt: "Eventos" },
+    promos: { es: "Eventos", en: "Events", pt: "Eventos" }, // Alias for backward compatibility
     analytics: { es: "Métricas", en: "Analytics", pt: "Métricas" },
     settings: { es: "Ajustes", en: "Settings", pt: "Ajustes" },
     settings_title: { es: "Configuración", en: "Settings", pt: "Configurações" },

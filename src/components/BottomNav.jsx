@@ -90,7 +90,7 @@ function BottomNav({ config: configProp }) {
             // Auth & System
             'login', 'admin', 'demo', 'staff', 'owner', 'camera', 'start-trial',
             // Customer pages - these are NOT slugs, they're page names
-            'menu', 'status', 'info', 'envios', 'order', 'rewards', 'share', 'game', 'promos',
+            'menu', 'status', 'info', 'envios', 'order', 'rewards', 'share', 'game', 'events', 'promos',
             // API & Assets
             'api', 'assets', 'receipt'
         ]
