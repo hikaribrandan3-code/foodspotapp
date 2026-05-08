@@ -250,24 +250,6 @@ function OwnerLogin() {
             };
             localStorage.setItem('fs_current_shift', JSON.stringify(shift));
 
-            // 🛡️ OWNER AUTH SYNC: If staff is owner, also sign in to Supabase Auth
-            // so that RLS policies like is_branding_owner() see auth.uid()
-            if (staff.role === 'owner') {
-                try {
-                    const { error: authError } = await supabase.auth.signInWithPassword({
-                        email: staff.email,
-                        password
-                    });
-                    if (authError) {
-                        console.warn('[OwnerLogin] Supabase Auth sign-in failed (PIN may differ from auth password):', authError.message);
-                    } else {
-                        console.log('[OwnerLogin] ✅ Supabase Auth session established for owner');
-                    }
-                } catch (authErr) {
-                    console.warn('[OwnerLogin] Supabase Auth exception:', authErr);
-                }
-            }
-
             window.location.replace(`/${tenantSlug}/staff/dashboard`);
         } catch (err) {
             console.error('Staff login error:', err);
