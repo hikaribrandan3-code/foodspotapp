@@ -124,9 +124,17 @@ export function TenantProvider({ children }) {
                 .from('branding')
                 .select('*')
                 .eq('slug', slug)
-                .single()
+                .maybeSingle()
 
-            if (brandingError) throw brandingError
+            if (brandingError) {
+                console.error('[TenantLock] Branding fetch error:', brandingError.message, brandingError.details);
+                throw brandingError;
+            }
+
+            if (!brandingData) {
+                console.error(`[TenantLock] No branding row found for slug: ${slug}`);
+                throw new Error(`No branding data found for '${slug}'`);
+            }
 
             if (brandingData) {
                 // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name (Official Schema)
@@ -135,7 +143,7 @@ export function TenantProvider({ children }) {
                     .from('tenants')
                     .select('id, language, venue_name, owner_id')
                     .ilike('venue_name', slug)
-                    .single()
+                    .maybeSingle()
 
                 // 🆘 ULTIMATE FAILSAFE: If venue_name fails, fetch by authenticated owner ID
                 if ((langError || !tenantRow) && mounted) {
@@ -146,7 +154,7 @@ export function TenantProvider({ children }) {
                             .from('tenants')
                             .select('id, language, venue_name, owner_id')
                             .eq('owner_id', user.id)
-                            .single();
+                            .maybeSingle();
 
                         if (!ownerError && ownerRow) {
                             console.log(`[TenantLock] ✅ Failsafe Success: Identity secured via owner_id.`);
@@ -253,15 +261,19 @@ export function TenantProvider({ children }) {
                 .from('branding')
                 .select('*')
                 .eq('business_id', businessId)
-                .single()
+                .maybeSingle()
 
-            if (!brandingError && brandingData) {
+            if (brandingError) {
+                console.error('[TenantLock] Refresh branding error:', brandingError.message, brandingError.details);
+            }
+
+            if (brandingData) {
                 // 📡 RELIABLE FETCH: Use known tenant PK first, then fallback to venue_name / owner_id
                 let { data: tenantRow, error: langError } = await supabase
                     .from('tenants')
                     .select('id, language, venue_name, owner_id')
                     .eq('id', tenantData?.id)
-                    .single()
+                    .maybeSingle()
 
                 // 🆘 FALLBACK 1: venue_name match (for edge cases where id is missing)
                 if ((langError || !tenantRow) && tenantData?.venue_name) {
@@ -269,7 +281,7 @@ export function TenantProvider({ children }) {
                         .from('tenants')
                         .select('id, language, venue_name, owner_id')
                         .ilike('venue_name', tenantData.venue_name)
-                        .single();
+                        .maybeSingle();
 
                     if (!venueFallback.error && venueFallback.data) {
                         tenantRow = venueFallback.data;
@@ -285,7 +297,7 @@ export function TenantProvider({ children }) {
                             .from('tenants')
                             .select('id, language, venue_name, owner_id')
                             .eq('owner_id', user.id)
-                            .single();
+                            .maybeSingle();
 
                         if (!ownerError && ownerRow) {
                             tenantRow = ownerRow;
@@ -307,6 +319,8 @@ export function TenantProvider({ children }) {
                 }
                 setTenantData(data)
                 console.log('✅ GLOBAL REFRESH COMPLETE')
+            } else {
+                console.error('[TenantLock] Refresh failed: no branding row found for business_id:', businessId);
             }
         } catch (err) {
             console.error('Refresh Failed', err)

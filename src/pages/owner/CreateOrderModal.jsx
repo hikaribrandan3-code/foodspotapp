@@ -68,7 +68,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
       .from('branding')
       .select('menu_data')
       .eq('business_id', businessId)
-      .single()
+      .maybeSingle()
       .then(async ({ data }) => {
         const menuData = data?.menu_data
         let items = []

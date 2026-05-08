@@ -209,7 +209,7 @@ function OwnerLogin() {
                 .eq('email', email.toLowerCase().trim())
                 .eq('pin', passwordHash)
                 .eq('status', 'active')
-                .single();
+                .maybeSingle();
 
             if (staffError || !staff) {
                 setError(t('incorrect'));

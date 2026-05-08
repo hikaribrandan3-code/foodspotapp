@@ -90,7 +90,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
         .select('name, category, price, cost, supplier, unit')
         .eq('barcode', barcode)
         .eq('business_id', businessId)
-        .single();
+        .maybeSingle();
       if (error || !data) return null;
       return data;
     } catch {

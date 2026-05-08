@@ -239,7 +239,7 @@ export async function getBranding(businessId) {
         .from('branding')
         .select('*')
         .eq('business_id', businessId) // 🔐 TENANT FILTER
-        .single()
+        .maybeSingle()
 
     if (error) {
         console.error('[getBranding] ❌ Query failed:', error.message)
@@ -327,7 +327,7 @@ export async function updateBranding(updates, businessId) {
             .update(filteredUpdates)
             .eq('business_id', businessId)
             .select()
-            .single()
+            .maybeSingle()
 
         if (!error && data) {
             // ✅ SUCCESS: Learn which columns the table actually has from the returned row
@@ -338,6 +338,25 @@ export async function updateBranding(updates, businessId) {
 
         // 🔍 DIAGNOSTIC: Log the full error
         console.warn('[updateBranding] Attempt 1 failed:', error?.message || error);
+
+        // 🆘 ATTEMPT 1b: Row missing — try INSERT instead
+        if (!error && !data) {
+            console.warn('[updateBranding] ⚠️ No branding row found for business_id:', businessId, '. Attempting insert...');
+            const insertPayload = { ...filteredUpdates, business_id: businessId };
+            const { data: insertData, error: insertError } = await supabase
+                .from('branding')
+                .insert(insertPayload)
+                .select()
+                .maybeSingle();
+
+            if (!insertError && insertData) {
+                _knownBrandingColumns = new Set(Object.keys(insertData));
+                console.log('[updateBranding] ✅ Insert succeeded. Learned columns:', [..._knownBrandingColumns].join(', '));
+                return { data: insertData, error: null };
+            }
+            console.error('[updateBranding] ❌ Insert also failed:', insertError);
+            return { data: null, error: insertError };
+        }
 
         // 🛡️ ATTEMPT 2: Auto-heal by using only CORE columns (guaranteed safe)
         if (error && (error.code === '42703' || error.message?.includes('column') || error.code === 'PGRST204' || String(error.code) === '400')) {
@@ -359,12 +378,30 @@ export async function updateBranding(updates, businessId) {
                 .update(coreUpdates)
                 .eq('business_id', businessId)
                 .select()
-                .single()
+                .maybeSingle()
 
             if (!coreError && coreData) {
                 _knownBrandingColumns = new Set(Object.keys(coreData));
                 console.log('[updateBranding] ✅ Core save succeeded. Known columns:', [..._knownBrandingColumns].join(', '));
                 return { data: coreData, error: null }
+            }
+
+            // 🆘 ATTEMPT 2b: Row missing + column mismatch — try INSERT with core columns
+            if (!coreError && !coreData) {
+                console.warn('[updateBranding] ⚠️ No row found + column mismatch. Attempting core insert...');
+                const insertPayload = { ...coreUpdates, business_id: businessId };
+                const { data: insertData, error: insertError } = await supabase
+                    .from('branding')
+                    .insert(insertPayload)
+                    .select()
+                    .maybeSingle();
+                if (!insertError && insertData) {
+                    _knownBrandingColumns = new Set(Object.keys(insertData));
+                    console.log('[updateBranding] ✅ Core insert succeeded. Learned columns:', [..._knownBrandingColumns].join(', '));
+                    return { data: insertData, error: null };
+                }
+                console.error('[updateBranding] ❌ Core insert also failed:', insertError);
+                return { data: null, error: insertError };
             }
 
             console.error('[updateBranding] ❌ Core save also failed:', coreError);

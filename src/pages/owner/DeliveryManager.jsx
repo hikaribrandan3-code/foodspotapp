@@ -156,7 +156,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                     .select('id, total, business_id')
                     .eq('id', orderId)
                     .eq('business_id', businessId)
-                    .single()
+                    .maybeSingle()
 
                 if (dbOrder) {
                     await handleCashPayment({
@@ -193,7 +193,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                     .select('id, total, business_id')
                     .eq('id', order.id)
                     .eq('business_id', businessId)
-                    .single()
+                    .maybeSingle()
 
                 if (dbOrder) {
                     await handleCashPayment({
