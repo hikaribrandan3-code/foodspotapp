@@ -462,7 +462,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
       <div style={{ padding: 16, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
         <h4 style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: theme.danger, textTransform: 'uppercase', letterSpacing: 1 }}>Danger Zone</h4>
         <button onClick={onDelete} style={{ ...s.btnPrimary, background: theme.danger, width: '100%', padding: 12 }}>
-          <Trash2 size={15} /> Archive Event
+          <Trash2 size={15} /> Delete Event Permanently
         </button>
       </div>
     </motion.div>
