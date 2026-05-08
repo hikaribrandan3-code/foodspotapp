@@ -235,33 +235,30 @@ export default function Menu({ config: configProp }) {
 
         const fetchMenu = async () => {
             try {
-                // PRIMARY: Use JSONB menu_data from tenantData (has all categories + images)
-                if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
-                    console.log('[Menu] ✅ Loading from JSONB:', tenantData.menu_data.categories.length, 'categories')
+                // PRIMARY: Always fetch fresh relational data to match backend MenuManager
+                const [{ data: items, error: itemsError }, { data: categories, error: catError }] = await Promise.all([
+                    supabase.from('menu_items').select('*').eq('business_id', businessId).limit(200),
+                    supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
+                ])
+
+                if (itemsError) {
+                    console.log('[Menu] ⚠️ items error:', itemsError.message)
+                }
+                if (catError) {
+                    console.log('[Menu] ⚠️ categories error:', catError.message)
+                }
+
+                if (items && items.length > 0) {
+                    console.log('[Menu] ☁️ Fresh DB load:', items.length, 'items', (categories?.length || 0), 'categories')
+                    const grouped = groupItemsByCategory(items, categories || [])
+                    setMenu({ categories: grouped })
+                } else if (tenantData?.menu_data?.categories?.length > 0) {
+                    // Fallback to JSONB only if no items in DB
+                    console.log('[Menu] ✅ Fallback to JSONB:', tenantData.menu_data.categories.length, 'categories')
                     setMenu(tenantData.menu_data)
                 } else {
-                    // FALLBACK: Try relational menu_items + categories tables
-                    console.log('[Menu] 🔄 No JSONB data, checking menu_items table...')
-                    const [{ data: items, error: itemsError }, { data: categories, error: catError }] = await Promise.all([
-                        supabase.from('menu_items').select('*').eq('business_id', businessId).limit(100),
-                        supabase.from('categories').select('id, name, icon, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
-                    ])
-
-                    if (itemsError) {
-                        console.log('[Menu] ⚠️ DB Error:', itemsError.message)
-                    }
-                    if (catError) {
-                        console.log('[Menu] ⚠️ Categories DB Error:', catError.message)
-                    }
-
-                    if (items && items.length > 0) {
-                        console.log('[Menu] ☁️ Loading from menu_items table:', items.length, 'items', (categories?.length || 0), 'categories')
-                        const grouped = groupItemsByCategory(items, categories || [])
-                        setMenu({ categories: grouped })
-                    } else {
-                        console.log('[Menu] ⚠️ No menu items found for this business')
-                        setMenu({ categories: [] })
-                    }
+                    console.log('[Menu] ⚠️ No menu items found for this business')
+                    setMenu({ categories: [] })
                 }
             } catch (err) {
                 console.error('[Menu] ❌ Fetch error:', err)
@@ -271,7 +268,7 @@ export default function Menu({ config: configProp }) {
         }
 
         fetchMenu()
-    }, [tenantLoaded, businessId, tenantData?.menu_data])
+    }, [tenantLoaded, businessId])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)

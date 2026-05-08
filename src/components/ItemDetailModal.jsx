@@ -54,18 +54,17 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150] transition-opacity duration-200"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[999] transition-opacity duration-200"
         onClick={onClose}
       />
 
       {/* Modal — slide up from bottom, scrollable */}
       <div
-        className="fixed inset-0 z-[160] flex items-end sm:items-center justify-center pointer-events-none"
+        className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center pointer-events-none"
         style={{ paddingBottom: 'calc(var(--nav-height, 60px) + env(safe-area-inset-bottom, 0px))' }}
       >
         <div
-          className="w-full sm:max-w-md sm:mx-auto sm:mb-auto sm:rounded-[2rem] rounded-t-[2rem] bg-white dark:bg-zinc-900 shadow-2xl pointer-events-auto flex flex-col"
-          style={{ maxHeight: '85vh' }}
+          className="w-full sm:max-w-md sm:mx-auto sm:mb-auto sm:rounded-[2rem] rounded-t-[2rem] bg-white dark:bg-zinc-900 shadow-2xl pointer-events-auto flex flex-col max-h-full"
         >
           {/* Image Header */}
           <div className="relative w-full aspect-[16/10] flex-shrink-0 overflow-hidden rounded-t-[2rem] sm:rounded-[2rem]">
