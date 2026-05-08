@@ -84,6 +84,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [statModal, setStatModal] = useState(null) // 'revenue' | 'tickets' | 'checkins' | null
+  const [showTemplates, setShowTemplates] = useState(false)
 
   useEffect(() => {
     if (!businessId) return
@@ -101,11 +102,13 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
       if (error) {
         console.error('fetchEvents error:', error)
-        setEvents(EVENT_TEMPLATES)
+        setEvents(showTemplates ? EVENT_TEMPLATES : [])
       } else {
-        // Always show templates + database events combined
         const dbEvents = data || []
-        const allEvents = [...EVENT_TEMPLATES, ...dbEvents].sort((a, b) => {
+        const allEvents = showTemplates
+          ? [...EVENT_TEMPLATES, ...dbEvents]
+          : dbEvents
+        allEvents.sort((a, b) => {
           const aDate = new Date(a.start_date || 0)
           const bDate = new Date(b.start_date || 0)
           return bDate - aDate
@@ -114,17 +117,17 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
       }
     } catch (err) {
       console.error('fetchEvents exception:', err)
-      setEvents(EVENT_TEMPLATES)
+      setEvents(showTemplates ? EVENT_TEMPLATES : [])
     }
     setLoading(false)
   }
 
   const handleDelete = async () => {
-    if (!window.confirm('Archive this event? This cannot be undone.')) return
+    if (!window.confirm('Delete this event permanently?')) return
     try {
       await supabase
         .from('events')
-        .update({ status: 'archived', updated_at: new Date().toISOString() })
+        .delete()
         .eq('id', selectedEvent.id)
       fetchEvents()
       setView('list')
@@ -262,6 +265,25 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
           <Plus size={18} /> Create
         </motion.button>
       </div>
+
+      {/* Template toggle */}
+      <button
+        onClick={() => setShowTemplates(!showTemplates)}
+        style={{
+          marginBottom: 16,
+          padding: '8px 12px',
+          background: showTemplates ? theme.primary : theme.bgWhite,
+          color: showTemplates ? '#fff' : theme.textSecondary,
+          border: `1px solid ${showTemplates ? theme.primary : theme.border}`,
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}
+      >
+        {showTemplates ? '✓' : '+'} {showTemplates ? 'Hide' : 'Show'} Templates
+      </button>
 
       {/* Stats strip */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
@@ -458,6 +480,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     image_url: '', start_date: '', end_date: '',
     venue_name: '', address: '', is_free: false,
     ticket_tiers: [{ id: '1', name: 'General Admission', price: 25, capacity: 100 }],
+    lineup: [],
   })
 
   const handleSelectTemplate = (template) => {
@@ -517,7 +540,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           total_capacity: totalCapacity,
           tickets_sold: 0,
           total_revenue_cents: 0,
-          checkins_count: 0
+          checkins_count: 0,
+          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
         }]);
 
       if (error) {
@@ -845,6 +869,58 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                   {form.ticket_tiers.reduce((a, t) => a + Number(t.capacity), 0)} people
                 </span>
               </div>
+
+              {['Festivals', 'Music'].includes(form.category) && (
+                <>
+                  <h2 style={{ margin: '24px 0 6px', fontSize: 18, fontWeight: 800, color: theme.textPrimary }}>Artist Schedule</h2>
+                  <p style={{ margin: '0 0 16px', fontSize: 13, color: theme.textSecondary }}>Add DJs, artists, or performers</p>
+
+                  {(form.lineup || []).map((artist, idx) => (
+                    <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 12, background: theme.bgSurface }}>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={s.label}>Time (HH:MM)</label>
+                          <input type="time" style={s.input} value={artist.time} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].time = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                        <div style={{ flex: 2 }}>
+                          <label style={s.label}>Artist</label>
+                          <input style={s.input} placeholder="e.g. Solar Flare" value={artist.artist} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].artist = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={s.label}>Genre</label>
+                          <input style={s.input} placeholder="e.g. House" value={artist.genre} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].genre = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={s.label}>Stage</label>
+                          <input style={s.input} placeholder="e.g. Main Stage" value={artist.stage} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].stage = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+                          <button onClick={() => patch('lineup', form.lineup.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  <button
+                    onClick={() => patch('lineup', [...(form.lineup || []), { time: '', artist: '', genre: '', stage: '' }])}
+                    style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 16 }}
+                  >
+                    <Plus size={16} /> Add Artist
+                  </button>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -898,7 +974,8 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           image_url: form.image_url,
           start_date: form.start_date,
           end_date: form.end_date,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
         })
         .eq('id', event.id);
 
@@ -932,6 +1009,55 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
       <Field label="Venue">
         <input style={s.input} value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
       </Field>
+
+      {['Festivals', 'Music'].includes(form.category) && (
+        <>
+          <h3 style={{ margin: '20px 0 12px', fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Artist Schedule</h3>
+          {(form.lineup || []).map((artist, idx) => (
+            <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 12, background: theme.bgSurface }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={s.label}>Time (HH:MM)</label>
+                  <input type="time" style={s.input} value={artist.time} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].time = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+                <div style={{ flex: 2 }}>
+                  <label style={s.label}>Artist</label>
+                  <input style={s.input} placeholder="e.g. Solar Flare" value={artist.artist} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].artist = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={s.label}>Genre</label>
+                  <input style={s.input} placeholder="e.g. House" value={artist.genre} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].genre = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={s.label}>Stage</label>
+                  <input style={s.input} placeholder="e.g. Main Stage" value={artist.stage} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].stage = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+                  <button onClick={() => patch('lineup', form.lineup.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          <button
+            onClick={() => patch('lineup', [...(form.lineup || []), { time: '', artist: '', genre: '', stage: '' }])}
+            style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 16, marginTop: 8 }}
+          >
+            <Plus size={16} /> Add Artist
+          </button>
+        </>
+      )}
 
       <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
         <button onClick={onBack} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>

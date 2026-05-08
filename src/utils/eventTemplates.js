@@ -2,6 +2,7 @@
 export const EVENT_TEMPLATES = [
   {
     id: 'evt_001',
+    status: 'template',
     name: 'Neon Tech Summit 2026',
     description: 'An exclusive deep dive into the future of food technology and sustainable automation. Join industry leaders for a day of innovation.',
     category: 'Exclusives',
@@ -17,6 +18,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_002',
+    status: 'template',
     name: 'Midnight Market Sessions',
     description: 'Live jazz, craft cocktails, and the best night vibes in the city. A recurring session for those who appreciate the finer things.',
     category: 'Music',
@@ -31,6 +33,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_004',
+    status: 'template',
     name: 'Electronic Echoes Festival',
     description: 'A massive celebration of electronic music featuring international DJs and immersive light shows.',
     category: 'Festivals',
@@ -47,6 +50,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_006',
+    status: 'template',
     name: 'Gourmet Food Truck Rally',
     description: 'Over 50 premium food trucks gathered for a weekend of epicurean delight. Live music and local brews.',
     category: 'Festivals',
@@ -61,6 +65,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_007',
+    status: 'template',
     name: 'Night with Amigos & Singles Speed Dating',
     description: 'Tired of apps? Meet real people in a relaxed environment. Speed dating in the first hour, party with amigos after. Your first drink is on us.',
     category: 'Social',
@@ -75,6 +80,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_008',
+    status: 'template',
     name: 'Mundo Lingo: Buenos Aires Intercambio',
     description: 'The legendary language exchange event. Grab your flags, find your language, and make friends from all over the world. No pressure, just good vibes.',
     category: 'Exclusives',
@@ -88,6 +94,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_009',
+    status: 'template',
     name: 'Mundial: Argentina vs Brazil Game Night',
     description: 'The biggest rivalry in football. Watch the game on our giant screens with live commentary, fresh choripanes, and ice-cold drinks. VAMOS ARGENTINA!',
     category: 'Sports',
@@ -102,6 +109,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_010',
+    status: 'template',
     name: 'Vinyl & Wine Evening',
     description: 'Listen to classic records while tasting hand-picked natural wines from around the world.',
     category: 'Music',
@@ -115,6 +123,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_011',
+    status: 'template',
     name: 'Pokemon TCG: Regional Qualifier BA',
     description: 'The road to the World Championships starts here. Competitive Swiss rounds, top-cut playoffs, and a dedicated trading area for collectors.',
     category: 'Gaming',
@@ -129,6 +138,7 @@ export const EVENT_TEMPLATES = [
   },
   {
     id: 'evt_012',
+    status: 'template',
     name: 'Anime Expo & Cosplay Cup BA',
     description: 'The biggest celebration of Japanese culture in South America. Massive cosplay contest, international guests, and the legendary Artist Alley.',
     category: 'Exclusives',
