@@ -101,13 +101,20 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
       if (error) {
         console.error('fetchEvents error:', error)
-        setEvents([])
+        setEvents(EVENT_TEMPLATES)
       } else {
-        setEvents(data || [])
+        // Always show templates + database events combined
+        const dbEvents = data || []
+        const allEvents = [...EVENT_TEMPLATES, ...dbEvents].sort((a, b) => {
+          const aDate = new Date(a.start_date || 0)
+          const bDate = new Date(b.start_date || 0)
+          return bDate - aDate
+        })
+        setEvents(allEvents)
       }
     } catch (err) {
       console.error('fetchEvents exception:', err)
-      setEvents([])
+      setEvents(EVENT_TEMPLATES)
     }
     setLoading(false)
   }
