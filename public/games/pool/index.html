@@ -187,7 +187,7 @@ const BPM=82, BEAT=60/BPM;
 let jBar=0, jBt=0, jNext=0;
 function initAudio(){
   if(AC){if(AC.state==='suspended')AC.resume();return;}
-  try{AC=new(window.AudioContext||window.webkitAudioContext)();jNext=AC.currentTime+0.15;schedBeat();}catch(e){}
+  try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
 }
 function schedBeat(){
   if(!AC)return;
