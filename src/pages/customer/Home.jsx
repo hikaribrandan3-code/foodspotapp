@@ -38,7 +38,7 @@ const ACTION_DEFINITIONS = {
     rewards: { icon: PromosIcon, label: 'rewards', path: 'rewards' },
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
     arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' },  // ← Alias for 'game'
-    events: { icon: PromosIcon, label: 'events', path: 'promos/events' }
+    events: { icon: EventsIcon, label: 'events', path: 'promos/events' }
 }
 
 // --- MAIN COMPONENT ---
