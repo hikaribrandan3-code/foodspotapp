@@ -186,13 +186,29 @@ export default function Menu({ config: configProp }) {
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-    // Helper: Group items by category
-    const groupItemsByCategory = (items) => {
+    // Helper: Group items by category (with category mapping)
+    const groupItemsByCategory = (items, categoryList = []) => {
+        // Build a map of category_id -> category info
+        const categoryMap = {}
+        categoryList.forEach(cat => {
+            categoryMap[cat.id] = cat
+        })
+
         const grouped = {}
         items.forEach(item => {
-            const catName = item.category_name || 'Otros'
+            // Try to get category name from mapping first, then item.category_name, then fallback
+            const cat = categoryMap[item.category_id]
+            const catName = (cat?.name) || item.category_name || 'Otros'
+            const catId = cat?.id || item.category_id || `cat-${catName.toLowerCase().replace(/\s+/g, '-')}`
+
             if (!grouped[catName]) {
-                grouped[catName] = { id: `cat-${catName.toLowerCase().replace(' ', '-')}`, name: catName, icon: '🍽️', items: [] }
+                grouped[catName] = {
+                    id: catId,
+                    name: catName,
+                    icon: cat?.icon || '🍽️',
+                    sort_order: cat?.sort_order ?? 999,
+                    items: []
+                }
             }
             grouped[catName].items.push({
                 id: item.id,
@@ -208,7 +224,9 @@ export default function Menu({ config: configProp }) {
                 featured: item.featured || false
             })
         })
-        return Object.values(grouped)
+
+        // Return in the same order as backend categories (sort_order)
+        return Object.values(grouped).sort((a, b) => (a.sort_order - b.sort_order))
     }
 
     useEffect(() => {
@@ -222,21 +240,23 @@ export default function Menu({ config: configProp }) {
                     console.log('[Menu] ✅ Loading from JSONB:', tenantData.menu_data.categories.length, 'categories')
                     setMenu(tenantData.menu_data)
                 } else {
-                    // FALLBACK: Try relational menu_items table
+                    // FALLBACK: Try relational menu_items + categories tables
                     console.log('[Menu] 🔄 No JSONB data, checking menu_items table...')
-                    const { data: items, error } = await supabase
-                        .from('menu_items')
-                        .select('*')
-                        .eq('business_id', businessId)
-                        .limit(100)
+                    const [{ data: items, error: itemsError }, { data: categories, error: catError }] = await Promise.all([
+                        supabase.from('menu_items').select('*').eq('business_id', businessId).limit(100),
+                        supabase.from('categories').select('id, name, icon, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
+                    ])
 
-                    if (error) {
-                        console.log('[Menu] ⚠️ DB Error:', error.message)
+                    if (itemsError) {
+                        console.log('[Menu] ⚠️ DB Error:', itemsError.message)
+                    }
+                    if (catError) {
+                        console.log('[Menu] ⚠️ Categories DB Error:', catError.message)
                     }
 
                     if (items && items.length > 0) {
-                        console.log('[Menu] ☁️ Loading from menu_items table:', items.length, 'items')
-                        const grouped = groupItemsByCategory(items)
+                        console.log('[Menu] ☁️ Loading from menu_items table:', items.length, 'items', (categories?.length || 0), 'categories')
+                        const grouped = groupItemsByCategory(items, categories || [])
                         setMenu({ categories: grouped })
                     } else {
                         console.log('[Menu] ⚠️ No menu items found for this business')
@@ -790,7 +810,7 @@ export default function Menu({ config: configProp }) {
             {/* Category Rail (Sticky) - RESTORED */}
             {enabledCategories.length > 0 && (
                 <div style={{
-                    position: 'sticky', top: 0, zIndex: 900, background: 'rgba(255,255,255,0.95)',
+                    position: 'sticky', top: 0, zIndex: 30, background: 'rgba(255,255,255,0.95)',
                     backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
                     padding: '10px 0', margin: '0 0 12px 0', borderBottom: '1px solid rgba(0,0,0,0.06)'
                 }}>
