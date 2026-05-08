@@ -206,8 +206,8 @@ function schedBeat(){
     if(jBt===0||jBt===2)rhodesChord(bar.c[0],bar.c[2],jNext);
     // Vinyl crackle occasionally
     if(Math.random()<0.25)vinylCrackle(jNext);
-    // Saxophone — upbeat phrase every 2 bars on beat 0
-    if(jBt===0&&jBar%2===0)playSaxPhrase(jBar,jNext);
+    // Saxophone — full melodic bar on beat 0
+    if(jBt===0)playSaxBar(jBar,jNext);
     jNext+=BEAT;jBt++;
     if(jBt>=4){jBt=0;jBar=(jBar+1)%PROG.length;}
   }
@@ -298,51 +298,144 @@ function vinylCrackle(t){
 }
 
 // ── SAXOPHONE ─────────────────────────────────────────────
-// Professional sax with vibrato, filter, and ADSR envelope
-function saxNote(freq,t,dur){
+// Full-featured sax engine: vibrato, filter, multiple articulations, breath noise
+function saxNote(freq,t,dur,art){
   if(!AC)return;
-  const now=AC.currentTime;
-  // Vibrato LFO ~5.2Hz
+  // Vibrato LFO ~5.2Hz with slight random variation
   const lfo=AC.createOscillator(),lfoG=AC.createGain();
-  lfo.frequency.value=5.2;
-  lfoG.gain.value=freq*0.006;
+  lfo.frequency.value=5.0+Math.random()*0.6;
+  lfoG.gain.value=freq*0.005;
   lfo.connect(lfoG);
-  // Main oscillator - sawtooth for rich sax harmonics
+  // Main oscillator
   const o=AC.createOscillator(),g=AC.createGain();
   lfoG.connect(o.frequency);
   o.type='sawtooth';
-  o.frequency.value=freq;
-  // Lowpass filter to soften
+  // Filter
   const f=AC.createBiquadFilter();
   f.type='lowpass';
-  f.frequency.value=2400;
-  f.Q.value=0.6;
+  f.frequency.value=2600;
+  f.Q.value=0.5;
   o.disconnect();o.connect(f);f.connect(g);g.connect(AC.destination);
-  // ADSR envelope
-  const atk=0.05,dec=0.1,sus=0.6;
-  g.gain.setValueAtTime(0.001,t);
-  g.gain.linearRampToValueAtTime(0.14,t+atk);
-  g.gain.linearRampToValueAtTime(0.1,t+atk+dec);
-  g.gain.setValueAtTime(0.1,t+atk+dec+(dur-atk-dec)*0.4);
-  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  // Articulation envelopes
+  switch(art){
+    case 'staccato':
+      o.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.linearRampToValueAtTime(0.17,t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.35);
+      break;
+    case 'slide-up':
+      o.frequency.setValueAtTime(freq*0.93,t);
+      o.frequency.linearRampToValueAtTime(freq,t+0.1);
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.linearRampToValueAtTime(0.15,t+0.1);
+      g.gain.setValueAtTime(0.11,t+dur*0.5);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      break;
+    case 'bend':
+      o.frequency.setValueAtTime(freq,t);
+      o.frequency.linearRampToValueAtTime(freq*1.04,t+dur*0.5);
+      o.frequency.linearRampToValueAtTime(freq*0.97,t+dur);
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.linearRampToValueAtTime(0.14,t+0.06);
+      g.gain.setValueAtTime(0.11,t+dur*0.5);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      break;
+    case 'ghost':
+      o.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.linearRampToValueAtTime(0.05,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.3);
+      break;
+    default: // tenuto / normal
+      o.frequency.setValueAtTime(freq,t);
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.linearRampToValueAtTime(0.15,t+0.06);
+      g.gain.linearRampToValueAtTime(0.1,t+0.14);
+      g.gain.setValueAtTime(0.1,t+dur*0.45);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  }
   lfo.start(t);lfo.stop(t+dur);
   o.start(t);o.stop(t+dur);
 }
-// Upbeat melodic phrases — 3-note motifs over 2-bar cycles
-const SAX_PHRASES=[
-  // Over Cm / Bb — bright and ascending
-  [{n:392.00,t:0,d:0.35},{n:466.16,t:0.45,d:0.35},{n:523.25,t:1.4,d:0.75}],
-  // Over Ab / G — plateau then resolve
-  [{n:392.00,t:0,d:0.35},{n:415.30,t:0.45,d:0.35},{n:466.16,t:1.4,d:0.75}],
-  // Over F / Eb — descending, soulful
-  [{n:349.23,t:0,d:0.35},{n:329.63,t:0.5,d:0.35},{n:311.13,t:1.4,d:0.8}],
-];
-let saxPhraseIdx=0;
-function playSaxPhrase(barIdx,t){
+// Breath noise before phrases
+function saxBreath(t){
   if(!AC)return;
-  const phrase=SAX_PHRASES[(barIdx/2)%SAX_PHRASES.length];
-  for(const note of phrase){
-    saxNote(note.n,t+note.t*BEAT,note.d*BEAT);
+  const sr=AC.sampleRate,dur=0.12,frames=Math.floor(sr*dur);
+  const buf=AC.createBuffer(1,frames,sr),d=buf.getChannelData(0);
+  for(let i=0;i<frames;i++)d[i]=(Math.random()*2-1)*0.35;
+  const s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();
+  s.buffer=buf;s.connect(f);f.connect(g);g.connect(AC.destination);
+  f.type='bandpass';f.frequency.value=1400;f.Q.value=1.8;
+  g.gain.setValueAtTime(0.01,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+  s.start(t);s.stop(t+0.13);
+}
+// Harmony layer — minor third above
+function saxHarmony(freq,t,dur,art){
+  // minor third = freq * 1.189
+  saxNote(freq*1.189,t,dur*0.85,'ghost');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FULL SONG STRUCTURE — 4 sections × 6 bars = ~70s arc
+// ═══════════════════════════════════════════════════════════
+
+// Section 0: INTRO — sparse, atmospheric, held notes
+const SAX_S0=[
+  [{n:392.00,t:0,d:2.5,art:'tenuto'}], // Cm: G4 held
+  [{n:349.23,t:0.5,d:2.0,art:'tenuto'}], // Bb: F4
+  [{n:311.13,t:0,d:2.0,art:'tenuto'},{n:392.00,t:2.5,d:0.8,art:'slide-up'}], // Ab: Eb4 → G4
+  [{n:392.00,t:0,d:3.0,art:'bend'}], // G: G4 bent
+  [{n:261.63,t:0.5,d:2.5,art:'tenuto'}], // F: C4
+  [{n:233.08,t:0,d:3.5,art:'tenuto'}], // Eb: Bb3 fade
+];
+
+// Section 1: GROOVE — syncopated 8th patterns, staccato + ghost notes
+const SAX_S1=[
+  [{n:392.00,t:0,d:0.2,art:'staccato'},{n:466.16,t:0.35,d:0.2,art:'staccato'},{n:392.00,t:0.7,d:0.15,art:'ghost'},{n:523.25,t:1.2,d:0.9,art:'tenuto'},{n:587.33,t:2.5,d:0.25,art:'staccato'}],
+  [{n:349.23,t:0,d:0.2,art:'staccato'},{n:440.00,t:0.35,d:0.2,art:'staccato'},{n:349.23,t:0.7,d:0.15,art:'ghost'},{n:466.16,t:1.2,d:0.9,art:'tenuto'},{n:523.25,t:2.5,d:0.25,art:'staccato'}],
+  [{n:311.13,t:0,d:0.2,art:'staccato'},{n:392.00,t:0.35,d:0.2,art:'staccato'},{n:311.13,t:0.7,d:0.15,art:'ghost'},{n:415.30,t:1.2,d:0.9,art:'tenuto'},{n:466.16,t:2.5,d:0.25,art:'staccato'}],
+  [{n:293.66,t:0,d:0.2,art:'staccato'},{n:369.99,t:0.35,d:0.2,art:'staccato'},{n:293.66,t:0.7,d:0.15,art:'ghost'},{n:392.00,t:1.2,d:0.9,art:'tenuto'},{n:440.00,t:2.5,d:0.25,art:'staccato'}],
+  [{n:261.63,t:0,d:0.2,art:'staccato'},{n:329.63,t:0.35,d:0.2,art:'staccato'},{n:261.63,t:0.7,d:0.15,art:'ghost'},{n:349.23,t:1.2,d:0.9,art:'tenuto'},{n:392.00,t:2.5,d:0.25,art:'staccato'}],
+  [{n:233.08,t:0,d:0.2,art:'staccato'},{n:293.66,t:0.35,d:0.2,art:'staccato'},{n:233.08,t:0.7,d:0.15,art:'ghost'},{n:311.13,t:1.2,d:0.9,art:'tenuto'},{n:349.23,t:2.5,d:0.25,art:'staccato'}],
+];
+
+// Section 2: CHORUS — energetic, slides, bends, runs
+const SAX_S2=[
+  [{n:392.00,t:0,d:0.25,art:'staccato'},{n:466.16,t:0.3,d:0.25,art:'staccato'},{n:523.25,t:0.6,d:0.7,art:'slide-up'},{n:587.33,t:1.5,d:0.6,art:'bend'},{n:523.25,t:2.3,d:0.4,art:'staccato'},{n:466.16,t:2.8,d:0.4,art:'staccato'}],
+  [{n:349.23,t:0,d:0.25,art:'staccato'},{n:440.00,t:0.3,d:0.25,art:'staccato'},{n:466.16,t:0.6,d:0.7,art:'slide-up'},{n:523.25,t:1.5,d:0.6,art:'bend'},{n:466.16,t:2.3,d:0.4,art:'staccato'},{n:440.00,t:2.8,d:0.4,art:'staccato'}],
+  [{n:311.13,t:0,d:0.25,art:'staccato'},{n:392.00,t:0.3,d:0.25,art:'staccato'},{n:415.30,t:0.6,d:0.7,art:'slide-up'},{n:466.16,t:1.5,d:0.6,art:'bend'},{n:415.30,t:2.3,d:0.4,art:'staccato'},{n:392.00,t:2.8,d:0.4,art:'staccato'}],
+  [{n:293.66,t:0,d:0.25,art:'staccato'},{n:369.99,t:0.3,d:0.25,art:'staccato'},{n:392.00,t:0.6,d:0.7,art:'slide-up'},{n:440.00,t:1.5,d:0.6,art:'bend'},{n:392.00,t:2.3,d:0.4,art:'staccato'},{n:369.99,t:2.8,d:0.4,art:'staccato'}],
+  [{n:261.63,t:0,d:0.25,art:'staccato'},{n:329.63,t:0.3,d:0.25,art:'staccato'},{n:349.23,t:0.6,d:0.7,art:'slide-up'},{n:392.00,t:1.5,d:0.6,art:'bend'},{n:349.23,t:2.3,d:0.4,art:'staccato'},{n:329.63,t:2.8,d:0.4,art:'staccato'}],
+  [{n:233.08,t:0,d:0.25,art:'staccato'},{n:293.66,t:0.3,d:0.25,art:'staccato'},{n:311.13,t:0.6,d:0.7,art:'slide-up'},{n:349.23,t:1.5,d:0.6,art:'bend'},{n:311.13,t:2.3,d:0.4,art:'staccato'},{n:293.66,t:2.8,d:0.4,art:'staccato'}],
+];
+
+// Section 3: BRIDGE — melodic counter-line, descending runs, emotional
+const SAX_S3=[
+  [{n:523.25,t:0,d:0.2,art:'staccato'},{n:466.16,t:0.35,d:0.2,art:'staccato'},{n:392.00,t:0.7,d:0.2,art:'staccato'},{n:349.23,t:1.1,d:0.2,art:'staccato'},{n:311.13,t:1.5,d:0.8,art:'slide-up'},{n:392.00,t:2.5,d:0.8,art:'tenuto'}],
+  [{n:466.16,t:0,d:0.2,art:'staccato'},{n:415.30,t:0.35,d:0.2,art:'staccato'},{n:349.23,t:0.7,d:0.2,art:'staccato'},{n:311.13,t:1.1,d:0.2,art:'staccato'},{n:261.63,t:1.5,d:0.8,art:'slide-up'},{n:349.23,t:2.5,d:0.8,art:'tenuto'}],
+  [{n:466.16,t:0,d:0.2,art:'staccato'},{n:415.30,t:0.35,d:0.2,art:'staccato'},{n:349.23,t:0.7,d:0.2,art:'staccato'},{n:311.13,t:1.1,d:0.2,art:'staccato'},{n:261.63,t:1.5,d:0.8,art:'slide-up'},{n:311.13,t:2.5,d:0.8,art:'tenuto'}],
+  [{n:440.00,t:0,d:0.2,art:'staccato'},{n:392.00,t:0.35,d:0.2,art:'staccato'},{n:329.63,t:0.7,d:0.2,art:'staccato'},{n:293.66,t:1.1,d:0.2,art:'staccato'},{n:233.08,t:1.5,d:0.8,art:'slide-up'},{n:293.66,t:2.5,d:0.8,art:'tenuto'}],
+  [{n:392.00,t:0,d:0.2,art:'staccato'},{n:349.23,t:0.35,d:0.2,art:'staccato'},{n:293.66,t:0.7,d:0.2,art:'staccato'},{n:261.63,t:1.1,d:0.2,art:'staccato'},{n:207.65,t:1.5,d:0.8,art:'slide-up'},{n:261.63,t:2.5,d:0.8,art:'tenuto'}],
+  [{n:349.23,t:0,d:0.2,art:'staccato'},{n:311.13,t:0.35,d:0.2,art:'staccato'},{n:261.63,t:0.7,d:0.2,art:'staccato'},{n:233.08,t:1.1,d:0.2,art:'staccato'},{n:196.00,t:1.5,d:1.2,art:'bend'},{n:174.61,t:2.8,d:1.0,art:'tenuto'}],
+];
+
+const SAX_SECTIONS=[SAX_S0,SAX_S1,SAX_S2,SAX_S3];
+
+function playSaxBar(barIdx,t){
+  if(!AC)return;
+  const sectionIdx=Math.floor(barIdx/6)%SAX_SECTIONS.length;
+  const bar=SAX_SECTIONS[sectionIdx][barIdx%6];
+  // Breath at start of each section
+  if(barIdx%6===0)saxBreath(t-0.08);
+  // Play bar melody
+  for(const note of bar){
+    saxNote(note.n,t+note.t*BEAT,note.d*BEAT,note.art||'tenuto');
+    // Add harmony in Chorus (section 2) on held notes
+    if(sectionIdx===2&&(note.art==='tenuto'||note.art==='slide-up')){
+      saxHarmony(note.n,t+note.t*BEAT+0.02,note.d*BEAT,note.art);
+    }
   }
 }
 function sndHit(v){if(!AC||v<0.8)return;const t=AC.currentTime,vol=Math.min(0.5,v*0.062);const o1=AC.createOscillator(),g1=AC.createGain();o1.connect(g1);g1.connect(AC.destination);o1.type='sine';o1.frequency.setValueAtTime(1800+v*120,t);o1.frequency.exponentialRampToValueAtTime(320,t+0.035);g1.gain.setValueAtTime(vol,t);g1.gain.exponentialRampToValueAtTime(0.001,t+0.055);o1.start(t);o1.stop(t+0.06);const o2=AC.createOscillator(),g2=AC.createGain();o2.connect(g2);g2.connect(AC.destination);o2.type='triangle';o2.frequency.setValueAtTime(520+v*60,t);o2.frequency.exponentialRampToValueAtTime(110,t+0.08);g2.gain.setValueAtTime(vol*0.7,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.1);o2.start(t);o2.stop(t+0.11);}
