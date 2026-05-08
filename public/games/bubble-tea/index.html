@@ -486,9 +486,11 @@ function drawGridHighlight(){
   }
 }
 class Proj{
-  constructor(boba,a){ this.boba=boba;this.x=CNX;this.y=CNY;const spd=Math.max(11,(14+lvl*.7)*SC);this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;this.stopped=false;this.trail=[]; }
+  constructor(boba,a){ this.boba=boba;this.x=CNX;this.y=CNY;const spd=Math.max(11,(14+lvl*.7)*SC);this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;this.stopped=false;this.trail=[];this.life=0; }
   update(){
     if(this.stopped)return;
+    this.life++;
+    if(this.life>360){this.stopped=true;return;} // 6-second safety fuse
     this.trail.push({x:this.x,y:this.y});if(this.trail.length>14)this.trail.shift();
     this.x+=this.vx;this.y+=this.vy;
     const lb=GX-R,rb=GX+(NC-1)*R*2+R;
@@ -1236,15 +1238,21 @@ function checkObjective(){
   return true;
 }
 
-function onStop(){
-  if(!proj)return;
-  const spot=findSpot(proj.x,proj.y);
-  const ct=proj.boba.ct;
+function onStop(p){
+  if(!p)return;
+  const spot=findSpot(p.x,p.y);
+  const ct=(p.boba&&p.boba.ct)||actPal[0];
   let madeMatch=false;
+  if(!spot){
+    // Safety: if no spot found, just clear projectile and continue
+    shots++;shotsThisLevel++;
+    if(checkGO())endGame();
+    return;
+  }
   if(spot){
     const {x,y}=bobaXY(spot.r,spot.c);
-    proj.boba.x=x;proj.boba.y=y;proj.boba.land();
-    grid[spot.r][spot.c]=proj.boba;
+    p.boba.x=x;p.boba.y=y;p.boba.land();
+    grid[spot.r][spot.c]=p.boba;
     rings.push(new Ring(x,y,'rgba(255,255,255,0.8)'));
     getNbrs(spot.r,spot.c).forEach(n=>{if(grid[n.r][n.c])grid[n.r][n.c].hit();});
     // POWER-UPS
@@ -1281,7 +1289,7 @@ function onStop(){
       }
     }
   }
-  proj=null;shots++;shotsThisLevel++;
+  shots++;shotsThisLevel++;
   
   // CLASSIC BUBBLE BLAST RULE: Ceiling drops only when you DON'T make a match
   if(!madeMatch){
@@ -1379,7 +1387,7 @@ function resetGame(){
   score=0;shots=0;shotsThisLevel=0;ceilOff=0;gameState='playing';lives=3;lvl=1;combo=0;
   actPal=[...PALETTE.slice(0,MAX_COLORS_START)];cInt=CI_BASE;freezeShots=0;dropsThisLevel=0;consecutiveMisses=0;
   parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];iceParticles=[];
-  proj=null;aimAngle=-Math.PI/2;mascot=null;nxt2Boba=null;
+  proj=null;aimAngle=-Math.PI/2;mascot=null;nxt2Boba=null;consecutiveMisses=0;shotsThisLevel=0;
   lvlScStart=0;lvlShStart=0;lvlObjScStart=0;comboMeter=0;comboMeterTarget=0;bgComboPct=0;
   cannonCharge=0;flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
   const cfg=LEVELS[0];
@@ -1481,7 +1489,7 @@ function loop(t){
       curBoba.x=CNX;curBoba.y=CNY-R*.3;
       cx.save();cx.translate(curBoba.x,curBoba.y);cx.scale(1.26,1.26);cx.translate(-curBoba.x,-curBoba.y);curBoba.draw(t);cx.restore();
     }
-    if(proj&&gameState==='playing'){proj.update();if(proj.stopped)onStop();else proj.draw(t);}
+    if(proj&&gameState==='playing'){proj.update();if(proj.stopped){const tmp=proj;proj=null;try{onStop(tmp);}catch(e){console.error('[BubbleTea] onStop error:',e);}}else proj.draw(t);}
     if(gameState==='playing')cannonCharge=Math.max(0,cannonCharge-.008);
   }
   // Optimized particle loops - iterate backwards to avoid array mutation issues

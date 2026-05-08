@@ -277,7 +277,7 @@ function menuSelect(){
   initAudio();Haptics.fire(Haptics.menu);
   if(menuState==='player'){
     if(menuSel===1){gameMode='2p';menuFadeTransition(startGame);}
-    else{menuFadeTransition(function(){menuState='difficulty';menuSel=0;});}
+    else{gameMode='1p-medium';menuFadeTransition(startGame);}
   }else{
     gameMode=['1p-easy','1p-medium','1p-hard'][menuSel];
     menuFadeTransition(startGame);
@@ -315,6 +315,7 @@ function drawMenu(){
   if(menuState==='player'){
     goldRule(H-208);ctx.fillStyle='rgba(212,175,55,0.65)';ctx.font='11px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('SELECT MODE',W/2,H-194);goldRule(H-190);
     const bw=160,bh=56,gap=20,by=H-180,sx=(W-(bw*2+gap))/2;btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel);});
+    ctx.fillStyle='rgba(212,175,55,0.55)';ctx.font='10px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('Press [A] or [START] to play',W/2,H-108);
   }else{
     goldRule(H-208);ctx.fillStyle='rgba(212,175,55,0.65)';ctx.font='13px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('DIFFICULTY',W/2,H-190);goldRule(H-186);
     const bw=130,bh=65,gap=15,by=H-180,sx=(W-(bw*3+gap*2))/2;btns.forEach(function(btn,i){drawNeonBtn(sx+i*(bw+gap),by,bw,bh,btn.label,btn.color,btn.glow,i===menuSel,16);});
