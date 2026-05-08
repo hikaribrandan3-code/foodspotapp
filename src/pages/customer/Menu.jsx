@@ -187,26 +187,35 @@ export default function Menu({ config: configProp }) {
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
     // Helper: Group items by category (with category mapping)
-    const groupItemsByCategory = (items, categoryList = []) => {
-        // Build a map of category_id -> category info
+    const groupItemsByCategory = (items, categoryList = [], menuDataCategories = []) => {
+        // Build a map of category_id -> category info from DB categories
         const categoryMap = {}
-        categoryList.forEach(cat => {
-            categoryMap[cat.id] = cat
+        categoryList.forEach(cat => { categoryMap[cat.id] = cat })
+
+        // Also build a fallback map from menu_data JSONB (handles RLS-blocked categories table)
+        const fallbackNameMap = {}
+        const fallbackSortMap = {}
+        menuDataCategories.forEach((cat, idx) => {
+            if (cat.id) fallbackNameMap[cat.id] = cat.name
+            if (cat.name) fallbackNameMap[`name:${cat.name}`] = cat.name
+            fallbackSortMap[cat.id || cat.name] = cat.sort_order ?? idx
         })
 
         const grouped = {}
         items.forEach(item => {
-            // Try to get category name from mapping first, then item.category_name, then fallback
-            const cat = categoryMap[item.category_id]
-            const catName = (cat?.name) || item.category_name || 'Otros'
-            const catId = cat?.id || item.category_id || `cat-${catName.toLowerCase().replace(/\s+/g, '-')}`
+            // Priority: DB category map -> JSONB fallback -> item.category_name -> 'Otros'
+            const dbCat = categoryMap[item.category_id]
+            const fallbackName = fallbackNameMap[item.category_id] || fallbackNameMap[`name:${item.category_name}`]
+            const catName = (dbCat?.name) || fallbackName || item.category_name || 'Otros'
+            const catId = dbCat?.id || item.category_id || `cat-${catName.toLowerCase().replace(/\s+/g, '-')}`
+            const sortOrder = dbCat?.sort_order ?? fallbackSortMap[item.category_id] ?? fallbackSortMap[catName] ?? 999
 
             if (!grouped[catName]) {
                 grouped[catName] = {
                     id: catId,
                     name: catName,
-                    icon: cat?.icon || '🍽️',
-                    sort_order: cat?.sort_order ?? 999,
+                    icon: dbCat?.icon || '🍽️',
+                    sort_order: sortOrder,
                     items: []
                 }
             }
@@ -249,8 +258,8 @@ export default function Menu({ config: configProp }) {
                 }
 
                 if (items && items.length > 0) {
-                    console.log('[Menu] ☁️ Fresh DB load:', items.length, 'items', (categories?.length || 0), 'categories')
-                    const grouped = groupItemsByCategory(items, categories || [])
+                    console.log('[Menu] ☁️ Fresh DB load:', items.length, 'items', (categories?.length || 0), 'DB categories +', (tenantData?.menu_data?.categories?.length || 0), 'JSONB categories')
+                    const grouped = groupItemsByCategory(items, categories || [], tenantData?.menu_data?.categories || [])
                     setMenu({ categories: grouped })
                 } else if (tenantData?.menu_data?.categories?.length > 0) {
                     // Fallback to JSONB only if no items in DB

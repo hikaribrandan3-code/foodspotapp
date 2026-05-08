@@ -60,8 +60,11 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
 
       {/* Modal — slide up from bottom, scrollable */}
       <div
-        className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center pointer-events-none"
-        style={{ paddingBottom: 'calc(var(--nav-height, 60px) + env(safe-area-inset-bottom, 0px))' }}
+        className="fixed inset-x-0 z-[999] flex items-end sm:items-center justify-center pointer-events-none"
+        style={{
+          top: 0,
+          bottom: 'calc(var(--nav-height, 60px) + env(safe-area-inset-bottom, 0px))',
+        }}
       >
         <div
           className="w-full sm:max-w-md sm:mx-auto sm:mb-auto sm:rounded-[2rem] rounded-t-[2rem] bg-white dark:bg-zinc-900 shadow-2xl pointer-events-auto flex flex-col max-h-full"
