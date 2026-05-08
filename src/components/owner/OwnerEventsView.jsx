@@ -8,6 +8,7 @@ import {
   Tag, Share2, CheckCircle2, PartyPopper
 } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
+import { EVENT_TEMPLATES } from '../../utils/eventTemplates'
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const theme = {
@@ -441,7 +442,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
 
 // ── Create Event (3-step wizard) ──────────────────────────────────────────────
 function CreateEventView({ businessId, onBack, onSuccess }) {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const fileInputRef = useRef(null)
@@ -451,6 +452,27 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     venue_name: '', address: '', is_free: false,
     ticket_tiers: [{ id: '1', name: 'General Admission', price: 25, capacity: 100 }],
   })
+
+  const handleSelectTemplate = (template) => {
+    setForm({
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      image_url: template.image_url,
+      start_date: template.start_date,
+      end_date: '',
+      venue_name: template.venue_name,
+      address: template.address,
+      is_free: template.ticket_tiers.some(t => t.price === 0),
+      ticket_tiers: template.ticket_tiers.map((t, i) => ({
+        id: String(i + 1),
+        name: t.name,
+        price: t.price,
+        capacity: t.capacity
+      })),
+    })
+    setStep(1)
+  }
 
   const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sport']
 
@@ -569,6 +591,87 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     </motion.div>
   )
 
+  // Template selection (step 0)
+  if (step === 0) return (
+    <div style={{ minHeight: '100vh', background: theme.bgSurface }}>
+      <div style={{ padding: '18px 16px', background: theme.bgWhite, borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ArrowLeft size={22} color={theme.textPrimary} />
+        </button>
+        <span style={{ flex: 1, fontSize: 16, fontWeight: 800, color: theme.textPrimary }}>Event Templates</span>
+      </div>
+
+      <div style={{ padding: '20px 16px 24px' }}>
+        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Use a Template</h2>
+        <p style={{ margin: '0 0 16px', fontSize: 14, color: theme.textSecondary }}>Quick start with proven event formats or create from scratch</p>
+
+        <div style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
+          {EVENT_TEMPLATES.map(template => (
+            <motion.button
+              key={template.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleSelectTemplate(template)}
+              style={{
+                display: 'flex',
+                gap: 12,
+                padding: 12,
+                background: theme.bgWhite,
+                border: `1px solid ${theme.border}`,
+                borderRadius: 12,
+                cursor: 'pointer',
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = theme.primary;
+                e.currentTarget.style.background = theme.bgSurface;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = theme.border;
+                e.currentTarget.style.background = theme.bgWhite;
+              }}
+            >
+              <img src={template.image_url} alt={template.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: theme.textPrimary, marginBottom: 2 }}>{template.name}</div>
+                <div style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 1.4 }}>{template.description.substring(0, 60)}...</div>
+                <div style={{ fontSize: 11, color: theme.textSecondary, marginTop: 4 }}>📍 {template.venue_name} • {template.category}</div>
+              </div>
+              <ChevronRight size={20} color={theme.textSecondary} style={{ flexShrink: 0, marginTop: 4 }} />
+            </motion.button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setStep(1)}
+          style={{
+            width: '100%',
+            padding: '16px',
+            background: theme.bgWhite,
+            border: `2px dashed ${theme.border}`,
+            borderRadius: 12,
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 700,
+            color: theme.textSecondary,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = theme.textSecondary;
+            e.currentTarget.style.background = theme.bgSurface;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = theme.border;
+            e.currentTarget.style.background = theme.bgWhite;
+          }}
+        >
+          ➕ Start From Scratch
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div style={{ minHeight: '100vh', background: theme.bgSurface }}>
       {/* Header */}
@@ -581,12 +684,12 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           {[1, 2, 3].map(n => (
             <motion.div
               key={n}
-              animate={{ background: n <= step ? theme.primary : theme.border }}
+              animate={{ background: n <= step - 1 ? theme.primary : theme.border }}
               style={{ width: 32, height: 4, borderRadius: 2 }}
             />
           ))}
         </div>
-        <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step}/3</span>
+        <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step - 1}/3</span>
       </div>
 
       <div style={{ padding: '20px 16px 24px' }}>

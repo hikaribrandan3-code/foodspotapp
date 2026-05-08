@@ -221,8 +221,8 @@ export default function EventsView({ onViewTickets }) {
   const [searchParams] = useSearchParams();
   const { events: dbEvents, loading: eventsLoading } = useEvents(tenantSlug);
 
-  // Normalize DB events to frontend shape; fallback to mock if no DB data
-  const events = dbEvents.length > 0 ? dbEvents.map(normalizeEvent) : mockEvents;
+  // Always show template events + any database events
+  const events = [...mockEvents, ...dbEvents.map(normalizeEvent)];
 
   const [stage, setStage] = useState('discovery'); // 'discovery' | 'detail' | 'checkout' | 'ticket' | 'my-tickets'
   const [selectedEvent, setSelectedEvent] = useState(null);

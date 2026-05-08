@@ -323,32 +323,15 @@ serve(async (req: Request) => {
         // ── BUILD SYSTEM PROMPT ────────────────────────────────────────
         const builtPrompt = buildSystemPrompt(language, businessName, contextBlock, planMode);
 
-        // ── ROUTE TO LLM ───────────────────────────────────────────────
-        const hasImage = messages.some((m: any) => m.image);
-        let result: any;
-
-        if (hasImage) {
-            if (!GEMINI_API_KEY) {
-                return new Response(
-                    JSON.stringify({ error: "MISSING_SECRET", detail: "Configure GEMINI_API_KEY for vision." }),
-                    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-                );
-            }
-            result = await callGemini(messages, builtPrompt, GEMINI_API_KEY);
-        } else if (GROQ_API_KEY) {
-            result = await callGroq(messages, builtPrompt, GROQ_API_KEY);
-            if (result.error && GEMINI_API_KEY) {
-                console.warn(`[foodspot-ai] Groq failed (${result.error}), falling back to Gemini`);
-                result = await callGemini(messages, builtPrompt, GEMINI_API_KEY);
-            }
-        } else if (GEMINI_API_KEY) {
-            result = await callGemini(messages, builtPrompt, GEMINI_API_KEY);
-        } else {
+        // ── ROUTE TO LLM (GROQ ONLY) ───────────────────────────────────
+        if (!GROQ_API_KEY) {
             return new Response(
-                JSON.stringify({ error: "MISSING_SECRET", detail: "Configure GROQ_API_KEY or GEMINI_API_KEY." }),
+                JSON.stringify({ error: "MISSING_SECRET", detail: "Configure GROQ_API_KEY." }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
+
+        const result = await callGroq(messages, builtPrompt, GROQ_API_KEY);
 
         return new Response(
             JSON.stringify({ ...result, planMode }),
