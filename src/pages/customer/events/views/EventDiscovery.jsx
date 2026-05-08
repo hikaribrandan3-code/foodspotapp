@@ -49,7 +49,7 @@ const WeatherWidget = () => {
 
   useEffect(() => {
     const fetchWeather = async () => {
-      let latitude = -34.6037, longitude = -58.3816; // Buenos Aires default
+      let latitude = -31.4201, longitude = -64.1888; // Córdoba default
 
       try {
         const pos = await new Promise((resolve, reject) => {
