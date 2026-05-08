@@ -43,6 +43,35 @@ const EventCountdown = ({ startDate }) => {
 
 const WeatherWidget = () => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const [weather, setWeather] = useState(null);
+  const [forecast, setForecast] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+        });
+
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&daily=temperature_2max,weather_code&temperature_unit=celsius&timezone=auto`
+        );
+
+        const data = await res.json();
+        setWeather(Math.round(data.current.temperature_2m));
+        setForecast(data.daily.temperature_2max.slice(0, 7));
+      } catch (err) {
+        console.log('Weather fetch failed, using defaults');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
+  }, []);
+
   return (
     <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-[24px] p-3 mb-4 shadow-sm">
       <div className="flex items-center justify-between mb-3 px-1">
@@ -57,18 +86,21 @@ const WeatherWidget = () => {
         </div>
         <div className="text-right">
           <div className="flex items-center gap-1 text-emerald-900 dark:text-emerald-100 font-black text-xs">
-            <Thermometer size={12} /> 24°C
+            <Thermometer size={12} /> {weather || 24}°C
           </div>
         </div>
       </div>
       <div className="flex justify-between px-1">
-        {days.map((day, i) => (
-          <div key={day} className="flex flex-col items-center gap-1">
-            <span className="text-[7px] font-bold text-emerald-600/60 uppercase">{day}</span>
-            {i % 2 === 0 ? <Sun size={10} className="text-orange-400" /> : <Cloud size={10} className="text-slate-400" />}
-            <span className="text-[8px] font-black text-emerald-900 dark:text-emerald-100">{20 + i}°</span>
-          </div>
-        ))}
+        {days.map((day, i) => {
+          const temp = forecast[i] ? Math.round(forecast[i]) : 20 + i;
+          return (
+            <div key={day} className="flex flex-col items-center gap-1">
+              <span className="text-[7px] font-bold text-emerald-600/60 uppercase">{day}</span>
+              {i % 2 === 0 ? <Sun size={10} className="text-orange-400" /> : <Cloud size={10} className="text-slate-400" />}
+              <span className="text-[8px] font-black text-emerald-900 dark:text-emerald-100">{temp}°</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
