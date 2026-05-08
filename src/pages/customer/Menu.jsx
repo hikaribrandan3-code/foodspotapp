@@ -8,7 +8,7 @@ import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
 import ItemCard from '../../components/ItemCard'
-import DetailedMenuItemCard from '../../components/DetailedMenuItemCard'
+import ItemDetailModal from '../../components/ItemDetailModal'
 
 // Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
 function parseHeroUrl(heroUrl) {
@@ -176,6 +176,9 @@ export default function Menu({ config: configProp }) {
         setDisplayMode(newMode)
         localStorage.setItem(`fs_menu_display_mode_${tenantSlug}`, newMode)
     }
+
+    // MODAL STATE
+    const [selectedItem, setSelectedItem] = useState(null)
 
     // =========================================================================
     // 1. DATA STATE (With Seed Fallback)
@@ -674,20 +677,20 @@ export default function Menu({ config: configProp }) {
     const enabledCategories = visibleCategories.filter(c => c.items?.length > 0)
     const hasCartItems = cart?.items?.length > 0
 
-    // ⚡ INSTANT ADD (Legacy Dec 19 Logic)
+    // ⚡ OPEN MODAL (Tapped item selection)
     const handleTapToAdd = (item) => {
         if (isEditMode) return
         if (!item.available) return
+        setSelectedItem(item)
+    }
 
-        // 1. Add to cart instantly
-        addToCart(item, 1, [])
-
-        // 2. Visual Feedback (Tactile Scale)
+    // MODAL ADD TO CART HANDLER
+    const handleModalAddToCart = (item, quantity) => {
+        addToCart(item, quantity, [])
         setAddedItem(item.id)
         setTimeout(() => setAddedItem(null), 150)
-
-        // 3. Haptic Feedback
         if (navigator.vibrate) navigator.vibrate(5)
+        setSelectedItem(null)
     }
 
     return (
@@ -800,40 +803,14 @@ export default function Menu({ config: configProp }) {
             <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
-                            {category === enabledCategories[0] && (
-                                <button
-                                    onClick={handleToggleMode}
-                                    style={{
-                                        fontSize: 11,
-                                        fontWeight: 600,
-                                        padding: '6px 12px',
-                                        border: '1px solid #D1D5DB',
-                                        background: 'white',
-                                        borderRadius: 6,
-                                        cursor: 'pointer',
-                                        color: '#374151',
-                                        textTransform: 'capitalize'
-                                    }}
-                                >
-                                    {displayMode === 'simple' ? 'Simple | Detailed' : 'Detailed | Simple'}
-                                </button>
-                            )}
-                        </div>
-                        <div style={{ display: displayMode === 'detailed' ? 'grid' : 'grid', gridTemplateColumns: displayMode === 'detailed' ? 'minmax(280px, 1fr)' : 'repeat(3, 1fr)', gap: displayMode === 'detailed' ? 16 : 12 }}>
+                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 12 }}>{category.name}</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                             {category.items.map((item, index) => {
                                 // 🛡️ PHYSICS VISUALS: Green Frame & Ghost Opacity
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
 
-                                return displayMode === 'detailed' ? (
-                                    <DetailedMenuItemCard
-                                        key={item.id}
-                                        item={item}
-                                        onAddToCart={handleTapToAdd}
-                                    />
-                                ) : (
+                                return (
                                     <ItemCard
                                         key={item.id}
                                         item={item}
@@ -855,6 +832,14 @@ export default function Menu({ config: configProp }) {
                     </div>
                 ))}
             </div>
+
+            {/* Item Detail Modal */}
+            <ItemDetailModal
+                item={selectedItem}
+                isOpen={!!selectedItem}
+                onClose={() => setSelectedItem(null)}
+                onAddToCart={handleModalAddToCart}
+            />
 
             {/* 🛒 INTERACTIVE MINI-CART (Legacy Receipt Style) */}
             {hasCartItems && !isEditMode && (
