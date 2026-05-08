@@ -11,6 +11,7 @@ export default function MenuTab({
   activeCategory,
   onSelectCategory,
   onItemUpdate,
+  onDeleteItem,
   onAddItem,
   onAddCategory,
   onDeleteCategory,
@@ -333,7 +334,7 @@ export default function MenuTab({
 
       <div className="flex-grow grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
           {filteredItems.map((item) => (
-            <MenuItemCard key={item.id} item={item} onUpdate={onItemUpdate} />
+            <MenuItemCard key={item.id} item={item} onUpdate={onItemUpdate} onDelete={onDeleteItem} />
           ))}
           {filteredItems.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-stone-400">

@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Flame, Leaf, Star, Wheat } from 'lucide-react';
 import { useState } from 'react';
 
-export default function MenuItemCard({ item, onUpdate }) {
+export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [inStock, setInStock] = useState(item.available !== false);
   const [description, setDescription] = useState(item.description || '');
   const [kcal, setKcal] = useState(item.kcal || 0);
@@ -159,16 +159,28 @@ export default function MenuItemCard({ item, onUpdate }) {
             </button>
           </div>
 
-          <button
-            onClick={() => handleToggle('available', !inStock, setInStock)}
-            className={`flex items-center gap-2 px-5 py-2 rounded-full border-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.1em] shadow-sm ${
-              inStock
-                ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
-                : 'bg-stone-900 text-white border-stone-900 hover:bg-stone-800'
-            }`}
-          >
-            {inStock ? 'In Kitchen' : 'Sold Out'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleToggle('available', !inStock, setInStock)}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full border-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.1em] shadow-sm ${
+                inStock
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
+                  : 'bg-stone-900 text-white border-stone-900 hover:bg-stone-800'
+              }`}
+            >
+              {inStock ? 'In Kitchen' : 'Sold Out'}
+            </button>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(item.id)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full border-2 border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-all active:scale-95 text-[10px] font-black uppercase tracking-[0.1em] shadow-sm"
+                title="Delete item"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Delete
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </motion.div>

@@ -124,6 +124,27 @@ export default function MenuManager() {
     }, 600);
   }, [businessId, t]);
 
+  const handleDeleteItem = useCallback(async (itemId) => {
+    if (!window.confirm('Delete this item permanently?')) return;
+    setMenuItems((prev) => prev.filter((i) => i.id !== itemId));
+
+    const { error } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', itemId)
+      .eq('business_id', businessId);
+
+    if (error) {
+      console.error('[MenuManager] Delete item error:', error);
+      setSaveStatus({ error: true, message: t('delete_error') || 'Failed to delete item.' });
+      fetchMenuItems();
+    } else {
+      setSaveStatus({ error: false, message: t('item_deleted') || 'Item deleted' });
+      setTimeout(() => setSaveStatus(null), 2000);
+      syncMenuDataToJsonb(menuItems.filter((i) => i.id !== itemId));
+    }
+  }, [businessId, menuItems, t]);
+
   const handleAddItem = useCallback(async (item) => {
     // Optimistic
     setMenuItems((prev) => [item, ...prev]);
@@ -337,6 +358,7 @@ export default function MenuManager() {
               activeCategory={activeCategory}
               onSelectCategory={setActiveCategory}
               onItemUpdate={saveItemField}
+              onDeleteItem={handleDeleteItem}
               onAddItem={handleAddItem}
               onAddCategory={handleAddCategory}
               onDeleteCategory={handleDeleteCategory}

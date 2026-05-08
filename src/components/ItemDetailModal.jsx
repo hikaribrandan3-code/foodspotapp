@@ -211,8 +211,8 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
             >
               <ShoppingCart className="h-4 w-4" />
               {item.available === false
-                ? (t('out_of_stock') || 'Out of Stock')
-                : (t('add_to_cart') || 'Add to Cart')
+                ? ((t('out_of_stock') && t('out_of_stock') !== 'out_of_stock') ? t('out_of_stock') : 'Out of Stock')
+                : ((t('add_to_cart') && t('add_to_cart') !== 'add_to_cart') ? t('add_to_cart') : 'Add to Cart')
               }
               <span className="ml-1 opacity-80">
                 • {formatPrice(item.price * quantity)}
