@@ -408,6 +408,21 @@ export async function updateBranding(updates, businessId) {
             return { data: null, error: coreError }
         }
 
+        // 🚨 403 DIAGNOSTIC: Log auth state for debugging RLS issues
+        if (error?.code === '42501' || error?.status === 403 || error?.message?.includes('permission')) {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                console.error('[updateBranding] 🚨 403 FORBIDDEN — Auth diagnostic:', {
+                    authUid: user?.id || 'NOT LOGGED IN',
+                    authEmail: user?.email || 'NO EMAIL',
+                    businessId,
+                    attemptedKeys: Object.keys(filteredUpdates)
+                });
+            } catch (e) {
+                console.error('[updateBranding] 🚨 403 FORBIDDEN — Could not fetch auth user:', e);
+            }
+        }
+
         return { data, error }
     } catch (error) {
         console.error('[updateBranding] Exception:', error)

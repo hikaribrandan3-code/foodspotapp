@@ -77,7 +77,12 @@ export default function MenuInventoryView({ lang = 'en' }) {
         })
       };
       updateBranding(payload, businessId).catch(err => {
-        console.error('[MenuInventoryView] Save failed:', err);
+        const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
+        if (isForbidden) {
+          console.error('[MenuInventoryView] 🚨 403 FORBIDDEN — Inventory save blocked. Please log in as owner.');
+        } else {
+          console.error('[MenuInventoryView] Save failed:', err);
+        }
       });
     }, 1000);
     return () => clearTimeout(saveDebounceRef.current);

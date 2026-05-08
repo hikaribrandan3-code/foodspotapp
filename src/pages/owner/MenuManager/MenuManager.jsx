@@ -306,7 +306,13 @@ export default function MenuManager() {
       setTimeout(() => setSaveStatus(null), 2000);
     } catch (err) {
       console.error('[MenuManager] Delivery save error:', err);
-      setSaveStatus({ error: true, message: t('save_error') || 'Save failed.' });
+      const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
+      setSaveStatus({
+        error: true,
+        message: isForbidden
+          ? 'Access denied. Please log out and log back in as the business owner.'
+          : (t('save_error') || 'Save failed.')
+      });
     }
   }, [
     businessId, tenantData, deliveryRadius, deliveryFee, freeDeliveryThreshold,

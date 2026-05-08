@@ -496,7 +496,13 @@ const Settings = () => {
         } catch (error) {
             console.error('Save failed:', error);
             justSavedRef.current = false;
-            setSaveStatus({ error: true, message: t('save_failed') });
+            const isForbidden = error?.code === '42501' || error?.status === 403 || error?.message?.includes('permission');
+            setSaveStatus({
+                error: true,
+                message: isForbidden
+                    ? 'Access denied. Please log out and log back in as the business owner.'
+                    : (t('save_failed') || 'Save failed')
+            });
         } finally {
             setIsSaving(false);
         }
