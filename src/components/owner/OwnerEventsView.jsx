@@ -129,6 +129,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         .from('events')
         .delete()
         .eq('id', selectedEvent.id)
+        .eq('business_id', businessId)
       fetchEvents()
       setView('list')
     } catch (err) {

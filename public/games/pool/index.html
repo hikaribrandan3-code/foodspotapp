@@ -1555,6 +1555,30 @@ cvs.addEventListener('touchstart',onDown,{passive:false});
 cvs.addEventListener('touchmove',onMove,{passive:false});
 cvs.addEventListener('touchend',onUp,{passive:false});
 </script>
+<audio id="bgMusic" loop style="display:none;">
+  <source src="./music.mp3" type="audio/mpeg">
+</audio>
+<script>
+// Jazz music player
+const bgMusic = document.getElementById('bgMusic');
+let gameStarted = false;
+
+// Play music when game starts (transitions out of menu)
+const origLoop = window.loop;
+const loopProxy = function(ts) {
+  if (G.state !== 'menu' && !gameStarted) {
+    gameStarted = true;
+    bgMusic.play().catch(e => console.log('Audio autoplay prevented, user interaction needed'));
+  }
+  if (G.state === 'menu' && gameStarted) {
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
+    gameStarted = false;
+  }
+  return origLoop(ts);
+};
+window.loop = loopProxy;
+</script>
 <script src="../game-sounds.js"></script>
 </body>
 </html>
