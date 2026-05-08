@@ -60,8 +60,8 @@ export const HERO_ICONS = {
 export const HERO_LABELS = {
     menu: 'Menú',
     delivery: 'Envíos',
-    promos: 'Promos',
+    promos: 'Eventos',
     game: 'Juego',
-    rewards: 'Promos', // Alias for backward compatibility
+    rewards: 'Eventos', // Alias for backward compatibility
     events: 'Eventos'
 }
