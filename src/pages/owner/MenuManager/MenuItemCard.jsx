@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Flame, Leaf, Star, Wheat } from 'lucide-react';
-import { useState } from 'react';
+import { Flame, Leaf, Star, Wheat, Camera } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { processAndStoreImage } from '../../../utils/imageOptimizer';
 
 export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [inStock, setInStock] = useState(item.available !== false);
@@ -10,6 +11,8 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [isGlutenFree, setIsGlutenFree] = useState(item.is_gluten_free || false);
   const [isSpicy, setIsSpicy] = useState(item.is_spicy || false);
   const [isFeatured, setIsFeatured] = useState(item.featured || false);
+  const [imgUploading, setImgUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleToggle = (field, value, setter) => {
     setter(value);
@@ -42,14 +45,51 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
       }`}
     >
       <div className="relative h-48 w-full overflow-hidden">
-        <img
-          src={item.image_url || item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
-          alt={item.name}
-          className="h-full w-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setImgUploading(true);
+            try {
+              const { publicUrl } = await processAndStoreImage(file);
+              onUpdate(item.id, { image_url: publicUrl });
+            } catch (err) {
+              console.error('[MenuItemCard] upload error:', err);
+              alert('Image upload failed: ' + err.message);
+            } finally {
+              setImgUploading(false);
+              e.target.value = '';
+            }
+          }}
         />
-        <div className="absolute inset-0 bg-white/10 opacity-0 transition-opacity group-hover/card:opacity-100"></div>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="relative h-full w-full p-0 border-none bg-transparent cursor-pointer"
+          title="Tap to change photo"
+        >
+          <img
+            src={item.image_url || item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
+            alt={item.name}
+            className="h-full w-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+          />
+          {imgUploading && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg">
+              <Camera className="h-4 w-4 text-stone-700" />
+              <span className="text-xs font-bold uppercase tracking-widest text-stone-700">Change Photo</span>
+            </div>
+          </div>
+        </button>
 
-        <div className="absolute top-6 right-6 flex flex-col gap-2 pointer-events-none">
+        <div className="absolute top-6 right-6 flex flex-col gap-2 pointer-events-none z-10">
           <div className="flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md px-4 py-2 text-stone-900 shadow-xl border border-white/50 pointer-events-auto">
             <Flame className="h-3.5 w-3.5 text-emerald-600 fill-current" />
             <input
@@ -62,7 +102,7 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
           </div>
         </div>
 
-        <div className="absolute top-6 left-6 flex flex-col gap-2 items-start pointer-events-none">
+        <div className="absolute top-6 left-6 flex flex-col gap-2 items-start pointer-events-none z-10">
           {isFeatured && (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
