@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
-import { X, Info } from 'lucide-react'
+import { Info, Leaf, Wheat, Flame, Star } from 'lucide-react'
 
 // 🚀 VAULT-SEAL: Image Optimization Helper
 const getOptimizedImageUrl = (url, options = {}) => {
@@ -43,15 +43,14 @@ const ItemCard = ({
     const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
 
     const [imgError, setImgError] = useState(false)
-    const [showDetail, setShowDetail] = useState(false)
-
     // Image Source Logic - Optimized
     const imageSrc = (item.image && !item.image.startsWith('blob:') && !imgError)
         ? getOptimizedImageUrl(item.image, { width: 300, quality: 75, format: 'webp' })
         : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80'
 
+    const hasAnyTag = item.is_vegan || item.is_gluten_free || item.is_spicy || item.featured
+
     return (
-        <>
         <div
             data-item-id={item.id}
             onClick={() => !readOnly && !isEditMode && !dragState && onTap && onTap(item)}
@@ -74,7 +73,7 @@ const ItemCard = ({
                 ...shakeStyle
             }}
         >
-            <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1 }}>
+            <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1, position: 'relative' }}>
                 <img 
                     src={imageSrc} 
                     alt="" 
@@ -84,16 +83,74 @@ const ItemCard = ({
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                     draggable={false} 
                 />
+
+                {/* Tag dots on image */}
+                {hasAnyTag && !isPlaceholder && (
+                    <div style={{
+                        position: 'absolute',
+                        top: 6,
+                        left: 6,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        pointerEvents: 'none'
+                    }}>
+                        {item.featured && (
+                            <span style={{
+                                display: 'flex', alignItems: 'center', gap: 3,
+                                background: 'rgba(245,158,11,0.95)', color: 'white',
+                                borderRadius: 10, padding: '2px 6px', fontSize: 9,
+                                fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                            }}>
+                                <Star size={9} fill="currentColor" /> Special
+                            </span>
+                        )}
+                        {item.is_vegan && (
+                            <span style={{
+                                display: 'flex', alignItems: 'center', gap: 3,
+                                background: 'rgba(16,185,129,0.95)', color: 'white',
+                                borderRadius: 10, padding: '2px 6px', fontSize: 9,
+                                fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                            }}>
+                                <Leaf size={9} fill="currentColor" /> Natural
+                            </span>
+                        )}
+                        {item.is_gluten_free && (
+                            <span style={{
+                                display: 'flex', alignItems: 'center', gap: 3,
+                                background: 'rgba(28,25,23,0.9)', color: 'white',
+                                borderRadius: 10, padding: '2px 6px', fontSize: 9,
+                                fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                            }}>
+                                <Wheat size={9} /> Tacc
+                            </span>
+                        )}
+                        {item.is_spicy && (
+                            <span style={{
+                                display: 'flex', alignItems: 'center', gap: 3,
+                                background: 'rgba(239,68,68,0.95)', color: 'white',
+                                borderRadius: 10, padding: '2px 6px', fontSize: 9,
+                                fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+                                boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                            }}>
+                                <Flame size={9} fill="currentColor" /> Spicy
+                            </span>
+                        )}
+                    </div>
+                )}
             </div>
             <div style={{ padding: '8px 4px', opacity: isPlaceholder ? 0 : 1, position: 'relative' }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <p style={{ fontSize: 12, color: '#6B7280' }}>{formatPrice(item.price)}</p>
-                    {!isEditMode && !readOnly && item.description && (
+                    {!isEditMode && !readOnly && (item.description || hasAnyTag) && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                setShowDetail(true);
+                                onTap && onTap(item);
                             }}
                             style={{
                                 background: 'none',
@@ -129,86 +186,6 @@ const ItemCard = ({
                 </div>
             )}
         </div>
-
-        {/* More Info Modal */}
-        {showDetail && (
-            <div
-                style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 9999,
-                    background: 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 16
-                }}
-                onClick={() => setShowDetail(false)}
-            >
-                <div
-                    style={{
-                        background: 'white',
-                        borderRadius: 20,
-                        maxWidth: 360,
-                        width: '100%',
-                        maxHeight: '80vh',
-                        overflow: 'hidden',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div style={{ position: 'relative', height: 220, flexShrink: 0 }}>
-                        <img
-                            src={imageSrc}
-                            alt={item.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={() => setImgError(true)}
-                        />
-                        <button
-                            onClick={() => setShowDetail(false)}
-                            style={{
-                                position: 'absolute',
-                                top: 12,
-                                right: 12,
-                                width: 32,
-                                height: 32,
-                                borderRadius: '50%',
-                                background: 'rgba(0,0,0,0.5)',
-                                border: 'none',
-                                color: 'white',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
-                        >
-                            <X size={18} />
-                        </button>
-                    </div>
-                    <div style={{ padding: 20, overflowY: 'auto' }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 8 }}>
-                            {item.name}
-                        </h3>
-                        <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--color-primary, #B8956A)', marginBottom: 16 }}>
-                            {formatPrice(item.price)}
-                        </p>
-                        {item.description ? (
-                            <p style={{ fontSize: 14, color: '#4B5563', lineHeight: 1.6, margin: 0 }}>
-                                {item.description}
-                            </p>
-                        ) : (
-                            <p style={{ fontSize: 14, color: '#9CA3AF', fontStyle: 'italic', margin: 0 }}>
-                                No description available.
-                            </p>
-                        )}
-                    </div>
-                </div>
-            </div>
-        )}
-        </>
     )
 }
 

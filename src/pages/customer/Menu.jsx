@@ -199,7 +199,13 @@ export default function Menu({ config: configProp }) {
                 name: item.name,
                 price: item.price,
                 image: item.image_url || item.image,
-                available: item.available !== false
+                available: item.available !== false,
+                description: item.description || '',
+                calories: item.calories || item.kcal || 0,
+                is_vegan: item.is_vegan || false,
+                is_gluten_free: item.is_gluten_free || false,
+                is_spicy: item.is_spicy || false,
+                featured: item.featured || false
             })
         })
         return Object.values(grouped)
@@ -782,17 +788,23 @@ export default function Menu({ config: configProp }) {
             })()} */}
 
             {/* Category Rail (Sticky) - RESTORED */}
-            {enabledCategories.length > 1 && (
+            {enabledCategories.length > 0 && (
                 <div style={{
-                    position: 'sticky', top: 52, zIndex: 900, background: 'rgba(255,255,255,0.95)',
-                    backdropFilter: 'blur(8px)', padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
+                    position: 'sticky', top: 0, zIndex: 900, background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    padding: '10px 0', margin: '0 0 12px 0', borderBottom: '1px solid rgba(0,0,0,0.06)'
                 }}>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none' }}>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 12px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                         {enabledCategories.map(cat => (
                             <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
-                                padding: '7px 15px', borderRadius: 18, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
-                                background: activeCategory === cat.id ? '#111827' : 'white', color: activeCategory === cat.id ? 'white' : '#374151',
-                                fontWeight: 600, fontSize: 14, flexShrink: 0, boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                                padding: '8px 16px', borderRadius: 20,
+                                border: activeCategory === cat.id ? '1.5px solid #111827' : '1px solid #E5E7EB',
+                                background: activeCategory === cat.id ? '#111827' : 'white',
+                                color: activeCategory === cat.id ? 'white' : '#374151',
+                                fontWeight: 600, fontSize: 13, flexShrink: 0,
+                                boxShadow: activeCategory === cat.id ? '0 2px 8px rgba(0,0,0,0.15)' : '0 1px 2px rgba(0,0,0,0.04)',
+                                transition: 'all 0.15s ease',
+                                whiteSpace: 'nowrap'
                             }}>{cat.name}</button>
                         ))}
                     </div>
