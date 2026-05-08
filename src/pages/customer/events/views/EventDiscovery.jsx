@@ -49,21 +49,32 @@ const WeatherWidget = () => {
 
   useEffect(() => {
     const fetchWeather = async () => {
+      let latitude = -34.6037, longitude = -58.3816; // Buenos Aires default
+
       try {
         const pos = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
         });
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+      } catch (err) {
+        console.log('[WeatherWidget] Geolocation denied/failed, using Buenos Aires');
+      }
 
-        const { latitude, longitude } = pos.coords;
-        const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&daily=temperature_2max,weather_code&temperature_unit=celsius&timezone=auto`
-        );
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m&daily=temperature_2max,weather_code&temperature_unit=celsius&timezone=auto`;
+        console.log('[WeatherWidget] Fetching from:', url);
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API returned ${res.status}`);
 
         const data = await res.json();
+        console.log('[WeatherWidget] Got data:', data.current.temperature_2m, data.daily.temperature_2max);
+
         setWeather(Math.round(data.current.temperature_2m));
         setForecast(data.daily.temperature_2max.slice(0, 7));
       } catch (err) {
-        console.log('Weather fetch failed, using defaults');
+        console.error('[WeatherWidget] API fetch failed:', err.message);
       } finally {
         setLoading(false);
       }
