@@ -307,10 +307,16 @@ export async function updateBranding(updates, businessId) {
         let filteredUpdates = dbUpdates;
         if (_knownBrandingColumns) {
             filteredUpdates = {};
+            const droppedKeys = [];
             for (const key of Object.keys(dbUpdates)) {
                 if (_knownBrandingColumns.has(key)) {
                     filteredUpdates[key] = dbUpdates[key];
+                } else {
+                    droppedKeys.push(key);
                 }
+            }
+            if (droppedKeys.length > 0) {
+                console.warn('[updateBranding] Filtered out unknown columns:', droppedKeys.join(', '));
             }
             console.log('[updateBranding] Using cached column set, sending:', Object.keys(filteredUpdates).join(', '));
         }
@@ -335,7 +341,9 @@ export async function updateBranding(updates, businessId) {
 
         // 🛡️ ATTEMPT 2: Auto-heal by using only CORE columns (guaranteed safe)
         if (error && (error.code === '42703' || error.message?.includes('column') || error.code === 'PGRST204' || String(error.code) === '400')) {
-            console.warn('[updateBranding] ⚠️ Column mismatch detected. Retrying with core columns only...');
+            console.warn('[updateBranding] ⚠️ Column mismatch detected. Invalidating cache and retrying with core columns only...');
+            // 🗑️ INVALIDATE CACHE: Don't let a stale cache silently drop columns forever
+            _knownBrandingColumns = null;
             
             const coreUpdates = {};
             for (const key of CORE_BRANDING_COLUMNS) {

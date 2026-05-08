@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { supabase, updateBranding } from '../../../lib/supabaseClient';
+import { deepMergeAppConfig } from '../../../utils/appConfig';
 import BackendNav from '../../../components/BackendNav';
 import PortalHeader from './PortalHeader';
 import MenuTab from './MenuTab';
@@ -285,8 +286,7 @@ export default function MenuManager() {
   const saveDeliverySettings = useCallback(async () => {
     if (!businessId) return;
     const payload = {
-      app_config: {
-        ...(tenantData?.app_config || {}),
+      app_config: deepMergeAppConfig(tenantData?.app_config || {}, {
         delivery: {
           radius: deliveryRadius,
           fee: deliveryFee,
@@ -295,7 +295,7 @@ export default function MenuManager() {
           free_enabled: isFreeDeliveryEnabled,
           paused: isDeliveryPaused
         }
-      }
+      })
     };
 
     setSaveStatus({ error: false, message: t('saving') || 'Saving...' });

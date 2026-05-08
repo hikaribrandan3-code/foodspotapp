@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
+import { deepMergeAppConfig } from '../../utils/appConfig';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
@@ -134,13 +135,6 @@ const Settings = () => {
         // Info Pills
         info_pills: {},
         
-        // Munchboy
-        munchboy_name: 'MUNCHBOY',
-        munchboy_shell_color: '#6B0FCC',
-        munchboy_a_color: '#D1D5DB',
-        munchboy_b_color: '#D1D5DB',
-        munchboy_enabled: false,
-        
         // Payment & Fulfillment Configuration
         service_modes: {
             pickup: true,
@@ -218,34 +212,37 @@ const Settings = () => {
             },
             
             info_pills: tenant.info_pills || {},
-            
-            munchboy_name: tenant.munchboy_name || 'MUNCHBOY',
-            munchboy_shell_color: tenant.munchboy_shell_color || '#6B0FCC',
-            munchboy_a_color: tenant.munchboy_a_color || '#D1D5DB',
-            munchboy_b_color: tenant.munchboy_b_color || '#D1D5DB',
-            munchboy_enabled: tenant.munchboy_enabled || false,
-            
+
             hero_mode: tenant.hero_mode || 'text',
             hero_url: tenant.hero_url || '',
             nav_icon_mode: tenant.nav_icon_mode || 'white',
             hero_icon_mode: tenant.hero_icon_mode || 'black',
-            app_config: tenant.app_config || {},
-            menu_data: tenant.menu_data || { categories: [] },
-
-            // Payment & Fulfillment — stored in app_config JSONB
-            service_modes: tenant.app_config?.service_modes || tenant.service_modes || {
-                pickup: true,
-                delivery: true,
-                dineIn: false,
-                dineInPayment: 'after',
-                events: false
+            app_config: {
+                ...(tenant.app_config || {}),
+                // Payment & Fulfillment — stored in app_config JSONB
+                service_modes: tenant.app_config?.service_modes || tenant.service_modes || {
+                    pickup: true,
+                    delivery: true,
+                    dineIn: false,
+                    dineInPayment: 'after',
+                    events: false
+                },
+                payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
+                    cash: true,
+                    mercado_pago: true,
+                    card: false,
+                    transfer: false
+                },
+                // Munchboy — migrate from top-level columns if present
+                munchboy: tenant.app_config?.munchboy || {
+                    enabled: tenant.munchboy_enabled ?? false,
+                    name: tenant.munchboy_name || 'MUNCHBOY',
+                    shell_color: tenant.munchboy_shell_color || '#6B0FCC',
+                    a_color: tenant.munchboy_a_color || '#D1D5DB',
+                    b_color: tenant.munchboy_b_color || '#D1D5DB'
+                }
             },
-            payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
-                cash: true,
-                mercado_pago: true,
-                card: false,
-                transfer: false
-            }
+            menu_data: tenant.menu_data || { categories: [] }
         });
         
         // Apply CSS variables immediately
@@ -365,11 +362,11 @@ const Settings = () => {
             }
             // Live preview for munchboy colors
             if (colorPickerState.keyName === 'munchboy_shell_color') {
-                updateDraftField('munchboy_shell_color', newColor);
+                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, shell_color: newColor } } }));
             } else if (colorPickerState.keyName === 'munchboy_a_color') {
-                updateDraftField('munchboy_a_color', newColor);
+                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, a_color: newColor } } }));
             } else if (colorPickerState.keyName === 'munchboy_b_color') {
-                updateDraftField('munchboy_b_color', newColor);
+                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, b_color: newColor } } }));
             }
         });
     };
@@ -397,11 +394,11 @@ const Settings = () => {
         }
         // Revert munchboy colors on cancel
         if (colorPickerState.keyName === 'munchboy_shell_color') {
-            updateDraftField('munchboy_shell_color', colorPickerState.originalColor);
+            setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, shell_color: colorPickerState.originalColor } } }));
         } else if (colorPickerState.keyName === 'munchboy_a_color') {
-            updateDraftField('munchboy_a_color', colorPickerState.originalColor);
+            setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, a_color: colorPickerState.originalColor } } }));
         } else if (colorPickerState.keyName === 'munchboy_b_color') {
-            updateDraftField('munchboy_b_color', colorPickerState.originalColor);
+            setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, b_color: colorPickerState.originalColor } } }));
         }
         setColorPickerState(prev => ({ ...prev, isOpen: false }));
     };
@@ -439,16 +436,14 @@ const Settings = () => {
                 hero_icons: draft.hero_icons,
                 hero_icon_mode: draft.hero_icon_mode,
                 info_pills: draft.info_pills,
-                munchboy_enabled: draft.munchboy_enabled,
-                munchboy_name: draft.munchboy_name,
-                munchboy_shell_color: draft.munchboy_shell_color,
-                munchboy_a_color: draft.munchboy_a_color,
-                munchboy_b_color: draft.munchboy_b_color,
-                app_config: {
-                    ...draft.app_config,
-                    service_modes: draft.service_modes,
-                    payment_methods: draft.payment_methods,
-                },
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || draft.app_config || {},
+                    {
+                        service_modes: draft.service_modes,
+                        payment_methods: draft.payment_methods,
+                        munchboy: draft.app_config?.munchboy
+                    }
+                ),
                 menu_data: draft.menu_data,
             };
 
@@ -871,7 +866,7 @@ const Settings = () => {
                     <div 
                         className="munchboy-preview"
                         style={{
-                            background: draft.munchboy_shell_color,
+                            background: draft.app_config?.munchboy?.shell_color || '#6B0FCC',
                             borderRadius: 20,
                             padding: '24px 16px 16px',
                             marginBottom: 20,
@@ -902,7 +897,7 @@ const Settings = () => {
                             marginBottom: 16,
                             opacity: 0.9
                         }}>
-                            {draft.munchboy_name}
+                            {draft.app_config?.munchboy?.name || 'MUNCHBOY'}
                         </div>
                         
                         {/* Controller preview */}
@@ -935,10 +930,10 @@ const Settings = () => {
                             {/* A/B Buttons */}
                             <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
                                 <div
-                                    onClick={() => openColorPicker(t('munchboy_b_button_color'), 'munchboy_b_color', '', draft.munchboy_b_color)}
+                                    onClick={() => openColorPicker(t('munchboy_b_button_color'), 'munchboy_b_color', '', draft.app_config?.munchboy?.b_color || '#D1D5DB')}
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
-                                        background: boostSaturation(draft.munchboy_b_color),
+                                        background: boostSaturation(draft.app_config?.munchboy?.b_color || '#D1D5DB'),
                                         border: '2px solid #1a1a1a',
                                         boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -947,10 +942,10 @@ const Settings = () => {
                                     }}
                                 >B</div>
                                 <div
-                                    onClick={() => openColorPicker(t('munchboy_a_button_color'), 'munchboy_a_color', '', draft.munchboy_a_color)}
+                                    onClick={() => openColorPicker(t('munchboy_a_button_color'), 'munchboy_a_color', '', draft.app_config?.munchboy?.a_color || '#D1D5DB')}
                                     style={{
                                         width: 44, height: 44, borderRadius: '50%',
-                                        background: boostSaturation(draft.munchboy_a_color),
+                                        background: boostSaturation(draft.app_config?.munchboy?.a_color || '#D1D5DB'),
                                         border: '2px solid #1a1a1a',
                                         boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -966,30 +961,30 @@ const Settings = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                         <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                             <div 
-                                onClick={() => openColorPicker(t('munchboy_shell'), 'munchboy_shell_color', '', draft.munchboy_shell_color)}
+                                onClick={() => openColorPicker(t('munchboy_shell'), 'munchboy_shell_color', '', draft.app_config?.munchboy?.shell_color || '#6B0FCC')}
                                 style={{
                                     width: 36, height: 36, borderRadius: 8,
-                                    background: draft.munchboy_shell_color,
+                                    background: draft.app_config?.munchboy?.shell_color || '#6B0FCC',
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
                                 title={t('munchboy_shell')}
                             />
                             <div
-                                onClick={() => openColorPicker(t('munchboy_a_button'), 'munchboy_a_color', '', draft.munchboy_a_color)}
+                                onClick={() => openColorPicker(t('munchboy_a_button'), 'munchboy_a_color', '', draft.app_config?.munchboy?.a_color || '#D1D5DB')}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    background: boostSaturation(draft.munchboy_a_color),
+                                    background: boostSaturation(draft.app_config?.munchboy?.a_color || '#D1D5DB'),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
                                 title={t('munchboy_a_button')}
                             />
                             <div
-                                onClick={() => openColorPicker(t('munchboy_b_button'), 'munchboy_b_color', '', draft.munchboy_b_color)}
+                                onClick={() => openColorPicker(t('munchboy_b_button'), 'munchboy_b_color', '', draft.app_config?.munchboy?.b_color || '#D1D5DB')}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    background: boostSaturation(draft.munchboy_b_color),
+                                    background: boostSaturation(draft.app_config?.munchboy?.b_color || '#D1D5DB'),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}

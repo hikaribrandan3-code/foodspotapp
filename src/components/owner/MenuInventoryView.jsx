@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronDown, ChevronUp, Plus, Settings, Camera, X, Check, Package } from 'lucide-react';
 import { useTenant } from '../../contexts/TenantContext.jsx';
 import { translations as staffTranslations } from '../../staff-ops/lib/translations';
-import { supabase } from '../../lib/supabaseClient.js';
+import { supabase, updateBranding } from '../../lib/supabaseClient.js';
+import { deepMergeAppConfig } from '../../utils/appConfig';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const EMERALD = '#059669';
@@ -30,13 +31,13 @@ const colors = {
 };
 
 export default function MenuInventoryView({ lang = 'en' }) {
-  const { businessId } = useTenant();
+  const { businessId, tenantData } = useTenant();
   const t = (key) => staffTranslations[key]?.[lang] || staffTranslations[key]?.['en'] || key;
 
   const [activeTab, setActiveTab] = useState('entry');
 
   // Entry tab state
-  const [expandedItems, setExpandedItems] = useState(['1']);
+  const [expandedItems, setExpandedItems] = useState([]);
   const [search, setSearch] = useState('');
   const [categories, setCategories] = useState(['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -49,12 +50,38 @@ export default function MenuInventoryView({ lang = 'en' }) {
   const [scanQty, setScanQty] = useState(1);
   const [scanUnit, setScanUnit] = useState('units');
 
-  const [items, setItems] = useState([
-    { id: '1', name: 'Tomato Soup', category: 'Food', min: 12, max: 48, qty: 24, unit: 'units', expiryDate: '', location: 'Shelf A1', supplier: 'Sysco', cost: 1.25, price: 5.99, barcode: '123456', tags: [] },
-    { id: '2', name: 'Black Beans', category: 'Food', tags: ['Low stock'], qty: 8, unit: 'units', expiryDate: '', location: 'Shelf A2', supplier: 'Goya', cost: 0.85, price: 2.50, barcode: '789012' },
-    { id: '3', name: 'Jasmine Rice', category: 'Food', qty: 15, unit: 'lbs', expiryDate: '', location: 'Pantry Rack', supplier: 'Local Bulk', cost: 2.10, price: 12.00, barcode: '345678', tags: [] },
-    { id: '4', name: 'Cola 330ml', category: 'Drinks', min: 24, max: 120, qty: 48, unit: 'units', expiryDate: '', location: 'Fridge 1', supplier: 'Coke', cost: 0.45, price: 1.50, barcode: '901234', tags: [] },
-  ]);
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const saveDebounceRef = useRef(null);
+
+  // Load inventory from app_config on mount
+  useEffect(() => {
+    if (!tenantData) return;
+    const invConfig = tenantData.app_config?.inventory || {};
+    setItems(invConfig.items || []);
+    setCategories(invConfig.categories || ['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
+    setIsLoading(false);
+  }, [tenantData?.app_config?.inventory]);
+
+  // Debounced save to branding.app_config
+  useEffect(() => {
+    if (!businessId || isLoading) return;
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = setTimeout(() => {
+      const payload = {
+        app_config: deepMergeAppConfig(tenantData?.app_config || {}, {
+          inventory: {
+            items,
+            categories
+          }
+        })
+      };
+      updateBranding(payload, businessId).catch(err => {
+        console.error('[MenuInventoryView] Save failed:', err);
+      });
+    }, 1000);
+    return () => clearTimeout(saveDebounceRef.current);
+  }, [items, categories, businessId, isLoading]);
 
   const lookupBarcode = async (barcode) => {
     try {
