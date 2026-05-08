@@ -48,6 +48,23 @@ const CLR=['#f5f5f5','#f59e0b','#2563eb','#dc2626','#7c3aed','#ea580c','#16a34a'
 const RACK=[1,9,2,3,8,10,4,14,7,11,6,13,15,12,5];
 const CMTS=['Nice! 🎯','Clean! ✨','Great! 👌','Pocket! 💫','Beauty! 🌟','Smooth! 🕶️','Boom! 💥','Perfect! 📐'];
 
+// ── HAPTICS ──
+const Haptics={
+  lastFrame:0,minGap:4,
+  _now(){return typeof frameCount!=='undefined'?frameCount:0;},
+  canFire(){return this._now()-this.lastFrame>=this.minGap;},
+  fire(pat,force){
+    if(!navigator.vibrate)return;
+    if(!force&&!this.canFire())return;
+    this.lastFrame=this._now();
+    try{navigator.vibrate(pat);}catch(e){}
+  },
+  shot:20,pocket:25,scratch:40,turnFoul:25,menu:15,
+  win:[30,15,30,15,60],loss:[50,30,50,30,100],
+  collision(impact){return Math.min(30,Math.max(8,Math.round(impact*1.8)));},
+  rail(vel){return Math.min(15,Math.max(8,Math.round(vel*2)));}
+};
+
 // ── FELT TEXTURE ──────────────────────────────────────────
 const feltPC=document.createElement('canvas');
 feltPC.width=8; feltPC.height=8;
@@ -259,7 +276,7 @@ function startGame(){newGame();initAudio();}
 function menuFadeTransition(cb){menuFadeDir=-1;menuFadeCb=function(){menuFade=0;menuFadeDir=1;if(cb)cb();};}
 function menuSelect(){
   if(menuFadeDir===-1)return;
-  initAudio();
+  initAudio();Haptics.fire(Haptics.menu);
   if(menuState==='player'){
     if(menuSel===1){gameMode='2p';menuFadeTransition(startGame);}
     else{menuFadeTransition(function(){menuState='difficulty';menuSel=0;});}
@@ -365,19 +382,19 @@ function wallBounce(b){
   }
   if(b.x-BR<FX&&b.vx<0){
     const e=getRailRestitution(b.vx,b.vy,true);
-    b.x=FX+BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);
+    b.x=FX+BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);Haptics.fire(Haptics.rail(Math.abs(b.vx)));
   }
   if(b.x+BR>FR&&b.vx>0){
     const e=getRailRestitution(b.vx,b.vy,true);
-    b.x=FR-BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);
+    b.x=FR-BR;b.vx*=-e;doShake(Math.abs(b.vx)*0.7);Haptics.fire(Haptics.rail(Math.abs(b.vx)));
   }
   if(b.y-BR<FY&&b.vy<0){
     const e=getRailRestitution(b.vx,b.vy,false);
-    b.y=FY+BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);
+    b.y=FY+BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);Haptics.fire(Haptics.rail(Math.abs(b.vy)));
   }
   if(b.y+BR>FB&&b.vy>0){
     const e=getRailRestitution(b.vx,b.vy,false);
-    b.y=FB-BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);
+    b.y=FB-BR;b.vy*=-e;doShake(Math.abs(b.vy)*0.7);Haptics.fire(Haptics.rail(Math.abs(b.vy)));
   }
 }
 function ballCollide(a,b){
@@ -411,7 +428,7 @@ function ballCollide(a,b){
   // Audio/visual feedback scaled by impact intensity
   const impact=Math.abs(dv);
   const shakeAmt=G.isBreak?impact*2.2:impact*0.55;
-  sndHit(impact);doShake(shakeAmt);
+  sndHit(impact);doShake(shakeAmt);Haptics.fire(Haptics.collision(impact));
   if(G.isBreak)G.isBreak=false;
 }
 function pocketCheck(b){
@@ -419,10 +436,10 @@ function pocketCheck(b){
   for(const p of PKS){
     if((b.x-p.x)**2+(b.y-p.y)**2<PR*PR){
       b.pocketed=true;b.vx=0;b.vy=0;
-      spawnParts(b.x,b.y,CLR[b.id]);sndPocket();
+      spawnParts(b.x,b.y,CLR[b.id]);sndPocket();Haptics.fire(Haptics.pocket);
       G.pocketGlows.push({x:p.x,y:p.y,life:1});
       G.potted.push(b.id);
-      if(b.id===0){G.foul=true;G.foulFlash=1;}
+      if(b.id===0){G.foul=true;G.foulFlash=1;Haptics.fire(Haptics.scratch,true);}
       else G.floats.push({x:b.x,y:b.y-10,text:CMTS[Math.floor(Math.random()*CMTS.length)],life:1});
       return;
     }
@@ -458,7 +475,7 @@ function computeAI(){
 // ── RULES ─────────────────────────────────────────────────
 function shoot(){
   const cue=getCue();if(!cue)return;
-  cue.vx=Math.cos(G.ang)*G.pwr*21;
+  Haptics.fire(Haptics.shot);cue.vx=Math.cos(G.ang)*G.pwr*21;
   cue.vy=Math.sin(G.ang)*G.pwr*21;
   cue.vx+=Math.cos(G.ang+Math.PI/2)*spinY*G.pwr*4.5;
   cue.vy+=Math.sin(G.ang+Math.PI/2)*spinY*G.pwr*4.5;
@@ -482,10 +499,10 @@ function endTurn(){
     const cleared=mg&&myIds.every(function(id){return G.balls.find(function(b){return b.id===id;})?.pocketed;});
     G.winner=(!pCue&&cleared&&mg)?G.turn:1-G.turn;
     G.wMsg=G.winner===0?'P1 Wins! 🎱':(G.gameMode==='2p'?'P2 Wins! 🎱':'CPU Wins! 🤖');
-    G.state='over';return;
+    G.state='over';Haptics.fire(G.winner===0?Haptics.win:Haptics.loss,true);return;
   }
   if(pCue){
-    G.foulFlash=1;G.turn=1-G.turn;showMsg(G.turn,'SCRATCH! Ball in hand');
+    G.foulFlash=1;G.turn=1-G.turn;showMsg(G.turn,'SCRATCH! Ball in hand');Haptics.fire(Haptics.turnFoul);
     G.hand=true;G.handX=FX+FW/2;G.handY=FY+FH*.55;
     G.state='hand';if(G.turn===1&&G.gameMode!=='2p')G.aiDelay=80;return;
   }
