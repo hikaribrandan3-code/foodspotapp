@@ -350,19 +350,19 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
       <main className="px-4 pt-2 flex flex-col gap-4">
         {/* Search & Add */}
         <div className="flex gap-2">
-          <div className="relative h-12 rounded-xl flex items-center px-3 gap-2 flex-1 border border-slate-200 bg-white">
+          <div className="relative h-12 rounded-2xl flex items-center px-3 gap-2 flex-1 border border-slate-200 bg-white">
             <Search size={18} className="text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder={t('search_items')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent border-none outline-none w-full text-sm text-slate-900"
+              className="bg-transparent border-none outline-none w-full text-sm text-slate-900 appearance-none"
             />
           </div>
           <button
             onClick={() => setShowScanner(true)}
-            className="w-12 h-12 rounded-xl flex items-center justify-center border-none cursor-pointer shrink-0"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center border-none cursor-pointer shrink-0 appearance-none"
             style={{ backgroundColor: GREEN, color: '#fff' }}
           >
             <Camera size={20} />
@@ -372,7 +372,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
               const name = prompt(t('item_name'));
               if (name) addItem({ name, qty: 0 });
             }}
-            className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shrink-0 border border-slate-200 bg-white text-slate-900"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center cursor-pointer shrink-0 border border-slate-200 bg-white text-slate-900 appearance-none"
           >
             <Plus size={20} />
           </button>
@@ -492,7 +492,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
               <div key={cat} className="shrink-0">
                 <button
                   onClick={() => handleCategoryInteraction(cat)}
-                  className="px-4 py-2 rounded-xl whitespace-nowrap text-sm font-medium transition-all border flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2 rounded-xl whitespace-nowrap text-sm font-medium transition-all border flex items-center gap-2 cursor-pointer appearance-none"
                   style={{
                     backgroundColor: activeCategory === cat ? '#ecfdf5' : '#ffffff',
                     color: activeCategory === cat ? '#059669' : '#0f172a',
@@ -525,7 +525,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                 style={{
                   backgroundColor: isExpanded ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
                   border: `1px solid ${isExpanded ? '#cbd5e1' : '#e2e8f0'}`,
-                  borderRadius: 16,
+                  borderRadius: 20,
                 }}
               >
                 <div
@@ -571,7 +571,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                           <select
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            className="h-11 px-3 rounded-2xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900 !rounded-2xl"
                             style={{ boxSizing: 'border-box' }}
                           >
                             {categories.filter(c => c !== 'All').map(c => (
@@ -585,7 +585,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                           <select
                             value={item.unit}
                             onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            className="h-11 px-3 rounded-2xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900 !rounded-2xl"
                             style={{ boxSizing: 'border-box' }}
                           >
                             <option value="units">{t('units')}</option>
@@ -602,7 +602,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                             value={(item as any).supplier || ''}
                             onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
                             placeholder="e.g. Sysco"
-                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            className="h-11 px-3 rounded-2xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900 appearance-none"
                             style={{ boxSizing: 'border-box' }}
                           />
                         </div>
@@ -613,7 +613,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                             type="number"
                             value={item.min || 0}
                             onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            className="h-11 px-3 rounded-2xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900 appearance-none"
                             style={{ boxSizing: 'border-box' }}
                           />
                         </div>
@@ -625,7 +625,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                             step="0.01"
                             value={(item as any).cost ?? ''}
                             onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            className="h-11 px-3 rounded-2xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900 appearance-none"
                             style={{ boxSizing: 'border-box' }}
                           />
                         </div>
@@ -637,7 +637,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                             step="0.01"
                             value={(item as any).price || ''}
                             onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none font-semibold w-full bg-slate-100 text-slate-900"
+                            className="h-11 px-3 rounded-2xl border text-sm outline-none font-semibold w-full bg-slate-100 text-slate-900 appearance-none"
                             style={{ borderColor: GREEN, boxSizing: 'border-box' }}
                           />
                         </div>
@@ -651,24 +651,24 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                           value={item.tags?.join(', ') || ''}
                           onChange={(e) => updateItem(item.id, { tags: e.target.value.split(',').map((s: string) => s.trim()).filter((s: string) => s !== '') })}
                           placeholder="Low stock, organic"
-                          className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                          className="h-11 px-3 rounded-2xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900 appearance-none"
                         />
                       </div>
 
                       {/* Quantity */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-medium ml-1 text-slate-400">{t('quantity')}</label>
-                        <div className="flex items-center gap-2 rounded-xl border overflow-hidden bg-slate-100 border-slate-200">
+                        <div className="flex items-center gap-2 rounded-2xl border overflow-hidden bg-slate-100 border-slate-200">
                           <input
                             type="number"
                             value={item.qty}
                             disabled
-                            className="h-11 flex-1 bg-transparent border-none text-center text-base font-bold outline-none"
+                            className="h-11 flex-1 bg-transparent border-none text-center text-base font-bold outline-none appearance-none"
                             style={{ color: GREEN }}
                           />
                           <button
                             onClick={() => updateQty(item.id, 1)}
-                            className="h-11 px-4 text-white font-semibold text-sm flex items-center gap-2 active:opacity-80 transition-opacity border-none cursor-pointer"
+                            className="h-11 px-4 text-white font-semibold text-sm flex items-center gap-2 active:opacity-80 transition-opacity border-none cursor-pointer rounded-xl appearance-none"
                             style={{ backgroundColor: GREEN }}
                           >
                             <Plus size={16} />
