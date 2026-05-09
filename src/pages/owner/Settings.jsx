@@ -179,7 +179,7 @@ const Settings = () => {
                 pickup_enabled: nextModes?.pickup ?? true,
                 delivery_enabled: nextModes?.delivery ?? true,
                 dine_in_enabled: nextModes?.dineIn ?? false,
-                dine_in_payment_timing: nextModes?.dineInPayment || 'after',
+                dine_in_payment_timing: 'after',
                 // Backward-compat: also write to app_config during transition
                 app_config: deepMergeAppConfig(
                     tenant?.app_config || {},
@@ -527,7 +527,7 @@ const Settings = () => {
                 pickup_enabled: draft.service_modes?.pickup ?? true,
                 delivery_enabled: draft.service_modes?.delivery ?? true,
                 dine_in_enabled: draft.service_modes?.dineIn ?? false,
-                dine_in_payment_timing: draft.service_modes?.dineInPayment || 'after',
+                dine_in_payment_timing: 'after',
                 app_config: deepMergeAppConfig(
                     tenant?.app_config || draft.app_config || {},
                     {
@@ -746,6 +746,16 @@ const Settings = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* MP TOKEN WARNING */}
+                        {draft.payment_methods?.mercado_pago && !tenantData?.mp_access_token && (
+                            <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ fontSize: 16 }}>⚠️</span>
+                                <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
+                                    Mercado Pago is enabled but no Access Token is configured. Customers won't be able to complete payment. Go to Payments to add your token.
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -1256,39 +1266,13 @@ const Settings = () => {
                         </div>
                     </div>
 
-                    {/* DINE-IN PAYMENT TIMING — only shown when Dine In is on */}
+                    {/* DINE-IN: Always pay at the end */}
                     {draft.service_modes?.dineIn && (
-                        <div style={{ marginBottom: 20 }}>
-                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
-                                {t('dine_in_payment') || 'Dine-In Payment Timing'}
-                            </p>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                {[
-                                    { value: 'before', label: t('pay_before_upfront') },
-                                    { value: 'after',  label: t('pay_after_table')  },
-                                ].map(({ value, label }) => {
-                                    const active = draft.service_modes?.dineInPayment === value;
-                                    return (
-                                        <button
-                                            key={value}
-                                            onClick={() => {
-                                                setDraft(d => {
-                                                    const current = d.service_modes || { pickup: true, delivery: true, dineIn: false, dineInPayment: 'after' };
-                                                    return { ...d, service_modes: { ...current, dineInPayment: value } };
-                                                });
-                                            }}
-                                            style={{
-                                                flex: 1, padding: '10px 12px', borderRadius: 8, border: `1px solid ${active ? '#F59E0B' : '#E5E7EB'}`,
-                                                background: active ? '#FFFBEB' : '#F9FAFB',
-                                                color: active ? '#92400E' : '#6B7280',
-                                                fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            {label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                        <div style={{ marginBottom: 20, padding: '10px 12px', background: '#F3F4F6', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 14 }}>😊</span>
+                            <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>
+                                {t('dine_in_pay_at_end') || 'Dine-in customers pay at the end of their meal'}
+                            </span>
                         </div>
                     )}
 
@@ -1327,6 +1311,16 @@ const Settings = () => {
                                 );
                             })}
                         </div>
+
+                        {/* MP TOKEN WARNING */}
+                        {draft.payment_methods?.mercado_pago && !tenantData?.mp_access_token && (
+                            <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ fontSize: 16 }}>⚠️</span>
+                                <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
+                                    Mercado Pago is enabled but no Access Token is configured. Customers won't be able to complete payment. Go to Payments to add your token.
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </section>
             </div>

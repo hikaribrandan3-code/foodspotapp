@@ -106,6 +106,7 @@ function Order({ config: configProp }) {
     const { businessId, tenantData, serviceModes } = useTenant()
     const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
+    const paymentMethods = config.payment_methods || { cash: true, mercado_pago: true }
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
 
@@ -156,8 +157,21 @@ function Order({ config: configProp }) {
     })
 
     // Payment method
-    const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHOD.MERCADO_PAGO)
+    const [paymentMethod, setPaymentMethod] = useState(() => {
+        const methods = config.payment_methods || { cash: true, mercado_pago: true }
+        return methods.mercado_pago ? PAYMENT_METHOD.MERCADO_PAGO : PAYMENT_METHOD.CASH
+    })
     const [validationErrors, setValidationErrors] = useState([])
+
+    // Sync payment method when owner toggles disable the currently selected one
+    useEffect(() => {
+        const methods = config.payment_methods || { cash: true, mercado_pago: true }
+        if (paymentMethod === PAYMENT_METHOD.MERCADO_PAGO && !methods.mercado_pago && methods.cash) {
+            setPaymentMethod(PAYMENT_METHOD.CASH)
+        } else if (paymentMethod === PAYMENT_METHOD.CASH && !methods.cash && methods.mercado_pago) {
+            setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)
+        }
+    }, [config.payment_methods])
 
     // 🔄 PAYMENT RETRY STATE (Audit #7)
     const [isRetryMode, setIsRetryMode] = useState(false)
@@ -928,25 +942,37 @@ function Order({ config: configProp }) {
                         {t('payment_methods') || 'Payment Method'}
                     </h3>
 
-                    <PaymentMethodCard
-                        id="mercadopago"
-                        selected={paymentMethod === PAYMENT_METHOD.MERCADO_PAGO}
-                        onClick={() => setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)}
-                        title={t(PAYMENT_METHOD.MERCADO_PAGO)}
-                        subtitle={t('mp_subtitle')}
-                        color="#009EE3"
-                        icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
-                    />
+                    {!paymentMethods.mercado_pago && !paymentMethods.cash && (
+                        <div style={{ padding: '16px', background: '#FEF2F2', borderRadius: 12, border: '1px solid #FECACA', textAlign: 'center' }}>
+                            <p style={{ fontSize: 14, color: '#991B1B', fontWeight: 600, margin: 0 }}>
+                                No payment methods available. Please contact the restaurant.
+                            </p>
+                        </div>
+                    )}
 
-                    <PaymentMethodCard
-                        id="efectivo"
-                        selected={paymentMethod === PAYMENT_METHOD.CASH}
-                        onClick={() => setPaymentMethod(PAYMENT_METHOD.CASH)}
-                        title={t(PAYMENT_METHOD.CASH)}
-                        subtitle={t('cash_delivery')}
-                        color="#22C55E"
-                        icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
-                    />
+                    {paymentMethods.mercado_pago && (
+                        <PaymentMethodCard
+                            id="mercadopago"
+                            selected={paymentMethod === PAYMENT_METHOD.MERCADO_PAGO}
+                            onClick={() => setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)}
+                            title={t(PAYMENT_METHOD.MERCADO_PAGO)}
+                            subtitle={t('mp_subtitle')}
+                            color="#009EE3"
+                            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
+                        />
+                    )}
+
+                    {paymentMethods.cash && (
+                        <PaymentMethodCard
+                            id="efectivo"
+                            selected={paymentMethod === PAYMENT_METHOD.CASH}
+                            onClick={() => setPaymentMethod(PAYMENT_METHOD.CASH)}
+                            title={t(PAYMENT_METHOD.CASH)}
+                            subtitle={t('cash_delivery')}
+                            color="#22C55E"
+                            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                        />
+                    )}
                 </div>
                 )}
 
