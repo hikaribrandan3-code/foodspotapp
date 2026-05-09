@@ -63,20 +63,18 @@ export function HikariBoy({
     document.body.classList.add('hikariboy-active');
     
     // Apply tenant Munchboy colors from props (passed from parent)
-    if (munchboyShellColor) {
-      document.documentElement.style.setProperty('--shell-color', munchboyShellColor);
-    }
-    if (munchboyAColor) {
-      document.documentElement.style.setProperty('--button-a-color', munchboyAColor);
-      // If color is custom (not default gray), use white labels for premium contrast
-      const aLabelColor = munchboyAColor.toLowerCase() === '#d1d5db' ? 'var(--button-gray-dark)' : '#FFFFFF';
-      document.documentElement.style.setProperty('--button-a-label-color', aLabelColor);
-    }
-    if (munchboyBColor) {
-      document.documentElement.style.setProperty('--button-b-color', munchboyBColor);
-      const bLabelColor = munchboyBColor.toLowerCase() === '#d1d5db' ? 'var(--button-gray-dark)' : '#FFFFFF';
-      document.documentElement.style.setProperty('--button-b-label-color', bLabelColor);
-    }
+    const shellColor = munchboyShellColor || '#6B0FCC';
+    const aColor = munchboyAColor || '#D1D5DB';
+    const bColor = munchboyBColor || '#D1D5DB';
+
+    document.documentElement.style.setProperty('--shell-color', shellColor);
+    document.documentElement.style.setProperty('--button-a-color', aColor);
+    document.documentElement.style.setProperty('--button-b-color', bColor);
+
+    const aLabelColor = aColor.toLowerCase() === '#d1d5db' ? 'var(--button-gray-dark)' : '#FFFFFF';
+    document.documentElement.style.setProperty('--button-a-label-color', aLabelColor);
+    const bLabelColor = bColor.toLowerCase() === '#d1d5db' ? 'var(--button-gray-dark)' : '#FFFFFF';
+    document.documentElement.style.setProperty('--button-b-label-color', bLabelColor);
     
     const authSelectors = [
       '.signup-container',

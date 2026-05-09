@@ -26,9 +26,9 @@ const Arcade = () => {
             <HikariBoy 
                 onClose={handleClose}
                 controllerColor={tenantData?.primary_color || '#8B5CF6'}
-                munchboyShellColor={tenantData?.munchboy_shell_color}
-                munchboyAColor={tenantData?.munchboy_a_color}
-                munchboyBColor={tenantData?.munchboy_b_color}
+                munchboyShellColor={tenantData?.app_config?.munchboy?.shell_color || tenantData?.munchboy_shell_color}
+                munchboyAColor={tenantData?.app_config?.munchboy?.a_color || tenantData?.munchboy_a_color}
+                munchboyBColor={tenantData?.app_config?.munchboy?.b_color || tenantData?.munchboy_b_color}
             />
         </div>
     )

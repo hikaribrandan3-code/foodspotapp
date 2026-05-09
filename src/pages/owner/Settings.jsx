@@ -19,7 +19,7 @@ const boostSaturation = (hex) => {
   const rgb = parseInt(hex.slice(1), 16);
   let r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h, s, l = (max + min) / 2;
+  let h, s, l = (max + min) / 2 / 255;
   if (max === min) { h = s = 0; } else {
     const d = max - min;
     s = l > 0.5 ? d / (510 - max - min) : d / (max + min);
@@ -378,6 +378,18 @@ const Settings = () => {
         } else if (colorPickerState.keyName.startsWith('info_pill_')) {
             const pillId = colorPickerState.keyName.replace('info_pill_', '');
             updateInfoPill(pillId, { bgColor: finalColor });
+        } else if (colorPickerState.keyName === 'munchboy_shell_color' || colorPickerState.keyName === 'munchboy_a_color' || colorPickerState.keyName === 'munchboy_b_color') {
+            const munchKey = colorPickerState.keyName.replace('munchboy_', '');
+            setDraft(prev => ({
+                ...prev,
+                app_config: {
+                    ...prev.app_config,
+                    munchboy: {
+                        ...prev.app_config.munchboy,
+                        [munchKey]: finalColor
+                    }
+                }
+            }));
         } else if (colorPickerState.keyName) {
             updateDraftField(colorPickerState.keyName, finalColor);
         }
