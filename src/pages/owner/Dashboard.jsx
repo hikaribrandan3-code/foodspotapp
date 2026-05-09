@@ -48,16 +48,30 @@ const OWNER_STATS = (t) => [
   { key: 'out', label: t('on_way_status').toUpperCase(), color: T.statOut, matches: [ORDER_STATUS.DISPATCHED] },
 ]
 
-const STATUS_FLOW = [
-  { key: ORDER_STATUS.PENDING_PAYMENT, label: 'Confirm Payment', intent: 'orange' },
-  { key: ORDER_STATUS.PAID_UNRELEASED, label: 'Confirm Payment', intent: 'orange' },
-  { key: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Start Prep', intent: 'blue' },
-  { key: ORDER_STATUS.PREPARING, label: 'Mark Ready', intent: 'blue' },
-  { key: ORDER_STATUS.READY, label: 'Hand Off', intent: 'blue' },
-  { key: ORDER_STATUS.DISPATCHED, label: 'Mark Delivered', intent: 'blue' },
-  { key: ORDER_STATUS.DELIVERED, label: null },
-  { key: ORDER_STATUS.CANCELLED, label: null },
-]
+const FLOW_MAP = {
+  delivery: [
+    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
+    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: 'Mark Ready', intent: 'blue' },
+    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DISPATCHED, label: 'Dispatch',   intent: 'blue' },
+    { from: ORDER_STATUS.DISPATCHED,       to: ORDER_STATUS.DELIVERED,  label: 'Mark Delivered', intent: 'green' },
+  ],
+  takeout: [
+    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
+    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: 'Mark Ready', intent: 'blue' },
+    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DELIVERED,  label: 'Hand Over',  intent: 'green' },
+  ],
+  dine_in: [
+    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm & Start', intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Release to Kitchen', intent: 'blue' },
+    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
+    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: 'Mark Ready', intent: 'blue' },
+    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DELIVERED,  label: 'Mark Served', intent: 'green' },
+  ],
+}
 
 function statusToBucket(status, t) {
   for (const s of OWNER_STATS(t)) {
@@ -67,17 +81,20 @@ function statusToBucket(status, t) {
 }
 
 function nextActionFor(status, orderType, paymentStatus) {
-  const flow = STATUS_FLOW.find(f => f.key === status)
   // 🛡️ DINE-IN PAY-AFTER: Delivered + unpaid = show payment button
   if (status === ORDER_STATUS.DELIVERED && orderType === 'dine_in' && paymentStatus === 'unpaid') {
     return { label: '💳 Confirm Payment', intent: 'orange', isPaymentConfirm: true }
   }
-  if (!flow?.label) return null
-  // Pickup/dine-in at READY skips dispatch — label should reflect the actual action
-  if (status === ORDER_STATUS.READY && orderType !== 'delivery') {
-    return { label: orderType === 'dine_in' ? 'Mark Served' : 'Mark Delivered', intent: 'green' }
-  }
-  return { label: flow.label, intent: flow.intent || 'blue' }
+
+  const typeKey = orderType || 'takeout'
+  const flow = FLOW_MAP[typeKey]
+  if (!flow) return null
+
+  const step = flow.find(f => f.from === status)
+  if (!step) return null
+  if (step.condition && !step.condition({ paymentStatus })) return null
+
+  return { label: step.label, intent: step.intent || 'blue', isPaymentConfirm: step.isPaymentConfirm }
 }
 
 function Icon({ type, color = T.muted, size = 16 }) {
@@ -148,9 +165,9 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
   return (
     <button onClick={onClick} style={{
       width: '100%', border: 'none', background: s.bg, color: s.fg, fontSize: 14.5,
-      fontWeight: 600, padding: '12px 14px', borderRadius: 10, cursor: 'pointer',
+      fontWeight: 600, padding: '14px 16px', borderRadius: 10, cursor: 'pointer',
       fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: 7, letterSpacing: '-0.005em',
+      gap: 7, letterSpacing: '-0.005em', minHeight: 52,
     }}>
       {icon}{children}
     </button>
@@ -160,12 +177,9 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
 function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
-  const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
-  const needsPaymentConfirm = order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed
-  const next = needsPaymentConfirm ? { label: 'Confirm Payment', intent: 'green' } : nextActionFor(order.status, order.order_type, order.payment_status)
+  const next = nextActionFor(order.status, order.order_type, order.payment_status)
   const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'TAKE OUT'
   const bucket = statusToBucket(order.status, t)
-  const bucketLabel = OWNER_STATS(t).find(s => s.key === bucket)?.label || order.status.toUpperCase()
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
@@ -284,7 +298,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
 
           {next && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <ActionButton intent={next.intent || 'blue'} icon={<Icon type="chevron" color={next.intent === 'green' ? T.greenInk : T.blueInk} size={14} />} onClick={() => onAdvance(order)}>
+              <ActionButton intent={next.intent || 'blue'} icon={<Icon type="chevron" color={next.intent === 'green' ? T.greenInk : next.intent === 'orange' ? '#D9892F' : T.blueInk} size={14} />} onClick={() => onAdvance(order)}>
                 {next.label}
               </ActionButton>
               {!(order.status === ORDER_STATUS.DELIVERED && isDineIn) && (
@@ -381,10 +395,6 @@ export default function Dashboard() {
   }, [displayOrders, tab, filterBucket, t])
 
   const advance = async (order) => {
-    const isCash = (order.payment_method === PAYMENT_METHOD.CASH) || (order.paymentMethod === PAYMENT_METHOD.CASH)
-    const isDineInDelivered = order.order_type === 'dine_in' && order.status === ORDER_STATUS.DELIVERED && order.payment_status !== 'paid'
-    const needsPaymentConfirm = (order.status === ORDER_STATUS.PAID_UNRELEASED && isCash && !order.payment_confirmed) || isDineInDelivered
-
     // 🛡️ DINE-IN PAY-AFTER: Show payment method modal on a delivered order
     const isDineInPayAfterConfirm = order.status === ORDER_STATUS.DELIVERED && order.order_type === 'dine_in' && order.payment_status === 'unpaid'
     if (isDineInPayAfterConfirm) {
@@ -392,42 +402,18 @@ export default function Dashboard() {
       return
     }
 
-    // For cash orders awaiting payment — confirm payment AND release to kitchen in one click
-    if (needsPaymentConfirm) {
-      setProcessingOrderId(order.id)
-      try {
-        const { error } = await supabase
-          .from('orders')
-          .update({ payment_confirmed: true, payment_status: 'paid', status: ORDER_STATUS.RELEASED_TO_KITCHEN })
-          .eq('id', order.id)
-        if (error) {
-          console.error('Payment confirm failed:', error)
-          alert('Error: ' + error.message)
-        } else {
-          refreshOrders()
-        }
-      } catch (err) {
-        console.error('Payment confirm exception:', err)
-        alert('Error confirming payment')
-      } finally {
-        setProcessingOrderId(null)
-      }
+    const typeKey = order.order_type || 'takeout'
+    const flow = FLOW_MAP[typeKey]
+    if (!flow) {
+      console.error('Unknown order type:', typeKey)
       return
     }
 
-    const flowIdx = STATUS_FLOW.findIndex(f => f.key === order.status)
-    const next = STATUS_FLOW[flowIdx + 1]
-    if (!next) return
+    const step = flow.find(f => f.from === order.status)
+    if (!step) return
+    if (step.condition && !step.condition(order)) return
 
-    let targetStatus = next.key
-    // Cash payment confirmation: skip PAID_UNRELEASED, go straight to kitchen
-    if (order.status === ORDER_STATUS.PENDING_PAYMENT || order.status === ORDER_STATUS.PAID_UNRELEASED) {
-      targetStatus = ORDER_STATUS.RELEASED_TO_KITCHEN
-    }
-    // Non-delivery orders skip DISPATCHED
-    if (order.status === ORDER_STATUS.READY && order.order_type !== 'delivery') {
-      targetStatus = ORDER_STATUS.DELIVERED
-    }
+    const targetStatus = step.to
 
     const validation = canAdvanceOrder(order, targetStatus, { orderMode: 'A1' })
     if (!validation.allowed) {
@@ -442,7 +428,7 @@ export default function Dashboard() {
     setProcessingOrderId(order.id)
     try {
       const updatePayload = { status: targetStatus }
-      if ((order.status === ORDER_STATUS.PENDING_PAYMENT || order.status === ORDER_STATUS.PAID_UNRELEASED) && targetStatus === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+      if (step.isPaymentConfirm) {
         updatePayload.payment_confirmed = true
         updatePayload.payment_status = 'paid'
       }

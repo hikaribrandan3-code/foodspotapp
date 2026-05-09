@@ -98,7 +98,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
 
     const checkShouldTrigger = (status) => {
       if (orderType === 'delivery' && status === 'delivered') return true;
-      if (orderType === 'dine_in'  && status === 'ready')    return true;
+      if (orderType === 'dine_in'  && status === 'delivered') return true;
       if (orderType === 'takeout'  && status === 'delivered') return true;
       return false;
     };

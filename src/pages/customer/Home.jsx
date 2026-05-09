@@ -729,7 +729,17 @@ function Home({ config: configProp }) {
                                 Order #{String(activeOrder.order_number).padStart(3, '0')}
                             </div>
                             <div style={{ fontSize: 12, color: '#C2410C', textTransform: 'capitalize' }}>
-                                {activeOrder.status.replace(/_/g, ' ')}
+                                {({
+                                    pending_payment: 'Pending Payment',
+                                    paid_unreleased: 'Paid — Preparing',
+                                    released_to_kitchen: 'In the Kitchen',
+                                    preparing: 'Preparing',
+                                    ready: 'Ready',
+                                    dispatched: 'On the Way',
+                                    delivered: 'Delivered',
+                                    cancelled: 'Cancelled',
+                                    refunded: 'Refunded',
+                                })[activeOrder.status] || activeOrder.status}
                             </div>
                         </div>
                     </div>
