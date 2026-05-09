@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
-import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
 import { deepMergeAppConfig } from '../../utils/appConfig';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
@@ -167,26 +166,6 @@ const Settings = () => {
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
     const justSavedRef = useRef(false); // Guard: Blocks Data Pump from overwriting after save
-
-    // ============================================================
-    // AUTO-SAVE: Service Modes (1.2s debounce, independent of manual Save)
-    // ============================================================
-    const { saveStatus: serviceModeSaveStatus, syncLastSaved, silence } = useDebouncedAutoSave(
-        draft.service_modes,
-        async (nextModes) => {
-            if (!businessId) return;
-            const payload = {
-                app_config: deepMergeAppConfig(
-                    tenant?.app_config || {},
-                    { service_modes: nextModes }
-                )
-            };
-            const { error } = await updateBranding(payload, businessId);
-            if (error) throw error;
-        },
-        1200,
-        isDraftReady
-    );
 
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
@@ -447,7 +426,6 @@ const Settings = () => {
     // ATOMIC SAVE (v7 — Self-Healing via updateBranding)
     const handlePlatformSave = async () => {
         if (!businessId) return;
-        silence(2000); // Silence auto-save hook during manual save
         setIsSaving(true);
         console.log('SAVING BRANDING — business:', businessId);
 
@@ -527,9 +505,6 @@ const Settings = () => {
             setSaveStatus({ message: t('branding_saved') });
             setTimeout(() => setSaveStatus(null), 3000);
             setTimeout(() => { justSavedRef.current = false; }, 2000);
-
-            // Sync auto-save hook so it doesn't fire a false-positive
-            syncLastSaved(draft.service_modes);
 
         } catch (error) {
             console.error('Save failed:', error);
@@ -1282,22 +1257,6 @@ const Settings = () => {
                     onApply={handleColorPickerApply}
                     onClose={handleColorPickerClose}
                 />
-            )}
-
-            {/* SERVICE MODE AUTO-SAVE PILL */}
-            {serviceModeSaveStatus && (
-                <div style={{
-                    position: 'fixed', bottom: 80, left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: serviceModeSaveStatus.error ? '#EF4444' : '#059669', color: 'white',
-                    padding: '10px 20px', borderRadius: 999,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    fontWeight: 600, fontSize: 13, zIndex: 9999,
-                    pointerEvents: 'none',
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    {serviceModeSaveStatus.message}
-                </div>
             )}
 
             {/* SAVE SUCCESS TOAST */}
