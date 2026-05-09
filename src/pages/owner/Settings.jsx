@@ -186,8 +186,9 @@ const Settings = () => {
                     { service_modes: nextModes }
                 )
             };
-            const { error } = await updateBranding(payload, businessId);
-            if (error) throw error;
+            const { data, error } = await updateBranding(payload, businessId);
+            if (error || !data) throw error || new Error('Save returned no data');
+            return data;
         },
         1200,
         isDraftReady
@@ -206,8 +207,9 @@ const Settings = () => {
                     { payment_methods: nextMethods }
                 )
             };
-            const { error } = await updateBranding(payload, businessId);
-            if (error) throw error;
+            const { data, error } = await updateBranding(payload, businessId);
+            if (error || !data) throw error || new Error('Save returned no data');
+            return data;
         },
         1200,
         isDraftReady
@@ -231,6 +233,10 @@ const Settings = () => {
     // ============================================================
     useEffect(() => {
         if (!tenant?.business_id) return;
+
+        // HYDRATION LOCK: Wait for real DB data before initializing.
+        // pickup_enabled is undefined while TenantContext is still fetching.
+        if (tenant.pickup_enabled === undefined) return;
         
         // Only initialize once per businessId to prevent overwrites
         if (initializedForBusinessRef.current === tenant.business_id) return;

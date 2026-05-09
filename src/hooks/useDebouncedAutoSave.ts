@@ -28,7 +28,7 @@ interface UseDebouncedAutoSaveReturn {
  */
 export function useDebouncedAutoSave<T>(
   value: T,
-  saveFn: (value: T) => Promise<void>,
+  saveFn: (value: T) => Promise<any>,
   delay: number = 1200,
   enabled: boolean = true
 ): UseDebouncedAutoSaveReturn {
@@ -82,7 +82,8 @@ export function useDebouncedAutoSave<T>(
 
     debounceTimerRef.current = setTimeout(async () => {
       try {
-        await saveFn(value);
+        const result = await saveFn(value);
+        if (!result) throw new Error('Save returned no data');
         lastSavedRef.current = JSON.stringify(value);
         isDirtyRef.current = false;
         setSaveStatus({ message: 'Saved' });
