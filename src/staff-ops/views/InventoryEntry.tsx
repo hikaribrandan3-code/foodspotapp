@@ -8,7 +8,7 @@ import { supabase, updateBranding } from '../../lib/supabaseClient.js';
 import { deepMergeAppConfig } from '../../utils/appConfig';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
-const BLUE = '#3b82f6';
+const GREEN = '#059669';
 
 export const InventoryEntry: React.FC = () => {
   const { language } = useLanguage();
@@ -290,7 +290,7 @@ export const InventoryEntry: React.FC = () => {
           <button
             onClick={() => setShowScanner(true)}
             className="w-12 h-12 rounded-xl flex items-center justify-center border-none cursor-pointer shrink-0"
-            style={{ backgroundColor: BLUE, color: '#fff' }}
+            style={{ backgroundColor: GREEN, color: '#fff' }}
           >
             <Camera size={20} />
           </button>
@@ -335,7 +335,7 @@ export const InventoryEntry: React.FC = () => {
                       <h2 className="text-white text-2xl font-bold mb-2">{t('scanning')}</h2>
                       <p className="text-white/60">{t('point_camera')}</p>
                     </div>
-                    <div id="reader" className="w-full aspect-square overflow-hidden rounded-3xl border-2" style={{ borderColor: BLUE, background: 'rgba(255,255,255,0.05)' }} />
+                    <div id="reader" className="w-full aspect-square overflow-hidden rounded-3xl border-2" style={{ borderColor: GREEN, background: 'rgba(255,255,255,0.05)' }} />
                     <p className="text-center text-white/40 text-sm">Allow camera access when prompted</p>
                   </>
                 ) : (
@@ -346,7 +346,7 @@ export const InventoryEntry: React.FC = () => {
                     style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: BLUE, color: 'white' }}>
+                      <div className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: GREEN, color: 'white' }}>
                         {scanResult.name === t('item_not_found') ? <Search size={32} /> : <Check size={32} />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -390,7 +390,7 @@ export const InventoryEntry: React.FC = () => {
                       <button
                         onClick={confirmScanAdd}
                         className="flex-[2] h-14 rounded-2xl font-bold text-white border-none cursor-pointer"
-                        style={{ backgroundColor: BLUE }}
+                        style={{ backgroundColor: GREEN }}
                       >
                         {scanResult.name === t('item_not_found') ? 'Add new item' : t('confirm_scan')}
                       </button>
@@ -409,7 +409,7 @@ export const InventoryEntry: React.FC = () => {
             <button
               onClick={addCategory}
               className="text-sm font-semibold flex items-center gap-1 border-none cursor-pointer bg-transparent"
-              style={{ color: BLUE }}
+              style={{ color: GREEN }}
             >
               <Plus size={14} />
               {t('add_category')}
@@ -479,7 +479,7 @@ export const InventoryEntry: React.FC = () => {
 
                     {!isExpanded && (
                       <div className="text-right ml-3 shrink-0">
-                        <p className="text-lg font-bold" style={{ color: BLUE }}>{item.qty}</p>
+                        <p className="text-lg font-bold" style={{ color: GREEN }}>{item.qty}</p>
                         <p className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>{item.unit}</p>
                       </div>
                     )}
@@ -498,7 +498,7 @@ export const InventoryEntry: React.FC = () => {
                           <select
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
+                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
                             style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                           >
                             {categories.filter(c => c !== 'All').map(c => (
@@ -511,7 +511,7 @@ export const InventoryEntry: React.FC = () => {
                           <select
                             value={item.unit}
                             onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
+                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
                             style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                           >
                             <option value="units">{t('units')}</option>
@@ -531,7 +531,7 @@ export const InventoryEntry: React.FC = () => {
                             value={(item as any).supplier || ''}
                             onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
                             placeholder="e.g. Sysco"
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
+                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
                             style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                           />
                         </div>
@@ -541,7 +541,7 @@ export const InventoryEntry: React.FC = () => {
                             type="number"
                             value={item.min || 0}
                             onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
+                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
                             style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                           />
                         </div>
@@ -556,19 +556,19 @@ export const InventoryEntry: React.FC = () => {
                             step="0.01"
                             value={(item as any).cost ?? ''}
                             onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
+                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
                             style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                           />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium ml-1" style={{ color: BLUE }}>{t('price')}</label>
+                          <label className="text-xs font-medium ml-1" style={{ color: GREEN }}>{t('price')}</label>
                           <input
                             type="number"
                             step="0.01"
                             value={(item as any).price || ''}
                             onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent font-semibold"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: BLUE, color: 'var(--text-primary)' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent font-semibold w-full"
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: GREEN, color: 'var(--text-primary)' }}
                           />
                         </div>
                       </div>
@@ -581,7 +581,7 @@ export const InventoryEntry: React.FC = () => {
                           value={item.tags?.join(', ') || ''}
                           onChange={(e) => updateItem(item.id, { tags: e.target.value.split(',').map((s: string) => s.trim()).filter((s: string) => s !== '') })}
                           placeholder="Low stock, organic"
-                          className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
+                          className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
                           style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                         />
                       </div>
@@ -595,12 +595,12 @@ export const InventoryEntry: React.FC = () => {
                             value={item.qty}
                             disabled
                             className="h-11 flex-1 bg-transparent border-none text-center text-base font-bold outline-none"
-                            style={{ color: BLUE }}
+                            style={{ color: GREEN }}
                           />
                           <button
                             onClick={() => updateQty(item.id, 1)}
                             className="h-11 px-4 text-white font-semibold text-sm flex items-center gap-2 active:opacity-80 transition-opacity border-none cursor-pointer"
-                            style={{ backgroundColor: BLUE }}
+                            style={{ backgroundColor: GREEN }}
                           >
                             <Plus size={16} />
                             {t('restock')}

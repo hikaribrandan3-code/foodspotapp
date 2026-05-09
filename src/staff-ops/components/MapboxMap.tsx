@@ -93,7 +93,7 @@ export default function MapboxMap({ orders, driverPosition }: MapboxMapProps) {
             transform: translate(-50%, -50%);
             width: 14px;
             height: 14px;
-            background: #3b82f6;
+            background: #059669;
             border: 2px solid white;
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(59,130,246,0.6);
@@ -171,7 +171,7 @@ export default function MapboxMap({ orders, driverPosition }: MapboxMapProps) {
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: 'var(--card-bg)' }}>
           <div className="flex flex-col items-center gap-2" style={{ color: 'var(--text-tertiary)' }}>
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs font-medium">Loading map...</span>
           </div>
         </div>

@@ -24,7 +24,7 @@ const statusLabels: Record<string, string> = {
 }
 
 const statusColors: Record<string, string> = {
-  RELEASED_TO_KITCHEN: 'bg-blue-500',
+  RELEASED_TO_KITCHEN: 'bg-emerald-600',
   PREP: 'bg-orange-500',
   READY: 'bg-green-500',
 }

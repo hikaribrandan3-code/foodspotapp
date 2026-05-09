@@ -13,7 +13,7 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%;
+    --primary: 142 76% 36%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222 47% 11%;
@@ -25,7 +25,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    --ring: 142 76% 36%;
     --radius: 0.75rem;
 
     /* App surface colors */
@@ -50,9 +50,9 @@
     --btn-secondary-bg: #f1f5f9;
     --btn-secondary-hover: #e2e8f0;
     --btn-secondary-active: #cbd5e1;
-    --filter-active-bg: #eff6ff;
-    --filter-active-text: #3b82f6;
-    --filter-active-border: #bfdbfe;
+    --filter-active-bg: #ecfdf5;
+    --filter-active-text: #059669;
+    --filter-active-border: #a7f3d0;
     --filter-inactive-bg: #ffffff;
     --section-bg: #ffffff;
     --section-border: #e2e8f0;
@@ -82,11 +82,11 @@
     --detail-drawer-bg: #ffffff;
     --detail-item-bg: #f8fafc;
     --detail-item-border: #e2e8f0;
-    --swipe-hint-bg: rgba(59, 130, 246, 0.1);
-    --swipe-hint-text: rgba(59, 130, 246, 0.7);
-    --swipe-success: #2563eb;
+    --swipe-hint-bg: rgba(5, 150, 105, 0.1);
+    --swipe-hint-text: rgba(5, 150, 105, 0.7);
+    --swipe-success: #059669;
     --status-icon-todo: #94a3b8;
-    --status-icon-prep: #3b82f6;
+    --status-icon-prep: #059669;
     --status-icon-ready: #f59e0b;
     --status-icon-dispatch: #059669;
     --status-icon-delivering: #a855f7;

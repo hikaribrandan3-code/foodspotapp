@@ -58,16 +58,20 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
   // Load inventory from app_config on mount
   useEffect(() => {
-    if (!tenantData) return;
+    if (!tenantData) {
+      setIsLoading(true);
+      return;
+    }
     const invConfig = tenantData.app_config?.inventory || {};
     setItems(invConfig.items || []);
     setCategories(invConfig.categories || ['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
     setIsLoading(false);
-  }, [tenantData?.app_config?.inventory]);
+  }, [tenantData]);
 
   // Debounced save to branding.app_config
   useEffect(() => {
-    if (!businessId || isLoading) return;
+    const effectiveBusinessId = businessId || tenantData?.business_id;
+    if (!effectiveBusinessId || isLoading) return;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
       setSaveStatus({ message: t('saving') || 'Saving...' });
@@ -79,7 +83,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
           }
         })
       };
-      updateBranding(payload, businessId)
+      updateBranding(payload, effectiveBusinessId)
         .then(() => {
           setSaveStatus({ message: t('saved') || 'Saved' });
           if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
@@ -101,7 +105,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
       clearTimeout(saveDebounceRef.current);
       clearTimeout(saveStatusTimeoutRef.current);
     };
-  }, [items, categories, businessId, isLoading]);
+  }, [items, categories, businessId, tenantData, isLoading]);
 
   const lookupBarcode = async (barcode) => {
     try {
