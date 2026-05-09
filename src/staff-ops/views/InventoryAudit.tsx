@@ -23,6 +23,7 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
   const [cachedAppConfig, setCachedAppConfig] = useState<any>({});
   const [loading, setLoading] = useState(!isEmbedded);
   const [isDirty, setIsDirty] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<{ message: string; error?: boolean } | null>(null);
   const [pulseId, setPulseId] = useState<string | null>(null);
   const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +49,13 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
     load();
   }, [businessId, isEmbedded]);
 
+  // Auto-hide save pill
+  useEffect(() => {
+    if (!saveStatus) return;
+    const timer = setTimeout(() => setSaveStatus(null), saveStatus.error ? 3000 : 2000);
+    return () => clearTimeout(timer);
+  }, [saveStatus]);
+
   // Display items: mapped from external (Owner) or raw (Staff)
   const items = useMemo(() => {
     const source = isEmbedded ? externalItems : rawItems;
@@ -67,6 +75,14 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
     if (item.qty <= item.min / 2) return 'critical';
     if (item.qty <= item.min) return 'low_stock';
     return 'nominal';
+  };
+
+  const statusStyles = (status: string) => {
+    switch (status) {
+      case 'critical': return { pill: 'bg-rose-50 text-rose-700', qty: 'text-rose-500', strip: 'bg-rose-400' };
+      case 'low_stock': return { pill: 'bg-amber-50 text-amber-700', qty: 'text-amber-500', strip: 'bg-amber-400' };
+      default: return { pill: 'bg-emerald-50 text-emerald-700', qty: 'text-slate-900', strip: 'bg-emerald-400' };
+    }
   };
 
   const updateQty = (id: string, delta: number) => {
@@ -92,6 +108,7 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
     if (isEmbedded || !businessId || !isDirty) return;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
+      setSaveStatus({ message: t('saving') || 'Saving...' });
       const payload = {
         app_config: deepMergeAppConfig(cachedAppConfig || {}, {
           inventory: { items: rawItems }
@@ -99,16 +116,18 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
       };
       updateBranding(payload, businessId)
         .then(() => {
+          setSaveStatus({ message: t('saved') || 'Saved' });
           setIsDirty(false);
         })
         .catch(err => {
           console.error('[InventoryAudit] Save failed:', err);
+          setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
         });
     }, 1000);
     return () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     };
-  }, [rawItems, businessId, isDirty, isEmbedded, cachedAppConfig]);
+  }, [rawItems, businessId, isDirty, isEmbedded, cachedAppConfig, t]);
 
   if (loading) {
     return (
@@ -120,6 +139,25 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
 
   return (
     <div className="flex flex-col min-h-screen pb-20" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
+      {/* Save Status Pill */}
+      <AnimatePresence>
+        {saveStatus && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed left-1/2 -translate-x-1/2 z-[9999] px-5 py-2.5 rounded-full text-[13px] font-semibold text-white shadow-xl pointer-events-none"
+            style={{
+              bottom: isEmbedded ? 80 : 24,
+              background: saveStatus.error ? '#EF4444' : '#22C55E',
+            }}
+          >
+            {saveStatus.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="px-4 flex flex-col">
         {/* Pull to refresh simulation */}
         <div className="w-full flex flex-col items-center justify-center py-4 opacity-60">
@@ -134,62 +172,62 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
           </button>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           {items.length === 0 && (
             <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>
               {t('no_items') || 'No inventory items yet.'}
             </div>
           )}
-          {items.map(item => (
-            <article 
-              key={item.id} 
-              className="bento-card flex flex-col gap-3 shadow-sm active:opacity-80 transition-all cursor-pointer"
-              style={{
-                borderColor: pulseId === item.id
-                  ? (getStatus(item) === 'critical' ? '#dc2626' : getStatus(item) === 'low_stock' ? '#ea580c' : '#059669')
-                  : 'var(--card-border)',
-                borderWidth: pulseId === item.id ? '2px' : '1px',
-                boxShadow: pulseId === item.id ? '0 0 0 4px rgba(5, 150, 105, 0.15)' : undefined,
-              }}
-              onClick={() => setSelectedItem(item)}
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-[17px] font-semibold text-[var(--text-primary)]">{item.name}</h2>
-                  <span className="text-[13px]" style={{ color: 'var(--text-tertiary)' }}>{item.cat} • {item.bin}</span>
+          {items.map(item => {
+            const status = getStatus(item);
+            const styles = statusStyles(status);
+            const isPulsing = pulseId === item.id;
+            return (
+              <article
+                key={item.id}
+                className={`inventory-card flex flex-col gap-3 cursor-pointer ${isPulsing ? 'ring-2 ring-emerald-400/30' : ''}`}
+                onClick={() => setSelectedItem(item)}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Status strip */}
+                  <div className={`w-1 shrink-0 rounded-full self-stretch ${styles.strip}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <div className="flex flex-col gap-1 min-w-0">
+                        <h2 className="text-[15px] font-semibold text-slate-900 truncate">{item.name}</h2>
+                        <span className="text-[13px] text-slate-400">{item.cat} • {item.bin}</span>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0 ml-3">
+                        <span className={`text-[32px] font-bold leading-none ${styles.qty}`}>{item.qty}</span>
+                        <span className={`status-pill ${styles.pill}`}>
+                          {t(status)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className={`text-[34px] font-bold leading-none ${getStatus(item) === 'critical' ? 'text-red-500' : getStatus(item) === 'low_stock' ? 'text-orange-500' : 'text-[var(--text-primary)]'}`}>
-                    {item.qty}
-                  </span>
-                  <span className={`status-badge ${getStatus(item) === 'nominal' ? 'in-stock' : 'low-stock'}`}>
-                    {t(getStatus(item))}
-                  </span>
+
+                <div className="flex justify-between items-center bg-slate-50 rounded-2xl p-2" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-[13px] text-slate-400 pl-2">{t('min')}: {item.min} / {t('max')}: {item.max}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updateQty(item.id, -1)}
+                      className="stepper-btn bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <span className="w-10 text-center text-[15px] font-semibold text-slate-800">{item.qty}</span>
+                    <button
+                      onClick={() => updateQty(item.id, 1)}
+                      className="stepper-btn bg-emerald-500 text-white hover:bg-emerald-600"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex justify-between items-center border-t pt-3 mt-1" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
-                <span className="text-[13px]" style={{ color: 'var(--text-tertiary)' }}>{t('min')}: {item.min} / {t('max')}: {item.max}</span>
-                <div className="flex items-center rounded-lg border overflow-hidden h-[44px]" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
-                  <button 
-                    onClick={() => updateQty(item.id, -1)}
-                    className="w-11 h-full flex items-center justify-center text-[var(--accent)] border-r active:opacity-70"
-                    style={{ borderColor: 'var(--nav-border)' }}
-                  >
-                    <Minus size={18} />
-                  </button>
-                  <span className="w-12 text-center text-[15px] font-semibold">{item.qty}</span>
-                  <button 
-                    onClick={() => updateQty(item.id, 1)}
-                    className="w-11 h-full flex items-center justify-center text-[var(--accent)] border-l active:opacity-70"
-                    style={{ borderColor: 'var(--nav-border)' }}
-                  >
-                    <Plus size={18} />
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </main>
     </div>

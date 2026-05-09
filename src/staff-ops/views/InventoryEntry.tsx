@@ -69,21 +69,23 @@ export const InventoryEntry: React.FC = () => {
         .then(() => {
           setSaveStatus({ message: t('saved') || 'Saved' });
           setIsDirty(false);
-          if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
-          saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 2000);
         })
         .catch(err => {
           console.error('[InventoryEntry] Save failed:', err);
           setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
-          if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
-          saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 3000);
         });
     }, 1000);
     return () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
-      if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
     };
   }, [items, categories, businessId, isLoading, isDirty]);
+
+  // Auto-hide save pill independently
+  useEffect(() => {
+    if (!saveStatus) return;
+    const timer = setTimeout(() => setSaveStatus(null), saveStatus.error ? 3000 : 2000);
+    return () => clearTimeout(timer);
+  }, [saveStatus]);
 
   // Query Supabase for scanned barcode
   const lookupBarcode = async (barcode: string) => {
@@ -502,29 +504,31 @@ export const InventoryEntry: React.FC = () => {
                   </div>
 
                   {isExpanded && (
-                    <div className="flex flex-col gap-5 mt-2 pt-4 border-t" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
-                      {/* Basic Info */}
-                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
+                    <div className="flex flex-col gap-5 mt-2 pt-4 border-t overflow-x-hidden" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
+                      {/* Mobile: 6 vertical rows. Desktop: 3 rows × 2 cols */}
+                      <div className="flex flex-col gap-3">
+                        {/* Row 1: Category */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('category')}</label>
                           <select
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
                             className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
                           >
                             {categories.filter(c => c !== 'All').map(c => (
                               <option key={c} value={c}>{c}</option>
                             ))}
                           </select>
                         </div>
+                        {/* Row 2: Unit Type */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('unit_type')}</label>
                           <select
                             value={item.unit}
                             onChange={(e) => updateItem(item.id, { unit: e.target.value })}
                             className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
                           >
                             <option value="units">{t('units')}</option>
                             <option value="kg">kg</option>
@@ -532,10 +536,7 @@ export const InventoryEntry: React.FC = () => {
                             <option value="liters">Liters</option>
                           </select>
                         </div>
-                      </div>
-
-                      {/* Supply Chain */}
-                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
+                        {/* Row 3: Supplier */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('supplier')}</label>
                           <input
@@ -544,9 +545,10 @@ export const InventoryEntry: React.FC = () => {
                             onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
                             placeholder="e.g. Sysco"
                             className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
                           />
                         </div>
+                        {/* Row 4: Min Stock */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('min_stock')}</label>
                           <input
@@ -554,13 +556,10 @@ export const InventoryEntry: React.FC = () => {
                             value={item.min || 0}
                             onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
                             className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
                           />
                         </div>
-                      </div>
-
-                      {/* Pricing */}
-                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
+                        {/* Row 5: Cost */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('cost')}</label>
                           <input
@@ -569,9 +568,10 @@ export const InventoryEntry: React.FC = () => {
                             value={(item as any).cost ?? ''}
                             onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
                             className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
                           />
                         </div>
+                        {/* Row 6: Price */}
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: GREEN }}>{t('price')}</label>
                           <input
@@ -580,7 +580,7 @@ export const InventoryEntry: React.FC = () => {
                             value={(item as any).price || ''}
                             onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
                             className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent font-semibold w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: GREEN, color: 'var(--text-primary)' }}
+                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: GREEN, color: 'var(--text-primary)', boxSizing: 'border-box' }}
                           />
                         </div>
                       </div>

@@ -57,7 +57,6 @@ export default function MenuInventoryView({ lang = 'en' }) {
   const [saveStatus, setSaveStatus] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const saveDebounceRef = useRef(null);
-  const saveStatusTimeoutRef = useRef(null);
 
   // Load inventory from app_config on mount
   useEffect(() => {
@@ -90,8 +89,6 @@ export default function MenuInventoryView({ lang = 'en' }) {
         .then(() => {
           setSaveStatus({ message: t('saved') || 'Saved' });
           setIsDirty(false);
-          if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
-          saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 2000);
         })
         .catch(err => {
           const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
@@ -101,15 +98,19 @@ export default function MenuInventoryView({ lang = 'en' }) {
             console.error('[MenuInventoryView] Save failed:', err);
           }
           setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
-          if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
-          saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 3000);
         });
     }, 1000);
     return () => {
       clearTimeout(saveDebounceRef.current);
-      clearTimeout(saveStatusTimeoutRef.current);
     };
   }, [items, categories, businessId, tenantData, isLoading, isDirty]);
+
+  // Auto-hide save status pill independently
+  useEffect(() => {
+    if (!saveStatus) return;
+    const timer = setTimeout(() => setSaveStatus(null), saveStatus.error ? 3000 : 2000);
+    return () => clearTimeout(timer);
+  }, [saveStatus]);
 
   const lookupBarcode = async (barcode) => {
     try {
@@ -299,26 +300,33 @@ export default function MenuInventoryView({ lang = 'en' }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '0 0 112px 0', position: 'relative' }}>
       {/* Save Status Pill */}
-      {saveStatus && (
-        <div style={{
-          position: 'fixed',
-          bottom: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 100,
-          padding: '10px 20px',
-          borderRadius: 999,
-          fontSize: 13,
-          fontWeight: 600,
-          color: 'white',
-          background: saveStatus.error ? '#EF4444' : '#22C55E',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          transition: 'all 0.3s ease',
-          pointerEvents: 'none',
-        }}>
-          {saveStatus.message}
-        </div>
-      )}
+      <AnimatePresence>
+        {saveStatus && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: 'fixed',
+              bottom: 80,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              padding: '10px 20px',
+              borderRadius: 999,
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'white',
+              background: saveStatus.error ? '#EF4444' : '#22C55E',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              pointerEvents: 'none',
+            }}
+          >
+            {saveStatus.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sub-tabs: Entry / Stock / Audit */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>

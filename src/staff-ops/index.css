@@ -388,3 +388,25 @@
 #reader__dashboard_section_csr {
   padding: 16px !important;
 }
+
+@layer components {
+  .inventory-card {
+    @apply rounded-2xl bg-white p-4 transition-all duration-200;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.08);
+  }
+  .inventory-card:active {
+    transform: scale(0.995);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .stepper-btn {
+    @apply h-11 w-11 flex items-center justify-center rounded-xl transition-all duration-150;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  .stepper-btn:active {
+    transform: scale(0.92);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+  }
+  .status-pill {
+    @apply text-[11px] font-bold px-2.5 py-1 rounded-full;
+  }
+}
