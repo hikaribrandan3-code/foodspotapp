@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
+import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
 import { deepMergeAppConfig } from '../../utils/appConfig';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
@@ -166,6 +167,51 @@ const Settings = () => {
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
     const justSavedRef = useRef(false); // Guard: Blocks Data Pump from overwriting after save
+
+    // ============================================================
+    // AUTO-SAVE: Service Modes (1.2s debounce, direct to flat columns)
+    // ============================================================
+    const { saveStatus: serviceModeSaveStatus } = useDebouncedAutoSave(
+        isDraftReady ? draft.service_modes : null,
+        async (nextModes) => {
+            if (!businessId) return;
+            const payload = {
+                pickup_enabled: nextModes?.pickup ?? true,
+                delivery_enabled: nextModes?.delivery ?? true,
+                dine_in_enabled: nextModes?.dineIn ?? false,
+                dine_in_payment_timing: nextModes?.dineInPayment || 'after',
+                // Backward-compat: also write to app_config during transition
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { service_modes: nextModes }
+                )
+            };
+            const { error } = await updateBranding(payload, businessId);
+            if (error) throw error;
+        },
+        1200,
+        isDraftReady
+    );
+
+    // ============================================================
+    // AUTO-SAVE: Payment Methods (1.2s debounce)
+    // ============================================================
+    const { saveStatus: paymentSaveStatus } = useDebouncedAutoSave(
+        isDraftReady ? draft.payment_methods : null,
+        async (nextMethods) => {
+            if (!businessId) return;
+            const payload = {
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { payment_methods: nextMethods }
+                )
+            };
+            const { error } = await updateBranding(payload, businessId);
+            if (error) throw error;
+        },
+        1200,
+        isDraftReady
+    );
 
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
@@ -1165,7 +1211,6 @@ const Settings = () => {
                                         key={key}
                                         onClick={() => {
                                             setDraft(d => ({ ...d, service_modes: { ...d.service_modes, [key]: !on } }));
-                                            setHasChanges(true);
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1201,7 +1246,6 @@ const Settings = () => {
                                             key={value}
                                             onClick={() => {
                                                 setDraft(d => ({ ...d, service_modes: { ...d.service_modes, dineInPayment: value } }));
-                                                setHasChanges(true);
                                             }}
                                             style={{
                                                 flex: 1, padding: '10px 12px', borderRadius: 8, border: `1px solid ${active ? '#F59E0B' : '#E5E7EB'}`,
@@ -1234,7 +1278,6 @@ const Settings = () => {
                                         key={key}
                                         onClick={() => {
                                             setDraft(d => ({ ...d, payment_methods: { ...d.payment_methods, [key]: !on } }));
-                                            setHasChanges(true);
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1268,7 +1311,30 @@ const Settings = () => {
                 />
             )}
 
-            {/* SAVE SUCCESS TOAST */}
+            {/* AUTO-SAVE PILL (Service Modes + Payment Methods) */}
+            {(serviceModeSaveStatus || paymentSaveStatus) && (
+                (() => {
+                    const status = serviceModeSaveStatus?.error ? serviceModeSaveStatus
+                        : paymentSaveStatus?.error ? paymentSaveStatus
+                        : serviceModeSaveStatus || paymentSaveStatus;
+                    return (
+                        <div style={{
+                            position: 'fixed', bottom: 80, left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: status?.error ? '#EF4444' : '#059669', color: 'white',
+                            padding: '10px 20px', borderRadius: 999,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            fontWeight: 600, fontSize: 13, zIndex: 9999,
+                            pointerEvents: 'none',
+                            animation: 'fadeIn 0.2s ease-out'
+                        }}>
+                            {status?.message}
+                        </div>
+                    );
+                })()
+            )}
+
+            {/* SAVE SUCCESS TOAST (manual branding save) */}
             {saveStatus && (
                 <div style={{
                     position: 'fixed', bottom: 24, left: '50%',
