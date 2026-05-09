@@ -67,9 +67,6 @@ export default function SummaryTab({ config, updateBusinessInfoCloud, updateBran
                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
                 <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfoCloud('address', e.target.value)} style={inputStyle} />
 
-                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
-                <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfoCloud('hours', e.target.value)} style={inputStyle} />
-
                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
                 <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfoCloud('googleMapsLink', e.target.value)} style={inputStyle} />
 

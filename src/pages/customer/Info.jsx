@@ -101,17 +101,6 @@ const Info = ({ config }) => {
                             border: '1px solid rgba(0,0,0,0.04)',
                             textAlign: 'left'
                         }}>
-                            {/* Header */}
-                            <h3 style={{
-                                fontSize: '1.05rem',
-                                fontWeight: 800,
-                                color: '#0F0F0F',
-                                marginBottom: 14,
-                                letterSpacing: '-0.02em'
-                            }}>
-                                {businessName}
-                            </h3>
-
                             {/* WhatsApp Row */}
                             {whatsapp && (
                                 <a

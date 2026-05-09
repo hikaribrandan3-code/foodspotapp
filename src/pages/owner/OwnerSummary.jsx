@@ -205,25 +205,42 @@ function OwnerSummary() {
     const [savingConfig, setSavingConfig] = useState(false)
     const [autoSaveStatus, setAutoSaveStatus] = useState(null) // { type: 'venue'|'links'|'currency'|'language', timestamp }
 
-    // Sync local businessInfo from server on mount
+    // Ref to always read latest businessInfoLocal inside async callbacks
+    const businessInfoLocalRef = useRef(businessInfoLocal)
     useEffect(() => {
+        businessInfoLocalRef.current = businessInfoLocal
+    }, [businessInfoLocal])
+
+    // Sync local businessInfo from server on mount — ONLY when appConfig actually changes from server
+    const lastSyncedAppConfigRef = useRef(null)
+    useEffect(() => {
+        const appConfigKey = JSON.stringify(appConfig?.businessInfo)
+        if (lastSyncedAppConfigRef.current === appConfigKey) return
+        lastSyncedAppConfigRef.current = appConfigKey
         setBusinessInfoLocal(appConfig?.businessInfo || {})
     }, [appConfig?.businessInfo])
 
     // Optimistic + debounced save
     const updateBusinessInfo = (field, value) => {
-        setBusinessInfoLocal(prev => ({ ...prev, [field]: value }))
+        setBusinessInfoLocal(prev => {
+            const next = { ...prev, [field]: value }
 
-        if (businessInfoDebounceRef.current) clearTimeout(businessInfoDebounceRef.current)
-        businessInfoDebounceRef.current = setTimeout(async () => {
-            const newBusinessInfo = { ...appConfig?.businessInfo, [field]: value }
-            const updatedConfig = { ...appConfig, businessInfo: newBusinessInfo }
-            try {
-                await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-            } catch (e) {
-                console.error('Save failed:', e)
-            }
-        }, 800)
+            if (businessInfoDebounceRef.current) clearTimeout(businessInfoDebounceRef.current)
+            businessInfoDebounceRef.current = setTimeout(async () => {
+                const currentLocal = businessInfoLocalRef.current
+                // Merge: server base + all local edits (ensures clears are preserved)
+                const newBusinessInfo = { ...appConfig?.businessInfo, ...currentLocal }
+                const updatedConfig = { ...appConfig, businessInfo: newBusinessInfo }
+                try {
+                    await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+                    await refreshTenantData()
+                } catch (e) {
+                    console.error('Save failed:', e)
+                }
+            }, 800)
+
+            return next
+        })
     }
 
     // Trigger pill on blur
