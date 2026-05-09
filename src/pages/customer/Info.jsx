@@ -46,22 +46,23 @@ const Info = ({ config }) => {
         return infoPills[pillId]?.content || '';
     };
 
-    // Icon-only circular button style (no text labels)
-    const iconButtonBase = {
+    // Button Styles for the "Old UI" Restoration
+    const buttonBase = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '64px',
-        height: '64px',
-        borderRadius: '50%',
+        width: '100%',
+        padding: '16px',
+        borderRadius: '30px',
+        fontSize: '1.1rem',
+        fontWeight: '600',
+        color: pillIconMode === 'dark' ? '#1F2937' : 'white',
         border: 'none',
+        marginBottom: '12px',
         cursor: 'pointer',
         textDecoration: 'none',
-        boxSizing: 'border-box',
-        flexShrink: 0
+        boxSizing: 'border-box'
     };
-
-    const iconColor = pillIconMode === 'dark' ? '#1F2937' : 'white';
 
     return (
         <div className="page" style={{
@@ -85,87 +86,63 @@ const Info = ({ config }) => {
                 justifyContent: 'flex-start',
                 padding: '12px 20px 0'
             }}>
-                {/* 2. ICON-ONLY ACTION BUTTONS - No text labels */}
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: '16px',
-                    flexWrap: 'wrap',
-                    marginTop: '8px',
-                    marginBottom: '8px'
-                }}>
+                {/* 2. COLORFUL BUTTON STACK - Now uses config from Settings */}
+                <div>
                     {/* WhatsApp - only show if enabled and has number */}
                     {isPillEnabled('whatsapp') && whatsapp && (
                         <a
                             href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            style={{ ...iconButtonBase, background: getPillColor('whatsapp') }}
-                            title={t('info_whatsapp')}
+                            style={{ ...buttonBase, background: getPillColor('whatsapp') }}
                         >
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                            </svg>
+                            {t('info_whatsapp')}
                         </a>
                     )}
 
                     {/* Mercado Pago */}
                     {isPillEnabled('mercadoPago') && (
                         <button
-                            style={{ ...iconButtonBase, background: getPillColor('mercadoPago') }}
+                            style={{ ...buttonBase, background: getPillColor('mercadoPago') }}
                             onClick={() => navigate(`/${tenantSlug}/menu`)}
-                            title={t('info_mercado_pago')}
                         >
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                                <line x1="1" y1="10" x2="23" y2="10"/>
-                            </svg>
+                            {t('info_mercado_pago')}
                         </button>
                     )}
 
                     {/* Rappi */}
                     {isPillEnabled('rappi') && (
                         <button
-                            style={{ ...iconButtonBase, background: getPillColor('rappi') }}
+                            style={{ ...buttonBase, background: getPillColor('rappi') }}
                             onClick={() => {
                                 const rappiUrl = getPillContent('rappi');
                                 if (rappiUrl) window.open(rappiUrl, '_blank');
                             }}
-                            title={t('info_rappi')}
                         >
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8c0 1.25-.75 2.25-1.5 3"/><path d="M8 13.5V16c0 2.35 1.38 4.5 3.5 4.5s3.5-2.15 3.5-4.5v-2.5"/><circle cx="15" cy="6" r="3"/><path d="M18 13v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6"/>
-                            </svg>
+                            {t('info_rappi')}
                         </button>
                     )}
 
                     {/* PedidosYa */}
                     {isPillEnabled('pedidosYa') && (
                         <button
-                            style={{ ...iconButtonBase, background: getPillColor('pedidosYa') }}
+                            style={{ ...buttonBase, background: getPillColor('pedidosYa') }}
                             onClick={() => {
                                 const pyUrl = getPillContent('pedidosYa');
                                 if (pyUrl) window.open(pyUrl, '_blank');
                             }}
-                            title={t('info_pedidosya')}
                         >
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/>
-                            </svg>
+                            {t('info_pedidosya')}
                         </button>
                     )}
 
                     {/* Admin Access */}
                     {isPillEnabled('adminAccess') && (
                         <button
-                            style={{ ...iconButtonBase, background: getPillColor('adminAccess') }}
+                            style={{ ...buttonBase, background: getPillColor('adminAccess') }}
                             onClick={() => navigate(`/${tenantSlug}/owner`)}
-                            title={t('info_admin_access')}
                         >
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                            </svg>
+                            {t('info_admin_access')}
                         </button>
                     )}
                 </div>
