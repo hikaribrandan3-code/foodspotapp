@@ -12,13 +12,13 @@ const Info = ({ config }) => {
 
     if (loading) return <BurgerLoader />;
 
-    const businessName = tenantData?.venue_name || tenantData?.name || "FOODSPOT";
     const primaryColor = tenantData?.primary_color || '#DB0007';
     const whatsapp = tenantData?.whatsapp_number || tenantData?.business_info?.whatsapp || tenantData?.whatsapp;
     const address = tenantData?.address_label || tenantData?.app_config?.businessInfo?.address || tenantData?.address || '';
     const mapsUrl = tenantData?.google_maps_url || tenantData?.app_config?.businessInfo?.googleMapsLink || '';
     const businessHours = tenantData?.business_hours || tenantData?.app_config?.businessInfo?.hours || '';
     const logoUrl = tenantData?.logo_url || tenantData?.hero_url || tenantData?.branding?.logoURL;
+    const whatsappEnabled = tenantData?.whatsapp_enabled !== false && tenantData?.info_pills?.whatsapp?.enabled !== false;
 
     // Get info pills from config (set in Settings.jsx)
     const infoPills = config?.infoPills || tenantData?.info_pills || {};
@@ -102,7 +102,7 @@ const Info = ({ config }) => {
                             textAlign: 'left'
                         }}>
                             {/* WhatsApp Row */}
-                            {whatsapp && (
+                            {(whatsappEnabled || whatsapp) && (
                                 <a
                                     href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
                                     target="_blank"
@@ -172,7 +172,7 @@ const Info = ({ config }) => {
                     )}
 
                     {/* WhatsApp - only show if enabled and has number */}
-                    {isPillEnabled('whatsapp') && whatsapp && (
+                    {(isPillEnabled('whatsapp') || whatsappEnabled) && whatsapp && (
                         <a
                             href={`https://wa.me/${whatsapp.replace(/\D/g, '')}`}
                             target="_blank"

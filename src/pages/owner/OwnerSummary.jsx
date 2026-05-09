@@ -211,9 +211,13 @@ function OwnerSummary() {
         businessInfoLocalRef.current = businessInfoLocal
     }, [businessInfoLocal])
 
+    // 🛡️ TYPING LOCK: Block server sync while user is actively editing
+    const isTypingRef = useRef(false)
+
     // Sync local businessInfo from server on mount — ONLY when appConfig actually changes from server
     const lastSyncedAppConfigRef = useRef(null)
     useEffect(() => {
+        if (isTypingRef.current) return // NEVER overwrite while user is typing
         const appConfigKey = JSON.stringify(appConfig?.businessInfo)
         if (lastSyncedAppConfigRef.current === appConfigKey) return
         lastSyncedAppConfigRef.current = appConfigKey
@@ -562,8 +566,9 @@ function OwnerSummary() {
                                         <input
                                             type="text"
                                             value={businessInfoLocal?.whatsapp || ''}
+                                            onFocus={() => { isTypingRef.current = true }}
                                             onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
-                                            onBlur={showVenueSavedPill}
+                                            onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                             placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                             className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
@@ -577,8 +582,9 @@ function OwnerSummary() {
                                             <input
                                                 type="text"
                                                 value={businessInfoLocal?.address || ''}
+                                                onFocus={() => { isTypingRef.current = true }}
                                                 onChange={(e) => updateBusinessInfo('address', e.target.value)}
-                                                onBlur={showVenueSavedPill}
+                                                onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                                 placeholder={t('address_placeholder') || '123 Main St'}
                                                 className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                             />
@@ -590,8 +596,9 @@ function OwnerSummary() {
                                             <input
                                                 type="text"
                                                 value={businessInfoLocal?.googleMapsLink || ''}
+                                                onFocus={() => { isTypingRef.current = true }}
                                                 onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
-                                                onBlur={showVenueSavedPill}
+                                                onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                                 placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
                                                 className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                             />
@@ -605,8 +612,9 @@ function OwnerSummary() {
                                         <input
                                             type="text"
                                             value={businessInfoLocal?.hours || ''}
+                                            onFocus={() => { isTypingRef.current = true }}
                                             onChange={(e) => updateBusinessInfo('hours', e.target.value)}
-                                            onBlur={showVenueSavedPill}
+                                            onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                             placeholder={t('hours_placeholder') || 'Mon-Fri 9:00-21:00, Sat-Sun 10:00-18:00'}
                                             className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />

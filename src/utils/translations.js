@@ -76,6 +76,8 @@ export const translations = {
     maps_link: { es: "Google Maps Link (Acción)", en: "Google Maps Link (Action)", pt: "Link do Google Maps (Ação)" },
     maps_info: { es: "Si ambos están presentes, se mostrará un botón con la dirección que abre el mapa.", en: "If both are present, a button with the address will appear to open the map.", pt: "Se ambos estiverem presentes, aparecerá um botão com o endereço para abrir o mapa." },
     notes: { es: "Indicaciones / Notas", en: "Directions / Notes", pt: "Indicações / Notas" },
+    business_hours: { es: "Horario de Atención", en: "Business Hours", pt: "Horário de Funcionamento" },
+    hours_placeholder: { es: "Lun-Vie 9:00-21:00, Sab 10:00-18:00", en: "Mon-Fri 9:00-21:00, Sat 10:00-18:00", pt: "Seg-Sex 9:00-21:00, Sáb 10:00-18:00" },
     external_links: { es: "LINKS EXTERNOS", en: "EXTERNAL LINKS", pt: "LINKS EXTERNOS" },
     good_morning: { es: "Buenos días", en: "Good morning", pt: "Bom dia" },
     good_afternoon: { es: "Buenas tardes", en: "Good afternoon", pt: "Boa tarde" },
