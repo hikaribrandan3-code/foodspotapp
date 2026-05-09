@@ -265,6 +265,24 @@ const Settings = () => {
             
             info_pills: tenant.info_pills || {},
 
+            service_modes: (tenant.pickup_enabled !== undefined ? {
+                pickup: tenant.pickup_enabled,
+                delivery: tenant.delivery_enabled,
+                dineIn: tenant.dine_in_enabled,
+                dineInPayment: tenant.dine_in_payment_timing || 'after'
+            } : null) || tenant.app_config?.service_modes || tenant.service_modes || {
+                pickup: true,
+                delivery: true,
+                dineIn: false,
+                dineInPayment: 'after'
+            },
+            payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
+                cash: true,
+                mercado_pago: true,
+                card: false,
+                transfer: false
+            },
+
             hero_mode: tenant.hero_mode || 'text',
             hero_url: tenant.hero_url || '',
             nav_icon_mode: tenant.nav_icon_mode || 'white',
@@ -308,7 +326,7 @@ const Settings = () => {
         setHasChanges(false);
         setIsDraftReady(true);
         
-    }, [tenant?.business_id]); // Only depend on business_id, not the entire tenant object
+    }, [tenant?.business_id, tenant?.pickup_enabled]); // Depend on business_id and hydration signal
 
     // ============================================================
     // CSS VARIABLES: Apply current draft values to document
@@ -1216,7 +1234,10 @@ const Settings = () => {
                                     <div
                                         key={key}
                                         onClick={() => {
-                                            setDraft(d => ({ ...d, service_modes: { ...d.service_modes, [key]: !on } }));
+                                            setDraft(d => {
+                                                const current = d.service_modes || { pickup: true, delivery: true, dineIn: false, dineInPayment: 'after' };
+                                                return { ...d, service_modes: { ...current, [key]: !on } };
+                                            });
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -1251,7 +1272,10 @@ const Settings = () => {
                                         <button
                                             key={value}
                                             onClick={() => {
-                                                setDraft(d => ({ ...d, service_modes: { ...d.service_modes, dineInPayment: value } }));
+                                                setDraft(d => {
+                                                    const current = d.service_modes || { pickup: true, delivery: true, dineIn: false, dineInPayment: 'after' };
+                                                    return { ...d, service_modes: { ...current, dineInPayment: value } };
+                                                });
                                             }}
                                             style={{
                                                 flex: 1, padding: '10px 12px', borderRadius: 8, border: `1px solid ${active ? '#F59E0B' : '#E5E7EB'}`,
@@ -1283,7 +1307,10 @@ const Settings = () => {
                                     <div
                                         key={key}
                                         onClick={() => {
-                                            setDraft(d => ({ ...d, payment_methods: { ...d.payment_methods, [key]: !on } }));
+                                            setDraft(d => {
+                                                const current = d.payment_methods || { cash: true, mercado_pago: true, card: false, transfer: false };
+                                                return { ...d, payment_methods: { ...current, [key]: !on } };
+                                            });
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
