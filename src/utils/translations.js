@@ -172,7 +172,7 @@ export const translations = {
     secondary: { es: "Secundario", en: "Secondary", pt: "Secundário" },
     confirmation: { es: "Confirmación", en: "Confirmation", pt: "Confirmação" },
     powered_by: { es: "Powered By", en: "Powered By", pt: "Desenvolvido por" },
-    info_pills: { es: "Botones Info (Pills)", en: "Info Buttons (Pills)", pt: "Botões de Informação (Pills)" },
+    info_pills: { es: "Botones Info", en: "Info Buttons", pt: "Botões de Informação" },
     info_pills_desc: { es: "Configura colores, enlaces y visibilidad.", en: "Configure colors, links, and visibility.", pt: "Configure cores, links e visibilidade." },
     branding_saved: { es: "Marca Guardada", en: "Branding Saved", pt: "Marca Salva" },
     save_error: { es: "Error al guardar", en: "Error saving", pt: "Erro ao salvar" },
