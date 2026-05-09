@@ -696,7 +696,7 @@ export const FONT_WEIGHTS = [
 ]
 
 // Hero Icon Constants (Single Source of Truth)
-export const HERO_ICON_DARK = '#4A4036'
+export const HERO_ICON_DARK = '#000000'
 export const HERO_DEFAULT = { color: 'auto', iconColorMode: 'auto' }
 
 // Phase 1 Branding - Navbar color presets

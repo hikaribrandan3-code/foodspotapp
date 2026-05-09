@@ -106,6 +106,8 @@ export function HikariBoy({
       document.documentElement.style.removeProperty('--shell-color');
       document.documentElement.style.removeProperty('--button-a-color');
       document.documentElement.style.removeProperty('--button-b-color');
+      document.documentElement.style.removeProperty('--button-a-label-color');
+      document.documentElement.style.removeProperty('--button-b-label-color');
       
       authSelectors.forEach(selector => {
         const el = document.querySelector(selector);
@@ -115,7 +117,7 @@ export function HikariBoy({
         }
       });
     };
-  }, []);
+  }, [munchboyShellColor, munchboyAColor, munchboyBColor]);
 
   // Boot sequence - controlled by MunchboyBoot now
   useEffect(() => {
