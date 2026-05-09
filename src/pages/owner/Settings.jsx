@@ -12,6 +12,7 @@ import ColorPickerModal from '../../components/ColorPickerModal';
 import BurgerLoader from '../../components/BurgerLoader';
 import { clearAuth } from '../../utils/storage';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
+import { HERO_ICON_DARK } from '../../config/appConfig.v2.js';
 import './Settings.css';
 
 const boostSaturation = (hex) => {
@@ -747,7 +748,7 @@ const Settings = () => {
                     }}>
                         {HERO_ICON_DEFS(t).map(({ id, label, Icon }) => {
                             const bgColor = draft.hero_icons[id]?.color || DEFAULTS.heroIconColor;
-                            const iconColor = heroIconMode === 'white' ? '#FFFFFF' : '#4A4036';
+                            const iconColor = heroIconMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK;
 
                             return (
                                 <div
