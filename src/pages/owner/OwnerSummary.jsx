@@ -589,21 +589,7 @@ function OwnerSummary() {
                                                 className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                             />
                                         </div>
-                                        <div>
-                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
-                                                {t('maps_link') || 'Google Maps'}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={businessInfoLocal?.googleMapsLink || ''}
-                                                onFocus={() => { isTypingRef.current = true }}
-                                                onChange={(e) => updateBusinessInfo('googleMapsLink', e.target.value)}
-                                                onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
-                                                placeholder={t('maps_placeholder') || 'https://maps.google.com/...'}
-                                                className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
-                                            />
-                                        </div>
-                                        <p className="text-[11px] text-stone-400 dark:text-white">ℹ️ {t('maps_info') || 'Add a Google Maps link for directions'}</p>
+
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
