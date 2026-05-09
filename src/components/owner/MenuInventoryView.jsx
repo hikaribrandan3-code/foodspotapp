@@ -52,7 +52,9 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState(null);
   const saveDebounceRef = useRef(null);
+  const saveStatusTimeoutRef = useRef(null);
 
   // Load inventory from app_config on mount
   useEffect(() => {
@@ -68,6 +70,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
     if (!businessId || isLoading) return;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
+      setSaveStatus({ message: t('saving') || 'Saving...' });
       const payload = {
         app_config: deepMergeAppConfig(tenantData?.app_config || {}, {
           inventory: {
@@ -76,16 +79,28 @@ export default function MenuInventoryView({ lang = 'en' }) {
           }
         })
       };
-      updateBranding(payload, businessId).catch(err => {
-        const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
-        if (isForbidden) {
-          console.error('[MenuInventoryView] 🚨 403 FORBIDDEN — Inventory save blocked. Please log in as owner.');
-        } else {
-          console.error('[MenuInventoryView] Save failed:', err);
-        }
-      });
+      updateBranding(payload, businessId)
+        .then(() => {
+          setSaveStatus({ message: t('saved') || 'Saved' });
+          if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
+          saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 2000);
+        })
+        .catch(err => {
+          const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
+          if (isForbidden) {
+            console.error('[MenuInventoryView] 🚨 403 FORBIDDEN — Inventory save blocked. Please log in as owner.');
+          } else {
+            console.error('[MenuInventoryView] Save failed:', err);
+          }
+          setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
+          if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
+          saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 3000);
+        });
     }, 1000);
-    return () => clearTimeout(saveDebounceRef.current);
+    return () => {
+      clearTimeout(saveDebounceRef.current);
+      clearTimeout(saveStatusTimeoutRef.current);
+    };
   }, [items, categories, businessId, isLoading]);
 
   const lookupBarcode = async (barcode) => {
@@ -266,7 +281,29 @@ export default function MenuInventoryView({ lang = 'en' }) {
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '0 0 112px 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '0 0 112px 0', position: 'relative' }}>
+      {/* Save Status Pill */}
+      {saveStatus && (
+        <div style={{
+          position: 'fixed',
+          bottom: 24,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 100,
+          padding: '10px 20px',
+          borderRadius: 999,
+          fontSize: 13,
+          fontWeight: 600,
+          color: 'white',
+          background: saveStatus.error ? '#EF4444' : '#22C55E',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transition: 'all 0.3s ease',
+          pointerEvents: 'none',
+        }}>
+          {saveStatus.message}
+        </div>
+      )}
+
       {/* Sub-tabs: Entry / Stock / Audit */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
         {tabs.map((tab) => (
@@ -648,8 +685,8 @@ export default function MenuInventoryView({ lang = 'en' }) {
                             <input
                               type="number"
                               step="0.01"
-                              value={item.cost || 0}
-                              onChange={(e) => updateItem(item.id, { cost: Number(e.target.value) })}
+                              value={item.cost ?? ''}
+                              onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
                               style={{
                                 height: 44, padding: '0 12px', borderRadius: 12,
                                 border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,

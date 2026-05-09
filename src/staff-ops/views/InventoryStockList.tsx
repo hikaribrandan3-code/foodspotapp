@@ -1,20 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
+import { supabase } from '../../lib/supabaseClient';
 
 export const InventoryStockList: React.FC = () => {
   const { language } = useLanguage();
   const { businessId } = useBusiness();
   const t = (key: string) => (translations as any)[language]?.[key] || key;
 
-  const stockItems = [
-    { id: '1', name: 'Organic Quinoa 5kg', cat: 'Dry Goods', bin: 'Bin A42', qty: 142, status: 'nominal' },
-    { id: '2', name: 'Almond Milk 1L', cat: 'Dairy Alt', bin: 'Fridge B', qty: 24, status: 'low_stock' },
-    { id: '3', name: 'Sourdough Loaves', cat: 'Bakery', bin: 'Rack 1', qty: 2, status: 'critical' },
-    { id: '4', name: 'Whole Bean Coffee 1kg', cat: 'Beverage', bin: 'Bin C12', qty: 88, status: 'nominal' },
-  ];
+  const [stockItems, setStockItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!businessId) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from('branding')
+        .select('app_config')
+        .eq('business_id', businessId)
+        .maybeSingle();
+      const items = data?.app_config?.inventory?.items || [];
+      setStockItems(items.map((it: any, idx: number) => ({
+        id: it.id || String(idx),
+        name: it.name || 'Unknown',
+        cat: it.category || 'General',
+        bin: it.location || '-',
+        qty: it.qty ?? 0,
+        min: it.min ?? 0,
+        status: (it.qty ?? 0) <= (it.min ?? 0) / 2 ? 'critical' : (it.qty ?? 0) <= (it.min ?? 0) ? 'low_stock' : 'nominal'
+      })));
+      setLoading(false);
+    };
+    load();
+  }, [businessId]);
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -32,6 +52,14 @@ export const InventoryStockList: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen pb-20 items-center justify-center" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
+        <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{t('loading') || 'Loading...'}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen pb-20" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       <main className="px-4 pt-2 flex flex-col gap-4">
@@ -43,6 +71,11 @@ export const InventoryStockList: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-3">
+          {stockItems.length === 0 && (
+            <div className="text-center py-12 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+              {t('no_items') || 'No inventory items yet.'}
+            </div>
+          )}
           {stockItems.map(item => (
             <article 
               key={item.id} 

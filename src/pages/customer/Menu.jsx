@@ -412,8 +412,9 @@ export default function Menu({ config: configProp }) {
     }
 
     const getItemImage = (item) => {
-        if (item.image && !item.image.startsWith('blob:')) {
-            return getOptimizedImageUrl(item.image, { width: 400, quality: 75, format: 'webp' })
+        const itemImage = item.image || item.image_url
+        if (itemImage && !itemImage.startsWith('blob:')) {
+            return getOptimizedImageUrl(itemImage, { width: 400, quality: 75, format: 'webp' })
         }
         return `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80`
     }

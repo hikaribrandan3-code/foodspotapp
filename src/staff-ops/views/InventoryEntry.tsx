@@ -507,8 +507,8 @@ export const InventoryEntry: React.FC = () => {
                         <input
                           type="number"
                           step="0.01"
-                          value={(item as any).cost || 0}
-                          onChange={(e) => updateItem(item.id, { cost: Number(e.target.value) })}
+                          value={(item as any).cost ?? ''}
+                          onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
                           className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent"
                           style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
                         />

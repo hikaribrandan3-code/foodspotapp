@@ -44,8 +44,9 @@ const ItemCard = ({
 
     const [imgError, setImgError] = useState(false)
     // Image Source Logic - Optimized
-    const imageSrc = (item.image && !item.image.startsWith('blob:') && !imgError)
-        ? getOptimizedImageUrl(item.image, { width: 300, quality: 75, format: 'webp' })
+    const itemImage = item.image || item.image_url
+    const imageSrc = (itemImage && !itemImage.startsWith('blob:') && !imgError)
+        ? getOptimizedImageUrl(itemImage, { width: 300, quality: 75, format: 'webp' })
         : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80'
 
     const hasAnyTag = item.is_vegan || item.is_gluten_free || item.is_spicy || item.featured

@@ -37,8 +37,9 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
 
   if (!isOpen || !item) return null
 
-  const imageSrc = (item.image && !item.image.startsWith('blob:') && !imgError)
-    ? getOptimizedImageUrl(item.image, { width: 600, quality: 80 })
+  const itemImage = item.image || item.image_url
+  const imageSrc = (itemImage && !itemImage.startsWith('blob:') && !imgError)
+    ? getOptimizedImageUrl(itemImage, { width: 600, quality: 80 })
     : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=338&fit=crop&q=80'
 
   const handleAddToCart = () => {

@@ -222,7 +222,8 @@ function Order({ config: configProp }) {
     }
 
     const getItemImage = (item, index) => {
-        if (item.image) return item.image
+        const itemImage = item.image || item.image_url
+        if (itemImage) return itemImage
         return placeholderImages[index % placeholderImages.length]
     }
 
