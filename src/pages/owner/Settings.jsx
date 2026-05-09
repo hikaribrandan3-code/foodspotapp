@@ -750,7 +750,6 @@ const Settings = () => {
                         {/* MP TOKEN WARNING */}
                         {draft.payment_methods?.mercado_pago && !tenant?.mp_access_token && (
                             <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 16 }}>⚠️</span>
                                 <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
                                     Mercado Pago is enabled but no Access Token is configured. Customers won't be able to complete payment. Go to Payments to add your token.
                                 </span>
@@ -1269,9 +1268,8 @@ const Settings = () => {
                     {/* DINE-IN: Always pay at the end */}
                     {draft.service_modes?.dineIn && (
                         <div style={{ marginBottom: 20, padding: '10px 12px', background: '#F3F4F6', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 14 }}>😊</span>
                             <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>
-                                {t('dine_in_pay_at_end') || 'Dine-in customers pay at the end of their meal'}
+                                Dine-in customers pay at the end of their meal.
                             </span>
                         </div>
                     )}
@@ -1315,7 +1313,6 @@ const Settings = () => {
                         {/* MP TOKEN WARNING */}
                         {draft.payment_methods?.mercado_pago && !tenant?.mp_access_token && (
                             <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 16 }}>⚠️</span>
                                 <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
                                     Mercado Pago is enabled but no Access Token is configured. Customers won't be able to complete payment. Go to Payments to add your token.
                                 </span>
