@@ -492,7 +492,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
               <div key={cat} className="shrink-0">
                 <button
                   onClick={() => handleCategoryInteraction(cat)}
-                  className="px-4 py-2 rounded-xl whitespace-nowrap text-sm font-medium transition-all border flex items-center gap-2 cursor-pointer appearance-none"
+                  className="px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-all border flex items-center gap-2 cursor-pointer appearance-none"
                   style={{
                     backgroundColor: activeCategory === cat ? '#ecfdf5' : '#ffffff',
                     color: activeCategory === cat ? '#059669' : '#0f172a',
