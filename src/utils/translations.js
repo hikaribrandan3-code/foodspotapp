@@ -514,6 +514,7 @@ export const translations = {
     pay_before_upfront: { es: "Pagar Antes (Adelante)", en: "Pay Before (Upfront)", pt: "Pagar Antes (Adiantado)" },
     pay_after_table: { es: "Pagar Después (Al Final)", en: "Pay After (At End)", pt: "Pagar Depois (No Final)" },
     dine_in_pay_at_end_message: { es: "Pagás al final — ¡que disfrutes tu comida!", en: "You pay at the end — enjoy your meal!", pt: "Você paga no final — aproveite sua refeição!" },
+    dine_in_pay_at_end: { es: "Los clientes de comer en local pagan al final de su comida.", en: "Dine-in customers pay at the end of their meal.", pt: "Os clientes que comem no local pagam no final da refeição." },
     payment_methods_label: { es: "Métodos de Pago", en: "Payment Methods", pt: "Métodos de Pagamento" },
     pickup: { es: "Retiro", en: "Pickup", pt: "Retirada" },
     coming_soon: { es: "Próximamente", en: "Coming Soon", pt: "Em Breve" },
