@@ -145,29 +145,7 @@ const Info = ({ config }) => {
                                 </div>
                             )}
 
-                            {/* Google Maps CTA */}
-                            {mapsUrl && (
-                                <a
-                                    href={mapsUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        display: 'block',
-                                        width: '100%',
-                                        padding: '14px',
-                                        background: '#FF6B00',
-                                        color: '#FFFFFF',
-                                        borderRadius: 14,
-                                        textAlign: 'center',
-                                        textDecoration: 'none',
-                                        fontWeight: 800,
-                                        fontSize: '0.95rem',
-                                        letterSpacing: '-0.01em'
-                                    }}
-                                >
-                                    Open in Google Maps →
-                                </a>
-                            )}
+
                         </div>
                     )}
 
