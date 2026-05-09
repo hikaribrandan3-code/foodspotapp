@@ -220,7 +220,12 @@ const Settings = () => {
             app_config: {
                 ...(tenant.app_config || {}),
                 // Payment & Fulfillment — stored in app_config JSONB
-                service_modes: tenant.app_config?.service_modes || tenant.service_modes || {
+                service_modes: (tenant.pickup_enabled !== undefined ? {
+                    pickup: tenant.pickup_enabled,
+                    delivery: tenant.delivery_enabled,
+                    dineIn: tenant.dine_in_enabled,
+                    dineInPayment: tenant.dine_in_payment_timing || 'after'
+                } : null) || tenant.app_config?.service_modes || tenant.service_modes || {
                     pickup: true,
                     delivery: true,
                     dineIn: false,
@@ -449,6 +454,10 @@ const Settings = () => {
                 hero_icons: draft.hero_icons,
                 hero_icon_mode: draft.hero_icon_mode,
                 info_pills: draft.info_pills,
+                pickup_enabled: draft.service_modes?.pickup ?? true,
+                delivery_enabled: draft.service_modes?.delivery ?? true,
+                dine_in_enabled: draft.service_modes?.dineIn ?? false,
+                dine_in_payment_timing: draft.service_modes?.dineInPayment || 'after',
                 app_config: deepMergeAppConfig(
                     tenant?.app_config || draft.app_config || {},
                     {

@@ -268,6 +268,7 @@ const CORE_BRANDING_COLUMNS = [
     'hero_mode', 'hero_url', 'nav_icon_mode', 'hero_icon_mode',
     'is_paused', 'pause_message',
     'delivery_radius', 'delivery_fee', 'free_delivery_threshold',
+    'pickup_enabled', 'delivery_enabled', 'dine_in_enabled', 'dine_in_payment_timing',
     'menu_data', 'app_config',
     'updated_at'
 ];

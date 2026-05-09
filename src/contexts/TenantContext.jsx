@@ -234,7 +234,11 @@ export function TenantProvider({ children }) {
                     console.log('[TenantLock] 🔄 Branding Update Received:', payload.new);
                     setTenantData(prev => ({
                         ...prev,
-                        app_config: payload.new.app_config || prev.app_config
+                        app_config: payload.new.app_config || prev.app_config,
+                        pickup_enabled: payload.new.pickup_enabled !== undefined ? payload.new.pickup_enabled : prev.pickup_enabled,
+                        delivery_enabled: payload.new.delivery_enabled !== undefined ? payload.new.delivery_enabled : prev.delivery_enabled,
+                        dine_in_enabled: payload.new.dine_in_enabled !== undefined ? payload.new.dine_in_enabled : prev.dine_in_enabled,
+                        dine_in_payment_timing: payload.new.dine_in_payment_timing !== undefined ? payload.new.dine_in_payment_timing : prev.dine_in_payment_timing,
                     }));
                 }
             )
@@ -333,12 +337,23 @@ export function TenantProvider({ children }) {
     const contextValue = {
         businessId,
         tenantData,
-        serviceModes: tenantData?.app_config?.service_modes || tenantData?.service_modes || {
-            pickup: true,
-            delivery: true,
-            dineIn: false,
-            dineInPayment: 'after'
-        },
+        serviceModes: (() => {
+            // NEW: Read from flat columns (source of truth post-migration)
+            const fromFlat = tenantData?.pickup_enabled !== undefined ? {
+                pickup: tenantData.pickup_enabled,
+                delivery: tenantData.delivery_enabled,
+                dineIn: tenantData.dine_in_enabled,
+                dineInPayment: tenantData.dine_in_payment_timing || 'after'
+            } : null;
+            // FALLBACK: Read from app_config JSONB (pre-migration rows)
+            const fromJsonb = tenantData?.app_config?.service_modes || tenantData?.service_modes || null;
+            return fromFlat || fromJsonb || {
+                pickup: true,
+                delivery: true,
+                dineIn: false,
+                dineInPayment: 'after'
+            };
+        })(),
         loading,
         error,
         trialExpired,
