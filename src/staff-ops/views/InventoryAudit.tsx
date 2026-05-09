@@ -150,7 +150,7 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
             className="fixed left-1/2 -translate-x-1/2 z-[9999] px-5 py-2.5 rounded-full text-[13px] font-semibold text-white shadow-xl pointer-events-none"
             style={{
               bottom: isEmbedded ? 80 : 24,
-              background: saveStatus.error ? '#EF4444' : '#22C55E',
+              background: saveStatus.error ? '#EF4444' : '#059669',
             }}
           >
             {saveStatus.message}
@@ -166,7 +166,7 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, o
         </div>
 
         <div className="flex justify-between items-end mb-6 pt-2">
-          <button className="flex items-center gap-1 px-3 py-1.5 rounded-md border transition-colors shadow-sm" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
+          <button className="flex items-center gap-1 px-3 py-1.5 rounded-full border transition-colors shadow-sm" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
             <span className="text-[15px] font-medium text-[var(--text-primary)]">All Tags</span>
             <SlidersHorizontal size={18} className="text-[var(--text-tertiary)]" />
           </button>

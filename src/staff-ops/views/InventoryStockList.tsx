@@ -73,7 +73,7 @@ export const InventoryStockList: React.FC<InventoryStockListProps> = ({ external
     <div className="flex flex-col min-h-screen pb-20" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
       <main className="px-4 pt-2 flex flex-col gap-4">
         <div className="flex justify-between items-end mb-4">
-          <button className="flex items-center gap-1 px-3 py-1.5 rounded-md border transition-colors shadow-sm" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
+          <button className="flex items-center gap-1 px-3 py-1.5 rounded-full border transition-colors shadow-sm" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
             <span className="text-[13px] font-medium text-[var(--text-primary)]">All Tags</span>
             <SlidersHorizontal size={18} className="text-[var(--text-tertiary)]" />
           </button>

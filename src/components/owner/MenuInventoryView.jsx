@@ -8,6 +8,7 @@ import { deepMergeAppConfig } from '../../utils/appConfig';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { InventoryStockList } from '../../staff-ops/views/InventoryStockList.tsx';
 import { InventoryAudit } from '../../staff-ops/views/InventoryAudit.tsx';
+import { InventoryEntry } from '../../staff-ops/views/InventoryEntry.tsx';
 
 const EMERALD = '#059669';
 
@@ -37,26 +38,13 @@ export default function MenuInventoryView({ lang = 'en' }) {
   const t = (key) => staffTranslations[key]?.[lang] || staffTranslations[key]?.['en'] || key;
 
   const [activeTab, setActiveTab] = useState('entry');
-
-  // Entry tab state
-  const [expandedItems, setExpandedItems] = useState([]);
-  const [search, setSearch] = useState('');
   const [categories, setCategories] = useState(['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [lastClick, setLastClick] = useState(null);
-
-  // Scanner
-  const [showScanner, setShowScanner] = useState(false);
-  const [scanResult, setScanResult] = useState(null);
-  const [scanLoading, setScanLoading] = useState(false);
-  const [scanQty, setScanQty] = useState(1);
-  const [scanUnit, setScanUnit] = useState('units');
-
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const saveDebounceRef = useRef(null);
+  const isSyncing = useRef(false);
 
   // Load inventory from app_config on mount
   useEffect(() => {
@@ -89,6 +77,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
         .then(() => {
           setSaveStatus({ message: t('saved') || 'Saved' });
           setIsDirty(false);
+          isSyncing.current = true;
         })
         .catch(err => {
           const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
@@ -112,165 +101,9 @@ export default function MenuInventoryView({ lang = 'en' }) {
     return () => clearTimeout(timer);
   }, [saveStatus]);
 
-  const lookupBarcode = async (barcode) => {
-    try {
-      const { data, error } = await supabase
-        .from('inventory')
-        .select('name, category, price, cost, supplier, unit')
-        .eq('barcode', barcode)
-        .eq('business_id', businessId)
-        .maybeSingle();
-      if (error || !data) return null;
-      return data;
-    } catch {
-      return null;
-    }
-  };
-
-  const addItem = (item) => {
-    const newItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: item.name,
-      category: item.category || (activeCategory === 'All' ? categories[1] || 'Food' : activeCategory),
-      qty: item.qty,
-      min: item.min || 0,
-      max: item.max || 100,
-      unit: item.unit || scanUnit || 'units',
-      expiryDate: item.expiryDate || '',
-      location: item.location || '',
-      supplier: item.supplier || '',
-      cost: item.cost || 0,
-      price: item.price || 0,
-      barcode: item.barcode || '',
-      tags: item.tags || []
-    };
-    setItems([newItem, ...items]);
-    setExpandedItems([newItem.id]);
-    setIsDirty(true);
-  };
-
-  useEffect(() => {
-    let scanner = null;
-    if (showScanner && !scanResult) {
-      try {
-        scanner = new Html5QrcodeScanner(
-          "reader",
-          {
-            fps: 15,
-            qrbox: { width: 250, height: 250 },
-            disableFlip: false,
-            supportedScanTypes: [0],
-            videoConstraints: { facingMode: 'environment' },
-          },
-          false
-        );
-        scanner.render(
-          async (decodedText) => {
-            setScanLoading(true);
-            const foundItem = await lookupBarcode(decodedText);
-            setScanLoading(false);
-            setScanResult(foundItem
-              ? { ...foundItem, barcode: decodedText }
-              : { name: t('item_not_found'), category: t('uncategorized'), barcode: decodedText, price: 0 }
-            );
-            scanner?.clear();
-          },
-          () => {}
-        );
-      } catch (err) {
-        console.error("Scanner setup failed", err);
-      }
-    }
-    return () => {
-      if (scanner) {
-        try { scanner.stop().catch(() => {}); } catch {}
-        try { scanner.clear().catch(() => {}); } catch {}
-      }
-    };
-  }, [showScanner, scanResult]);
-
-  const confirmScanAdd = () => {
-    if (scanResult) {
-      if (scanResult.name === t('item_not_found')) {
-        const name = prompt(t('item_name'));
-        if (name) addItem({ name, category: 'Food', qty: scanQty, barcode: scanResult.barcode });
-      } else {
-        addItem({
-          name: scanResult.name,
-          category: scanResult.category,
-          qty: scanQty,
-          barcode: scanResult.barcode,
-          cost: scanResult.cost,
-          price: scanResult.price,
-          supplier: scanResult.supplier,
-          unit: scanResult.unit,
-        });
-      }
-      setShowScanner(false);
-      setScanResult(null);
-      setScanQty(1);
-    }
-  };
-
-  const updateItem = (id, updates) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
-    setIsDirty(true);
-  };
-
   const updateQty = (id, delta) => {
     setItems(prev => prev.map(item => item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item));
     setIsDirty(true);
-  };
-
-  const toggleExpand = (id) => {
-    setExpandedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
-
-  const addCategory = () => {
-    const name = prompt(t('add_category'));
-    if (name) {
-      setCategories([...categories, name]);
-      setIsDirty(true);
-    }
-  };
-
-  const activeItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const manageCategory = (cat) => {
-    const action = prompt(`${t('edit_category')} "${cat}"? \n1. ${t('rename')}\n2. ${t('delete')}\n3. Cancel`, "1");
-    if (action === "1") {
-      const newName = prompt(`${t('rename')} "${cat}" to:`, cat);
-      if (newName && newName !== cat) {
-        setCategories(prev => prev.map(c => c === cat ? newName : c));
-        setItems(prev => prev.map(item => item.category === cat ? { ...item, category: newName } : item));
-        setActiveCategory(newName);
-        setIsDirty(true);
-      }
-    } else if (action === "2") {
-      if (confirm(`${t('delete')} category "${cat}"?`)) {
-        const firstCat = categories.find(c => c !== cat) || t('uncategorized');
-        setCategories(prev => prev.filter(c => c !== cat));
-        setItems(prev => prev.map(item => item.category === cat ? { ...item, category: firstCat } : item));
-        setActiveCategory(firstCat);
-        setIsDirty(true);
-      }
-    }
-  };
-
-  const handleCategoryInteraction = (cat) => {
-    if (cat === 'All') { setActiveCategory('All'); return; }
-    const now = Date.now();
-    if (lastClick && lastClick.id === cat && (now - lastClick.time) < 500) {
-      manageCategory(cat);
-      setLastClick(null);
-    } else {
-      setActiveCategory(cat);
-      setLastClick({ id: cat, time: now });
-    }
   };
 
   const tabs = [
@@ -318,7 +151,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
               fontSize: 13,
               fontWeight: 600,
               color: 'white',
-              background: saveStatus.error ? '#EF4444' : '#22C55E',
+              background: saveStatus.error ? '#EF4444' : '#059669',
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               pointerEvents: 'none',
             }}
@@ -343,466 +176,23 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
       {/* ENTRY TAB */}
       {activeTab === 'entry' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Search & Add */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{
-              position: 'relative',
-              height: 48,
-              borderRadius: 12,
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0 12px',
-              gap: 8,
-              flex: 1,
-              border: `1px solid ${colors.counterBorder}`,
-              backgroundColor: colors.counterBg,
-            }}>
-              <Search size={18} style={{ color: colors.textTertiary, flexShrink: 0 }} />
-              <input
-                type="text"
-                placeholder={t('search_items')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  width: '100%',
-                  fontSize: 14,
-                  color: colors.textPrimary,
-                }}
-              />
-            </div>
-            <button
-              onClick={() => setShowScanner(true)}
-              style={{
-                width: 48, height: 48, borderRadius: 12,
-                backgroundColor: EMERALD, color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: 'none', cursor: 'pointer', flexShrink: 0,
-              }}
-            >
-              <Camera size={20} />
-            </button>
-            <button
-              onClick={() => {
-                const name = prompt(t('item_name'));
-                if (name) addItem({ name, qty: 0 });
-              }}
-              style={{
-                width: 48, height: 48, borderRadius: 12,
-                backgroundColor: colors.navBg, color: colors.textPrimary,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: `1px solid ${colors.navBorder}`, cursor: 'pointer', flexShrink: 0,
-              }}
-            >
-              <Plus size={20} />
-            </button>
-          </div>
-
-          {/* Scanner Overlay */}
-          <AnimatePresence>
-            {showScanner && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{
-                  position: 'fixed', inset: 0, zIndex: 100,
-                  background: 'black', display: 'flex',
-                  flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  padding: 24,
-                }}
-              >
-                <button
-                  onClick={() => { setShowScanner(false); setScanResult(null); }}
-                  style={{
-                    position: 'absolute', top: 48, right: 24,
-                    padding: 8, borderRadius: 9999, background: 'rgba(255,255,255,0.1)',
-                    color: 'white', border: 'none', cursor: 'pointer',
-                  }}
-                >
-                  <X size={24} />
-                </button>
-
-                <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {scanLoading ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '48px 0' }}>
-                      <div style={{
-                        width: 48, height: 48,
-                        border: '4px solid rgba(255,255,255,0.2)',
-                        borderTopColor: 'white', borderRadius: '50%',
-                        animation: 'spin 1s linear infinite',
-                      }} />
-                      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 500 }}>Looking up item...</p>
-                    </div>
-                  ) : !scanResult ? (
-                    <>
-                      <div style={{ textAlign: 'center' }}>
-                        <h2 style={{ color: 'white', fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{t('scanning')}</h2>
-                        <p style={{ color: 'rgba(255,255,255,0.6)' }}>{t('point_camera')}</p>
-                      </div>
-                      <div id="reader" style={{
-                        width: '100%', aspectRatio: '1',
-                        overflow: 'hidden', borderRadius: 24,
-                        border: `2px solid ${EMERALD}`, background: 'rgba(255,255,255,0.05)',
-                      }} />
-                      <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Allow camera access when prompted</p>
-                    </>
-                  ) : (
-                    <motion.div
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      style={{
-                        background: 'white', borderRadius: 32, padding: 32,
-                        display: 'flex', flexDirection: 'column', gap: 24,
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        <div style={{
-                          width: 64, height: 64, borderRadius: 16,
-                          backgroundColor: EMERALD, color: 'white',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          {scanResult.name === t('item_not_found') ? <Search size={32} /> : <Check size={32} />}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 14, fontWeight: 700, letterSpacing: '0.05em', color: '#9ca3af' }}>{t('found')}</p>
-                          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#111827', lineHeight: 1.2, margin: 0 }}>{scanResult.name}</h2>
-                          <p style={{ color: '#6b7280', fontWeight: 500 }}>{scanResult.category} &bull; {scanResult.barcode}</p>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <label style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', color: '#9ca3af', marginLeft: 4 }}>{t('quantity')}</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                          <div style={{
-                            flex: 1, height: 64, borderRadius: 16,
-                            background: '#f3f4f6', display: 'flex', alignItems: 'center',
-                            padding: '0 24px', gap: 16,
-                          }}>
-                            <input
-                              type="number"
-                              value={scanQty}
-                              onChange={(e) => setScanQty(Number(e.target.value))}
-                              style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 24, fontWeight: 700, color: '#111827', width: '100%' }}
-                            />
-                            <select
-                              value={scanUnit}
-                              onChange={(e) => setScanUnit(e.target.value)}
-                              style={{ background: 'transparent', border: 'none', outline: 'none', color: '#6b7280', fontWeight: 700 }}
-                            >
-                              <option value="units">{t('units')}</option>
-                              <option value="lbs">{t('lbs')}</option>
-                              <option value="kg">kg</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-                        <button
-                          onClick={() => setScanResult(null)}
-                          style={{
-                            flex: 1, height: 56, borderRadius: 16,
-                            border: '2px solid #f3f4f6', background: 'transparent',
-                            fontWeight: 700, color: '#6b7280', cursor: 'pointer',
-                          }}
-                        >
-                          {scanResult.name === t('item_not_found') ? t('cancel') : 'Scan again'}
-                        </button>
-                        <button
-                          onClick={confirmScanAdd}
-                          style={{
-                            flex: 2, height: 56, borderRadius: 16,
-                            backgroundColor: EMERALD, fontWeight: 700, color: 'white',
-                            border: 'none', cursor: 'pointer',
-                          }}
-                        >
-                          {scanResult.name === t('item_not_found') ? 'Add new item' : t('confirm_scan')}
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Categories */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', color: colors.textTertiary, paddingLeft: 4 }}>Category</p>
-              <button
-                onClick={addCategory}
-                style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, color: EMERALD, background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                <Plus size={14} />
-                {t('add_category')}
-              </button>
-            </div>
-            <div style={{ display: 'flex', overflowX: 'auto', gap: 8, paddingBottom: 8 }}>
-              {categories.map((cat) => (
-                <div key={cat} style={{ flexShrink: 0 }}>
-                  <button
-                    onClick={() => handleCategoryInteraction(cat)}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: 12,
-                      whiteSpace: 'nowrap',
-                      fontSize: 14,
-                      fontWeight: 500,
-                      transition: 'all 0.2s',
-                      border: '1px solid',
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      cursor: 'pointer',
-                      backgroundColor: activeCategory === cat ? colors.filterActiveBg : colors.filterInactiveBg,
-                      color: activeCategory === cat ? colors.filterActiveText : colors.textPrimary,
-                      borderColor: activeCategory === cat ? colors.filterActiveBorder : colors.navBorder,
-                    }}
-                  >
-                    {cat === 'All' ? t('all') : cat}
-                    {activeCategory === cat && cat !== 'All' && (
-                      <span
-                        onClick={(e) => { e.stopPropagation(); manageCategory(cat); }}
-                        style={{ marginLeft: 4, opacity: 0.6, cursor: 'pointer' }}
-                      >
-                        <Settings size={14} />
-                      </span>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Item List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {activeItems.length > 0 ? activeItems.map(item => {
-              const isExpanded = expandedItems.includes(item.id);
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    overflow: 'hidden',
-                    transition: 'all 0.2s',
-                    backgroundColor: isExpanded ? colors.cardBg : colors.navBg,
-                    border: `1px solid ${isExpanded ? colors.cardBorderStrong : colors.navBorder}`,
-                    borderRadius: 16,
-                  }}
-                >
-                  <div
-                    style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}
-                    onClick={() => toggleExpand(item.id)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', width: '100%' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ fontSize: 18, fontWeight: 900, fontStyle: 'italic', fontFamily: "'Outfit', sans-serif", color: colors.textPrimary, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.name}
-                        </h3>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
-                          <span style={{
-                            fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 6,
-                            backgroundColor: colors.filterBg, color: colors.textSecondary, border: `1px solid ${colors.navBorder}`,
-                          }}>
-                            {item.category}
-                          </span>
-                          {item.tags?.map(tag => (
-                            <span key={tag} style={{
-                              fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 6,
-                              backgroundColor: '#fff7ed', color: '#ea580c', border: '1px solid #fed7aa',
-                            }}>
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {!isExpanded && (
-                        <div style={{ textAlign: 'right', marginLeft: 12, flexShrink: 0 }}>
-                          <p style={{ fontSize: 18, fontWeight: 700, color: EMERALD, margin: 0 }}>{item.qty}</p>
-                          <p style={{ fontSize: 11, fontWeight: 500, color: colors.textTertiary, margin: 0 }}>{item.unit}</p>
-                        </div>
-                      )}
-
-                      <div style={{ marginLeft: 8, flexShrink: 0, color: colors.textTertiary }}>
-                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 8, paddingTop: 16, borderTop: `1px solid ${colors.navBorder}` }} onClick={(e) => e.stopPropagation()}>
-                        {/* Basic Info */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Category</label>
-                            <select
-                              value={item.category}
-                              onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                              style={{
-                                height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                                color: colors.textPrimary, fontSize: 14, outline: 'none',
-                              }}
-                            >
-                              {categories.filter(c => c !== 'All').map(c => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Unit type</label>
-                            <select
-                              value={item.unit}
-                              onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                              style={{
-                                height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                                color: colors.textPrimary, fontSize: 14, outline: 'none',
-                              }}
-                            >
-                              <option value="units">Units</option>
-                              <option value="kg">kg</option>
-                              <option value="lbs">Lbs</option>
-                              <option value="liters">Liters</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Supply Chain */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Supplier</label>
-                            <input
-                              type="text"
-                              value={item.supplier || ''}
-                              onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
-                              placeholder="e.g. Sysco"
-                              style={{
-                                height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                                color: colors.textPrimary, fontSize: 14, outline: 'none',
-                              }}
-                            />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Min stock</label>
-                            <input
-                              type="number"
-                              value={item.min || 0}
-                              onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
-                              style={{
-                                height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                                color: colors.textPrimary, fontSize: 14, outline: 'none',
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Pricing */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Cost ($)</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={item.cost ?? ''}
-                              onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
-                              style={{
-                                height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                                color: colors.textPrimary, fontSize: 14, outline: 'none',
-                              }}
-                            />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: EMERALD }}>Price ($)</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={item.price || ''}
-                              onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
-                              style={{
-                                height: 44, padding: '0 12px', borderRadius: 12,
-                                border: `1px solid ${EMERALD}`, backgroundColor: colors.filterBg,
-                                color: colors.textPrimary, fontSize: 14, outline: 'none', fontWeight: 600,
-                              }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Tags */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Tags</label>
-                          <input
-                            type="text"
-                            value={item.tags?.join(', ') || ''}
-                            onChange={(e) => updateItem(item.id, { tags: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '') })}
-                            placeholder="Low stock, organic"
-                            style={{
-                              height: 44, padding: '0 12px', borderRadius: 12,
-                              border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                              color: colors.textPrimary, fontSize: 14, outline: 'none',
-                            }}
-                          />
-                        </div>
-
-                        {/* Quantity */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          <label style={{ fontSize: 12, fontWeight: 500, marginLeft: 4, color: colors.textTertiary }}>Quantity</label>
-                          <div style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            borderRadius: 12, overflow: 'hidden',
-                            border: `1px solid ${colors.navBorder}`, backgroundColor: colors.filterBg,
-                          }}>
-                            <input
-                              type="number"
-                              value={item.qty}
-                              disabled
-                              style={{
-                                height: 44, flex: 1, background: 'transparent',
-                                border: 'none', textAlign: 'center', fontSize: 16,
-                                fontWeight: 700, color: EMERALD, outline: 'none',
-                              }}
-                            />
-                            <button
-                              onClick={() => updateQty(item.id, 1)}
-                              style={{
-                                height: 44, padding: '0 16px',
-                                backgroundColor: EMERALD, color: 'white',
-                                fontWeight: 600, fontSize: 14,
-                                display: 'flex', alignItems: 'center', gap: 8,
-                                border: 'none', cursor: 'pointer',
-                              }}
-                            >
-                              <Plus size={16} />
-                              Restock
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            }) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 0', textAlign: 'center', color: colors.textTertiary }}>
-                <Package size={48} style={{ marginBottom: 12, color: colors.emptyIcon }} />
-                <p style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
-                  {activeCategory === 'All' ? 'No items found' : `Empty "${activeCategory}" category`}
-                </p>
-                <p style={{ fontSize: 12, marginTop: 4, opacity: 0.6 }}>
-                  Start building your inventory by adding your first item.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        <InventoryEntry
+          externalItems={items}
+          externalCategories={categories}
+          onItemsChange={(next) => {
+            if (isSyncing.current) { isSyncing.current = false; return; }
+            setItems(next);
+            setIsDirty(true);
+          }}
+          onCategoriesChange={(next) => {
+            if (isSyncing.current) { isSyncing.current = false; return; }
+            setCategories(next);
+            setIsDirty(true);
+          }}
+          onDirty={() => setIsDirty(true)}
+          businessId={businessId || tenantData?.business_id}
+        />
       )}
-
       {/* STOCK TAB */}
       {activeTab === 'stock' && (
         <InventoryStockList externalItems={items} />

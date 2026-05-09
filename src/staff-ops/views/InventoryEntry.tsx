@@ -10,9 +10,27 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 
 const GREEN = '#059669';
 
-export const InventoryEntry: React.FC = () => {
+interface InventoryEntryProps {
+  externalItems?: any[];
+  externalCategories?: string[];
+  onItemsChange?: (items: any[]) => void;
+  onCategoriesChange?: (categories: string[]) => void;
+  onDirty?: () => void;
+  businessId?: string;
+}
+
+export const InventoryEntry: React.FC<InventoryEntryProps> = ({
+  externalItems,
+  externalCategories,
+  onItemsChange,
+  onCategoriesChange,
+  onDirty,
+  businessId: businessIdProp,
+}) => {
+  const isEmbedded = !!externalItems;
   const { language } = useLanguage();
-  const { businessId } = useBusiness();
+  const { businessId: ctxBusinessId } = useBusiness();
+  const businessId = businessIdProp || ctxBusinessId;
   const t = (key: string) => (translations as any)[key]?.[language] || key;
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -20,7 +38,7 @@ export const InventoryEntry: React.FC = () => {
   const [categories, setCategories] = useState(['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
   const [activeCategory, setActiveCategory] = useState('All');
   const [lastClick, setLastClick] = useState<{ id: string, time: number } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isEmbedded);
   const [saveStatus, setSaveStatus] = useState<{ message: string; error?: boolean } | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -34,10 +52,52 @@ export const InventoryEntry: React.FC = () => {
   const [items, setItems] = useState<any[]>([]);
   const [cachedAppConfig, setCachedAppConfig] = useState<any>({});
   const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSyncing = useRef(false);
+
+  // Sync external props into local state
+  useEffect(() => {
+    if (externalItems) {
+      isSyncing.current = true;
+      setItems(externalItems);
+    }
+  }, [externalItems]);
+
+  useEffect(() => {
+    if (externalCategories) {
+      isSyncing.current = true;
+      setCategories(externalCategories);
+    }
+  }, [externalCategories]);
+
+  // Notify parent of local changes
+  useEffect(() => {
+    if (isEmbedded && onItemsChange && !isSyncing.current) {
+      onItemsChange(items);
+    }
+    isSyncing.current = false;
+  }, [items]);
+
+  useEffect(() => {
+    if (isEmbedded && onCategoriesChange && !isSyncing.current) {
+      onCategoriesChange(categories);
+    }
+    isSyncing.current = false;
+  }, [categories]);
+
+  const markDirty = () => {
+    if (onDirty) {
+      onDirty();
+    } else {
+      setIsDirty(true);
+    }
+  };
 
   // Load inventory from branding.app_config on mount
   useEffect(() => {
+    if (isEmbedded) {
+      setIsLoading(false);
+      return;
+    }
     if (!businessId) return;
     const load = async () => {
       const { data } = await supabase
@@ -52,11 +112,11 @@ export const InventoryEntry: React.FC = () => {
       setIsLoading(false);
     };
     load();
-  }, [businessId]);
+  }, [businessId, isEmbedded]);
 
   // Debounced auto-save to branding.app_config
   useEffect(() => {
-    if (!businessId || isLoading || !isDirty) return;
+    if (isEmbedded || !businessId || isLoading || !isDirty) return;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
       setSaveStatus({ message: t('saving') || 'Saving...' });
@@ -78,7 +138,7 @@ export const InventoryEntry: React.FC = () => {
     return () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     };
-  }, [items, categories, businessId, isLoading, isDirty]);
+  }, [items, categories, businessId, isLoading, isDirty, isEmbedded]);
 
   // Auto-hide save pill independently
   useEffect(() => {
@@ -123,7 +183,7 @@ export const InventoryEntry: React.FC = () => {
     };
     setItems([newItem, ...items]);
     setExpandedItems([newItem.id]);
-    setIsDirty(true);
+    markDirty();
   };
 
   useEffect(() => {
@@ -192,14 +252,14 @@ export const InventoryEntry: React.FC = () => {
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, ...updates } : item
     ));
-    setIsDirty(true);
+    markDirty();
   };
 
   const updateQty = (id: string, delta: number) => {
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item
     ));
-    setIsDirty(true);
+    markDirty();
   };
 
   const toggleExpand = (id: string) => {
@@ -212,7 +272,7 @@ export const InventoryEntry: React.FC = () => {
     const name = prompt(t('add_category'));
     if (name) {
       setCategories([...categories, name]);
-      setIsDirty(true);
+      markDirty();
     }
   };
 
@@ -230,7 +290,7 @@ export const InventoryEntry: React.FC = () => {
         setCategories(prev => prev.map(c => c === cat ? newName : c));
         setItems(prev => prev.map(item => item.category === cat ? { ...item, category: newName } : item));
         setActiveCategory(newName);
-        setIsDirty(true);
+        markDirty();
       }
     } else if (action === "2") {
       if (confirm(`${t('delete')} category "${cat}"?`)) {
@@ -238,7 +298,7 @@ export const InventoryEntry: React.FC = () => {
         setCategories(prev => prev.filter(c => c !== cat));
         setItems(prev => prev.map(item => item.category === cat ? { ...item, category: firstCat } : item));
         setActiveCategory(firstCat);
-        setIsDirty(true);
+        markDirty();
       }
     }
   };
@@ -278,7 +338,7 @@ export const InventoryEntry: React.FC = () => {
           fontSize: 13,
           fontWeight: 600,
           color: 'white',
-          background: saveStatus.error ? '#EF4444' : '#22C55E',
+          background: saveStatus.error ? '#EF4444' : '#059669',
           boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           transition: 'all 0.3s ease',
           pointerEvents: 'none',
