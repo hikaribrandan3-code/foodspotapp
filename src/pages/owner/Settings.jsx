@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
+import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
 import { deepMergeAppConfig } from '../../utils/appConfig';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
@@ -141,8 +142,7 @@ const Settings = () => {
             pickup: true,
             delivery: true,
             dineIn: false,
-            dineInPayment: 'after',
-            events: false
+            dineInPayment: 'after'
         },
         payment_methods: {
             cash: true,
@@ -167,6 +167,25 @@ const Settings = () => {
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
     const justSavedRef = useRef(false); // Guard: Blocks Data Pump from overwriting after save
+
+    // ============================================================
+    // AUTO-SAVE: Service Modes (1.2s debounce, independent of manual Save)
+    // ============================================================
+    const { saveStatus: serviceModeSaveStatus } = useDebouncedAutoSave(
+        draft.service_modes,
+        async (nextModes) => {
+            if (!businessId) return;
+            const payload = {
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { service_modes: nextModes }
+                )
+            };
+            const { error } = await updateBranding(payload, businessId);
+            if (error) throw error;
+        },
+        1200
+    );
 
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
@@ -225,8 +244,7 @@ const Settings = () => {
                     pickup: true,
                     delivery: true,
                     dineIn: false,
-                    dineInPayment: 'after',
-                    events: false
+                    dineInPayment: 'after'
                 },
                 payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
                     cash: true,
@@ -1151,7 +1169,6 @@ const Settings = () => {
                                 { key: 'pickup',   label: t('pickup'),   defaultOn: true  },
                                 { key: 'delivery', label: t('delivery'), defaultOn: true  },
                                 { key: 'dineIn',   label: t('dine_in'),  defaultOn: false },
-                                { key: 'events',   label: t('events'),   defaultOn: false },
                             ].map(({ key, label, defaultOn }) => {
                                 const on = draft.service_modes?.[key] ?? defaultOn;
                                 return (
@@ -1260,6 +1277,22 @@ const Settings = () => {
                     onApply={handleColorPickerApply}
                     onClose={handleColorPickerClose}
                 />
+            )}
+
+            {/* SERVICE MODE AUTO-SAVE PILL */}
+            {serviceModeSaveStatus && (
+                <div style={{
+                    position: 'fixed', bottom: 80, left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: serviceModeSaveStatus.error ? '#EF4444' : '#059669', color: 'white',
+                    padding: '10px 20px', borderRadius: 999,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    fontWeight: 600, fontSize: 13, zIndex: 9999,
+                    pointerEvents: 'none',
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    {serviceModeSaveStatus.message}
+                </div>
             )}
 
             {/* SAVE SUCCESS TOAST */}

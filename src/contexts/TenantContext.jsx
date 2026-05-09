@@ -337,8 +337,7 @@ export function TenantProvider({ children }) {
             pickup: true,
             delivery: true,
             dineIn: false,
-            dineInPayment: 'after',
-            events: false
+            dineInPayment: 'after'
         },
         loading,
         error,
