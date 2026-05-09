@@ -748,7 +748,7 @@ const Settings = () => {
                         </div>
 
                         {/* MP TOKEN WARNING */}
-                        {draft.payment_methods?.mercado_pago && !tenantData?.mp_access_token && (
+                        {draft.payment_methods?.mercado_pago && !tenant?.mp_access_token && (
                             <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span style={{ fontSize: 16 }}>⚠️</span>
                                 <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
@@ -1313,7 +1313,7 @@ const Settings = () => {
                         </div>
 
                         {/* MP TOKEN WARNING */}
-                        {draft.payment_methods?.mercado_pago && !tenantData?.mp_access_token && (
+                        {draft.payment_methods?.mercado_pago && !tenant?.mp_access_token && (
                             <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span style={{ fontSize: 16 }}>⚠️</span>
                                 <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
