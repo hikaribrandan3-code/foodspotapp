@@ -57,7 +57,7 @@ const FLOW_MAP = {
     { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DISPATCHED, label: 'Dispatch',   intent: 'blue' },
     { from: ORDER_STATUS.DISPATCHED,       to: ORDER_STATUS.DELIVERED,  label: 'Mark Delivered', intent: 'green' },
   ],
-  takeout: [
+  pickup: [
     { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
     { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
     { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
@@ -86,7 +86,7 @@ function nextActionFor(status, orderType, paymentStatus) {
     return { label: '💳 Confirm Payment', intent: 'orange', isPaymentConfirm: true }
   }
 
-  const typeKey = orderType || 'takeout'
+  const typeKey = orderType === 'takeout' ? 'pickup' : orderType || 'pickup'
   const flow = FLOW_MAP[typeKey]
   if (!flow) return null
 
@@ -402,7 +402,7 @@ export default function Dashboard() {
       return
     }
 
-    const typeKey = order.order_type || 'takeout'
+    const typeKey = order.order_type === 'takeout' ? 'pickup' : order.order_type || 'pickup'
     const flow = FLOW_MAP[typeKey]
     if (!flow) {
       console.error('Unknown order type:', typeKey)

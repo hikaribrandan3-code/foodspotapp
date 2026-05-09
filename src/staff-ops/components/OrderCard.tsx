@@ -342,7 +342,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Confirm Payment' : order.status === 'READY' ? 'Assign Delivery' : 'Advance'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Confirm Payment' : order.status === 'READY' && order.deliveryType === 'delivery' ? 'Assign Delivery' : order.status === 'READY' ? 'Hand Over' : 'Advance'}
             </button>
           </div>
         )}

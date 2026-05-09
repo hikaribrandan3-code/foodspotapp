@@ -51,6 +51,14 @@ const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   DONE: null,
 };
 
+/** Order-type-aware next status (pickup/dine-in skip DISPATCH) */
+function getNextStatus(status: OrderStatus, deliveryType?: string): OrderStatus | null {
+  if (status === 'READY') {
+    return deliveryType === 'delivery' ? 'DISPATCH' : 'DONE';
+  }
+  return STATUS_FLOW[status] || null;
+}
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_TAB':
@@ -59,7 +67,7 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ADVANCE_STATUS': {
       const order = state.orders.find(o => o.id === action.orderId);
       if (!order) return state;
-      const nextStatus = STATUS_FLOW[order.status];
+      const nextStatus = getNextStatus(order.status, order.deliveryType);
       if (!nextStatus) return state;
       hapticForTransition('status_advance');
       const newOrders = state.orders.map(o =>
@@ -313,7 +321,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const advanceOrderStatus = useCallback((orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
-    const nextStatus = STATUS_FLOW[order.status];
+    const nextStatus = getNextStatus(order.status, order.deliveryType);
     if (!nextStatus) return;
 
     if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
@@ -333,7 +341,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'VERIFY_CASH', orderId });
 
     if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: 'confirmado', payment_confirmed: true }, businessId)
+      updateOrderCloud(orderId, { status: toDbStatus('TODO'), payment_confirmed: true, payment_status: 'paid' }, businessId)
         .catch((e: Error) => console.error('[StaffOps] verifyCash:', e));
     }
 
@@ -348,7 +356,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CONFIRM_PAYMENT', orderId });
 
     if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: 'entregado', payment_confirmed: true }, businessId)
+      updateOrderCloud(orderId, { status: toDbStatus('DONE'), payment_confirmed: true, payment_status: 'paid' }, businessId)
         .catch((e: Error) => console.error('[StaffOps] confirmPayment:', e));
     }
 
@@ -364,8 +372,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CONFIRM_DELIVERY', orderId });
 
     if (state.isOnline && businessId) {
-      // delivered_at is auto-stamped inside updateOrderCloud when status = 'entregado'
-      updateOrderCloud(orderId, { status: 'entregado' }, businessId)
+      updateOrderCloud(orderId, { status: toDbStatus('DONE') }, businessId)
         .catch((e: Error) => console.error('[StaffOps] confirmDelivery:', e));
     }
 
