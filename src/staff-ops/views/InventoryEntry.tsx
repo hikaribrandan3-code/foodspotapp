@@ -317,14 +317,14 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col min-h-screen pb-20 items-center justify-center" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)' }}>
-        <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>{t('loading') || 'Loading...'}</span>
+      <div className="flex flex-col min-h-screen pb-20 items-center justify-center bg-slate-100 text-slate-900">
+        <span className="text-sm text-slate-400">{t('loading') || 'Loading...'}</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-20" style={{ backgroundColor: 'var(--app-bg)', color: 'var(--text-primary)', position: 'relative' }}>
+    <div className="flex flex-col min-h-screen pb-20 bg-slate-100 text-slate-900" style={{ position: 'relative' }}>
       {/* Save Status Pill */}
       {saveStatus && (
         <div style={{
@@ -350,15 +350,14 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
       <main className="px-4 pt-2 flex flex-col gap-4">
         {/* Search & Add */}
         <div className="flex gap-2">
-          <div className="relative h-12 rounded-xl flex items-center px-3 gap-2 flex-1 border" style={{ borderColor: 'var(--counter-border)', backgroundColor: 'var(--counter-bg)' }}>
-            <Search size={18} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+          <div className="relative h-12 rounded-xl flex items-center px-3 gap-2 flex-1 border border-slate-200 bg-white">
+            <Search size={18} className="text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder={t('search_items')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent border-none outline-none w-full text-sm"
-              style={{ color: 'var(--text-primary)' }}
+              className="bg-transparent border-none outline-none w-full text-sm text-slate-900"
             />
           </div>
           <button
@@ -373,8 +372,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
               const name = prompt(t('item_name'));
               if (name) addItem({ name, qty: 0 });
             }}
-            className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shrink-0 border"
-            style={{ backgroundColor: 'var(--nav-bg)', color: 'var(--text-primary)', borderColor: 'var(--nav-border)' }}
+            className="w-12 h-12 rounded-xl flex items-center justify-center cursor-pointer shrink-0 border border-slate-200 bg-white text-slate-900"
           >
             <Plus size={20} />
           </button>
@@ -479,7 +477,7 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
         {/* Categories */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold tracking-wider uppercase pl-1" style={{ color: 'var(--text-tertiary)' }}>Category</p>
+            <p className="text-[10px] font-bold tracking-wider uppercase pl-1 text-slate-400">Category</p>
             <button
               onClick={addCategory}
               className="text-sm font-semibold flex items-center gap-1 border-none cursor-pointer bg-transparent"
@@ -496,9 +494,9 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                   onClick={() => handleCategoryInteraction(cat)}
                   className="px-4 py-2 rounded-xl whitespace-nowrap text-sm font-medium transition-all border flex items-center gap-2 cursor-pointer"
                   style={{
-                    backgroundColor: activeCategory === cat ? 'var(--filter-active-bg)' : 'var(--filter-inactive-bg)',
-                    color: activeCategory === cat ? 'var(--filter-active-text)' : 'var(--text-primary)',
-                    borderColor: activeCategory === cat ? 'var(--filter-active-border)' : 'var(--nav-border)',
+                    backgroundColor: activeCategory === cat ? '#ecfdf5' : '#ffffff',
+                    color: activeCategory === cat ? '#059669' : '#0f172a',
+                    borderColor: activeCategory === cat ? '#a7f3d0' : '#e2e8f0',
                   }}
                 >
                   {cat === 'All' ? t('all') : cat}
@@ -525,8 +523,8 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                 key={item.id}
                 className="overflow-hidden transition-all"
                 style={{
-                  backgroundColor: isExpanded ? 'var(--card-bg)' : 'var(--nav-bg)',
-                  border: `1px solid ${isExpanded ? 'var(--card-border-strong)' : 'var(--nav-border)'}`,
+                  backgroundColor: isExpanded ? '#ffffff' : 'rgba(255, 255, 255, 0.95)',
+                  border: `1px solid ${isExpanded ? '#cbd5e1' : '#e2e8f0'}`,
                   borderRadius: 16,
                 }}
               >
@@ -536,11 +534,11 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                 >
                   <div className="flex items-start justify-between w-full">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-black italic truncate" style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--text-primary)' }}>
+                      <h3 className="text-lg font-black italic truncate text-slate-900" style={{ fontFamily: "'Outfit', sans-serif" }}>
                         {item.name}
                       </h3>
                       <div className="flex flex-wrap gap-2 mt-1">
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border" style={{ backgroundColor: 'var(--filter-bg)', color: 'var(--text-secondary)', borderColor: 'var(--nav-border)' }}>
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border bg-slate-100 text-slate-500 border-slate-200">
                           {item.category}
                         </span>
                         {item.tags?.map((tag: string) => (
@@ -554,27 +552,27 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                     {!isExpanded && (
                       <div className="text-right ml-3 shrink-0">
                         <p className="text-lg font-bold" style={{ color: GREEN }}>{item.qty}</p>
-                        <p className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>{item.unit}</p>
+                        <p className="text-[11px] font-medium text-slate-400">{item.unit}</p>
                       </div>
                     )}
 
-                    <div className="ml-2 shrink-0" style={{ color: 'var(--text-tertiary)' }}>
+                    <div className="ml-2 shrink-0 text-slate-400">
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </div>
                   </div>
 
                   {isExpanded && (
-                    <div className="flex flex-col gap-5 mt-2 pt-4 border-t overflow-x-hidden" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-col gap-5 mt-2 pt-4 border-t border-slate-200 overflow-x-hidden" onClick={(e) => e.stopPropagation()}>
                       {/* Mobile: 6 vertical rows. Desktop: 3 rows × 2 cols */}
                       <div className="flex flex-col gap-3">
                         {/* Row 1: Category */}
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('category')}</label>
+                          <label className="text-xs font-medium ml-1 text-slate-400">{t('category')}</label>
                           <select
                             value={item.category}
                             onChange={(e) => updateItem(item.id, { category: e.target.value })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            style={{ boxSizing: 'border-box' }}
                           >
                             {categories.filter(c => c !== 'All').map(c => (
                               <option key={c} value={c}>{c}</option>
@@ -583,12 +581,12 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                         </div>
                         {/* Row 2: Unit Type */}
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('unit_type')}</label>
+                          <label className="text-xs font-medium ml-1 text-slate-400">{t('unit_type')}</label>
                           <select
                             value={item.unit}
                             onChange={(e) => updateItem(item.id, { unit: e.target.value })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            style={{ boxSizing: 'border-box' }}
                           >
                             <option value="units">{t('units')}</option>
                             <option value="kg">kg</option>
@@ -598,37 +596,37 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                         </div>
                         {/* Row 3: Supplier */}
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('supplier')}</label>
+                          <label className="text-xs font-medium ml-1 text-slate-400">{t('supplier')}</label>
                           <input
                             type="text"
                             value={(item as any).supplier || ''}
                             onChange={(e) => updateItem(item.id, { supplier: e.target.value })}
                             placeholder="e.g. Sysco"
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            style={{ boxSizing: 'border-box' }}
                           />
                         </div>
                         {/* Row 4: Min Stock */}
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('min_stock')}</label>
+                          <label className="text-xs font-medium ml-1 text-slate-400">{t('min_stock')}</label>
                           <input
                             type="number"
                             value={item.min || 0}
                             onChange={(e) => updateItem(item.id, { min: Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            style={{ boxSizing: 'border-box' }}
                           />
                         </div>
                         {/* Row 5: Cost */}
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('cost')}</label>
+                          <label className="text-xs font-medium ml-1 text-slate-400">{t('cost')}</label>
                           <input
                             type="number"
                             step="0.01"
                             value={(item as any).cost ?? ''}
                             onChange={(e) => updateItem(item.id, { cost: e.target.value === '' ? null : Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
+                            style={{ boxSizing: 'border-box' }}
                           />
                         </div>
                         {/* Row 6: Price */}
@@ -639,29 +637,28 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                             step="0.01"
                             value={(item as any).price || ''}
                             onChange={(e) => updateItem(item.id, { price: Number(e.target.value) })}
-                            className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent font-semibold w-full"
-                            style={{ backgroundColor: 'var(--filter-bg)', borderColor: GREEN, color: 'var(--text-primary)', boxSizing: 'border-box' }}
+                            className="h-11 px-3 rounded-xl border text-sm outline-none font-semibold w-full bg-slate-100 text-slate-900"
+                            style={{ borderColor: GREEN, boxSizing: 'border-box' }}
                           />
                         </div>
                       </div>
 
                       {/* Tags */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('tags')}</label>
+                        <label className="text-xs font-medium ml-1 text-slate-400">{t('tags')}</label>
                         <input
                           type="text"
                           value={item.tags?.join(', ') || ''}
                           onChange={(e) => updateItem(item.id, { tags: e.target.value.split(',').map((s: string) => s.trim()).filter((s: string) => s !== '') })}
                           placeholder="Low stock, organic"
-                          className="h-11 px-3 rounded-xl border text-sm outline-none bg-transparent w-full"
-                          style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)', color: 'var(--text-primary)' }}
+                          className="h-11 px-3 rounded-xl border text-sm outline-none w-full bg-slate-100 border-slate-200 text-slate-900"
                         />
                       </div>
 
                       {/* Quantity */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('quantity')}</label>
-                        <div className="flex items-center gap-2 rounded-xl border overflow-hidden" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
+                        <label className="text-xs font-medium ml-1 text-slate-400">{t('quantity')}</label>
+                        <div className="flex items-center gap-2 rounded-xl border overflow-hidden bg-slate-100 border-slate-200">
                           <input
                             type="number"
                             value={item.qty}
@@ -685,9 +682,9 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
               </div>
             );
           }) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center" style={{ color: 'var(--text-tertiary)' }}>
-              <Package size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
+              <Package size={48} className="mb-3" style={{ color: 'rgba(148, 163, 184, 0.6)' }} />
+              <p className="text-sm font-semibold text-slate-900">
                 {activeCategory === 'All' ? 'No items in stock' : `Empty "${activeCategory}" category`}
               </p>
               <p className="text-xs mt-1 opacity-60">
