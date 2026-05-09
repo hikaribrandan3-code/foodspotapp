@@ -380,16 +380,18 @@ const Settings = () => {
             updateInfoPill(pillId, { bgColor: finalColor });
         } else if (colorPickerState.keyName === 'munchboy_shell_color' || colorPickerState.keyName === 'munchboy_a_color' || colorPickerState.keyName === 'munchboy_b_color') {
             const munchKey = colorPickerState.keyName.replace('munchboy_', '');
+            const nextMunchboy = {
+                ...draft.app_config?.munchboy,
+                [munchKey]: finalColor
+            };
             setDraft(prev => ({
                 ...prev,
                 app_config: {
                     ...prev.app_config,
-                    munchboy: {
-                        ...prev.app_config.munchboy,
-                        [munchKey]: finalColor
-                    }
+                    munchboy: nextMunchboy
                 }
             }));
+            autoSaveMunchboy(nextMunchboy);
         } else if (colorPickerState.keyName) {
             updateDraftField(colorPickerState.keyName, finalColor);
         }
@@ -518,6 +520,34 @@ const Settings = () => {
             });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    // Auto-save munchboy color changes immediately (no main Save button needed)
+    const autoSaveMunchboy = async (munchboyData) => {
+        if (!businessId) return;
+        setSaveStatus({ message: t('saving') || 'Saving...' });
+        try {
+            const payload = {
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { munchboy: munchboyData }
+                )
+            };
+            const { data, error } = await updateBranding(payload, businessId);
+            if (error) throw error;
+            if (data) Object.assign(tenant, data);
+            setSaveStatus({ message: t('saved') || 'Saved' });
+            setTimeout(() => setSaveStatus(null), 2000);
+        } catch (err) {
+            console.error('[autoSaveMunchboy] failed:', err);
+            setSaveStatus({
+                error: true,
+                message: err?.message?.includes('403') || err?.code === '403'
+                    ? 'Access denied. Please log out and log back in as the business owner.'
+                    : (t('save_failed') || 'Save failed')
+            });
+            setTimeout(() => setSaveStatus(null), 3000);
         }
     };
 
