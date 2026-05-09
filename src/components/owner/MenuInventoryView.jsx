@@ -802,7 +802,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
       {/* AUDIT TAB */}
       {activeTab === 'audit' && (
-        <InventoryAudit externalItems={items} />
+        <InventoryAudit externalItems={items} onUpdateQty={(id, delta) => updateQty(id, delta)} />
       )}
     </div>
   );

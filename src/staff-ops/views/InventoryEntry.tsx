@@ -32,6 +32,7 @@ export const InventoryEntry: React.FC = () => {
   const [scanUnit, setScanUnit] = useState('units');
 
   const [items, setItems] = useState<any[]>([]);
+  const [cachedAppConfig, setCachedAppConfig] = useState<any>({});
   const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveStatusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -47,6 +48,7 @@ export const InventoryEntry: React.FC = () => {
       const invConfig = data?.app_config?.inventory || {};
       setItems(invConfig.items || []);
       setCategories(invConfig.categories || ['All', 'Food', 'Drinks', 'Cups', 'Plates', 'Condiments', 'Chips']);
+      setCachedAppConfig(data?.app_config || {});
       setIsLoading(false);
     };
     load();
@@ -59,7 +61,7 @@ export const InventoryEntry: React.FC = () => {
     saveDebounceRef.current = setTimeout(() => {
       setSaveStatus({ message: t('saving') || 'Saving...' });
       const payload = {
-        app_config: deepMergeAppConfig({}, {
+        app_config: deepMergeAppConfig(cachedAppConfig || {}, {
           inventory: { items, categories }
         })
       };

@@ -1,36 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, SlidersHorizontal, ArrowDown, Plus, Minus, X, Calendar, AlertCircle, Package, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase, updateBranding } from '../../lib/supabaseClient';
+import { deepMergeAppConfig } from '../../utils/appConfig';
 
 interface InventoryAuditProps {
   externalItems?: any[];
+  onUpdateQty?: (id: string, delta: number) => void;
 }
 
-export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems }) => {
+export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems, onUpdateQty }) => {
+  const isEmbedded = !!externalItems;
   const { language } = useLanguage();
   const { businessId } = useBusiness();
   const t = (key: string) => (translations as any)[language]?.[key] || key;
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(!externalItems);
+  const [rawItems, setRawItems] = useState<any[]>([]);
+  const [cachedAppConfig, setCachedAppConfig] = useState<any>({});
+  const [loading, setLoading] = useState(!isEmbedded);
+  const [isDirty, setIsDirty] = useState(false);
+  const [pulseId, setPulseId] = useState<string | null>(null);
+  const saveDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Load from DB in standalone mode
   useEffect(() => {
-    if (externalItems) {
-      setItems(externalItems.map((it: any, idx: number) => ({
-        id: it.id || String(idx),
-        name: it.name || 'Unknown',
-        cat: it.category || 'General',
-        bin: it.location || '-',
-        qty: it.qty ?? 0,
-        min: it.min ?? 0,
-        max: it.max ?? 0,
-        sku: it.barcode || '-'
-      })));
+    if (isEmbedded) {
       setLoading(false);
       return;
     }
@@ -41,21 +40,28 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems })
         .select('app_config')
         .eq('business_id', businessId)
         .maybeSingle();
-      const rawItems = data?.app_config?.inventory?.items || [];
-      setItems(rawItems.map((it: any, idx: number) => ({
-        id: it.id || String(idx),
-        name: it.name || 'Unknown',
-        cat: it.category || 'General',
-        bin: it.location || '-',
-        qty: it.qty ?? 0,
-        min: it.min ?? 0,
-        max: it.max ?? 0,
-        sku: it.barcode || '-'
-      })));
+      const loadedRaw = data?.app_config?.inventory?.items || [];
+      setRawItems(loadedRaw);
+      setCachedAppConfig(data?.app_config || {});
       setLoading(false);
     };
     load();
-  }, [businessId, externalItems]);
+  }, [businessId, isEmbedded]);
+
+  // Display items: mapped from external (Owner) or raw (Staff)
+  const items = useMemo(() => {
+    const source = isEmbedded ? externalItems : rawItems;
+    return (source || []).map((it: any, idx: number) => ({
+      id: it.id || String(idx),
+      name: it.name || 'Unknown',
+      cat: it.category || 'General',
+      bin: it.location || '-',
+      qty: it.qty ?? 0,
+      min: it.min ?? 0,
+      max: it.max ?? 0,
+      sku: it.barcode || '-'
+    }));
+  }, [externalItems, rawItems, isEmbedded]);
 
   const getStatus = (item: any) => {
     if (item.qty <= item.min / 2) return 'critical';
@@ -64,13 +70,45 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems })
   };
 
   const updateQty = (id: string, delta: number) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, qty: Math.max(0, item.qty + delta) };
-      }
-      return item;
-    }));
+    if (onUpdateQty) {
+      onUpdateQty(id, delta);
+    } else {
+      setRawItems(prev => prev.map((raw, idx) => {
+        const rawId = raw.id || String(idx);
+        if (rawId === id) {
+          return { ...raw, qty: Math.max(0, (raw.qty ?? 0) + delta) };
+        }
+        return raw;
+      }));
+      setIsDirty(true);
+    }
+    setPulseId(id);
+    if (pulseTimeoutRef.current) clearTimeout(pulseTimeoutRef.current);
+    pulseTimeoutRef.current = setTimeout(() => setPulseId(null), 600);
   };
+
+  // Standalone auto-save
+  useEffect(() => {
+    if (isEmbedded || !businessId || !isDirty) return;
+    if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = setTimeout(() => {
+      const payload = {
+        app_config: deepMergeAppConfig(cachedAppConfig || {}, {
+          inventory: { items: rawItems }
+        })
+      };
+      updateBranding(payload, businessId)
+        .then(() => {
+          setIsDirty(false);
+        })
+        .catch(err => {
+          console.error('[InventoryAudit] Save failed:', err);
+        });
+    }, 1000);
+    return () => {
+      if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
+    };
+  }, [rawItems, businessId, isDirty, isEmbedded, cachedAppConfig]);
 
   if (loading) {
     return (
@@ -105,7 +143,14 @@ export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems })
           {items.map(item => (
             <article 
               key={item.id} 
-              className="bento-card flex flex-col gap-3 shadow-sm active:opacity-80 transition-opacity cursor-pointer"
+              className="bento-card flex flex-col gap-3 shadow-sm active:opacity-80 transition-all cursor-pointer"
+              style={{
+                borderColor: pulseId === item.id
+                  ? (getStatus(item) === 'critical' ? '#dc2626' : getStatus(item) === 'low_stock' ? '#ea580c' : '#059669')
+                  : 'var(--card-border)',
+                borderWidth: pulseId === item.id ? '2px' : '1px',
+                boxShadow: pulseId === item.id ? '0 0 0 4px rgba(5, 150, 105, 0.15)' : undefined,
+              }}
               onClick={() => setSelectedItem(item)}
             >
               <div className="flex justify-between items-start">
