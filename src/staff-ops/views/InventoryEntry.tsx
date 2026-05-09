@@ -22,6 +22,7 @@ export const InventoryEntry: React.FC = () => {
   const [lastClick, setLastClick] = useState<{ id: string, time: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<{ message: string; error?: boolean } | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Scanner State
   const [showScanner, setShowScanner] = useState(false);
@@ -53,7 +54,7 @@ export const InventoryEntry: React.FC = () => {
 
   // Debounced auto-save to branding.app_config
   useEffect(() => {
-    if (!businessId || isLoading) return;
+    if (!businessId || isLoading || !isDirty) return;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
       setSaveStatus({ message: t('saving') || 'Saving...' });
@@ -65,6 +66,7 @@ export const InventoryEntry: React.FC = () => {
       updateBranding(payload, businessId)
         .then(() => {
           setSaveStatus({ message: t('saved') || 'Saved' });
+          setIsDirty(false);
           if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
           saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 2000);
         })
@@ -79,7 +81,7 @@ export const InventoryEntry: React.FC = () => {
       if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
       if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
     };
-  }, [items, categories, businessId, isLoading]);
+  }, [items, categories, businessId, isLoading, isDirty]);
 
   // Query Supabase for scanned barcode
   const lookupBarcode = async (barcode: string) => {
@@ -117,6 +119,7 @@ export const InventoryEntry: React.FC = () => {
     };
     setItems([newItem, ...items]);
     setExpandedItems([newItem.id]);
+    setIsDirty(true);
   };
 
   useEffect(() => {
@@ -185,12 +188,14 @@ export const InventoryEntry: React.FC = () => {
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, ...updates } : item
     ));
+    setIsDirty(true);
   };
 
   const updateQty = (id: string, delta: number) => {
     setItems(prev => prev.map(item =>
       item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item
     ));
+    setIsDirty(true);
   };
 
   const toggleExpand = (id: string) => {
@@ -201,7 +206,10 @@ export const InventoryEntry: React.FC = () => {
 
   const addCategory = () => {
     const name = prompt(t('add_category'));
-    if (name) setCategories([...categories, name]);
+    if (name) {
+      setCategories([...categories, name]);
+      setIsDirty(true);
+    }
   };
 
   const activeItems = items.filter(item => {
@@ -218,6 +226,7 @@ export const InventoryEntry: React.FC = () => {
         setCategories(prev => prev.map(c => c === cat ? newName : c));
         setItems(prev => prev.map(item => item.category === cat ? { ...item, category: newName } : item));
         setActiveCategory(newName);
+        setIsDirty(true);
       }
     } else if (action === "2") {
       if (confirm(`${t('delete')} category "${cat}"?`)) {
@@ -225,6 +234,7 @@ export const InventoryEntry: React.FC = () => {
         setCategories(prev => prev.filter(c => c !== cat));
         setItems(prev => prev.map(item => item.category === cat ? { ...item, category: firstCat } : item));
         setActiveCategory(firstCat);
+        setIsDirty(true);
       }
     }
   };
@@ -457,7 +467,7 @@ export const InventoryEntry: React.FC = () => {
                 }}
               >
                 <div
-                  className="p-4 flex flex-col gap-3 cursor-pointer"
+                  className="p-4 pr-6 flex flex-col gap-3 cursor-pointer"
                   onClick={() => toggleExpand(item.id)}
                 >
                   <div className="flex items-start justify-between w-full">
@@ -492,7 +502,7 @@ export const InventoryEntry: React.FC = () => {
                   {isExpanded && (
                     <div className="flex flex-col gap-5 mt-2 pt-4 border-t" style={{ borderColor: 'var(--nav-border)' }} onClick={(e) => e.stopPropagation()}>
                       {/* Basic Info */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('category')}</label>
                           <select
@@ -523,7 +533,7 @@ export const InventoryEntry: React.FC = () => {
                       </div>
 
                       {/* Supply Chain */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('supplier')}</label>
                           <input
@@ -548,7 +558,7 @@ export const InventoryEntry: React.FC = () => {
                       </div>
 
                       {/* Pricing */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
                         <div className="flex flex-col gap-1.5">
                           <label className="text-xs font-medium ml-1" style={{ color: 'var(--text-tertiary)' }}>{t('cost')}</label>
                           <input

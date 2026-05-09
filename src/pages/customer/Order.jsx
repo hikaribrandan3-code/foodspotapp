@@ -126,8 +126,9 @@ function Order({ config: configProp }) {
     // --------------------------------------------
     const [orderType, setOrderType] = useState(() => {
         if (isDeliveryMode() && serviceModes?.delivery) return 'delivery'
-        if (serviceModes?.dineIn) return 'dine_in'
+        if (serviceModes?.pickup) return 'pickup'
         if (serviceModes?.delivery) return 'delivery'
+        if (serviceModes?.dineIn) return 'dine_in'
         return 'pickup'
     })
 

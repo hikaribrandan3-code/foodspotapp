@@ -6,6 +6,8 @@ import { translations as staffTranslations } from '../../staff-ops/lib/translati
 import { supabase, updateBranding } from '../../lib/supabaseClient.js';
 import { deepMergeAppConfig } from '../../utils/appConfig';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import { InventoryStockList } from '../../staff-ops/views/InventoryStockList.tsx';
+import { InventoryAudit } from '../../staff-ops/views/InventoryAudit.tsx';
 
 const EMERALD = '#059669';
 
@@ -53,6 +55,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
   const saveDebounceRef = useRef(null);
   const saveStatusTimeoutRef = useRef(null);
 
@@ -71,7 +74,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
   // Debounced save to branding.app_config
   useEffect(() => {
     const effectiveBusinessId = businessId || tenantData?.business_id;
-    if (!effectiveBusinessId || isLoading) return;
+    if (!effectiveBusinessId || isLoading || !isDirty) return;
     if (saveDebounceRef.current) clearTimeout(saveDebounceRef.current);
     saveDebounceRef.current = setTimeout(() => {
       setSaveStatus({ message: t('saving') || 'Saving...' });
@@ -86,6 +89,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
       updateBranding(payload, effectiveBusinessId)
         .then(() => {
           setSaveStatus({ message: t('saved') || 'Saved' });
+          setIsDirty(false);
           if (saveStatusTimeoutRef.current) clearTimeout(saveStatusTimeoutRef.current);
           saveStatusTimeoutRef.current = setTimeout(() => setSaveStatus(null), 2000);
         })
@@ -105,7 +109,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
       clearTimeout(saveDebounceRef.current);
       clearTimeout(saveStatusTimeoutRef.current);
     };
-  }, [items, categories, businessId, tenantData, isLoading]);
+  }, [items, categories, businessId, tenantData, isLoading, isDirty]);
 
   const lookupBarcode = async (barcode) => {
     try {
@@ -141,6 +145,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
     };
     setItems([newItem, ...items]);
     setExpandedItems([newItem.id]);
+    setIsDirty(true);
   };
 
   useEffect(() => {
@@ -208,10 +213,12 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
   const updateItem = (id, updates) => {
     setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
+    setIsDirty(true);
   };
 
   const updateQty = (id, delta) => {
     setItems(prev => prev.map(item => item.id === id ? { ...item, qty: Math.max(0, item.qty + delta) } : item));
+    setIsDirty(true);
   };
 
   const toggleExpand = (id) => {
@@ -220,7 +227,10 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
   const addCategory = () => {
     const name = prompt(t('add_category'));
-    if (name) setCategories([...categories, name]);
+    if (name) {
+      setCategories([...categories, name]);
+      setIsDirty(true);
+    }
   };
 
   const activeItems = items.filter(item => {
@@ -237,6 +247,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
         setCategories(prev => prev.map(c => c === cat ? newName : c));
         setItems(prev => prev.map(item => item.category === cat ? { ...item, category: newName } : item));
         setActiveCategory(newName);
+        setIsDirty(true);
       }
     } else if (action === "2") {
       if (confirm(`${t('delete')} category "${cat}"?`)) {
@@ -244,6 +255,7 @@ export default function MenuInventoryView({ lang = 'en' }) {
         setCategories(prev => prev.filter(c => c !== cat));
         setItems(prev => prev.map(item => item.category === cat ? { ...item, category: firstCat } : item));
         setActiveCategory(firstCat);
+        setIsDirty(true);
       }
     }
   };
@@ -785,20 +797,12 @@ export default function MenuInventoryView({ lang = 'en' }) {
 
       {/* STOCK TAB */}
       {activeTab === 'stock' && (
-        <div style={{ color: colors.textSecondary, textAlign: 'center', padding: '40px 0' }}>
-          <Package size={40} style={{ marginBottom: 12, color: colors.emptyIcon }} />
-          <p style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>Stock view</p>
-          <p style={{ fontSize: 12, marginTop: 4 }}>Detailed stock levels coming soon.</p>
-        </div>
+        <InventoryStockList externalItems={items} />
       )}
 
       {/* AUDIT TAB */}
       {activeTab === 'audit' && (
-        <div style={{ color: colors.textSecondary, textAlign: 'center', padding: '40px 0' }}>
-          <Package size={40} style={{ marginBottom: 12, color: colors.emptyIcon }} />
-          <p style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>Audit view</p>
-          <p style={{ fontSize: 12, marginTop: 4 }}>Transaction history coming soon.</p>
-        </div>
+        <InventoryAudit externalItems={items} />
       )}
     </div>
   );

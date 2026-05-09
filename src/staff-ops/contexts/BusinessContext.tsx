@@ -54,6 +54,6 @@ export function BusinessProvider({
 
 export function useBusiness(): BusinessContextValue {
   const ctx = useContext(BusinessContext);
-  if (!ctx) throw new Error('useBusiness must be used within BusinessProvider');
+  if (!ctx) return { businessId: '', tenantSlug: '' };
   return ctx;
 }

@@ -6,16 +6,34 @@ import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
 import { supabase } from '../../lib/supabaseClient';
 
-export const InventoryAudit: React.FC = () => {
+interface InventoryAuditProps {
+  externalItems?: any[];
+}
+
+export const InventoryAudit: React.FC<InventoryAuditProps> = ({ externalItems }) => {
   const { language } = useLanguage();
   const { businessId } = useBusiness();
   const t = (key: string) => (translations as any)[language]?.[key] || key;
 
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!externalItems);
 
   useEffect(() => {
+    if (externalItems) {
+      setItems(externalItems.map((it: any, idx: number) => ({
+        id: it.id || String(idx),
+        name: it.name || 'Unknown',
+        cat: it.category || 'General',
+        bin: it.location || '-',
+        qty: it.qty ?? 0,
+        min: it.min ?? 0,
+        max: it.max ?? 0,
+        sku: it.barcode || '-'
+      })));
+      setLoading(false);
+      return;
+    }
     if (!businessId) return;
     const load = async () => {
       const { data } = await supabase
@@ -37,7 +55,7 @@ export const InventoryAudit: React.FC = () => {
       setLoading(false);
     };
     load();
-  }, [businessId]);
+  }, [businessId, externalItems]);
 
   const getStatus = (item: any) => {
     if (item.qty <= item.min / 2) return 'critical';
@@ -73,7 +91,7 @@ export const InventoryAudit: React.FC = () => {
 
         <div className="flex justify-between items-end mb-6 pt-2">
           <button className="flex items-center gap-1 px-3 py-1.5 rounded-md border transition-colors shadow-sm" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
-            <span className="text-[15px] font-medium text-[var(--text-primary)]">{t('all_tags')}</span>
+            <span className="text-[15px] font-medium text-[var(--text-primary)]">All Tags</span>
             <SlidersHorizontal size={18} className="text-[var(--text-tertiary)]" />
           </button>
         </div>

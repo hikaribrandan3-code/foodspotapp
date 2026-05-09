@@ -5,15 +5,32 @@ import { useBusiness } from '../contexts/BusinessContext';
 import { translations } from '../lib/translations';
 import { supabase } from '../../lib/supabaseClient';
 
-export const InventoryStockList: React.FC = () => {
+interface InventoryStockListProps {
+  externalItems?: any[];
+}
+
+export const InventoryStockList: React.FC<InventoryStockListProps> = ({ externalItems }) => {
   const { language } = useLanguage();
   const { businessId } = useBusiness();
   const t = (key: string) => (translations as any)[language]?.[key] || key;
 
   const [stockItems, setStockItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!externalItems);
 
   useEffect(() => {
+    if (externalItems) {
+      setStockItems(externalItems.map((it: any, idx: number) => ({
+        id: it.id || String(idx),
+        name: it.name || 'Unknown',
+        cat: it.category || 'General',
+        bin: it.location || '-',
+        qty: it.qty ?? 0,
+        min: it.min ?? 0,
+        status: (it.qty ?? 0) <= (it.min ?? 0) / 2 ? 'critical' : (it.qty ?? 0) <= (it.min ?? 0) ? 'low_stock' : 'nominal'
+      })));
+      setLoading(false);
+      return;
+    }
     if (!businessId) return;
     const load = async () => {
       const { data } = await supabase
@@ -34,7 +51,7 @@ export const InventoryStockList: React.FC = () => {
       setLoading(false);
     };
     load();
-  }, [businessId]);
+  }, [businessId, externalItems]);
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -65,7 +82,7 @@ export const InventoryStockList: React.FC = () => {
       <main className="px-4 pt-2 flex flex-col gap-4">
         <div className="flex justify-between items-end mb-4">
           <button className="flex items-center gap-1 px-3 py-1.5 rounded-md border transition-colors shadow-sm" style={{ backgroundColor: 'var(--filter-bg)', borderColor: 'var(--nav-border)' }}>
-            <span className="text-[13px] font-medium text-[var(--text-primary)]">{t('all_tags')}</span>
+            <span className="text-[13px] font-medium text-[var(--text-primary)]">All Tags</span>
             <SlidersHorizontal size={18} className="text-[var(--text-tertiary)]" />
           </button>
         </div>

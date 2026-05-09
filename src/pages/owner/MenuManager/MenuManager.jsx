@@ -16,7 +16,10 @@ export default function MenuManager() {
   const navigate = useNavigate();
   const { tenantSlug } = useParams();
 
-  const [activeTab, setActiveTab] = useState('menu');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'inventory' ? 'inventory' : 'menu';
+  });
   const [menuItems, setMenuItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
