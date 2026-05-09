@@ -179,10 +179,8 @@ export const defaultConfig = {
 
     // External Ordering Links (Owner/Super can configure)
     externalOrdering: {
-        rappiEnabled: false,
-        rappiUrl: '',
-        pedidosYaEnabled: false,
-        pedidosYaUrl: '',
+        instagramUrl: '',
+        tiktokUrl: '',
     },
 
     // Payment Methods (Owner/Super can configure)
@@ -198,8 +196,6 @@ export const defaultConfig = {
     infoPills: {
         whatsapp: { bgColor: '#C4856A', textColor: 'white' },
         mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
-        rappi: { bgColor: '#FF5A00', textColor: 'white' },
-        pedidosYa: { bgColor: '#E31837', textColor: 'white' },
         adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB' },
         demo: { bgColor: '#84CC16', textColor: 'white' },
         // Extra custom pill (limit: 1)
@@ -376,10 +372,8 @@ export function normalizeConfig(config) {
             ...(config.infoDisplay || {})
         },
         externalOrdering: {
-            rappiEnabled: false,
-            rappiUrl: '',
-            pedidosYaEnabled: false,
-            pedidosYaUrl: '',
+            instagramUrl: '',
+            tiktokUrl: '',
             ...(config.externalOrdering || {})
         },
         payments: {
@@ -392,8 +386,6 @@ export function normalizeConfig(config) {
             ...(config.info_pills || {}), // 🔥 CRITICAL: Map snake_case (legacy/DB) to camelCase
             whatsapp: { bgColor: '#C4856A', textColor: 'white', ...(config.infoPills?.whatsapp || {}) },
             mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3', ...(config.infoPills?.mercadoPago || {}) },
-            rappi: { bgColor: '#FF5A00', textColor: 'white', ...(config.infoPills?.rappi || {}) },
-            pedidosYa: { bgColor: '#E31837', textColor: 'white', ...(config.infoPills?.pedidosYa || {}) },
             adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB', ...(config.infoPills?.adminAccess || {}) },
             demo: { bgColor: '#84CC16', textColor: 'white', ...(config.infoPills?.demo || {}) },
             custom: { enabled: false, label: '', url: '', bgColor: '#6366F1', textColor: 'white', ...(config.infoPills?.custom || {}) },
@@ -484,8 +476,6 @@ export function getConfig() {
                     ...(parsed.infoPills || {}),
                     whatsapp: { ...defaultConfig.infoPills.whatsapp, ...(parsed.infoPills?.whatsapp || {}) },
                     mercadoPago: { ...defaultConfig.infoPills.mercadoPago, ...(parsed.infoPills?.mercadoPago || {}) },
-                    rappi: { ...defaultConfig.infoPills.rappi, ...(parsed.infoPills?.rappi || {}) },
-                    pedidosYa: { ...defaultConfig.infoPills.pedidosYa, ...(parsed.infoPills?.pedidosYa || {}) },
                     adminAccess: { ...defaultConfig.infoPills.adminAccess, ...(parsed.infoPills?.adminAccess || {}) },
                     demo: { ...defaultConfig.infoPills.demo, ...(parsed.infoPills?.demo || {}) },
                     custom: { ...defaultConfig.infoPills.custom, ...(parsed.infoPills?.custom || {}) },

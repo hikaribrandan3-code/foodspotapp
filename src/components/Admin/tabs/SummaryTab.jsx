@@ -79,18 +79,6 @@ export default function SummaryTab({ config, updateBusinessInfoCloud, updateBran
 
             <h3 style={labelStyle}>🔗 LINKS EXTERNOS & PAGOS</h3>
             <div style={cardStyle}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
-                </div>
-                <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
-                </div>
-                <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
-
                 <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
                     <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago Setup</span>
 

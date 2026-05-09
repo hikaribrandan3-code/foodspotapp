@@ -1154,7 +1154,7 @@ const Settings = () => {
                     </div>
                     <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, marginTop: -4 }}>{t('info_pills_desc')}</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        {['whatsapp', 'rappi', 'mercadoPago', 'pedidosYa', 'adminAccess'].map(pillId => {
+                        {['whatsapp', 'mercadoPago', 'adminAccess'].map(pillId => {
                             const pillData = draft.info_pills[pillId] || {};
                             const isActive = pillData.enabled;
                             const bgColor = pillData.bgColor || '#EEEEEE';
@@ -1162,17 +1162,13 @@ const Settings = () => {
 
                             const labels = {
                                 whatsapp: t('label_whatsapp'),
-                                rappi: t('label_rappi'),
                                 mercadoPago: t('label_mercado_pago'),
-                                pedidosYa: t('label_pedidosya'),
                                 adminAccess: t('admin_login')
                             };
 
                             const placeHolders = {
                                 whatsapp: t('phone_placeholder'),
-                                rappi: t('rappi_placeholder'),
                                 mercadoPago: t('mp_alias_placeholder'),
-                                pedidosYa: t('pedidosya_placeholder'),
                                 adminAccess: t('not_applicable')
                             };
 

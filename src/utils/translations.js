@@ -182,8 +182,7 @@ export const translations = {
     address_placeholder: { es: "ej: Av. Corrientes 1234", en: "ex: 123 Main St", pt: "ex: Av. Paulista 1234" },
     maps_placeholder: { es: "https://maps.google.com/...", en: "https://maps.google.com/...", pt: "https://maps.google.com/..." },
     notes_placeholder: { es: "ej: Timbre 2A, subir escaleras", en: "ex: Doorbell 2A, up the stairs", pt: "ex: Campainha 2A, subir as escadas" },
-    rappi_placeholder: { es: "Link de Rappi", en: "Rappi Link", pt: "Link do Rappi" },
-    pedidosya_placeholder: { es: "Link de PedidosYa", en: "PedidosYa Link", pt: "Link do PedidosYa" },
+
     mp_alias_label: { es: "Mercado Pago (Alias)", en: "Mercado Pago (Alias)", pt: "Mercado Pago (Alias)" },
     mp_alias_placeholder: { es: "ej: grubclub.mp", en: "ex: yourstore.mp", pt: "ex: sualoja.mp" },
 
@@ -214,8 +213,7 @@ export const translations = {
     munchboy_a_button_color: { es: "Color Botón A", en: "A Button Color", pt: "Cor Botão A" },
     munchboy_b_button_color: { es: "Color Botón B", en: "B Button Color", pt: "Cor Botão B" },
     label_whatsapp: { es: "WhatsApp", en: "WhatsApp", pt: "WhatsApp" },
-    label_rappi: { es: "Rappi", en: "Rappi", pt: "Rappi" },
-    label_pedidosya: { es: "PedidosYa", en: "PedidosYa", pt: "PedidosYa" },
+
     label_mercado_pago: { es: "Mercado Pago", en: "Mercado Pago", pt: "Mercado Pago" },
     not_applicable: { es: "N/D", en: "N/A", pt: "N/A" },
     loading_vault: { es: "Cargando Bóveda...", en: "Loading Vault...", pt: "Carregando Cofre..." },
@@ -372,8 +370,7 @@ export const translations = {
     end_shift_confirm: { es: "¿Terminar turno y cerrar sesión?", en: "End shift and log out?", pt: "Encerrar turno e fazer logout?" },
     info_whatsapp: { es: "Escribinos por WhatsApp", en: "Chat on WhatsApp", pt: "Escreva-nos pelo WhatsApp" },
     info_mercado_pago: { es: "Pagar con Mercado Pago", en: "Pay with Mercado Pago", pt: "Pagar com Mercado Pago" },
-    info_rappi: { es: "Pedir por Rappi", en: "Order via Rappi", pt: "Pedir pelo Rappi" },
-    info_pedidosya: { es: "Pedir por PedidosYa", en: "Order via PedidosYa", pt: "Pedir pelo PedidosYa" },
+
     info_admin_access: { es: "Acceso administrador", en: "Admin access", pt: "Acesso de administrador" },
 
     // Order Status

@@ -51,12 +51,6 @@ function OwnerSummary() {
     const [tiktokInput, setTiktokInput] = useState('')
     const tiktokInitialized = useRef(false)
 
-    const [rappiInput, setRappiInput] = useState('')
-    const rappiInitialized = useRef(false)
-
-    const [pedidosyaInput, setPedidosyaInput] = useState('')
-    const pedidosyaInitialized = useRef(false)
-
     // MP Access Token local state
     const [mpTokenInput, setMpTokenInput] = useState('')
     const [mpTokenSaving, setMpTokenSaving] = useState(false)
@@ -301,20 +295,6 @@ function OwnerSummary() {
             tiktokInitialized.current = true
         }
     }, [appConfig?.externalOrdering?.tiktokUrl])
-
-    useEffect(() => {
-        if (!rappiInitialized.current && appConfig?.externalOrdering?.rappiUrl !== undefined) {
-            setRappiInput(appConfig.externalOrdering.rappiUrl || '')
-            rappiInitialized.current = true
-        }
-    }, [appConfig?.externalOrdering?.rappiUrl])
-
-    useEffect(() => {
-        if (!pedidosyaInitialized.current && appConfig?.externalOrdering?.pedidosYaUrl !== undefined) {
-            setPedidosyaInput(appConfig.externalOrdering.pedidosYaUrl || '')
-            pedidosyaInitialized.current = true
-        }
-    }, [appConfig?.externalOrdering?.pedidosYaUrl])
 
     // Sync MP Token from server on first load
     useEffect(() => {
@@ -603,14 +583,14 @@ function OwnerSummary() {
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
-                                            {t('notes') || 'Notes'}
+                                            {t('business_hours') || 'Business Hours'}
                                         </label>
                                         <input
                                             type="text"
-                                            value={businessInfoLocal?.directions || ''}
-                                            onChange={(e) => updateBusinessInfo('directions', e.target.value)}
+                                            value={businessInfoLocal?.hours || ''}
+                                            onChange={(e) => updateBusinessInfo('hours', e.target.value)}
                                             onBlur={showVenueSavedPill}
-                                            placeholder={t('notes_placeholder') || 'Additional directions...'}
+                                            placeholder={t('hours_placeholder') || 'Mon-Fri 9:00-21:00, Sat-Sun 10:00-18:00'}
                                             className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
@@ -667,47 +647,7 @@ function OwnerSummary() {
                                         />
                                     </div>
 
-                                    <div className="space-y-2 pt-2 border-t border-stone-100 dark:border-white/5">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-stone-950 dark:text-white">Rappi</span>
-                                            <ToggleSwitch
-                                                checked={appConfig?.externalOrdering?.rappiEnabled ?? false}
-                                                onChange={() => updateExternalOrdering({ rappiEnabled: !(appConfig?.externalOrdering?.rappiEnabled) })}
-                                            />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            placeholder={t('rappi_placeholder') || 'https://rappi.com.br/...'}
-                                            value={rappiInput}
-                                            onChange={(e) => {
-                                                setRappiInput(e.target.value)
-                                                saveExternalLink('rappiUrl', e.target.value)
-                                            }}
-                                            onBlur={showLinksSavedPill}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
-                                        />
-                                    </div>
 
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium text-stone-950 dark:text-white">PedidosYa</span>
-                                            <ToggleSwitch
-                                                checked={appConfig?.externalOrdering?.pedidosYaEnabled ?? false}
-                                                onChange={() => updateExternalOrdering({ pedidosYaEnabled: !(appConfig?.externalOrdering?.pedidosYaEnabled) })}
-                                            />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            placeholder={t('pedidosya_placeholder') || 'https://pedidosya.com/...'}
-                                            value={pedidosyaInput}
-                                            onChange={(e) => {
-                                                setPedidosyaInput(e.target.value)
-                                                saveExternalLink('pedidosYaUrl', e.target.value)
-                                            }}
-                                            onBlur={showLinksSavedPill}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
-                                        />
-                                    </div>
                                 </div>
                             </motion.div>
                         )}

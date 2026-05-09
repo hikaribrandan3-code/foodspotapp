@@ -965,18 +965,6 @@ function SuperAdmin({ config: configProp }) {
                             {/* 4. EXTERNAL GATES (BOTTOM) */}
                             <h3 style={labelStyle}>🔗 LINKS EXTERNOS & PAGOS</h3>
                             <div style={cardStyle}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                    <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
-                                </div>
-                                <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                    <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
-                                </div>
-                                <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
-
                                 {/* Mercado Pago Alias */}
                                 <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
                                     <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
@@ -1826,8 +1814,6 @@ function SuperAdmin({ config: configProp }) {
                                     {[
                                         { id: 'whatsapp', label: 'WhatsApp', icon: '💬' },
                                         { id: 'mercadoPago', label: 'Mercado Pago', icon: '💳' },
-                                        { id: 'rappi', label: 'Rappi', icon: '🛵' },
-                                        { id: 'pedidosYa', label: 'PedidosYa', icon: '🍕' },
                                         { id: 'demo', label: 'Demo', icon: '🎮' },
                                         { id: 'adminAccess', label: 'Admin', icon: '🔒' },
                                     ].map(pill => {
@@ -1835,7 +1821,7 @@ function SuperAdmin({ config: configProp }) {
                                         const isEditing = editingPillId === pill.id
 
                                         // Defaults
-                                        const defaultBg = pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'rappi' ? '#FF5A00' : pill.id === 'pedidosYa' ? '#E31837' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF'
+                                        const defaultBg = pill.id === 'whatsapp' ? '#C4856A' : pill.id === 'mercadoPago' ? '#FFE600' : pill.id === 'demo' ? '#84CC16' : '#FFFFFF'
                                         const bgColor = pillConfig.bgColor || defaultBg
                                         const textColor = pillConfig.textColor || (pill.id === 'mercadoPago' ? '#009EE3' : pill.id === 'adminAccess' ? '#9CA3AF' : '#FFFFFF')
                                         // For preview in grid, we use actual colors
