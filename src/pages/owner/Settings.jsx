@@ -171,7 +171,7 @@ const Settings = () => {
     // ============================================================
     // AUTO-SAVE: Service Modes (1.2s debounce, independent of manual Save)
     // ============================================================
-    const { saveStatus: serviceModeSaveStatus } = useDebouncedAutoSave(
+    const { saveStatus: serviceModeSaveStatus, syncLastSaved, silence } = useDebouncedAutoSave(
         draft.service_modes,
         async (nextModes) => {
             if (!businessId) return;
@@ -184,7 +184,8 @@ const Settings = () => {
             const { error } = await updateBranding(payload, businessId);
             if (error) throw error;
         },
-        1200
+        1200,
+        isDraftReady
     );
 
     // Color Picker Modal State
@@ -446,6 +447,7 @@ const Settings = () => {
     // ATOMIC SAVE (v7 — Self-Healing via updateBranding)
     const handlePlatformSave = async () => {
         if (!businessId) return;
+        silence(2000); // Silence auto-save hook during manual save
         setIsSaving(true);
         console.log('SAVING BRANDING — business:', businessId);
 
@@ -525,6 +527,9 @@ const Settings = () => {
             setSaveStatus({ message: t('branding_saved') });
             setTimeout(() => setSaveStatus(null), 3000);
             setTimeout(() => { justSavedRef.current = false; }, 2000);
+
+            // Sync auto-save hook so it doesn't fire a false-positive
+            syncLastSaved(draft.service_modes);
 
         } catch (error) {
             console.error('Save failed:', error);
