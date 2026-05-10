@@ -2,6 +2,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
+import { formatPrice } from '@/lib/utils';
+import { useBusiness } from '@/contexts/BusinessContext';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient.js';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -15,7 +19,23 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
+  const { businessId } = useBusiness();
   const order = state.orders.find(o => o.id === state.selectedOrderId);
+  const [mpAlias, setMpAlias] = useState<string>('');
+
+  useEffect(() => {
+    if (!businessId) return;
+    supabase
+      .from('businesses')
+      .select('app_config')
+      .eq('id', businessId)
+      .single()
+      .then(({ data }) => {
+        const alias = data?.app_config?.payments?.mercadoPagoAlias;
+        if (alias) setMpAlias(alias);
+      })
+      .catch(() => {});
+  }, [businessId]);
 
   if (!order) return null;
 
@@ -130,6 +150,16 @@ export default function OrderDetailDrawer() {
                 </div>
               </div>
 
+              {/* Order Total — hidden when cash pending (Total to collect shows instead) */}
+              {!isCashPending && (
+                <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--detail-item-bg)', border: '1px solid var(--detail-item-border)' }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Order Total</span>
+                    <span className="text-lg font-bold" style={{ color: 'var(--status-icon-ready)' }}>{formatPrice(order.total)}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Delivery info */}
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>Customer & Delivery</h3>
@@ -178,7 +208,7 @@ export default function OrderDetailDrawer() {
                   <div className="text-center mb-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                     <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total to collect</p>
                     <p className="text-lg font-bold" style={{ color: 'var(--status-icon-ready)' }}>
-                      ${(order.total ?? 0).toFixed(2)}
+                      {formatPrice(order.total)}
                     </p>
                   </div>
                   <button
@@ -207,6 +237,12 @@ export default function OrderDetailDrawer() {
               {/* Dine-in payment confirmation (DONE + unpaid) */}
               {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
                 <div className="mt-3">
+                  {mpAlias && (
+                    <div className="mb-3 p-3 rounded-lg text-center" style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
+                      <p className="text-xs font-semibold" style={{ color: '#92400e' }}>Mercado Pago Alias</p>
+                      <p className="text-lg font-bold font-mono" style={{ color: '#b45309' }}>{mpAlias}</p>
+                    </div>
+                  )}
                   <p className="text-xs font-semibold mb-2 text-center" style={{ color: 'var(--text-tertiary)' }}>
                     Confirm Payment
                   </p>

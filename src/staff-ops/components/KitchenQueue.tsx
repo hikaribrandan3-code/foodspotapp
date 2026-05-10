@@ -155,7 +155,7 @@ export const KitchenQueue: React.FC = () => {
                     </span>
                   ))}
                 </p>
-                <p className="font-medium text-gray-800">Total: ${order.total}</p>
+                <p className="font-medium text-gray-800">Total: ${(order.total ?? 0).toFixed(2)}</p>
                 <p>
                   {order.delivery_address?.street} {order.delivery_address?.number}
                 </p>
