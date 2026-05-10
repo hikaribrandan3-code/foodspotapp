@@ -173,9 +173,9 @@ export default function OrderDetailDrawer() {
             {/* Action buttons */}
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
               {/* Order Total */}
-              <div className="text-center p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total</p>
-                <p className="text-lg font-bold" style={{ color: 'var(--filter-active-bg)' }}>
+              <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FCD34D' }}>
+                <p className="text-xs" style={{ color: '#92400E' }}>Total</p>
+                <p className="text-lg font-bold" style={{ color: '#D97706' }}>
                   ${(order.total / 100).toFixed(2)}
                 </p>
               </div>
