@@ -1468,11 +1468,12 @@ function PromosView({ event, businessId, onBack }) {
               </div>
 
               <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{ width: `${promo.max_uses > 0 ? (promo.used_count / promo.max_uses) * 100 : 0}%`, height: '100%', background: theme.primary, borderRadius: 3 }} />
+                <div style={{ width: String(promo.max_uses > 0 ? (promo.used_count / promo.max_uses) * 100 : 0) + '%', height: '100%', background: theme.primary, borderRadius: 3 }} />
               </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </motion.div>
   )
 }
