@@ -24,36 +24,46 @@ export function BusinessProvider({
   const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
   const [mpAlias, setMpAlias] = useState<string>('');
 
-  // Fetch business location + MP alias on mount
+  // Fetch business location from businesses + MP alias from branding on mount
   useEffect(() => {
     if (!businessId) return;
+    // Location
     supabase
       .from('businesses')
-      .select('latitude, longitude, app_config')
+      .select('latitude, longitude')
       .eq('id', businessId)
       .single()
       .then(({ data }: { data: any }) => {
         if (data?.latitude && data?.longitude) {
           setCoords({ lat: data.latitude, lng: data.longitude });
         }
+      })
+      .catch(() => {}); // silent fail
+    // MP Alias (owner stores it in branding.app_config)
+    supabase
+      .from('branding')
+      .select('app_config')
+      .eq('business_id', businessId)
+      .single()
+      .then(({ data }: { data: any }) => {
         const alias = data?.app_config?.payments?.mercadoPagoAlias;
         if (alias) setMpAlias(alias);
       })
       .catch(() => {}); // silent fail
   }, [businessId]);
 
-  // Realtime subscription: owner updates app_config → staff sees new alias instantly
+  // Realtime subscription: owner updates branding.app_config → staff sees new alias instantly
   useEffect(() => {
     if (!businessId) return;
     const channel = supabase
-      .channel(`business-config-${businessId}`)
+      .channel(`branding-config-${businessId}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'businesses',
-          filter: `id=eq.${businessId}`,
+          table: 'branding',
+          filter: `business_id=eq.${businessId}`,
         },
         (payload: any) => {
           const newAlias = payload.new?.app_config?.payments?.mercadoPagoAlias;
