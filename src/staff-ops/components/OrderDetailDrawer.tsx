@@ -5,6 +5,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { useState, useEffect } from 'react';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -20,8 +21,12 @@ export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
   const { mpAlias } = useBusiness();
   const order = state.orders.find(o => o.id === state.selectedOrderId);
+  const [showingAlias, setShowingAlias] = useState(false);
 
-  if (!order) return null;
+  // Reset alias view when drawer opens/closes or order changes
+  useEffect(() => {
+    setShowingAlias(false);
+  }, [state.selectedOrderId]);
 
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
@@ -57,7 +62,7 @@ export default function OrderDetailDrawer() {
             transition={{ duration: 0.2 }}
             className="absolute inset-0 z-[60]"
             style={{ backgroundColor: 'var(--drawer-backdrop)' }}
-            onClick={() => selectOrder(null)}
+            onClick={() => { if (!showingAlias) selectOrder(null); }}
           />
 
           {/* Drawer */}
@@ -234,32 +239,55 @@ export default function OrderDetailDrawer() {
               {/* Dine-in payment confirmation (DONE + unpaid) */}
               {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
                 <div className="mt-3 space-y-2">
-                  {/* MP Alias Display — locked, owner-controlled */}
-                  {mpAlias && (
-                    <div className="p-3 rounded-lg text-center" style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
-                      <p className="text-xs font-semibold" style={{ color: '#92400e' }}>Tell customer</p>
-                      <p className="text-lg font-bold font-mono" style={{ color: '#b45309' }}>{mpAlias}</p>
-                    </div>
+                  {!showingAlias ? (
+                    /* Step 1: Pick payment method */
+                    <>
+                      <p className="text-xs font-semibold text-center" style={{ color: 'var(--text-tertiary)' }}>
+                        Confirm Payment
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { confirmPayment(order.id, 'cash'); selectOrder(null); }}
+                          className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                          style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                        >
+                          💵 Cash
+                        </button>
+                        <button
+                          onClick={() => setShowingAlias(true)}
+                          className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                          style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                        >
+                          📲 Alias
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* Step 2: Show alias full-screen for customer */
+                    <>
+                      <div className="p-4 rounded-xl text-center space-y-2" style={{ background: '#fed7aa', border: '2px solid #f97316' }}>
+                        <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#92400e' }}>MP Alias</p>
+                        <p className="text-[28px] font-extrabold font-mono leading-tight" style={{ color: '#b45309' }}>
+                          {mpAlias || 'N/A'}
+                        </p>
+                        <p className="text-[10px]" style={{ color: '#92400e' }}>Tell customer to pay via Mercado Pago</p>
+                      </div>
+                      <button
+                        onClick={() => { confirmPayment(order.id, 'mercado_pago'); setShowingAlias(false); selectOrder(null); }}
+                        className="w-full min-h-[48px] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                        style={{ backgroundColor: '#f97316', color: '#fff' }}
+                      >
+                        ✓ Verified — Customer Paid
+                      </button>
+                      <button
+                        onClick={() => setShowingAlias(false)}
+                        className="w-full min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                        style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                      >
+                        ← Back
+                      </button>
+                    </>
                   )}
-                  <p className="text-xs font-semibold text-center" style={{ color: 'var(--text-tertiary)' }}>
-                    Confirm Payment
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { confirmPayment(order.id, 'cash'); selectOrder(null); }}
-                      className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-                      style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
-                    >
-                      💵 Cash
-                    </button>
-                    <button
-                      onClick={() => { confirmPayment(order.id, 'mercado_pago'); selectOrder(null); }}
-                      className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-                      style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
-                    >
-                      📲 Alias
-                    </button>
-                  </div>
                 </div>
               )}
 
