@@ -4,14 +4,12 @@ import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, Dol
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderCard from '@/components/OrderCard';
-import OrderCelebration from '@/components/OrderCelebration';
 import type { OrderStatus, Order } from '@/types';
 
 export default function BoardView() {
   const { state, toggleOnline, advanceOrderStatus, verifyCash, claimDelivery, confirmDelivery } = useOrders();
   const { t } = useLanguage();
   const [tab, setTab] = useState<'active' | 'completed'>('active');
-  const [celebratingOrder, setCelebratingOrder] = useState<Order | null>(null);
   const prevActiveIdsRef = useRef<Set<string>>(new Set());
 
   // Detect orders that just transitioned to DONE and celebrate
@@ -39,7 +37,7 @@ export default function BoardView() {
       if (!currentIds.has(id)) {
         const order = state.orders.find(o => o.id === id);
         if (order && order.status === 'DONE') {
-          setCelebratingOrder(order);
+          // Celebration removed from staff side — kept on customer receipt only
         }
       }
     });
@@ -153,12 +151,7 @@ export default function BoardView() {
         )}
       </div>
 
-      {celebratingOrder && (
-        <OrderCelebration
-          order={celebratingOrder}
-          onClose={() => setCelebratingOrder(null)}
-        />
-      )}
+
     </div>
   );
 }
