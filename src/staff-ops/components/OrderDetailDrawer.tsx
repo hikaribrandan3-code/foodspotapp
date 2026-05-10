@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -192,16 +192,6 @@ export default function OrderDetailDrawer() {
 
             {/* Action buttons */}
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
-              {/* Order Total */}
-              {!isCashPending && (
-                <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FCD34D' }}>
-                  <p className="text-xs" style={{ color: '#92400E' }}>Total</p>
-                  <p className="text-lg font-bold" style={{ color: '#D97706' }}>
-                    {formatPrice(order.total)}
-                  </p>
-                </div>
-              )}
-
               {/* Verify Cash */}
               {isCashPending && (
                 <>
