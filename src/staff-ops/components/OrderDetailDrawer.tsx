@@ -202,6 +202,14 @@ export default function OrderDetailDrawer() {
 
             {/* Action buttons */}
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
+              {/* Order Total */}
+              <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FCD34D' }}>
+                <p className="text-xs" style={{ color: '#92400E' }}>Total</p>
+                <p className="text-lg font-bold" style={{ color: '#D97706' }}>
+                  ${(order.total / 100).toFixed(2)}
+                </p>
+              </div>
+
               {/* Verify Cash */}
               {isCashPending && (
                 <>
@@ -236,14 +244,15 @@ export default function OrderDetailDrawer() {
 
               {/* Dine-in payment confirmation (DONE + unpaid) */}
               {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
-                <div className="mt-3">
+                <div className="mt-3 space-y-2">
+                  {/* MP Alias Display */}
                   {mpAlias && (
-                    <div className="mb-3 p-3 rounded-lg text-center" style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
+                    <div className="p-3 rounded-lg text-center" style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
                       <p className="text-xs font-semibold" style={{ color: '#92400e' }}>Mercado Pago Alias</p>
                       <p className="text-lg font-bold font-mono" style={{ color: '#b45309' }}>{mpAlias}</p>
                     </div>
                   )}
-                  <p className="text-xs font-semibold mb-2 text-center" style={{ color: 'var(--text-tertiary)' }}>
+                  <p className="text-xs font-semibold text-center" style={{ color: 'var(--text-tertiary)' }}>
                     Confirm Payment
                   </p>
                   <div className="flex gap-2">
