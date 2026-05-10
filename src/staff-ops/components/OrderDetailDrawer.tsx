@@ -186,7 +186,6 @@ export default function OrderDetailDrawer() {
 
             {/* Action buttons */}
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
-<<<<<<< HEAD
               {/* Order Total */}
               {!isCashPending && (
                 <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FCD34D' }}>
@@ -197,8 +196,6 @@ export default function OrderDetailDrawer() {
                 </div>
               )}
 
-=======
->>>>>>> origin/main
               {/* Verify Cash */}
               {isCashPending && (
                 <>
