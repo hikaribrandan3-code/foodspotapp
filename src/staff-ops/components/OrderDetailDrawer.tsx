@@ -5,7 +5,6 @@ import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useBusiness } from '@/contexts/BusinessContext';
-import { useState, useEffect } from 'react';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -27,6 +26,8 @@ export default function OrderDetailDrawer() {
   useEffect(() => {
     setShowingAlias(false);
   }, [state.selectedOrderId]);
+
+  if (!order) return null;
 
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
