@@ -928,3 +928,4 @@ export async function getNextOrderNumber(businessId) {
 
     return { nextNumber, error: null }
 }
+// Vercel deploy trigger: Sun May 10 04:26:04 -03 2026
