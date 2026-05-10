@@ -4,12 +4,11 @@ import { CheckCircle, Truck, Clock, MapPin, ChefHat, Package, Phone, Navigation,
 import { supabase } from '../../lib/supabaseClient.js'
 
 const STATUS_STEPS = [
-  { key: 'released_to_kitchen', label: 'En cocina', icon: ChefHat },
-  { key: 'preparing',           label: 'Preparando', icon: Package },
-  { key: 'ready',               label: 'Listo',      icon: CheckCircle },
-  { key: 'dispatched',          label: 'Despachado', icon: Truck },
-  { key: 'on_way',              label: 'En camino',  icon: Navigation },
-  { key: 'delivered',           label: 'Entregado',  icon: CheckCircle },
+  { key: 'released_to_kitchen', label: 'En cocina',     icon: ChefHat },
+  { key: 'preparing',           label: 'Preparando',    icon: Package },
+  { key: 'ready',               label: 'Listo',         icon: CheckCircle },
+  { key: 'dispatched',          label: 'En camino',     icon: Truck },
+  { key: 'delivered',           label: 'Entregado',     icon: CheckCircle },
 ]
 
 const SIMULATED_DRIVERS = [
@@ -38,7 +37,7 @@ export default function DeliveryTracker() {
     const distKm = o.distance_km || 5
     const etaMs = distKm * 5 * 60 * 1000
     if (o.status === 'delivered') { setEtaText('Entregado ✓'); return }
-    if (o.status === 'on_way') {
+    if (o.status === 'dispatched') {
       const elapsed = Date.now() - new Date(o.updated_at || Date.now()).getTime()
       const remaining = Math.max(0, Math.ceil((etaMs - elapsed) / 60000))
       setEtaText(`Tu repartidor llega en ~${remaining} min`)
@@ -73,6 +72,8 @@ export default function DeliveryTracker() {
 
   const getStepState = (stepKey) => {
     if (!order) return 'future'
+    // delivered is terminal — all steps completed
+    if (order.status === 'delivered') return 'completed'
     const currentIdx = STATUS_STEPS.findIndex(s => s.key === order.status)
     const stepIdx = STATUS_STEPS.findIndex(s => s.key === stepKey)
     if (stepIdx < currentIdx) return 'completed'
@@ -161,7 +162,7 @@ export default function DeliveryTracker() {
         </div>
 
         {/* Map Placeholder */}
-        {(order.status === 'on_way' || order.status === 'dispatched') && (
+        {order.status === 'dispatched' && (
           <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <div style={{ padding: '10px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', gap: 8, alignItems: 'center' }}>
               <MapPin size={16} style={{ color: '#EF4444' }} />

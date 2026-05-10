@@ -427,26 +427,47 @@ export default function Dashboard() {
 
     setProcessingOrderId(order.id)
     try {
-      const updatePayload = { status: targetStatus }
+      // If payment confirmation is part of this step, update payment fields first
       if (step.isPaymentConfirm) {
-        updatePayload.payment_confirmed = true
-        updatePayload.payment_status = 'paid'
+        const { error: payError } = await supabase
+          .from('orders')
+          .update({ payment_confirmed: true, payment_status: 'paid' })
+          .eq('id', order.id)
+        if (payError) {
+          console.error('Payment confirm failed:', payError)
+          setDisplayOrders(prevOrders)
+          alert('Error: ' + payError.message)
+          setProcessingOrderId(null)
+          return
+        }
       }
 
-      const { error } = await supabase
-        .from('orders')
-        .update(updatePayload)
-        .eq('id', order.id)
+      // Use RPC for status transition (FSM-enforced, same as staff)
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: order.id,
+        p_target_status: targetStatus,
+      })
 
       if (error) {
-        console.error('Advance failed:', error)
-        setDisplayOrders(prevOrders) // Revert on failure
+        console.error('Advance RPC failed:', error)
+        setDisplayOrders(prevOrders)
         alert('Error: ' + error.message)
+        setProcessingOrderId(null)
+        return
       }
+
+      if (data && !data.success) {
+        console.warn('FSM Rejection:', data.error, data.message)
+        setDisplayOrders(prevOrders)
+        alert(data.message || 'Transition not allowed')
+        setProcessingOrderId(null)
+        return
+      }
+
       refreshOrders()
     } catch (err) {
       console.error('Advance exception:', err)
-      setDisplayOrders(prevOrders) // Revert on failure
+      setDisplayOrders(prevOrders)
     } finally {
       setProcessingOrderId(null)
     }
@@ -458,10 +479,30 @@ export default function Dashboard() {
 
     setProcessingOrderId(order.id)
     try {
-      const { error } = await supabase.from('orders').update({ status: ORDER_STATUS.CANCELLED }).eq('id', order.id)
-      if (error) setDisplayOrders(prevOrders)
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: order.id,
+        p_target_status: ORDER_STATUS.CANCELLED,
+      })
+
+      if (error) {
+        console.error('Cancel RPC failed:', error)
+        setDisplayOrders(prevOrders)
+        alert('Error: ' + error.message)
+        setProcessingOrderId(null)
+        return
+      }
+
+      if (data && !data.success) {
+        console.warn('FSM Rejection:', data.error, data.message)
+        setDisplayOrders(prevOrders)
+        alert(data.message || 'Cannot cancel this order')
+        setProcessingOrderId(null)
+        return
+      }
+
       refreshOrders()
     } catch (err) {
+      console.error('Cancel exception:', err)
       setDisplayOrders(prevOrders)
     } finally {
       setProcessingOrderId(null)
