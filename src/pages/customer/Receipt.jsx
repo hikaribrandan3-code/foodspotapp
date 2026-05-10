@@ -199,7 +199,7 @@ export default function Receipt() {
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
             <button
-              onClick={() => navigate(`/${tenantSlug}/track?order_id=${order.id}`)}
+              onClick={() => navigate(`/${tenantSlug}/status?orderId=${order.id}`)}
               style={{ width: '100%', padding: '14px', background: '#10B981', color: '#fff', borderRadius: 14, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15 }}
             >
               <Truck size={18} />
