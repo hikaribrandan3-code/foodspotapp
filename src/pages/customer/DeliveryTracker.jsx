@@ -74,7 +74,10 @@ export default function DeliveryTracker() {
     const currentIdx = STATUS_STEPS.findIndex(s => s.key === order.status)
     const stepIdx = STATUS_STEPS.findIndex(s => s.key === stepKey)
     if (stepIdx < currentIdx) return 'completed'
-    if (stepIdx === currentIdx) return 'current'
+    if (stepIdx === currentIdx) {
+      if (['dispatched', 'delivered'].includes(stepKey)) return 'completed'
+      return 'current'
+    }
     return 'future'
   }
 
