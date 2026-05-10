@@ -579,68 +579,6 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
 
-                    {isDelivery && order.status === ORDER_STATUS.DISPATCHED && (
-                        <>
-                            <div style={{
-                                background: '#fef8f0',
-                                border: '1px solid #fed7aa',
-                                borderRadius: 8,
-                                padding: 16,
-                                marginBottom: 16
-                            }}>
-                                <div style={{
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                    color: '#b45309',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 0.5,
-                                    marginBottom: 8
-                                }}>
-                                    🚴 On the Way
-                                </div>
-                                <div style={{
-                                    fontSize: 24,
-                                    fontWeight: 700,
-                                    color: '#0a0a0a',
-                                    marginBottom: 12
-                                }}>
-                                    {calculateETA()} min
-                                </div>
-                                <div style={{
-                                    fontSize: 13,
-                                    color: '#737373',
-                                    marginBottom: 12
-                                }}>
-                                    {order?.distance_km?.toFixed(1)} km · Driver is on the way
-                                </div>
-                                {!paid && (
-                                    <div style={{
-                                        display: 'inline-block',
-                                        background: '#fee2e2',
-                                        color: '#b91c1c',
-                                        padding: '6px 10px',
-                                        borderRadius: 4,
-                                        fontSize: 12,
-                                        fontWeight: 600
-                                    }}>
-                                        💳 Payment pending at door
-                                    </div>
-                                )}
-                            </div>
-                            <div
-                                ref={mapContainer}
-                                style={{
-                                    width: '100%',
-                                    height: 300,
-                                    borderRadius: 8,
-                                    marginBottom: 16,
-                                    border: '1px solid #e5e5e5',
-                                    overflow: 'hidden'
-                                }}
-                            />
-                        </>
-                    )}
-
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <button
                             onClick={() => navigate(`/${tenantSlug}`)}

@@ -32,3 +32,11 @@ export function getETAMinutes(distanceKm: number): number {
   const travelMins = Math.ceil((distanceKm / 30) * 60);
   return travelMins + 10; // Conservative 10 min buffer
 }
+
+/**
+ * Format integer cents to currency string (e.g., 1150 → "$11.50")
+ */
+export function formatPrice(cents: number | undefined): string {
+  if (cents === undefined || cents === null) return '$0.00';
+  return `$${(cents / 100).toFixed(2)}`;
+}

@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { Badge } from './Badge.jsx'
 import { Button } from './Button.jsx'
 import { ChefHat, Clock, Package } from 'lucide-react'
+import { formatPrice } from '../lib/utils'
 
 interface Order {
   id: string
@@ -155,7 +156,7 @@ export const KitchenQueue: React.FC = () => {
                     </span>
                   ))}
                 </p>
-                <p className="font-medium text-gray-800">Total: ${order.total}</p>
+                <p className="font-medium text-gray-800">Total: {formatPrice(order.total)}</p>
                 <p>
                   {order.delivery_address?.street} {order.delivery_address?.number}
                 </p>
