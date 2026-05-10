@@ -7,7 +7,6 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const WEBHOOK_URL = "https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/mp-event-webhook";
 const MERCADO_PAGO_API = "https://api.mercadopago.com/checkout/preferences";
 
 // Generate ticket code: TKT-XXX-NNN
@@ -48,6 +47,7 @@ serve(async (req: Request) => {
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
         const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspotapp.vercel.app";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const WEBHOOK_URL = `${supabaseUrl}/functions/v1/mp-event-webhook`;
 
         // ── 1. Fetch event (capacity check will validate tier availability) ──
         const { data: event, error: eventError } = await supabase
