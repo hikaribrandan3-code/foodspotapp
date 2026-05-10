@@ -377,9 +377,17 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
-  const confirmPayment = useCallback(async (orderId: string) => {
+  const confirmPayment = useCallback(async (orderId: string, method?: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
+
+    const now = new Date().toISOString();
+    const paymentUpdates: Record<string, unknown> = {
+      payment_confirmed: true,
+      payment_status: 'paid',
+      paid_at: now,
+    };
+    if (method) paymentUpdates.payment_method = method;
 
     if (!state.isOnline) {
       dispatch({ type: 'CONFIRM_PAYMENT', orderId });
@@ -398,7 +406,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         addToast({ type: 'critical', title: 'Update Failed', message: rpcData?.message || rpcError?.message || 'Could not confirm payment', orderId });
         return;
       }
-      updateOrderCloud(orderId, { payment_confirmed: true, payment_status: 'paid' }, businessId)
+      updateOrderCloud(orderId, paymentUpdates, businessId)
         .catch(() => {});
       dispatch({ type: 'CONFIRM_PAYMENT', orderId });
       addToast({ type: 'delivery_done', title: 'Payment Confirmed', message: `${order.customerName} — dine-in complete`, orderId });

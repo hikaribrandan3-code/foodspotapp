@@ -33,7 +33,7 @@ export default function OrderDetailDrawer() {
            order.deliveryType === 'delivery' ? '🚴 Assign Delivery' :
            '✋ Hand Over',
     DISPATCH: '📍 Mark Delivered',
-    DONE: order.deliveryType === 'dine_in' && !order.cashVerified ? '💰 Confirm Payment' : '',
+    DONE: '',
   };
   const nextLabel = nextLabels[order.status];
 
@@ -187,20 +187,38 @@ export default function OrderDetailDrawer() {
               {/* Advance status (TODO → PREP → READY → DISPATCH → DELIVERING, or dine-in READY → DONE) */}
               {nextLabel && !isCashPending && (
                 <button
-                  onClick={() => {
-                    if (order.deliveryType === 'dine_in' && order.status === 'DONE' && !order.cashVerified) {
-                      confirmPayment(order.id);
-                    } else {
-                      advanceOrderStatus(order.id);
-                    }
-                    selectOrder(null);
-                  }}
+                  onClick={() => { advanceOrderStatus(order.id); selectOrder(null); }}
                   className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)', border: '1px solid var(--status-icon-prep)' }}
                 >
                   {nextLabel}
                   <ChevronRight size={16} />
                 </button>
+              )}
+
+              {/* Dine-in payment confirmation (DONE + unpaid) */}
+              {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
+                <div className="mt-3">
+                  <p className="text-xs font-semibold mb-2 text-center" style={{ color: 'var(--text-tertiary)' }}>
+                    Confirm Payment
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { confirmPayment(order.id, 'cash'); selectOrder(null); }}
+                      className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                      style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                    >
+                      💵 Cash
+                    </button>
+                    <button
+                      onClick={() => { confirmPayment(order.id, 'mercado_pago'); selectOrder(null); }}
+                      className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                      style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                    >
+                      📲 Alias
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* Confirm Delivery */}

@@ -347,6 +347,31 @@ export default function OrderCard({
           </div>
         )}
 
+        {/* ── Dine-in payment confirmation (DONE + unpaid) ─────── */}
+        {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
+          <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
+            <p className="text-xs font-semibold mb-2 text-center" style={{ color: 'var(--text-tertiary)' }}>
+              Confirm Payment
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); confirmPayment(order.id, 'cash'); }}
+                className="flex-1 min-h-[44px] py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+              >
+                💵 Cash
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); confirmPayment(order.id, 'mercado_pago'); }}
+                className="flex-1 min-h-[44px] py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+              >
+                📲 Alias
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Claim delivery button (READY, no assignee) ───────── */}
         {showClaimButton && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
