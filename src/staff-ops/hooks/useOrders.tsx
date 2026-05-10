@@ -318,92 +318,171 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Action creators ─────────────────────────────────────────────── */
 
-  const advanceOrderStatus = useCallback((orderId: string) => {
+  const advanceOrderStatus = useCallback(async (orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
     const nextStatus = getNextStatus(order.status, order.deliveryType);
     if (!nextStatus) return;
 
-    if (!state.isOnline) queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
-    dispatch({ type: 'ADVANCE_STATUS', orderId });
+    if (!state.isOnline) {
+      queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
+      dispatch({ type: 'ADVANCE_STATUS', orderId });
+      return;
+    }
 
     if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: toDbStatus(nextStatus) }, businessId)
-        .catch((e: Error) => console.error('[StaffOps] advance:', e));
+      const targetDbStatus = toDbStatus(nextStatus);
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: orderId,
+        p_target_status: targetDbStatus,
+      });
+      if (error || !data?.success) {
+        console.error('[StaffOps] advance RPC error:', error?.message || data?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not advance order', orderId });
+        return;
+      }
+      dispatch({ type: 'ADVANCE_STATUS', orderId });
     }
-  }, [state.isOnline, state.orders, businessId]);
+  }, [state.isOnline, state.orders, businessId, addToast]);
 
-  const verifyCash = useCallback((orderId: string) => {
+  const verifyCash = useCallback(async (orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    if (!state.isOnline) queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
-    dispatch({ type: 'VERIFY_CASH', orderId });
-
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: toDbStatus('TODO'), payment_confirmed: true, payment_status: 'paid' }, businessId)
-        .catch((e: Error) => console.error('[StaffOps] verifyCash:', e));
+    if (!state.isOnline) {
+      queueAction({ orderId, type: 'verify_cash', timestamp: Date.now() });
+      dispatch({ type: 'VERIFY_CASH', orderId });
+      addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+      if (audioEnabled) audio.alertCashVerified();
+      return;
     }
 
-    addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
-    if (audioEnabled) audio.alertCashVerified();
+    if (state.isOnline && businessId) {
+      // 1) Advance status via RPC (bypasses RLS)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('advance_order_status', {
+        p_order_id: orderId,
+        p_target_status: toDbStatus('TODO'),
+      });
+      if (rpcError || !rpcData?.success) {
+        console.error('[StaffOps] verifyCash RPC error:', rpcError?.message || rpcData?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: rpcData?.message || rpcError?.message || 'Could not verify cash', orderId });
+        return;
+      }
+      // 2) Set payment flags via direct update (best-effort)
+      updateOrderCloud(orderId, { payment_confirmed: true, payment_status: 'paid' }, businessId)
+        .catch(() => {});
+      dispatch({ type: 'VERIFY_CASH', orderId });
+      addToast({ type: 'cash_verified', title: 'Cash Verified', message: `${order.customerName} — sent to kitchen`, orderId });
+      if (audioEnabled) audio.alertCashVerified();
+    }
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
-  const confirmPayment = useCallback((orderId: string) => {
+  const confirmPayment = useCallback(async (orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    dispatch({ type: 'CONFIRM_PAYMENT', orderId });
-
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: toDbStatus('DONE'), payment_confirmed: true, payment_status: 'paid' }, businessId)
-        .catch((e: Error) => console.error('[StaffOps] confirmPayment:', e));
+    if (!state.isOnline) {
+      dispatch({ type: 'CONFIRM_PAYMENT', orderId });
+      addToast({ type: 'delivery_done', title: 'Payment Confirmed', message: `${order.customerName} — dine-in complete`, orderId });
+      if (audioEnabled) audio.alertDeliveryConfirmed();
+      return;
     }
 
-    addToast({ type: 'delivery_done', title: 'Payment Confirmed', message: `${order.customerName} — dine-in complete`, orderId });
-    if (audioEnabled) audio.alertDeliveryConfirmed();
+    if (state.isOnline && businessId) {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('advance_order_status', {
+        p_order_id: orderId,
+        p_target_status: toDbStatus('DONE'),
+      });
+      if (rpcError || !rpcData?.success) {
+        console.error('[StaffOps] confirmPayment RPC error:', rpcError?.message || rpcData?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: rpcData?.message || rpcError?.message || 'Could not confirm payment', orderId });
+        return;
+      }
+      updateOrderCloud(orderId, { payment_confirmed: true, payment_status: 'paid' }, businessId)
+        .catch(() => {});
+      dispatch({ type: 'CONFIRM_PAYMENT', orderId });
+      addToast({ type: 'delivery_done', title: 'Payment Confirmed', message: `${order.customerName} — dine-in complete`, orderId });
+      if (audioEnabled) audio.alertDeliveryConfirmed();
+    }
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
-  const confirmDelivery = useCallback((orderId: string) => {
+  const confirmDelivery = useCallback(async (orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    if (!state.isOnline) queueAction({ orderId, type: 'confirm_delivery', timestamp: Date.now() });
-    dispatch({ type: 'CONFIRM_DELIVERY', orderId });
-
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: toDbStatus('DONE') }, businessId)
-        .catch((e: Error) => console.error('[StaffOps] confirmDelivery:', e));
+    if (!state.isOnline) {
+      queueAction({ orderId, type: 'confirm_delivery', timestamp: Date.now() });
+      dispatch({ type: 'CONFIRM_DELIVERY', orderId });
+      addToast({ type: 'delivery_done', title: 'Delivered', message: `${order.customerName} — completed`, orderId });
+      if (audioEnabled) audio.alertDeliveryConfirmed();
+      return;
     }
 
-    addToast({ type: 'delivery_done', title: 'Delivered', message: `${order.customerName} — completed`, orderId });
-    if (audioEnabled) audio.alertDeliveryConfirmed();
+    if (state.isOnline && businessId) {
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: orderId,
+        p_target_status: 'delivered',
+      });
+      if (error || !data?.success) {
+        console.error('[StaffOps] confirmDelivery RPC error:', error?.message || data?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not confirm delivery', orderId });
+        return;
+      }
+      dispatch({ type: 'CONFIRM_DELIVERY', orderId });
+      addToast({ type: 'delivery_done', title: 'Delivered', message: `${order.customerName} — completed`, orderId });
+      if (audioEnabled) audio.alertDeliveryConfirmed();
+    }
   }, [state.isOnline, state.orders, businessId, addToast, audioEnabled]);
 
-  const claimDelivery = useCallback((orderId: string) => {
+  const claimDelivery = useCallback(async (orderId: string) => {
     const staffMember = (() => { try { return JSON.parse(localStorage.getItem('fs_staff_member') || '{}'); } catch { return {}; } })();
     const staffName = staffMember?.name || 'Staff';
-    dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: toDbStatus('DISPATCH') }, businessId)
-        .catch((e: Error) => console.error('[StaffOps] claimDelivery:', e));
+
+    if (!state.isOnline) {
+      dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
+      addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
+      return;
     }
-    addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
+
+    if (state.isOnline && businessId) {
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: orderId,
+        p_target_status: 'dispatched',
+      });
+      if (error || !data?.success) {
+        console.error('[StaffOps] claimDelivery RPC error:', error?.message || data?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not claim delivery', orderId });
+        return;
+      }
+      dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
+      addToast({ type: 'cash_verified', title: 'Delivery Claimed', message: `${staffName} is taking this order`, orderId });
+    }
   }, [state.isOnline, businessId, addToast]);
 
-  const cancelOrder = useCallback((orderId: string) => {
+  const cancelOrder = useCallback(async (orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
 
-    if (!state.isOnline) queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
-    dispatch({ type: 'CANCEL_ORDER', orderId });
-
-    if (state.isOnline && businessId) {
-      updateOrderCloud(orderId, { status: 'cancelled' }, businessId)
-        .catch((e: Error) => console.error('[StaffOps] cancelOrder:', e));
+    if (!state.isOnline) {
+      queueAction({ orderId, type: 'cancel_order', timestamp: Date.now() });
+      dispatch({ type: 'CANCEL_ORDER', orderId });
+      addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
+      return;
     }
 
-    addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
+    if (state.isOnline && businessId) {
+      const { data, error } = await supabase.rpc('advance_order_status', {
+        p_order_id: orderId,
+        p_target_status: 'cancelled',
+      });
+      if (error || !data?.success) {
+        console.error('[StaffOps] cancelOrder RPC error:', error?.message || data?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not cancel order', orderId });
+        return;
+      }
+      dispatch({ type: 'CANCEL_ORDER', orderId });
+      addToast({ type: 'order_cancelled', title: 'Order Cancelled', message: `${order.customerName} — cancelled`, orderId });
+    }
   }, [state.isOnline, state.orders, businessId, addToast]);
 
   const setTab = useCallback((tab: TabId) => dispatch({ type: 'SET_TAB', tab }), []);
