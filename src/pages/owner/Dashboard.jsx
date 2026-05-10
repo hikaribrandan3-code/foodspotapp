@@ -651,7 +651,7 @@ export default function Dashboard() {
           }}>
             <div>
               <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 4 }}>
-                {t('analytics_today').toUpperCase()}
+                RECENT ORDERS
               </div>
               <div style={{
                 fontSize: 26, fontWeight: 800, color: T.ink, letterSpacing: '-0.025em', lineHeight: 1,
@@ -662,12 +662,6 @@ export default function Dashboard() {
               <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
                 {t('across') || 'across'} {displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} {t('orders_count')}
               </div>
-            </div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6, background: T.greenBg, color: T.greenInk,
-              padding: '7px 11px', borderRadius: 999, fontSize: 12.5, fontWeight: 600,
-            }}>
-              <Icon type="trend" color={T.greenInk} size={16} /> +18% vs yest
             </div>
           </div>
         </div>
