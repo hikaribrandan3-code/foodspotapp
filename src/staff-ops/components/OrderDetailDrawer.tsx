@@ -29,7 +29,7 @@ export default function OrderDetailDrawer() {
   const nextLabels: Record<string, string> = {
     TODO: '▶ Start Prep',
     PREP: '✓ Mark Ready',
-    READY: order.deliveryType === 'dine_in' ? '💰 Confirm Payment' :
+    READY: order.deliveryType === 'dine_in' ? '🍽️ Mark Served' :
            order.deliveryType === 'delivery' ? '🚴 Assign Delivery' :
            '✋ Hand Over',
     DISPATCH: '📍 Mark Delivered',
@@ -187,11 +187,7 @@ export default function OrderDetailDrawer() {
               {nextLabel && !isCashPending && (
                 <button
                   onClick={() => {
-                    if (order.deliveryType === 'dine_in' && order.status === 'READY') {
-                      confirmPayment(order.id);
-                    } else {
-                      advanceOrderStatus(order.id);
-                    }
+                    advanceOrderStatus(order.id);
                     selectOrder(null);
                   }}
                   className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"

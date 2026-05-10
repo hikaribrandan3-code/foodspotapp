@@ -164,12 +164,8 @@ export default function OrderCard({
 
   const handleAdvance = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (order.deliveryType === 'dine_in' && order.status === 'READY') {
-      confirmPayment(order.id);
-    } else {
-      onAdvance?.(order.id);
-    }
-  }, [onAdvance, order.id, order.deliveryType, order.status, confirmPayment]);
+    onAdvance?.(order.id);
+  }, [onAdvance, order.id]);
 
   if (isRemoving) {
     return (
@@ -342,7 +338,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Confirm Payment' : order.status === 'READY' && order.deliveryType === 'delivery' ? 'Assign Delivery' : order.status === 'READY' ? 'Hand Over' : order.status === 'DELIVERING' ? 'Complete Delivery' : 'Complete Order'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Mark Served' : order.status === 'READY' && order.deliveryType === 'delivery' ? 'Assign Delivery' : order.status === 'READY' ? 'Hand Over' : order.status === 'DELIVERING' ? 'Complete Delivery' : 'Complete Order'}
             </button>
           </div>
         )}
