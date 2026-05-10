@@ -15,6 +15,22 @@ export default function BoardView() {
   const prevActiveIdsRef = useRef<Set<string>>(new Set());
 
   // Detect orders that just transitioned to DONE and celebrate
+  // Active orders (excluding DONE)
+  const activeOrders = useMemo(() => {
+    return state.orders
+      .filter(o => {
+        // Keep in active if not DONE, OR if it's a DONE dine-in order that hasn't been paid
+        if (o.status !== 'DONE') return true;
+        if (o.deliveryType === 'dine_in' && o.paymentStatus !== 'paid') return true;
+        return false;
+      })
+      .sort((a, b) => {
+        const urgencyA = (Date.now() - a.createdAt) / 60000;
+        const urgencyB = (Date.now() - b.createdAt) / 60000;
+        return urgencyB - urgencyA;
+      });
+  }, [state.orders]);
+
   useEffect(() => {
     const currentIds = new Set(activeOrders.map(o => o.id));
     const prevIds = prevActiveIdsRef.current;
@@ -31,21 +47,7 @@ export default function BoardView() {
     prevActiveIdsRef.current = currentIds;
   }, [activeOrders, state.orders]);
 
-  // Active orders (excluding DONE)
-  const activeOrders = useMemo(() => {
-    return state.orders
-      .filter(o => {
-        // Keep in active if not DONE, OR if it's a DONE dine-in order that hasn't been paid
-        if (o.status !== 'DONE') return true;
-        if (o.deliveryType === 'dine_in' && o.paymentStatus !== 'paid') return true;
-        return false;
-      })
-      .sort((a, b) => {
-        const urgencyA = (Date.now() - a.createdAt) / 60000;
-        const urgencyB = (Date.now() - b.createdAt) / 60000;
-        return urgencyB - urgencyA;
-      });
-  }, [state.orders]);
+  
 
   // Completed orders
   const completedOrders = useMemo(() => {
