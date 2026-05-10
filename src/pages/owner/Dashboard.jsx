@@ -81,8 +81,10 @@ function statusToBucket(status, t) {
 }
 
 function nextActionFor(status, orderType, paymentStatus) {
-  // NOTE: Dine-in pay-after logic removed. Business model is pay-first.
-  // Payment is collected before or at order time; serving happens after.
+  // 🛡️ DINE-IN PAY-AFTER: Delivered + unpaid = show payment button
+  if (status === ORDER_STATUS.DELIVERED && orderType === 'dine_in' && paymentStatus === 'unpaid') {
+    return { label: '💳 Confirm Payment', intent: 'orange', isPaymentConfirm: true }
+  }
 
   const typeKey = orderType === 'takeout' ? 'pickup' : orderType || 'pickup'
   const flow = FLOW_MAP[typeKey]

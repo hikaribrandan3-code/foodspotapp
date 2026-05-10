@@ -216,7 +216,10 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
     const getStatusText = () => {
         if (order.status === ORDER_STATUS.CANCELLED) return t('status_cancelled')
-        if (order.status === ORDER_STATUS.DELIVERED) return order.order_type === 'dine_in' ? 'Served' : t('status_delivered')
+        if (order.status === ORDER_STATUS.DELIVERED) {
+            if (order.order_type === 'dine_in' && !paid) return 'Served — Awaiting Payment'
+            return order.order_type === 'dine_in' ? 'Served' : t('status_delivered')
+        }
         if (order.status === ORDER_STATUS.READY) return isDelivery ? t('status_on_the_way') : t('status_ready_pickup')
         if (order.status === ORDER_STATUS.DISPATCHED) return t('status_on_the_way')
         if (paid) return '✅ ' + t('status_payment_received')

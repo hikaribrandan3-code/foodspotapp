@@ -33,6 +33,7 @@ export default function OrderDetailDrawer() {
            order.deliveryType === 'delivery' ? '🚴 Assign Delivery' :
            '✋ Hand Over',
     DISPATCH: '📍 Mark Delivered',
+    DONE: order.deliveryType === 'dine_in' && !order.cashVerified ? '💰 Confirm Payment' : '',
   };
   const nextLabel = nextLabels[order.status];
 
@@ -187,7 +188,11 @@ export default function OrderDetailDrawer() {
               {nextLabel && !isCashPending && (
                 <button
                   onClick={() => {
-                    advanceOrderStatus(order.id);
+                    if (order.deliveryType === 'dine_in' && order.status === 'DONE' && !order.cashVerified) {
+                      confirmPayment(order.id);
+                    } else {
+                      advanceOrderStatus(order.id);
+                    }
                     selectOrder(null);
                   }}
                   className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
