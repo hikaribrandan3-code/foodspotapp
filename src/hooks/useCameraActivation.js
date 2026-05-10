@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabaseClient';
 
 const BANNER_AUTO_DISMISS_MS = 300_000;   // 5 minutes visible window
 const COOLDOWN_BETWEEN_ACTIVATIONS_MS = 600_000; // 10 min cooldown if dismissed
-const VISUAL_DELAY_MS = 500;             // 0.5s — snappy for 2026 attention spans
-const POLL_INTERVAL_MS = 3_000;          // 3s polling fallback
+const DEFAULT_VISUAL_DELAY_MS = 500;      // 0.5s fallback
+const POLL_INTERVAL_MS = 3_000;           // 3s polling fallback
 const LS_KEY = 'fs_pending_donut';
 
 /**
@@ -16,7 +16,7 @@ const LS_KEY = 'fs_pending_donut';
  * @param {string} orderType – 'delivery' | 'dine_in' | 'pickup' | 'takeout'
  * @returns {object}
  */
-export function useCameraActivation(orderId, userId, orderType = 'delivery') {
+export function useCameraActivation(orderId, userId, orderType = 'delivery', delayMs = DEFAULT_VISUAL_DELAY_MS) {
   const [activationStatus, setActivationStatus] = useState('pending');
   const timerRef = useRef(null);
   const dismissTimerRef = useRef(null);
@@ -32,7 +32,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
   }, []);
 
   const showBannerNow = useCallback((isInstant = false) => {
-    const delay = isInstant ? 0 : VISUAL_DELAY_MS;
+    const delay = isInstant ? 0 : delayMs;
     console.log(`[camera] showBannerNow — isInstant=${isInstant}, delay=${delay}ms`);
 
     timerRef.current = setTimeout(() => {
@@ -132,7 +132,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
       localStorage.setItem(LS_KEY, JSON.stringify({ orderId, timestamp: Date.now() }));
 
       if (document.visibilityState === 'visible') {
-        console.log(`[camera] visible → delay ${VISUAL_DELAY_MS}ms`);
+        console.log(`[camera] visible → delay ${delayMs}ms`);
         showBannerNow(false);
       } else {
         console.log(`[camera] hidden → waiting for visibility`);

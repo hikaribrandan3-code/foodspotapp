@@ -169,7 +169,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             }
             await supabase
                 .from('orders')
-                .update({ payment_confirmed: true, paid_at: new Date().toISOString() })
+                .update({ payment_confirmed: true, payment_status: 'paid', paid_at: new Date().toISOString(), status: 'released_to_kitchen' })
                 .eq('id', orderId)
                 .eq('business_id', businessId)
         }
