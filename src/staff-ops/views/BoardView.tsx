@@ -1,15 +1,35 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign, CheckCircle2 } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderCard from '@/components/OrderCard';
-import type { OrderStatus } from '@/types';
+import OrderCelebration from '@/components/OrderCelebration';
+import type { OrderStatus, Order } from '@/types';
 
 export default function BoardView() {
   const { state, toggleOnline, advanceOrderStatus, verifyCash, claimDelivery, confirmDelivery } = useOrders();
   const { t } = useLanguage();
   const [tab, setTab] = useState<'active' | 'completed'>('active');
+  const [celebratingOrder, setCelebratingOrder] = useState<Order | null>(null);
+  const prevActiveIdsRef = useRef<Set<string>>(new Set());
+
+  // Detect orders that just transitioned to DONE and celebrate
+  useEffect(() => {
+    const currentIds = new Set(activeOrders.map(o => o.id));
+    const prevIds = prevActiveIdsRef.current;
+
+    prevIds.forEach(id => {
+      if (!currentIds.has(id)) {
+        const order = state.orders.find(o => o.id === id);
+        if (order && order.status === 'DONE') {
+          setCelebratingOrder(order);
+        }
+      }
+    });
+
+    prevActiveIdsRef.current = currentIds;
+  }, [activeOrders, state.orders]);
 
   // Active orders (excluding DONE)
   const activeOrders = useMemo(() => {
@@ -131,6 +151,12 @@ export default function BoardView() {
         )}
       </div>
 
+      {celebratingOrder && (
+        <OrderCelebration
+          order={celebratingOrder}
+          onClose={() => setCelebratingOrder(null)}
+        />
+      )}
     </div>
   );
 }
