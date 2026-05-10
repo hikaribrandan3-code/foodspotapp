@@ -530,6 +530,7 @@ function App() {
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
                                             <Route path="/:tenantSlug/events" element={<EventThemeWrapper />} />
+                                            <Route path="/:tenantSlug/events/ticket" element={<EventThemeWrapper />} />
                                             <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} /> {/* Alias for backward compatibility */}
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />

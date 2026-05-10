@@ -33,12 +33,16 @@ export function useEvents(tenantSlug) {
                 return
             }
 
+            // Include events from start of today (not just future) so ongoing events still show
+            const todayStart = new Date()
+            todayStart.setHours(0, 0, 0, 0)
+
             const { data, error: fetchError } = await supabase
                 .from('events')
                 .select('*')
                 .eq('business_id', branding.business_id)
                 .eq('status', 'live')
-                .gte('start_date', new Date().toISOString())
+                .gte('start_date', todayStart.toISOString())
                 .order('start_date', { ascending: true })
 
             if (fetchError) {

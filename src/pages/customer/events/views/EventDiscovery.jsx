@@ -171,7 +171,7 @@ const WeatherWidget = () => {
   );
 };
 
-export default function EventDiscovery({ events, onSelectEvent, onViewTickets }) {
+export default function EventDiscovery({ events, loading, error, onSelectEvent, onViewTickets }) {
   const { t, language, setLanguage } = useLanguage();
   const { businessId } = useTenant();
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -295,12 +295,30 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
           </div>
         ))}
 
-        {filteredEvents.length === 0 && (
+        {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-10 h-10 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin mb-4" />
+            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">Loading events…</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="w-20 h-20 rounded-[32px] bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6">
+               <Sparkles size={32} />
+            </div>
+            <p className="text-sm font-black text-rose-600 uppercase tracking-widest mb-2">Something went wrong</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)] opacity-60">We couldn't load events for this restaurant. Please try again later.</p>
+          </div>
+        )}
+
+        {!loading && !error && filteredEvents.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
             <div className="w-20 h-20 rounded-[32px] bg-[var(--border-color)]/30 flex items-center justify-center text-[var(--text-secondary)] mb-6 opacity-40">
                <Sparkles size={32} />
             </div>
-            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">No events found in this category</p>
+            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60 mb-2">No events found</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)] opacity-40">Check back soon for upcoming events at this venue.</p>
           </div>
         )}
       </main>

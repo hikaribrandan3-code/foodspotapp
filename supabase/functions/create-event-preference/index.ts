@@ -179,6 +179,15 @@ serve(async (req: Request) => {
             );
         }
 
+        // ── 6. Fetch branding (needed by both free events and MP flow) ──
+        const { data: branding, error: brandingError } = await supabase
+            .from('branding')
+            .select("mp_access_token, business_name, slug, currency")
+            .eq("business_id", event.business_id)
+            .single();
+
+        const businessSlug = branding?.slug || 'demo';
+
         // ── 7. Free event? Skip MP and mark paid ──
         if (event.is_free || totalCents === 0) {
             await supabase
@@ -192,18 +201,11 @@ serve(async (req: Request) => {
                     order_id: order.id,
                     ticket_code: ticketCode,
                     guest_token: order.guest_token,
-                    redirect_url: `${APP_BASE_URL}/${branding.slug || 'demo'}/events/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`
+                    redirect_url: `${APP_BASE_URL}/${businessSlug}/events/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`
                 }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
-
-        // ── 6. Fetch MP access token ──
-        const { data: branding, error: brandingError } = await supabase
-            .from('branding')
-            .select("mp_access_token, business_name, slug, currency")
-            .eq("business_id", event.business_id)
-            .single();
 
         if (brandingError || !branding?.mp_access_token) {
             return new Response(
@@ -217,7 +219,7 @@ serve(async (req: Request) => {
         const externalReference = `${event.business_id}:${order.id}`;
 
         // ── 8. Create MP preference ──
-        const baseUrl = `${APP_BASE_URL}/${branding.slug || 'demo'}/events`;
+        const baseUrl = `${APP_BASE_URL}/${businessSlug}/events`;
         const preferenceBody = {
             items: [{
                 title: `${event.name} - ${tier.name}`,

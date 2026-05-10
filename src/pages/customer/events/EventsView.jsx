@@ -219,10 +219,12 @@ function normalizeEvent(event) {
 export default function EventsView({ onViewTickets }) {
   const { tenantSlug } = useParams();
   const [searchParams] = useSearchParams();
-  const { events: dbEvents, loading: eventsLoading } = useEvents(tenantSlug);
+  const { events: dbEvents, loading: eventsLoading, error: eventsError } = useEvents(tenantSlug);
 
-  // Always show template events + any database events
-  const events = [...mockEvents, ...dbEvents.map(normalizeEvent)];
+  // Only show real DB events in production; mock events are dev-only
+  const events = dbEvents.length > 0
+    ? dbEvents.map(normalizeEvent)
+    : mockEvents.map(e => ({ ...e, id: `mock_${e.id}` }));
 
   const [stage, setStage] = useState('discovery'); // 'discovery' | 'detail' | 'checkout' | 'ticket' | 'my-tickets'
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -312,6 +314,8 @@ export default function EventsView({ onViewTickets }) {
           {stage === 'discovery' && (
             <EventDiscovery 
               events={events} 
+              loading={eventsLoading}
+              error={eventsError}
               onSelectEvent={handleSelectEvent} 
               onViewTickets={onViewTickets || (() => setStage('my-tickets'))}
             />
