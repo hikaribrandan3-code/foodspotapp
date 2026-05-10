@@ -275,6 +275,12 @@ function OwnerLogin() {
             const metadata = data.user?.user_metadata || {}
             const role = metadata.role || 'owner'
             const slug = metadata.slug || tenantSlug || 'default'
+            const businessId = tenantData?.id
+
+            // 🔐 Set business ID for RLS header injection (matches staff login behavior)
+            if (businessId) {
+                localStorage.setItem('fs_business_id', businessId)
+            }
 
             if (role === 'superadmin') {
                 window.location.href = '/admin'
