@@ -242,7 +242,8 @@ export default function OrderDetailDrawer() {
                           💵 Cash
                         </button>
                         <button
-                          onClick={() => setShowingAlias(true)}
+                          onClick={(e) => { e.stopPropagation(); setShowingAlias(true); }}
+                          onTouchStart={(e) => { e.stopPropagation(); setShowingAlias(true); }}
                           className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
                           style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
                         >
@@ -261,14 +262,16 @@ export default function OrderDetailDrawer() {
                         <p className="text-[10px]" style={{ color: '#92400e' }}>Tell customer to pay via Mercado Pago</p>
                       </div>
                       <button
-                        onClick={() => { confirmPayment(order.id, 'mercado_pago'); setShowingAlias(false); selectOrder(null); }}
+                        onClick={(e) => { e.stopPropagation(); confirmPayment(order.id, 'mercado_pago'); setShowingAlias(false); selectOrder(null); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
                         className="w-full min-h-[48px] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
                         style={{ backgroundColor: '#f97316', color: '#fff' }}
                       >
                         ✓ Verified — Customer Paid
                       </button>
                       <button
-                        onClick={() => setShowingAlias(false)}
+                        onClick={(e) => { e.stopPropagation(); setShowingAlias(false); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
                         className="w-full min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
                         style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
                       >
