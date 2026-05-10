@@ -70,13 +70,6 @@ export default function Receipt() {
     }
   }, [orderId])
 
-  const calculateETA = () => {
-    if (!order?.distance_km) return '30-45 min'
-    const mins = Math.round(order.distance_km * 5)
-    const eta = new Date(Date.now() + mins * 60000)
-    return `${mins} min (${eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
-  }
-
   const isCash = order?.payment_method === 'cash'
   const isMp = order?.payment_method === 'mercado_pago'
   const isDelivered = order?.status === 'delivered'
@@ -144,16 +137,7 @@ export default function Receipt() {
             </div>
           </div>
 
-          {/* ETA */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <Clock size={20} style={{ color: '#9CA3AF', flexShrink: 0 }} />
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Tiempo estimado de entrega</p>
-              <p style={{ fontSize: 14, color: '#6B7280' }}>{calculateETA()}</p>
-            </div>
-          </div>
-
-          {/* Delivery Address */}
+          {/* Delivery Address (no mapbox) */}
           {order.delivery_address && (
             <div style={{ background: '#fff', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <MapPin size={20} style={{ color: '#9CA3AF', marginTop: 2, flexShrink: 0 }} />
@@ -164,7 +148,6 @@ export default function Receipt() {
                     ? order.delivery_address
                     : `${order.delivery_address.street || ''} ${order.delivery_address.number || ''}`}
                 </p>
-                {order.distance_km && <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{Number(order.distance_km).toFixed(1)} km</p>}
               </div>
             </div>
           )}
