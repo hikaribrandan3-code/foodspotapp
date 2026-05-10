@@ -81,6 +81,7 @@ const Analytics = () => {
 
             const cutoff = getDateCutoff(dateRange)
             if (cutoff) query = query.gte('created_at', cutoff)
+            query = query.limit(500)
 
             const { data, error } = await query
 
@@ -107,7 +108,7 @@ const Analytics = () => {
     // COMPUTED STATS
     const stats = useMemo(() => {
         const completed = orders.filter(o =>
-            [ORDER_STATUS.DELIVERED, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING].includes(o.status)
+            [ORDER_STATUS.DELIVERED, ORDER_STATUS.DISPATCHED].includes(o.status)
         )
         const delivered = orders.filter(o => o.status === ORDER_STATUS.DELIVERED)
         const totalRevenue = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
