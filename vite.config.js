@@ -22,16 +22,20 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          'html5-qrcode': ['html5-qrcode'],
+          // Keep html5-qrcode separate (large, only needed on inventory pages)
+          'vendor-qrcode': ['html5-qrcode'],
+          // Force React into its own chunk so it never gets trapped inside
+          // a cross-entry shared chunk like InventoryEntry.
+          'vendor-react': ['react', 'react-dom'],
+          // Same for framer-motion — prevents TDZ crashes when chunks
+          // loaded by multiple entry points initialize out of order.
+          'vendor-motion': ['framer-motion'],
         },
       },
     },
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
+    // Use esbuild minify instead of terser to avoid TDZ/circular-init
+    // crashes like "Cannot access 'X' before initialization" when chunks
+    // are split across multiple entry points (staff-ops + main app).
+    minify: 'esbuild',
   },
 })
