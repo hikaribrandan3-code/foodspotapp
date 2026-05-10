@@ -67,6 +67,20 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ADVANCE_STATUS': {
       const order = state.orders.find(o => o.id === action.orderId);
       if (!order) return state;
+
+      // paid_unreleased → released_to_kitchen doesn't change Kimi status (still TODO)
+      if (order.rawDbStatus === 'paid_unreleased') {
+        hapticForTransition('status_advance');
+        return {
+          ...state,
+          orders: state.orders.map(o =>
+            o.id === action.orderId
+              ? { ...o, rawDbStatus: 'released_to_kitchen', offlineQueued: !state.isOnline }
+              : o,
+          ),
+        };
+      }
+
       const nextStatus = getNextStatus(order.status, order.deliveryType);
       if (!nextStatus) return state;
       hapticForTransition('status_advance');
@@ -322,8 +336,16 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   const advanceOrderStatus = useCallback(async (orderId: string) => {
     const order = state.orders.find(o => o.id === orderId);
     if (!order) return;
-    const nextStatus = getNextStatus(order.status, order.deliveryType);
-    if (!nextStatus) return;
+
+    // paid_unreleased must go to released_to_kitchen first (RPC FSM rule)
+    let targetDbStatus: string;
+    if (order.rawDbStatus === 'paid_unreleased') {
+      targetDbStatus = 'released_to_kitchen';
+    } else {
+      const nextStatus = getNextStatus(order.status, order.deliveryType);
+      if (!nextStatus) return;
+      targetDbStatus = toDbStatus(nextStatus);
+    }
 
     if (!state.isOnline) {
       queueAction({ orderId, type: 'status_advance', timestamp: Date.now() });
@@ -332,7 +354,6 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (state.isOnline && businessId) {
-      const targetDbStatus = toDbStatus(nextStatus);
       const { data, error } = await supabase.rpc('advance_order_status', {
         p_order_id: orderId,
         p_target_status: targetDbStatus,

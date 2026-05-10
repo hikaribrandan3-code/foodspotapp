@@ -313,13 +313,16 @@ function Order({ config: configProp }) {
         const isMercadoPago = effectivePaymentMethod === PAYMENT_METHOD.MERCADO_PAGO
         const isCash = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
         const isDineInPayAfter = orderType === 'dine_in' && isCash
+        const isDeliveryCash = orderType === 'delivery' && isCash
         const orderStatus = isMercadoPago
             ? ORDER_STATUS.PENDING_PAYMENT      // MP: waiting for online payment
             : isDineInPayAfter
                 ? ORDER_STATUS.RELEASED_TO_KITCHEN  // Dine-in pay-after: skip payment gate, go straight to kitchen
-                : isCash
-                    ? ORDER_STATUS.PAID_UNRELEASED  // Pickup/delivery cash: owner must confirm payment
-                    : ORDER_STATUS.RELEASED_TO_KITCHEN
+                : isDeliveryCash
+                    ? ORDER_STATUS.RELEASED_TO_KITCHEN  // Delivery cash: pay at door, start cooking immediately
+                    : isCash
+                        ? ORDER_STATUS.PAID_UNRELEASED  // Pickup cash: owner must confirm payment
+                        : ORDER_STATUS.RELEASED_TO_KITCHEN
 
         const orderPaymentStatus = isDineInPayAfter ? 'unpaid' : 'pending'
 
@@ -510,8 +513,8 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: ORDER_STATUS.PAID_UNRELEASED, // WhatsApp = cash path, payment done, awaiting release
-            payment_status: 'pending',
+            status: isDelivery ? ORDER_STATUS.RELEASED_TO_KITCHEN : ORDER_STATUS.PAID_UNRELEASED, // Delivery cash: start immediately; Pickup cash: await release
+            payment_status: isDelivery ? 'unpaid' : 'pending',
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,

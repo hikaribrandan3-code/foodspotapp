@@ -33,6 +33,9 @@ export interface Order {
   deliveryType?: 'delivery' | 'pickup' | 'dine_in';
   tableNumber?: number;
   staffNotes?: string;
+  /** Raw DB status — used for FSM-aware transitions */
+  rawDbStatus?: string;
+  paymentStatus?: string;
 }
 
 export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'inventory';
