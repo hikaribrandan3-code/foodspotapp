@@ -730,9 +730,9 @@ function Home({ config: configProp }) {
                             </div>
                             <div style={{ fontSize: 12, color: '#C2410C', textTransform: 'capitalize' }}>
                                 {({
-                                    pending_payment: 'Pending Payment',
-                                    paid_unreleased: 'Paid — Preparing',
-                                    released_to_kitchen: 'In the Kitchen',
+                                    pending_payment: 'Awaiting Payment',
+                                    paid_unreleased: 'Order Confirmed',
+                                    released_to_kitchen: 'Order Received',
                                     preparing: 'Preparing',
                                     ready: 'Ready',
                                     dispatched: 'On the Way',

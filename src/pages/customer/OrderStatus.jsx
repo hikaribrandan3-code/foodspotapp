@@ -214,22 +214,70 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const deliveryFee = isDelivery ? (order.delivery_fee || 0) : null
     const total = order.total || (subtotal + (deliveryFee || 0) + tax)
 
-    const getStatusText = () => {
-        if (order.status === ORDER_STATUS.CANCELLED) return t('status_cancelled')
-        if (order.status === ORDER_STATUS.DELIVERED) {
-            if (order.order_type === 'dine_in' && !paid) return 'Served — Awaiting Payment'
-            return order.order_type === 'dine_in' ? 'Served' : t('status_delivered')
+    /**
+     * 🎯 1:1 STATUS PARITY
+     * Every DB status maps to exactly one customer-facing heading + subtext.
+     * This matches 1:1 with staff/owner actions.
+     */
+    const getStatusDisplay = () => {
+        const s = order.status
+        const type = order.order_type
+
+        // Cancelled
+        if (s === ORDER_STATUS.CANCELLED) {
+            return { heading: t('heading_order_cancelled'), subtext: t('order_cancelled_message') }
         }
-        if (order.status === ORDER_STATUS.READY) {
-            if (order.order_type === 'dine_in') return 'Ready to Serve'
-            if (isDelivery) return t('status_on_the_way')
-            return t('status_ready_pickup')
+
+        // Delivered / Picked Up / Served
+        if (s === ORDER_STATUS.DELIVERED) {
+            if (type === 'dine_in') {
+                return paid
+                    ? { heading: 'Served', subtext: 'Enjoy your meal!' }
+                    : { heading: 'Served', subtext: 'Payment due at table' }
+            }
+            if (type === 'delivery') {
+                return { heading: t('heading_order_delivered'), subtext: 'Enjoy your meal!' }
+            }
+            return { heading: 'Picked Up', subtext: 'Enjoy your meal!' }
         }
-        if (order.status === ORDER_STATUS.DISPATCHED) return t('status_on_the_way')
-        if (paid) return '✅ ' + t('status_payment_received')
-        if (order.order_type === 'dine_in') return 'Preparing'
-        return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
+
+        // Dispatched (delivery only)
+        if (s === ORDER_STATUS.DISPATCHED) {
+            return { heading: t('status_on_the_way'), subtext: 'Your driver is en route' }
+        }
+
+        // Ready
+        if (s === ORDER_STATUS.READY) {
+            if (type === 'dine_in') return { heading: 'Ready to Serve', subtext: 'Your server will bring it shortly' }
+            if (type === 'delivery') return { heading: 'Ready for Delivery', subtext: 'A driver will be assigned soon' }
+            return { heading: t('status_ready_pickup'), subtext: 'Come pick up your order' }
+        }
+
+        // Preparing
+        if (s === ORDER_STATUS.PREPARING) {
+            return { heading: t('status_preparing'), subtext: 'Your order is being prepared' }
+        }
+
+        // Released to kitchen (staff/owner confirmed, cooking hasn't started)
+        if (s === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+            return { heading: 'Order Received', subtext: 'The kitchen will start preparing soon' }
+        }
+
+        // Paid but not released (pickup cash — owner hasn't confirmed yet)
+        if (s === ORDER_STATUS.PAID_UNRELEASED) {
+            return { heading: 'Order Confirmed', subtext: 'Waiting for restaurant to start' }
+        }
+
+        // Pending payment (MP or pickup cash awaiting confirmation)
+        if (s === ORDER_STATUS.PENDING_PAYMENT) {
+            return { heading: 'Awaiting Payment', subtext: 'Complete your payment to confirm' }
+        }
+
+        // Fallback
+        return { heading: t('heading_order_confirmed'), subtext: '' }
     }
+
+    const statusDisplay = getStatusDisplay()
 
     const getPaymentDisplay = () => {
         if (order.payment_method === PAYMENT_METHOD.CASH) return t(PAYMENT_METHOD.CASH)
@@ -300,14 +348,19 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
-                        {order.status === ORDER_STATUS.DELIVERED ? (order.order_type === 'dine_in' ? 'Order Served' : t('heading_order_delivered'))
-                            : order.status === ORDER_STATUS.CANCELLED ? t('heading_order_cancelled')
-                            : order.status === ORDER_STATUS.READY ? (order.order_type === 'dine_in' ? 'Ready to Serve' : isDelivery ? t('status_on_the_way') : t('status_ready_pickup'))
-                            : order.status === ORDER_STATUS.DISPATCHED ? t('status_on_the_way')
-                            : order.status === 'released_to_kitchen' ? 'Prepping! 👨‍🍳'
-                            : isCashMethod && !paid ? t('heading_confirmed_unpaid')
-                            : t('heading_order_confirmed')}
+                        {statusDisplay.heading}
                     </h1>
+
+                    {statusDisplay.subtext && (
+                        <p style={{
+                            fontSize: 14,
+                            color: '#737373',
+                            marginTop: 8,
+                            lineHeight: 1.4
+                        }}>
+                            {statusDisplay.subtext}
+                        </p>
+                    )}
 
                     <div style={{
                         marginTop: 8,
@@ -518,7 +571,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             gap: 12, padding: '3px 0', fontSize: 13,
                         }}>
                             <span style={{ color: '#737373' }}>{t('status')}</span>
-                            <span style={{ color: '#0a0a0a' }}>{getStatusText()}</span>
+                            <span style={{ color: '#0a0a0a' }}>{statusDisplay.heading}</span>
                         </div>
                     </div>
                         </>
