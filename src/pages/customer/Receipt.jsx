@@ -54,6 +54,20 @@ export default function Receipt() {
     }
 
     fetchOrder()
+
+    // Realtime subscription to update order status after delivery
+    const channel = supabase
+      .channel(`receipt-${orderId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
+        (payload) => {
+          setOrder(payload.new)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [orderId])
 
   const calculateETA = () => {
