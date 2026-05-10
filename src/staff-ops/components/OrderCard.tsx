@@ -324,7 +324,7 @@ export default function OrderCard({
             <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>Payment must be verified before kitchen sees this order.</p>
             <button
               onClick={handleVerifyCash}
-              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+              className="w-full min-h-[52px] py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
             >
               <DollarSign size={16} strokeWidth={2.5} />
@@ -338,11 +338,11 @@ export default function OrderCard({
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
               onClick={handleAdvance}
-              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              className="w-full min-h-[52px] py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Confirm Payment' : order.status === 'READY' && order.deliveryType === 'delivery' ? 'Assign Delivery' : order.status === 'READY' ? 'Hand Over' : 'Advance'}
+              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Confirm Payment' : order.status === 'READY' && order.deliveryType === 'delivery' ? 'Assign Delivery' : order.status === 'READY' ? 'Hand Over' : order.status === 'DELIVERING' ? 'Complete Delivery' : 'Complete Order'}
             </button>
           </div>
         )}
@@ -352,7 +352,7 @@ export default function OrderCard({
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
               onClick={e => { e.stopPropagation(); onClaim?.(order.id); }}
-              className="w-full py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+              className="w-full min-h-[52px] py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
               style={{ backgroundColor: 'var(--status-icon-dispatch)', color: '#fff' }}
             >
               <Bike size={15} />

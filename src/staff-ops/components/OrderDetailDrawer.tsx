@@ -25,12 +25,14 @@ export default function OrderDetailDrawer() {
   const isDelivering = order.status === 'DELIVERING';
   const isDone = order.status === 'DONE';
 
-  // Next status label for the advance button
+  // Next status label for the advance button — type-aware per FLOW_MAP
   const nextLabels: Record<string, string> = {
     TODO: '▶ Start Prep',
     PREP: '✓ Mark Ready',
-    READY: order.deliveryType === 'dine_in' ? '💰 Confirm Payment & Done' : '🚴 Dispatch',
-    DISPATCH: '📍 Mark Delivering',
+    READY: order.deliveryType === 'dine_in' ? '💰 Confirm Payment' :
+           order.deliveryType === 'delivery' ? '🚴 Assign Delivery' :
+           '✋ Hand Over',
+    DISPATCH: '📍 Mark Delivered',
   };
   const nextLabel = nextLabels[order.status];
 
@@ -173,7 +175,7 @@ export default function OrderDetailDrawer() {
               {isCashPending && (
                 <button
                   onClick={() => { verifyCash(order.id); selectOrder(null); }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
                 >
                   <DollarSign size={16} strokeWidth={2.5} />
@@ -192,7 +194,7 @@ export default function OrderDetailDrawer() {
                     }
                     selectOrder(null);
                   }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)', border: '1px solid var(--status-icon-prep)' }}
                 >
                   {nextLabel}
@@ -204,7 +206,7 @@ export default function OrderDetailDrawer() {
               {isDelivering && (
                 <button
                   onClick={() => { confirmDelivery(order.id); selectOrder(null); }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--reception-bg)', color: 'var(--reception-text)', border: '1px solid var(--reception-border)' }}
                 >
                   <Package size={16} />
