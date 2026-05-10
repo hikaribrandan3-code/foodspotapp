@@ -71,8 +71,8 @@ export default function Receipt() {
 
   // Use actual order type from database, fallback to inferring from delivery address
   const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
-  // For pickup/takeout, use instant trigger (5s); for dine-in use 2s; for delivery use variants (45-90s)
-  const finalDelayVariant = orderType === 'takeout' ? 5000 : orderType === 'dine_in' ? dineinDelayVariant : delayVariant
+  // Flat 1s delay for all order types — banner appears 1s after delivery
+  const finalDelayVariant = 1000
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>

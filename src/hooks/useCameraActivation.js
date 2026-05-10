@@ -22,6 +22,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
   const dismissTimerRef = useRef(null);
   const pollRef = useRef(null);
   const hasTriggeredRef = useRef(false);
+  const hasShownBannerRef = useRef(false);
   const effectiveUserId = userId || `guest_${orderId}`;
 
   /* ── helpers ── */
@@ -32,11 +33,14 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
   }, []);
 
   const showBannerNow = useCallback((isInstant = false) => {
+    if (hasShownBannerRef.current) return;
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
     const delay = isInstant ? 0 : delayMs;
     console.log(`[camera] showBannerNow — isInstant=${isInstant}, delay=${delay}ms`);
 
     timerRef.current = setTimeout(() => {
       console.log(`[camera] Timer fired → ready`);
+      hasShownBannerRef.current = true;
       setActivationStatus('ready');
       supabase
         .from('ugc_activations')
@@ -46,7 +50,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         .then(() => {})
         .then(() => {}).catch(() => {});
     }, delay);
-  }, [orderId, effectiveUserId]);
+  }, [orderId, effectiveUserId, delayMs]);
 
   /* ── load existing activation (prevent dupes on refresh) ── */
   useEffect(() => {
@@ -76,16 +80,12 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
           hasTriggeredRef.current = true;
           return;
         }
-        if (data.status === 'shown' && data.banner_shown_at) {
-          // Sticky re-show: if banner was shown < 30 min ago, user may have missed it
-          const shownAt = new Date(data.banner_shown_at).getTime();
-          const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
-          if (shownAt > thirtyMinAgo) {
-            setActivationStatus('ready');
-            hasTriggeredRef.current = true;
-            return;
-          }
-          // If > 30 min, treat as a fresh opportunity — fall through
+        if (data.status === 'shown') {
+          // Persist banner across reloads indefinitely until user dismisses it
+          setActivationStatus('ready');
+          hasTriggeredRef.current = true;
+          hasShownBannerRef.current = true;
+          return;
         }
       }
     };
@@ -131,12 +131,9 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
       setActivationStatus('waiting');
       localStorage.setItem(LS_KEY, JSON.stringify({ orderId, timestamp: Date.now() }));
 
-      if (document.visibilityState === 'visible') {
-        console.log(`[camera] visible → delay ${delayMs}ms`);
-        showBannerNow(false);
-      } else {
-        console.log(`[camera] hidden → waiting for visibility`);
-      }
+      // Always schedule banner show regardless of tab visibility
+      console.log(`[camera] scheduling banner → delay ${delayMs}ms`);
+      showBannerNow(false);
     };
 
     /* ── visibility listener ── */
@@ -148,7 +145,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
         const p = JSON.parse(raw);
         if (p.orderId !== orderId) return;
         if (Date.now() - p.timestamp > 5 * 60 * 1000) { localStorage.removeItem(LS_KEY); return; }
-        if (hasTriggeredRef.current) { localStorage.removeItem(LS_KEY); return; }
+        if (hasShownBannerRef.current) { localStorage.removeItem(LS_KEY); return; }
         console.log(`[camera] visibility→visible → instant donut`);
         showBannerNow(true);
         localStorage.removeItem(LS_KEY);

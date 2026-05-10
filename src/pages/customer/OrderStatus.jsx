@@ -239,7 +239,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const paid = isOrderPaid(order)
 
     return (
-      <CameraTrigger orderId={order.id} orderType={orderType}>
+      <CameraTrigger orderId={order.id} orderType={orderType} delayMs={1000}>
         <>
             <HeaderClamp config={config} />
             <div style={{
