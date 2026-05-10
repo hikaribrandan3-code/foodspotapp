@@ -666,6 +666,7 @@ export async function updateOrderCloud(orderId, updates, businessId) {
     if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
     if (updates.payment_confirmed !== undefined) dbUpdates.payment_confirmed = updates.payment_confirmed
+    if (updates.payment_status !== undefined) dbUpdates.payment_status = updates.payment_status
     // Stamp delivered_at when order is confirmed delivered
     if (updates.status === 'delivered') dbUpdates.delivered_at = new Date().toISOString()
 

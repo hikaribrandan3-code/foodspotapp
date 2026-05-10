@@ -76,11 +76,16 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
           hasTriggeredRef.current = true;
           return;
         }
-        if (data.status === 'shown') {
-          // Already shown this session — don't re-show
-          setActivationStatus('shown');
-          hasTriggeredRef.current = true;
-          return;
+        if (data.status === 'shown' && data.banner_shown_at) {
+          // Sticky re-show: if banner was shown < 30 min ago, user may have missed it
+          const shownAt = new Date(data.banner_shown_at).getTime();
+          const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
+          if (shownAt > thirtyMinAgo) {
+            setActivationStatus('ready');
+            hasTriggeredRef.current = true;
+            return;
+          }
+          // If > 30 min, treat as a fresh opportunity — fall through
         }
       }
     };
@@ -194,11 +199,26 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
     };
   }, [orderId, orderType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── auto-dismiss (skip dine-in) ── */
+  /* ── auto-dismiss (skip dine-in, only when visible) ── */
   useEffect(() => {
     if (activationStatus !== 'ready' || orderType === 'dine_in') return;
+    if (document.visibilityState !== 'visible') return;
+
     dismissTimerRef.current = setTimeout(() => dismissBanner(), BANNER_AUTO_DISMISS_MS);
-    return () => clearTimers();
+
+    const resetOnVisible = () => {
+      if (document.visibilityState === 'visible' && activationStatus === 'ready') {
+        // User came back — give them a fresh 5-minute window
+        clearTimers();
+        dismissTimerRef.current = setTimeout(() => dismissBanner(), BANNER_AUTO_DISMISS_MS);
+      }
+    };
+    document.addEventListener('visibilitychange', resetOnVisible);
+
+    return () => {
+      clearTimers();
+      document.removeEventListener('visibilitychange', resetOnVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activationStatus, orderType]);
 
