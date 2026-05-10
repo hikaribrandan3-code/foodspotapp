@@ -4,8 +4,6 @@ import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useBusiness } from '@/contexts/BusinessContext';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient.js';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -19,23 +17,8 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
-  const { businessId } = useBusiness();
+  const { mpAlias } = useBusiness();
   const order = state.orders.find(o => o.id === state.selectedOrderId);
-  const [mpAlias, setMpAlias] = useState<string>('');
-
-  useEffect(() => {
-    if (!businessId) return;
-    supabase
-      .from('businesses')
-      .select('app_config')
-      .eq('id', businessId)
-      .single()
-      .then(({ data }) => {
-        const alias = data?.app_config?.payments?.mercadoPagoAlias;
-        if (alias) setMpAlias(alias);
-      })
-      .catch(() => {});
-  }, [businessId]);
 
   if (!order) return null;
 
@@ -237,10 +220,10 @@ export default function OrderDetailDrawer() {
               {/* Dine-in payment confirmation (DONE + unpaid) */}
               {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
                 <div className="mt-3 space-y-2">
-                  {/* MP Alias Display */}
+                  {/* MP Alias Display — locked, owner-controlled */}
                   {mpAlias && (
                     <div className="p-3 rounded-lg text-center" style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
-                      <p className="text-xs font-semibold" style={{ color: '#92400e' }}>Mercado Pago Alias</p>
+                      <p className="text-xs font-semibold" style={{ color: '#92400e' }}>Tell customer</p>
                       <p className="text-lg font-bold font-mono" style={{ color: '#b45309' }}>{mpAlias}</p>
                     </div>
                   )}

@@ -7,6 +7,7 @@ interface BusinessContextValue {
   tenantSlug: string;
   businessLat?: number;
   businessLng?: number;
+  mpAlias: string;
 }
 
 const BusinessContext = createContext<BusinessContextValue | null>(null);
@@ -21,21 +22,51 @@ export function BusinessProvider({
   children: React.ReactNode;
 }) {
   const [coords, setCoords] = useState<{ lat?: number; lng?: number }>({});
+  const [mpAlias, setMpAlias] = useState<string>('');
 
-  // Fetch business location on mount
+  // Fetch business location + MP alias on mount
   useEffect(() => {
     if (!businessId) return;
     supabase
       .from('businesses')
-      .select('latitude, longitude')
+      .select('latitude, longitude, app_config')
       .eq('id', businessId)
       .single()
       .then(({ data }: { data: any }) => {
         if (data?.latitude && data?.longitude) {
           setCoords({ lat: data.latitude, lng: data.longitude });
         }
+        const alias = data?.app_config?.payments?.mercadoPagoAlias;
+        if (alias) setMpAlias(alias);
       })
-      .catch(() => {}); // silent fail, ETA just won't show
+      .catch(() => {}); // silent fail
+  }, [businessId]);
+
+  // Realtime subscription: owner updates app_config → staff sees new alias instantly
+  useEffect(() => {
+    if (!businessId) return;
+    const channel = supabase
+      .channel(`business-config-${businessId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'businesses',
+          filter: `id=eq.${businessId}`,
+        },
+        (payload: any) => {
+          const newAlias = payload.new?.app_config?.payments?.mercadoPagoAlias;
+          if (typeof newAlias === 'string') {
+            setMpAlias(newAlias);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel).catch(() => {});
+    };
   }, [businessId]);
 
   return (
@@ -45,6 +76,7 @@ export function BusinessProvider({
         tenantSlug,
         businessLat: coords.lat,
         businessLng: coords.lng,
+        mpAlias,
       }}
     >
       {children}
@@ -54,6 +86,6 @@ export function BusinessProvider({
 
 export function useBusiness(): BusinessContextValue {
   const ctx = useContext(BusinessContext);
-  if (!ctx) return { businessId: '', tenantSlug: '' };
+  if (!ctx) return { businessId: '', tenantSlug: '', mpAlias: '' };
   return ctx;
 }
