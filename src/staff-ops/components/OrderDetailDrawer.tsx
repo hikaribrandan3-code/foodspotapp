@@ -172,6 +172,14 @@ export default function OrderDetailDrawer() {
 
             {/* Action buttons */}
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
+              {/* Order Total */}
+              <div className="text-center p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total</p>
+                <p className="text-lg font-bold" style={{ color: 'var(--filter-active-bg)' }}>
+                  ${(order.total / 100).toFixed(2)}
+                </p>
+              </div>
+
               {/* Verify Cash */}
               {isCashPending && (
                 <button
@@ -198,8 +206,15 @@ export default function OrderDetailDrawer() {
 
               {/* Dine-in payment confirmation (DONE + unpaid) */}
               {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
-                <div className="mt-3">
-                  <p className="text-xs font-semibold mb-2 text-center" style={{ color: 'var(--text-tertiary)' }}>
+                <div className="mt-3 space-y-2">
+                  {/* MP Alias Display */}
+                  {order.alias && (
+                    <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                      <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Mercado Pago Alias</p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{order.alias}</p>
+                    </div>
+                  )}
+                  <p className="text-xs font-semibold text-center" style={{ color: 'var(--text-tertiary)' }}>
                     Confirm Payment
                   </p>
                   <div className="flex gap-2">

@@ -54,6 +54,18 @@ export default function Receipt() {
     }
 
     fetchOrder()
+
+    const channel = supabase
+      .channel(`receipt-${orderId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
+        (payload) => {
+          setOrder(payload.new)
+        })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [orderId])
 
   const calculateETA = () => {
@@ -65,9 +77,10 @@ export default function Receipt() {
 
   const isCash = order?.payment_method === 'cash'
   const isMp = order?.payment_method === 'mercado_pago'
-  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased'
+  const isDelivered = order?.status === 'delivered'
+  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased' || isDelivered
   const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
-  const paymentFailed = !isPaid && !isPending && !isCash
+  const paymentFailed = !isPaid && !isPending && !isCash && !isDelivered
 
   // Use actual order type from database, fallback to inferring from delivery address
   const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
