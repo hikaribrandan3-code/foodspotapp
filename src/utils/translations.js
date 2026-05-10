@@ -384,8 +384,8 @@ export const translations = {
     status_payment_received: { es: "Pago recibido", en: "Payment received", pt: "Pagamento recebido" },
     status_confirmed: { es: "Pedido confirmado", en: "Order confirmed", pt: "Pedido confirmado" },
     status_preparing: { es: "En preparación", en: "Preparing", pt: "Em preparação" },
-    status_ready_pickup: { es: "¡Listo para recoger!", en: "Ready for pickup!", pt: "Pronto para retirar!" },
-    status_awaiting_pickup: { es: "Esperando pago al retirar", en: "Awaiting payment at pickup", pt: "Aguardando pagamento na retirada" },
+    status_ready_pickup: { es: "¡Listo para recoger!", en: "Ready for take out!", pt: "Pronto para retirar!" },
+    status_awaiting_pickup: { es: "Esperando pago al retirar", en: "Awaiting payment at take out", pt: "Aguardando pagamento na retirada" },
     status_awaiting_delivery: { es: "Esperando pago al recibir", en: "Awaiting cash on delivery", pt: "Aguardando pagamento na entrega" },
     status_in_kitchen: { es: "En cocina", en: "In Kitchen", pt: "Na Cozinha" },
     status_on_the_way: { es: "En camino", en: "On the way", pt: "A caminho" },
@@ -515,7 +515,7 @@ export const translations = {
     dine_in_pay_at_end_message: { es: "Pagás al final — ¡que disfrutes tu comida!", en: "You pay at the end — enjoy your meal!", pt: "Você paga no final — aproveite sua refeição!" },
     dine_in_pay_at_end: { es: "Los clientes de comer en local pagan al final de su comida.", en: "Dine-in customers pay at the end of their meal.", pt: "Os clientes que comem no local pagam no final da refeição." },
     payment_methods_label: { es: "Métodos de Pago", en: "Payment Methods", pt: "Métodos de Pagamento" },
-    pickup: { es: "Retiro", en: "Pickup", pt: "Retirada" },
+    pickup: { es: "Retiro", en: "Take Out", pt: "Retirada" },
     coming_soon: { es: "Próximamente", en: "Coming Soon", pt: "Em Breve" },
 
     // Events Module

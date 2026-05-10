@@ -297,7 +297,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
               <div>
                 <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, paddingLeft: 4, color: 'var(--text-tertiary, #9AA4B5)' }}>Order Type</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                  {[{ value: 'pickup', label: 'Pickup' }, { value: 'delivery', label: 'Delivery' }, { value: 'dine_in', label: 'Dine In' }].map(({ value, label }) => (
+                  {[{ value: 'pickup', label: 'Take Out' }, { value: 'delivery', label: 'Delivery' }, { value: 'dine_in', label: 'Dine In' }].map(({ value, label }) => (
                     <button key={value} onClick={() => setOrderType(value)} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setOrderType(value); }}
                       style={{
                         padding: '10px 0', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',

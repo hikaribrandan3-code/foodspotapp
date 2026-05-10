@@ -746,7 +746,7 @@ function Order({ config: configProp }) {
                         {/* Order type selector — only show when multiple modes are enabled */}
                         {(() => {
                             const modes = []
-                            if (serviceModes?.pickup) modes.push({ id: 'pickup', label: t('pickup') || 'Takeout' })
+                            if (serviceModes?.pickup) modes.push({ id: 'pickup', label: t('pickup') || 'Take Out' })
                             if (serviceModes?.dineIn) modes.push({ id: 'dine_in', label: t('dine_in') || 'Dine In' })
                             if (serviceModes?.delivery) modes.push({ id: 'delivery', label: t('delivery') || 'Delivery' })
                             if (modes.length <= 1) return null

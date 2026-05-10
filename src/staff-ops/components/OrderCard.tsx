@@ -272,7 +272,7 @@ export default function OrderCard({
                     backgroundColor: order.deliveryType === 'delivery' ? 'rgba(168,85,247,0.12)' : order.deliveryType === 'dine_in' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)',
                     color: order.deliveryType === 'delivery' ? 'var(--status-icon-delivering)' : order.deliveryType === 'dine_in' ? 'var(--status-icon-dispatch)' : 'var(--status-icon-prep)',
                   }}>
-                  {order.deliveryType === 'delivery' ? 'Delivery' : order.deliveryType === 'dine_in' ? 'Dine In' : 'Pickup'}
+                  {order.deliveryType === 'delivery' ? 'Delivery' : order.deliveryType === 'dine_in' ? 'Dine In' : 'Take Out'}
                 </span>
               )}
               {order.tableNumber && (

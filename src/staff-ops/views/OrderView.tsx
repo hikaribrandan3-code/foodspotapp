@@ -295,7 +295,7 @@ export default function OrderView() {
               <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Order Type</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {([
-                  { value: 'pickup', label: 'Pickup' },
+                  { value: 'pickup', label: 'Take Out' },
                   { value: 'delivery', label: 'Delivery' },
                   { value: 'dine_in', label: 'Dine In' },
                 ] as const).map(({ value, label }) => (

@@ -237,7 +237,7 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     pt: 'Todos os pedidos limpos',
   },
   'no_orders_ready': {
-    en: 'No orders ready for pickup',
+    en: 'No orders ready for hand off',
     es: 'No hay pedidos listos',
     pt: 'Nenhum pedido pronto',
   },

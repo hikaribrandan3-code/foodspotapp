@@ -20,7 +20,7 @@ interface Order {
 const statusLabels: Record<string, string> = {
   RELEASED_TO_KITCHEN: 'In Kitchen',
   PREP: 'Preparing',
-  READY: 'Ready for Pickup',
+  READY: 'Ready for Hand Off',
 }
 
 const statusColors: Record<string, string> = {
