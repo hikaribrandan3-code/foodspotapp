@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, SlidersHorizontal, ArrowDown, Plus, Minus, X, Calendar, AlertCircle, Package, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusiness } from '../contexts/BusinessContext';
