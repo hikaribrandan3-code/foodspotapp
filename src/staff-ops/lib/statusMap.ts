@@ -149,5 +149,6 @@ export function mapDbOrderToKimi(dbOrder: any): Order {
     staffNotes: dbOrder.staff_notes ?? dbOrder.notes ?? undefined,
     rawDbStatus: dbOrder.status,
     paymentStatus: dbOrder.payment_status ?? undefined,
+    total: dbOrder.total ?? 0,
   };
 }

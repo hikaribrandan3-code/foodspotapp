@@ -36,6 +36,8 @@ export interface Order {
   /** Raw DB status — used for FSM-aware transitions */
   rawDbStatus?: string;
   paymentStatus?: string;
+  /** Order total in dollars */
+  total?: number;
 }
 
 export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'inventory';

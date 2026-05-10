@@ -174,14 +174,22 @@ export default function OrderDetailDrawer() {
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
               {/* Verify Cash */}
               {isCashPending && (
-                <button
-                  onClick={() => { verifyCash(order.id); selectOrder(null); }}
-                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
-                >
-                  <DollarSign size={16} strokeWidth={2.5} />
-                  Verify Cash Payment
-                </button>
+                <>
+                  <div className="text-center mb-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total to collect</p>
+                    <p className="text-lg font-bold" style={{ color: 'var(--status-icon-ready)' }}>
+                      ${(order.total ?? 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { verifyCash(order.id); selectOrder(null); }}
+                    className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
+                  >
+                    <DollarSign size={16} strokeWidth={2.5} />
+                    Verify Cash Payment
+                  </button>
+                </>
               )}
 
               {/* Advance status (TODO → PREP → READY → DISPATCH → DELIVERING, or dine-in READY → DONE) */}

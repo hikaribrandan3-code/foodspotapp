@@ -4,11 +4,10 @@ import { CheckCircle, Truck, Clock, MapPin, ChefHat, Package, Phone, Navigation,
 import { supabase } from '../../lib/supabaseClient.js'
 
 const STATUS_STEPS = [
-  { key: 'released_to_kitchen', label: 'En cocina',     icon: ChefHat },
-  { key: 'preparing',           label: 'Preparando',    icon: Package },
-  { key: 'ready',               label: 'Listo',         icon: CheckCircle },
-  { key: 'dispatched',          label: 'En camino',     icon: Truck },
-  { key: 'delivered',           label: 'Entregado',     icon: CheckCircle },
+  { key: 'preparing',  label: 'Preparando', icon: Package },
+  { key: 'ready',      label: 'Listo',      icon: CheckCircle },
+  { key: 'dispatched', label: 'En camino',  icon: Truck },
+  { key: 'delivered',  label: 'Entregado',  icon: CheckCircle },
 ]
 
 const SIMULATED_DRIVERS = [
@@ -72,8 +71,6 @@ export default function DeliveryTracker() {
 
   const getStepState = (stepKey) => {
     if (!order) return 'future'
-    // delivered is terminal — all steps completed
-    if (order.status === 'delivered') return 'completed'
     const currentIdx = STATUS_STEPS.findIndex(s => s.key === order.status)
     const stepIdx = STATUS_STEPS.findIndex(s => s.key === stepKey)
     if (stepIdx < currentIdx) return 'completed'
