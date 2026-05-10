@@ -221,18 +221,6 @@ export default function OrderDetailDrawer() {
                 </div>
               )}
 
-              {/* Confirm Delivery */}
-              {isDelivering && (
-                <button
-                  onClick={() => { confirmDelivery(order.id); selectOrder(null); }}
-                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: 'var(--reception-bg)', color: 'var(--reception-text)', border: '1px solid var(--reception-border)' }}
-                >
-                  <Package size={16} />
-                  Confirm Delivery ✓
-                </button>
-              )}
-
               {isDone && (
                 <div className="text-center text-sm py-2" style={{ color: 'var(--text-tertiary)' }}>
                   ✓ Order completed
