@@ -278,7 +278,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
-    const paid = isOrderPaid(order)
+    const isDelivered = order.status === ORDER_STATUS.DELIVERED
+    const paid = isOrderPaid(order) || (isDelivered && isCashMethod)
 
     const statusDisplay = getStatusDisplay()
 

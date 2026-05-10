@@ -34,9 +34,8 @@ export function getETAMinutes(distanceKm: number): number {
 }
 
 /**
- * Format integer cents to currency string (e.g., 1150 → "$11.50")
+ * Format a price value to $X.XX, guarding against undefined/null and floating-point noise.
  */
-export function formatPrice(cents: number | undefined): string {
-  if (cents === undefined || cents === null) return '$0.00';
-  return `$${(cents / 100).toFixed(2)}`;
+export function formatPrice(n: number | undefined | null): string {
+  return `$${(n ?? 0).toFixed(2)}`;
 }

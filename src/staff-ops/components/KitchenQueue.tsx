@@ -156,6 +156,7 @@ export const KitchenQueue: React.FC = () => {
                     </span>
                   ))}
                 </p>
+<<<<<<< HEAD
                 <p className="font-medium text-gray-800">Total: {formatPrice(order.total)}</p>
                 <p>
                   {order.delivery_address?.street} {order.delivery_address?.number}

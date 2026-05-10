@@ -51,7 +51,7 @@ const TRANSPORT_MODES = [
 export default function ProfileView() {
   const { theme, toggleTheme } = useTheme();
   const [audioEnabled, toggleAudio] = useAudioPref();
-  const { tenantSlug, businessId } = useBusiness();
+  const { tenantSlug, businessId, mpAlias } = useBusiness();
 
   const staffMember = getStored<any>('fs_staff_member', null);
   const [currentShift, setCurrentShift] = useState(getStored<any>('fs_current_shift', null));
@@ -208,6 +208,14 @@ export default function ProfileView() {
               </span>
               {isOnDuty && <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{t('since')} {shiftStart}</span>}
             </div>
+            {/* Locked MP Alias bubble — owner-controlled, read-only */}
+            {mpAlias && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg"
+                style={{ backgroundColor: '#fef3c7', border: '1px solid #f59e0b' }}>
+                <span className="text-[10px] font-semibold" style={{ color: '#92400e' }}>📲 Alias:</span>
+                <span className="text-[10px] font-mono font-bold" style={{ color: '#b45309' }}>{mpAlias}</span>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
