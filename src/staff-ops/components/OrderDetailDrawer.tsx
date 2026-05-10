@@ -22,7 +22,7 @@ export default function OrderDetailDrawer() {
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
   const isCashPending = order.status === 'PENDING_VERIFICATION';
-  const isDelivering = order.status === 'DELIVERING';
+  const isDelivering = order.status === 'DISPATCH' || order.status === 'DELIVERING';
   const isDone = order.status === 'DONE';
 
   // Next status label for the advance button — type-aware per FLOW_MAP

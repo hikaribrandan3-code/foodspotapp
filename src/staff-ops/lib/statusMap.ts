@@ -48,6 +48,8 @@ export function toDbStatus(kimiStatus: OrderStatus): string {
       return 'ready';
     case 'DISPATCH':
       return 'dispatched';
+    case 'DELIVERING':
+      return 'delivered';
     case 'DONE':
       return 'delivered';
   }

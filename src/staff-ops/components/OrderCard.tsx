@@ -84,7 +84,7 @@ export default function OrderCard({
   })();
 
   const isCashPending = order.status === 'PENDING_VERIFICATION';
-  const isDelivering = order.status === 'DELIVERING';
+  const isDelivering = order.status === 'DISPATCH' || order.status === 'DELIVERING';
 
   const getCardStyles = () => {
     if (urgency === 'critical' && !isCashPending) return 'animate-urgent-pulse';

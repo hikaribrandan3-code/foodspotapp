@@ -9,11 +9,14 @@ export default function LogisticsView() {
   const { state, claimDelivery, advanceOrderStatus } = useOrders();
   const [filter, setFilter] = useState<'READY' | 'DISPATCH' | 'DELIVERING'>('READY');
 
-  const filteredOrders = state.orders.filter(o => o.status === filter && o.deliveryType !== 'dine_in');
+  const filteredOrders = state.orders.filter(o => {
+    if (filter === 'DELIVERING') return (o.status === 'DISPATCH' || o.status === 'DELIVERING') && o.deliveryType !== 'dine_in';
+    return o.status === filter && o.deliveryType !== 'dine_in';
+  });
 
   const readyCount = state.orders.filter(o => o.status === 'READY' && o.deliveryType !== 'dine_in').length;
   const dispatchCount = state.orders.filter(o => o.status === 'DISPATCH').length;
-  const deliveringCount = state.orders.filter(o => o.status === 'DELIVERING').length;
+  const deliveringCount = state.orders.filter(o => (o.status === 'DISPATCH' || o.status === 'DELIVERING') && o.deliveryType !== 'dine_in').length;
 
   const handoffOrder = state.orders.find(o => o.id === state.handoffOrderId);
 

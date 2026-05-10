@@ -45,7 +45,7 @@ export const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   TODO: 'PREP',
   PREP: 'READY',
   READY: 'DISPATCH',
-  DISPATCH: 'DELIVERING',
+  DISPATCH: 'DONE',
   DELIVERING: 'DONE',
   DONE: null,
 };
