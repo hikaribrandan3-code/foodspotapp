@@ -55,12 +55,14 @@ export default function Receipt() {
 
     fetchOrder()
 
+    // Realtime subscription to update order status after delivery
     const channel = supabase
       .channel(`receipt-${orderId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
         (payload) => {
           setOrder(payload.new)
-        })
+        }
+      )
       .subscribe()
 
     return () => {
@@ -78,6 +80,7 @@ export default function Receipt() {
   const isCash = order?.payment_method === 'cash'
   const isMp = order?.payment_method === 'mercado_pago'
   const isDelivered = order?.status === 'delivered'
+  const isDeliveredCash = isDelivered && isCash
   const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased' || isDelivered
   const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
   const paymentFailed = !isPaid && !isPending && !isCash && !isDelivered
@@ -121,7 +124,7 @@ export default function Receipt() {
               {paymentFailed ? <AlertCircle size={32} style={{ color: '#EF4444' }} /> : isPaid ? <CheckCircle size={32} style={{ color: '#10B981' }} /> : <Clock size={32} style={{ color: '#F97316' }} />}
             </div>
             <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-              {paymentFailed ? 'Pago fallido' : isPaid ? 'Order Confirmed!' : 'Confirmando pago...'}
+              {isDelivered ? 'Pedido entregado ✓' : paymentFailed ? 'Pago fallido' : isPaid ? 'Order Confirmed!' : 'Confirmando pago...'}
             </h1>
             <p style={{ color: '#6B7280', fontSize: 14 }}>
               #{order.order_number ? String(order.order_number).padStart(3, '0') : order.id.slice(0, 8).toUpperCase()}
@@ -129,14 +132,14 @@ export default function Receipt() {
           </div>
 
           {/* Payment Status */}
-          <div style={{ background: isCash ? '#FFFBEB' : paymentFailed ? '#FEF2F2' : isPaid ? '#EFF6FF' : '#FFF7ED', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            {isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : paymentFailed ? <AlertCircle size={20} style={{ color: '#DC2626', marginTop: 2, flexShrink: 0 }} /> : isPaid ? <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} /> : <Clock size={20} style={{ color: '#F97316', marginTop: 2, flexShrink: 0 }} />}
+          <div style={{ background: isDeliveredCash ? '#D1FAE5' : isCash ? '#FFFBEB' : paymentFailed ? '#FEF2F2' : isPaid ? '#EFF6FF' : '#FFF7ED', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            {isDeliveredCash ? <CheckCircle size={20} style={{ color: '#10B981', marginTop: 2, flexShrink: 0 }} /> : isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : paymentFailed ? <AlertCircle size={20} style={{ color: '#DC2626', marginTop: 2, flexShrink: 0 }} /> : isPaid ? <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} /> : <Clock size={20} style={{ color: '#F97316', marginTop: 2, flexShrink: 0 }} />}
             <div>
-              <p style={{ fontWeight: 600, fontSize: 14, color: isCash ? '#D97706' : paymentFailed ? '#DC2626' : isPaid ? '#2563EB' : '#F97316' }}>
-                {isCash ? 'Efectivo en la puerta' : paymentFailed ? 'Pago fallido — Mercado Pago' : isPaid ? 'Pago confirmado — Mercado Pago' : 'Pago pendiente — Confirmando...'}
+              <p style={{ fontWeight: 600, fontSize: 14, color: isDeliveredCash ? '#10B981' : isCash ? '#D97706' : paymentFailed ? '#DC2626' : isPaid ? '#2563EB' : '#F97316' }}>
+                {isDeliveredCash ? 'Pagado ✓' : isCash ? 'Efectivo en la puerta' : paymentFailed ? 'Pago fallido — Mercado Pago' : isPaid ? 'Pago confirmado — Mercado Pago' : 'Pago pendiente — Confirmando...'}
               </p>
               <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-                {isCash ? 'Tendrás que pagar cuando llegue tu pedido' : paymentFailed ? 'Tu pago no se procesó. Intenta con otro método.' : isPaid ? 'Tu pago fue procesado correctamente' : 'Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.'}
+                {isDeliveredCash ? 'Pago en efectivo confirmado' : isCash ? 'Tendrás que pagar cuando llegue tu pedido' : paymentFailed ? 'Tu pago no se procesó. Intenta con otro método.' : isPaid ? 'Tu pago fue procesado correctamente' : 'Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.'}
               </p>
             </div>
           </div>

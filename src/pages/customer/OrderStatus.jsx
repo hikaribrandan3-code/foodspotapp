@@ -277,6 +277,9 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         return { heading: t('heading_order_confirmed'), subtext: '' }
     }
 
+    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
+    const paid = isOrderPaid(order)
+
     const statusDisplay = getStatusDisplay()
 
     const getPaymentDisplay = () => {
@@ -289,9 +292,6 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         if (order.payment_method === PAYMENT_METHOD.CASH || order.payment_method === 'dine_in') return t('pay_at_table')
         return order.payment_method || t(PAYMENT_METHOD.CASH)
     }
-
-    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
-    const paid = isOrderPaid(order)
 
     return (
       <CameraTrigger orderId={order.id} orderType={orderType} delayMs={1000}>

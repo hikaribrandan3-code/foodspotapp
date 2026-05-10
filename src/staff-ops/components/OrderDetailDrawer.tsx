@@ -182,20 +182,28 @@ export default function OrderDetailDrawer() {
 
               {/* Verify Cash */}
               {isCashPending && (
-                <button
-                  onClick={() => { verifyCash(order.id); selectOrder(null); }}
-                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
-                >
-                  <DollarSign size={16} strokeWidth={2.5} />
-                  Verify Cash Payment
-                </button>
+                <>
+                  <div className="text-center mb-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total to collect</p>
+                    <p className="text-lg font-bold" style={{ color: 'var(--status-icon-ready)' }}>
+                      ${(order.total ?? 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { verifyCash(order.id); selectOrder(null); }}
+                    className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
+                  >
+                    <DollarSign size={16} strokeWidth={2.5} />
+                    Verify Cash Payment
+                  </button>
+                </>
               )}
 
               {/* Advance status (TODO → PREP → READY → DISPATCH → DELIVERING, or dine-in READY → DONE) */}
               {nextLabel && !isCashPending && (
                 <button
-                  onClick={() => { advanceOrderStatus(order.id); selectOrder(null); }}
+                  onClick={() => { advanceOrderStatus(order.id); if (!(order.deliveryType === 'dine_in' && order.status === 'READY')) selectOrder(null); }}
                   className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)', border: '1px solid var(--status-icon-prep)' }}
                 >
