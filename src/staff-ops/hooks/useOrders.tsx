@@ -225,7 +225,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
               if (audioEnabled) audio.alertNewOrder(order.priority);
             } else if (eventType === 'UPDATE') {
               const updated = mapDbOrderToKimi(newRow);
-              if (updated.status === 'DONE' || newRow.status === 'cancelled' || newRow.status === 'cancelado') {
+              const isUnpaidDineInDone = updated.deliveryType === 'dine_in' && updated.status === 'DONE' && updated.paymentStatus !== 'paid';
+              if ((updated.status === 'DONE' || newRow.status === 'cancelled' || newRow.status === 'cancelado') && !isUnpaidDineInDone) {
                 dispatch({ type: 'REMOVE_ORDER', orderId: updated.id });
               } else {
                 dispatch({ type: 'UPDATE_ORDER', order: updated });
