@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, CreditCard, MessageCircle } from 'lucide-react';
+import { ChevronLeft, CreditCard, MessageCircle, Ticket } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 import { supabase } from '../../../../lib/supabaseClient';
@@ -23,6 +23,58 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   if (!event || !tier) return null;
 
   const total = tier.price * qty;
+  const isFreeTicket = tier.price === 0;
+
+  const handleClaimFreeTicket = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+    setPaymentError(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-event-preference', {
+        body: {
+          event_id: event.id,
+          tier_id: tier.id,
+          quantity: qty,
+          customer: { name: '', email: email || '', phone: '' },
+          promo_code: applied ? promoCode : null
+        }
+      });
+
+      if (error || data?.error) {
+        console.error('Claim error:', error || data?.error);
+        setPaymentError('Failed to claim ticket. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
+
+      if (data.free_order) {
+        onConfirm({
+          id: data.ticket_code,
+          email,
+          event_id: event.id,
+          event_name: event.name,
+          tier_name: tier.name,
+          tier_id: tier.id,
+          quantity: qty,
+          total: 0,
+          purchase_date: new Date().toISOString(),
+          venue_name: event.venue_name,
+          date: event.date,
+          image: event.image,
+          description: event.description,
+          category: event.category,
+          payment_method: 'free',
+          guest_token: data.guest_token
+        });
+      }
+    } catch (err) {
+      console.error('Claim exception:', err);
+      setPaymentError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleConfirm = async () => {
     if (isProcessing) return;
@@ -260,49 +312,64 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
            )}
         </div>
 
-        {/* WhatsApp Confirmation Button */}
-        <div>
-           <button
-             onClick={() => {
-               const whatsappNumber = tenantData?.whatsapp_number || tenantData?.phone || '';
-               if (!whatsappNumber) {
-                 setPaymentError('WhatsApp number not configured');
-                 return;
-               }
-               const message = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
-               const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-               window.open(whatsappUrl, '_blank');
-             }}
-             className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20"
-           >
-             <MessageCircle size={18} />
-             Confirm via WhatsApp
-           </button>
-        </div>
+        {/* Free Ticket Claim or WhatsApp Confirmation */}
+        {isFreeTicket ? (
+          <div>
+             <button
+               onClick={handleClaimFreeTicket}
+               disabled={isProcessing}
+               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+               <Ticket size={18} />
+               {isProcessing ? 'Claiming...' : 'Claim Ticket'}
+             </button>
+          </div>
+        ) : (
+          <div>
+             <button
+               onClick={() => {
+                 const whatsappNumber = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.business_info?.whatsapp || tenantData?.phone || '';
+                 if (!whatsappNumber) {
+                   setPaymentError('WhatsApp number not configured');
+                   return;
+                 }
+                 const message = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
+                 const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                 window.open(whatsappUrl, '_blank');
+               }}
+               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20"
+             >
+               <MessageCircle size={18} />
+               Confirm via WhatsApp
+             </button>
+          </div>
+        )}
 
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
-        {paymentError && (
-          <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
-            <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
-          </div>
-        )}
-        <button
-          onClick={handleConfirm}
-          disabled={isProcessing}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isProcessing ? (
-            <span className="animate-pulse">Processing...</span>
-          ) : (
-            <>
-              <CreditCard size={18} />
-              {t('confirm_payment')}
-            </>
+      {!isFreeTicket && (
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
+          {paymentError && (
+            <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
+              <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
+            </div>
           )}
-        </button>
-      </div>
+          <button
+            onClick={handleConfirm}
+            disabled={isProcessing}
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? (
+              <span className="animate-pulse">Processing...</span>
+            ) : (
+              <>
+                <CreditCard size={18} />
+                {t('confirm_payment')}
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
