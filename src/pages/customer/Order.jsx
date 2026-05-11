@@ -342,7 +342,6 @@ function Order({ config: configProp }) {
         }
 
         try {
-            debugger
             // ─── STEP 3: PERSISTENT-FIRST DB INSERT ───────────
             // The order exists in Supabase BEFORE any external API call.
             // Even if the user's phone dies here, the owner sees the order.
