@@ -636,7 +636,7 @@ function OwnerSummary() {
                     </AnimatePresence>
                 </motion.div>
 
-                {/* Mercado Pago & Discord */}
+                {/* Mercado Pago */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                     <SectionHeader
                         icon={<CreditCard size={14} />}
