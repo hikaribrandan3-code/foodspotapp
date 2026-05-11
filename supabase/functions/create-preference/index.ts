@@ -78,6 +78,14 @@ serve(async (req: Request) => {
                 failure: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=failure&order_id=${order.id}`,
                 pending: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=pending&order_id=${order.id}`
             },
+            payment_methods: {
+                excluded_payment_types: [
+                    { id: "account_money" }
+                ],
+                excluded_payment_methods: [
+                    { id: "paypal" }
+                ]
+            },
             auto_return: "approved",
             external_reference: order.id,
             notification_url: WEBHOOK_URL
