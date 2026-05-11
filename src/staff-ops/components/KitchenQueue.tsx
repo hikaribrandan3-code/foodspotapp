@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { Badge } from './Badge.jsx'
 import { Button } from './Button.jsx'
 import { ChefHat, Clock, Package } from 'lucide-react'
+import { formatPrice } from '../lib/utils'
 
 interface Order {
   id: string
@@ -20,11 +21,11 @@ interface Order {
 const statusLabels: Record<string, string> = {
   RELEASED_TO_KITCHEN: 'In Kitchen',
   PREP: 'Preparing',
-  READY: 'Ready for Pickup',
+  READY: 'Ready for Hand Off',
 }
 
 const statusColors: Record<string, string> = {
-  RELEASED_TO_KITCHEN: 'bg-blue-500',
+  RELEASED_TO_KITCHEN: 'bg-emerald-600',
   PREP: 'bg-orange-500',
   READY: 'bg-green-500',
 }
@@ -155,7 +156,7 @@ export const KitchenQueue: React.FC = () => {
                     </span>
                   ))}
                 </p>
-                <p className="font-medium text-gray-800">Total: ${order.total}</p>
+                <p className="font-medium text-gray-800">Total: {formatPrice(order.total)}</p>
                 <p>
                   {order.delivery_address?.street} {order.delivery_address?.number}
                 </p>

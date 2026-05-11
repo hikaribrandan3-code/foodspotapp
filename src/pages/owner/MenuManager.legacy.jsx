@@ -60,6 +60,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
     // It will be populated by cloud data when tenantData arrives.
     const [menu, setMenu] = useState({ categories: [] })
     const [localConfig, setLocalConfig] = useState(config) // Local copy for mutations
+    const [selectedCategory, setSelectedCategory] = useState(null) // Category filter for pills
 
     // 🔒 HYDRATION LOCK: Prevents sync until cloud data is loaded
     const isHydratedRef = useRef(false)
@@ -1051,12 +1052,12 @@ function MenuManager({ config: configProp, demoMode = false }) {
 
                     {/* Archive Info */}
                     <div style={{ background: '#F0FDF4', borderRadius: 12, border: '1px solid #BBF7D0', padding: 12, marginBottom: 12 }}>
-                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ Los pedidos se archivan automáticamente al marcarlos como entregados.</p>
+                        <p style={{ fontSize: 13, color: '#166534', margin: 0 }}>✓ {t('archive_info')}</p>
                     </div>
 
                     {/* Delivery Configuration */}
                     <div style={{ background: 'white', borderRadius: 12, border: '1px solid #E2E8F0', padding: 16 }}>
-                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 Configuración de Envíos</p>
+                        <p style={{ fontWeight: 600, fontSize: 14, color: '#1E293B', margin: '0 0 12px' }}>🚚 {t('delivery_config')}</p>
 
                         <div style={{ marginBottom: 12 }}>
                             {/* SaaS-Scale Static Map & Radius Visualizer */}
@@ -1421,9 +1422,52 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     </div>
                 )}
 
+                {/* 🛡️ CATEGORY FILTER PILLS */}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 8 }}>
+                    <button
+                        onClick={() => setSelectedCategory(null)}
+                        style={{
+                            padding: '10px 16px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            fontWeight: 600,
+                            border: '1px solid',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            background: selectedCategory === null ? '#10B981' : '#FFFFFF',
+                            color: selectedCategory === null ? '#FFFFFF' : '#4B5563',
+                            borderColor: selectedCategory === null ? '#10B981' : '#E5E7EB'
+                        }}
+                    >
+                        All
+                    </button>
+                    {(menu?.categories || []).map(cat => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            style={{
+                                padding: '10px 16px',
+                                borderRadius: 12,
+                                fontSize: 13,
+                                fontWeight: 600,
+                                border: '1px solid',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                background: selectedCategory === cat.id ? '#10B981' : '#FFFFFF',
+                                color: selectedCategory === cat.id ? '#FFFFFF' : '#4B5563',
+                                borderColor: selectedCategory === cat.id ? '#10B981' : '#E5E7EB'
+                            }}
+                        >
+                            {cat.name}
+                        </button>
+                    ))}
+                </div>
+
                 {/* 🛡️ RENDER GUARD: Handle empty/undefined categories gracefully */}
                 {console.log('[MenuManager] 🎨 RENDER CHECK - Menu State:', menu)}
-                {(menu?.categories || []).map(category => {
+                {(menu?.categories || [])
+                    .filter(cat => selectedCategory === null || cat.id === selectedCategory)
+                    .map(category => {
                     const isEnabled = category.enabled !== false
                     return (
                         <div key={category.id} style={{ marginBottom: 20, opacity: isEnabled ? 1 : 0.5 }}>
@@ -1617,13 +1661,29 @@ function MenuManager({ config: configProp, demoMode = false }) {
                                                         style={{
                                                             fontSize: 12, fontWeight: 600,
                                                             color: item.description ? '#22C55E' : '#9CA3AF',
-                                                            background: 'none', border: 'none',
-                                                            cursor: 'pointer', padding: '2px 0',
-                                                            display: 'flex', alignItems: 'center', gap: 4
+                                                            background: 'rgba(0,0,0,0.02)',
+                                                            border: '1px solid rgba(0,0,0,0.08)',
+                                                            cursor: 'pointer',
+                                                            padding: '6px 10px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 6,
+                                                            borderRadius: '4px',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
+                                                            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.12)'
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.background = 'rgba(0,0,0,0.02)'
+                                                            e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'
                                                         }}
                                                         title={item.description || 'Agregar descripción'}
                                                     >
-                                                        <span>✏️</span>
+                                                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M11.46 1.46l3.54 3.54a2 2 0 010 2.83L4.41 14H1v-3.41L11.46 1.46z"></path>
+                                                        </svg>
                                                         {item.description ? 'Editar descripción' : 'Agregar descripción'}
                                                     </button>
                                                     <label style={{ fontSize: 11, color: '#6B7280', display: 'flex', alignItems: 'center', gap: 6, height: 24, cursor: 'pointer' }}>
@@ -1882,7 +1942,7 @@ function MenuManager({ config: configProp, demoMode = false }) {
                     zIndex: 10000, animation: 'slideUp 0.3s ease-out',
                     border: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>⚠️ Cambios sin guardar</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{t('unsaved_changes_warning')}</div>
                     <button
                         onClick={handlePlatformSave}
                         disabled={isSaving}

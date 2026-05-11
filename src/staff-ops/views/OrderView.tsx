@@ -52,25 +52,58 @@ export default function OrderView() {
   useEffect(() => {
     if (!businessId) return;
     setLoadingMenu(true);
+
+    const loadFromJsonb = (menuData: any): MenuItem[] => {
+      const categories = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || []);
+      const items: MenuItem[] = [];
+      categories.forEach((cat: any) => {
+        (cat.items || []).forEach((item: any) => {
+          items.push({ id: item.id || `${cat.name}-${item.name}`, name: item.name, price: item.price ?? 0, category: cat.name });
+        });
+      });
+      return items;
+    };
+
+    const loadFromRelational = async (): Promise<MenuItem[]> => {
+      const [{ data: items }, { data: categories }] = await Promise.all([
+        supabase.from('menu_items').select('*').eq('business_id', businessId).limit(200),
+        supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
+      ]);
+      const catMap: Record<string, string> = {};
+      (categories || []).forEach((c: any) => { catMap[c.id] = c.name; });
+      const out: MenuItem[] = [];
+      (items || []).forEach((item: any) => {
+        out.push({
+          id: item.id || `${item.category_name || 'item'}-${item.name}`,
+          name: item.name,
+          price: item.price ?? 0,
+          category: catMap[item.category_id] || item.category_name || 'Other'
+        });
+      });
+      return out;
+    };
+
     supabase
       .from('branding')
       .select('menu_data')
       .eq('business_id', businessId)
       .single()
-      .then(({ data }: { data: any }) => {
+      .then(async ({ data }: { data: any }) => {
         const menuData = data?.menu_data;
-        if (!menuData) { setLoadingMenu(false); return; }
-        const categories = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || []);
-        const items: MenuItem[] = [];
-        categories.forEach((cat: any) => {
-          (cat.items || []).forEach((item: any) => {
-            items.push({ id: item.id || `${cat.name}-${item.name}`, name: item.name, price: item.price ?? 0, category: cat.name });
-          });
-        });
+        let items: MenuItem[] = [];
+        if (menuData && (menuData.categories?.length > 0 || (Array.isArray(menuData) && menuData.length > 0))) {
+          items = loadFromJsonb(menuData);
+        }
+        if (items.length === 0) {
+          try { items = await loadFromRelational(); } catch (e) { console.error('[OrderView] relational load failed:', e); }
+        }
         setMenuItems(items);
         setLoadingMenu(false);
       })
-      .catch(() => setLoadingMenu(false));
+      .catch(async () => {
+        try { const items = await loadFromRelational(); setMenuItems(items); } catch (e) { console.error('[OrderView] fallback load failed:', e); }
+        setLoadingMenu(false);
+      });
   }, [businessId]);
 
   const filtered = menuItems.filter(i =>
@@ -262,7 +295,7 @@ export default function OrderView() {
               <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Order Type</p>
               <div className="grid grid-cols-3 gap-1.5">
                 {([
-                  { value: 'pickup', label: 'Pickup' },
+                  { value: 'pickup', label: 'Take Out' },
                   { value: 'delivery', label: 'Delivery' },
                   { value: 'dine_in', label: 'Dine In' },
                 ] as const).map(({ value, label }) => (

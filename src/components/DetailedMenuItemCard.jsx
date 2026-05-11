@@ -24,8 +24,9 @@ const DetailedMenuItemCard = ({
   const [imgError, setImgError] = useState(false)
   const [isFav, setIsFav] = useState(false)
 
-  const imageSrc = (item.image && !item.image.startsWith('blob:') && !imgError)
-    ? getOptimizedImageUrl(item.image, { width: 600, quality: 80, format: 'webp' })
+  const itemImage = item.image || item.image_url
+  const imageSrc = (itemImage && !itemImage.startsWith('blob:') && !imgError)
+    ? getOptimizedImageUrl(itemImage, { width: 600, quality: 80, format: 'webp' })
     : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=338&fit=crop&q=80'
 
   const hasDetails = item.description || item.calories

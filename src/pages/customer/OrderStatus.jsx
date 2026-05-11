@@ -37,7 +37,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const primaryColor = tenantData?.primary_color || '#DC2626'
 
     // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
-    const orderType = !order?.delivery_address ? 'takeout' : 'delivery'
+    const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -214,15 +214,74 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const deliveryFee = isDelivery ? (order.delivery_fee || 0) : null
     const total = order.total || (subtotal + (deliveryFee || 0) + tax)
 
-    const getStatusText = () => {
-        if (order.status === ORDER_STATUS.CANCELLED) return t('status_cancelled')
-        if (order.status === ORDER_STATUS.DELIVERED) return order.order_type === 'dine_in' ? 'Served' : t('status_delivered')
-        if (order.status === ORDER_STATUS.READY) return (isDelivery || order.order_type === 'dine_in') ? t('status_on_the_way') : t('status_ready_pickup')
-        if (order.status === ORDER_STATUS.DISPATCHED) return t('status_on_the_way')
-        if (paid) return '✅ ' + t('status_payment_received')
-        if (order.order_type === 'dine_in') return 'Preparing'
-        return isDelivery ? t('status_awaiting_delivery') : t('status_awaiting_pickup')
+    /**
+     * 🎯 1:1 STATUS PARITY
+     * Every DB status maps to exactly one customer-facing heading + subtext.
+     * This matches 1:1 with staff/owner actions.
+     */
+    const getStatusDisplay = () => {
+        const s = order.status
+        const type = order.order_type
+
+        // Cancelled
+        if (s === ORDER_STATUS.CANCELLED) {
+            return { heading: t('heading_order_cancelled'), subtext: t('order_cancelled_message') }
+        }
+
+        // Delivered / Picked Up / Served
+        if (s === ORDER_STATUS.DELIVERED) {
+            if (type === 'dine_in') {
+                return paid
+                    ? { heading: 'Served', subtext: 'Enjoy your meal!' }
+                    : { heading: 'Served', subtext: 'Payment due at table' }
+            }
+            if (type === 'delivery') {
+                return { heading: t('heading_order_delivered'), subtext: 'Enjoy your meal!' }
+            }
+            return { heading: 'Picked Up', subtext: 'Enjoy your meal!' }
+        }
+
+        // Dispatched (delivery only)
+        if (s === ORDER_STATUS.DISPATCHED) {
+            return { heading: t('status_on_the_way'), subtext: 'Your driver is en route' }
+        }
+
+        // Ready
+        if (s === ORDER_STATUS.READY) {
+            if (type === 'dine_in') return { heading: 'Ready to Serve', subtext: 'Your server will bring it shortly' }
+            if (type === 'delivery') return { heading: 'Ready for Delivery', subtext: 'A driver will be assigned soon' }
+            return { heading: t('status_ready_pickup'), subtext: 'Come pick up your order' }
+        }
+
+        // Preparing
+        if (s === ORDER_STATUS.PREPARING) {
+            return { heading: t('status_preparing'), subtext: 'Your order is being prepared' }
+        }
+
+        // Released to kitchen (staff/owner confirmed, cooking hasn't started)
+        if (s === ORDER_STATUS.RELEASED_TO_KITCHEN) {
+            return { heading: 'Order Received', subtext: 'The kitchen will start preparing soon' }
+        }
+
+        // Paid but not released (pickup cash — owner hasn't confirmed yet)
+        if (s === ORDER_STATUS.PAID_UNRELEASED) {
+            return { heading: 'Order Confirmed', subtext: 'Waiting for restaurant to start' }
+        }
+
+        // Pending payment (MP or pickup cash awaiting confirmation)
+        if (s === ORDER_STATUS.PENDING_PAYMENT) {
+            return { heading: 'Awaiting Payment', subtext: 'Complete your payment to confirm' }
+        }
+
+        // Fallback
+        return { heading: t('heading_order_confirmed'), subtext: '' }
     }
+
+    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
+    const isDelivered = order.status === ORDER_STATUS.DELIVERED
+    const paid = isOrderPaid(order) || (isDelivered && isCashMethod)
+
+    const statusDisplay = getStatusDisplay()
 
     const getPaymentDisplay = () => {
         if (order.payment_method === PAYMENT_METHOD.CASH) return t(PAYMENT_METHOD.CASH)
@@ -235,11 +294,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         return order.payment_method || t(PAYMENT_METHOD.CASH)
     }
 
-    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
-    const paid = isOrderPaid(order)
-
     return (
-      <CameraTrigger orderId={order.id} orderType={orderType}>
+      <CameraTrigger orderId={order.id} orderType={orderType} delayMs={1000}>
         <>
             <HeaderClamp config={config} />
             <div style={{
@@ -293,14 +349,19 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         letterSpacing: -0.8,
                         margin: '8px 0 0'
                     }}>
-                        {order.status === ORDER_STATUS.DELIVERED ? (order.order_type === 'dine_in' ? 'Order Served' : t('heading_order_delivered'))
-                            : order.status === ORDER_STATUS.CANCELLED ? t('heading_order_cancelled')
-                            : order.status === ORDER_STATUS.READY ? ((isDelivery || order.order_type === 'dine_in') ? t('status_on_the_way') : t('status_ready_pickup'))
-                            : order.status === ORDER_STATUS.DISPATCHED ? t('status_on_the_way')
-                            : order.status === 'released_to_kitchen' ? 'Prepping! 👨‍🍳'
-                            : isCashMethod && !paid ? t('heading_confirmed_unpaid')
-                            : t('heading_order_confirmed')}
+                        {statusDisplay.heading}
                     </h1>
+
+                    {statusDisplay.subtext && (
+                        <p style={{
+                            fontSize: 14,
+                            color: '#737373',
+                            marginTop: 8,
+                            lineHeight: 1.4
+                        }}>
+                            {statusDisplay.subtext}
+                        </p>
+                    )}
 
                     <div style={{
                         marginTop: 8,
@@ -511,75 +572,13 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                             gap: 12, padding: '3px 0', fontSize: 13,
                         }}>
                             <span style={{ color: '#737373' }}>{t('status')}</span>
-                            <span style={{ color: '#0a0a0a' }}>{getStatusText()}</span>
+                            <span style={{ color: '#0a0a0a' }}>{statusDisplay.heading}</span>
                         </div>
                     </div>
                         </>
                     )}
 
                     <div style={{ height: 1, background: '#e5e5e5', margin: '16px 0' }} />
-
-                    {isDelivery && order.status === ORDER_STATUS.DISPATCHED && (
-                        <>
-                            <div style={{
-                                background: '#fef8f0',
-                                border: '1px solid #fed7aa',
-                                borderRadius: 8,
-                                padding: 16,
-                                marginBottom: 16
-                            }}>
-                                <div style={{
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                    color: '#b45309',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 0.5,
-                                    marginBottom: 8
-                                }}>
-                                    🚴 On the Way
-                                </div>
-                                <div style={{
-                                    fontSize: 24,
-                                    fontWeight: 700,
-                                    color: '#0a0a0a',
-                                    marginBottom: 12
-                                }}>
-                                    {calculateETA()} min
-                                </div>
-                                <div style={{
-                                    fontSize: 13,
-                                    color: '#737373',
-                                    marginBottom: 12
-                                }}>
-                                    {order?.distance_km?.toFixed(1)} km · Driver is on the way
-                                </div>
-                                {!paid && (
-                                    <div style={{
-                                        display: 'inline-block',
-                                        background: '#fee2e2',
-                                        color: '#b91c1c',
-                                        padding: '6px 10px',
-                                        borderRadius: 4,
-                                        fontSize: 12,
-                                        fontWeight: 600
-                                    }}>
-                                        💳 Payment pending at door
-                                    </div>
-                                )}
-                            </div>
-                            <div
-                                ref={mapContainer}
-                                style={{
-                                    width: '100%',
-                                    height: 300,
-                                    borderRadius: 8,
-                                    marginBottom: 16,
-                                    border: '1px solid #e5e5e5',
-                                    overflow: 'hidden'
-                                }}
-                            />
-                        </>
-                    )}
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         <button

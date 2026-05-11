@@ -33,6 +33,11 @@ export interface Order {
   deliveryType?: 'delivery' | 'pickup' | 'dine_in';
   tableNumber?: number;
   staffNotes?: string;
+  /** Raw DB status — used for FSM-aware transitions */
+  rawDbStatus?: string;
+  paymentStatus?: string;
+  /** Order total in dollars */
+  total?: number;
 }
 
 export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'inventory';
@@ -42,7 +47,7 @@ export const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   TODO: 'PREP',
   PREP: 'READY',
   READY: 'DISPATCH',
-  DISPATCH: 'DELIVERING',
+  DISPATCH: 'DONE',
   DELIVERING: 'DONE',
   DONE: null,
 };

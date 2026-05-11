@@ -67,43 +67,18 @@ export default function SummaryTab({ config, updateBusinessInfoCloud, updateBran
                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Dirección</label>
                 <input type="text" placeholder="Av. Corrientes 1234" value={config.businessInfo?.address || ''} onChange={(e) => updateBusinessInfoCloud('address', e.target.value)} style={inputStyle} />
 
-                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Horarios</label>
-                <input type="text" placeholder="Lun-Vie 9-21, Sab 10-18" value={config.businessInfo?.hours || ''} onChange={(e) => updateBusinessInfoCloud('hours', e.target.value)} style={inputStyle} />
-
-                <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Google Maps (reseñas)</label>
-                <input type="text" placeholder="https://maps.google.com/..." value={config.businessInfo?.googleMapsLink || ''} onChange={(e) => updateBusinessInfoCloud('googleMapsLink', e.target.value)} style={inputStyle} />
-
                 <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Indicaciones / Notas</label>
                 <input type="text" placeholder="Timbre 2A, subir escaleras" value={config.businessInfo?.directions || ''} onChange={(e) => updateBusinessInfoCloud('directions', e.target.value)} style={inputStyle} />
             </div>
 
             <h3 style={labelStyle}>🔗 LINKS EXTERNOS & PAGOS</h3>
             <div style={cardStyle}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: '#374151' }}>🧡 Rappi</span>
-                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.rappiEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiEnabled: !c.rappiEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
-                </div>
-                <input type="text" placeholder="Link de Rappi" value={config.externalOrdering?.rappiUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, rappiUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontSize: 13, color: '#374151' }}>❤️ PedidosYa</span>
-                    <label className="toggle"><input type="checkbox" checked={config.externalOrdering?.pedidosYaEnabled ?? false} onChange={() => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaEnabled: !c.pedidosYaEnabled } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} /><span className="toggle-slider"></span></label>
-                </div>
-                <input type="text" placeholder="Link de PedidosYa" value={config.externalOrdering?.pedidosYaUrl || ''} onChange={(e) => { const c = config.externalOrdering || {}; updateConfig({ externalOrdering: { ...c, pedidosYaUrl: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={{ ...inputStyle, marginBottom: 14 }} />
-
                 <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago Setup</span>
-
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 600 }}>Código de Acceso (Access Token) *Requerido</label>
-                    <input type="password" placeholder="APP_1234567890..." value={config.mp_access_token || ''} onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)} style={inputStyle} />
-                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 12 }}>
-                        🔒 Privado. Tu dinero va directo a tu cuenta de MP.
-                        <br />👉 <strong>Cómo obtenerlo:</strong> mercadopago.com.ar → Configuración → Desarrolladores → Credenciales → Copiar "Access Token"
-                    </p>
+                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago Alias</span>
 
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Alias / Usuario (para Info página)</label>
                     <input type="text" placeholder="ej: grubclub.mp" value={config.payments?.mercadoPagoAlias || ''} onChange={(e) => { const c = config.payments || {}; updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={inputStyle} />
-                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Opcional. Si está vacío, no aparece en Info</p>
+                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Opcional. Se muestra en la página Info para pagos QR al finalizar la comida.</p>
                 </div>
             </div>
         </>

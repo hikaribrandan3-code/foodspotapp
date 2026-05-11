@@ -32,3 +32,10 @@ export function getETAMinutes(distanceKm: number): number {
   const travelMins = Math.ceil((distanceKm / 30) * 60);
   return travelMins + 10; // Conservative 10 min buffer
 }
+
+/**
+ * Format a price value to $X.XX, guarding against undefined/null and floating-point noise.
+ */
+export function formatPrice(n: number | undefined | null): string {
+  return `$${(n ?? 0).toFixed(2)}`;
+}

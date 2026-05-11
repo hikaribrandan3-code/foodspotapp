@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { updateBranding, uploadAsset, supabase } from '../../lib/supabaseClient';
+import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave';
+import { deepMergeAppConfig } from '../../utils/appConfig';
 import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
@@ -11,7 +13,33 @@ import ColorPickerModal from '../../components/ColorPickerModal';
 import BurgerLoader from '../../components/BurgerLoader';
 import { clearAuth } from '../../utils/storage';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
+import { HERO_ICON_DARK } from '../../config/appConfig.v2.js';
 import './Settings.css';
+
+const boostSaturation = (hex) => {
+  const rgb = parseInt(hex.slice(1), 16);
+  let r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2 / 255;
+  if (max === min) { h = s = 0; } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (510 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  s = Math.min(1, s * 1.6);
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+  const m = l - c / 2;
+  let r2 = 0, g2 = 0, b2 = 0;
+  if (h < 1/6) { r2 = c; g2 = x; } else if (h < 2/6) { r2 = x; g2 = c; } else if (h < 3/6) { g2 = c; b2 = x; } else if (h < 4/6) { g2 = x; b2 = c; } else if (h < 5/6) { r2 = x; b2 = c; } else { r2 = c; b2 = x; }
+  const toHex = (v) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+  return '#' + toHex(r2) + toHex(g2) + toHex(b2);
+};
 
 // --- MINI NAV ICONS (24px versions for compact preview) ---
 const NavHomeIcon = () => (
@@ -109,20 +137,12 @@ const Settings = () => {
         // Info Pills
         info_pills: {},
         
-        // Munchboy
-        munchboy_name: 'MUNCHBOY',
-        munchboy_shell_color: '#6B0FCC',
-        munchboy_a_color: '#D1D5DB',
-        munchboy_b_color: '#D1D5DB',
-        munchboy_enabled: false,
-        
         // Payment & Fulfillment Configuration
         service_modes: {
             pickup: true,
             delivery: true,
             dineIn: false,
-            dineInPayment: 'after',
-            events: false
+            dineInPayment: 'after'
         },
         payment_methods: {
             cash: true,
@@ -146,7 +166,54 @@ const Settings = () => {
     const fontMenuRef = useRef(null);
     const weightMenuRef = useRef(null);
     const rafRef = useRef(null);
-    const justSavedRef = useRef(false); // 🛡️ Blocks Data Pump from overwriting after save
+    const justSavedRef = useRef(false); // Guard: Blocks Data Pump from overwriting after save
+
+    // ============================================================
+    // AUTO-SAVE: Service Modes (1.2s debounce, direct to flat columns)
+    // ============================================================
+    const { saveStatus: serviceModeSaveStatus } = useDebouncedAutoSave(
+        isDraftReady ? draft.service_modes : null,
+        async (nextModes) => {
+            if (!businessId) return;
+            const payload = {
+                pickup_enabled: nextModes?.pickup ?? true,
+                delivery_enabled: nextModes?.delivery ?? true,
+                dine_in_enabled: nextModes?.dineIn ?? false,
+                dine_in_payment_timing: 'after',
+                // Backward-compat: also write to app_config during transition
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { service_modes: nextModes }
+                )
+            };
+            const { data, error } = await updateBranding(payload, businessId);
+            if (error || !data) throw error || new Error('Save returned no data');
+            return data;
+        },
+        1200,
+        isDraftReady
+    );
+
+    // ============================================================
+    // AUTO-SAVE: Payment Methods (1.2s debounce)
+    // ============================================================
+    const { saveStatus: paymentSaveStatus } = useDebouncedAutoSave(
+        isDraftReady ? draft.payment_methods : null,
+        async (nextMethods) => {
+            if (!businessId) return;
+            const payload = {
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { payment_methods: nextMethods }
+                )
+            };
+            const { data, error } = await updateBranding(payload, businessId);
+            if (error || !data) throw error || new Error('Save returned no data');
+            return data;
+        },
+        1200,
+        isDraftReady
+    );
 
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
@@ -166,6 +233,10 @@ const Settings = () => {
     // ============================================================
     useEffect(() => {
         if (!tenant?.business_id) return;
+
+        // HYDRATION LOCK: Wait for real DB data before initializing.
+        // pickup_enabled is undefined while TenantContext is still fetching.
+        if (tenant.pickup_enabled === undefined) return;
         
         // Only initialize once per businessId to prevent overwrites
         if (initializedForBusinessRef.current === tenant.business_id) return;
@@ -193,34 +264,59 @@ const Settings = () => {
             },
             
             info_pills: tenant.info_pills || {},
-            
-            munchboy_name: tenant.munchboy_name || 'MUNCHBOY',
-            munchboy_shell_color: tenant.munchboy_shell_color || '#6B0FCC',
-            munchboy_a_color: tenant.munchboy_a_color || '#D1D5DB',
-            munchboy_b_color: tenant.munchboy_b_color || '#D1D5DB',
-            munchboy_enabled: tenant.munchboy_enabled || false,
-            
-            hero_mode: tenant.hero_mode || 'text',
-            hero_url: tenant.hero_url || '',
-            nav_icon_mode: tenant.nav_icon_mode || 'white',
-            hero_icon_mode: tenant.hero_icon_mode || 'black',
-            app_config: tenant.app_config || {},
-            menu_data: tenant.menu_data || { categories: [] },
 
-            // Payment & Fulfillment — stored in app_config JSONB
-            service_modes: tenant.app_config?.service_modes || tenant.service_modes || {
+            service_modes: (tenant.pickup_enabled !== undefined ? {
+                pickup: tenant.pickup_enabled,
+                delivery: tenant.delivery_enabled,
+                dineIn: tenant.dine_in_enabled,
+                dineInPayment: tenant.dine_in_payment_timing || 'after'
+            } : null) || tenant.app_config?.service_modes || tenant.service_modes || {
                 pickup: true,
                 delivery: true,
                 dineIn: false,
-                dineInPayment: 'after',
-                events: false
+                dineInPayment: 'after'
             },
             payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
                 cash: true,
                 mercado_pago: true,
                 card: false,
                 transfer: false
-            }
+            },
+
+            hero_mode: tenant.hero_mode || 'text',
+            hero_url: tenant.hero_url || '',
+            nav_icon_mode: tenant.nav_icon_mode || 'white',
+            hero_icon_mode: tenant.hero_icon_mode || 'black',
+            app_config: {
+                ...(tenant.app_config || {}),
+                // Payment & Fulfillment — stored in app_config JSONB
+                service_modes: (tenant.pickup_enabled !== undefined ? {
+                    pickup: tenant.pickup_enabled,
+                    delivery: tenant.delivery_enabled,
+                    dineIn: tenant.dine_in_enabled,
+                    dineInPayment: tenant.dine_in_payment_timing || 'after'
+                } : null) || tenant.app_config?.service_modes || tenant.service_modes || {
+                    pickup: true,
+                    delivery: true,
+                    dineIn: false,
+                    dineInPayment: 'after'
+                },
+                payment_methods: tenant.app_config?.payment_methods || tenant.payment_methods || {
+                    cash: true,
+                    mercado_pago: true,
+                    card: false,
+                    transfer: false
+                },
+                // Munchboy — migrate from top-level columns if present
+                munchboy: tenant.app_config?.munchboy || {
+                    enabled: tenant.munchboy_enabled ?? false,
+                    name: tenant.munchboy_name || 'MUNCHBOY',
+                    shell_color: tenant.munchboy_shell_color || '#6B0FCC',
+                    a_color: tenant.munchboy_a_color || '#D1D5DB',
+                    b_color: tenant.munchboy_b_color || '#D1D5DB'
+                }
+            },
+            menu_data: tenant.menu_data || { categories: [] }
         });
         
         // Apply CSS variables immediately
@@ -230,7 +326,7 @@ const Settings = () => {
         setHasChanges(false);
         setIsDraftReady(true);
         
-    }, [tenant?.business_id]); // Only depend on business_id, not the entire tenant object
+    }, [tenant?.business_id, tenant?.pickup_enabled]); // Depend on business_id and hydration signal
 
     // ============================================================
     // CSS VARIABLES: Apply current draft values to document
@@ -340,11 +436,11 @@ const Settings = () => {
             }
             // Live preview for munchboy colors
             if (colorPickerState.keyName === 'munchboy_shell_color') {
-                updateDraftField('munchboy_shell_color', newColor);
+                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, shell_color: newColor } } }));
             } else if (colorPickerState.keyName === 'munchboy_a_color') {
-                updateDraftField('munchboy_a_color', newColor);
+                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, a_color: newColor } } }));
             } else if (colorPickerState.keyName === 'munchboy_b_color') {
-                updateDraftField('munchboy_b_color', newColor);
+                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, b_color: newColor } } }));
             }
         });
     };
@@ -355,6 +451,20 @@ const Settings = () => {
         } else if (colorPickerState.keyName.startsWith('info_pill_')) {
             const pillId = colorPickerState.keyName.replace('info_pill_', '');
             updateInfoPill(pillId, { bgColor: finalColor });
+        } else if (colorPickerState.keyName === 'munchboy_shell_color' || colorPickerState.keyName === 'munchboy_a_color' || colorPickerState.keyName === 'munchboy_b_color') {
+            const munchKey = colorPickerState.keyName.replace('munchboy_', '');
+            const nextMunchboy = {
+                ...draft.app_config?.munchboy,
+                [munchKey]: finalColor
+            };
+            setDraft(prev => ({
+                ...prev,
+                app_config: {
+                    ...prev.app_config,
+                    munchboy: nextMunchboy
+                }
+            }));
+            autoSaveMunchboy(nextMunchboy);
         } else if (colorPickerState.keyName) {
             updateDraftField(colorPickerState.keyName, finalColor);
         }
@@ -372,11 +482,11 @@ const Settings = () => {
         }
         // Revert munchboy colors on cancel
         if (colorPickerState.keyName === 'munchboy_shell_color') {
-            updateDraftField('munchboy_shell_color', colorPickerState.originalColor);
+            setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, shell_color: colorPickerState.originalColor } } }));
         } else if (colorPickerState.keyName === 'munchboy_a_color') {
-            updateDraftField('munchboy_a_color', colorPickerState.originalColor);
+            setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, a_color: colorPickerState.originalColor } } }));
         } else if (colorPickerState.keyName === 'munchboy_b_color') {
-            updateDraftField('munchboy_b_color', colorPickerState.originalColor);
+            setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, munchboy: { ...prev.app_config.munchboy, b_color: colorPickerState.originalColor } } }));
         }
         setColorPickerState(prev => ({ ...prev, isOpen: false }));
     };
@@ -388,13 +498,13 @@ const Settings = () => {
         window.location.href = `/${tenant?.slug || ''}`;
     };
 
-    // 💾 ATOMIC SAVE (v7 — Self-Healing via updateBranding)
+    // ATOMIC SAVE (v7 — Self-Healing via updateBranding)
     const handlePlatformSave = async () => {
         if (!businessId) return;
         setIsSaving(true);
-        console.log('💾 SAVING BRANDING — business:', businessId);
+        console.log('SAVING BRANDING — business:', businessId);
 
-        // 🛡️ GUARD: Prevent Data Pump from overwriting local state with stale DB data
+        // GUARD: Prevent Data Pump from overwriting local state with stale DB data
         justSavedRef.current = true;
 
         try {
@@ -414,30 +524,32 @@ const Settings = () => {
                 hero_icons: draft.hero_icons,
                 hero_icon_mode: draft.hero_icon_mode,
                 info_pills: draft.info_pills,
-                munchboy_enabled: draft.munchboy_enabled,
-                munchboy_name: draft.munchboy_name,
-                munchboy_shell_color: draft.munchboy_shell_color,
-                munchboy_a_color: draft.munchboy_a_color,
-                munchboy_b_color: draft.munchboy_b_color,
-                app_config: {
-                    ...draft.app_config,
-                    service_modes: draft.service_modes,
-                    payment_methods: draft.payment_methods,
-                },
+                pickup_enabled: draft.service_modes?.pickup ?? true,
+                delivery_enabled: draft.service_modes?.delivery ?? true,
+                dine_in_enabled: draft.service_modes?.dineIn ?? false,
+                dine_in_payment_timing: 'after',
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || draft.app_config || {},
+                    {
+                        service_modes: draft.service_modes,
+                        payment_methods: draft.payment_methods,
+                        munchboy: draft.app_config?.munchboy
+                    }
+                ),
                 menu_data: draft.menu_data,
             };
 
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
 
-            // 🛡️ STRICT CHECK: Only show success if data was actually written
+            // STRICT CHECK: Only show success if data was actually written
             if (saveError || !savedData) {
                 throw saveError || new Error('Save returned no data');
             }
 
-            // ✅ Apply confirmed data to context + cache
+            // Apply confirmed data to context + cache
             Object.assign(tenant, savedData);
 
-            // 🗺️ FRONTEND SYNC: Map flat DB rows to nested UI config
+            // FRONTEND SYNC: Map flat DB rows to nested UI config
             const frontendSyncData = {
                 ...savedData,
                 colors: {
@@ -474,11 +586,45 @@ const Settings = () => {
             setTimeout(() => { justSavedRef.current = false; }, 2000);
 
         } catch (error) {
-            console.error('💾 Save failed:', error);
+            console.error('Save failed:', error);
             justSavedRef.current = false;
-            setSaveStatus({ error: true, message: t('save_error') || 'Save failed. Please try again.' });
+            const isForbidden = error?.code === '42501' || error?.status === 403 || error?.message?.includes('permission');
+            setSaveStatus({
+                error: true,
+                message: isForbidden
+                    ? 'Access denied. Please log out and log back in as the business owner.'
+                    : (t('save_failed') || 'Save failed')
+            });
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    // Auto-save munchboy color changes immediately (no main Save button needed)
+    const autoSaveMunchboy = async (munchboyData) => {
+        if (!businessId) return;
+        setSaveStatus({ message: t('saving') || 'Saving...' });
+        try {
+            const payload = {
+                app_config: deepMergeAppConfig(
+                    tenant?.app_config || {},
+                    { munchboy: munchboyData }
+                )
+            };
+            const { data, error } = await updateBranding(payload, businessId);
+            if (error) throw error;
+            if (data) Object.assign(tenant, data);
+            setSaveStatus({ message: t('saved') || 'Saved' });
+            setTimeout(() => setSaveStatus(null), 2000);
+        } catch (err) {
+            console.error('[autoSaveMunchboy] failed:', err);
+            setSaveStatus({
+                error: true,
+                message: err?.message?.includes('403') || err?.code === '403'
+                    ? 'Access denied. Please log out and log back in as the business owner.'
+                    : (t('save_failed') || 'Save failed')
+            });
+            setTimeout(() => setSaveStatus(null), 3000);
         }
     };
 
@@ -524,7 +670,7 @@ const Settings = () => {
             <div className="settings-vault">
                 {/* ========== 1. IDENTITY & TYPOGRAPHY ========== */}
                 <section className="branding-card">
-                    <h3>1. {t('identity_typography')}</h3>
+                    <h3 style={{ color: '#10B981', fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>1. {t('identity_typography')}</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <input
                             type="text"
@@ -554,7 +700,7 @@ const Settings = () => {
                                                 style={{ fontFamily: font }}
                                             >
                                                 {font}
-                                                {draft.font_family === font && <span className="check">✓</span>}
+                                                {draft.font_family === font && <span className="check">{t('selected')}</span>}
                                             </div>
                                         ))}
                                     </div>
@@ -593,13 +739,15 @@ const Settings = () => {
                                                 style={{ fontWeight: option.value }}
                                             >
                                                 {option.label}
-                                                {draft.font_weight === option.value && <span className="check">✓</span>}
+                                                {draft.font_weight === option.value && <span className="check">{t('selected')}</span>}
                                             </div>
                                         ))}
                                     </div>
                                 )}
                             </div>
                         </div>
+
+                        {/* MP token warning removed for MVP — token kept dormant in DB */}
                     </div>
                 </section>
 
@@ -641,7 +789,7 @@ const Settings = () => {
                         </div>
                         {/* Guidelines for best results */}
                         <p style={{ fontSize: 11, color: '#64748B', marginTop: 10, marginBottom: 0, textAlign: 'center' }}>
-                            📸 <strong>Tip:</strong> For best results, use images around <strong>1200×800px</strong> or <strong>16:9 ratio</strong>, under <strong>500KB</strong>.
+                            <strong>Tip:</strong> For best results, use images around <strong>1200×800px</strong> or <strong>16:9 ratio</strong>, under <strong>500KB</strong>.
                             <br />Larger files may take longer to upload on slow connections.
                         </p>
                         </>
@@ -651,7 +799,7 @@ const Settings = () => {
                             className="hero-preview-text"
                             style={{ fontFamily: draft.font_family, fontWeight: draft.font_weight }}
                         >
-                            {draft.business_name || 'Business Name'}
+                            {draft.business_name || t('business_name_placeholder')}
                         </div>
                     )}
 
@@ -682,7 +830,7 @@ const Settings = () => {
                         onSave={(data) => {
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
-                            // 🚀 NEW STANDARD: px/py for percentage based positioning
+                            // NEW STANDARD: px/py for percentage based positioning
                             const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&px=${data.posX}&py=${data.posY}`;
                             updateDraftField('hero_url', finalUrl);
                             setShowCoverEditor(false);
@@ -721,7 +869,7 @@ const Settings = () => {
                     }}>
                         {HERO_ICON_DEFS(t).map(({ id, label, Icon }) => {
                             const bgColor = draft.hero_icons[id]?.color || DEFAULTS.heroIconColor;
-                            const iconColor = heroIconMode === 'white' ? '#FFFFFF' : '#4A4036';
+                            const iconColor = heroIconMode === 'white' ? '#FFFFFF' : HERO_ICON_DARK;
 
                             return (
                                 <div
@@ -744,12 +892,12 @@ const Settings = () => {
                                         position: 'relative'
                                     }}
                                 >
-                                    <div style={{ color: iconColor }}><Icon /></div>
+                                    <div style={{ color: iconColor, fontSize: '28px' }}><Icon /></div>
                                     <span style={{
-                                        fontSize: 11,
+                                        fontSize: 13,
                                         fontWeight: 600,
                                         color: iconColor,
-                                        opacity: 0.9
+                                        opacity: 0.95
                                     }}>{label}</span>
                                     {/* Color dot indicator */}
                                     <div style={{
@@ -846,7 +994,7 @@ const Settings = () => {
                     <div 
                         className="munchboy-preview"
                         style={{
-                            background: draft.munchboy_shell_color,
+                            background: draft.app_config?.munchboy?.shell_color || '#6B0FCC',
                             borderRadius: 20,
                             padding: '24px 16px 16px',
                             marginBottom: 20,
@@ -877,7 +1025,7 @@ const Settings = () => {
                             marginBottom: 16,
                             opacity: 0.9
                         }}>
-                            {draft.munchboy_name}
+                            {draft.app_config?.munchboy?.name || 'MUNCHBOY'}
                         </div>
                         
                         {/* Controller preview */}
@@ -908,31 +1056,31 @@ const Settings = () => {
                             </div>
                             
                             {/* A/B Buttons */}
-                            <div style={{ position: 'relative', width: 60, height: 58 }}>
-                                <div 
-                                    onClick={() => openColorPicker('A Button Color', 'munchboy_a_color', '', draft.munchboy_a_color)}
+                            <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+                                <div
+                                    onClick={() => openColorPicker(t('munchboy_b_button_color'), 'munchboy_b_color', '', draft.app_config?.munchboy?.b_color || '#D1D5DB')}
                                     style={{
-                                        position: 'absolute', top: 0, right: 0,
                                         width: 44, height: 44, borderRadius: '50%',
-                                        background: draft.munchboy_a_color,
-                                        border: '3px solid #1a1a1a',
-                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
+                                        background: boostSaturation(draft.app_config?.munchboy?.b_color || '#D1D5DB'),
+                                        border: '2px solid #1a1a1a',
+                                        boxShadow: 'none',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
-                                    }}
-                                >A</div>
-                                <div 
-                                    onClick={() => openColorPicker('B Button Color', 'munchboy_b_color', '', draft.munchboy_b_color)}
-                                    style={{
-                                        position: 'absolute', bottom: 0, left: 0,
-                                        width: 44, height: 44, borderRadius: '50%',
-                                        background: draft.munchboy_b_color,
-                                        border: '3px solid #1a1a1a',
-                                        boxShadow: '0 3px 8px rgba(0,0,0,0.3)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 16, fontWeight: 'bold', color: '#666'
+                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
+                                        opacity: 1
                                     }}
                                 >B</div>
+                                <div
+                                    onClick={() => openColorPicker(t('munchboy_a_button_color'), 'munchboy_a_color', '', draft.app_config?.munchboy?.a_color || '#D1D5DB')}
+                                    style={{
+                                        width: 44, height: 44, borderRadius: '50%',
+                                        background: boostSaturation(draft.app_config?.munchboy?.a_color || '#D1D5DB'),
+                                        border: '2px solid #1a1a1a',
+                                        boxShadow: 'none',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
+                                        opacity: 1
+                                    }}
+                                >A</div>
                             </div>
                         </div>
                     </div>
@@ -941,65 +1089,41 @@ const Settings = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                         <div style={{ display: 'flex', gap: 8, flex: 1 }}>
                             <div 
-                                onClick={() => openColorPicker('Shell', 'munchboy_shell_color', '', draft.munchboy_shell_color)}
+                                onClick={() => openColorPicker(t('munchboy_shell'), 'munchboy_shell_color', '', draft.app_config?.munchboy?.shell_color || '#6B0FCC')}
                                 style={{
                                     width: 36, height: 36, borderRadius: 8,
-                                    background: draft.munchboy_shell_color,
+                                    background: draft.app_config?.munchboy?.shell_color || '#6B0FCC',
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
-                                title="Shell"
+                                title={t('munchboy_shell')}
                             />
-                            <div 
-                                onClick={() => openColorPicker('A Button', 'munchboy_a_color', '', draft.munchboy_a_color)}
+                            <div
+                                onClick={() => openColorPicker(t('munchboy_a_button'), 'munchboy_a_color', '', draft.app_config?.munchboy?.a_color || '#D1D5DB')}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    background: draft.munchboy_a_color,
+                                    background: boostSaturation(draft.app_config?.munchboy?.a_color || '#D1D5DB'),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
-                                title="A Button"
+                                title={t('munchboy_a_button')}
                             />
-                            <div 
-                                onClick={() => openColorPicker('B Button', 'munchboy_b_color', '', draft.munchboy_b_color)}
+                            <div
+                                onClick={() => openColorPicker(t('munchboy_b_button'), 'munchboy_b_color', '', draft.app_config?.munchboy?.b_color || '#D1D5DB')}
                                 style={{
                                     width: 36, height: 36, borderRadius: '50%',
-                                    background: draft.munchboy_b_color,
+                                    background: boostSaturation(draft.app_config?.munchboy?.b_color || '#D1D5DB'),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
                                 }}
-                                title="B Button"
+                                title={t('munchboy_b_button')}
                             />
                         </div>
                         
-                        {/* Enable Toggle */}
-                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: draft.munchboy_enabled ? '#22C55E' : '#64748B' }}>
-                                {draft.munchboy_enabled ? 'ON' : 'OFF'}
-                            </span>
-                            <input
-                                type="checkbox"
-                                checked={!!draft.munchboy_enabled}
-                                onChange={(e) => updateDraftField('munchboy_enabled', e.target.checked)}
-                                style={{ accentColor: '#22C55E' }}
-                            />
-                        </label>
+                        {/* Enable Toggle — hidden until wired to frontend */}
                     </div>
-                    
-                    {/* Display Name */}
-                    <div>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: '#64748B', display: 'block', marginBottom: 6 }}>
-                            Display Name
-                        </label>
-                        <input
-                            type="text"
-                            className="pill-input"
-                            value={draft.munchboy_name}
-                            placeholder="MUNCHBOY"
-                            onChange={(e) => updateDraftField('munchboy_name', e.target.value)}
-                            style={{ width: '100%', fontSize: 14 }}
-                        />
-                    </div>
+
+                    {/* Display Name — hidden until frontend sync is fixed */}
                 </section>
 
                 {/* ========== 7. INFO PILLS ========== */}
@@ -1021,28 +1145,22 @@ const Settings = () => {
                             </button>
                         </div>
                     </div>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('info_pills_desc')}</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {['whatsapp', 'rappi', 'mercadoPago', 'pedidosYa', 'adminAccess'].map(pillId => {
+                    <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, marginTop: -4 }}>{t('info_pills_desc')}</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {['mercadoPago', 'adminAccess'].map(pillId => {
                             const pillData = draft.info_pills[pillId] || {};
                             const isActive = pillData.enabled;
                             const bgColor = pillData.bgColor || '#EEEEEE';
                             const content = pillData.content || '';
 
                             const labels = {
-                                whatsapp: 'WhatsApp',
-                                rappi: 'Rappi',
-                                mercadoPago: 'Mercado Pago',
-                                pedidosYa: 'PedidosYa',
-                                adminAccess: 'Admin Login'
+                                mercadoPago: t('label_mercado_pago'),
+                                adminAccess: t('admin_login')
                             };
 
                             const placeHolders = {
-                                whatsapp: '+54 9 11 1234 5678',
-                                rappi: 'https://rappi.com/...',
-                                mercadoPago: 'ALIAS.MP',
-                                pedidosYa: 'https://pedidosya.com/...',
-                                adminAccess: 'N/A'
+                                mercadoPago: t('mp_alias_placeholder'),
+                                adminAccess: t('not_applicable')
                             };
 
                             return (
@@ -1056,19 +1174,23 @@ const Settings = () => {
 
                                     {/* Content Input */}
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'center' }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#1E293B' }}>{labels[pillId]}</span>
-                                            <label className="switch-label">
-                                                <span style={{ color: isActive ? '#22C55E' : '#94A3B8' }}>
-                                                    {isActive ? t('visible') : t('hidden')}
-                                                </span>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!isActive}
-                                                    onChange={(e) => updateInfoPill(pillId, { enabled: e.target.checked })}
-                                                    style={{ accentColor: '#22C55E' }}
-                                                />
-                                            </label>
+                                            {pillId !== 'adminAccess' ? (
+                                                <label className="switch-label">
+                                                    <span style={{ color: isActive ? '#10B981' : '#94A3B8', fontWeight: 600 }}>
+                                                        {isActive ? t('visible') : t('hidden')}
+                                                    </span>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!!isActive}
+                                                        onChange={(e) => updateInfoPill(pillId, { enabled: e.target.checked })}
+                                                        style={{ accentColor: '#10B981' }}
+                                                    />
+                                                </label>
+                                            ) : (
+                                                <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>Always visible</span>
+                                            )}
                                         </div>
                                         {pillId !== 'adminAccess' && (
                                             <input
@@ -1099,29 +1221,30 @@ const Settings = () => {
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             {[
-                                { key: 'pickup',   label: 'Pickup',   defaultOn: true  },
-                                { key: 'delivery', label: 'Delivery', defaultOn: true  },
-                                { key: 'dineIn',   label: 'Dine In',  defaultOn: false },
-                                { key: 'events',   label: 'Events',   defaultOn: false },
+                                { key: 'pickup',   label: t('pickup'),   defaultOn: true  },
+                                { key: 'delivery', label: t('delivery'), defaultOn: true  },
+                                { key: 'dineIn',   label: t('dine_in'),  defaultOn: false },
                             ].map(({ key, label, defaultOn }) => {
                                 const on = draft.service_modes?.[key] ?? defaultOn;
                                 return (
                                     <div
                                         key={key}
                                         onClick={() => {
-                                            setDraft(d => ({ ...d, service_modes: { ...d.service_modes, [key]: !on } }));
-                                            setHasChanges(true);
+                                            setDraft(d => {
+                                                const current = d.service_modes || { pickup: true, delivery: true, dineIn: false, dineInPayment: 'after' };
+                                                return { ...d, service_modes: { ...current, [key]: !on } };
+                                            });
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
-                                            background: on ? '#F0FDF4' : '#F9FAFB',
-                                            border: `1px solid ${on ? '#22C55E' : '#E5E7EB'}`
+                                            background: on ? '#ECFDF5' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#10B981' : '#E5E7EB'}`
                                         }}
                                     >
                                         <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
-                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#22C55E' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
-                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#10B981' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
                                         </div>
                                     </div>
                                 );
@@ -1129,37 +1252,12 @@ const Settings = () => {
                         </div>
                     </div>
 
-                    {/* DINE-IN PAYMENT TIMING — only shown when Dine In is on */}
+                    {/* DINE-IN: Always pay at the end */}
                     {draft.service_modes?.dineIn && (
-                        <div style={{ marginBottom: 20 }}>
-                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
-                                {t('dine_in_payment') || 'Dine-In Payment Timing'}
-                            </p>
-                            <div style={{ display: 'flex', gap: 8 }}>
-                                {[
-                                    { value: 'before', label: 'Pay Before (Upfront)' },
-                                    { value: 'after',  label: 'Pay After (At End)'  },
-                                ].map(({ value, label }) => {
-                                    const active = draft.service_modes?.dineInPayment === value;
-                                    return (
-                                        <button
-                                            key={value}
-                                            onClick={() => {
-                                                setDraft(d => ({ ...d, service_modes: { ...d.service_modes, dineInPayment: value } }));
-                                                setHasChanges(true);
-                                            }}
-                                            style={{
-                                                flex: 1, padding: '10px 12px', borderRadius: 8, border: `1px solid ${active ? '#F59E0B' : '#E5E7EB'}`,
-                                                background: active ? '#FFFBEB' : '#F9FAFB',
-                                                color: active ? '#92400E' : '#6B7280',
-                                                fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s'
-                                            }}
-                                        >
-                                            {label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                        <div style={{ marginBottom: 20, padding: '10px 12px', background: '#F3F4F6', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>
+                                Dine-in customers pay at the end of their meal.
+                            </span>
                         </div>
                     )}
 
@@ -1170,32 +1268,35 @@ const Settings = () => {
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             {[
-                                { key: 'cash',         label: 'Cash'         },
-                                { key: 'mercado_pago', label: 'Mercado Pago' },
+                                { key: 'cash',         label: t('cash')         },
                             ].map(({ key, label }) => {
                                 const on = draft.payment_methods?.[key] ?? true;
                                 return (
                                     <div
                                         key={key}
                                         onClick={() => {
-                                            setDraft(d => ({ ...d, payment_methods: { ...d.payment_methods, [key]: !on } }));
-                                            setHasChanges(true);
+                                            setDraft(d => {
+                                                const current = d.payment_methods || { cash: true, mercado_pago: true, card: false, transfer: false };
+                                                return { ...d, payment_methods: { ...current, [key]: !on } };
+                                            });
                                         }}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
-                                            background: on ? '#EFF6FF' : '#F9FAFB',
-                                            border: `1px solid ${on ? '#3B82F6' : '#E5E7EB'}`
+                                            background: on ? '#ECFDF5' : '#F9FAFB',
+                                            border: `1px solid ${on ? '#10B981' : '#E5E7EB'}`
                                         }}
                                     >
                                         <span style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{label}</span>
-                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#3B82F6' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
-                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s' }} />
+                                        <div style={{ width: 36, height: 20, borderRadius: 10, background: on ? '#10B981' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: on ? 18 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
+
+                        {/* MP token warning removed for MVP — token kept dormant in DB */}
                     </div>
                 </section>
             </div>
@@ -1213,7 +1314,30 @@ const Settings = () => {
                 />
             )}
 
-            {/* SAVE SUCCESS TOAST */}
+            {/* AUTO-SAVE PILL (Service Modes + Payment Methods) */}
+            {(serviceModeSaveStatus || paymentSaveStatus) && (
+                (() => {
+                    const status = serviceModeSaveStatus?.error ? serviceModeSaveStatus
+                        : paymentSaveStatus?.error ? paymentSaveStatus
+                        : serviceModeSaveStatus || paymentSaveStatus;
+                    return (
+                        <div style={{
+                            position: 'fixed', bottom: 80, left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: status?.error ? '#EF4444' : '#059669', color: 'white',
+                            padding: '10px 20px', borderRadius: 999,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            fontWeight: 600, fontSize: 13, zIndex: 9999,
+                            pointerEvents: 'none',
+                            animation: 'fadeIn 0.2s ease-out'
+                        }}>
+                            {status?.message}
+                        </div>
+                    );
+                })()
+            )}
+
+            {/* SAVE SUCCESS TOAST (manual branding save) */}
             {saveStatus && (
                 <div style={{
                     position: 'fixed', bottom: 24, left: '50%',
@@ -1225,7 +1349,7 @@ const Settings = () => {
                     display: 'flex', alignItems: 'center', gap: 8,
                     animation: 'fadeIn 0.2s ease-out'
                 }}>
-                    <span>{saveStatus.error ? '⚠️' : '✓'}</span> {saveStatus.message}
+                    <span style={{ fontWeight: 700 }}>{saveStatus.error ? '!' : ''}</span> {saveStatus.message}
                 </div>
             )}
 

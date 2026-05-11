@@ -75,7 +75,7 @@ const PaymentMethodCard = ({ id, selected, onClick, title, subtitle, icon, color
         onClick={onClick}
         style={{
             position: 'relative', padding: 16, marginBottom: 12,
-            background: selected ? (id === PAYMENT_METHOD.MERCADO_PAGO ? '#EFF6FF' : '#F0FDF4') : '#FFFFFF',
+            background: selected ? '#F0FDF4' : '#FFFFFF',
             border: selected ? `2px solid ${color}` : '1px solid #E5E7EB',
             borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease',
             display: 'flex', alignItems: 'center', gap: 16,
@@ -106,6 +106,7 @@ function Order({ config: configProp }) {
     const { businessId, tenantData, serviceModes } = useTenant()
     const { t } = useLanguage()
     const config = configProp || tenantData?.app_config || {}
+    const paymentMethods = config.payment_methods || { cash: true, mercado_pago: true }
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
 
@@ -126,8 +127,9 @@ function Order({ config: configProp }) {
     // --------------------------------------------
     const [orderType, setOrderType] = useState(() => {
         if (isDeliveryMode() && serviceModes?.delivery) return 'delivery'
-        if (serviceModes?.dineIn) return 'dine_in'
+        if (serviceModes?.pickup) return 'pickup'
         if (serviceModes?.delivery) return 'delivery'
+        if (serviceModes?.dineIn) return 'dine_in'
         return 'pickup'
     })
 
@@ -155,7 +157,9 @@ function Order({ config: configProp }) {
     })
 
     // Payment method
-    const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHOD.MERCADO_PAGO)
+    const [paymentMethod, setPaymentMethod] = useState(() => {
+        return PAYMENT_METHOD.CASH  // Default to cash, no MP option
+    })
     const [validationErrors, setValidationErrors] = useState([])
 
     // 🔄 PAYMENT RETRY STATE (Audit #7)
@@ -222,7 +226,8 @@ function Order({ config: configProp }) {
     }
 
     const getItemImage = (item, index) => {
-        if (item.image) return item.image
+        const itemImage = item.image || item.image_url
+        if (itemImage) return itemImage
         return placeholderImages[index % placeholderImages.length]
     }
 
@@ -292,18 +297,12 @@ function Order({ config: configProp }) {
         // Dine-in always pays at the end — force cash so order goes straight to kitchen
         const effectivePaymentMethod = orderType === 'dine_in' ? PAYMENT_METHOD.CASH : paymentMethod
         const isCashPath = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
+        const isWhatsApp = effectivePaymentMethod === PAYMENT_METHOD.WHATSAPP
 
-        // Payment-aware status assignment
-        const isMercadoPago = effectivePaymentMethod === PAYMENT_METHOD.MERCADO_PAGO
+        // ALL orders require owner approval before kitchen starts (prevent customer anger)
         const isCash = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
         const isDineInPayAfter = orderType === 'dine_in' && isCash
-        const orderStatus = isMercadoPago
-            ? ORDER_STATUS.PENDING_PAYMENT      // MP: waiting for online payment
-            : isDineInPayAfter
-                ? ORDER_STATUS.RELEASED_TO_KITCHEN  // Dine-in pay-after: skip payment gate, go straight to kitchen
-                : isCash
-                    ? ORDER_STATUS.PAID_UNRELEASED  // Pickup/delivery cash: owner must confirm payment
-                    : ORDER_STATUS.RELEASED_TO_KITCHEN
+        const orderStatus = ORDER_STATUS.PAID_UNRELEASED  // Simple: everyone waits for approval
 
         const orderPaymentStatus = isDineInPayAfter ? 'unpaid' : 'pending'
 
@@ -352,61 +351,14 @@ function Order({ config: configProp }) {
             // Pre-build the WhatsApp URL so it's ready for any branch
             const whatsappUrl = buildWhatsAppUrl(newOrder)
 
-            // For non-MP paths, fire WhatsApp immediately
+            // Fire WhatsApp for WhatsApp payment method
             // 🛡️ DINE-IN: Skip WhatsApp — staff is at the table, no need for external notification
-            if (isCashPath && whatsappUrl && orderType !== 'dine_in') {
+            if (isWhatsApp && whatsappUrl && orderType !== 'dine_in') {
                 window.open(whatsappUrl, '_blank')
             }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
-            if (isMercadoPago) {
-                // ========== MERCADO PAGO BRANCH ==========
-                try {
-                    const mpResponse = await fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/create-preference', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ order_id: savedOrder.id })
-                    })
-                    const prefData = await mpResponse.json()
-                    const prefError = !mpResponse.ok ? new Error(prefData?.error || 'MP error') : null
-
-                    if (prefError) throw prefError
-
-                    // Item/price guard from Edge Function
-                    if (prefData?.error === 'item_unavailable' || prefData?.error === 'price_mismatch') {
-                        showToast(`⚠️ ${prefData.message}`)
-                        setIsSubmitting(false)
-                        return
-                    }
-
-                    // MP not configured → silent fallback
-                    if (prefData?.error === 'mp_not_configured') {
-                        throw new Error('mp_not_configured')
-                    }
-
-                    // 🎯 SUCCESS: Redirect to Mercado Pago checkout
-                    if (prefData?.redirect_url || prefData?.init_point) {
-                        clearCart()
-                        incrementOrderCount()
-                        if (isDelivery) clearDeliveryMode()
-                        // Use sandbox_init_point when available (test mode), else init_point
-                        const targetUrl = prefData?.redirect_url || prefData?.init_point
-                        window.location.href = targetUrl
-                        return
-                    }
-
-                    // No init_point → treat as failure
-                    throw new Error('No init_point returned from Edge Function')
-
-                } catch (mpError) {
-                    // ========== MP ERROR: SHOW TO USER, DON'T SILENT-FALLBACK ==========
-                    console.error('[Order] MP payment failed:', mpError.message)
-                    setRetryError(mpError.message || 'Payment failed. Please try again.')
-                    showToast('❌ ' + (mpError.message || 'Payment failed'))
-                    setIsSubmitting(false)
-                    return
-                }
-            }
+            // (Mercado Pago branch removed for MVP — cash/WhatsApp only)
 
             // ─── STEP 5: CASH/OFFLINE PAYMENT HANDLING ────────
             // If cash payment, create ledger entry (with offline resilience)
@@ -494,8 +446,8 @@ function Order({ config: configProp }) {
             subtotal: subtotal,
             delivery_fee: actualDeliveryFee,
             total: total,
-            status: ORDER_STATUS.PAID_UNRELEASED, // WhatsApp = cash path, payment done, awaiting release
-            payment_status: 'pending',
+            status: ORDER_STATUS.PAID_UNRELEASED, // ALL orders require owner approval before kitchen starts
+            payment_status: isDelivery ? 'unpaid' : 'pending',
             order_type: orderType,
             customer_name: customerInfo.name || null,
             customer_phone: customerInfo.phone || null,
@@ -565,25 +517,9 @@ function Order({ config: configProp }) {
                 return
             }
 
-            // Create NEW Mercado Pago preference for SAME order
-            const mpResponse = await fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/create-preference', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ order_id: order.id })
-            })
-            const prefData = await mpResponse.json()
-            const prefError = !mpResponse.ok ? new Error(prefData?.error || 'MP error') : null
-
-            if (prefError) throw prefError
-
-            if (prefData?.redirect_url || prefData?.init_point) {
-                // Redirect to MP checkout (sandbox_init_point for test mode)
-                const targetUrl = prefData?.redirect_url || prefData?.init_point
-                window.location.href = targetUrl
-                return
-            }
-
-            throw new Error('No init_point returned from Edge Function')
+            setRetryError('Cash orders cannot be retried. Please contact the restaurant.')
+            setIsSubmitting(false)
+            return
 
         } catch (err) {
             console.error('[Order] Retry payment error:', err)
@@ -730,7 +666,7 @@ function Order({ config: configProp }) {
                         {/* Order type selector — only show when multiple modes are enabled */}
                         {(() => {
                             const modes = []
-                            if (serviceModes?.pickup) modes.push({ id: 'pickup', label: t('pickup') || 'Takeout' })
+                            if (serviceModes?.pickup) modes.push({ id: 'pickup', label: t('pickup') || 'Take Out' })
                             if (serviceModes?.dineIn) modes.push({ id: 'dine_in', label: t('dine_in') || 'Dine In' })
                             if (serviceModes?.delivery) modes.push({ id: 'delivery', label: t('delivery') || 'Delivery' })
                             if (modes.length <= 1) return null
@@ -926,24 +862,34 @@ function Order({ config: configProp }) {
                         {t('payment_methods') || 'Payment Method'}
                     </h3>
 
-                    <PaymentMethodCard
-                        id="mercadopago"
-                        selected={paymentMethod === PAYMENT_METHOD.MERCADO_PAGO}
-                        onClick={() => setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)}
-                        title={t(PAYMENT_METHOD.MERCADO_PAGO)}
-                        subtitle={t('mp_subtitle')}
-                        color="#009EE3"
-                        icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>}
-                    />
+                    {!paymentMethods.cash && (
+                        <div style={{ padding: '16px', background: '#FEF2F2', borderRadius: 12, border: '1px solid #FECACA', textAlign: 'center' }}>
+                            <p style={{ fontSize: 14, color: '#991B1B', fontWeight: 600, margin: 0 }}>
+                                No payment methods available. Please contact the restaurant.
+                            </p>
+                        </div>
+                    )}
+
+                    {paymentMethods.cash && (
+                        <PaymentMethodCard
+                            id="efectivo"
+                            selected={paymentMethod === PAYMENT_METHOD.CASH}
+                            onClick={() => setPaymentMethod(PAYMENT_METHOD.CASH)}
+                            title={t(PAYMENT_METHOD.CASH)}
+                            subtitle={t('cash_delivery')}
+                            color="#22C55E"
+                            icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                        />
+                    )}
 
                     <PaymentMethodCard
-                        id="efectivo"
-                        selected={paymentMethod === PAYMENT_METHOD.CASH}
-                        onClick={() => setPaymentMethod(PAYMENT_METHOD.CASH)}
-                        title={t(PAYMENT_METHOD.CASH)}
-                        subtitle={t('cash_delivery')}
-                        color="#22C55E"
-                        icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
+                        id="whatsapp"
+                        selected={paymentMethod === PAYMENT_METHOD.WHATSAPP}
+                        onClick={() => setPaymentMethod(PAYMENT_METHOD.WHATSAPP)}
+                        title={t('label_whatsapp') || 'WhatsApp'}
+                        subtitle={t('whatsapp_order') || 'Confirmar por WhatsApp'}
+                        color="#25D366"
+                        icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>}
                     />
                 </div>
                 )}
@@ -1024,28 +970,7 @@ function Order({ config: configProp }) {
                     {!isSubmitting && !isOutOfRadius && <span>➜</span>}
                 </button>
 
-                {ownerPhone && !isOutOfRadius && (
-                    <button
-                        onClick={handleWhatsAppSubmit}
-                        disabled={isSubmitting || config.pauseOrders}
-                        style={{
-                            width: '100%', padding: 14,
-                            background: '#25D366',
-                            color: 'white', border: 'none', borderRadius: 16,
-                            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8,
-                            fontSize: 15, fontWeight: 700,
-                            cursor: 'pointer',
-                            opacity: (isSubmitting || config.pauseOrders) ? 0.6 : 1,
-                            boxShadow: '0 4px 16px rgba(37,211,102,0.3)',
-                            transform: 'translateZ(0)'
-                        }}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                        </svg>
-                        <span>{t('whatsapp_order') || '✅ Pedir por WhatsApp'}</span>
-                    </button>
-                )}
+
             </div>
 
             {toastMessage && (

@@ -6,7 +6,7 @@ import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
-import { getPhoneLast4, verifyDeliveryCode } from '../../utils/deliveryUtils.js'
+// Delivery utils removed — verification code flow stripped for all order types
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -79,7 +79,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const [processingOrderId, setProcessingOrderId] = useState(null)
     const [errorMessage, setErrorMessage] = useState(null)
     const [paymentMethodSelect, setPaymentMethodSelect] = useState({})
-    const [deliveryConfirmCode, setDeliveryConfirmCode] = useState({})
+    // deliveryConfirmCode state removed — no verification code gate
 
     // ============================================
     // 📡 FETCH ORDERS
@@ -156,7 +156,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                     .select('id, total, business_id')
                     .eq('id', orderId)
                     .eq('business_id', businessId)
-                    .single()
+                    .maybeSingle()
 
                 if (dbOrder) {
                     await handleCashPayment({
@@ -169,7 +169,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
             }
             await supabase
                 .from('orders')
-                .update({ payment_confirmed: true, paid_at: new Date().toISOString() })
+                .update({ payment_confirmed: true, payment_status: 'paid', paid_at: new Date().toISOString(), status: 'released_to_kitchen' })
                 .eq('id', orderId)
                 .eq('business_id', businessId)
         }
@@ -193,7 +193,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                     .select('id, total, business_id')
                     .eq('id', order.id)
                     .eq('business_id', businessId)
-                    .single()
+                    .maybeSingle()
 
                 if (dbOrder) {
                     await handleCashPayment({
@@ -430,7 +430,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     color: 'white', padding: '2px 8px', borderRadius: 6,
                                                     fontSize: 11, fontWeight: 600
                                                 }}>
-                                                    {order.order_type === 'delivery' ? 'Delivery' : 'Pickup'}
+                                                    {order.order_type === 'delivery' ? 'Delivery' : 'Take Out'}
                                                 </span>
                                                 <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
                                                     {formatPrice(order.total)}
@@ -469,22 +469,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                 </div>
                                             )}
 
-                                            {/* Delivery Code (dispatched only) */}
-                                            {order.status === ORDER_STATUS.DISPATCHED && (order.customer_phone || order.customerInfo?.phone) && (
-                                                <div style={{ marginBottom: 12 }}>
-                                                    <input
-                                                        type="text" maxLength={4} placeholder="Código"
-                                                        value={deliveryConfirmCode[order.id] || ''}
-                                                        onChange={(e) => setDeliveryConfirmCode(prev => ({ ...prev, [order.id]: e.target.value.replace(/\D/g, '') }))}
-                                                        style={{
-                                                            width: '100%', padding: '10px', border: '1px solid #D1D5DB',
-                                                            borderRadius: 8, fontSize: 16, textAlign: 'center', letterSpacing: 4
-                                                        }}
-                                                    />
-                                                </div>
-                                            )}
-
-                                            {/* Action Row */}
+                                            {/* Action Row — no verification code gate */}
                                             <div style={{ display: 'flex', gap: 8 }}>
                                                 {action ? (
                                                     <button
@@ -494,13 +479,6 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                             } else if (action.action === 'confirm_and_release') {
                                                                 handleConfirmAndRelease(order, action.targetStatus)
                                                             } else if (action.action === 'advance') {
-                                                                if (action.targetStatus === ORDER_STATUS.DELIVERED && (order.customer_phone || order.customerInfo?.phone)) {
-                                                                    const code = deliveryConfirmCode[order.id] || ''
-                                                                    if (!verifyDeliveryCode(order.customer_phone || order.customerInfo?.phone, code)) {
-                                                                        alert('Código incorrecto')
-                                                                        return
-                                                                    }
-                                                                }
                                                                 handleAdvance(order, action.targetStatus)
                                                             }
                                                         }}

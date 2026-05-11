@@ -32,25 +32,65 @@ export default function CreateOrderModal({ businessId, onClose }) {
   useEffect(() => {
     if (!businessId) return
     setLoadingMenu(true)
+
+    const loadFromJsonb = (menuData) => {
+      const categories = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || [])
+      const items = []
+      categories.forEach(cat => {
+        ;(cat.items || []).forEach(item => {
+          items.push({ id: item.id || `${cat.name}-${item.name}`, name: item.name, price: item.price ?? 0, category: cat.name })
+        })
+      })
+      return items
+    }
+
+    const loadFromRelational = async () => {
+      const [{ data: items }, { data: categories }] = await Promise.all([
+        supabase.from('menu_items').select('*').eq('business_id', businessId).limit(200),
+        supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
+      ])
+      const catMap = {}
+      ;(categories || []).forEach(c => { catMap[c.id] = c.name })
+      const out = []
+      ;(items || []).forEach(item => {
+        out.push({
+          id: item.id || `${item.category_name || 'item'}-${item.name}`,
+          name: item.name,
+          price: item.price ?? 0,
+          category: catMap[item.category_id] || item.category_name || 'Other'
+        })
+      })
+      return out
+    }
+
+    // Try JSONB first (fast), fallback to relational tables
     supabase
       .from('branding')
       .select('menu_data')
       .eq('business_id', businessId)
-      .single()
-      .then(({ data }) => {
+      .maybeSingle()
+      .then(async ({ data }) => {
         const menuData = data?.menu_data
-        if (!menuData) { setLoadingMenu(false); return }
-        const categories = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || [])
-        const items = []
-        categories.forEach(cat => {
-          ;(cat.items || []).forEach(item => {
-            items.push({ id: item.id || `${cat.name}-${item.name}`, name: item.name, price: item.price ?? 0, category: cat.name })
-          })
-        })
+        let items = []
+        if (menuData && (menuData.categories?.length > 0 || (Array.isArray(menuData) && menuData.length > 0))) {
+          items = loadFromJsonb(menuData)
+        }
+        // If JSONB empty/stale, fetch from relational tables
+        if (items.length === 0) {
+          try { items = await loadFromRelational() } catch (e) { console.error('[CreateOrder] relational load failed:', e) }
+        }
         setMenuItems(items)
         setLoadingMenu(false)
       })
-      .catch(() => setLoadingMenu(false))
+      .catch(async () => {
+        try {
+          const items = await loadFromRelational()
+          setMenuItems(items)
+        } catch (e) {
+          console.error('[CreateOrder] fallback load failed:', e)
+        }
+        setLoadingMenu(false)
+      })
   }, [businessId])
 
   const filtered = menuItems.filter(i =>
@@ -257,7 +297,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
               <div>
                 <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, paddingLeft: 4, color: 'var(--text-tertiary, #9AA4B5)' }}>Order Type</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
-                  {[{ value: 'pickup', label: 'Pickup' }, { value: 'delivery', label: 'Delivery' }, { value: 'dine_in', label: 'Dine In' }].map(({ value, label }) => (
+                  {[{ value: 'pickup', label: 'Take Out' }, { value: 'delivery', label: 'Delivery' }, { value: 'dine_in', label: 'Dine In' }].map(({ value, label }) => (
                     <button key={value} onClick={() => setOrderType(value)} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); setOrderType(value); }}
                       style={{
                         padding: '10px 0', borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: 'pointer',

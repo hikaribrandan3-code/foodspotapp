@@ -378,7 +378,7 @@ const LazyImage = ({ src, alt, style, className, category = '', businessName = '
     )
 }
 
-export function FoodSpotAI({ context = {} }) {
+export function FoodSpotAI() {
     const navigate = useNavigate()
     const { businessId, tenantData } = useTenant()
 
@@ -413,30 +413,19 @@ export function FoodSpotAI({ context = {} }) {
         setPreviewUrl(null)
 
         try {
-            const contextInfo = context.order ? `
-Current Order Context:
-- Order ID: ${context.order.id}
-- Items: ${context.order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ')}
-- Status: ${context.order.status}
-` : '';
-
-            // Get system prompt in owner's language
-            const ownerPrompt = getOwnerSystemPrompt(lang, businessName, tenantData?.category);
-
-            const fullPrompt = `${ownerPrompt}
-
-Additional Context: ${contextInfo}
-
-Question: ${userText}`;
-
-            // Call Supabase edge function (API key stays server-side)
+            // Edge function handles context fetching + system prompt building server-side
             const response = await supabase.functions.invoke('foodspot-ai', {
                 body: {
-                    messages: newMessages.map(m => ({
-                        role: m.role,
-                        content: m.content
-                    })),
-                    systemPrompt: ownerPrompt
+                    messages: newMessages.map(m => {
+                        const msg = { role: m.role, content: m.content };
+                        if (m.attachedImage) {
+                            msg.image = { data: m.attachedImage.split(',')[1], mimeType: 'image/jpeg' };
+                        }
+                        return msg;
+                    }),
+                    businessId: businessId,
+                    businessName: businessName,
+                    language: lang,
                 }
             });
 
@@ -656,14 +645,15 @@ Question: ${userText}`;
                             />
                             <button
                                 onClick={() => fileInputRef.current.click()}
+                                disabled
                                 style={{
                                     width: 44,
                                     height: 44,
                                     background: 'transparent',
                                     border: 'none',
                                     fontSize: 28,
-                                    cursor: 'pointer',
-                                    display: 'flex',
+                                    cursor: 'not-allowed',
+                                    display: 'none',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: '#6b7280',

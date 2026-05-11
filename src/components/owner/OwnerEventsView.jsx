@@ -7,7 +7,9 @@ import {
   ChevronRight, Trash2, Users, Check, AlertCircle, X, Trophy, Clock,
   Tag, Share2, CheckCircle2, PartyPopper
 } from 'lucide-react'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase, uploadAsset } from '../../lib/supabaseClient'
+import { useOwnerEvents } from '../../hooks/useOwnerEvents'
+import { EVENT_TEMPLATES } from '../../utils/eventTemplates'
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const theme = {
@@ -79,45 +81,31 @@ const s = {
 // ── Root ─────────────────────────────────────────────────────────────────────
 export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }) {
   const [view, setView] = useState('list')
-  const [events, setEvents] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [statModal, setStatModal] = useState(null) // 'revenue' | 'tickets' | 'checkins' | null
+  const [showTemplates, setShowTemplates] = useState(false)
 
-  useEffect(() => {
-    if (!businessId) return
-    fetchEvents()
-  }, [businessId])
+  const { events: dbEvents, loading, error, refetch: fetchEvents } = useOwnerEvents(businessId)
 
-  const fetchEvents = async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('start_date', { ascending: false })
-
-      if (error) {
-        console.error('fetchEvents error:', error)
-        setEvents([])
-      } else {
-        setEvents(data || [])
-      }
-    } catch (err) {
-      console.error('fetchEvents exception:', err)
-      setEvents([])
-    }
-    setLoading(false)
-  }
+  const events = (() => {
+    const allEvents = showTemplates
+      ? [...EVENT_TEMPLATES, ...(dbEvents || [])]
+      : (dbEvents || [])
+    return allEvents.sort((a, b) => {
+      const aDate = new Date(a.start_date || 0)
+      const bDate = new Date(b.start_date || 0)
+      return bDate - aDate
+    })
+  })()
 
   const handleDelete = async () => {
-    if (!window.confirm('Archive this event? This cannot be undone.')) return
+    if (!window.confirm('Delete this event permanently?')) return
     try {
       await supabase
         .from('events')
-        .update({ status: 'archived', updated_at: new Date().toISOString() })
+        .delete()
         .eq('id', selectedEvent.id)
+        .eq('business_id', businessId)
       fetchEvents()
       setView('list')
     } catch (err) {
@@ -155,8 +143,8 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
   // ── Stat Modals ──────────────────────────────────────────────────────────────
   if (statModal === 'revenue') {
-    const totalRev = events.reduce((a, e) => a + (e.total_revenue || 0), 0)
-    const revenueSplits = events.map(e => ({ name: e.name, amount: e.total_revenue || 0 })).sort((a, b) => b.amount - a.amount)
+    const totalRev = events.reduce((a, e) => a + (e.total_revenue_cents || 0), 0)
+    const revenueSplits = events.map(e => ({ name: e.name, amount: e.total_revenue_cents || 0 })).sort((a, b) => b.amount - a.amount)
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
@@ -255,9 +243,28 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         </motion.button>
       </div>
 
+      {/* Template toggle */}
+      <button
+        onClick={() => setShowTemplates(!showTemplates)}
+        style={{
+          marginBottom: 16,
+          padding: '8px 12px',
+          background: showTemplates ? theme.primary : theme.bgWhite,
+          color: showTemplates ? '#fff' : theme.textSecondary,
+          border: `1px solid ${showTemplates ? theme.primary : theme.border}`,
+          borderRadius: 8,
+          fontSize: 12,
+          fontWeight: 600,
+          cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}
+      >
+        {showTemplates ? '✓' : '+'} {showTemplates ? 'Hide' : 'Show'} Templates
+      </button>
+
       {/* Stats strip */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-        <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
+        <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue_cents || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
         <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={TicketIcon} onClick={() => setStatModal('tickets')} />
         <StatCard label="Live Events" value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
         <StatCard label="Check-ins" value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
@@ -322,7 +329,7 @@ function EventListCard({ event, onClick, delay = 0 }) {
           background: event.status === 'live' ? '#DCFCE7' : '#F3F4F6',
           color: event.status === 'live' ? '#16A34A' : theme.textSecondary,
         }}>{event.status}</span>
-        <span style={{ fontWeight: 800, fontSize: 15, color: theme.textPrimary }}>${(event.total_revenue / 100).toFixed(0)}</span>
+        <span style={{ fontWeight: 800, fontSize: 15, color: theme.textPrimary }}>${(event.total_revenue_cents / 100).toFixed(0)}</span>
         <ChevronRight size={16} color={theme.textSecondary} />
       </div>
     </motion.div>
@@ -370,10 +377,10 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-        <StatCard label="Revenue"    value={`$${(event.total_revenue / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
+        <StatCard label="Revenue"    value={`$${(event.total_revenue_cents / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
         <StatCard label="Sold"       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={TicketIcon} />
         <StatCard label="Check-ins"  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
-        <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
+        <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue_cents / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
       </div>
 
       {/* Action buttons */}
@@ -403,7 +410,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontWeight: 700, color: theme.textPrimary }}>{tier.name}</span>
                   <span style={{ fontSize: 13, color: theme.textSecondary }}>
-                    {tier.sold}/{tier.capacity} · <strong style={{ color: theme.textPrimary }}>${(tier.price / 100).toFixed(0)}</strong>
+                    {tier.sold}/{tier.capacity} · <strong style={{ color: theme.textPrimary }}>${(tier.price_cents / 100).toFixed(0)}</strong>
                   </span>
                 </div>
                 <div style={{ width: '100%', height: 8, background: theme.bgSurface, borderRadius: 4, overflow: 'hidden' }}>
@@ -432,7 +439,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
       <div style={{ padding: 16, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
         <h4 style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: theme.danger, textTransform: 'uppercase', letterSpacing: 1 }}>Danger Zone</h4>
         <button onClick={onDelete} style={{ ...s.btnPrimary, background: theme.danger, width: '100%', padding: 12 }}>
-          <Trash2 size={15} /> Archive Event
+          <Trash2 size={15} /> Delete Event Permanently
         </button>
       </div>
     </motion.div>
@@ -441,7 +448,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
 
 // ── Create Event (3-step wizard) ──────────────────────────────────────────────
 function CreateEventView({ businessId, onBack, onSuccess }) {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const fileInputRef = useRef(null)
@@ -450,7 +457,30 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     image_url: '', start_date: '', end_date: '',
     venue_name: '', address: '', is_free: false,
     ticket_tiers: [{ id: '1', name: 'General Admission', price: 25, capacity: 100 }],
+    lineup: [],
   })
+  const [imageUploading, setImageUploading] = useState(false)
+
+  const handleSelectTemplate = (template) => {
+    setForm({
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      image_url: template.image_url,
+      start_date: template.start_date,
+      end_date: '',
+      venue_name: template.venue_name,
+      address: template.address,
+      is_free: template.ticket_tiers.some(t => t.price === 0),
+      ticket_tiers: template.ticket_tiers.map((t, i) => ({
+        id: String(i + 1),
+        name: t.name,
+        price: t.price,
+        capacity: t.capacity
+      })),
+    })
+    setStep(1)
+  }
 
   const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sport']
 
@@ -463,7 +493,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
       const ticketTiers = form.ticket_tiers.map(t => ({
         id: t.id || crypto.randomUUID(),
         name: t.name,
-        price_cents: Math.round(parseFloat(t.price) * 100),
+        price_cents: Math.round((parseFloat(t.price) || 0) * 100),
         capacity: Number(t.capacity),
         sold: 0
       }));
@@ -488,7 +518,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           total_capacity: totalCapacity,
           tickets_sold: 0,
           total_revenue_cents: 0,
-          checkins_count: 0
+          checkins_count: 0,
+          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
         }]);
 
       if (error) {
@@ -569,6 +600,87 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     </motion.div>
   )
 
+  // Template selection (step 0)
+  if (step === 0) return (
+    <div style={{ minHeight: '100vh', background: theme.bgSurface }}>
+      <div style={{ padding: '18px 16px', background: theme.bgWhite, borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+          <ArrowLeft size={22} color={theme.textPrimary} />
+        </button>
+        <span style={{ flex: 1, fontSize: 16, fontWeight: 800, color: theme.textPrimary }}>Event Templates</span>
+      </div>
+
+      <div style={{ padding: '20px 16px 24px' }}>
+        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Use a Template</h2>
+        <p style={{ margin: '0 0 16px', fontSize: 14, color: theme.textSecondary }}>Quick start with proven event formats or create from scratch</p>
+
+        <div style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
+          {EVENT_TEMPLATES.map(template => (
+            <motion.button
+              key={template.id}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleSelectTemplate(template)}
+              style={{
+                display: 'flex',
+                gap: 12,
+                padding: 12,
+                background: theme.bgWhite,
+                border: `1px solid ${theme.border}`,
+                borderRadius: 12,
+                cursor: 'pointer',
+                alignItems: 'flex-start',
+                textAlign: 'left',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = theme.primary;
+                e.currentTarget.style.background = theme.bgSurface;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = theme.border;
+                e.currentTarget.style.background = theme.bgWhite;
+              }}
+            >
+              <img src={template.image_url} alt={template.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: theme.textPrimary, marginBottom: 2 }}>{template.name}</div>
+                <div style={{ fontSize: 12, color: theme.textSecondary, lineHeight: 1.4 }}>{template.description.substring(0, 60)}...</div>
+                <div style={{ fontSize: 11, color: theme.textSecondary, marginTop: 4 }}>📍 {template.venue_name} • {template.category}</div>
+              </div>
+              <ChevronRight size={20} color={theme.textSecondary} style={{ flexShrink: 0, marginTop: 4 }} />
+            </motion.button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setStep(1)}
+          style={{
+            width: '100%',
+            padding: '16px',
+            background: theme.bgWhite,
+            border: `2px dashed ${theme.border}`,
+            borderRadius: 12,
+            cursor: 'pointer',
+            fontSize: 14,
+            fontWeight: 700,
+            color: theme.textSecondary,
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = theme.textSecondary;
+            e.currentTarget.style.background = theme.bgSurface;
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = theme.border;
+            e.currentTarget.style.background = theme.bgWhite;
+          }}
+        >
+          ➕ Start From Scratch
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div style={{ minHeight: '100vh', background: theme.bgSurface }}>
       {/* Header */}
@@ -581,12 +693,12 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           {[1, 2, 3].map(n => (
             <motion.div
               key={n}
-              animate={{ background: n <= step ? theme.primary : theme.border }}
+              animate={{ background: n <= step - 1 ? theme.primary : theme.border }}
               style={{ width: 32, height: 4, borderRadius: 2 }}
             />
           ))}
         </div>
-        <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step}/3</span>
+        <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step - 1}/3</span>
       </div>
 
       <div style={{ padding: '20px 16px 24px' }}>
@@ -623,29 +735,37 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                   type="file"
                   accept="image/*"
                   style={{ display: 'none' }}
-                  onChange={e => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0]
-                    if (file) {
-                      const reader = new FileReader()
-                      reader.onload = (evt) => patch('image_url', evt.target?.result || '')
-                      reader.readAsDataURL(file)
+                    if (!file) return
+                    setImageUploading(true)
+                    try {
+                      const { url, error } = await uploadAsset(file, businessId, 'assets')
+                      if (error) throw error
+                      patch('image_url', url)
+                    } catch (err) {
+                      console.error('Image upload failed:', err)
+                      alert('Image upload failed: ' + (err.message || 'Unknown error'))
+                    } finally {
+                      setImageUploading(false)
                     }
                   }}
                 />
                 {form.image_url ? (
                   <motion.div
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140, cursor: 'pointer', border: `2px solid ${theme.primary}` }}
+                    onClick={() => !imageUploading && fileInputRef.current?.click()}
+                    style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140, cursor: imageUploading ? 'wait' : 'pointer', border: `2px solid ${theme.primary}`, opacity: imageUploading ? 0.6 : 1 }}
                   >
                     <img src={form.image_url} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </motion.div>
                 ) : (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16 }}
+                    disabled={imageUploading}
+                    style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16, opacity: imageUploading ? 0.6 : 1 }}
                   >
-                    📸 Upload Image
+                    {imageUploading ? 'Uploading…' : '📸 Upload Image'}
                   </button>
                 )}
               </Field>
@@ -735,6 +855,58 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                   {form.ticket_tiers.reduce((a, t) => a + Number(t.capacity), 0)} people
                 </span>
               </div>
+
+              {['Festivals', 'Music'].includes(form.category) && (
+                <>
+                  <h2 style={{ margin: '24px 0 6px', fontSize: 18, fontWeight: 800, color: theme.textPrimary }}>Artist Schedule</h2>
+                  <p style={{ margin: '0 0 16px', fontSize: 13, color: theme.textSecondary }}>Add DJs, artists, or performers</p>
+
+                  {(form.lineup || []).map((artist, idx) => (
+                    <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 12, background: theme.bgSurface }}>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={s.label}>Time (HH:MM)</label>
+                          <input type="time" style={s.input} value={artist.time} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].time = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                        <div style={{ flex: 2 }}>
+                          <label style={s.label}>Artist</label>
+                          <input style={s.input} placeholder="e.g. Solar Flare" value={artist.artist} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].artist = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={s.label}>Genre</label>
+                          <input style={s.input} placeholder="e.g. House" value={artist.genre} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].genre = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={s.label}>Stage</label>
+                          <input style={s.input} placeholder="e.g. Main Stage" value={artist.stage} onChange={e => {
+                            const lineup = [...(form.lineup || [])]; lineup[idx].stage = e.target.value; patch('lineup', lineup)
+                          }} />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+                          <button onClick={() => patch('lineup', form.lineup.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}>
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  <button
+                    onClick={() => patch('lineup', [...(form.lineup || []), { time: '', artist: '', genre: '', stage: '' }])}
+                    style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 16 }}
+                  >
+                    <Plus size={16} /> Add Artist
+                  </button>
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -788,7 +960,8 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           image_url: form.image_url,
           start_date: form.start_date,
           end_date: form.end_date,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
         })
         .eq('id', event.id);
 
@@ -822,6 +995,55 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
       <Field label="Venue">
         <input style={s.input} value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
       </Field>
+
+      {['Festivals', 'Music'].includes(form.category) && (
+        <>
+          <h3 style={{ margin: '20px 0 12px', fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Artist Schedule</h3>
+          {(form.lineup || []).map((artist, idx) => (
+            <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 12, background: theme.bgSurface }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={s.label}>Time (HH:MM)</label>
+                  <input type="time" style={s.input} value={artist.time} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].time = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+                <div style={{ flex: 2 }}>
+                  <label style={s.label}>Artist</label>
+                  <input style={s.input} placeholder="e.g. Solar Flare" value={artist.artist} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].artist = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={s.label}>Genre</label>
+                  <input style={s.input} placeholder="e.g. House" value={artist.genre} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].genre = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={s.label}>Stage</label>
+                  <input style={s.input} placeholder="e.g. Main Stage" value={artist.stage} onChange={e => {
+                    const lineup = [...(form.lineup || [])]; lineup[idx].stage = e.target.value; patch('lineup', lineup)
+                  }} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', marginBottom: 6 }}>
+                  <button onClick={() => patch('lineup', form.lineup.filter((_, i) => i !== idx))} style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+          <button
+            onClick={() => patch('lineup', [...(form.lineup || []), { time: '', artist: '', genre: '', stage: '' }])}
+            style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 16, marginTop: 8 }}
+          >
+            <Plus size={16} /> Add Artist
+          </button>
+        </>
+      )}
 
       <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
         <button onClick={onBack} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
@@ -1075,28 +1297,85 @@ function CheckinView({ event, businessId, onBack }) {
 
 // ── Promos View ──────────────────────────────────────────────────────────────────
 function PromosView({ event, businessId, onBack }) {
-  const [promos, setPromos] = useState([
-    { id: 'promo_1', code: 'EARLYBIRD20', discount: 20, type: 'percent', uses: 15, limit: 50, expiry: '2026-06-01' },
-    { id: 'promo_2', code: 'VIP15', discount: 15, type: 'percent', uses: 8, limit: 30, expiry: '2026-05-25' },
-  ])
+  const [promos, setPromos] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [newPromo, setNewPromo] = useState({ code: '', discount: 10, type: 'percent', limit: 100 })
+  const [newPromo, setNewPromo] = useState({ code: '', discount_percent: 10, max_uses: 100 })
 
-  const handleCreatePromo = () => {
+  useEffect(() => {
+    const fetchPromos = async () => {
+      setLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('event_promo_codes')
+          .select('*')
+          .eq('event_id', event.id)
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('fetchPromos error:', error)
+          setPromos([])
+        } else {
+          setPromos(data || [])
+        }
+      } catch (err) {
+        console.error('fetchPromos exception:', err)
+        setPromos([])
+      }
+      setLoading(false)
+    }
+    fetchPromos()
+  }, [event.id])
+
+  const handleCreatePromo = async () => {
     if (!newPromo.code.trim()) { alert('Code required'); return }
-    setPromos([...promos, {
-      id: 'promo_' + Date.now(),
-      ...newPromo,
-      uses: 0,
-      expiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    }])
-    setNewPromo({ code: '', discount: 10, type: 'percent', limit: 100 })
-    setShowForm(false)
+    try {
+      const { data, error } = await supabase
+        .from('event_promo_codes')
+        .insert([{
+          event_id: event.id,
+          business_id: businessId,
+          code: newPromo.code.trim().toUpperCase(),
+          discount_percent: Math.max(0, Math.min(100, Number(newPromo.discount_percent) || 0)),
+          max_uses: Math.max(1, Number(newPromo.max_uses) || 100),
+          used_count: 0
+        }])
+        .select()
+        .single()
+
+      if (error) {
+        console.error('handleCreatePromo error:', error)
+        alert('Failed to create promo: ' + error.message)
+        return
+      }
+
+      setPromos(prev => [data, ...prev])
+      setNewPromo({ code: '', discount_percent: 10, max_uses: 100 })
+      setShowForm(false)
+    } catch (err) {
+      console.error('handleCreatePromo exception:', err)
+      alert('Something went wrong.')
+    }
   }
 
-  const handleDeletePromo = (id) => {
-    if (window.confirm('Delete this promo code?')) {
-      setPromos(promos.filter(p => p.id !== id))
+  const handleDeletePromo = async (id) => {
+    if (!window.confirm('Delete this promo code?')) return
+    try {
+      const { error } = await supabase
+        .from('event_promo_codes')
+        .delete()
+        .eq('id', id)
+        .eq('event_id', event.id)
+
+      if (error) {
+        console.error('handleDeletePromo error:', error)
+        alert('Failed to delete promo: ' + error.message)
+        return
+      }
+
+      setPromos(prev => prev.filter(p => p.id !== id))
+    } catch (err) {
+      console.error('handleDeletePromo exception:', err)
     }
   }
 
@@ -1121,31 +1400,14 @@ function PromosView({ event, businessId, onBack }) {
             />
           </Field>
 
-          <Field label="Discount Type">
-            <div style={{ display: 'flex', gap: 8 }}>
-              {['percent', 'fixed'].map(t => (
-                <button
-                  key={t}
-                  onClick={() => setNewPromo({ ...newPromo, type: t })}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: '1px solid',
-                    background: newPromo.type === t ? theme.primary : theme.bgWhite,
-                    color: newPromo.type === t ? '#fff' : theme.textSecondary,
-                    borderColor: newPromo.type === t ? theme.primary : theme.border,
-                  }}
-                >
-                  {t === 'percent' ? '%' : '$'}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field label={newPromo.type === 'percent' ? 'Discount %' : 'Discount $'}>
+          <Field label="Discount %">
             <input
               type="number"
               style={s.input}
-              value={newPromo.discount}
-              onChange={e => setNewPromo({ ...newPromo, discount: Number(e.target.value) })}
+              min={1}
+              max={100}
+              value={newPromo.discount_percent}
+              onChange={e => setNewPromo({ ...newPromo, discount_percent: Number(e.target.value) })}
             />
           </Field>
 
@@ -1153,9 +1415,10 @@ function PromosView({ event, businessId, onBack }) {
             <input
               type="number"
               style={s.input}
+              min={1}
               placeholder="100"
-              value={newPromo.limit}
-              onChange={e => setNewPromo({ ...newPromo, limit: Number(e.target.value) })}
+              value={newPromo.max_uses}
+              onChange={e => setNewPromo({ ...newPromo, max_uses: Number(e.target.value) })}
             />
           </Field>
 
@@ -1172,41 +1435,45 @@ function PromosView({ event, businessId, onBack }) {
         </motion.button>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {promos.map(promo => (
-          <motion.div key={promo.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: theme.primary, letterSpacing: 2 }}>{promo.code}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary, marginTop: 2 }}>
-                  {promo.discount}{promo.type === 'percent' ? '%' : '$'} off
+      {loading ? (
+        <p style={{ color: theme.textSecondary }}>Loading promos…</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {promos.map(promo => (
+            <motion.div key={promo.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: theme.primary, letterSpacing: 2 }}>{promo.code}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary, marginTop: 2 }}>
+                    {promo.discount_percent}% off
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeletePromo(promo.id)}
+                  style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Uses</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: theme.textPrimary }}>{promo.used_count} / {promo.max_uses}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Created</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary }}>{new Date(promo.created_at).toLocaleDateString()}</div>
                 </div>
               </div>
-              <button
-                onClick={() => handleDeletePromo(promo.id)}
-                style={{ background: 'none', border: 'none', color: theme.danger, cursor: 'pointer', padding: 4 }}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-              <div>
-                <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Uses</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: theme.textPrimary }}>{promo.uses} / {promo.limit}</div>
+              <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: String(promo.max_uses > 0 ? (promo.used_count / promo.max_uses) * 100 : 0) + '%', height: '100%', background: theme.primary, borderRadius: 3 }} />
               </div>
-              <div>
-                <div style={{ fontSize: 10, color: theme.textSecondary, fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>Expires</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: theme.textPrimary }}>{new Date(promo.expiry).toLocaleDateString()}</div>
-              </div>
-            </div>
-
-            <div style={{ width: '100%', height: 6, background: theme.bgSurface, borderRadius: 3, overflow: 'hidden' }}>
-              <div style={{ width: `${(promo.uses / promo.limit) * 100}%`, height: '100%', background: theme.primary, borderRadius: 3 }} />
-            </div>
-          </motion.div>
-        ))}
-      </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </motion.div>
   )
 }

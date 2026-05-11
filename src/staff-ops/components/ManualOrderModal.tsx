@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Search, ShoppingBag, User, Phone, MapPin, CreditCard, Loader2 } from 'lucide-react';
 import { useBusiness } from '@/contexts/BusinessContext';
-import { useOrders } from '@/staff-ops/hooks/useOrders';
+import { useOrders } from '@/hooks/useOrders';
 // @ts-ignore
 import { supabase, createOrderCloud } from '../../lib/supabaseClient.js';
 
@@ -43,46 +43,79 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
   const [submitError, setSubmitError] = useState('');
   const [step, setStep] = useState<'items' | 'order-type' | 'details'>('items');
 
-  // Fetch menu items from branding.menu_data
+  // Fetch menu items from branding.menu_data, fallback to relational tables
   useEffect(() => {
     if (!open || !businessId) return;
     setLoadingMenu(true);
+
+    const loadFromJsonb = (menuData: any): { items: MenuItem[]; groups: Array<{ name: string; items: MenuItem[] }> } => {
+      const items: MenuItem[] = [];
+      const groups: Array<{ name: string; items: MenuItem[] }> = [];
+      const cats = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || []);
+      cats.forEach((cat: { name?: string; items?: { id?: string; name: string; price: number }[] }) => {
+        const categoryItems: MenuItem[] = [];
+        (cat.items || []).forEach((item) => {
+          const menuItem: MenuItem = { id: item.id || `${cat.name}-${item.name}`, name: item.name, price: item.price ?? 0, category: cat.name };
+          items.push(menuItem);
+          categoryItems.push(menuItem);
+        });
+        if (categoryItems.length > 0) {
+          groups.push({ name: cat.name || 'Uncategorized', items: categoryItems });
+        }
+      });
+      return { items, groups };
+    };
+
+    const loadFromRelational = async (): Promise<{ items: MenuItem[]; groups: Array<{ name: string; items: MenuItem[] }> }> => {
+      const [{ data: dbItems }, { data: dbCategories }] = await Promise.all([
+        supabase.from('menu_items').select('*').eq('business_id', businessId).limit(200),
+        supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
+      ]);
+      const catMap: Record<string, string> = {};
+      (dbCategories || []).forEach((c: any) => { catMap[c.id] = c.name; });
+
+      const items: MenuItem[] = [];
+      const groupMap: Record<string, MenuItem[]> = {};
+      (dbItems || []).forEach((item: any) => {
+        const catName = catMap[item.category_id] || item.category_name || 'Other';
+        const menuItem: MenuItem = { id: item.id || `${catName}-${item.name}`, name: item.name, price: item.price ?? 0, category: catName };
+        items.push(menuItem);
+        if (!groupMap[catName]) groupMap[catName] = [];
+        groupMap[catName].push(menuItem);
+      });
+
+      const groups = Object.entries(groupMap).map(([name, groupItems]) => ({ name, items: groupItems }));
+      return { items, groups };
+    };
+
     supabase
       .from('branding')
       .select('menu_data')
       .eq('business_id', businessId)
       .single()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then(({ data }: { data: any }) => {
-        if (!data?.menu_data) { setLoadingMenu(false); return; }
-        const menuData = data.menu_data;
-        const items: MenuItem[] = [];
-        const categoryGroups: Array<{ name: string; items: MenuItem[] }> = [];
-
-        // menu_data can be: { categories: [...] } or an array of categories
-        const cats = Array.isArray(menuData) ? menuData : (menuData.categories || menuData.sections || []);
-        cats.forEach((cat: { name?: string; items?: { id?: string; name: string; price: number }[] }) => {
-          const categoryItems: MenuItem[] = [];
-          (cat.items || []).forEach((item) => {
-            const menuItem: MenuItem = {
-              id: item.id || `${cat.name}-${item.name}`,
-              name: item.name,
-              price: item.price ?? 0,
-              category: cat.name,
-            };
-            items.push(menuItem);
-            categoryItems.push(menuItem);
-          });
-          if (categoryItems.length > 0) {
-            categoryGroups.push({ name: cat.name || 'Uncategorized', items: categoryItems });
-          }
-        });
-
-        setMenuItems(items);
-        setCategories(categoryGroups);
-        if (categoryGroups.length > 0) {
-          setActiveCategory(categoryGroups[0].name);
+      .then(async ({ data }: { data: any }) => {
+        const menuData = data?.menu_data;
+        let result: { items: MenuItem[]; groups: Array<{ name: string; items: MenuItem[] }> } = { items: [], groups: [] };
+        if (menuData && (menuData.categories?.length > 0 || (Array.isArray(menuData) && menuData.length > 0))) {
+          result = loadFromJsonb(menuData);
         }
+        if (result.items.length === 0) {
+          try { result = await loadFromRelational(); } catch (e) { console.error('[ManualOrder] relational load failed:', e); }
+        }
+        setMenuItems(result.items);
+        setCategories(result.groups);
+        if (result.groups.length > 0) {
+          setActiveCategory(result.groups[0].name);
+        }
+        setLoadingMenu(false);
+      })
+      .catch(async () => {
+        try {
+          const result = await loadFromRelational();
+          setMenuItems(result.items);
+          setCategories(result.groups);
+          if (result.groups.length > 0) setActiveCategory(result.groups[0].name);
+        } catch (e) { console.error('[ManualOrder] fallback load failed:', e); }
         setLoadingMenu(false);
       });
   }, [open, businessId]);
@@ -494,6 +527,8 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                           style={{ color: 'var(--text-primary)' }}
                         />
                   </Field>
+                </>
+              )}
                 </div>
               )}
             </div>

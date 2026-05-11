@@ -34,11 +34,11 @@ const LONG_PRESS_DURATION = 1800
 const ACTION_DEFINITIONS = {
     menu: { icon: MenuIcon, label: 'menu', path: 'menu' },
     envios: { icon: DeliveryIcon, label: 'delivery', path: 'envios' },
-    promos: { icon: PromosIcon, label: 'promos', path: 'promos' },
-    rewards: { icon: PromosIcon, label: 'rewards', path: 'rewards' },
+    events: { icon: EventsIcon, label: 'events', path: 'events' },
+    promos: { icon: EventsIcon, label: 'events', path: 'events' }, // Alias for backward compatibility
+    rewards: { icon: EventsIcon, label: 'events', path: 'events' }, // Alias for backward compatibility
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
-    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' },  // ← Alias for 'game'
-    events: { icon: PromosIcon, label: 'events', path: 'promos/events' }
+    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' }  // ← Alias for 'game'
 }
 
 // --- MAIN COMPONENT ---
@@ -726,7 +726,17 @@ function Home({ config: configProp }) {
                                 Order #{String(activeOrder.order_number).padStart(3, '0')}
                             </div>
                             <div style={{ fontSize: 12, color: '#C2410C', textTransform: 'capitalize' }}>
-                                {activeOrder.status.replace(/_/g, ' ')}
+                                {({
+                                    pending_payment: 'Awaiting Payment',
+                                    paid_unreleased: 'Order Confirmed',
+                                    released_to_kitchen: 'Order Received',
+                                    preparing: 'Preparing',
+                                    ready: 'Ready',
+                                    dispatched: 'On the Way',
+                                    delivered: 'Delivered',
+                                    cancelled: 'Cancelled',
+                                    refunded: 'Refunded',
+                                })[activeOrder.status] || activeOrder.status}
                             </div>
                         </div>
                     </div>
@@ -1154,9 +1164,9 @@ function Home({ config: configProp }) {
                     onClose={() => setShowArcade(false)}
                     controllerColor={tenantData?.primary_color || '#8B5CF6'}
                     userId={tenantData?.business_name || 'guest'}
-                    munchboyShellColor={tenantData?.munchboy_shell_color}
-                    munchboyAColor={tenantData?.munchboy_a_color}
-                    munchboyBColor={tenantData?.munchboy_b_color}
+                    munchboyShellColor={tenantData?.app_config?.munchboy?.shell_color || tenantData?.munchboy_shell_color}
+                    munchboyAColor={tenantData?.app_config?.munchboy?.a_color || tenantData?.munchboy_a_color}
+                    munchboyBColor={tenantData?.app_config?.munchboy?.b_color || tenantData?.munchboy_b_color}
                 />
             )}
         </div>

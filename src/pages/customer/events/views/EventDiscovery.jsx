@@ -41,40 +41,137 @@ const EventCountdown = ({ startDate }) => {
   );
 };
 
+const getWeatherLabel = (code) => {
+  if (code === 0) return 'Clear';
+  if ([1, 2, 3].includes(code)) return 'Partly Cloudy';
+  if ([45, 48].includes(code)) return 'Foggy';
+  if ([51, 53, 55, 56, 57].includes(code)) return 'Drizzle';
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return 'Rain';
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'Snow';
+  if ([95, 96, 99].includes(code)) return 'Storm';
+  return 'Cloudy';
+};
+
+const getWeatherIcon = (code, size = 10) => {
+  if (code === 0) return <Sun size={size} className="text-orange-400" />;
+  if ([1, 2, 3].includes(code)) return <Cloud size={size} className="text-yellow-400" />;
+  if ([45, 48].includes(code)) return <Cloud size={size} className="text-slate-400" />;
+  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return <Droplets size={size} className="text-blue-400" />;
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return <Cloud size={size} className="text-sky-200" />;
+  if ([95, 96, 99].includes(code)) return <Cloud size={size} className="text-purple-400" />;
+  return <Cloud size={size} className="text-slate-400" />;
+};
+
 const WeatherWidget = () => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const [weather, setWeather] = useState(null);
+  const [forecast, setForecast] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const DEFAULT_LAT = -31.4201, DEFAULT_LNG = -64.1888; // Córdoba
+
+    const fetchForCoords = async (lat, lng, source) => {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,weather_code&daily=temperature_2m_max,weather_code&temperature_unit=celsius&timezone=auto`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data = await res.json();
+        if (data.current && typeof data.current.temperature_2m === 'number') {
+          setWeather({
+            temp: Math.round(data.current.temperature_2m),
+            humidity: data.current.relative_humidity_2m ?? null,
+            condition: getWeatherLabel(data.current.weather_code),
+            code: data.current.weather_code,
+          });
+          const daily = [];
+          for (let i = 0; i < 7; i++) {
+            daily.push({
+              tempMax: data.daily.temperature_2m_max[i],
+              code: data.daily.weather_code[i],
+            });
+          }
+          setForecast(daily);
+          console.log(`[WeatherWidget] ${source}:`, data.current.temperature_2m + '°C', data.current.relative_humidity_2m + '%', getWeatherLabel(data.current.weather_code));
+          return true;
+        }
+      } catch (err) {
+        console.error('[WeatherWidget] fetch failed (' + source + '):', err.message);
+      }
+      return false;
+    };
+
+    let cancelled = false;
+    (async () => {
+      // 1. Fetch with default coords immediately — no waiting
+      const ok = await fetchForCoords(DEFAULT_LAT, DEFAULT_LNG, 'default');
+      if (!cancelled) {
+        setLoading(false);
+        if (!ok) setError(true);
+      }
+
+      // 2. Background geolocation — if it succeeds with different coords, refetch
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          if (cancelled) return;
+          const { latitude, longitude } = pos.coords;
+          const moved = Math.abs(latitude - DEFAULT_LAT) > 0.01 || Math.abs(longitude - DEFAULT_LNG) > 0.01;
+          if (moved || !ok) {
+            const geoOk = await fetchForCoords(latitude, longitude, 'geolocated');
+            if (!geoOk && !ok) setError(true);
+          }
+        },
+        (err) => {
+          console.log('[WeatherWidget] Geolocation denied/failed, staying on default');
+        },
+        { timeout: 8000, enableHighAccuracy: false }
+      );
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-[24px] p-3 mb-4 shadow-sm">
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-emerald-600">
-            <Sun size={16} />
+            {weather ? getWeatherIcon(weather.code, 16) : <Sun size={16} />}
           </div>
           <div>
             <h4 className="text-[10px] font-black uppercase tracking-tight text-emerald-900 dark:text-emerald-100">7-Day Forecast</h4>
-            <p className="text-[8px] font-medium text-emerald-600 dark:text-emerald-400">Perfect weekend for events</p>
+            <p className="text-[8px] font-medium text-emerald-600 dark:text-emerald-400">
+              {error ? 'Forecast unavailable' : (weather ? `${weather.condition} · ${weather.humidity}% humidity` : 'Loading…')}
+            </p>
           </div>
         </div>
         <div className="text-right">
           <div className="flex items-center gap-1 text-emerald-900 dark:text-emerald-100 font-black text-xs">
-            <Thermometer size={12} /> 24°C
+            <Thermometer size={12} />
+            {weather !== null ? weather.temp + '°C' : (loading ? '…' : '—')}
           </div>
         </div>
       </div>
       <div className="flex justify-between px-1">
-        {days.map((day, i) => (
-          <div key={day} className="flex flex-col items-center gap-1">
-            <span className="text-[7px] font-bold text-emerald-600/60 uppercase">{day}</span>
-            {i % 2 === 0 ? <Sun size={10} className="text-orange-400" /> : <Cloud size={10} className="text-slate-400" />}
-            <span className="text-[8px] font-black text-emerald-900 dark:text-emerald-100">{20 + i}°</span>
-          </div>
-        ))}
+        {days.map((day, i) => {
+          const item = forecast[i];
+          const temp = item ? Math.round(item.tempMax) : 20 + i;
+          const code = item ? item.code : (i % 2 === 0 ? 0 : 3);
+          return (
+            <div key={day} className="flex flex-col items-center gap-1">
+              <span className="text-[7px] font-bold text-emerald-600/60 uppercase">{day}</span>
+              {getWeatherIcon(code, 10)}
+              <span className="text-[8px] font-black text-emerald-900 dark:text-emerald-100">{temp}°</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-export default function EventDiscovery({ events, onSelectEvent, onViewTickets }) {
+export default function EventDiscovery({ events, loading, error, onSelectEvent, onViewTickets }) {
   const { t, language, setLanguage } = useLanguage();
   const { businessId } = useTenant();
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -198,12 +295,30 @@ export default function EventDiscovery({ events, onSelectEvent, onViewTickets })
           </div>
         ))}
 
-        {filteredEvents.length === 0 && (
+        {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-10 h-10 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin mb-4" />
+            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">Loading events…</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+            <div className="w-20 h-20 rounded-[32px] bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6">
+               <Sparkles size={32} />
+            </div>
+            <p className="text-sm font-black text-rose-600 uppercase tracking-widest mb-2">Something went wrong</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)] opacity-60">We couldn't load events for this restaurant. Please try again later.</p>
+          </div>
+        )}
+
+        {!loading && !error && filteredEvents.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-6">
             <div className="w-20 h-20 rounded-[32px] bg-[var(--border-color)]/30 flex items-center justify-center text-[var(--text-secondary)] mb-6 opacity-40">
                <Sparkles size={32} />
             </div>
-            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60">No events found in this category</p>
+            <p className="text-sm font-black text-[var(--text-secondary)] uppercase tracking-widest opacity-60 mb-2">No events found</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)] opacity-40">Check back soon for upcoming events at this venue.</p>
           </div>
         )}
       </main>

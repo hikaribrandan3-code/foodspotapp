@@ -94,9 +94,9 @@ const getRouteMaps = (tenantSlug) => ({
 // ICON COMPONENTS - Matching Reference Image
 // ============================================
 
-// Active color: FoodSpot brand brown
-const ACTIVE_COLOR = '#8B7355'
-const INACTIVE_COLOR = '#9AA4B5'
+// Active color: Emerald green (matches MenuManager UI)
+const ACTIVE_COLOR = '#10b981'
+const INACTIVE_COLOR = '#9CA3AF'
 
 function TabIcon({ id, active }) {
     const color = active ? ACTIVE_COLOR : INACTIVE_COLOR
@@ -376,7 +376,7 @@ function BackendNav({
         height: 16,
         padding: '0 4px',
         borderRadius: 8,
-        background: '#6B7280',
+        background: '#10b981',
         color: '#FFFFFF',
         fontSize: 9,
         fontWeight: 600,
@@ -401,6 +401,7 @@ function BackendNav({
                         key={tab.id}
                         onClick={() => handleTabClick(tab.id)}
                         style={tabButtonStyle(isActive)}
+                        className={`rounded-xl transition-colors duration-150 ${isActive ? '' : 'hover:bg-emerald-50'}`}
                         aria-current={isActive ? 'page' : undefined}
                         aria-label={tab.label}
                     >

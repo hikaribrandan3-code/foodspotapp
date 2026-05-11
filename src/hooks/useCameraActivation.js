@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabaseClient';
 
 const BANNER_AUTO_DISMISS_MS = 300_000;   // 5 minutes visible window
 const COOLDOWN_BETWEEN_ACTIVATIONS_MS = 600_000; // 10 min cooldown if dismissed
-const VISUAL_DELAY_MS = 500;             // 0.5s — snappy for 2026 attention spans
-const POLL_INTERVAL_MS = 3_000;          // 3s polling fallback
+const DEFAULT_VISUAL_DELAY_MS = 500;      // 0.5s fallback
+const POLL_INTERVAL_MS = 3_000;           // 3s polling fallback
 const LS_KEY = 'fs_pending_donut';
 
 /**
@@ -13,15 +13,16 @@ const LS_KEY = 'fs_pending_donut';
  *
  * @param {string} orderId
  * @param {string} userId
- * @param {string} orderType – 'delivery' | 'dine_in' | 'takeout'
+ * @param {string} orderType – 'delivery' | 'dine_in' | 'pickup' | 'takeout'
  * @returns {object}
  */
-export function useCameraActivation(orderId, userId, orderType = 'delivery') {
+export function useCameraActivation(orderId, userId, orderType = 'delivery', delayMs = DEFAULT_VISUAL_DELAY_MS) {
   const [activationStatus, setActivationStatus] = useState('pending');
   const timerRef = useRef(null);
   const dismissTimerRef = useRef(null);
   const pollRef = useRef(null);
   const hasTriggeredRef = useRef(false);
+  const hasShownBannerRef = useRef(false);
   const effectiveUserId = userId || `guest_${orderId}`;
 
   /* ── helpers ── */
@@ -32,11 +33,14 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
   }, []);
 
   const showBannerNow = useCallback((isInstant = false) => {
-    const delay = isInstant ? 0 : VISUAL_DELAY_MS;
+    if (hasShownBannerRef.current) return;
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    const delay = isInstant ? 0 : delayMs;
     console.log(`[camera] showBannerNow — isInstant=${isInstant}, delay=${delay}ms`);
 
     timerRef.current = setTimeout(() => {
       console.log(`[camera] Timer fired → ready`);
+      hasShownBannerRef.current = true;
       setActivationStatus('ready');
       supabase
         .from('ugc_activations')
@@ -46,7 +50,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
         .then(() => {})
         .then(() => {}).catch(() => {});
     }, delay);
-  }, [orderId, effectiveUserId]);
+  }, [orderId, effectiveUserId, delayMs]);
 
   /* ── load existing activation (prevent dupes on refresh) ── */
   useEffect(() => {
@@ -77,9 +81,10 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
           return;
         }
         if (data.status === 'shown') {
-          // Already shown this session — don't re-show
-          setActivationStatus('shown');
+          // Persist banner across reloads indefinitely until user dismisses it
+          setActivationStatus('ready');
           hasTriggeredRef.current = true;
+          hasShownBannerRef.current = true;
           return;
         }
       }
@@ -98,7 +103,8 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
 
     const checkShouldTrigger = (status) => {
       if (orderType === 'delivery' && status === 'delivered') return true;
-      if (orderType === 'dine_in'  && status === 'ready')    return true;
+      if (orderType === 'dine_in'  && status === 'delivered') return true;
+      if (orderType === 'pickup'   && status === 'delivered') return true;
       if (orderType === 'takeout'  && status === 'delivered') return true;
       return false;
     };
@@ -125,12 +131,9 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
       setActivationStatus('waiting');
       localStorage.setItem(LS_KEY, JSON.stringify({ orderId, timestamp: Date.now() }));
 
-      if (document.visibilityState === 'visible') {
-        console.log(`[camera] visible → delay ${VISUAL_DELAY_MS}ms`);
-        showBannerNow(false);
-      } else {
-        console.log(`[camera] hidden → waiting for visibility`);
-      }
+      // Always schedule banner show regardless of tab visibility
+      console.log(`[camera] scheduling banner → delay ${delayMs}ms`);
+      showBannerNow(false);
     };
 
     /* ── visibility listener ── */
@@ -142,7 +145,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
         const p = JSON.parse(raw);
         if (p.orderId !== orderId) return;
         if (Date.now() - p.timestamp > 5 * 60 * 1000) { localStorage.removeItem(LS_KEY); return; }
-        if (hasTriggeredRef.current) { localStorage.removeItem(LS_KEY); return; }
+        if (hasShownBannerRef.current) { localStorage.removeItem(LS_KEY); return; }
         console.log(`[camera] visibility→visible → instant donut`);
         showBannerNow(true);
         localStorage.removeItem(LS_KEY);
@@ -194,11 +197,26 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery') {
     };
   }, [orderId, orderType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── auto-dismiss (skip dine-in) ── */
+  /* ── auto-dismiss (skip dine-in, only when visible) ── */
   useEffect(() => {
     if (activationStatus !== 'ready' || orderType === 'dine_in') return;
+    if (document.visibilityState !== 'visible') return;
+
     dismissTimerRef.current = setTimeout(() => dismissBanner(), BANNER_AUTO_DISMISS_MS);
-    return () => clearTimers();
+
+    const resetOnVisible = () => {
+      if (document.visibilityState === 'visible' && activationStatus === 'ready') {
+        // User came back — give them a fresh 5-minute window
+        clearTimers();
+        dismissTimerRef.current = setTimeout(() => dismissBanner(), BANNER_AUTO_DISMISS_MS);
+      }
+    };
+    document.addEventListener('visibilitychange', resetOnVisible);
+
+    return () => {
+      clearTimers();
+      document.removeEventListener('visibilitychange', resetOnVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activationStatus, orderType]);
 

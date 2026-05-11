@@ -123,148 +123,58 @@ function BackendHeader({ title, onLogout }) {
     }
 
     return (
-        <header style={{
-            background: '#FFFFFF',
-            borderBottom: '1px solid #E5E7EB',
-            padding: '12px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            minHeight: 56,
-            position: 'sticky',
-            top: 0,
-            zIndex: 50
-        }}>
+        <header className="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between gap-3 min-h-[56px] sticky top-0 z-50 shadow-[0_2px_20px_rgba(28,25,23,0.04)]">
             {/* LEFT: Business Identity (Logo or Text) */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                flex: 1,
-                minWidth: 0
-            }}>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
                 {headerMode === 'logo' && logoUrl ? (
                     <img
                         src={logoUrl}
                         alt={businessName}
-                        style={{
-                            height: 36,
-                            width: 'auto',
-                            maxWidth: 120,
-                            objectFit: 'contain'
-                        }}
+                        className="h-9 w-auto max-w-[120px] object-contain"
                     />
                 ) : (
-                    <span style={{
-                        fontSize: 17,
-                        fontWeight: 600,
-                        color: '#1F2937',
-                        letterSpacing: '-0.01em',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                    }}>
+                    <span className="font-['Outfit',sans-serif] text-lg font-black text-stone-950 tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">
                         {businessName}
                     </span>
                 )}
             </div>
 
             {/* RIGHT: Actions */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                flexShrink: 0
-            }}>
+            <div className="flex items-center gap-3 flex-shrink-0">
                 {/* Ver Tienda Button */}
                 {tenantSlug && (
                     <button
                         onClick={handleViewStore}
-                        style={{
-                            padding: '8px 12px',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: '#FFFFFF',
-                            background: '#3B82F6',
-                            border: 'none',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
-                        }}
+                        className="px-4 py-2 text-[11px] font-black uppercase tracking-[0.05em] text-white bg-emerald-600 border-none rounded-2xl cursor-pointer whitespace-nowrap hover:bg-emerald-500 transition-colors shadow-sm"
                     >
                         {t('view_store')}
                     </button>
                 )}
 
                 {/* Role Dropdown */}
-                <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <div ref={dropdownRef} className="relative">
                     <button
                         onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            padding: '8px 12px',
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: '#374151',
-                            background: '#F3F4F6',
-                            border: 'none',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            textTransform: 'uppercase'
-                        }}
+                        className="flex items-center gap-1 px-3 py-2 text-[11px] font-black uppercase tracking-[0.05em] text-stone-700 bg-stone-100 border-none rounded-2xl cursor-pointer hover:bg-stone-200 transition-colors"
                     >
                         {isInStaffView ? 'STAFF' : 'OWNER'}
-                        <span style={{ fontSize: 10 }}>▾</span>
+                        <span className="text-[10px]">▾</span>
                     </button>
 
                     {showRoleDropdown && (
-                        <div style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: 8,
-                            background: '#FFFFFF',
-                            border: '1px solid #E5E7EB',
-                            borderRadius: 12,
-                            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                            minWidth: 180,
-                            overflow: 'hidden',
-                            zIndex: 1000
-                        }}>
+                        <div className="absolute top-full right-0 mt-2 bg-white border border-stone-200 rounded-2xl shadow-[0_20px_50px_rgba(28,25,23,0.08)] min-w-[200px] overflow-hidden z-[1000]">
                             {/* Section Header */}
-                            <div style={{
-                                padding: '10px 16px',
-                                borderBottom: '1px solid #F3F4F6',
-                                fontSize: 10,
-                                fontWeight: 600,
-                                color: '#9CA3AF',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
-                            }}>
-                                {t('change_view')}
+                            <div className="px-4 py-3 border-b border-stone-100">
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
+                                    {t('change_view')}
+                                </span>
                             </div>
 
                             {/* Bidirectional Navigation: Owner ↔ Staff */}
                             {isOwner && isInStaffView && tenantSlug && (
                                 <button
                                     onClick={handleGoToOwner}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 10,
-                                        padding: '12px 16px',
-                                        width: '100%',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: 13,
-                                        color: '#3B82F6',
-                                        fontWeight: 700,
-                                        textAlign: 'left'
-                                    }}
+                                    className="flex items-center gap-3 px-4 py-3.5 w-full bg-none border-none cursor-pointer text-sm font-bold text-emerald-600 text-left hover:bg-stone-50 transition-colors"
                                 >
                                     👑 {t('back_to_owner')}
                                 </button>
@@ -273,44 +183,19 @@ function BackendHeader({ title, onLogout }) {
                             {isOwner && !isInStaffView && tenantSlug && (
                                 <button
                                     onClick={handleGoToStaff}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 10,
-                                        padding: '12px 16px',
-                                        width: '100%',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: 13,
-                                        color: '#374151',
-                                        textAlign: 'left'
-                                    }}
+                                    className="flex items-center gap-3 px-4 py-3.5 w-full bg-none border-none cursor-pointer text-sm font-bold text-stone-700 text-left hover:bg-stone-50 transition-colors"
                                 >
                                     {t('staff_view')}
                                 </button>
                             )}
 
                             {/* Divider */}
-                            <div style={{ borderTop: '1px solid #F3F4F6' }} />
+                            <div className="border-t border-stone-100" />
 
                             {/* Logout */}
                             <button
                                 onClick={handleSignOut}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 10,
-                                    padding: '12px 16px',
-                                    width: '100%',
-                                    background: 'none',
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontSize: 13,
-                                    color: '#EF4444',
-                                    fontWeight: 600,
-                                    textAlign: 'left'
-                                }}
+                                className="flex items-center gap-3 px-4 py-3.5 w-full bg-none border-none cursor-pointer text-sm font-bold text-red-500 text-left hover:bg-red-50 transition-colors"
                             >
                                 {t('logout')}
                             </button>

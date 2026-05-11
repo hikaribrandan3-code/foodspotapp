@@ -7,7 +7,6 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const WEBHOOK_URL = "https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/mp-event-webhook";
 const MERCADO_PAGO_API = "https://api.mercadopago.com/checkout/preferences";
 
 // Generate ticket code: TKT-XXX-NNN
@@ -25,14 +24,6 @@ serve(async (req: Request) => {
         return new Response("ok", { headers: corsHeaders });
     }
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-        return new Response(
-            JSON.stringify({ error: "Unauthorized" }),
-            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-    }
-
     try {
         const payload = await req.json();
         const { event_id, tier_id, quantity = 1, addons = [], customer, promo_code } = payload;
@@ -48,6 +39,7 @@ serve(async (req: Request) => {
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
         const APP_BASE_URL = Deno.env.get("APP_BASE_URL") || "https://foodspotapp.vercel.app";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const WEBHOOK_URL = `${supabaseUrl}/functions/v1/mp-event-webhook`;
 
         // ── 1. Fetch event (capacity check will validate tier availability) ──
         const { data: event, error: eventError } = await supabase
@@ -179,6 +171,15 @@ serve(async (req: Request) => {
             );
         }
 
+        // ── 6. Fetch branding (needed by both free events and MP flow) ──
+        const { data: branding, error: brandingError } = await supabase
+            .from('branding')
+            .select("mp_access_token, business_name, slug, currency")
+            .eq("business_id", event.business_id)
+            .single();
+
+        const businessSlug = branding?.slug || 'demo';
+
         // ── 7. Free event? Skip MP and mark paid ──
         if (event.is_free || totalCents === 0) {
             await supabase
@@ -192,18 +193,11 @@ serve(async (req: Request) => {
                     order_id: order.id,
                     ticket_code: ticketCode,
                     guest_token: order.guest_token,
-                    redirect_url: `${APP_BASE_URL}/${branding.slug || 'demo'}/events/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`
+                    redirect_url: `${APP_BASE_URL}/${businessSlug}/events/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`
                 }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
-
-        // ── 6. Fetch MP access token ──
-        const { data: branding, error: brandingError } = await supabase
-            .from('branding')
-            .select("mp_access_token, business_name, slug, currency")
-            .eq("business_id", event.business_id)
-            .single();
 
         if (brandingError || !branding?.mp_access_token) {
             return new Response(
@@ -217,7 +211,7 @@ serve(async (req: Request) => {
         const externalReference = `${event.business_id}:${order.id}`;
 
         // ── 8. Create MP preference ──
-        const baseUrl = `${APP_BASE_URL}/${branding.slug || 'demo'}/events`;
+        const baseUrl = `${APP_BASE_URL}/${businessSlug}/events`;
         const preferenceBody = {
             items: [{
                 title: `${event.name} - ${tier.name}`,

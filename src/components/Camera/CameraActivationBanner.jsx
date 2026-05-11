@@ -18,7 +18,7 @@ export default function CameraActivationBanner({
   const [isVisible, setIsVisible] = useState(true);
 
   // Randomly pick a character on mount (donut, burger, pizza, taco)
-  const CHARACTERS = ['donut', 'burger', 'pizza', 'taco'];
+  const CHARACTERS = ['ramen', 'burger', 'pizza', 'taco'];
   const [character] = useState(() => {
     if (characterProp && CHARACTERS.includes(characterProp)) return characterProp;
     return CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];

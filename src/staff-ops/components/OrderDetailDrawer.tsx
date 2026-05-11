@@ -1,7 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Clock, User, Package, AlertCircle, MapPin, DollarSign, CreditCard, Globe, ChevronRight, MessageCircle, Phone } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
+import { formatPrice } from '@/lib/utils';
+import { useBusiness } from '@/contexts/BusinessContext';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -15,22 +18,32 @@ function callPhone(phone: string) {
 
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
+  const { mpAlias } = useBusiness();
   const order = state.orders.find(o => o.id === state.selectedOrderId);
+  const [showingAlias, setShowingAlias] = useState(false);
+
+  // Reset alias view when drawer opens/closes or order changes
+  useEffect(() => {
+    setShowingAlias(false);
+  }, [state.selectedOrderId]);
 
   if (!order) return null;
 
   const urgency = getUrgencyLevel(order.createdAt);
   const waitMins = getWaitMinutes(order.createdAt);
   const isCashPending = order.status === 'PENDING_VERIFICATION';
-  const isDelivering = order.status === 'DELIVERING';
+  const isDelivering = order.status === 'DISPATCH' || order.status === 'DELIVERING';
   const isDone = order.status === 'DONE';
 
-  // Next status label for the advance button
+  // Next status label for the advance button — type-aware per FLOW_MAP
   const nextLabels: Record<string, string> = {
     TODO: '▶ Start Prep',
     PREP: '✓ Mark Ready',
-    READY: order.deliveryType === 'dine_in' ? '💰 Confirm Payment & Done' : '🚴 Dispatch',
-    DISPATCH: '📍 Mark Delivering',
+    READY: order.deliveryType === 'dine_in' ? '🍽️ Mark Served' :
+           order.deliveryType === 'delivery' ? '🚴 Assign Delivery' :
+           '✋ Hand Over',
+    DISPATCH: '📍 Mark Delivered',
+    DONE: '',
   };
   const nextLabel = nextLabels[order.status];
 
@@ -50,7 +63,7 @@ export default function OrderDetailDrawer() {
             transition={{ duration: 0.2 }}
             className="absolute inset-0 z-[60]"
             style={{ backgroundColor: 'var(--drawer-backdrop)' }}
-            onClick={() => selectOrder(null)}
+            onClick={() => { if (!showingAlias) selectOrder(null); }}
           />
 
           {/* Drawer */}
@@ -127,6 +140,16 @@ export default function OrderDetailDrawer() {
                 </div>
               </div>
 
+              {/* Order Total — hidden when cash pending (Total to collect shows instead) */}
+              {!isCashPending && (
+                <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--detail-item-bg)', border: '1px solid var(--detail-item-border)' }}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Order Total</span>
+                    <span className="text-lg font-bold" style={{ color: 'var(--status-icon-ready)' }}>{formatPrice(order.total)}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Delivery info */}
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>Customer & Delivery</h3>
@@ -171,28 +194,29 @@ export default function OrderDetailDrawer() {
             <div className="px-5 py-4 space-y-2" style={{ borderTop: '1px solid var(--card-border)' }}>
               {/* Verify Cash */}
               {isCashPending && (
-                <button
-                  onClick={() => { verifyCash(order.id); selectOrder(null); }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
-                >
-                  <DollarSign size={16} strokeWidth={2.5} />
-                  Verify Cash Payment
-                </button>
+                <>
+                  <div className="text-center mb-3 p-3 rounded-lg" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                    <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Total to collect</p>
+                    <p className="text-lg font-bold" style={{ color: 'var(--status-icon-ready)' }}>
+                      {formatPrice(order.total)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { verifyCash(order.id); selectOrder(null); }}
+                    className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                    style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
+                  >
+                    <DollarSign size={16} strokeWidth={2.5} />
+                    Verify Cash Payment
+                  </button>
+                </>
               )}
 
               {/* Advance status (TODO → PREP → READY → DISPATCH → DELIVERING, or dine-in READY → DONE) */}
               {nextLabel && !isCashPending && (
                 <button
-                  onClick={() => {
-                    if (order.deliveryType === 'dine_in' && order.status === 'READY') {
-                      confirmPayment(order.id);
-                    } else {
-                      advanceOrderStatus(order.id);
-                    }
-                    selectOrder(null);
-                  }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                  onClick={() => { advanceOrderStatus(order.id); if (!(order.deliveryType === 'dine_in' && order.status === 'READY')) selectOrder(null); }}
+                  className="w-full min-h-[52px] py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                   style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--status-icon-prep)', border: '1px solid var(--status-icon-prep)' }}
                 >
                   {nextLabel}
@@ -200,16 +224,62 @@ export default function OrderDetailDrawer() {
                 </button>
               )}
 
-              {/* Confirm Delivery */}
-              {isDelivering && (
-                <button
-                  onClick={() => { confirmDelivery(order.id); selectOrder(null); }}
-                  className="w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: 'var(--reception-bg)', color: 'var(--reception-text)', border: '1px solid var(--reception-border)' }}
-                >
-                  <Package size={16} />
-                  Confirm Delivery ✓
-                </button>
+              {/* Dine-in payment confirmation (DONE + unpaid) */}
+              {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
+                <div className="mt-3 space-y-2">
+                  {!showingAlias ? (
+                    /* Step 1: Pick payment method */
+                    <>
+                      <p className="text-xs font-semibold text-center" style={{ color: 'var(--text-tertiary)' }}>
+                        Confirm Payment
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { confirmPayment(order.id, 'cash'); selectOrder(null); }}
+                          className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                          style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                        >
+                          💵 Cash
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowingAlias(true); }}
+                          onTouchStart={(e) => { e.stopPropagation(); setShowingAlias(true); }}
+                          className="flex-1 min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                          style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                        >
+                          📲 Alias
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    /* Step 2: Show alias full-screen for customer */
+                    <>
+                      <div className="p-4 rounded-xl text-center space-y-2" style={{ background: '#fed7aa', border: '2px solid #f97316' }}>
+                        <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: '#92400e' }}>MP Alias</p>
+                        <p className="text-[28px] font-extrabold font-mono leading-tight" style={{ color: '#b45309' }}>
+                          {mpAlias || 'N/A'}
+                        </p>
+                        <p className="text-[10px]" style={{ color: '#92400e' }}>Tell customer to pay via Mercado Pago</p>
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); confirmPayment(order.id, 'mercado_pago'); setShowingAlias(false); selectOrder(null); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
+                        className="w-full min-h-[48px] py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                        style={{ backgroundColor: '#f97316', color: '#fff' }}
+                      >
+                        ✓ Verified — Customer Paid
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowingAlias(false); }}
+                        onTouchStart={(e) => { e.stopPropagation(); }}
+                        className="w-full min-h-[44px] py-2 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+                        style={{ backgroundColor: '#f3f4f6', color: '#0a0a0a' }}
+                      >
+                        ← Back
+                      </button>
+                    </>
+                  )}
+                </div>
               )}
 
               {isDone && (

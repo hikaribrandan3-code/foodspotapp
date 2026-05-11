@@ -17,8 +17,10 @@ export const ORDER_STATUS = {
 
 export const PAYMENT_METHOD = {
   CASH: 'cash',
-  MERCADO_PAGO: 'mercado_pago',
+  // MERCADO_PAGO: 'mercado_pago',  // Disabled for MVP — backend token kept dormant
   CARD_ON_DELIVERY: 'card_on_delivery',
+  WHATSAPP: 'whatsapp',
+  ALIAS: 'alias',
 };
 
 // Legacy values (pre-migration): 'efectivo', 'mercadopago', 'pay_at_counter', 'tarjeta_envio'

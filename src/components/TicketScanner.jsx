@@ -104,7 +104,8 @@ function TicketScanner({ onClose }) {
                 const barcodes = await detector.detect(videoRef.current)
                 if (barcodes.length > 0) {
                     const raw = barcodes[0].rawValue
-                    if (raw.startsWith('FS-TICKET|')) {
+                    // Support both event tickets (TKT-XXX-NNN) and food order tickets (FS-TICKET|...)
+                    if (raw.startsWith('TKT-') || raw.startsWith('FS-TICKET|')) {
                         scanningRef.current = true
                         await handleTicketScan(raw)
                         return // Stop scanning after first hit
@@ -122,6 +123,78 @@ function TicketScanner({ onClose }) {
 
     // Process scanned ticket
     const handleTicketScan = async (raw) => {
+        // ── Event Ticket Format: TKT-XXX-NNN ──
+        if (raw.startsWith('TKT-')) {
+            try {
+                // 1. Look up order by ticket_code
+                const { data: order, error: orderError } = await supabase
+                    .from('event_orders')
+                    .select('id, event_id, customer_name, tier_snapshot, payment_status, business_id')
+                    .eq('ticket_code', raw)
+                    .single()
+
+                if (orderError || !order) {
+                    setStatus('error')
+                    setResult({ message: 'Entrada no encontrada' })
+                    playErrorBuzz()
+                    return
+                }
+
+                if (order.payment_status !== 'paid') {
+                    setStatus('error')
+                    setResult({ message: 'Pago pendiente' })
+                    playErrorBuzz()
+                    return
+                }
+
+                // 2. Check if already checked in
+                const { data: existingCheckin, error: checkinError } = await supabase
+                    .from('event_checkins')
+                    .select('id')
+                    .eq('order_id', order.id)
+                    .eq('event_id', order.event_id)
+                    .single()
+
+                if (existingCheckin) {
+                    setStatus('already_used')
+                    setResult({
+                        message: 'Ya canjeada',
+                        customer_name: order.customer_name
+                    })
+                    playErrorBuzz()
+                    if (navigator.vibrate) navigator.vibrate(300)
+                    return
+                }
+
+                // 3. Record check-in
+                const { error: insertError } = await supabase
+                    .from('event_checkins')
+                    .insert({
+                        event_id: order.event_id,
+                        order_id: order.id,
+                        checkin_method: 'qr_scan'
+                    })
+
+                if (insertError) throw insertError
+
+                setStatus('success')
+                setResult({
+                    message: '¡Entrada válida!',
+                    customer_name: order.customer_name,
+                    order_number: raw,
+                    tier: order.tier_snapshot?.name || 'General'
+                })
+                playSuccessBeep()
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100])
+            } catch (err) {
+                setStatus('error')
+                setResult({ message: err.message })
+                playErrorBuzz()
+            }
+            return
+        }
+
+        // ── Food Order Ticket Format: FS-TICKET|orderId|... ──
         const parts = raw.split('|')
         if (parts.length < 3) {
             setStatus('error')

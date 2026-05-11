@@ -211,7 +211,7 @@ export default function FinancialTrackerDashboard() {
   const exportCSV = () => {
     const headers = ['Date', 'Category', 'Description', 'Amount', 'Recurring'];
     const rows = filteredExpenses.map((e) => [
-      e.date, e.category, e.description, e.amount, e.recurring ? 'Yes' : 'No'
+      e.date, e.category, e.description, e.amount, e.is_recurring ? 'Yes' : 'No'
     ]);
     const csv = [headers, ...rows]
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
@@ -246,7 +246,7 @@ export default function FinancialTrackerDashboard() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>
-          Financial Tracker
+          Expenses
         </h2>
         <button
           onClick={() => setShowCalc(true)}
@@ -318,11 +318,6 @@ export default function FinancialTrackerDashboard() {
           <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
             {menuItems.length} total
           </p>
-        </div>
-        <div style={cardStyle}>
-          <span style={labelStyle}>Next Payout</span>
-          <h3 style={{ ...valueStyle, fontSize: 18 }}>{nextPayout}</h3>
-          <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Auto-deposit</p>
         </div>
       </div>
 
@@ -485,7 +480,7 @@ export default function FinancialTrackerDashboard() {
                   <div key={expense.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ width: 36, height: 36, background: meta.color + '15', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, fontWeight: 700, color: meta.color }}>
-                        {meta.name[0]}
+                        {meta.name?.[0] || '?'}
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.description}</p>
@@ -499,7 +494,7 @@ export default function FinancialTrackerDashboard() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
-                        -${expense.amount.toFixed(2)}
+                        -${(expense.amount || 0).toFixed(2)}
                       </span>
                       <button
                         onClick={() => deleteExpense(expense.id)}
@@ -561,16 +556,6 @@ export default function FinancialTrackerDashboard() {
               <option key={c.name} value={c.name}>{c.name}</option>
             ))}
           </select>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#6B7280', gridColumn: '1 / -1', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={recurring}
-              onChange={(e) => setRecurring(e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: primaryColor, cursor: 'pointer' }}
-            />
-            <Repeat className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-            Repeat monthly
-          </label>
           <button
             onClick={addExpense}
             style={{
@@ -755,8 +740,8 @@ function CalculatorModal({ onClose, onUseResult, primaryColor, cardStyle }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           <Btn s={accentBtn} onPress={press(clear)}>C</Btn>
-          <Btn s={opBtn(false)} onPress={press(inputPercent)}>%</Btn>
           <Btn s={numBtn} onPress={press(backspace)}>⌫</Btn>
+          <Btn s={numBtn} style={{ opacity: 0.3, pointerEvents: 'none' }}></Btn>
           <Btn s={opBtn(op === '/' && prev !== null)} onPress={press(() => inputOp('/'))}>÷</Btn>
 
           {[7,8,9].map(n => <Btn key={n} s={numBtn} onPress={press(() => inputNum(n))}>{n}</Btn>)}

@@ -47,7 +47,7 @@ import Envio from './pages/customer/Envio.jsx'
 import Order from './pages/customer/Order.jsx'
 import OrderStatus from './pages/customer/OrderStatus.jsx'
 import Receipt from './pages/customer/Receipt.jsx'
-import DeliveryTracker from './pages/customer/DeliveryTracker.jsx'
+
 import Rewards from './pages/customer/Rewards.jsx'
 import ShareFood from './pages/customer/ShareFood.jsx'
 import PerfectPour from './pages/customer/PerfectPour.jsx'
@@ -63,7 +63,7 @@ import StaffKDS from './pages/staff/StaffKDS.jsx'
 // Owner Pages
 import OwnerLogin from './pages/owner/OwnerLogin.jsx'
 import OwnerSummary from './pages/owner/OwnerSummary.jsx'
-import MenuManager from './pages/owner/MenuManager.jsx'
+import MenuManager from './pages/owner/MenuManager/index.js'
 import RewardsManager from './pages/owner/RewardsManager.jsx'
 import Settings from './pages/owner/Settings.jsx'
 import Analytics from './pages/owner/Analytics.jsx'
@@ -312,11 +312,13 @@ function App() {
         root.style.setProperty('--hero-delivery-bg', getHeroBg(delC));
         root.style.setProperty('--hero-delivery-icon', getHeroIcon(delC));
 
-        const promoC = { ...HERO_DEFAULT, ...(heroIcons.rewards || {}), ...(heroIcons.promos || {}) };
-        root.style.setProperty('--hero-promos-bg', getHeroBg(promoC));
-        root.style.setProperty('--hero-promos-icon', getHeroIcon(promoC));
-        root.style.setProperty('--hero-rewards-bg', getHeroBg(promoC));
-        root.style.setProperty('--hero-rewards-icon', getHeroIcon(promoC));
+        const eventsC = { ...HERO_DEFAULT, ...(heroIcons.events || {}), ...(heroIcons.rewards || {}), ...(heroIcons.promos || {}) };
+        root.style.setProperty('--hero-events-bg', getHeroBg(eventsC));
+        root.style.setProperty('--hero-events-icon', getHeroIcon(eventsC));
+        root.style.setProperty('--hero-promos-bg', getHeroBg(eventsC)); // Alias for backward compatibility
+        root.style.setProperty('--hero-promos-icon', getHeroIcon(eventsC)); // Alias for backward compatibility
+        root.style.setProperty('--hero-rewards-bg', getHeroBg(eventsC));
+        root.style.setProperty('--hero-rewards-icon', getHeroIcon(eventsC));
 
         const gameC = heroIcons.game || HERO_DEFAULT;
         root.style.setProperty('--hero-game-bg', getHeroBg(gameC));
@@ -521,13 +523,15 @@ function App() {
                                             <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
                                             <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
                                             <Route path="/:tenantSlug/receipt" element={<Receipt />} />
-                                            <Route path="/:tenantSlug/track" element={<DeliveryTracker />} />
+
                                             <Route path="/:tenantSlug/rewards" element={<Rewards />} />
                                             <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
                                             <Route path="/:tenantSlug/game" element={<PerfectPour />} />
                                             <Route path="/:tenantSlug/arcade" element={<Arcade />} />
                                             <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} />
+                                            <Route path="/:tenantSlug/events" element={<EventThemeWrapper />} />
+                                            <Route path="/:tenantSlug/events/ticket" element={<EventThemeWrapper />} />
+                                            <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} /> {/* Alias for backward compatibility */}
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
@@ -556,7 +560,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/promos') && <BottomNav config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && <BottomNav config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>

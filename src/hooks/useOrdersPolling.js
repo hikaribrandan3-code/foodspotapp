@@ -8,8 +8,9 @@ import { supabase } from '../lib/supabaseClient'
 export function useOrdersPolling(businessId) {
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
+    const [offset, setOffset] = useState(0)
 
-    const fetchOrders = useCallback(async () => {
+    const fetchOrders = useCallback(async (newOffset = 0) => {
         if (!businessId) return
         try {
             const { data, error } = await supabase
@@ -17,10 +18,11 @@ export function useOrdersPolling(businessId) {
                 .select('*')
                 .eq('business_id', businessId)
                 .order('created_at', { ascending: false })
-                .limit(100)
+                .range(newOffset, newOffset + 99)
 
             if (!error && data) {
-                setOrders(data)
+                // If offset is 0 (initial load), replace. Otherwise append.
+                setOrders(prev => newOffset === 0 ? data : [...prev, ...data])
             }
             setLoading(false)
         } catch (err) {
@@ -65,5 +67,5 @@ export function useOrdersPolling(businessId) {
         }
     }, [businessId, fetchOrders])
 
-    return { orders, loading, refreshOrders: fetchOrders }
+    return { orders, loading, refreshOrders: fetchOrders, loadMore: () => { const newOffset = offset + 100; setOffset(newOffset); fetchOrders(newOffset); } }
 }

@@ -1,14 +1,30 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Package } from 'lucide-react';
-import { InventoryEntry } from './InventoryEntry';
-import { InventoryStockList } from './InventoryStockList';
-import { InventoryAudit } from './InventoryAudit';
+
+// Lazy-load all inventory tabs so the large shared chunk (used by both
+// staff-ops and the owner MenuInventoryView) is NOT eagerly preloaded on
+// staff-ops startup. This prevents TDZ / "Cannot access 'x' before
+// initialization" crashes caused by cross-entry chunk loading order.
+const InventoryEntry = lazy(() => import('./InventoryEntry').then(m => ({ default: m.InventoryEntry })));
+const InventoryStockList = lazy(() => import('./InventoryStockList').then(m => ({ default: m.InventoryStockList })));
+const InventoryAudit = lazy(() => import('./InventoryAudit').then(m => ({ default: m.InventoryAudit })));
 
 const TABS = [
   { id: 'entry', label: 'Entry' },
   { id: 'stock', label: 'Stock' },
   { id: 'audit', label: 'Audit' },
 ];
+
+function InventoryFallback() {
+  return (
+    <div className="flex-1 flex items-center justify-center">
+      <div className="animate-pulse flex flex-col items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-gray-200" />
+        <div className="w-24 h-3 rounded bg-gray-200" />
+      </div>
+    </div>
+  );
+}
 
 export default function InventoryView() {
   const [activeTab, setActiveTab] = useState('entry');
@@ -47,9 +63,11 @@ export default function InventoryView() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        {activeTab === 'entry' && <InventoryEntry />}
-        {activeTab === 'stock' && <InventoryStockList />}
-        {activeTab === 'audit' && <InventoryAudit />}
+        <Suspense fallback={<InventoryFallback />}>
+          {activeTab === 'entry' && <InventoryEntry />}
+          {activeTab === 'stock' && <InventoryStockList />}
+          {activeTab === 'audit' && <InventoryAudit />}
+        </Suspense>
       </div>
     </div>
   );

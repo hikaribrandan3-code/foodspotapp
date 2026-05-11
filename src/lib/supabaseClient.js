@@ -239,7 +239,7 @@ export async function getBranding(businessId) {
         .from('branding')
         .select('*')
         .eq('business_id', businessId) // 🔐 TENANT FILTER
-        .single()
+        .maybeSingle()
 
     if (error) {
         console.error('[getBranding] ❌ Query failed:', error.message)
@@ -268,6 +268,7 @@ const CORE_BRANDING_COLUMNS = [
     'hero_mode', 'hero_url', 'nav_icon_mode', 'hero_icon_mode',
     'is_paused', 'pause_message',
     'delivery_radius', 'delivery_fee', 'free_delivery_threshold',
+    'pickup_enabled', 'delivery_enabled', 'dine_in_enabled', 'dine_in_payment_timing',
     'menu_data', 'app_config',
     'updated_at'
 ];
@@ -307,10 +308,16 @@ export async function updateBranding(updates, businessId) {
         let filteredUpdates = dbUpdates;
         if (_knownBrandingColumns) {
             filteredUpdates = {};
+            const droppedKeys = [];
             for (const key of Object.keys(dbUpdates)) {
                 if (_knownBrandingColumns.has(key)) {
                     filteredUpdates[key] = dbUpdates[key];
+                } else {
+                    droppedKeys.push(key);
                 }
+            }
+            if (droppedKeys.length > 0) {
+                console.warn('[updateBranding] Filtered out unknown columns:', droppedKeys.join(', '));
             }
             console.log('[updateBranding] Using cached column set, sending:', Object.keys(filteredUpdates).join(', '));
         }
@@ -321,7 +328,7 @@ export async function updateBranding(updates, businessId) {
             .update(filteredUpdates)
             .eq('business_id', businessId)
             .select()
-            .single()
+            .maybeSingle()
 
         if (!error && data) {
             // ✅ SUCCESS: Learn which columns the table actually has from the returned row
@@ -333,9 +340,30 @@ export async function updateBranding(updates, businessId) {
         // 🔍 DIAGNOSTIC: Log the full error
         console.warn('[updateBranding] Attempt 1 failed:', error?.message || error);
 
+        // 🆘 ATTEMPT 1b: Row missing — try INSERT instead
+        if (!error && !data) {
+            console.warn('[updateBranding] ⚠️ No branding row found for business_id:', businessId, '. Attempting insert...');
+            const insertPayload = { ...filteredUpdates, business_id: businessId };
+            const { data: insertData, error: insertError } = await supabase
+                .from('branding')
+                .insert(insertPayload)
+                .select()
+                .maybeSingle();
+
+            if (!insertError && insertData) {
+                _knownBrandingColumns = new Set(Object.keys(insertData));
+                console.log('[updateBranding] ✅ Insert succeeded. Learned columns:', [..._knownBrandingColumns].join(', '));
+                return { data: insertData, error: null };
+            }
+            console.error('[updateBranding] ❌ Insert also failed:', insertError);
+            return { data: null, error: insertError };
+        }
+
         // 🛡️ ATTEMPT 2: Auto-heal by using only CORE columns (guaranteed safe)
         if (error && (error.code === '42703' || error.message?.includes('column') || error.code === 'PGRST204' || String(error.code) === '400')) {
-            console.warn('[updateBranding] ⚠️ Column mismatch detected. Retrying with core columns only...');
+            console.warn('[updateBranding] ⚠️ Column mismatch detected. Invalidating cache and retrying with core columns only...');
+            // 🗑️ INVALIDATE CACHE: Don't let a stale cache silently drop columns forever
+            _knownBrandingColumns = null;
             
             const coreUpdates = {};
             for (const key of CORE_BRANDING_COLUMNS) {
@@ -351,7 +379,7 @@ export async function updateBranding(updates, businessId) {
                 .update(coreUpdates)
                 .eq('business_id', businessId)
                 .select()
-                .single()
+                .maybeSingle()
 
             if (!coreError && coreData) {
                 _knownBrandingColumns = new Set(Object.keys(coreData));
@@ -359,8 +387,41 @@ export async function updateBranding(updates, businessId) {
                 return { data: coreData, error: null }
             }
 
+            // 🆘 ATTEMPT 2b: Row missing + column mismatch — try INSERT with core columns
+            if (!coreError && !coreData) {
+                console.warn('[updateBranding] ⚠️ No row found + column mismatch. Attempting core insert...');
+                const insertPayload = { ...coreUpdates, business_id: businessId };
+                const { data: insertData, error: insertError } = await supabase
+                    .from('branding')
+                    .insert(insertPayload)
+                    .select()
+                    .maybeSingle();
+                if (!insertError && insertData) {
+                    _knownBrandingColumns = new Set(Object.keys(insertData));
+                    console.log('[updateBranding] ✅ Core insert succeeded. Learned columns:', [..._knownBrandingColumns].join(', '));
+                    return { data: insertData, error: null };
+                }
+                console.error('[updateBranding] ❌ Core insert also failed:', insertError);
+                return { data: null, error: insertError };
+            }
+
             console.error('[updateBranding] ❌ Core save also failed:', coreError);
             return { data: null, error: coreError }
+        }
+
+        // 🚨 403 DIAGNOSTIC: Log auth state for debugging RLS issues
+        if (error?.code === '42501' || error?.status === 403 || error?.message?.includes('permission')) {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                console.error('[updateBranding] 🚨 403 FORBIDDEN — Auth diagnostic:', {
+                    authUid: user?.id || 'NOT LOGGED IN',
+                    authEmail: user?.email || 'NO EMAIL',
+                    businessId,
+                    attemptedKeys: Object.keys(filteredUpdates)
+                });
+            } catch (e) {
+                console.error('[updateBranding] 🚨 403 FORBIDDEN — Could not fetch auth user:', e);
+            }
         }
 
         return { data, error }
@@ -605,6 +666,7 @@ export async function updateOrderCloud(orderId, updates, businessId) {
     if (updates.paymentMethod !== undefined) dbUpdates.payment_method = updates.paymentMethod
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes
     if (updates.payment_confirmed !== undefined) dbUpdates.payment_confirmed = updates.payment_confirmed
+    if (updates.payment_status !== undefined) dbUpdates.payment_status = updates.payment_status
     // Stamp delivered_at when order is confirmed delivered
     if (updates.status === 'delivered') dbUpdates.delivered_at = new Date().toISOString()
 
@@ -866,3 +928,4 @@ export async function getNextOrderNumber(businessId) {
 
     return { nextNumber, error: null }
 }
+// Vercel deploy trigger: Sun May 10 04:26:04 -03 2026

@@ -1,0 +1,32 @@
+# Dependencies & Build
+node_modules
+.venv
+dist
+build
+
+# Development & IDE
+.claude
+.kimi
+.opencode
+.openclaw
+.vscode
+.idea
+
+# Git & Version Control
+.git
+.gitignore
+
+# Documentation & Archives
+DOCS
+OLD_GAMES_ARCHIVE
+downloads
+tests
+tools
+memory
+
+# System & Temporary
+.DS_Store
+*.log
+.env
+.env.local
+.env.*.local

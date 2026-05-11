@@ -209,7 +209,7 @@ function OwnerLogin() {
                 .eq('email', email.toLowerCase().trim())
                 .eq('pin', passwordHash)
                 .eq('status', 'active')
-                .single();
+                .maybeSingle();
 
             if (staffError || !staff) {
                 setError(t('incorrect'));
@@ -275,6 +275,12 @@ function OwnerLogin() {
             const metadata = data.user?.user_metadata || {}
             const role = metadata.role || 'owner'
             const slug = metadata.slug || tenantSlug || 'default'
+            const businessId = tenantData?.id
+
+            // 🔐 Set business ID for RLS header injection (matches staff login behavior)
+            if (businessId) {
+                localStorage.setItem('fs_business_id', businessId)
+            }
 
             if (role === 'superadmin') {
                 window.location.href = '/admin'
@@ -340,7 +346,7 @@ function OwnerLogin() {
                         marginBottom: '16px'
                     }}>
                         {/* Restaurant Icon */}
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ff9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
                             <path d="M7 2v20"/>
                             <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
@@ -378,9 +384,9 @@ function OwnerLogin() {
                             fontSize: '14px', 
                             fontWeight: 700, 
                             transition: 'all 0.3s ease',
-                            backgroundColor: loginMode === 'owner' ? '#8b5000' : 'transparent',
-                            color: loginMode === 'owner' ? '#ffffff' : '#554434',
-                            boxShadow: loginMode === 'owner' ? '0 4px 12px rgba(139, 80, 0, 0.3)' : 'none',
+                            backgroundColor: loginMode === 'owner' ? '#10b981' : 'transparent',
+                            color: loginMode === 'owner' ? '#ffffff' : '#059669',
+                            boxShadow: loginMode === 'owner' ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none',
                             border: 'none', 
                             cursor: 'pointer'
                         }}
@@ -397,9 +403,9 @@ function OwnerLogin() {
                             fontSize: '14px', 
                             fontWeight: 700, 
                             transition: 'all 0.3s ease',
-                            backgroundColor: loginMode === 'staff' ? '#8b5000' : 'transparent',
-                            color: loginMode === 'staff' ? '#ffffff' : '#554434',
-                            boxShadow: loginMode === 'staff' ? '0 4px 12px rgba(139, 80, 0, 0.3)' : 'none',
+                            backgroundColor: loginMode === 'staff' ? '#10b981' : 'transparent',
+                            color: loginMode === 'staff' ? '#ffffff' : '#059669',
+                            boxShadow: loginMode === 'staff' ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none',
                             border: 'none', 
                             cursor: 'pointer'
                         }}
@@ -422,7 +428,7 @@ function OwnerLogin() {
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
-                                    color: '#554434',
+                                    color: '#059669',
                                     marginBottom: '8px',
                                     marginLeft: '16px'
                                 }}>{t('emailLabel')}</label>
@@ -430,13 +436,13 @@ function OwnerLogin() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     backgroundColor: '#f2f4f6',
-                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    border: '1px solid rgba(16, 185, 129, 0.15)',
                                     borderRadius: '16px',
                                     padding: '16px',
                                     transition: 'all 0.2s ease'
                                 }}>
                                     {/* Mail Icon */}
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
                                         <rect x="2" y="4" width="20" height="16" rx="2"/>
                                         <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
                                     </svg>
@@ -467,7 +473,7 @@ function OwnerLogin() {
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
-                                    color: '#554434',
+                                    color: '#059669',
                                     marginBottom: '8px',
                                     marginLeft: '16px'
                                 }}>{t('passwordLabel')}</label>
@@ -475,13 +481,13 @@ function OwnerLogin() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     backgroundColor: '#f2f4f6',
-                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    border: '1px solid rgba(16, 185, 129, 0.15)',
                                     borderRadius: '16px',
                                     padding: '16px',
                                     transition: 'all 0.2s ease'
                                 }}>
                                     {/* Lock Icon */}
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
                                         <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
                                         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                                     </svg>
@@ -502,7 +508,7 @@ function OwnerLogin() {
                                         }}
                                     />
                                     {/* Visibility Icon */}
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px', opacity: 0.4, cursor: 'pointer' }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '8px', opacity: 0.4, cursor: 'pointer' }}>
                                         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
                                         <circle cx="12" cy="12" r="3"/>
                                     </svg>
@@ -522,7 +528,7 @@ function OwnerLogin() {
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
-                                    color: '#554434',
+                                    color: '#059669',
                                     marginBottom: '8px',
                                     marginLeft: '16px'
                                 }}>{t('staffUsername')}</label>
@@ -530,13 +536,13 @@ function OwnerLogin() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     backgroundColor: '#f2f4f6',
-                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    border: '1px solid rgba(16, 185, 129, 0.15)',
                                     borderRadius: '16px',
                                     padding: '16px',
                                     transition: 'all 0.2s ease'
                                 }}>
                                     {/* Person Icon */}
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
                                         <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
                                         <circle cx="12" cy="7" r="4"/>
                                     </svg>
@@ -567,7 +573,7 @@ function OwnerLogin() {
                                     fontWeight: 700,
                                     textTransform: 'uppercase',
                                     letterSpacing: '0.05em',
-                                    color: '#554434',
+                                    color: '#059669',
                                     marginBottom: '8px',
                                     marginLeft: '16px'
                                 }}>{t('pinLabel')}</label>
@@ -575,13 +581,13 @@ function OwnerLogin() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     backgroundColor: '#f2f4f6',
-                                    border: '1px solid rgba(219, 194, 173, 0.2)',
+                                    border: '1px solid rgba(16, 185, 129, 0.15)',
                                     borderRadius: '16px',
                                     padding: '16px',
                                     transition: 'all 0.2s ease'
                                 }}>
                                     {/* Dialpad Icon */}
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
                                         <circle cx="12" cy="12" r="1"/>
                                         <circle cx="19" cy="12" r="1"/>
                                         <circle cx="5" cy="12" r="1"/>
@@ -636,14 +642,14 @@ function OwnerLogin() {
                             disabled={loading}
                             style={{ 
                                 width: '100%', 
-                                backgroundColor: '#ff9800', 
+                                backgroundColor: '#10b981', 
                                 color: '#ffffff', 
                                 borderRadius: '16px', 
                                 padding: '20px', 
                                 fontSize: '16px', 
                                 fontWeight: 900, 
                                 letterSpacing: '0.15em', 
-                                boxShadow: loading ? 'none' : '0 8px 24px rgba(255, 152, 0, 0.35)', 
+                                boxShadow: loading ? 'none' : '0 8px 24px rgba(16, 185, 129, 0.2)', 
                                 border: 'none', 
                                 cursor: loading ? 'wait' : 'pointer', 
                                 transition: 'all 0.2s ease', 
@@ -714,15 +720,15 @@ function OwnerLogin() {
                                     <label style={{
                                         display: 'block', fontSize: '10px', fontWeight: 700,
                                         textTransform: 'uppercase', letterSpacing: '0.05em',
-                                        color: '#554434', marginBottom: '8px', marginLeft: '16px'
+                                        color: '#059669', marginBottom: '8px', marginLeft: '16px'
                                     }}>{t('resetEmailLabel')}</label>
                                     <div style={{
                                         display: 'flex', alignItems: 'center',
                                         backgroundColor: '#f2f4f6',
-                                        border: '1px solid rgba(219, 194, 173, 0.2)',
+                                        border: '1px solid rgba(16, 185, 129, 0.15)',
                                         borderRadius: '16px', padding: '16px'
                                     }}>
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#554434" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '12px', opacity: 0.6 }}>
                                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                                             <polyline points="22,6 12,13 2,6"/>
                                         </svg>
@@ -741,7 +747,7 @@ function OwnerLogin() {
                                     </div>
                                 </div>
                                 <button type="submit" disabled={fpLoading} style={{
-                                    width: '100%', backgroundColor: '#ff9800', color: '#ffffff',
+                                    width: '100%', backgroundColor: '#10b981', color: '#ffffff',
                                     borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 900,
                                     letterSpacing: '0.1em', border: 'none', cursor: fpLoading ? 'wait' : 'pointer',
                                     textTransform: 'uppercase'
@@ -757,7 +763,7 @@ function OwnerLogin() {
 
                         {fpStep === 'code' && (
                             <form onSubmit={(e) => { e.preventDefault(); setFpStep('password') }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                <p style={{ textAlign: 'center', fontSize: '13px', color: '#554434', margin: 0 }}>
+                                <p style={{ textAlign: 'center', fontSize: '13px', color: '#059669', margin: 0 }}>
                                     Enter the 6-digit code sent to {fpEmail}
                                 </p>
                                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
@@ -798,7 +804,7 @@ function OwnerLogin() {
                                     ))}
                                 </div>
                                 <button type="submit" style={{
-                                    width: '100%', backgroundColor: '#ff9800', color: '#ffffff',
+                                    width: '100%', backgroundColor: '#10b981', color: '#ffffff',
                                     borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 900,
                                     letterSpacing: '0.1em', border: 'none', cursor: 'pointer',
                                     textTransform: 'uppercase'
@@ -812,7 +818,7 @@ function OwnerLogin() {
                                     <label style={{
                                         display: 'block', fontSize: '10px', fontWeight: 700,
                                         textTransform: 'uppercase', letterSpacing: '0.05em',
-                                        color: '#554434', marginBottom: '8px', marginLeft: '16px'
+                                        color: '#059669', marginBottom: '8px', marginLeft: '16px'
                                     }}>{t('resetNewLabel')}</label>
                                     <input
                                         type="password"
@@ -822,7 +828,7 @@ function OwnerLogin() {
                                         autoFocus
                                         style={{
                                             width: '100%', backgroundColor: '#f2f4f6',
-                                            border: '1px solid rgba(219, 194, 173, 0.2)',
+                                            border: '1px solid rgba(16, 185, 129, 0.15)',
                                             borderRadius: '16px', padding: '16px',
                                             color: '#191c1e', fontWeight: 500, fontSize: '16px',
                                             boxSizing: 'border-box', outline: 'none'
@@ -833,7 +839,7 @@ function OwnerLogin() {
                                     <label style={{
                                         display: 'block', fontSize: '10px', fontWeight: 700,
                                         textTransform: 'uppercase', letterSpacing: '0.05em',
-                                        color: '#554434', marginBottom: '8px', marginLeft: '16px'
+                                        color: '#059669', marginBottom: '8px', marginLeft: '16px'
                                     }}>{t('resetConfirmLabel')}</label>
                                     <input
                                         type="password"
@@ -842,7 +848,7 @@ function OwnerLogin() {
                                         disabled={fpLoading}
                                         style={{
                                             width: '100%', backgroundColor: '#f2f4f6',
-                                            border: '1px solid rgba(219, 194, 173, 0.2)',
+                                            border: '1px solid rgba(16, 185, 129, 0.15)',
                                             borderRadius: '16px', padding: '16px',
                                             color: '#191c1e', fontWeight: 500, fontSize: '16px',
                                             boxSizing: 'border-box', outline: 'none'
@@ -850,7 +856,7 @@ function OwnerLogin() {
                                     />
                                 </div>
                                 <button type="submit" disabled={fpLoading} style={{
-                                    width: '100%', backgroundColor: '#ff9800', color: '#ffffff',
+                                    width: '100%', backgroundColor: '#10b981', color: '#ffffff',
                                     borderRadius: '16px', padding: '18px', fontSize: '15px', fontWeight: 900,
                                     letterSpacing: '0.1em', border: 'none', cursor: fpLoading ? 'wait' : 'pointer',
                                     textTransform: 'uppercase'

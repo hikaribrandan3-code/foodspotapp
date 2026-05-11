@@ -50,18 +50,18 @@ export const EventsIcon = () => (
 export const HERO_ICONS = {
     menu: MenuIcon,
     delivery: DeliveryIcon,
-    promos: PromosIcon,
+    events: EventsIcon,
     game: GameIcon,
-    rewards: PromosIcon, // Alias for backward compatibility
-    events: EventsIcon
+    promos: EventsIcon, // Alias for backward compatibility
+    rewards: EventsIcon // Alias for backward compatibility
 }
 
 // Labels for display
 export const HERO_LABELS = {
     menu: 'Menú',
     delivery: 'Envíos',
-    promos: 'Promos',
+    events: 'Eventos',
     game: 'Juego',
-    rewards: 'Promos', // Alias for backward compatibility
-    events: 'Eventos'
+    promos: 'Eventos', // Alias for backward compatibility
+    rewards: 'Eventos' // Alias for backward compatibility
 }

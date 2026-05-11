@@ -1,16 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Wifi, WifiOff, LayoutDashboard, Clock, ChefHat, PackageCheck, Bike, DollarSign, CheckCircle2 } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
 import OrderCard from '@/components/OrderCard';
-import type { OrderStatus } from '@/types';
+import type { OrderStatus, Order } from '@/types';
 
 export default function BoardView() {
   const { state, toggleOnline, advanceOrderStatus, verifyCash, claimDelivery, confirmDelivery } = useOrders();
   const { t } = useLanguage();
   const [tab, setTab] = useState<'active' | 'completed'>('active');
+  const prevActiveIdsRef = useRef<Set<string>>(new Set());
 
+  // Detect orders that just transitioned to DONE and celebrate
   // Active orders (excluding DONE)
   const activeOrders = useMemo(() => {
     return state.orders
@@ -26,6 +28,24 @@ export default function BoardView() {
         return urgencyB - urgencyA;
       });
   }, [state.orders]);
+
+  useEffect(() => {
+    const currentIds = new Set(activeOrders.map(o => o.id));
+    const prevIds = prevActiveIdsRef.current;
+
+    prevIds.forEach(id => {
+      if (!currentIds.has(id)) {
+        const order = state.orders.find(o => o.id === id);
+        if (order && order.status === 'DONE') {
+          // Celebration removed from staff side — kept on customer receipt only
+        }
+      }
+    });
+
+    prevActiveIdsRef.current = currentIds;
+  }, [activeOrders, state.orders]);
+
+  
 
   // Completed orders
   const completedOrders = useMemo(() => {
@@ -97,7 +117,7 @@ export default function BoardView() {
                 <OrderCard
                   order={order}
                   compact={false}
-                  showAdvanceButton={order.status !== 'PENDING_VERIFICATION' && order.status !== 'DONE'}
+                  showAdvanceButton={order.status !== 'PENDING_VERIFICATION' && order.status !== 'DONE' && order.status !== 'DISPATCH' && order.status !== 'DELIVERING'}
                   onAdvance={advanceOrderStatus}
                   showClaimButton={order.status === 'READY' && !order.assignedTo && order.deliveryType === 'delivery'}
                   onClaim={claimDelivery}
@@ -130,6 +150,7 @@ export default function BoardView() {
           </div>
         )}
       </div>
+
 
     </div>
   );

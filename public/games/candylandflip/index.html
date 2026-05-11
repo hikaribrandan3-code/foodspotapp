@@ -29,6 +29,22 @@ const PU_META={shield:{col:'#00BFFF',icon:'🛡',label:'SHIELD'},magnet:{col:'#C
 const HYPE=[{at:100,msg:'sheesh you cookin 🔥'},{at:250,msg:'LOCK IN!! 🔒'},{at:450,msg:'aura farming rn 💅'},{at:700,msg:'you the GOAT fr 🐐'},{at:1000,msg:'TRANSCENDED 🌌'}];
 const AURA=[{min:0,label:'NPC Energy',emoji:'🌀',col:'iridescent'},{min:60,label:'Mild Rizz',emoji:'😐',col:'#AAAAFF'},{min:180,label:'Lowkey Valid',emoji:'👀',col:'#00FF88'},{min:350,label:'Certified Cooked',emoji:'🔥',col:'#FF6B00'},{min:550,label:'SHEESH Tier',emoji:'😤',col:'#FF0080'},{min:800,label:'Aura Farmer',emoji:'💅',col:'#AA00FF'},{min:1100,label:'THE GOAT',emoji:'🐐',col:'#FFD700'}];
 
+// ── HAPTICS ──
+const Haptics={
+  lastFrame:0,minGap:4,
+  _now(){return typeof frameNum!=='undefined'?frameNum:0;},
+  canFire(){return this._now()-this.lastFrame>=this.minGap;},
+  fire(pat,force){
+    if(!navigator.vibrate)return;
+    if(!force&&!this.canFire())return;
+    this.lastFrame=this._now();
+    try{navigator.vibrate(pat);}catch(e){}
+  },
+  flip:12,coin:15,powerup:25,shieldBreak:40,combo:30,
+  fever:[30,15,30],countTick:20,countGo:35,
+  death:[50,30,50,30,100],newBest:[25,10,25,10,50]
+};
+
 const canvas=document.getElementById('gameCanvas');
 // HB Audio Unlock
 (function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}canvas.addEventListener('touchstart',unlock,{passive:true,once:true});canvas.addEventListener('mousedown',unlock,{once:true});canvas.addEventListener('click',unlock,{once:true});})();
@@ -249,22 +265,22 @@ function update(dt){
   if(multi2Active){multi2Timer-=dt;if(multi2Timer<=0)multi2Active=false;}
   if(feverActive){feverTimer-=dt;feverColor=(feverColor+0.008)%1;if(feverTimer<=0)feverActive=false;}
   const fc=Math.floor(score/C.FEVER_EVERY);
-  if(!feverActive&&fc>Math.floor((score-C.SCORE_INC*(dt/16.67)*fm)/C.FEVER_EVERY)&&fc>0){feverActive=true;feverTimer=C.FEVER_DUR;buildSpeedLines();sfxFever();addPopup('🔥 FEVER MODE 🔥',C.W/2,C.H/2-40,'#FF6B00',1.3);}
+  if(!feverActive&&fc>Math.floor((score-C.SCORE_INC*(dt/16.67)*fm)/C.FEVER_EVERY)&&fc>0){feverActive=true;feverTimer=C.FEVER_DUR;buildSpeedLines();sfxFever();Haptics.fire(Haptics.fever,true);addPopup('🔥 FEVER MODE 🔥',C.W/2,C.H/2-40,'#FF6B00',1.3);}
   if(nextHypeIdx<HYPE.length&&score>=HYPE[nextHypeIdx].at&&(gameTime-lastHypeTime)>4000){addPopup(HYPE[nextHypeIdx].msg,C.W/2,C.H/2,'#FFFFFF',1.1);lastHypeTime=gameTime;nextHypeIdx++;}
   squishX+=(1-squishX)*0.22;squishY+=(1-squishY)*0.22;
   spawnRow();updateBgObjs();
   const spd=speed*fs*ss;
   for(let i=obstacles.length-1;i>=0;i--){
     obstacles[i].x-=spd;
-    if(!obstacles[i].counted&&obstacles[i].x+obstacles[i].w<C.PLAYER_X){obstacles[i].counted=true;comboCount++;comboDisplay=comboCount;if(comboCount>0&&comboCount%C.COMBO_MILESTONE===0){const bonus=comboCount*5;score+=bonus*fm;sfxCombo();addPopup(`${comboCount}× COMBO! +${bonus}`,C.W/2,C.H/2-30,'#FFE44E',1.3);}}
+    if(!obstacles[i].counted&&obstacles[i].x+obstacles[i].w<C.PLAYER_X){obstacles[i].counted=true;comboCount++;comboDisplay=comboCount;if(comboCount>0&&comboCount%C.COMBO_MILESTONE===0){const bonus=comboCount*5;score+=bonus*fm;sfxCombo();Haptics.fire(Haptics.combo,true);addPopup(`${comboCount}× COMBO! +${bonus}`,C.W/2,C.H/2-30,'#FFE44E',1.3);}}
     if(obstacles[i].x+obstacles[i].w<0)obstacles.splice(i,1);
   }
   for(const cn of coins){if(!cn.collected){if(magnetActive){const dx=C.PLAYER_X+C.PLAYER_SIZE/2-cn.x,dy=playerY+C.PLAYER_SIZE/2-cn.y;if(Math.sqrt(dx*dx+dy*dy)<C.MAGNET_R){cn.x+=dx*0.12;cn.y+=dy*0.12;}}cn.x-=spd;cn.spin+=0.08;}}
   for(let i=coins.length-1;i>=0;i--){coins[i].life-=dt/2000;if(coins[i].x+9<0||coins[i].life<=0)coins.splice(i,1);}
   for(let i=powerups.length-1;i>=0;i--){powerups[i].x-=spd;powerups[i].spin+=0.05;if(powerups[i].x<-20)powerups.splice(i,1);}
-  for(const cn of coins){if(!cn.collected){const dx=C.PLAYER_X+C.PLAYER_SIZE/2-cn.x,dy=playerY+C.PLAYER_SIZE/2-cn.y;if(Math.sqrt(dx*dx+dy*dy)<9+C.PLAYER_SIZE/2){cn.collected=true;cn.life=-1;score+=10*fm;sfxCoin();addFlare(cn.x,cn.y);spawnParticles(cn.x,cn.y,8,['#FFD700','#FFECB3','#FFA500'],3,25);addPopup(multi2Active?'+20':'+10',cn.x,cn.y-12,'#FFD700');}}}
-  for(let i=powerups.length-1;i>=0;i--){const pu=powerups[i];const dx=C.PLAYER_X+C.PLAYER_SIZE/2-pu.x,dy=playerY+C.PLAYER_SIZE/2-pu.y;if(Math.sqrt(dx*dx+dy*dy)<pu.r+C.PLAYER_SIZE/2){const m=PU_META[pu.type];if(pu.type==='shield'){shieldActive=true;shieldTimer=C.SHIELD_DUR;}if(pu.type==='magnet'){magnetActive=true;magnetTimer=C.MAGNET_DUR;}if(pu.type==='slowmo'){slowmoActive=true;slowmoTimer=C.SLOWMO_DUR;sfxSlowmo();}if(pu.type==='multi2'){multi2Active=true;multi2Timer=C.MULTI2_DUR;sfxMulti();}addPopup(m.icon+' '+m.label+'!',C.W/2,C.H/2-10,m.col,1.15);spawnParticles(pu.x,pu.y,12,CANDY_COLS,3,30);powerups.splice(i,1);}}
-  if(checkCollision()){if(shieldActive){shieldActive=false;shieldTimer=0;sfxShield();flashFrames=8;chromaFrames=10;spawnParticles(C.PLAYER_X+C.PLAYER_SIZE/2,playerY+C.PLAYER_SIZE/2,16,['#00BFFF','#FFFFFF'],4,40);addPopup('🛡 BLOCKED!',C.PLAYER_X+30,playerY-10,'#00BFFF',1.1);}else triggerDeath();}
+  for(const cn of coins){if(!cn.collected){const dx=C.PLAYER_X+C.PLAYER_SIZE/2-cn.x,dy=playerY+C.PLAYER_SIZE/2-cn.y;if(Math.sqrt(dx*dx+dy*dy)<9+C.PLAYER_SIZE/2){cn.collected=true;cn.life=-1;score+=10*fm;sfxCoin();Haptics.fire(Haptics.coin);addFlare(cn.x,cn.y);spawnParticles(cn.x,cn.y,8,['#FFD700','#FFECB3','#FFA500'],3,25);addPopup(multi2Active?'+20':'+10',cn.x,cn.y-12,'#FFD700');}}}
+  for(let i=powerups.length-1;i>=0;i--){const pu=powerups[i];const dx=C.PLAYER_X+C.PLAYER_SIZE/2-pu.x,dy=playerY+C.PLAYER_SIZE/2-pu.y;if(Math.sqrt(dx*dx+dy*dy)<pu.r+C.PLAYER_SIZE/2){const m=PU_META[pu.type];if(pu.type==='shield'){shieldActive=true;shieldTimer=C.SHIELD_DUR;}if(pu.type==='magnet'){magnetActive=true;magnetTimer=C.MAGNET_DUR;}if(pu.type==='slowmo'){slowmoActive=true;slowmoTimer=C.SLOWMO_DUR;sfxSlowmo();}if(pu.type==='multi2'){multi2Active=true;multi2Timer=C.MULTI2_DUR;sfxMulti();}Haptics.fire(Haptics.powerup);addPopup(m.icon+' '+m.label+'!',C.W/2,C.H/2-10,m.col,1.15);spawnParticles(pu.x,pu.y,12,CANDY_COLS,3,30);powerups.splice(i,1);}}
+  if(checkCollision()){if(shieldActive){shieldActive=false;shieldTimer=0;sfxShield();Haptics.fire(Haptics.shieldBreak,true);flashFrames=8;chromaFrames=10;spawnParticles(C.PLAYER_X+C.PLAYER_SIZE/2,playerY+C.PLAYER_SIZE/2,16,['#00BFFF','#FFFFFF'],4,40);addPopup('🛡 BLOCKED!',C.PLAYER_X+30,playerY-10,'#00BFFF',1.1);}else triggerDeath();}
   speed=Math.min(C.MAX_SPEED,speed+C.SPEED_INC);spawnInt=Math.max(C.MIN_SPAWN,spawnInt-C.SPAWN_DEC);
   updateParticles();updatePopups();
   if(flashFrames>0)flashFrames--;if(chromaFrames>0)chromaFrames--;
@@ -273,7 +289,7 @@ function update(dt){
 function checkCollision(){const px=C.PLAYER_X+3,py=playerY+3,pw=C.PLAYER_SIZE-6,ph=C.PLAYER_SIZE-6;for(const o of obstacles){if(px<o.x+o.w&&px+pw>o.x&&py<o.y+o.h&&py+ph>o.y)return true;}return false;}
 
 function triggerDeath(){
-  state=GS.DYING;deathTimer=C.DEATH_DUR;deathShake=18;stopMusic();sfxOver();
+  state=GS.DYING;deathTimer=C.DEATH_DUR;deathShake=18;stopMusic();sfxOver();Haptics.fire(Haptics.death,true);
   spawnDeathBurst(C.PLAYER_X+C.PLAYER_SIZE/2,playerY+C.PLAYER_SIZE/2);
   flashFrames=12;
   if(score>hiScore){hiScore=score;saveHiScore();}
@@ -282,7 +298,7 @@ function triggerDeath(){
 function flip(){
   if(state!==GS.PLAY)return;
   gravDown=!gravDown;playerY=gravDown?floorY-C.PLAYER_SIZE:ceilingY;
-  sfxFlip();squishX=1.45;squishY=0.58;
+  Haptics.fire(Haptics.flip);sfxFlip();squishX=1.45;squishY=0.58;
   spawnParticles(C.PLAYER_X+C.PLAYER_SIZE/2,playerY+C.PLAYER_SIZE/2,10,CANDY_COLS,4,20);
   addPopup(gravDown?'FLIP! ↓':'FLIP! ↑',C.PLAYER_X+60,playerY+(gravDown?-12:C.PLAYER_SIZE+16),'#FFFFFF');
 }
@@ -292,9 +308,9 @@ function startCount(){
   tickCountAnim(3);
   countTimer=setInterval(()=>{
     countVal--;
-    if(countVal>0){sfxCount();tickCountAnim(countVal);}
+    if(countVal>0){sfxCount();Haptics.fire(Haptics.countTick);tickCountAnim(countVal);}
     else{
-      tickCountAnim(0);sfxStart();
+      tickCountAnim(0);sfxStart();Haptics.fire(Haptics.countGo,true);
       setTimeout(()=>{
         clearInterval(countTimer);countTimer=null;
         countParticles=[];countPhase=0;countFlash=0;
@@ -919,6 +935,7 @@ function drawOverScreen(){
   if(overIsNewBest&&overTimer>0.55){
     const t2=ease((overTimer-0.55)/0.35);
     const nbScale=overTimer<0.9?easeBack(Math.max(0,(overTimer-0.55)/0.35)):1;
+    if(overTimer<0.6)Haptics.fire(Haptics.newBest,true);
     const spin=Math.sin(overTimer*4)*0.04;
     ctx.save();ctx.globalAlpha=t2;ctx.translate(cx,cy+8);ctx.scale(nbScale,nbScale);ctx.rotate(spin);
     // golden frame

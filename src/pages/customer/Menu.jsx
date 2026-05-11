@@ -8,7 +8,7 @@ import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
 import ItemCard from '../../components/ItemCard'
-import DetailedMenuItemCard from '../../components/DetailedMenuItemCard'
+import ItemDetailModal from '../../components/ItemDetailModal'
 
 // Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
 function parseHeroUrl(heroUrl) {
@@ -177,29 +177,65 @@ export default function Menu({ config: configProp }) {
         localStorage.setItem(`fs_menu_display_mode_${tenantSlug}`, newMode)
     }
 
+    // MODAL STATE
+    const [selectedItem, setSelectedItem] = useState(null)
+
     // =========================================================================
     // 1. DATA STATE (With Seed Fallback)
     // =========================================================================
     const [menu, setMenu] = useState({ categories: [] })
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
-    // Helper: Group items by category
-    const groupItemsByCategory = (items) => {
+    // Helper: Group items by category (with category mapping)
+    const groupItemsByCategory = (items, categoryList = [], menuDataCategories = []) => {
+        // Build a map of category_id -> category info from DB categories
+        const categoryMap = {}
+        categoryList.forEach(cat => { categoryMap[cat.id] = cat })
+
+        // Also build a fallback map from menu_data JSONB (handles RLS-blocked categories table)
+        const fallbackNameMap = {}
+        const fallbackSortMap = {}
+        menuDataCategories.forEach((cat, idx) => {
+            if (cat.id) fallbackNameMap[cat.id] = cat.name
+            if (cat.name) fallbackNameMap[`name:${cat.name}`] = cat.name
+            fallbackSortMap[cat.id || cat.name] = cat.sort_order ?? idx
+        })
+
         const grouped = {}
         items.forEach(item => {
-            const catName = item.category_name || 'Otros'
+            // Priority: DB category map -> JSONB fallback -> item.category_name -> 'Otros'
+            const dbCat = categoryMap[item.category_id]
+            const fallbackName = fallbackNameMap[item.category_id] || fallbackNameMap[`name:${item.category_name}`]
+            const catName = (dbCat?.name) || fallbackName || item.category_name || 'Otros'
+            const catId = dbCat?.id || item.category_id || `cat-${catName.toLowerCase().replace(/\s+/g, '-')}`
+            const sortOrder = dbCat?.sort_order ?? fallbackSortMap[item.category_id] ?? fallbackSortMap[catName] ?? 999
+
             if (!grouped[catName]) {
-                grouped[catName] = { id: `cat-${catName.toLowerCase().replace(' ', '-')}`, name: catName, icon: '🍽️', items: [] }
+                grouped[catName] = {
+                    id: catId,
+                    name: catName,
+                    icon: dbCat?.icon || '🍽️',
+                    sort_order: sortOrder,
+                    items: []
+                }
             }
             grouped[catName].items.push({
                 id: item.id,
                 name: item.name,
                 price: item.price,
                 image: item.image_url || item.image,
-                available: item.available !== false
+                available: item.available !== false,
+                description: item.description || '',
+                calories: item.calories || item.kcal || 0,
+                is_vegan: item.is_vegan || false,
+                is_gluten_free: item.is_gluten_free || false,
+                is_spicy: item.is_spicy || false,
+                featured: item.featured || false
             })
         })
-        return Object.values(grouped)
+
+        // Return in the same order as backend categories (sort_order)
+        return Object.values(grouped).sort((a, b) => (a.sort_order - b.sort_order))
     }
 
     useEffect(() => {
@@ -208,31 +244,30 @@ export default function Menu({ config: configProp }) {
 
         const fetchMenu = async () => {
             try {
-                // PRIMARY: Use JSONB menu_data from tenantData (has all categories + images)
-                if (tenantData?.menu_data && tenantData.menu_data.categories?.length > 0) {
-                    console.log('[Menu] ✅ Loading from JSONB:', tenantData.menu_data.categories.length, 'categories')
+                // PRIMARY: Always fetch fresh relational data to match backend MenuManager
+                const [{ data: items, error: itemsError }, { data: categories, error: catError }] = await Promise.all([
+                    supabase.from('menu_items').select('*').eq('business_id', businessId).limit(200),
+                    supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
+                ])
+
+                if (itemsError) {
+                    console.log('[Menu] ⚠️ items error:', itemsError.message)
+                }
+                if (catError) {
+                    console.log('[Menu] ⚠️ categories error:', catError.message)
+                }
+
+                if (items && items.length > 0) {
+                    console.log('[Menu] ☁️ Fresh DB load:', items.length, 'items', (categories?.length || 0), 'DB categories +', (tenantData?.menu_data?.categories?.length || 0), 'JSONB categories')
+                    const grouped = groupItemsByCategory(items, categories || [], tenantData?.menu_data?.categories || [])
+                    setMenu({ categories: grouped })
+                } else if (tenantData?.menu_data?.categories?.length > 0) {
+                    // Fallback to JSONB only if no items in DB
+                    console.log('[Menu] ✅ Fallback to JSONB:', tenantData.menu_data.categories.length, 'categories')
                     setMenu(tenantData.menu_data)
                 } else {
-                    // FALLBACK: Try relational menu_items table
-                    console.log('[Menu] 🔄 No JSONB data, checking menu_items table...')
-                    const { data: items, error } = await supabase
-                        .from('menu_items')
-                        .select('*')
-                        .eq('business_id', businessId)
-                        .limit(100)
-
-                    if (error) {
-                        console.log('[Menu] ⚠️ DB Error:', error.message)
-                    }
-
-                    if (items && items.length > 0) {
-                        console.log('[Menu] ☁️ Loading from menu_items table:', items.length, 'items')
-                        const grouped = groupItemsByCategory(items)
-                        setMenu({ categories: grouped })
-                    } else {
-                        console.log('[Menu] ⚠️ No menu items found for this business')
-                        setMenu({ categories: [] })
-                    }
+                    console.log('[Menu] ⚠️ No menu items found for this business')
+                    setMenu({ categories: [] })
                 }
             } catch (err) {
                 console.error('[Menu] ❌ Fetch error:', err)
@@ -242,7 +277,7 @@ export default function Menu({ config: configProp }) {
         }
 
         fetchMenu()
-    }, [tenantLoaded, businessId, tenantData?.menu_data])
+    }, [tenantLoaded, businessId])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)
@@ -377,8 +412,9 @@ export default function Menu({ config: configProp }) {
     }
 
     const getItemImage = (item) => {
-        if (item.image && !item.image.startsWith('blob:')) {
-            return getOptimizedImageUrl(item.image, { width: 400, quality: 75, format: 'webp' })
+        const itemImage = item.image || item.image_url
+        if (itemImage && !itemImage.startsWith('blob:')) {
+            return getOptimizedImageUrl(itemImage, { width: 400, quality: 75, format: 'webp' })
         }
         return `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80`
     }
@@ -674,20 +710,20 @@ export default function Menu({ config: configProp }) {
     const enabledCategories = visibleCategories.filter(c => c.items?.length > 0)
     const hasCartItems = cart?.items?.length > 0
 
-    // ⚡ INSTANT ADD (Legacy Dec 19 Logic)
+    // ⚡ OPEN MODAL (Tapped item selection)
     const handleTapToAdd = (item) => {
         if (isEditMode) return
         if (!item.available) return
+        setSelectedItem(item)
+    }
 
-        // 1. Add to cart instantly
-        addToCart(item, 1, [])
-
-        // 2. Visual Feedback (Tactile Scale)
+    // MODAL ADD TO CART HANDLER
+    const handleModalAddToCart = (item, quantity) => {
+        addToCart(item, quantity, [])
         setAddedItem(item.id)
         setTimeout(() => setAddedItem(null), 150)
-
-        // 3. Haptic Feedback
         if (navigator.vibrate) navigator.vibrate(5)
+        setSelectedItem(null)
     }
 
     return (
@@ -779,17 +815,23 @@ export default function Menu({ config: configProp }) {
             })()} */}
 
             {/* Category Rail (Sticky) - RESTORED */}
-            {enabledCategories.length > 1 && (
+            {enabledCategories.length > 0 && (
                 <div style={{
-                    position: 'sticky', top: 52, zIndex: 900, background: 'rgba(255,255,255,0.95)',
-                    backdropFilter: 'blur(8px)', padding: '8px 0', margin: '0 0 16px 0', borderBottom: '1px solid rgba(0,0,0,0.05)'
+                    position: 'sticky', top: 0, zIndex: 30, background: 'rgba(255,255,255,0.95)',
+                    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                    padding: '10px 0', margin: '0 0 12px 0', borderBottom: '1px solid rgba(0,0,0,0.06)'
                 }}>
-                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 8px', scrollbarWidth: 'none' }}>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 12px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
                         {enabledCategories.map(cat => (
                             <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
-                                padding: '7px 15px', borderRadius: 18, border: activeCategory === cat.id ? 'none' : '1px solid #E5E7EB',
-                                background: activeCategory === cat.id ? '#111827' : 'white', color: activeCategory === cat.id ? 'white' : '#374151',
-                                fontWeight: 600, fontSize: 14, flexShrink: 0, boxShadow: activeCategory === cat.id ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
+                                padding: '8px 16px', borderRadius: 20,
+                                border: activeCategory === cat.id ? '1.5px solid #111827' : '1px solid #E5E7EB',
+                                background: activeCategory === cat.id ? '#111827' : 'white',
+                                color: activeCategory === cat.id ? 'white' : '#374151',
+                                fontWeight: 600, fontSize: 13, flexShrink: 0,
+                                boxShadow: activeCategory === cat.id ? '0 2px 8px rgba(0,0,0,0.15)' : '0 1px 2px rgba(0,0,0,0.04)',
+                                transition: 'all 0.15s ease',
+                                whiteSpace: 'nowrap'
                             }}>{cat.name}</button>
                         ))}
                     </div>
@@ -800,40 +842,14 @@ export default function Menu({ config: configProp }) {
             <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (
                     <div key={category.id} ref={el => categoryRefs.current[category.id] = el} data-category-id={category.id} style={{ marginBottom: 24 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827' }}>{category.name}</h3>
-                            {category === enabledCategories[0] && (
-                                <button
-                                    onClick={handleToggleMode}
-                                    style={{
-                                        fontSize: 11,
-                                        fontWeight: 600,
-                                        padding: '6px 12px',
-                                        border: '1px solid #D1D5DB',
-                                        background: 'white',
-                                        borderRadius: 6,
-                                        cursor: 'pointer',
-                                        color: '#374151',
-                                        textTransform: 'capitalize'
-                                    }}
-                                >
-                                    {displayMode === 'simple' ? 'Simple | Detailed' : 'Detailed | Simple'}
-                                </button>
-                            )}
-                        </div>
-                        <div style={{ display: displayMode === 'detailed' ? 'grid' : 'grid', gridTemplateColumns: displayMode === 'detailed' ? 'minmax(280px, 1fr)' : 'repeat(3, 1fr)', gap: displayMode === 'detailed' ? 16 : 12 }}>
+                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#111827', marginBottom: 12 }}>{category.name}</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                             {category.items.map((item, index) => {
                                 // 🛡️ PHYSICS VISUALS: Green Frame & Ghost Opacity
                                 const isDragging = dragState?.itemId === item.id
                                 const isPlaceholder = dragState?.categoryId === category.id && dragState?.targetIndex === index && !isDragging
 
-                                return displayMode === 'detailed' ? (
-                                    <DetailedMenuItemCard
-                                        key={item.id}
-                                        item={item}
-                                        onAddToCart={handleTapToAdd}
-                                    />
-                                ) : (
+                                return (
                                     <ItemCard
                                         key={item.id}
                                         item={item}
@@ -855,6 +871,14 @@ export default function Menu({ config: configProp }) {
                     </div>
                 ))}
             </div>
+
+            {/* Item Detail Modal */}
+            <ItemDetailModal
+                item={selectedItem}
+                isOpen={!!selectedItem}
+                onClose={() => setSelectedItem(null)}
+                onAddToCart={handleModalAddToCart}
+            />
 
             {/* 🛒 INTERACTIVE MINI-CART (Legacy Receipt Style) */}
             {hasCartItems && !isEditMode && (

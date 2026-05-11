@@ -54,25 +54,34 @@ export default function Receipt() {
     }
 
     fetchOrder()
-  }, [orderId])
 
-  const calculateETA = () => {
-    if (!order?.distance_km) return '30-45 min'
-    const mins = Math.round(order.distance_km * 5)
-    const eta = new Date(Date.now() + mins * 60000)
-    return `${mins} min (${eta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
-  }
+    // Realtime subscription to update order status after delivery
+    const channel = supabase
+      .channel(`receipt-${orderId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` },
+        (payload) => {
+          setOrder(payload.new)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [orderId])
 
   const isCash = order?.payment_method === 'cash'
   const isMp = order?.payment_method === 'mercado_pago'
-  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased'
+  const isDelivered = order?.status === 'delivered'
+  const isDeliveredCash = isDelivered && isCash
+  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased' || isDelivered
   const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
-  const paymentFailed = !isPaid && !isPending && !isCash
+  const paymentFailed = !isPaid && !isPending && !isCash && !isDelivered
 
   // Use actual order type from database, fallback to inferring from delivery address
   const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
-  // For pickup/takeout, use instant trigger (5s); for dine-in use 2s; for delivery use variants (45-90s)
-  const finalDelayVariant = orderType === 'takeout' ? 5000 : orderType === 'dine_in' ? dineinDelayVariant : delayVariant
+  // Flat 1s delay for all order types — banner appears 1s after delivery
+  const finalDelayVariant = 1000
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
@@ -108,7 +117,7 @@ export default function Receipt() {
               {paymentFailed ? <AlertCircle size={32} style={{ color: '#EF4444' }} /> : isPaid ? <CheckCircle size={32} style={{ color: '#10B981' }} /> : <Clock size={32} style={{ color: '#F97316' }} />}
             </div>
             <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-              {paymentFailed ? 'Pago fallido' : isPaid ? 'Order Confirmed!' : 'Confirmando pago...'}
+              {isDelivered ? 'Pedido entregado ✓' : paymentFailed ? 'Pago fallido' : isPaid ? 'Order Confirmed!' : 'Confirmando pago...'}
             </h1>
             <p style={{ color: '#6B7280', fontSize: 14 }}>
               #{order.order_number ? String(order.order_number).padStart(3, '0') : order.id.slice(0, 8).toUpperCase()}
@@ -116,28 +125,19 @@ export default function Receipt() {
           </div>
 
           {/* Payment Status */}
-          <div style={{ background: isCash ? '#FFFBEB' : paymentFailed ? '#FEF2F2' : isPaid ? '#EFF6FF' : '#FFF7ED', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            {isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : paymentFailed ? <AlertCircle size={20} style={{ color: '#DC2626', marginTop: 2, flexShrink: 0 }} /> : isPaid ? <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} /> : <Clock size={20} style={{ color: '#F97316', marginTop: 2, flexShrink: 0 }} />}
+          <div style={{ background: isDeliveredCash ? '#D1FAE5' : isCash ? '#FFFBEB' : paymentFailed ? '#FEF2F2' : isPaid ? '#EFF6FF' : '#FFF7ED', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            {isDeliveredCash ? <CheckCircle size={20} style={{ color: '#10B981', marginTop: 2, flexShrink: 0 }} /> : isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : paymentFailed ? <AlertCircle size={20} style={{ color: '#DC2626', marginTop: 2, flexShrink: 0 }} /> : isPaid ? <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} /> : <Clock size={20} style={{ color: '#F97316', marginTop: 2, flexShrink: 0 }} />}
             <div>
-              <p style={{ fontWeight: 600, fontSize: 14, color: isCash ? '#D97706' : paymentFailed ? '#DC2626' : isPaid ? '#2563EB' : '#F97316' }}>
-                {isCash ? 'Efectivo en la puerta' : paymentFailed ? 'Pago fallido — Mercado Pago' : isPaid ? 'Pago confirmado — Mercado Pago' : 'Pago pendiente — Confirmando...'}
+              <p style={{ fontWeight: 600, fontSize: 14, color: isDeliveredCash ? '#10B981' : isCash ? '#D97706' : paymentFailed ? '#DC2626' : isPaid ? '#2563EB' : '#F97316' }}>
+                {isDeliveredCash ? 'Pagado ✓' : isCash ? 'Efectivo en la puerta' : paymentFailed ? 'Pago fallido — Mercado Pago' : isPaid ? 'Pago confirmado — Mercado Pago' : 'Pago pendiente — Confirmando...'}
               </p>
               <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-                {isCash ? 'Tendrás que pagar cuando llegue tu pedido' : paymentFailed ? 'Tu pago no se procesó. Intenta con otro método.' : isPaid ? 'Tu pago fue procesado correctamente' : 'Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.'}
+                {isDeliveredCash ? 'Pago en efectivo confirmado' : isCash ? 'Tendrás que pagar cuando llegue tu pedido' : paymentFailed ? 'Tu pago no se procesó. Intenta con otro método.' : isPaid ? 'Tu pago fue procesado correctamente' : 'Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.'}
               </p>
             </div>
           </div>
 
-          {/* ETA */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <Clock size={20} style={{ color: '#9CA3AF', flexShrink: 0 }} />
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Tiempo estimado de entrega</p>
-              <p style={{ fontSize: 14, color: '#6B7280' }}>{calculateETA()}</p>
-            </div>
-          </div>
-
-          {/* Delivery Address */}
+          {/* Delivery Address (no mapbox) */}
           {order.delivery_address && (
             <div style={{ background: '#fff', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <MapPin size={20} style={{ color: '#9CA3AF', marginTop: 2, flexShrink: 0 }} />
@@ -148,7 +148,6 @@ export default function Receipt() {
                     ? order.delivery_address
                     : `${order.delivery_address.street || ''} ${order.delivery_address.number || ''}`}
                 </p>
-                {order.distance_km && <p style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{Number(order.distance_km).toFixed(1)} km</p>}
               </div>
             </div>
           )}
@@ -183,7 +182,7 @@ export default function Receipt() {
           {/* Actions */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
             <button
-              onClick={() => navigate(`/${tenantSlug}/track?order_id=${order.id}`)}
+              onClick={() => navigate(`/${tenantSlug}/status?orderId=${order.id}`)}
               style={{ width: '100%', padding: '14px', background: '#10B981', color: '#fff', borderRadius: 14, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15 }}
             >
               <Truck size={18} />

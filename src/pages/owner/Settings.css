@@ -9,33 +9,44 @@
     /* Space for BottomNav */
 }
 
-/* Card Styling */
+/* Card Styling — Neomorphic Soft */
 .branding-card {
     background: #FFF;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 20px;
     margin-bottom: 16px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.04),
+        0 2px 4px -2px rgba(0, 0, 0, 0.02),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
     border: 1px solid #E2E8F0;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.branding-card:hover {
+    box-shadow:
+        0 8px 16px -4px rgba(0, 0, 0, 0.06),
+        0 4px 8px -4px rgba(0, 0, 0, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .branding-card h3 {
     margin-top: 0;
     margin-bottom: 16px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #64748B;
+    font-size: 13px;
+    font-weight: 700;
+    color: #10B981;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
 }
 
 /* INPUTS */
 .fs-input {
     width: 100%;
-    padding: 12px 16px;
+    padding: 10px 14px;
     border: 1px solid #E2E8F0;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: 10px;
+    font-size: 14px;
     color: #1E293B;
     background: #F8FAFC;
     transition: all 0.2s;
@@ -43,11 +54,16 @@
     appearance: none;
 }
 
+.fs-input:hover {
+    border-color: #A7F3D0;
+    background: #FFF;
+}
+
 .fs-input:focus {
     outline: none;
-    border-color: #3B82F6;
+    border-color: #10B981;
     background: #FFF;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
 .typo-grid {
@@ -77,7 +93,7 @@
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #E2E8F0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: #FFF;
     font-size: 14px;
     color: #1E293B;
@@ -90,7 +106,8 @@
 }
 
 .dropdown-trigger:hover {
-    border-color: #94A3B8;
+    border-color: #10B981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
 }
 
 .dropdown-trigger:active {
@@ -152,12 +169,13 @@
 }
 
 .dropdown-option.active {
-    background: #EFF6FF;
-    color: #3B82F6;
+    background: #ECFDF5;
+    color: #059669;
+    font-weight: 600;
 }
 
 .dropdown-option .check {
-    color: #3B82F6;
+    color: #10B981;
     font-weight: 600;
 }
 
@@ -225,7 +243,7 @@
 .color-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
 }
 
 .color-pillar {
@@ -243,12 +261,23 @@
 
 .native-swatch {
     width: 100%;
-    height: 44px;
+    height: 40px;
     border: 1px solid #E2E8F0;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     background: #F1F5F9;
     padding: 0;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.native-swatch:hover {
+    transform: translateY(-1px);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04), 0 4px 8px rgba(0, 0, 0, 0.06);
+}
+
+.native-swatch:active {
+    transform: translateY(0);
 }
 
 .native-swatch::-webkit-color-swatch-wrapper {
@@ -265,7 +294,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .section-header h3 {
@@ -275,8 +304,8 @@
 .mode-toggle {
     display: flex;
     background: #F1F5F9;
-    border-radius: 8px;
-    padding: 2px;
+    border-radius: 10px;
+    padding: 3px;
 }
 
 .mode-toggle button {
@@ -286,15 +315,16 @@
     font-size: 12px;
     font-weight: 500;
     color: #64748B;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .mode-toggle button.active {
     background: #FFF;
-    color: #1E293B;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: #059669;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-weight: 600;
 }
 
 .mode-row {
@@ -333,32 +363,34 @@
 }
 
 .toggle-group button.active {
-    background: #1E293B;
+    background: #10B981;
     color: white;
-    border-color: #1E293B;
+    border-color: #10B981;
 }
 
-/* INFO PILLS POLISH (Section 6) */
+/* INFO PILLS POLISH (Section 6) — Compact Neomorphic */
 .pill-swatch {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px; /* Visual Rhyme: Matches Outfit/Inter feel */
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     cursor: pointer;
     flex-shrink: 0;
-    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* Hardware-accelerated pop */
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .pill-swatch:hover {
-    transform: scale(1.05); /* Tactile pop */
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
 }
 
 .pill-input {
     width: 100%;
-    padding: 10px 14px; /* Tighter padding */
-    border: 1.5px solid #E2E8F0; /* Refined border */
-    border-radius: 10px; /* Consistent radius */
-    font-size: 13px;
+    padding: 6px 10px;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 12px;
     color: #1E293B;
     background: #F8FAFC;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -368,25 +400,26 @@
 
 .pill-input:focus {
     outline: none;
-    border-color: #3B82F6;
+    border-color: #10B981;
     background: #FFF;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }
 
 .pill-row {
     background: #FFF;
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 10px;
+    padding: 6px 8px;
     border: 1px solid #E2E8F0;
     display: flex;
-    flex-wrap: nowrap; /* Drop-Proof stability */
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 12px; /* Flexible gap */
-    transition: background-color 0.2s ease;
+    gap: 8px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .pill-row:hover {
     background: #F8FAFC;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .switch-label {
@@ -395,5 +428,5 @@
     gap: 6px;
     cursor: pointer;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
 }
