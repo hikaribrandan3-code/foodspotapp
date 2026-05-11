@@ -157,9 +157,7 @@ function Order({ config: configProp }) {
     })
 
     // Payment method
-    const [paymentMethod, setPaymentMethod] = useState(() => {
-        return PAYMENT_METHOD.CASH  // Default to cash, no MP option
-    })
+    const [paymentMethod, setPaymentMethod] = useState('cash')
     const [validationErrors, setValidationErrors] = useState([])
 
     // 🔄 PAYMENT RETRY STATE (Audit #7)
