@@ -22,7 +22,7 @@ const cv = document.getElementById('gc');
 // HB Audio Unlock
 (function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}cv.addEventListener('touchstart',unlock,{passive:true,once:true});cv.addEventListener('mousedown',unlock,{once:true});cv.addEventListener('pointerdown',unlock,{once:true});})();
 const cx = cv.getContext('2d');
-let W,H,R,NC,ROWS=16,GX,GY,CNX,CNY,SC;
+let W,H,R,NC,ROWS=16,GX,GY,CNX,CNY,SC,DEADLINE;
 
 const gradientCache=new Map();
 function buildGradientCache(){
@@ -46,6 +46,7 @@ function resize(){
   GY=Math.round(R*6.5);
   CNX=Math.round(W/2);
   CNY=Math.round(H-R*5);
+  DEADLINE=Math.round(GY+(CNY-GY)*0.76);
 }
 resize();
 window.addEventListener('resize',()=>{ resize(); buildGradientCache(); rebuildBgCache(); updPos(); calcAim(); });
@@ -90,7 +91,7 @@ const COL_BOMB={name:'bomb',c:'#FF3300',hi:'#FF7744',lo:'#AA0000',out:'#440000',
 const COL_FIREBALL={name:'fireball',c:'#FF7700',hi:'#FFCC44',lo:'#CC3300',out:'#661100',wv:'#FF9900',fc:'#330800'};
 const COL_FREEZE={name:'freeze',c:'#88EEFF',hi:'#DDFAFF',lo:'#0099CC',out:'#003366',wv:'#BBFAFF',fc:'#002244'};
 const MAX_COLORS_START=3;
-const CEILING_THRESHOLD=3; // Ceiling drops after this many consecutive misses
+const CEILING_THRESHOLD=5; // Ceiling drops after this many consecutive misses
 
 // ── LEVEL CONFIG ─────────────────────────────────────────────────
 const LEVELS=[
@@ -265,25 +266,39 @@ function drawBG(t){
 
 // ── DANGER BAR ────────────────────────────────────────────────────
 function drawDangerBar(){
-  let minY=GY; let dangerY=CNY-R*6;
-  for(let r=0;r<grid.length;r++) for(let c=0;c<grid[r].length;c++) if(grid[r][c]) minY=Math.max(minY,grid[r][c].y);
-  const danger=(minY-GY)/(dangerY-GY);
-  if(danger>.65){
-    dangerFlash=Math.min(1,(danger-.65)/.35);
-    const pulse=Math.sin(Date.now()*.008)*.5+.5;
+  let minY=GY;
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])minY=Math.max(minY,grid[r][c].y);
+  const danger=(minY-GY)/Math.max(1,DEADLINE-GY);
+
+  // Always draw subtle dead line (projectiles pass through freely)
+  const pulse=Math.sin(Date.now()*.005)*.5+.5;
+  cx.save();
+  cx.strokeStyle=`rgba(255,60,60,${0.12+pulse*.1})`;
+  cx.lineWidth=2;
+  cx.setLineDash([R*.5,R*.35]);
+  cx.lineDashOffset=-Date.now()*.015;
+  cx.beginPath();cx.moveTo(0,DEADLINE);cx.lineTo(W,DEADLINE);cx.stroke();
+  cx.setLineDash([]);
+  cx.restore();
+
+  // Danger warning only when bubbles are within 28% of the dead line
+  if(danger>.72){
+    dangerFlash=Math.min(1,(danger-.72)/.28);
+    const wp=Math.sin(Date.now()*.008)*.5+.5;
     cx.save();
-    cx.globalAlpha=dangerFlash*(0.3+pulse*.4);
-    cx.fillStyle=`rgba(255,0,0,1)`;
-    cx.fillRect(0,dangerY-R*.5,W,R);
-    cx.globalAlpha=dangerFlash*.8;
-    cx.strokeStyle='#FF0000';
-    cx.lineWidth=3+pulse*3;
-    cx.shadowColor='#FF0000'; cx.shadowBlur=6;
-    cx.beginPath(); cx.moveTo(0,dangerY); cx.lineTo(W,dangerY); cx.stroke();
-    // WARNING text
-    cx.font=`bold ${Math.round(R*.7)}px Arial Black`; cx.textAlign='center'; cx.fillStyle=`rgba(255,80,80,${dangerFlash*(0.5+pulse*.5)})`; cx.fillText('⚠ DANGER ⚠',W/2,dangerY-R*.8);
+    cx.globalAlpha=dangerFlash*(0.12+wp*.18);
+    cx.fillStyle='rgba(255,0,0,1)';
+    cx.fillRect(0,DEADLINE-R*.25,W,R*.5);
+    cx.globalAlpha=dangerFlash*(0.6+wp*.4);
+    cx.strokeStyle='#FF3333';
+    cx.lineWidth=2+wp*2;
+    cx.shadowColor='#FF0000';cx.shadowBlur=6;
+    cx.beginPath();cx.moveTo(0,DEADLINE);cx.lineTo(W,DEADLINE);cx.stroke();
+    cx.font=`bold ${Math.round(R*.55)}px Arial Black`;cx.textAlign='center';
+    cx.fillStyle=`rgba(255,80,80,${dangerFlash*(0.5+wp*.5)})`;
+    cx.fillText('DANGER',W/2,DEADLINE-R*.7);
     cx.restore();
-  } else { dangerFlash=0; }
+  }else{dangerFlash=0;}
 }
 
 // ── BOBA ─────────────────────────────────────────────────────────
@@ -1356,7 +1371,7 @@ function dropCeiling(){
   // Classic: No "survive drops" win condition - you MUST clear the board
 }
 function checkGO(){
-  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>CNY-R*3){lives--;livesAnim[lives<0?0:lives]=1.6;Haptics.fire(Haptics.lifeLost,true);if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>DEADLINE){lives--;livesAnim[lives<0?0:lives]=1.6;Haptics.fire(Haptics.lifeLost,true);if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
   return false;
 }
 function endGame(){
