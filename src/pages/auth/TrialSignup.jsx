@@ -543,7 +543,7 @@ const TrialSignup = () => {
 
   // Auth state listener for redirects
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event !== 'SIGNED_IN' || !session?.user) return
       
       const user = session.user
