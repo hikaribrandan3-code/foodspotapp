@@ -10,10 +10,10 @@
 
 import AppHeader from './AppHeader.jsx'
 
-function HeaderClamp({ config: configProp }) {
+function HeaderClamp({ config: configProp, isHomePage = false }) {
     const config = configProp || {};
     // Pass config through to AppHeader
-    return <AppHeader config={config} />
+    return <AppHeader config={config} isHomePage={isHomePage} />
 }
 
 export default HeaderClamp

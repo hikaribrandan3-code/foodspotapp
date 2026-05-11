@@ -699,7 +699,7 @@ function Home({ config: configProp }) {
                 paddingBottom: 8
             }}
         >
-            <HeaderClamp config={config} />
+            <HeaderClamp config={config} isHomePage={true} />
 
             {/* 🛎️ ACTIVE ORDER BANNER — persists even if customer closes tab */}
             {activeOrder && (

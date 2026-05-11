@@ -22,7 +22,7 @@ function getBreakpoint() {
 }
 
 // INVARIANT: config must come from prop, not getConfig()
-function AppHeader({ config: configProp }) {
+function AppHeader({ config: configProp, isHomePage = false }) {
     const { t } = useLanguage()
     const config = configProp || {};
     const canvasMode = config?.canvasMode || 'light'
@@ -80,7 +80,7 @@ function AppHeader({ config: configProp }) {
                     style={{
                         width: '100%',
                         aspectRatio: '16 / 9',
-                        maxHeight: breakpoint === 'mobile' ? 180 : undefined,
+                        maxHeight: breakpoint === 'mobile' ? (isHomePage ? 220 : 180) : undefined,
                         position: 'relative',
                         overflow: 'hidden',
                         background: '#F1F5F9' // Clean skeleton background
