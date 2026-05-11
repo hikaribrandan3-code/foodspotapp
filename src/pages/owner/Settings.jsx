@@ -86,9 +86,7 @@ const HERO_ICON_DEFS = (t) => [
 // Default values for all branding fields
 const DEFAULTS = {
     navbar: '#1F2937',
-    primary: '#B8956A',
-    secondary: '#A89070',
-    confirmation: '#22C55E',
+    confirmation: '#B8956A',
     poweredBy: '#C4856A',
     fontFamily: 'Inter',
     fontWeight: '600',
@@ -118,11 +116,9 @@ const Settings = () => {
         business_name: '',
         font_family: DEFAULTS.fontFamily,
         font_weight: DEFAULTS.fontWeight,
-        
+
         // Theme Colors
         navbar_color: DEFAULTS.navbar,
-        primary_color: DEFAULTS.primary,
-        secondary_color: DEFAULTS.secondary,
         confirmation_color: DEFAULTS.confirmation,
         powered_by_color: DEFAULTS.poweredBy,
         
@@ -251,8 +247,6 @@ const Settings = () => {
             font_weight: tenant.font_weight || DEFAULTS.fontWeight,
             
             navbar_color: tenant.navbar_color || DEFAULTS.navbar,
-            primary_color: tenant.primary_color || DEFAULTS.primary,
-            secondary_color: tenant.secondary_color || DEFAULTS.secondary,
             confirmation_color: tenant.confirmation_color || DEFAULTS.confirmation,
             powered_by_color: tenant.powered_by_color || DEFAULTS.poweredBy,
             
@@ -337,9 +331,7 @@ const Settings = () => {
         if (data.font_family) root.setProperty('--font-main', data.font_family);
         if (data.font_weight) root.setProperty('--font-weight-hero', data.font_weight);
         if (data.navbar_color) root.setProperty('--color-navbar-bg', data.navbar_color);
-        if (data.primary_color) root.setProperty('--color-primary', data.primary_color);
-        if (data.secondary_color) root.setProperty('--color-secondary', data.secondary_color);
-        if (data.confirmation_color) root.setProperty('--color-confirm', data.confirmation_color);
+        if (data.confirmation_color) root.setProperty('--color-primary', data.confirmation_color);
         if (data.powered_by_color) root.setProperty('--color-powered', data.powered_by_color);
     }, []);
 
@@ -515,8 +507,6 @@ const Settings = () => {
                 font_weight: draft.font_weight,
                 navbar_color: draft.navbar_color,
                 nav_icon_mode: draft.nav_icon_mode,
-                primary_color: draft.primary_color,
-                secondary_color: draft.secondary_color,
                 confirmation_color: draft.confirmation_color,
                 powered_by_color: draft.powered_by_color,
                 hero_mode: draft.hero_mode,
@@ -553,13 +543,12 @@ const Settings = () => {
             const frontendSyncData = {
                 ...savedData,
                 colors: {
-                    primary: savedData.primary_color,
-                    secondary: savedData.secondary_color,
+                    primary: savedData.confirmation_color,
                     confirmation: savedData.confirmation_color,
                     powered: savedData.powered_by_color
                 },
                 branding: {
-                    primaryColor: savedData.primary_color,
+                    primaryColor: savedData.confirmation_color,
                     navbar_color: savedData.navbar_color,
                     nav_icon_mode: savedData.nav_icon_mode,
                     fontFamily: savedData.font_family,
@@ -976,9 +965,7 @@ const Settings = () => {
                 <section className="branding-card">
                     <h3>5. {t('theme_colors')}</h3>
                     <div className="color-grid">
-                        <ColorPillar label={t('primary')} keyName="primary_color" cssVar="--color-primary" defaultValue={DEFAULTS.primary} />
-                        <ColorPillar label={t('secondary')} keyName="secondary_color" cssVar="--color-secondary" defaultValue={DEFAULTS.secondary} />
-                        <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-confirm" defaultValue={DEFAULTS.confirmation} />
+                        <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-primary" defaultValue={DEFAULTS.confirmation} />
                         <ColorPillar label={t('powered_by')} keyName="powered_by_color" cssVar="--color-powered" defaultValue={DEFAULTS.poweredBy} />
                     </div>
                 </section>

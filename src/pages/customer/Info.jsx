@@ -12,7 +12,7 @@ const Info = ({ config }) => {
 
     if (loading) return <BurgerLoader />;
 
-    const primaryColor = tenantData?.primary_color || '#DB0007';
+    const primaryColor = tenantData?.confirmation_color || '#DB0007';
     const whatsapp = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.business_info?.whatsapp || tenantData?.whatsapp || '';
     const address = tenantData?.address_label || tenantData?.app_config?.businessInfo?.address || tenantData?.address || '';
     const rawMapsUrl = tenantData?.google_maps_url || tenantData?.app_config?.businessInfo?.googleMapsLink || '';
@@ -194,11 +194,11 @@ const Info = ({ config }) => {
 
                 {/* 4. FOOTER */}
                 <div style={{ marginTop: '28px', marginBottom: 'auto' }}>
-                    <p style={{ color: '#000', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                    <p style={{ color: config?.colors?.powered || '#C4856A', fontSize: '1rem', fontWeight: 'bold', marginBottom: '8px' }}>
                         {t('powered_by')}
                     </p>
                     <a href="https://www.instagram.com/foodspotmobile?igsh=MXgxcDlvcGFtbW93Yw==" target="_blank" rel="noopener noreferrer"
-                        style={{ color: config?.branding?.poweredByColor || '#C4856A', fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.05em', textDecoration: 'none', cursor: 'pointer' }}>
+                        style={{ color: config?.colors?.powered || '#C4856A', fontSize: '1.85rem', fontWeight: '800', letterSpacing: '-0.05em', textDecoration: 'none', cursor: 'pointer' }}>
                         FoodSpot OS
                     </a>
                 </div>

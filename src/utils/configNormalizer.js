@@ -129,11 +129,10 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
             baseConfig?.homeConfig ||
             defaultConfig.homeConfig,
 
-        // Branding Colors (The Big 4)
+        // Branding Colors (Confirmation + Powered By)
         colors: {
             ...(baseConfig?.colors || defaultConfig.colors),
-            primary: tenantData.primary_color,
-            secondary: tenantData.secondary_color,
+            primary: tenantData.confirmation_color,
             confirmation: tenantData.confirmation_color,
             powered: tenantData.powered_by_color
         }
