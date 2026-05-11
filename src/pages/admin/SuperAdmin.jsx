@@ -342,7 +342,7 @@ function SuperAdmin({ config: configProp }) {
         // Map local field names to Supabase column names
         const columnMap = {
             businessName: 'business_name',
-            primaryColor: 'primary_color',
+            primaryColor: 'confirmation_color',
             fontFamily: 'font_family',
             fontWeight: 'font_weight',
             mercadoPagoAccessToken: 'mp_access_token'

@@ -123,7 +123,7 @@ function App() {
                 },
                 branding: {
                     ...(tenantData.app_config.branding || {}),
-                    primaryColor: tenantData.primary_color || tenantData.app_config.branding?.primaryColor,
+                    primaryColor: tenantData.confirmation_color || tenantData.app_config.branding?.primaryColor,
                     navbar_color: tenantData.navbar_color || tenantData.app_config.branding?.navbar_color,
                     nav_icon_mode: tenantData.nav_icon_mode || tenantData.app_config.branding?.nav_icon_mode
                 }
@@ -158,8 +158,7 @@ function App() {
                 colors: {
                     ...config.colors,
                     ...(cloudAppConfig.colors || {}),
-                    primary: tenantData.colors?.primary || cloudAppConfig.colors?.primary || tenantData.primary_color || config.colors?.primary,
-                    secondary: tenantData.colors?.secondary || cloudAppConfig.colors?.secondary || tenantData.secondary_color || config.colors?.secondary,
+                    primary: tenantData.colors?.primary || cloudAppConfig.colors?.primary || tenantData.confirmation_color || config.colors?.primary,
                     confirmation: tenantData.colors?.confirmation || cloudAppConfig.colors?.confirmation || tenantData.confirmation_color || config.colors?.confirmation,
                     powered: tenantData.colors?.powered || cloudAppConfig.colors?.powered || tenantData.powered_by_color || config.colors?.powered
                 },
@@ -288,8 +287,6 @@ function App() {
 
         const c = config.colors || {};
         root.style.setProperty('--color-primary', c.primary || '#8B7355');
-        root.style.setProperty('--color-secondary', c.secondary || '#A89070');
-        root.style.setProperty('--color-confirm', c.confirmation || '#22C55E');
         root.style.setProperty('--color-powered', c.powered || '#C4856A');
 
         root.style.setProperty('--nav-primary-color', config.branding?.primaryColor || '#8B7355');
@@ -406,7 +403,7 @@ function App() {
         try {
             const { data: cloudBranding } = await getBranding(businessId);
             if (cloudBranding) {
-                setConfig({ ...localConfig, branding: { ...localConfig.branding, primaryColor: cloudBranding.primary_color || localConfig.branding?.primaryColor }, colors: { ...localConfig.colors, primary: cloudBranding.primary_color || localConfig.colors?.primary, secondary: cloudBranding.secondary_color || localConfig.colors?.secondary }, headerCover: cloudBranding.hero_url ? { ...localConfig.headerCover, ...parseHeroUrl(cloudBranding.hero_url) } : localConfig.headerCover, logo: cloudBranding.logo_url || localConfig.logo });
+                setConfig({ ...localConfig, branding: { ...localConfig.branding, primaryColor: cloudBranding.confirmation_color || localConfig.branding?.primaryColor }, colors: { ...localConfig.colors, primary: cloudBranding.confirmation_color || localConfig.colors?.primary }, headerCover: cloudBranding.hero_url ? { ...localConfig.headerCover, ...parseHeroUrl(cloudBranding.hero_url) } : localConfig.headerCover, logo: cloudBranding.logo_url || localConfig.logo });
             } else if (localConfig) { setConfig(localConfig); }
         } catch (err) { console.warn('[Supabase] Refresh failed', err); if (localConfig) setConfig(localConfig); }
         setOrders(getOrders());

@@ -113,7 +113,7 @@ function Session({ config }) {
                         onClick={() => navigate(`/${tenantSlug}/menu`)}
                         style={{
                             padding: '14px 24px',
-                            background: tenantData?.primary_color || '#C4856A',
+                            background: tenantData?.confirmation_color || '#C4856A',
                             color: 'white',
                             border: 'none',
                             borderRadius: 12,
@@ -172,7 +172,7 @@ function Session({ config }) {
                                 onClick={() => copyToClipboard(sessionUrl)}
                                 style={{
                                     padding: 12,
-                                    background: tenantData?.primary_color || '#C4856A',
+                                    background: tenantData?.confirmation_color || '#C4856A',
                                     border: 'none',
                                     borderRadius: 12,
                                     cursor: 'pointer',
@@ -216,7 +216,7 @@ function Session({ config }) {
                             style={{
                                 flex: 1,
                                 padding: 16,
-                                background: tenantData?.primary_color || '#C4856A',
+                                background: tenantData?.confirmation_color || '#C4856A',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: 14,
@@ -333,7 +333,7 @@ function Session({ config }) {
                         style={{
                             width: '100%',
                             padding: 16,
-                            background: tenantData?.primary_color || '#C4856A',
+                            background: tenantData?.confirmation_color || '#C4856A',
                             color: 'white',
                             border: 'none',
                             borderRadius: 14,

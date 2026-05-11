@@ -679,7 +679,7 @@ function Order({ config: configProp }) {
                                             onClick={() => setOrderType(mode.id)}
                                             style={{
                                                 flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
-                                                background: orderType === mode.id ? (tenantData?.primary_color || '#C4856A') : '#F3F4F6',
+                                                background: orderType === mode.id ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
                                                 color: orderType === mode.id ? 'white' : '#4B5563',
                                                 fontWeight: 600, fontSize: 13, cursor: 'pointer',
                                                 transition: 'all 0.15s'
@@ -935,7 +935,7 @@ function Order({ config: configProp }) {
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, alignItems: 'flex-end' }}>
                             <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>Total</span>
-                            <span style={{ fontSize: 24, fontWeight: 800, color: tenantData?.primary_color || '#C4856A' }}>{formatPrice(total)}</span>
+                            <span style={{ fontSize: 24, fontWeight: 800, color: tenantData?.confirmation_color || '#C4856A' }}>{formatPrice(total)}</span>
                         </div>
                     </div>
                 </div>
@@ -957,7 +957,7 @@ function Order({ config: configProp }) {
                     disabled={isSubmitting || config.pauseOrders || isOutOfRadius}
                     style={{
                         width: '100%', padding: 18,
-                        background: isOutOfRadius ? '#EF4444' : (tenantData?.primary_color || '#C4856A'),
+                        background: isOutOfRadius ? '#EF4444' : (tenantData?.confirmation_color || '#C4856A'),
                         color: 'white', border: 'none', borderRadius: 16,
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         fontSize: 18, fontWeight: 700,

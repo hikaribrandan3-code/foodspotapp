@@ -34,7 +34,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const mapContainer = useRef(null)
     const map = useRef(null)
 
-    const primaryColor = tenantData?.primary_color || '#DC2626'
+    const primaryColor = tenantData?.confirmation_color || '#DC2626'
 
     // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery)
     const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')

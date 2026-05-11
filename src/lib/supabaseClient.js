@@ -263,8 +263,7 @@ let _knownBrandingColumns = null;
 // 🔐 GUARANTEED SAFE COLUMNS: These exist in every branding table deployment.
 const CORE_BRANDING_COLUMNS = [
     'business_name', 'font_family', 'font_weight',
-    'navbar_color', 'primary_color', 'secondary_color',
-    'confirmation_color', 'powered_by_color',
+    'navbar_color', 'confirmation_color', 'powered_by_color',
     'hero_mode', 'hero_url', 'nav_icon_mode', 'hero_icon_mode',
     'is_paused', 'pause_message',
     'delivery_radius', 'delivery_fee', 'free_delivery_threshold',

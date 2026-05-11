@@ -42,7 +42,7 @@ const PRESET_THEMES = {
 
 const PrintMenuModal = ({ isOpen, onClose, menu, tenantData, tenantSlug }) => {
   const [fontFamily, setFontFamily] = useState('Inter');
-  const [primaryColor, setPrimaryColor] = useState(tenantData?.primary_color || '#22C55E');
+  const [primaryColor, setPrimaryColor] = useState(tenantData?.confirmation_color || '#22C55E');
   const [borderColor, setBorderColor] = useState(primaryColor);
   const [separatorStyle, setSeparatorStyle] = useState('line');
   const [showPrices, setShowPrices] = useState(true);
