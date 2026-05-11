@@ -80,7 +80,12 @@ serve(async (req: Request) => {
             },
             auto_return: "approved",
             external_reference: order.id,
-            notification_url: WEBHOOK_URL
+            notification_url: WEBHOOK_URL,
+            binary_mode: false,
+            payment_methods: {
+                excluded_payment_methods: [],
+                excluded_payment_types: []
+            }
         };
 
         const mpResponse = await fetch(MERCADO_PAGO_API, {
@@ -111,7 +116,7 @@ serve(async (req: Request) => {
             JSON.stringify({
                 init_point: mpData.init_point,
                 sandbox_init_point: mpData.sandbox_init_point,
-                redirect_url: mpData.sandbox_init_point || mpData.init_point,
+                redirect_url: mpData.init_point || mpData.sandbox_init_point,
                 preference_id: mpData.id
             }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
