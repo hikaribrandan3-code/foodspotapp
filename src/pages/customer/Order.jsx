@@ -383,7 +383,10 @@ function Order({ config: configProp }) {
                 try {
                     const mpResponse = await fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/create-preference', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                        },
                         body: JSON.stringify({ order_id: savedOrder.id })
                     })
                     const prefData = await mpResponse.json()
@@ -587,7 +590,10 @@ function Order({ config: configProp }) {
             // Create NEW Mercado Pago preference for SAME order
             const mpResponse = await fetch('https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/create-preference', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                },
                 body: JSON.stringify({ order_id: order.id })
             })
             const prefData = await mpResponse.json()
