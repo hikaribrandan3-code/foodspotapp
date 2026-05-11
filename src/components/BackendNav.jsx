@@ -94,9 +94,9 @@ const getRouteMaps = (tenantSlug) => ({
 // ICON COMPONENTS - Matching Reference Image
 // ============================================
 
-// Active color from reference: Teal/Cyan
-const ACTIVE_COLOR = '#0EA5E9'
-const INACTIVE_COLOR = '#9CA3AF'
+// Active color: FoodSpot brand brown
+const ACTIVE_COLOR = '#8B7355'
+const INACTIVE_COLOR = '#9AA4B5'
 
 function TabIcon({ id, active }) {
     const color = active ? ACTIVE_COLOR : INACTIVE_COLOR
