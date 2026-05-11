@@ -590,20 +590,26 @@ export default function Dashboard() {
     if (response !== 'DELETE') return
 
     try {
-      const { error } = await supabase
+      console.log('[Nuke] Deleting all orders for business_id:', businessId)
+      const { error, data } = await supabase
         .from('orders')
         .delete()
         .eq('business_id', businessId)
 
+      console.log('[Nuke] Delete response:', { error, data })
+
       if (error) {
-        alert('Error: ' + error.message)
-      } else {
-        alert('✅ All orders deleted')
-        setDisplayOrders([])
-        refreshOrders()
+        alert('❌ Error: ' + error.message)
+        return
       }
+
+      alert('✅ All orders deleted')
+      await new Promise(r => setTimeout(r, 500))
+      setDisplayOrders([])
+      await refreshOrders()
     } catch (err) {
-      alert('Error: ' + err.message)
+      console.error('[Nuke] Exception:', err)
+      alert('❌ Error: ' + err.message)
     }
   }
 
