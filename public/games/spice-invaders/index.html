@@ -508,9 +508,9 @@ class Player{
 class Boss{
   constructor(type,wave){
     this.type=type;this.x=BW/2;this.y=90+HUD_H/2;
-    this.hp=this.maxHp=(type==='chili'?46:74)+wave*2;
+    this.hp=this.maxHp=(type==='chili'?46:52)+wave*2;
     this.targetX=this.x;this.mt=0;this.st=0;this.flash=0;
-    this.orbs=[{x:-35,y:-25,hp:8,alive:true,flash:0},{x:35,y:-25,hp:8,alive:true,flash:0},{x:0,y:30,hp:8,alive:true,flash:0}];
+    this.orbs=[{x:-35,y:-25,hp:5,alive:true,flash:0},{x:35,y:-25,hp:5,alive:true,flash:0},{x:0,y:30,hp:5,alive:true,flash:0}];
     this.coreExposed=false;
   }
   update(px,py,dt){
@@ -518,7 +518,7 @@ class Boss{
     this.mt+=dt;if(this.mt>100){this.mt=0;this.targetX=70+Math.random()*(BW-140);}
     this.x+=(this.targetX-this.x)*0.025;
     if(!this.coreExposed&&this.orbs.every(o=>!o.alive)){this.coreExposed=true;this.flash=20;}
-    this.st+=dt;const interval=this.coreExposed?(this.hp<this.maxHp*0.3?23:40):58;
+    this.st+=dt;const interval=this.coreExposed?40:58;
     if(this.st>interval){this.st=0;return this.fire(px,py);}
     return null;
   }
@@ -535,7 +535,7 @@ class Boss{
         const o=this.orbs[i];
         if(o.alive){const dx=(bx||this.x)-(this.x+o.x),dy=(by||this.y)-(this.y+o.y);if(dx*dx+dy*dy<900){o.hp-=d;o.flash=5;if(o.hp<=0){o.alive=false;this.flash=10;}hitOrb=true;break;}}
       }
-      if(!hitOrb){this.hp-=Math.ceil(d*0.25);this.flash=4;}
+      if(!hitOrb){this.hp-=Math.ceil(d*0.5);this.flash=4;}
       return this.hp<=0;
     }
     this.hp-=d;this.flash=8;return this.hp<=0;
@@ -1164,7 +1164,7 @@ class Game{
       if(this.boss){
         const dx=b.x-this.boss.x,dy=b.y-this.boss.y;
         if(dx*dx+dy*dy<2500){
-          if(this.boss.hit(b.dmg,b.x,b.y)){this.boom(this.boss.x,this.boss.y,60);this.score+=1000;this.boss=null;this.shake.trigger(12,22,3);this.audio.explode();Haptics.fire(Haptics.bossDeath,true);}
+          if(this.boss.hit(b.dmg,b.x,b.y)){this.boom(this.boss.x,this.boss.y,60);this.score+=1000;this.boss=null;this.shake.trigger(12,22,3);this.audio.explode();Haptics.fire(Haptics.bossDeath,true);this.player.heal(25);this.player.addBomb();this.popups.push(new Popup(this.player.x,this.player.y-30,25,'#00ff66'));this.powerups.push({x:this.player.x,y:this.player.y-40,type:PU_TYPES[Math.floor(Math.random()*PU_TYPES.length)],vy:0});}
           else{this.shake.trigger(4,8,1);Haptics.fire(Haptics.orbBreak,true);}hit=!b.pierce;
         }
       }
