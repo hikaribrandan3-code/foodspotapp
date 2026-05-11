@@ -101,14 +101,18 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const handleDelete = async () => {
     if (!window.confirm('Delete this event permanently?')) return
     try {
-      const { error } = await supabase
+      console.log('[OwnerEventsView] Deleting event:', selectedEvent.id, 'for business:', businessId)
+      const { error, data } = await supabase
         .from('events')
         .delete()
         .eq('id', selectedEvent.id)
         .eq('business_id', businessId)
 
+      console.log('[OwnerEventsView] Delete response:', { error, data })
+
       if (error) {
-        alert(`Delete failed: ${error.message}`)
+        console.error('[OwnerEventsView] Delete error details:', error)
+        alert(`Delete failed: ${error.message || JSON.stringify(error)}`)
         return
       }
 
