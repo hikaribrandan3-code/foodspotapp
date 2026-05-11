@@ -339,13 +339,16 @@ function Order({ config: configProp }) {
             // ─── STEP 3: PERSISTENT-FIRST DB INSERT ───────────
             // The order exists in Supabase BEFORE any external API call.
             // Even if the user's phone dies here, the owner sees the order.
+            console.log('[Order] DEBUG: Inserting order...', newOrder)
             const { data: savedOrder, error } = await supabase
                 .from('orders')
                 .insert(newOrder)
                 .select()
                 .single()
 
+            console.log('[Order] DEBUG: Insert response:', { savedOrder, error })
             if (error) throw error
+            console.log('[Order] DEBUG: Order inserted successfully:', savedOrder.id)
 
             // Store phone for recovery
             if (customerInfo?.phone) {
@@ -381,6 +384,7 @@ function Order({ config: configProp }) {
             // If cash payment, create ledger entry (with offline resilience)
             // 🛡️ DINE-IN PAY-AFTER: Skip cash ledger — payment happens after the meal
             if (isCashPath && savedOrder && !isDineInPayAfter) {
+                console.log('[Order] DEBUG: Processing cash payment...')
                 try {
                     const cashResult = await handleCashPayment({
                         orderId: savedOrder.id,
@@ -388,7 +392,8 @@ function Order({ config: configProp }) {
                         businessId: businessId,
                         currency: 'ARS'
                     })
-                    
+
+                    console.log('[Order] DEBUG: Cash result:', cashResult)
                     if (cashResult.method === 'offline') {
                         showToast('💾 ' + t('cash_offline'))
                     } else {
@@ -401,10 +406,12 @@ function Order({ config: configProp }) {
             }
 
             // ─── STEP 6: FINALIZE ─────────────────────────────
+            console.log('[Order] DEBUG: Finalizing order...')
             clearCart()
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
 
+            console.log('[Order] DEBUG: Setting submitted to true')
             setSubmitted(true)
             setTimeout(() => {
                 if (isDelivery) {
@@ -415,7 +422,7 @@ function Order({ config: configProp }) {
             }, 1500)
 
         } catch (err) {
-            console.error('[Order] Submission Error:', err)
+            console.error('[Order] ❌ SUBMISSION FAILED:', err.message, err)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
         }
