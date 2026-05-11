@@ -1,6 +1,6 @@
 {
-    "name": "Grub Club",
-    "short_name": "Grub Club",
+    "name": "FoodSpot",
+  "short_name": "FoodSpot",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#F5F0E8",
