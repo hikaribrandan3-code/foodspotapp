@@ -747,14 +747,7 @@ const Settings = () => {
                             </div>
                         </div>
 
-                        {/* MP TOKEN WARNING */}
-                        {draft.payment_methods?.mercado_pago && !tenant?.mp_access_token && (
-                            <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
-                                    Mercado Pago is enabled but no Access Token is configured. Customers won't be able to complete payment. Go to Payments to add your token.
-                                </span>
-                            </div>
-                        )}
+                        {/* MP token warning removed for MVP — token kept dormant in DB */}
                     </div>
                 </section>
 
@@ -1276,7 +1269,6 @@ const Settings = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             {[
                                 { key: 'cash',         label: t('cash')         },
-                                { key: 'mercado_pago', label: t('label_mercado_pago') },
                             ].map(({ key, label }) => {
                                 const on = draft.payment_methods?.[key] ?? true;
                                 return (
@@ -1304,14 +1296,7 @@ const Settings = () => {
                             })}
                         </div>
 
-                        {/* MP TOKEN WARNING */}
-                        {draft.payment_methods?.mercado_pago && !tenant?.mp_access_token && (
-                            <div style={{ marginTop: 12, padding: '10px 12px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #F59E0B', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 12, color: '#92400E', fontWeight: 500 }}>
-                                    Mercado Pago is enabled but no Access Token is configured. Customers won't be able to complete payment. Go to Payments to add your token.
-                                </span>
-                            </div>
-                        )}
+                        {/* MP token warning removed for MVP — token kept dormant in DB */}
                     </div>
                 </section>
             </div>

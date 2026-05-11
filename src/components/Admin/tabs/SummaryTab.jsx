@@ -74,18 +74,11 @@ export default function SummaryTab({ config, updateBusinessInfoCloud, updateBran
             <h3 style={labelStyle}>🔗 LINKS EXTERNOS & PAGOS</h3>
             <div style={cardStyle}>
                 <div style={{ paddingTop: 10, borderTop: '1px solid #F3F4F6' }}>
-                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago Setup</span>
-
-                    <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4, fontWeight: 600 }}>Código de Acceso (Access Token) *Requerido</label>
-                    <input type="password" placeholder="APP_1234567890..." value={config.mp_access_token || ''} onChange={(e) => updateBrandingCloud('mercadoPagoAccessToken', e.target.value)} style={inputStyle} />
-                    <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 12 }}>
-                        🔒 Privado. Tu dinero va directo a tu cuenta de MP.
-                        <br />👉 <strong>Cómo obtenerlo:</strong> mercadopago.com.ar → Configuración → Desarrolladores → Credenciales → Copiar "Access Token"
-                    </p>
+                    <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago Alias</span>
 
                     <label style={{ fontSize: 12, color: '#6B7280', display: 'block', marginBottom: 4 }}>Alias / Usuario (para Info página)</label>
                     <input type="text" placeholder="ej: grubclub.mp" value={config.payments?.mercadoPagoAlias || ''} onChange={(e) => { const c = config.payments || {}; updateConfig({ payments: { ...c, mercadoPagoAlias: e.target.value } }); window.dispatchEvent(new CustomEvent('frontendSync')) }} style={inputStyle} />
-                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Opcional. Si está vacío, no aparece en Info</p>
+                    <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Opcional. Se muestra en la página Info para pagos QR al finalizar la comida.</p>
                 </div>
             </div>
         </>

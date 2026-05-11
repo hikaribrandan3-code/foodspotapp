@@ -682,59 +682,7 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    {/* MP Setup Card */}
-                                    <div className="bg-emerald-50 dark:bg-emerald-500/5 rounded-[2.5rem] p-6 md:p-8 border border-emerald-200 dark:border-emerald-500/20 space-y-3 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                        <div className="flex items-start gap-3">
-                                            <span className="text-2xl">💳</span>
-                                            <div>
-                                                <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-400">{t('mp_connect_title') || 'Connect Mercado Pago'}</h4>
-                                                <p className="text-xs text-emerald-600/70 dark:text-emerald-300/70 mt-0.5">{t('mp_connect_subtitle') || 'Accept online payments'}</p>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-4 border border-emerald-200 dark:border-emerald-500/10 shadow-sm">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400 mb-2">{t('mp_why_title') || 'Why connect?'}</p>
-                                            <ul className="text-xs text-emerald-700/80 dark:text-emerald-300/70 space-y-1 list-disc pl-4">
-                                                <li>{t('mp_benefit_1') || 'Instant payment confirmation'}</li>
-                                                <li>{t('mp_benefit_2') || 'Automatic order status updates'}</li>
-                                                <li>{t('mp_benefit_3') || 'Secure transactions'}</li>
-                                            </ul>
-                                        </div>
-                                        <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-4 border border-emerald-200 dark:border-emerald-500/10 space-y-2 shadow-sm">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400 mb-2">{t('mp_how_to_title') || 'How to connect'}</p>
-                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>1.</strong> {t('mp_step_1') || 'Go to Mercado Pago Developers'}</p>
-                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>2.</strong> {t('mp_step_2') || 'Create an application'}</p>
-                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>3.</strong> {t('mp_step_3') || 'Get your credentials'}</p>
-                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>4.</strong> {t('mp_step_4') || 'Copy your Access Token'} <code className="bg-stone-100 dark:bg-[#1e293b] px-1 py-0.5 rounded text-[10px]">APP_</code></p>
-                                            <p className="text-xs text-emerald-700/80 dark:text-emerald-300/70"><strong>5.</strong> {t('mp_step_5') || 'Paste it below'}</p>
-                                        </div>
-                                    </div>
-
-                                    {/* Access Token */}
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('mp_access_token') || 'Access Token'}</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="password"
-                                                placeholder="APP_1234567890abcdef..."
-                                                value={mpTokenInput}
-                                                onChange={(e) => setMpTokenInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
-                                            />
-                                            <motion.button
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={saveMpToken}
-                                                disabled={mpTokenSaving}
-                                                className="px-4 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                            >
-                                                {mpTokenSaved ? <Check size={16} /> : (mpTokenSaving ? '...' : 'Save')}
-                                            </motion.button>
-                                        </div>
-                                        {mpTokenSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Token saved</p>}
-                                        {!mpTokenSaved && mpTokenInput && <p className="text-xs text-stone-400 dark:text-white mt-1">Click Save to update</p>}
-                                        {!mpTokenSaved && !mpTokenInput && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{t('mp_token_required') || 'Token required for payments'}</p>}
-                                    </div>
-
-                                    {/* Alias */}
+                                    {/* MP Alias only (access token nerfed for MVP) */}
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
                                         <div className="flex gap-2">
