@@ -1,10 +1,12 @@
 /**
  * REFACTORED: Delivery Utils
  * Accepts 'config' as a parameter to ensure single-source-of-truth.
- * 
+ *
  * ARCHITECTURAL INVARIANT: These functions are PURE.
  * They do NOT call getConfig() — config must be passed in.
  */
+
+import { PAYMENT_METHOD } from '../constants/database.js'
 
 // ============================================
 // 🌍 HAVERSINE DISTANCE CALCULATION (Pure JS)
