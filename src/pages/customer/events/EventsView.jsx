@@ -264,16 +264,16 @@ export default function EventsView({ onViewTickets }) {
   const [searchParams] = useSearchParams();
   const { events: dbEvents, loading: eventsLoading, error: eventsError, refetch } = useEvents(tenantSlug);
 
-  // Seed demos on mount if no events exist
+  // Seed demos on mount (idempotent check inside seedDemoEvents prevents duplicates)
   useEffect(() => {
     const seedIfNeeded = async () => {
-      if (businessId && dbEvents.length === 0) {
+      if (businessId) {
         await seedDemoEvents(businessId);
         refetch(); // Refetch to show seeded demos
       }
     };
     seedIfNeeded();
-  }, [businessId, dbEvents.length, refetch]);
+  }, [businessId, refetch]);
 
   // Show all DB events (includes real events + seeded demos)
   const events = dbEvents.map(normalizeEvent);
