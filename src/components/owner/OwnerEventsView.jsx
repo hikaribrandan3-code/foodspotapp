@@ -102,6 +102,15 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     if (!window.confirm('Delete this event permanently?')) return
     try {
       console.log('[OwnerEventsView] Deleting event:', selectedEvent.id, 'for business:', businessId)
+
+      // Verify event exists before delete
+      const { data: beforeDelete } = await supabase
+        .from('events')
+        .select('id')
+        .eq('id', selectedEvent.id)
+        .eq('business_id', businessId)
+      console.log('[OwnerEventsView] Event exists before delete:', beforeDelete?.length > 0)
+
       const { error, data } = await supabase
         .from('events')
         .delete()
@@ -116,8 +125,14 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         return
       }
 
-      // Wait for DB propagation
+      // Verify event deleted
       await new Promise(r => setTimeout(r, 500))
+      const { data: afterDelete } = await supabase
+        .from('events')
+        .select('id')
+        .eq('id', selectedEvent.id)
+        .eq('business_id', businessId)
+      console.log('[OwnerEventsView] Event exists after delete:', afterDelete?.length > 0)
 
       fetchEvents()
       setView('list')
