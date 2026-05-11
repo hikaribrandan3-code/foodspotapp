@@ -64,16 +64,16 @@ export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) =>
  */
 export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMENT_METHOD.CASH, t = null) => {
     const items = order.items.map(item =>
-        `• ${item.quantity}x ${item.name} - $${item.price * item.quantity}`
+        `${item.quantity}x ${item.name} - $${item.price * item.quantity}`
     ).join('\n');
 
-    const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\n⚠️ *TRAER POS*' : '';
+    const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\nNOTA: TRAER POS' : '';
     const paymentLabel =
-        paymentMethod === PAYMENT_METHOD.CASH ? '💵 Efectivo' :
-        paymentMethod === PAYMENT_METHOD.WHATSAPP ? '📱 WhatsApp' :
-        '💳 Tarjeta';
+        paymentMethod === PAYMENT_METHOD.CASH ? 'Efectivo' :
+        paymentMethod === PAYMENT_METHOD.WHATSAPP ? 'WhatsApp' :
+        'Tarjeta';
 
-    // 🛡️ STRUCTURED ADDRESS FORMATTER
+    // STRUCTURED ADDRESS FORMATTER
     let addressDisplay = 'Retiro en local'
     if (order.customerInfo?.address) {
         const addr = order.customerInfo.address
@@ -89,16 +89,19 @@ export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMEN
         }
     }
 
-    return `🍔 *NUEVO PEDIDO - ${businessName}*\n` +
-        `📋 Pedido #${order.orderNumber}\n\n` +
-        `*Items:*\n${items}\n\n` +
-        `*Subtotal:* $${order.subtotal}\n` +
-        `*Envío:* $${order.deliveryFee || 0}\n` +
-        `*Total:* $${order.total}\n\n` +
-        `💳 *Pago:* ${paymentLabel}\n` +
-        `👤 *Cliente:* ${order.customerInfo?.name || 'N/A'}\n` +
-        `📞 *Tel:* ${order.customerInfo?.phone || 'N/A'}\n` +
-        `📍 *Dirección:* ${addressDisplay}` +
+    return `NUEVO PEDIDO - ${businessName}\n` +
+        `═══════════════════════════\n` +
+        `Pedido #${order.orderNumber}\n\n` +
+        `ITEMS:\n${items}\n\n` +
+        `───────────────────────────\n` +
+        `Subtotal: $${order.subtotal}\n` +
+        `Envio: $${order.deliveryFee || 0}\n` +
+        `TOTAL: $${order.total}\n\n` +
+        `───────────────────────────\n` +
+        `Pago: ${paymentLabel}\n` +
+        `Cliente: ${order.customerInfo?.name || 'N/A'}\n` +
+        `Telefono: ${order.customerInfo?.phone || 'N/A'}\n` +
+        `Direccion: ${addressDisplay}` +
         paymentNote;
 };
 
