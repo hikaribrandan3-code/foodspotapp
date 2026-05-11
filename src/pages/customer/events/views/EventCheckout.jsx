@@ -1,61 +1,41 @@
 import React, { useState } from 'react';
-import { ChevronLeft, CreditCard } from 'lucide-react';
+import { ChevronLeft, CreditCard, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useTenant } from '../../../../contexts/TenantContext';
 import { supabase } from '../../../../lib/supabaseClient';
 
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const { t } = useLanguage();
+  const { tenantData } = useTenant();
   const [email, setEmail] = useState('');
   const [qty, setQty] = useState(1);
   const [promoCode, setPromoCode] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [applied, setApplied] = useState(false);
   const [promoError, setPromoError] = useState(null);
-
-  // Calculate max available quantity
-  const maxQty = Math.max(1, (tier.qty || 0) - (tier.sold || 0));
-  const [selectedAddons, setSelectedAddons] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' | 'crypto' | 'wristband' | 'wallet'
+  const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
 
+  // Calculate max available quantity
+  const maxQty = Math.max(1, (tier.qty || 0) - (tier.sold || 0));
+
   if (!event || !tier) return null;
 
-  const addons = [
-    { id: 'drink', name: t('drink_tokens') || 'Drink Tokens', price: 15, icon: '🍺' },
-    { id: 'food', name: t('tasting_platter') || 'Tasting Platter', price: 45, icon: '🍱' }
-  ];
-
-  const addonsTotal = selectedAddons.reduce((sum, id) => sum + addons.find(a => a.id === id).price, 0);
-  const total = (tier.price * qty) + addonsTotal;
-
-  const toggleAddon = (id) => {
-    setSelectedAddons(prev => 
-      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
-    );
-  };
-
-  const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  const total = tier.price * qty;
 
   const handleConfirm = async () => {
-    if (!isValidEmail(email)) return;
     if (isProcessing) return;
     setIsProcessing(true);
     setPaymentError(null);
 
     try {
-      const addonItems = selectedAddons.map(id => {
-        const a = addons.find(x => x.id === id);
-        return { id: a.id, name: a.name, price: a.price };
-      });
-
       const { data, error } = await supabase.functions.invoke('create-event-preference', {
         body: {
           event_id: event.id,
           tier_id: tier.id,
           quantity: qty,
-          addons: addonItems,
-          customer: { name: '', email, phone: '' },
+          customer: { name: '', email: email || '', phone: '' },
           promo_code: applied ? promoCode : null
         }
       });
@@ -86,7 +66,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           tier_name: tier.name,
           tier_id: tier.id,
           quantity: qty,
-          addons: addonItems,
           total: total,
           purchase_date: new Date().toISOString(),
           venue_name: event.venue_name,
@@ -183,40 +162,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
              </div>
           </div>
         </div>
-        
-        {/* Experience Add-ons Section */}
-        <div className="space-y-4">
-           <div className="flex flex-col px-2">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('addons_title')}</h3>
-             <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-30 uppercase tracking-widest mt-1">{t('addons_desc')}</p>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-3">
-              {addons.map((addon) => (
-                <button
-                  key={addon.id}
-                  onClick={() => toggleAddon(addon.id)}
-                  className={`flex flex-col items-start p-4 rounded-[28px] border transition-all text-left relative overflow-hidden ${
-                    selectedAddons.includes(addon.id)
-                    ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/20 shadow-slate-900/20'
-                    : 'bg-white dark:bg-slate-900 border-[var(--border-color)] text-[var(--text-primary)] hover:border-[var(--color-primary)] shadow-sm'
-                  }`}
-                >
-                  <span className="text-xl mb-2">{addon.icon}</span>
-                  <p className="text-[10px] font-black uppercase tracking-tight leading-tight mb-1">{addon.name}</p>
-                  <p className={`text-xs font-black ${selectedAddons.includes(addon.id) ? 'text-white/80' : 'text-[var(--color-primary)]'}`}>
-                    ${addon.price}
-                  </p>
-                  
-                  {selectedAddons.includes(addon.id) && (
-                    <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-white flex items-center justify-center">
-                       <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]"></div>
-                    </div>
-                  )}
-                </button>
-              ))}
-           </div>
-        </div>
 
         {/* Futuristic Payment Methods */}
         <div className="space-y-4">
@@ -252,13 +197,13 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         </div>
 
         <div className="space-y-3">
-           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('email_label')}</h3>
-           <div className={`flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border transition-all shadow-sm ${email && !isValidEmail(email) ? 'border-rose-500' : 'border-[var(--border-color)]'}`}>
-              <input 
-                type="email" 
+           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('email_label') || 'Email (Optional)'}</h3>
+           <div className="flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-[var(--border-color)] transition-all shadow-sm">
+              <input
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={t('email_placeholder')}
+                placeholder={t('email_placeholder') || 'your@email.com'}
                 className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)]"
               />
            </div>
@@ -315,6 +260,26 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
            )}
         </div>
 
+        {/* WhatsApp Confirmation Button */}
+        <div>
+           <button
+             onClick={() => {
+               const whatsappNumber = tenantData?.whatsapp_number || tenantData?.phone || '';
+               if (!whatsappNumber) {
+                 setPaymentError('WhatsApp number not configured');
+                 return;
+               }
+               const message = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
+               const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+               window.open(whatsappUrl, '_blank');
+             }}
+             className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20"
+           >
+             <MessageCircle size={18} />
+             Confirm via WhatsApp
+           </button>
+        </div>
+
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
@@ -325,8 +290,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         )}
         <button
           onClick={handleConfirm}
-          disabled={isProcessing || !isValidEmail(email)}
-          className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-slate-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isProcessing}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isProcessing ? (
             <span className="animate-pulse">Processing...</span>
