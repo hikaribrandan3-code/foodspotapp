@@ -470,10 +470,13 @@ function Order({ config: configProp }) {
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
 
-            // Open WhatsApp
+            // 🔒 MVP: Auto-open WhatsApp (Pedix style) — customer confirms order in chat
             const whatsappUrl = buildWhatsAppUrl(newOrder)
             if (whatsappUrl) {
+                // Open WhatsApp immediately (don't wait)
                 window.open(whatsappUrl, '_blank')
+            } else {
+                showToast('⚠️ WhatsApp number not configured')
             }
 
             clearCart()
@@ -481,9 +484,10 @@ function Order({ config: configProp }) {
             if (isDelivery) clearDeliveryMode()
 
             setSubmitted(true)
+            // Fast redirect to status/receipt (customer confirms in WhatsApp, follows here)
             setTimeout(() => {
                 navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
-            }, 1500)
+            }, 800)
         } catch (err) {
             console.error('[Order] WhatsApp Submit Error:', err)
             showToast('❌ Error al enviar el pedido: ' + err.message)
