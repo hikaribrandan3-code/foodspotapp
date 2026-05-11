@@ -108,12 +108,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         .eq('business_id', businessId)
 
       if (error) {
-        alert(`Delete failed: ${error.message}`)
+        alert(`Delete failed: ${error.message || JSON.stringify(error)}`)
         return
       }
-
-      // Wait for DB propagation
-      await new Promise(r => setTimeout(r, 500))
 
       fetchEvents()
       setView('list')
@@ -492,7 +489,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     setStep(1)
   }
 
-  const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sport']
+  const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sport', 'Dating']
 
   const patch = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
@@ -780,8 +777,14 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                 )}
               </Field>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: theme.bgSurface, borderRadius: 12, marginTop: 4 }}>
-                <input type="checkbox" id="free" checked={form.is_free} onChange={e => patch('is_free', e.target.checked)} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: theme.primary }} />
-                <label htmlFor="free" style={{ fontSize: 14, fontWeight: 600, color: theme.textPrimary, cursor: 'pointer' }}>Free event (no tickets)</label>
+                <input type="checkbox" id="free" checked={form.is_free} onChange={e => {
+                  patch('is_free', e.target.checked);
+                  if (e.target.checked) {
+                    const tiers = form.ticket_tiers.map(t => ({ ...t, price: 0 }));
+                    patch('ticket_tiers', tiers);
+                  }
+                }} style={{ width: 18, height: 18, cursor: 'pointer', accentColor: theme.primary }} />
+                <label htmlFor="free" style={{ fontSize: 14, fontWeight: 600, color: theme.textPrimary, cursor: 'pointer' }}>Free event</label>
               </div>
             </motion.div>
           )}
@@ -828,14 +831,12 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                         const tiers = [...form.ticket_tiers]; tiers[idx].name = e.target.value; patch('ticket_tiers', tiers)
                       }} />
                     </div>
-                    {!form.is_free && (
-                      <div style={{ flex: 1 }}>
-                        <label style={s.label}>Price ($)</label>
-                        <input type="number" style={s.input} placeholder="25" value={tier.price} onChange={e => {
-                          const tiers = [...form.ticket_tiers]; tiers[idx].price = Number(e.target.value); patch('ticket_tiers', tiers)
-                        }} />
-                      </div>
-                    )}
+                    <div style={{ flex: 1 }}>
+                      <label style={s.label}>Price ($)</label>
+                      <input type="number" style={s.input} placeholder="25" value={tier.price} disabled={form.is_free} onChange={e => {
+                        const tiers = [...form.ticket_tiers]; tiers[idx].price = Number(e.target.value); patch('ticket_tiers', tiers)
+                      }} />
+                    </div>
                     <div style={{ flex: 1 }}>
                       <label style={s.label}>Capacity</label>
                       <input type="number" style={s.input} placeholder="100" value={tier.capacity} onChange={e => {

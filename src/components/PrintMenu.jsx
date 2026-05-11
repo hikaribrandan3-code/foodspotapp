@@ -4,7 +4,7 @@ import './PrintMenu.css';
 
 const PrintMenu = ({ menu, tenantData, tenantSlug }) => {
   const [fontFamily, setFontFamily] = useState('Inter');
-  const [primaryColor, setPrimaryColor] = useState(tenantData?.primary_color || '#22C55E');
+  const [primaryColor, setPrimaryColor] = useState(tenantData?.confirmation_color || '#22C55E');
   const [separatorStyle, setSeparatorStyle] = useState('line');
   const [showPrices, setShowPrices] = useState(true);
   const [customHeader, setCustomHeader] = useState('');

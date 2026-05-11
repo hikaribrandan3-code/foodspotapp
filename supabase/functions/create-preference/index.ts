@@ -32,7 +32,7 @@ serve(async (req: Request) => {
 
         const { data: order, error: orderError } = await supabase
             .from('orders')
-            .select('id, order_number, total, business_id, status')
+            .select('id, order_number, total, business_id, status, customer_name, customer_phone')
             .eq('id', order_id)
             .single();
 
@@ -45,7 +45,7 @@ serve(async (req: Request) => {
 
         const { data: branding, error: brandingError } = await supabase
             .from('branding')
-            .select("mp_access_token, business_name, slug, currency")
+            .select("mp_access_token, business_name, slug")
             .eq("business_id", order.business_id)
             .single();
 
@@ -63,9 +63,16 @@ serve(async (req: Request) => {
             items: [{
                 title: `Pedido #${order.order_number} - ${businessName}`,
                 quantity: 1,
-                unit_price: order.total,
-                currency_id: branding.currency || "ARS"
+                unit_price: order.total / 100,
+                currency_id: "ARS"
             }],
+            payer: {
+                name: order.customer_name || "Guest",
+                phone: {
+                    area_code: "549",
+                    number: order.customer_phone?.replace(/\D/g, '') || "1111111111"
+                }
+            },
             back_urls: {
                 success: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=success&order_id=${order.id}`,
                 failure: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=failure&order_id=${order.id}`,
@@ -73,7 +80,12 @@ serve(async (req: Request) => {
             },
             auto_return: "approved",
             external_reference: order.id,
-            notification_url: WEBHOOK_URL
+            notification_url: WEBHOOK_URL,
+            binary_mode: false,
+            payment_methods: {
+                excluded_payment_methods: [],
+                excluded_payment_types: []
+            }
         };
 
         const mpResponse = await fetch(MERCADO_PAGO_API, {
@@ -104,7 +116,7 @@ serve(async (req: Request) => {
             JSON.stringify({
                 init_point: mpData.init_point,
                 sandbox_init_point: mpData.sandbox_init_point,
-                redirect_url: mpData.sandbox_init_point || mpData.init_point,
+                redirect_url: mpData.init_point || mpData.sandbox_init_point,
                 preference_id: mpData.id
             }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

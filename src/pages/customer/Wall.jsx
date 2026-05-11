@@ -18,7 +18,7 @@ export default function Wall() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
-    const primaryColor = tenantData?.primary_color || '#C4856A'
+    const primaryColor = tenantData?.confirmation_color || '#C4856A'
     const businessName = tenantData?.business_name || 'El Momento'
 
     const [photos, setPhotos] = useState([])

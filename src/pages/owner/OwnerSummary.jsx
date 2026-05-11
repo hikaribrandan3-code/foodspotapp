@@ -771,7 +771,7 @@ function OwnerSummary() {
                 </motion.div>
 
                 {/* Team Management */}
-                <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.primary_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} onSaved={() => { setAutoSaveStatus({ type: 'team', timestamp: Date.now() }); setTimeout(() => setAutoSaveStatus(null), 2000) }} />
+                <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.confirmation_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} onSaved={() => { setAutoSaveStatus({ type: 'team', timestamp: Date.now() }); setTimeout(() => setAutoSaveStatus(null), 2000) }} />
 
                 {/* Superadmin */}
                 {session?.role === 'superadmin' && (

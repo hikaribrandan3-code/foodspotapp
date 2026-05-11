@@ -458,7 +458,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
             {showArcade && (
                 <HikariBoy
                     onClose={() => setShowArcade(false)}
-                    controllerColor={tenantData?.primary_color || '#8B5CF6'}
+                    controllerColor={tenantData?.confirmation_color || '#8B5CF6'}
                     userId={tenantData?.business_name || 'guest'}
                     munchboyShellColor={tenantData?.app_config?.munchboy?.shell_color || tenantData?.munchboy_shell_color}
                     munchboyAColor={tenantData?.app_config?.munchboy?.a_color || tenantData?.munchboy_a_color}

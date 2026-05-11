@@ -89,7 +89,7 @@ export default function OrderPayment({ config: configProp }) {
 
   const mpAlias = tenantData?.app_config?.payments?.mercadoPagoAlias || null
   const ownerPhone = tenantData?.whatsapp_number || tenantData?.phone || null
-  const primaryColor = tenantData?.primary_color || '#C4856A'
+  const primaryColor = tenantData?.confirmation_color || '#C4856A'
 
   // Fetch order on mount
   useEffect(() => {
