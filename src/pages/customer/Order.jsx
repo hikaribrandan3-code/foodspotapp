@@ -336,7 +336,6 @@ function Order({ config: configProp }) {
         }
 
         try {
-            debugger
             // ─── STEP 3: PERSISTENT-FIRST DB INSERT ───────────
             // The order exists in Supabase BEFORE any external API call.
             // Even if the user's phone dies here, the owner sees the order.
@@ -406,7 +405,6 @@ function Order({ config: configProp }) {
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
 
-            setIsSubmitting(false)
             setSubmitted(true)
             setTimeout(() => {
                 if (isDelivery) {
@@ -417,7 +415,7 @@ function Order({ config: configProp }) {
             }, 1500)
 
         } catch (err) {
-            console.error('[Order] ❌ Submission Error:', err.message)
+            console.error('[Order] Submission Error:', err)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
         }
@@ -1003,6 +1001,41 @@ function Order({ config: configProp }) {
                 >
                     <span>{isSubmitting ? t('order_processing') : (isOutOfRadius ? t('out_of_delivery_radius') : t('confirm_order'))}</span>
                     {!isSubmitting && !isOutOfRadius && <span>➜</span>}
+                </button>
+
+                {/* WhatsApp Preview Button — Test/Demo */}
+                <button
+                    onClick={() => {
+                        const orderNumber = generateOrderNumber()
+                        const testOrder = {
+                            business_id: businessId,
+                            order_number: orderNumber,
+                            items: order.items,
+                            subtotal: subtotal,
+                            delivery_fee: actualDeliveryFee,
+                            total: total,
+                            order_type: orderType,
+                            customer_name: customerInfo.name || 'Guest',
+                            customer_phone: customerInfo.phone || '',
+                            delivery_address: isDelivery ? customerInfo.address : null,
+                            payment_method: paymentMethod || PAYMENT_METHOD.CASH
+                        }
+                        const whatsappUrl = buildWhatsAppUrl(testOrder)
+                        if (whatsappUrl) window.open(whatsappUrl, '_blank')
+                        else alert('WhatsApp number not configured')
+                    }}
+                    style={{
+                        width: '100%', padding: 14,
+                        background: '#25D366', color: 'white', border: 'none', borderRadius: 14,
+                        fontSize: 14, fontWeight: 600,
+                        cursor: 'pointer',
+                        opacity: 0.9,
+                        transition: 'opacity 0.2s'
+                    }}
+                    onMouseOver={(e) => e.target.style.opacity = '1'}
+                    onMouseOut={(e) => e.target.style.opacity = '0.9'}
+                >
+                    📲 Preview WhatsApp
                 </button>
 
             </div>
