@@ -584,6 +584,29 @@ export default function Dashboard() {
     }
   }
 
+  const nukeAllOrders = async () => {
+    if (!confirm('⚠️ DELETE ALL ORDERS? This cannot be undone. Type "DELETE" to confirm.')) return
+    const response = prompt('Type DELETE to confirm:')
+    if (response !== 'DELETE') return
+
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('business_id', businessId)
+
+      if (error) {
+        alert('Error: ' + error.message)
+      } else {
+        alert('✅ All orders deleted')
+        setDisplayOrders([])
+        refreshOrders()
+      }
+    } catch (err) {
+      alert('Error: ' + err.message)
+    }
+  }
+
   const todayRev = displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).reduce((a, o) => a + o.total, 0)
 
   // 🔔 Browser notification permission on mount
@@ -697,7 +720,22 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 12px' }}>
+          <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
+          <button onClick={nukeAllOrders} style={{
+            padding: '6px 12px',
+            fontSize: 11,
+            fontWeight: 600,
+            background: '#EF4444',
+            color: '#FFF',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            letterSpacing: '0.05em',
+          }}>
+            🗑️ NUKE
+          </button>
+        </div>
 
         <div style={{ padding: '0 16px 24px' }}>
           {filterBucket && (
