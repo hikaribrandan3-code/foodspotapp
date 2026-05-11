@@ -32,7 +32,7 @@ serve(async (req: Request) => {
 
         const { data: order, error: orderError } = await supabase
             .from('orders')
-            .select('id, order_number, total, business_id, status')
+            .select('id, order_number, total, business_id, status, customer_name, customer_phone')
             .eq('id', order_id)
             .single();
 
@@ -45,7 +45,7 @@ serve(async (req: Request) => {
 
         const { data: branding, error: brandingError } = await supabase
             .from('branding')
-            .select("mp_access_token, business_name, slug, currency")
+            .select("mp_access_token, business_name, slug")
             .eq("business_id", order.business_id)
             .single();
 
@@ -63,9 +63,16 @@ serve(async (req: Request) => {
             items: [{
                 title: `Pedido #${order.order_number} - ${businessName}`,
                 quantity: 1,
-                unit_price: order.total,
-                currency_id: branding.currency || "ARS"
+                unit_price: order.total / 100,
+                currency_id: "ARS"
             }],
+            payer: {
+                name: order.customer_name || "Guest",
+                phone: {
+                    area_code: "549",
+                    number: order.customer_phone?.replace(/\D/g, '') || "1111111111"
+                }
+            },
             back_urls: {
                 success: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=success&order_id=${order.id}`,
                 failure: `https://foodspotapp.vercel.app/${branding.slug || 'demo'}/receipt?payment=failure&order_id=${order.id}`,
