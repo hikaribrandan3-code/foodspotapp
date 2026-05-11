@@ -84,7 +84,6 @@ function Home({ config: configProp }) {
         if (root) root.style.minHeight = '100dvh'
         if (appContainer) {
             appContainer.classList.add('app-home-tight')
-            appContainer.style.justifyContent = 'center'
         }
         if (pageEl) {
             pageEl.style.flex = '0 0 auto'
@@ -98,7 +97,6 @@ function Home({ config: configProp }) {
             if (root) root.style.minHeight = ''
             if (appContainer) {
                 appContainer.classList.remove('app-home-tight')
-                appContainer.style.justifyContent = ''
             }
             if (pageEl) {
                 pageEl.style.flex = ''
@@ -686,7 +684,6 @@ function Home({ config: configProp }) {
                 }
                 .app-container.app-home-tight {
                     min-height: 100dvh !important;
-                    justify-content: center !important;
                     padding-bottom: 0 !important;
                 }
             `}</style>

@@ -1,0 +1,178 @@
+/** Owner Theme — CSS Custom Properties
+ *  Replaces the scattered inline T = {...} objects across owner pages.
+ *  Import this once in owner-facing entry points.
+ */
+
+.owner-theme,
+[data-theme="owner"] {
+  /* ── Canvas ── */
+  --o-bg:        #F4F6F9;
+  --o-card:      #FFFFFF;
+  --o-ink:       #0F1B2D;
+  --o-ink-2:     #1F2A3D;
+  --o-body:      #3D4A5C;
+  --o-muted:     #7A8699;
+  --o-muted-2:   #9AA4B5;
+
+  /* ── Lines ── */
+  --o-line:      #E6EAF0;
+  --o-line-2:    #EEF1F5;
+
+  /* ── Brand / Primary ── */
+  --o-brand:     #8B7355;
+  --o-brand-2:   #A68B6A;
+  --o-brand-bg:  #F5F0EB;
+  --o-brand-ink: #FFFFFF;
+
+  /* ── Semantic intents ── */
+  --o-blue:      #2563D9;
+  --o-blue-bg:   #EAF1FB;
+  --o-blue-ink:  #1B4FB1;
+  --o-red:       #B33A3A;
+  --o-red-bg:    #FBECEC;
+  --o-green:     #1F7A45;
+  --o-green-bg:  #E2F5EA;
+  --o-orange:    #D9892F;
+  --o-orange-bg: #FDF2E3;
+  --o-purple:    #6B21A8;
+  --o-purple-bg: #F3E8FF;
+
+  /* ── Shadows ── */
+  --o-shadow-sm: 0 1px 2px rgba(15, 27, 45, 0.06);
+  --o-shadow:    0 4px 12px rgba(15, 27, 45, 0.08);
+  --o-shadow-lg: 0 12px 32px rgba(15, 27, 45, 0.12);
+
+  /* ── Spacing scale ── */
+  --o-space-1: 4px;
+  --o-space-2: 8px;
+  --o-space-3: 12px;
+  --o-space-4: 16px;
+  --o-space-5: 20px;
+  --o-space-6: 24px;
+  --o-space-8: 32px;
+  --o-space-10:40px;
+
+  /* ── Radius scale ── */
+  --o-r-sm:  8px;
+  --o-r-md:  12px;
+  --o-r-lg:  16px;
+  --o-r-xl:  24px;
+  --o-r-2xl: 32px;
+}
+
+/* ── Owner Page Base ── */
+.owner-page {
+  background: var(--o-bg);
+  color: var(--o-ink);
+  min-height: 100vh;
+}
+
+/* ── Reusable Card ── */
+.o-card {
+  background: var(--o-card);
+  border-radius: var(--o-r-lg);
+  box-shadow: var(--o-shadow-sm);
+  border: 1px solid var(--o-line);
+}
+
+/* ── Reusable Button Intents ── */
+.o-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--o-space-2);
+  padding: var(--o-space-3) var(--o-space-4);
+  border-radius: var(--o-r-md);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.o-btn:active { transform: scale(0.97); }
+
+.o-btn--brand {
+  background: var(--o-brand);
+  color: var(--o-brand-ink);
+}
+.o-btn--brand:hover { background: var(--o-brand-2); }
+
+.o-btn--blue {
+  background: var(--o-blue);
+  color: #fff;
+}
+.o-btn--blue:hover { background: var(--o-blue-ink); }
+
+.o-btn--green {
+  background: var(--o-green);
+  color: #fff;
+}
+.o-btn--green:hover { background: #166534; }
+
+.o-btn--red {
+  background: var(--o-red);
+  color: #fff;
+}
+.o-btn--red:hover { background: #991b1b; }
+
+.o-btn--ghost {
+  background: var(--o-line-2);
+  color: var(--o-body);
+}
+.o-btn--ghost:hover { background: var(--o-line); }
+
+/* ── Stat Cards ── */
+.o-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--o-space-4);
+  border-radius: var(--o-r-lg);
+  gap: var(--o-space-1);
+}
+.o-stat__label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+}
+.o-stat__value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ── Order Row ── */
+.o-order {
+  display: flex;
+  align-items: center;
+  gap: var(--o-space-3);
+  padding: var(--o-space-3) var(--o-space-4);
+  border-radius: var(--o-r-md);
+  background: var(--o-card);
+  border: 1px solid var(--o-line);
+}
+
+/* ── Status Pills ── */
+.o-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ── Typography helpers ── */
+.o-text-xs  { font-size: 10px; font-weight: 700; }
+.o-text-sm  { font-size: 12px; font-weight: 600; }
+.o-text-base{ font-size: 14px; font-weight: 600; }
+.o-text-lg  { font-size: 16px; font-weight: 700; }
+.o-text-xl  { font-size: 20px; font-weight: 800; }
+.o-text-2xl { font-size: 24px; font-weight: 800; }
+.o-upper    { text-transform: uppercase; letter-spacing: 0.05em; }
