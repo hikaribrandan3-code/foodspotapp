@@ -464,7 +464,7 @@ class Mascot{
 
 // ── GRID HELPERS ─────────────────────────────────────────────────
 function rowOX(r){return r%2===0?0:R;}
-function colsInRow(r){return r%2===0?NC:NC-1;}
+function colsInRow(r){return NC;}
 function bobaXY(r,c){return {x:GX+c*R*2+rowOX(r),y:GY+r*R*1.732+ceilOff};}
 function isVal(r,c){if(r<0||r>=ROWS)return false;return c>=0&&c<colsInRow(r);}
 function getNbrs(r,c){ const e=r%2===0,off=e?[[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]]:[[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]]; return off.map(([dr,dc])=>({r:r+dr,c:c+dc})).filter(n=>isVal(n.r,n.c)&&grid[n.r][n.c]); }
