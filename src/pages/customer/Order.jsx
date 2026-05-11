@@ -238,10 +238,12 @@ function Order({ config: configProp }) {
     // 📲 WhatsApp link builder (extracted for reuse across branches)
     const buildWhatsAppUrl = (orderPayload) => {
         if (!ownerPhone) return null
+        const mpAlias = config.payments?.mercadoPagoAlias || null
         const message = buildWhatsAppSummary(
             { ...orderPayload, orderNumber: orderPayload.order_number, customerInfo },
             businessName,
-            orderPayload.payment_method
+            orderPayload.payment_method,
+            mpAlias
         )
         return `https://wa.me/${ownerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
     }
