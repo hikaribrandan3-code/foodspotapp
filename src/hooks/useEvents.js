@@ -42,7 +42,6 @@ export function useEvents(tenantSlug) {
                 .select('*')
                 .eq('business_id', branding.business_id)
                 .eq('status', 'live')
-                .gte('start_date', todayStart.toISOString())
                 .order('start_date', { ascending: true })
 
             if (fetchError) {

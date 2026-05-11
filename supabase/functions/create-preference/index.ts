@@ -7,21 +7,11 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const WEBHOOK_URL = "https://buendqgmwpxdixwvlkhd.supabase.co/functions/v1/mp-webhook";
 const MERCADO_PAGO_API = "https://api.mercadopago.com/checkout/preferences";
 
 serve(async (req: Request) => {
     if (req.method === "OPTIONS") {
         return new Response("ok", { headers: corsHeaders });
-    }
-
-    // Verify JWT / Auth header
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-        return new Response(
-            JSON.stringify({ error: "Unauthorized" }),
-            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
     }
 
     try {
@@ -38,6 +28,7 @@ serve(async (req: Request) => {
         const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const WEBHOOK_URL = `${supabaseUrl}/functions/v1/mp-webhook`;
 
         const { data: order, error: orderError } = await supabase
             .from('orders')
