@@ -293,14 +293,14 @@ function Order({ config: configProp }) {
         const orderNumber = generateOrderNumber()
         const guestToken = getScopedGuestToken()
         // Dine-in always pays at the end — force cash so order goes straight to kitchen
-        const effectivePaymentMethod = orderType === 'dine_in' ? PAYMENT_METHOD.CASH : paymentMethod
-        const isCashPath = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
-        const isWhatsApp = effectivePaymentMethod === PAYMENT_METHOD.WHATSAPP
+        const effectivePaymentMethod = orderType === 'dine_in' ? 'cash' : paymentMethod
+        const isCashPath = effectivePaymentMethod === 'cash' || effectivePaymentMethod === 'card_on_delivery'
+        const isWhatsApp = effectivePaymentMethod === 'whatsapp'
 
-        const isCash = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
+        const isCash = effectivePaymentMethod === 'cash' || effectivePaymentMethod === 'card_on_delivery'
         const isDineInPayAfter = orderType === 'dine_in' && isCash
         const isDeliveryCash = orderType === 'delivery' && isCash
-        const orderStatus = effectivePaymentMethod === PAYMENT_METHOD.MERCADO_PAGO
+        const orderStatus = effectivePaymentMethod === 'mercado_pago'
             ? ORDER_STATUS.PENDING_PAYMENT
             : isDineInPayAfter
                 ? ORDER_STATUS.RELEASED_TO_KITCHEN
@@ -362,7 +362,7 @@ function Order({ config: configProp }) {
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
-            if (effectivePaymentMethod === PAYMENT_METHOD.MERCADO_PAGO) {
+            if (effectivePaymentMethod === 'mercado_pago') {
                 try {
                     const { data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
                         body: { order_id: savedOrder.id }
@@ -477,7 +477,7 @@ function Order({ config: configProp }) {
             customer_phone: customerInfo.phone || null,
             delivery_address: isDelivery ? (customerInfo.address || null) : null,
             table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
-            payment_method: PAYMENT_METHOD.CASH,
+            payment_method: 'cash',
             distance_km: isDelivery ? distanceResult.distanceKm : null,
             created_at: new Date().toISOString()
         }
@@ -901,9 +901,9 @@ function Order({ config: configProp }) {
                     {paymentMethods.cash && (
                         <PaymentMethodCard
                             id="efectivo"
-                            selected={paymentMethod === PAYMENT_METHOD.CASH}
-                            onClick={() => setPaymentMethod(PAYMENT_METHOD.CASH)}
-                            title={t(PAYMENT_METHOD.CASH)}
+                            selected={paymentMethod === 'cash'}
+                            onClick={() => setPaymentMethod('cash')}
+                            title={t('cash')}
                             subtitle={t('cash_delivery')}
                             color="#22C55E"
                             icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>}
@@ -912,8 +912,8 @@ function Order({ config: configProp }) {
 
                     <PaymentMethodCard
                         id="whatsapp"
-                        selected={paymentMethod === PAYMENT_METHOD.WHATSAPP}
-                        onClick={() => setPaymentMethod(PAYMENT_METHOD.WHATSAPP)}
+                        selected={paymentMethod === 'whatsapp'}
+                        onClick={() => setPaymentMethod('whatsapp')}
                         title={t('label_whatsapp') || 'WhatsApp'}
                         subtitle={'Confirmar por WhatsApp'}
                         color="#25D366"
@@ -923,8 +923,8 @@ function Order({ config: configProp }) {
                     {paymentMethods.mercado_pago && (
                         <PaymentMethodCard
                             id="mercado_pago"
-                            selected={paymentMethod === PAYMENT_METHOD.MERCADO_PAGO}
-                            onClick={() => setPaymentMethod(PAYMENT_METHOD.MERCADO_PAGO)}
+                            selected={paymentMethod === 'mercado_pago'}
+                            onClick={() => setPaymentMethod('mercado_pago')}
                             title="Mercado Pago"
                             subtitle="Tarjeta de crédito/débito o billetera"
                             color="#0066FF"
