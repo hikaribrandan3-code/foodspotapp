@@ -25,7 +25,6 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import { ORDER_STATUS } from '../../constants/database.js';
-import { PAYMENT_METHOD } from '../../constants/database.js';
 
 
 
