@@ -31,6 +31,7 @@ function OwnerSummary() {
     const { theme, setTheme } = useTheme()
     const appConfig = tenantData?.app_config || {}
     const [businessInfoLocal, setBusinessInfoLocal] = useState({})
+    const [paymentMethodsLocal, setPaymentMethodsLocal] = useState({ cash: true, mercado_pago: true, whatsapp: false })
     const [showAuditor, setShowAuditor] = useState(false)
     const [showOnboarding, setShowOnboarding] = useState(false)
     const debounceTimerRef = useRef(null)
@@ -207,6 +208,12 @@ function OwnerSummary() {
         businessInfoLocalRef.current = businessInfoLocal
     }, [businessInfoLocal])
 
+    // Ref for payment methods
+    const paymentMethodsLocalRef = useRef(paymentMethodsLocal)
+    useEffect(() => {
+        paymentMethodsLocalRef.current = paymentMethodsLocal
+    }, [paymentMethodsLocal])
+
     // 🛡️ TYPING LOCK: Block server sync while user is actively editing
     const isTypingRef = useRef(false)
 
@@ -219,6 +226,12 @@ function OwnerSummary() {
         lastSyncedAppConfigRef.current = appConfigKey
         setBusinessInfoLocal(appConfig?.businessInfo || {})
     }, [appConfig?.businessInfo])
+
+    // Sync payment methods from server
+    useEffect(() => {
+        const paymentMethods = appConfig?.payment_methods || { cash: true, mercado_pago: true, whatsapp: false }
+        setPaymentMethodsLocal(paymentMethods)
+    }, [appConfig?.payment_methods])
 
     // Optimistic + debounced save
     const updateBusinessInfo = (field, value) => {
@@ -238,6 +251,25 @@ function OwnerSummary() {
                     console.error('Save failed:', e)
                 }
             }, 800)
+
+            return next
+        })
+    }
+
+    // Update payment methods
+    const updatePaymentMethods = async (field, value) => {
+        setPaymentMethodsLocal(prev => {
+            const next = { ...prev, [field]: value }
+
+            // Immediately save to database
+            const updatedConfig = { ...appConfig, payment_methods: next }
+            supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+                .then(() => {
+                    refreshTenantData()
+                    setAutoSaveStatus({ type: 'venue', timestamp: Date.now() })
+                    setTimeout(() => setAutoSaveStatus(null), 2000)
+                })
+                .catch(e => console.error('Payment methods save failed:', e))
 
             return next
         })
@@ -543,6 +575,35 @@ function OwnerSummary() {
                                             placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                             className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
+                                    </div>
+
+                                    {/* WhatsApp Payment Toggle */}
+                                    <div>
+                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-3">
+                                            ✅ {t('whatsapp_payment') || 'Enable WhatsApp Payment'}
+                                        </label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => updatePaymentMethods('whatsapp', true)}
+                                                className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                                                    paymentMethodsLocal?.whatsapp
+                                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 border-2 border-emerald-500 text-emerald-700 dark:text-emerald-400'
+                                                        : 'bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400'
+                                                }`}
+                                            >
+                                                {paymentMethodsLocal?.whatsapp ? '✓ Enabled' : 'Enable'}
+                                            </button>
+                                            <button
+                                                onClick={() => updatePaymentMethods('whatsapp', false)}
+                                                className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                                                    !paymentMethodsLocal?.whatsapp
+                                                        ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-700 dark:text-red-400'
+                                                        : 'bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400'
+                                                }`}
+                                            >
+                                                {!paymentMethodsLocal?.whatsapp ? '✓ Disabled' : 'Disable'}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-6 md:p-8 space-y-4 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
