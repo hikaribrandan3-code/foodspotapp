@@ -46,6 +46,7 @@ import Menu from './pages/customer/Menu.jsx'
 import Envio from './pages/customer/Envio.jsx'
 import Order from './pages/customer/Order.jsx'
 import OrderStatus from './pages/customer/OrderStatus.jsx'
+import OrderPayment from './pages/customer/OrderPayment.jsx'
 import Receipt from './pages/customer/Receipt.jsx'
 
 import Rewards from './pages/customer/Rewards.jsx'
@@ -523,6 +524,7 @@ function App() {
                                             <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
                                             <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
                                             <Route path="/:tenantSlug/receipt" element={<Receipt />} />
+                                            <Route path="/:tenantSlug/payment" element={<OrderPayment config={safeConfig} />} />
 
                                             <Route path="/:tenantSlug/rewards" element={<Rewards />} />
                                             <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />

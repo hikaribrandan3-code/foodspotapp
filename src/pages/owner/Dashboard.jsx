@@ -249,14 +249,32 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
           {(() => {
             const isPaid = order.payment_status === 'paid'
             const isCash = order.payment_method === PAYMENT_METHOD.CASH
-            const text = isPaid
-              ? 'Paid'
-              : isCash
-                ? order.order_type === 'delivery' ? 'Pay on Delivery' : order.order_type === 'dine_in' ? 'Pay at Table' : 'Pay at Takeout'
-                : 'Payment Pending'
-            const bg = isPaid ? T.greenBg : T.blueBg
+            const isWhatsApp = order.payment_method === PAYMENT_METHOD.WHATSAPP
+            const isAlias = order.payment_method === PAYMENT_METHOD.ALIAS
+            const isAwaitingPayment = !isPaid && (isCash || isWhatsApp || isAlias) && order.status === ORDER_STATUS.PENDING_PAYMENT
+
+            let text = 'Payment Pending'
+            let bg = T.blueBg
+            let color = T.blueInk
+
+            if (isPaid) {
+              text = 'Paid'
+              bg = T.greenBg
+              color = T.greenInk
+            } else if (isAwaitingPayment) {
+              text = '⏳ Awaiting Payment'
+              bg = '#FEF3C7'
+              color = '#92400E'
+            } else if (isCash) {
+              text = order.order_type === 'delivery' ? 'Pay on Delivery' : order.order_type === 'dine_in' ? 'Pay at Table' : 'Pay at Takeout'
+            } else if (isWhatsApp) {
+              text = 'WhatsApp Payment'
+            } else if (isAlias) {
+              text = 'MP Alias'
+            }
+
             return (
-              <div style={{ fontSize: 13, color: isPaid ? T.greenInk : T.blueInk, marginBottom: 6, padding: '6px 8px', background: bg, borderRadius: 6, fontWeight: 600 }}>
+              <div style={{ fontSize: 13, color, marginBottom: 6, padding: '6px 8px', background: bg, borderRadius: 6, fontWeight: 600 }}>
                 {text}
               </div>
             )
