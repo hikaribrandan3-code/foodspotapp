@@ -335,25 +335,17 @@ function Order({ config: configProp }) {
             window.open(whatsappUrl, '_blank')
         }
 
-        // Failsafe timeout
-        const submitTimeout = setTimeout(() => {
-            console.error('[Order] TIMEOUT: Submit took >10s, resetting')
-            setIsSubmitting(false)
-            showToast('⏱️ Orden tardó demasiado. Intenta de nuevo.')
-        }, 10000)
-
         try {
+            debugger
             // ─── STEP 3: PERSISTENT-FIRST DB INSERT ───────────
             // The order exists in Supabase BEFORE any external API call.
             // Even if the user's phone dies here, the owner sees the order.
-            console.log('[Order] Inserting order...')
             const { data: savedOrder, error } = await supabase
                 .from('orders')
                 .insert(newOrder)
                 .select()
                 .single()
 
-            console.log('[Order] Insert result:', { success: !error, error: error?.message })
             if (error) throw error
 
             // Store phone for recovery
@@ -414,7 +406,6 @@ function Order({ config: configProp }) {
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
 
-            clearTimeout(submitTimeout)
             setIsSubmitting(false)
             setSubmitted(true)
             setTimeout(() => {
@@ -426,7 +417,6 @@ function Order({ config: configProp }) {
             }, 1500)
 
         } catch (err) {
-            clearTimeout(submitTimeout)
             console.error('[Order] ❌ Submission Error:', err.message)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
