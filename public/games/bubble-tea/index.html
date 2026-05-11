@@ -64,9 +64,9 @@ window.addEventListener('message',(e)=>{
   if(button==='select'){window.parent.postMessage({type:'GAME_EXIT',gameId:'bubble-tea-blast'},'*');return;}
   if(button==='a'){
     if(gameState==='gameover'){resetGame();startMusic();}
-    else if(gameState==='levelcomplete'&&lcTimer>60){lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();}
+    else if(gameState==='levelcomplete'&&lcTimer>60){proj=null;lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();}
     else if(gameState==='paused'){if(pauseSelection===0){gameState='playing';startMusic();}else{resetGame();startMusic();gameState='playing';}}
-    else if(gameState==='playing'){cannonCharge=Math.min(cannonCharge+.3,1);fire();}
+    else if(gameState==='playing'){fire();}
     return;
   }
   if(button==='dpad-left'){if(gameState==='playing'){aimAngle=Math.max(-Math.PI+.1,aimAngle-.05);calcAim();}}
@@ -138,7 +138,7 @@ let lvlStars=0,lvlScStart=0,lvlShStart=0,lcTimer=0,lcScDisp=0;
 let mascot=null;
 let comboMeter=0,comboMeterTarget=0;
 let bgComboPct=0;
-let cannonCharge=0,orbCrack=0,launchBeam=0,launchBeamAngle=0;
+let orbCrack=0,launchBeam=0,launchBeamAngle=0;
 let flashAlpha=0,flashCol='#FFF';
 let livesAnim=[1,1,1];
 let scoreBounce=0,lvlBadgePop=0;
@@ -486,7 +486,7 @@ function drawGridHighlight(){
   }
 }
 class Proj{
-  constructor(boba,a){ this.boba=boba;this.x=CNX;this.y=CNY;const spd=Math.max(11,(14+lvl*.7)*SC);this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;this.stopped=false;this.trail=[];this.life=0; }
+  constructor(boba,a){ this.boba=boba;this.x=CNX;this.y=CNY-R*.3;const spd=Math.max(11,(14+lvl*.7)*SC);this.vx=Math.cos(a)*spd;this.vy=Math.sin(a)*spd;this.stopped=false;this.trail=[];this.life=0; }
   update(){
     if(this.stopped)return;
     this.life++;
@@ -1227,9 +1227,9 @@ function spawnBoba(){
   nxt2Boba=new Boba(rndCol(next2IsPowerUp));
 }
 function fire(){
-  if(proj||gameState!=='playing')return;
+  if(proj||gameState!=='playing'||getReadyTimer>0)return;
   proj=new Proj(curBoba,aimAngle);
-  playFX('shoot');Haptics.fire(Haptics.shoot);cannonCharge=0;orbCrack=1;launchBeam=1;launchBeamAngle=aimAngle;spawnBoba();
+  playFX('shoot');Haptics.fire(Haptics.shoot);orbCrack=1;launchBeam=1;launchBeamAngle=aimAngle;spawnBoba();
 }
 function checkObjective(){
   // Win: reached target score OR cleared the board early
@@ -1389,7 +1389,7 @@ function resetGame(){
   parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];iceParticles=[];
   proj=null;aimAngle=-Math.PI/2;mascot=null;nxt2Boba=null;consecutiveMisses=0;shotsThisLevel=0;
   lvlScStart=0;lvlShStart=0;lvlObjScStart=0;comboMeter=0;comboMeterTarget=0;bgComboPct=0;
-  cannonCharge=0;flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
+  flashAlpha=0;flashCol='#FFF';livesAnim=[1,1,1];scoreBounce=0;lvlBadgePop=0;beatPulse=0;beatTimer=0;getReadyTimer=0;
   const cfg=LEVELS[0];
   shotBudget=cfg.shots;targetScore=cfg.targetScore;levelName=cfg.name;
   resize();initParallax();initGrid();spawnBoba();calcAim();
@@ -1405,19 +1405,19 @@ cv.addEventListener('pointerdown',e=>{
   e.preventDefault();
   if(gameState==='splash'){gameState='playing';resetGame();initAudio();startMusic();return;}
   if(gameState==='gameover'){resetGame();initAudio();startMusic();return;}
-  if(gameState==='levelcomplete'&&lcTimer>60){lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();return;}
+  if(gameState==='levelcomplete'&&lcTimer>60){proj=null;lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();return;}
   if(gameState==='paused'){gameState='playing';startMusic();return;}
-  if(gameState==='playing'){cannonCharge=Math.min(cannonCharge+.3,1);fire();}
+  if(gameState==='playing'){fire();}
 },{passive:false});
 window.addEventListener('keydown',e=>{
   if(e.key==='Escape'||e.key==='p'){if(gameState==='playing')gameState='paused';else if(gameState==='paused')gameState='playing';return;}
   if(gameState==='splash'){if(e.key==='Enter'){gameState='playing';resetGame();}return;}
   if(gameState==='gameover'){if(e.key==='Enter')resetGame();return;}
-  if(gameState==='levelcomplete'&&e.key==='Enter'){lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();return;}
+  if(gameState==='levelcomplete'&&e.key==='Enter'){proj=null;lvlUp();gameState='playing';resize();initGrid();spawnBoba();calcAim();return;}
   if(gameState!=='playing')return;
   if(e.key==='ArrowLeft')aimAngle=Math.max(-Math.PI+.1,aimAngle-.05);
   if(e.key==='ArrowRight')aimAngle=Math.min(-.1,aimAngle+.05);
-  if(e.key===' '||e.key==='z'||e.key==='Z'||e.key==='Enter'){cannonCharge=Math.min(cannonCharge+.3,1);fire();}
+  if(e.key===' '||e.key==='z'||e.key==='Z'||e.key==='Enter'){fire();}
   calcAim();
 });
 
@@ -1490,7 +1490,6 @@ function loop(t){
       cx.save();cx.translate(curBoba.x,curBoba.y);cx.scale(1.26,1.26);cx.translate(-curBoba.x,-curBoba.y);curBoba.draw(t);cx.restore();
     }
     if(proj&&gameState==='playing'){proj.update();if(proj.stopped){const tmp=proj;proj=null;try{onStop(tmp);}catch(e){console.error('[BubbleTea] onStop error:',e);}}else proj.draw(t);}
-    if(gameState==='playing')cannonCharge=Math.max(0,cannonCharge-.008);
   }
   // Optimized particle loops - iterate backwards to avoid array mutation issues
   if(parts.length>60)parts.splice(0,parts.length-60);
