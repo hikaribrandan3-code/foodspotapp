@@ -580,12 +580,12 @@ function OwnerSummary() {
                                     {/* WhatsApp Payment Toggle */}
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-3">
-                                            ✅ {t('whatsapp_payment') || 'Enable WhatsApp Payment'}
+                                            ✅ WhatsApp Payment
                                         </label>
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => updatePaymentMethods('whatsapp', true)}
-                                                className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                                                className={`flex-1 px-6 py-3 rounded-2xl font-semibold text-sm transition-all ${
                                                     paymentMethodsLocal?.whatsapp
                                                         ? 'bg-emerald-100 dark:bg-emerald-900/30 border-2 border-emerald-500 text-emerald-700 dark:text-emerald-400'
                                                         : 'bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400'
@@ -595,7 +595,7 @@ function OwnerSummary() {
                                             </button>
                                             <button
                                                 onClick={() => updatePaymentMethods('whatsapp', false)}
-                                                className={`flex-1 px-6 py-3 rounded-xl font-semibold text-sm transition-all ${
+                                                className={`flex-1 px-6 py-3 rounded-2xl font-semibold text-sm transition-all ${
                                                     !paymentMethodsLocal?.whatsapp
                                                         ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-700 dark:text-red-400'
                                                         : 'bg-stone-100 dark:bg-stone-800 border-2 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400'
