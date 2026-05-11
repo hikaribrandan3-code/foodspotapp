@@ -802,7 +802,7 @@ function Home({ config: configProp }) {
                     gap: 12,
                     marginBottom: 0,
                     width: '99%', /* Hero Authority: 3% Scale-Up */
-                    margin: '4px auto 0 auto' /* Tight gap from Hero, Centered */
+                    margin: '28px auto 0 auto' /* Pushed down 15% from header */
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
