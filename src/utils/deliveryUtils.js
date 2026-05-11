@@ -66,7 +66,10 @@ export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMEN
     ).join('\n');
 
     const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\n⚠️ *TRAER POS*' : '';
-    const paymentLabel = paymentMethod === PAYMENT_METHOD.CASH ? '💵 Efectivo' : '💳 Tarjeta';
+    const paymentLabel =
+        paymentMethod === PAYMENT_METHOD.CASH ? '💵 Efectivo' :
+        paymentMethod === PAYMENT_METHOD.WHATSAPP ? '📱 WhatsApp' :
+        '💳 Tarjeta';
 
     // 🛡️ STRUCTURED ADDRESS FORMATTER
     let addressDisplay = 'Retiro en local'
