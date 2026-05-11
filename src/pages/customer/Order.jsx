@@ -405,6 +405,7 @@ function Order({ config: configProp }) {
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
 
+            setIsSubmitting(false)
             setSubmitted(true)
             setTimeout(() => {
                 if (isDelivery) {
@@ -415,7 +416,7 @@ function Order({ config: configProp }) {
             }, 1500)
 
         } catch (err) {
-            console.error('[Order] Submission Error:', err)
+            console.error('[Order] ❌ Submission Error:', err.message)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
         }
