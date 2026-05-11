@@ -39,10 +39,6 @@ function OwnerSummary() {
     const [mpAliasSaved, setMpAliasSaved] = useState(false)
     const [mpAliasSaving, setMpAliasSaving] = useState(false)
     const mpAliasInitialized = useRef(false)
-    const [discordWebhookInput, setDiscordWebhookInput] = useState('')
-    const [discordWebhookSaved, setDiscordWebhookSaved] = useState(false)
-    const [discordWebhookSaving, setDiscordWebhookSaving] = useState(false)
-    const discordWebhookInitialized = useRef(false)
 
     // External Links local state
     const [instagramInput, setInstagramInput] = useState('')
@@ -283,14 +279,6 @@ function OwnerSummary() {
         }
     }, [appConfig?.payments?.mercadoPagoAlias])
 
-    // Sync discordWebhookInput from server only on first load
-    useEffect(() => {
-        if (!discordWebhookInitialized.current && appConfig?.notifications?.discordWebhookUrl !== undefined) {
-            setDiscordWebhookInput(appConfig.notifications?.discordWebhookUrl || '')
-            discordWebhookInitialized.current = true
-        }
-    }, [appConfig?.notifications?.discordWebhookUrl])
-
     // Sync businessCurrency from app_config on first load (default: ARS)
     useEffect(() => {
         if (!businessCurrencyInitialized.current && appConfig?.businessCurrency !== undefined) {
@@ -348,23 +336,6 @@ function OwnerSummary() {
             console.error('Failed to save MP Alias:', err)
         } finally {
             setMpAliasSaving(false)
-        }
-    }
-
-    const saveDiscordWebhook = async () => {
-        setDiscordWebhookSaving(true)
-        setDiscordWebhookSaved(false)
-        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-        try {
-            const updatedConfig = { ...appConfig, notifications: { ...appConfig?.notifications, discordWebhookUrl: discordWebhookInput } }
-            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-            await refreshTenantData()
-            setDiscordWebhookSaved(true)
-            setTimeout(() => setDiscordWebhookSaved(false), 3000)
-        } catch (err) {
-            console.error('Failed to save Discord Webhook:', err)
-        } finally {
-            setDiscordWebhookSaving(false)
         }
     }
 
@@ -704,30 +675,6 @@ function OwnerSummary() {
                                         </div>
                                         {mpAliasSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
                                         {!mpAliasSaved && <p className="text-xs text-stone-400 dark:text-white mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
-                                    </div>
-
-                                    {/* Discord Webhook */}
-                                    <div className="border-t border-stone-100 dark:border-white/5 pt-4">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Discord Webhook</label>
-                                        <p className="text-xs text-stone-400 dark:text-white mb-2">Send payment requests to Discord when drivers deliver</p>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="password"
-                                                placeholder="https://discord.com/api/webhooks/..."
-                                                value={discordWebhookInput}
-                                                onChange={(e) => setDiscordWebhookInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
-                                            />
-                                            <motion.button
-                                                whileTap={{ scale: 0.97 }}
-                                                onClick={saveDiscordWebhook}
-                                                disabled={discordWebhookSaving}
-                                                className="px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-stone-900 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                                            >
-                                                {discordWebhookSaved ? <Check size={16} /> : (discordWebhookSaving ? '...' : 'Save')}
-                                            </motion.button>
-                                        </div>
-                                        {discordWebhookSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Webhook saved</p>}
                                     </div>
                                 </div>
                             </motion.div>
