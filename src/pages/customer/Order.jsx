@@ -1005,41 +1005,6 @@ function Order({ config: configProp }) {
                     {!isSubmitting && !isOutOfRadius && <span>➜</span>}
                 </button>
 
-                {/* WhatsApp Preview Button — Test/Demo */}
-                <button
-                    onClick={() => {
-                        const orderNumber = generateOrderNumber()
-                        const testOrder = {
-                            business_id: businessId,
-                            order_number: orderNumber,
-                            items: order.items,
-                            subtotal: subtotal,
-                            delivery_fee: actualDeliveryFee,
-                            total: total,
-                            order_type: orderType,
-                            customer_name: customerInfo.name || 'Guest',
-                            customer_phone: customerInfo.phone || '',
-                            delivery_address: isDelivery ? customerInfo.address : null,
-                            payment_method: paymentMethod || PAYMENT_METHOD.CASH
-                        }
-                        const whatsappUrl = buildWhatsAppUrl(testOrder)
-                        if (whatsappUrl) window.open(whatsappUrl, '_blank')
-                        else alert('WhatsApp number not configured')
-                    }}
-                    style={{
-                        width: '100%', padding: 14,
-                        background: '#25D366', color: 'white', border: 'none', borderRadius: 14,
-                        fontSize: 14, fontWeight: 600,
-                        cursor: 'pointer',
-                        opacity: 0.9,
-                        transition: 'opacity 0.2s'
-                    }}
-                    onMouseOver={(e) => e.target.style.opacity = '1'}
-                    onMouseOut={(e) => e.target.style.opacity = '0.9'}
-                >
-                    📲 Preview WhatsApp
-                </button>
-
             </div>
 
             {toastMessage && (
