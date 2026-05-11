@@ -22,7 +22,7 @@ const cv = document.getElementById('gc');
 // HB Audio Unlock
 (function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}cv.addEventListener('touchstart',unlock,{passive:true,once:true});cv.addEventListener('mousedown',unlock,{once:true});cv.addEventListener('pointerdown',unlock,{once:true});})();
 const cx = cv.getContext('2d');
-let W,H,R,NC,ROWS=16,GX,GY,CNX,CNY,SC,DEADLINE;
+let W,H,R,NC,ROWS=16,GX,GY,CNX,CNY,SC;
 
 const gradientCache=new Map();
 function buildGradientCache(){
@@ -46,7 +46,6 @@ function resize(){
   GY=Math.round(R*6.5);
   CNX=Math.round(W/2);
   CNY=Math.round(H-R*5);
-  DEADLINE=Math.round(GY+(CNY-GY)*0.76);
 }
 resize();
 window.addEventListener('resize',()=>{ resize(); buildGradientCache(); rebuildBgCache(); updPos(); calcAim(); });
@@ -263,39 +262,6 @@ function drawBG(t){
   const fg=cx.createLinearGradient(0,CNY+R*3,0,H); fg.addColorStop(0,bot); fg.addColorStop(1,'#1A0030');
   cx.fillStyle=fg; cx.fillRect(0,CNY+R*3,W,H);
   if(flashAlpha>0){ cx.save(); cx.globalAlpha=flashAlpha; cx.fillStyle=flashCol; cx.fillRect(0,0,W,H); cx.restore(); flashAlpha=Math.max(0,flashAlpha-.04); }
-}
-
-// ── DANGER BAR ────────────────────────────────────────────────────
-function drawDangerBar(){
-  let minY=GY;
-  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])minY=Math.max(minY,grid[r][c].y);
-  const danger=(minY-GY)/Math.max(1,DEADLINE-GY);
-
-  cx.save();
-  const t=Date.now()*.002;
-
-  // Base dead line: thin dashed amber, always visible, never obstructs
-  const d=Math.min(1,danger);
-  const r=255,g=Math.round(160-d*90),b=Math.round(70-d*35);
-  const alpha=0.22+d*.28;
-  cx.strokeStyle=`rgba(${r},${g},${b},${alpha})`;
-  cx.lineWidth=2;
-  cx.setLineDash([R*.55,R*.35]);
-  cx.lineDashOffset=-t*8;
-  cx.beginPath();cx.moveTo(0,DEADLINE);cx.lineTo(W,DEADLINE);cx.stroke();
-  cx.setLineDash([]);
-
-  // Only when truly close (within 12% of dead line): soft red glow
-  if(danger>.88){
-    const g2=(danger-.88)/.12;
-    cx.shadowColor='rgba(255,40,40,0.5)';
-    cx.shadowBlur=3+g2*5;
-    cx.strokeStyle=`rgba(255,50,50,${0.45+g2*.25})`;
-    cx.lineWidth=2+g2;
-    cx.beginPath();cx.moveTo(0,DEADLINE);cx.lineTo(W,DEADLINE);cx.stroke();
-    cx.shadowBlur=0;
-  }
-  cx.restore();
 }
 
 // ── BOBA ─────────────────────────────────────────────────────────
@@ -1370,7 +1336,8 @@ function dropCeiling(){
 }
 function checkGO(){
   if(checkGOCooldown>0){checkGOCooldown--;return false;}
-  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>DEADLINE){lives--;livesAnim[lives<0?0:lives]=1.6;Haptics.fire(Haptics.lifeLost,true);checkGOCooldown=45;if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
+  const touchY=CNY-R*2; // bubble center within 2 radii of cannon = death
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&grid[r][c].y>touchY){lives--;livesAnim[lives<0?0:lives]=1.6;Haptics.fire(Haptics.lifeLost,true);checkGOCooldown=45;if(lives<=0)return true;ceilOff=Math.max(0,ceilOff-R*1.732);updPos();}
   return false;
 }
 function endGame(){
@@ -1458,7 +1425,6 @@ function loop(t){
   for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]){
     if(grid[r][c].y<-R||grid[r][c].y>H+R)continue;
     grid[r][c].update(t);grid[r][c].draw(t);}
-  if(gameState==='playing'&&getReadyTimer<=0){if(checkGO())endGame();}
   if(getReadyTimer>0){
     getReadyTimer--;
     const p=getReadyTimer/110;
@@ -1496,7 +1462,6 @@ function loop(t){
     if(gameState==='playing')return;
   }
   if(gameState==='playing'||gameState==='paused'||gameState==='levelcomplete'){
-    drawDangerBar();
     drawGridHighlight();
     if(gameState==='playing'&&getReadyTimer<=0)drawAim();
     drawCannon(t);
