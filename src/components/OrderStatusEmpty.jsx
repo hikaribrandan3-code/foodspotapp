@@ -323,7 +323,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
 
                 {/* Hero Banner */}
                 {promoConfig.enabled && (
-                    <section className="ose-hero" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${adjustColor(primaryColor, -20)})` }}>
+                    <section className="ose-hero" style={{ background: 'linear-gradient(135deg, #FFF059, #FFD700)' }}>
                         <div className="ose-hero-content">
                             <h2 className="ose-hero-title">{promoConfig.text}</h2>
                             <p className="ose-hero-subtext">{promoConfig.subtext}</p>
