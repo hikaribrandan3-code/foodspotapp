@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Ticket, CreditCard, Info, Smartphone, Wallet, Zap, Coins, Fingerprint } from 'lucide-react';
+import { ChevronLeft, CreditCard } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { supabase } from '../../../../lib/supabaseClient';
 
@@ -116,10 +116,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   };
 
   const paymentOptions = [
-    { id: 'card', name: 'Credit Card', icon: <CreditCard size={16} />, color: 'slate' },
-    { id: 'mercado', name: 'Mercado Pago', icon: <Smartphone size={16} />, color: 'sky' },
-    { id: 'crypto', name: 'Crypto Pay', icon: <Coins size={16} />, color: 'indigo' },
-    { id: 'wristband', name: 'Sync Wristband', icon: <Fingerprint size={16} />, color: 'emerald' }
+    { id: 'card', name: 'Credit Card', icon: <CreditCard size={16} />, color: 'slate' }
   ];
 
   return (
@@ -318,17 +315,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
            )}
         </div>
 
-        <div className="bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl p-5 border border-amber-100 dark:border-amber-900/30 flex gap-4">
-           <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-amber-600 shrink-0 shadow-sm">
-              <Zap size={18} />
-           </div>
-           <div>
-              <h4 className="text-[11px] font-black uppercase tracking-tight text-amber-700 dark:text-amber-400 mb-1">Futuristic Checkout</h4>
-              <p className="text-[10px] font-medium text-amber-600 dark:text-amber-500/80 leading-relaxed">
-                Syncing to your wristband allows you to leave your phone behind. Just scan and enjoy.
-              </p>
-           </div>
-        </div>
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
@@ -346,13 +332,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
             <span className="animate-pulse">Processing...</span>
           ) : (
             <>
-              {paymentMethod === 'wristband' ? <Fingerprint size={18} /> : 
-               paymentMethod === 'crypto' ? <Coins size={18} /> : 
-               paymentMethod === 'mercado' ? <Smartphone size={18} /> : 
-               <CreditCard size={18} />}
-              {paymentMethod === 'wristband' ? 'Sync & Confirm' : 
-               paymentMethod === 'mercado' ? 'Pay with Mercado Pago' : 
-               t('confirm_payment')}
+              <CreditCard size={18} />
+              {t('confirm_payment')}
             </>
           )}
         </button>

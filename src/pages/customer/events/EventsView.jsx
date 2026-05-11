@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../../lib/supabaseClient';
+import { useTenant } from '../../../contexts/TenantContext';
 import { useEvents } from '../../../hooks/useEvents';
 import EventDiscovery from './views/EventDiscovery';
 import EventDetail from './views/EventDetail';
@@ -216,15 +217,66 @@ function normalizeEvent(event) {
   };
 }
 
+// Demo events to seed on first view (skip evt_004 - festival with complex stages)
+const DEMO_SEEDS = mockEvents.filter(e => e.id !== 'evt_004').map(e => ({
+  id: `demo_${e.id}`,
+  name: e.name,
+  description: e.description,
+  image_url: e.image,
+  venue_name: e.venue_name,
+  start_date: new Date(`${e.date}T${e.time}`).toISOString(),
+  category: e.category,
+  status: 'live',
+  ticket_tiers: e.tiers.map(t => ({
+    id: t.id,
+    name: t.name,
+    price_cents: Math.round(t.price * 100),
+    capacity: t.qty,
+    sold: t.sold
+  }))
+}));
+
+async function seedDemoEvents(businessId) {
+  if (!businessId) return;
+
+  try {
+    // Check if any demos exist (check for demo_ prefix in IDs)
+    const { data: existing } = await supabase
+      .from('events')
+      .select('id')
+      .eq('business_id', businessId)
+      .like('id', 'demo_%')
+      .limit(1);
+
+    if (existing && existing.length > 0) return; // Already seeded
+
+    // Create demos
+    const demosWithBusiness = DEMO_SEEDS.map(e => ({ ...e, business_id: businessId }));
+    await supabase.from('events').insert(demosWithBusiness);
+  } catch (err) {
+    console.warn('Demo seeding skipped:', err.message);
+  }
+}
+
 export default function EventsView({ onViewTickets }) {
   const { tenantSlug } = useParams();
+  const { businessId } = useTenant();
   const [searchParams] = useSearchParams();
-  const { events: dbEvents, loading: eventsLoading, error: eventsError } = useEvents(tenantSlug);
+  const { events: dbEvents, loading: eventsLoading, error: eventsError, refetch } = useEvents(tenantSlug);
 
-  // Only show real DB events in production; mock events are dev-only
-  const events = dbEvents.length > 0
-    ? dbEvents.map(normalizeEvent)
-    : mockEvents.map(e => ({ ...e, id: `mock_${e.id}` }));
+  // Seed demos on mount if no events exist
+  useEffect(() => {
+    const seedIfNeeded = async () => {
+      if (businessId && dbEvents.length === 0) {
+        await seedDemoEvents(businessId);
+        refetch(); // Refetch to show seeded demos
+      }
+    };
+    seedIfNeeded();
+  }, [businessId, dbEvents.length, refetch]);
+
+  // Show all DB events (includes real events + seeded demos)
+  const events = dbEvents.map(normalizeEvent);
 
   const [stage, setStage] = useState('discovery'); // 'discovery' | 'detail' | 'checkout' | 'ticket' | 'my-tickets'
   const [selectedEvent, setSelectedEvent] = useState(null);
