@@ -163,7 +163,7 @@ export default function MyTickets() {
 
       <main className="flex-1 overflow-y-auto px-6 space-y-8 pb-32">
         {/* Futuristic Digital Wallet Card */}
-        <section>
+        <section className="hidden">
           <div className="bg-slate-900 rounded-[32px] p-5 text-white relative overflow-hidden shadow-2xl group active:scale-[0.98] transition-all cursor-pointer">
              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all duration-700" />
              <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -323,40 +323,14 @@ export default function MyTickets() {
               <div className="p-8 pb-12">
                  <div className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8 sm:hidden" />
                  
-                 <div className="flex flex-col items-center text-center mb-10">
+                 <div className="flex flex-col items-center text-center">
                     <div className="w-20 h-20 rounded-[30px] bg-gradient-to-tr from-[var(--color-primary)] to-indigo-600 flex items-center justify-center text-white shadow-2xl mb-6 transform -rotate-6">
-                       <Award size={40} />
+                       <Sparkles size={40} />
                     </div>
-                    <h3 className="text-2xl font-black text-[var(--text-primary)] mb-2 uppercase tracking-tighter italic">Collector Status</h3>
-                    <p className="text-sm font-medium text-[var(--text-secondary)] opacity-60">Level 4: Night Explorer</p>
-                 </div>
-
-                 <div className="space-y-4 mb-10">
-                    <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4">
-                       <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400">
-                          <Ticket size={24} />
-                       </div>
-                       <div className="flex-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-1">Last Milestone</p>
-                          <p className="text-sm font-bold">Techno Pioneer Badge</p>
-                       </div>
-                    </div>
-                    
-                    <div className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-[var(--border-color)] flex items-center gap-4 border-l-4 border-l-[var(--color-primary)]">
-                       <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)]">
-                          <Sparkles size={24} />
-                       </div>
-                       <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                             <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Next Reward</p>
-                             <p className="text-[10px] font-black text-[var(--color-primary)] tracking-widest">70%</p>
-                          </div>
-                          <p className="text-sm font-bold mb-2">After-Hours Legend</p>
-                          <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                             <div className="h-full bg-[var(--color-primary)] w-[70%]" />
-                          </div>
-                       </div>
-                    </div>
+                    <h3 className="text-2xl font-black text-[var(--text-primary)] mb-4 uppercase tracking-tighter">Coming Soon</h3>
+                    <p className="text-sm font-medium text-[var(--text-secondary)] opacity-70 leading-relaxed">
+                       Member Rewards & Badges are rolling out soon. Stay tuned for exclusive perks and recognition! 🎉
+                    </p>
                  </div>
 
                  <button 
