@@ -568,7 +568,7 @@ function Home({ config: configProp }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        aspectRatio: '1 / 0.9', // V1 Hero Dominance
+        aspectRatio: '1 / 0.96', // 7% taller, fills space better
         gap: 12,
         textDecoration: 'none',
         boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
