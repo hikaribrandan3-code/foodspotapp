@@ -299,10 +299,18 @@ function Order({ config: configProp }) {
         const isCashPath = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
         const isWhatsApp = effectivePaymentMethod === PAYMENT_METHOD.WHATSAPP
 
-        // ALL orders require owner approval before kitchen starts (prevent customer anger)
         const isCash = effectivePaymentMethod === PAYMENT_METHOD.CASH || effectivePaymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY
         const isDineInPayAfter = orderType === 'dine_in' && isCash
-        const orderStatus = ORDER_STATUS.PAID_UNRELEASED  // Simple: everyone waits for approval
+        const isDeliveryCash = orderType === 'delivery' && isCash
+        const orderStatus = effectivePaymentMethod === PAYMENT_METHOD.MERCADO_PAGO
+            ? ORDER_STATUS.PENDING_PAYMENT
+            : isDineInPayAfter
+                ? ORDER_STATUS.RELEASED_TO_KITCHEN
+                : isDeliveryCash
+                    ? ORDER_STATUS.RELEASED_TO_KITCHEN
+                    : isCash
+                        ? ORDER_STATUS.PAID_UNRELEASED
+                        : ORDER_STATUS.RELEASED_TO_KITCHEN
 
         const orderPaymentStatus = isDineInPayAfter ? 'unpaid' : 'pending'
 
