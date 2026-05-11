@@ -230,7 +230,7 @@ export function TenantProvider({ children }) {
         try {
             brandingChannel = supabase
                 .channel('branding-sync')
-            .on(
+                .on(
                 'postgres_changes',
                 {
                     event: 'UPDATE',

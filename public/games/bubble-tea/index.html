@@ -169,6 +169,16 @@ function startMusic(){
   musicOn=true;
 }
 function stopMusic(){ bgMusic.pause();bgMusic.currentTime=0; musicOn=false; }
+function note(f,t,d,g,ty){
+  if(!audioCtx)return;
+  const o=audioCtx.createOscillator(),gn=audioCtx.createGain();
+  o.type=ty||'sine';
+  o.frequency.setValueAtTime(f,t);
+  gn.gain.setValueAtTime(g||0.1,t);
+  gn.gain.exponentialRampToValueAtTime(0.001,t+d);
+  o.connect(gn);gn.connect(audioCtx.destination);
+  o.start(t);o.stop(t+d);
+}
 function playFX(type){
   if(!audioCtx) return; const now=audioCtx.currentTime;
   if(type==='shoot'){ note(440,now,.06,.1,'square'); note(660,now+.03,.05,.07,'square'); }

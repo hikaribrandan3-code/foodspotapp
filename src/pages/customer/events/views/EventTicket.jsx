@@ -1,18 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText, Fingerprint, Zap, Wallet, Smartphone } from 'lucide-react';
+import { Download, Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText, Fingerprint, Zap, Wallet, Smartphone, Scan } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import TicketScanner from '../../../../components/TicketScanner';
 
 export default function EventTicket({ booking, onClose }) {
   const { t } = useLanguage();
   const { theme } = useTheme();
   const ticketRef = useRef(null);
   const [activeTab, setActiveTab] = React.useState('ticket'); // 'ticket' or 'vouchers'
+  const [showScanner, setShowScanner] = React.useState(false);
 
   useEffect(() => {
     const duration = 3 * 1000;
@@ -65,6 +67,10 @@ export default function EventTicket({ booking, onClose }) {
   };
 
   if (!booking) return null;
+
+  if (showScanner) {
+    return <TicketScanner onClose={() => setShowScanner(false)} />;
+  }
 
   return (
     <div className="flex flex-col h-full bg-[var(--canvas-bg)] overflow-y-auto hide-scrollbar">
@@ -287,7 +293,14 @@ export default function EventTicket({ booking, onClose }) {
         )}
 
         <div className="w-full grid grid-cols-2 gap-2 mt-4 pb-10">
-          <button 
+          <button
+            onClick={() => setShowScanner(true)}
+            className="col-span-2 bg-emerald-500 text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10"
+          >
+            <Scan size={16} /> {t('check_in') || 'Check In'}
+          </button>
+
+          <button
             onClick={handleDownloadPDF}
             className="col-span-2 bg-[var(--color-primary)] text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-[var(--color-primary)]/10"
           >
