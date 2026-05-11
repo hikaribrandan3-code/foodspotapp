@@ -152,13 +152,6 @@ export default function MyTickets() {
         <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">
           {t('my_tickets')}
         </h1>
-        <div className="flex flex-col items-end">
-           <span className="text-[8px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-1">Wallet</span>
-           <div className="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-[var(--border-color)] shadow-sm flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-black text-[var(--text-primary)]">${walletBalance.toFixed(2)}</span>
-           </div>
-        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto px-6 space-y-8 pb-32">
