@@ -822,12 +822,27 @@ const Settings = () => {
                                 return { image: draft.hero_url, scale: 1, posX: 50, posY: 50 };
                             }
                         })()}
-                        onSave={(data) => {
+                        onSave={async (data) => {
                             if (!data?.image) {
                                 console.error('onSave: No image data received');
                                 alert('Upload failed. Please try again.');
                                 return;
                             }
+
+                            // Delete old hero cover image from storage to keep it clean (1 file at a time)
+                            if (draft.hero_cover_image) {
+                                try {
+                                    const oldUrl = new URL(draft.hero_cover_image);
+                                    const oldPath = oldUrl.pathname.split('/storage/v1/object/')[1];
+                                    if (oldPath) {
+                                        await supabase.storage.from('assets').remove([oldPath]);
+                                        console.log('[Hero] Deleted old cover image:', oldPath);
+                                    }
+                                } catch (err) {
+                                    console.warn('[Hero] Could not delete old image (non-critical):', err);
+                                }
+                            }
+
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
                             // NEW STANDARD: px/py for percentage based positioning
