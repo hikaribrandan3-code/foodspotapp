@@ -145,18 +145,43 @@ const Info = ({ config }) => {
                                 </div>
                             )}
 
+                            {/* Google Maps Row */}
+                            {tenantData?.app_config?.externalOrdering?.mapsLink && (
+                                <a
+                                    href={tenantData.app_config.externalOrdering.mapsLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, textDecoration: 'none' }}
+                                >
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Directions</p>
+                                        <p style={{ fontSize: 15, color: '#0F0F0F', margin: 0, fontWeight: 600 }}>Open in Google Maps</p>
+                                    </div>
+                                </a>
+                            )}
+
+                            {/* Google Review Row */}
+                            {tenantData?.app_config?.externalOrdering?.googleReviewUrl && (
+                                <a
+                                    href={tenantData.app_config.externalOrdering.googleReviewUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, textDecoration: 'none' }}
+                                >
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#FBBF24" stroke="#FBBF24" strokeWidth="1"><polygon points="12 2 15.09 10.26 23.77 11.25 17.77 17.25 19.09 25.95 12 21.77 4.91 25.95 6.23 17.25 0.23 11.25 8.91 10.26 12 2"/></svg>
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reviews</p>
+                                        <p style={{ fontSize: 15, color: '#0F0F0F', margin: 0, fontWeight: 600 }}>Leave a Review</p>
+                                    </div>
+                                </a>
+                            )}
 
                         </div>
-                    )}
-
-                    {/* Mercado Pago */}
-                    {isPillEnabled('mercadoPago') && (
-                        <button
-                            style={{ ...buttonBase, background: getPillColor('mercadoPago') }}
-                            onClick={() => navigate(`/${tenantSlug}/menu`)}
-                        >
-                            {t('info_mercado_pago')}
-                        </button>
                     )}
 
                     {/* Admin Access */}
