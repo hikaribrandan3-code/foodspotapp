@@ -1210,7 +1210,7 @@ function loop(ts){
     if(keys.right)G.handX=Math.min(FR-BR-1,G.handX+spd);
     if(keys.up)G.handY=Math.max(FY+BR+1,G.handY-spd);
     if(keys.down)G.handY=Math.min(FB-BR-1,G.handY+spd);
-    // Ball placement handled in drawHandMode with rollState reset
+    if(keys.a){const cb=G.balls.find(function(b){return b.id===0;});cb.pocketed=false;cb.vx=0;cb.vy=0;cb.x=G.handX;cb.y=G.handY;G.state='aim';G.potted=[];G.foul=false;}
   }
   // aPrev tracking removed - using aHeldFrames instead
   if(G.state==='roll'){for(let i=0;i<4;i++)physStep(dt/4);if(allStop())endTurn();}
