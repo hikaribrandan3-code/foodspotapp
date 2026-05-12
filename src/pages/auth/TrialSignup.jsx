@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
+import OnboardingModal from '../../components/Onboarding/OnboardingModal'
 import './TrialSignup.css'
 
 // ============================================
@@ -526,6 +527,7 @@ const TrialSignup = () => {
   const [error, setError] = useState(null)
   const [showResetModal, setShowResetModal] = useState(false)
   const [successToast, setSuccessToast] = useState(null)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   const l = TRANSLATIONS[lang]
 
@@ -607,8 +609,16 @@ const TrialSignup = () => {
     }
   }
 
-  const handleSignup = async (e) => {
+  const handleSignup = (e) => {
     e.preventDefault()
+    setError(null)
+    if (!businessName.trim()) { setError('Please enter a business name'); return }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return }
+    if (!email.trim()) { setError('Please enter your email'); return }
+    setShowOnboarding(true)
+  }
+
+  const handleOnboardingComplete = async (formData) => {
     setLoading(true)
     setError(null)
 
@@ -619,7 +629,7 @@ const TrialSignup = () => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { business_name: businessName, slug, role: 'owner' } }
+        options: { data: { business_name: businessName, slug, role: 'owner', onboarding: formData } }
       })
 
       if (authError) throw authError
@@ -628,7 +638,6 @@ const TrialSignup = () => {
       const trialEndsAt = new Date()
       trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
-      // Generate business_id (UUID) for multi-tenant isolation
       const businessId = crypto.randomUUID()
 
       await supabase.from('branding').insert({
@@ -637,8 +646,16 @@ const TrialSignup = () => {
         business_name: businessName,
         slug,
         trial_ends_at: trialEndsAt.toISOString(),
+        language: 'es',
         app_config: {
-          businessInfo: {},
+          businessInfo: {
+            businessType: formData.businessType,
+            duration: formData.duration,
+            serviceType: formData.serviceType,
+            socialMedia: formData.socialMedia,
+            priorAppUsage: formData.priorAppUsage,
+            eventsInfo: formData.events
+          },
           externalOrdering: {},
           payments: {},
           notifications: {},
@@ -651,6 +668,8 @@ const TrialSignup = () => {
 
     } catch (err) {
       setError(err.message || 'Error creating account')
+      setShowOnboarding(false)
+    } finally {
       setLoading(false)
     }
   }
@@ -863,6 +882,11 @@ const TrialSignup = () => {
           </div>
         </div>
       </main>
+
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onComplete={handleOnboardingComplete}
+      />
     </>
   )
 }
