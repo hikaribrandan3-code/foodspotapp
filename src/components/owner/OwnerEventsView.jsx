@@ -1179,24 +1179,6 @@ function CheckinView({ event, businessId, onBack }) {
         return
       }
 
-      const now = new Date()
-      const eventStart = event.start_date ? new Date(event.start_date) : null
-      const eventEnd = event.end_date ? new Date(event.end_date) : null
-
-      if (eventStart && now < eventStart) {
-        setResult({ success: false, code, message: 'Event has not started yet' })
-        setLoading(false)
-        setTimeout(() => setResult(null), 3000)
-        return
-      }
-
-      if (eventEnd && now > eventEnd) {
-        setResult({ success: false, code, message: 'Event has ended' })
-        setLoading(false)
-        setTimeout(() => setResult(null), 3000)
-        return
-      }
-
       const { data: existingCheckin } = await supabase
         .from('event_checkins')
         .select('id')
