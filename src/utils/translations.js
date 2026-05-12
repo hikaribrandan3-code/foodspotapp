@@ -74,6 +74,7 @@ export const translations = {
     location_label: { es: "Localización", en: "Location", pt: "Localização" },
     address_label: { es: "Dirección (Etiqueta)", en: "Address (Label)", pt: "Endereço (Rótulo)" },
     maps_link: { es: "Google Maps Link (Acción)", en: "Google Maps Link (Action)", pt: "Link do Google Maps (Ação)" },
+    google_review_url: { es: "Link de Reseña Google", en: "Google Review Link", pt: "Link da Avaliação Google" },
     maps_info: { es: "Si ambos están presentes, se mostrará un botón con la dirección que abre el mapa.", en: "If both are present, a button with the address will appear to open the map.", pt: "Se ambos estiverem presentes, aparecerá um botão com o endereço para abrir o mapa." },
     notes: { es: "Indicaciones / Notas", en: "Directions / Notes", pt: "Indicações / Notas" },
     business_hours: { es: "Horario de Atención", en: "Business Hours", pt: "Horário de Funcionamento" },

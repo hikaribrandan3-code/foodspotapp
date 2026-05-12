@@ -48,6 +48,12 @@ function OwnerSummary() {
     const [tiktokInput, setTiktokInput] = useState('')
     const tiktokInitialized = useRef(false)
 
+    const [mapsInput, setMapsInput] = useState('')
+    const mapsInitialized = useRef(false)
+
+    const [googleReviewInput, setGoogleReviewInput] = useState('')
+    const googleReviewInitialized = useRef(false)
+
     // MP Access Token local state
     const [mpTokenInput, setMpTokenInput] = useState('')
     const [mpTokenSaving, setMpTokenSaving] = useState(false)
@@ -342,6 +348,20 @@ function OwnerSummary() {
             tiktokInitialized.current = true
         }
     }, [appConfig?.externalOrdering?.tiktokUrl])
+
+    useEffect(() => {
+        if (!mapsInitialized.current && appConfig?.externalOrdering?.mapsLink !== undefined) {
+            setMapsInput(appConfig.externalOrdering.mapsLink || '')
+            mapsInitialized.current = true
+        }
+    }, [appConfig?.externalOrdering?.mapsLink])
+
+    useEffect(() => {
+        if (!googleReviewInitialized.current && appConfig?.externalOrdering?.googleReviewUrl !== undefined) {
+            setGoogleReviewInput(appConfig.externalOrdering.googleReviewUrl || '')
+            googleReviewInitialized.current = true
+        }
+    }, [appConfig?.externalOrdering?.googleReviewUrl])
 
     // Sync MP Token from server on first load
     useEffect(() => {
@@ -842,6 +862,35 @@ function OwnerSummary() {
                                         />
                                     </div>
 
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('maps_link') || 'Google Maps'}</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://maps.google.com/..."
+                                            value={mapsInput}
+                                            onChange={(e) => {
+                                                setMapsInput(e.target.value)
+                                                saveExternalLink('mapsLink', e.target.value)
+                                            }}
+                                            onBlur={showLinksSavedPill}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('google_review_url') || 'Google Review Link'}</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://g.page/.../review"
+                                            value={googleReviewInput}
+                                            onChange={(e) => {
+                                                setGoogleReviewInput(e.target.value)
+                                                saveExternalLink('googleReviewUrl', e.target.value)
+                                            }}
+                                            onBlur={showLinksSavedPill}
+                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                        />
+                                    </div>
 
                                 </div>
                             </motion.div>
