@@ -497,6 +497,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     if (!form.name.trim() || !form.start_date) { alert('Name and start date are required'); return }
     setSaving(true)
     try {
+      console.log('🔍 [DEBUG] Event publish starting. businessId:', businessId, 'type:', typeof businessId)
       const ticketTiers = form.ticket_tiers.map(t => ({
         id: t.id || crypto.randomUUID(),
         name: t.name,
@@ -506,11 +507,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
       }));
 
       const totalCapacity = ticketTiers.reduce((a, t) => a + t.capacity, 0);
-
-      const { error } = await supabase
-        .from('events')
-        .insert([{
-          business_id: businessId,
+      const eventPayload = {
+        business_id: businessId,
           name: form.name.trim(),
           description: form.description,
           category: form.category,
@@ -527,14 +525,18 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           total_revenue_cents: 0,
           checkins_count: 0,
           lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
-        }]);
+      };
+      console.log('📦 [DEBUG] Event payload:', eventPayload);
+      const { error } = await supabase.from('events').insert([eventPayload]);
 
       if (error) {
-        console.error('handlePublish error:', error);
+        console.error('❌ [DEBUG] handlePublish error:', error);
+        console.error('❌ [DEBUG] error.code:', error.code, 'error.message:', error.message, 'error.details:', error.details);
         alert('Failed to create event: ' + error.message);
         setSaving(false);
         return;
       }
+      console.log('✅ [DEBUG] Event created successfully');
 
       setShowSuccess(true)
       confetti({ particleCount: 140, spread: 80, origin: { y: 0.55 }, colors: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6'] })
