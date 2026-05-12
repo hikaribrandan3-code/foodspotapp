@@ -85,7 +85,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const [statModal, setStatModal] = useState(null) // 'revenue' | 'tickets' | 'checkins' | null
   const [showTemplates, setShowTemplates] = useState(false)
 
-  const { events: dbEvents, loading, error, refetch: fetchEvents } = useOwnerEvents(businessId)
+  const { events: dbEvents, loading, error, refetch: fetchEvents, removeEvent } = useOwnerEvents(businessId)
 
   const events = (() => {
     const allEvents = showTemplates
@@ -115,9 +115,10 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
       }
 
       console.log('✅ [DELETE] Success! Deleted event:', selectedEvent.id)
-      fetchEvents()
+      removeEvent(selectedEvent.id)
       setSelectedEvent(null)
       setView('list')
+      fetchEvents()
     } catch (err) {
       console.error('💥 [DELETE] Exception:', err)
       alert(`Error deleting event: ${err?.message}`)

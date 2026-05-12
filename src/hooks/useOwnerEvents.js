@@ -68,5 +68,9 @@ export function useOwnerEvents(businessId) {
         }
     }, [fetchEvents, businessId])
 
-    return { events, loading, error, refetch: fetchEvents }
+    const removeEvent = useCallback((eventId) => {
+        setEvents(prev => prev.filter(e => e.id !== eventId))
+    }, [])
+
+    return { events, loading, error, refetch: fetchEvents, removeEvent }
 }
