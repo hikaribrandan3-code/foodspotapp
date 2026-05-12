@@ -344,7 +344,7 @@ function physStep(subDt){
   for(const b of act){
     const spd=Math.hypot(b.vx,b.vy);
     if(b.rollState==='sliding'){
-      b.vx*=Math.pow(0.935,scale);b.vy*=Math.pow(0.935,scale);
+      b.vx*=Math.pow(0.965,scale);b.vy*=Math.pow(0.965,scale);
       b.slideTimer-=scale;
       if(b.slideTimer<=0||spd<0.5){
         b.rollState='rolling';
@@ -473,8 +473,8 @@ function computeAI(){
 // ── RULES ─────────────────────────────────────────────────
 function shoot(){
   const cue=getCue();if(!cue)return;
-  Haptics.fire(Haptics.shot);cue.vx=Math.cos(G.ang)*G.pwr*21;
-  cue.vy=Math.sin(G.ang)*G.pwr*21;
+  Haptics.fire(Haptics.shot);cue.vx=Math.cos(G.ang)*G.pwr*24;
+  cue.vy=Math.sin(G.ang)*G.pwr*24;
   cue.vx+=Math.cos(G.ang+Math.PI/2)*spinY*G.pwr*4.5;
   cue.vy+=Math.sin(G.ang+Math.PI/2)*spinY*G.pwr*4.5;
   // SLIDING: cue ball starts sliding when struck
@@ -1184,8 +1184,8 @@ function loop(ts){
   if(G.state==='paused'){drawPaused();ctx.restore();return;}
   const isHuman=G.turn===0||(G.gameMode==='2p'&&G.turn===1);
   if(G.state==='aim'&&isHuman){
-    if(keys.left){G.ang-=0.012;lastDpadFrame=frameCount;}
-    if(keys.right){G.ang+=0.012;lastDpadFrame=frameCount;}
+    if(keys.left){G.ang-=0.0084;lastDpadFrame=frameCount;}
+    if(keys.right){G.ang+=0.0084;lastDpadFrame=frameCount;}
     if(!G.charge){
       if(keys.up)spinY=Math.min(1,spinY+0.06);
       if(keys.down)spinY=Math.max(-1,spinY-0.06);
