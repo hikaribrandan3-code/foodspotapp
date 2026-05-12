@@ -307,6 +307,21 @@ export default function InventoryOwnerDashboard() {
               >
                 Save Changes
               </button>
+              <button
+                onClick={async () => {
+                  if (!window.confirm(`Stop tracking stock for "${editItem.name}"? This won't delete the menu item.`)) return;
+                  await supabase.from('inventory').delete().eq('id', editItem.id);
+                  setItems((prev) => prev.filter((i) => i.id !== editItem.id));
+                  setEditItem(null);
+                }}
+                style={{
+                  padding: '14px', background: '#FFFFFF', color: '#DC2626',
+                  borderRadius: 12, border: '1px solid #FECACA', fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', marginTop: 8
+                }}
+              >
+                Remove from Inventory
+              </button>
             </div>
           </div>
         </div>
