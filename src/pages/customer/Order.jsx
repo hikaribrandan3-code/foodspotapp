@@ -368,7 +368,7 @@ function Order({ config: configProp }) {
                         body: { order_id: savedOrder.id }
                     })
                     if (mpError) throw mpError
-                    const checkoutUrl = mpData?.sandbox_init_point || mpData?.init_point
+                    const checkoutUrl = mpData?.init_point
                     if (checkoutUrl) {
                         window.location.href = checkoutUrl
                         return
