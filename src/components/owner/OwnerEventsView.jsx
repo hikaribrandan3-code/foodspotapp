@@ -101,21 +101,28 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const handleDelete = async () => {
     if (!window.confirm('Archive this event? It will be hidden from customers.')) return
     try {
-      const { error } = await supabase
+      console.log('🔍 [ARCHIVE] Starting archive. Event:', selectedEvent?.id, 'Business:', businessId)
+      const { data, error } = await supabase
         .from('events')
         .update({ status: 'archived' })
         .eq('id', selectedEvent.id)
         .eq('business_id', businessId)
+        .select()
+
+      console.log('📦 [ARCHIVE] Response data:', data)
+      console.log('❌ [ARCHIVE] Response error:', error)
 
       if (error) {
+        console.error('🚨 [ARCHIVE] Error details:', error.code, error.message, error.details)
         alert(`Archive failed: ${error.message || JSON.stringify(error)}`)
         return
       }
 
+      console.log('✅ [ARCHIVE] Success! Archived event:', selectedEvent.id)
       fetchEvents()
       setView('list')
     } catch (err) {
-      console.error('handleArchive error:', err)
+      console.error('💥 [ARCHIVE] Exception:', err)
       alert(`Error archiving event: ${err?.message}`)
     }
   }
