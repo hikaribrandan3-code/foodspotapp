@@ -174,7 +174,7 @@ serve(async (req: Request) => {
         // ── 6. Fetch branding (needed by both free events and MP flow) ──
         const { data: branding, error: brandingError } = await supabase
             .from('branding')
-            .select("mp_access_token, business_name, slug, currency")
+            .select("mp_access_token, business_name, slug, app_config")
             .eq("business_id", event.business_id)
             .single();
 
@@ -218,7 +218,7 @@ serve(async (req: Request) => {
                 description: event.description?.substring(0, 200) || `Ticket for ${event.name}`,
                 quantity: 1,
                 unit_price: totalCents / 100,
-                currency_id: branding.currency || "ARS"
+                currency_id: (branding.app_config as any)?.businessCurrency || "ARS"
             }],
             back_urls: {
                 success: `${baseUrl}/ticket?order_id=${order.id}&payment=success&guest_token=${order.guest_token}`,
