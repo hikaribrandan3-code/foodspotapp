@@ -198,8 +198,8 @@ export default function EventTicket({ booking, onClose }) {
 
             <div className="p-4 flex flex-col items-center gap-4">
                <div className="p-4 bg-white rounded-xl shadow-inner border border-slate-50">
-                  <QRCodeSVG 
-                     value={booking.id}
+                  <QRCodeSVG
+                     value={booking.ticket_code}
                      size={140}
                      level="H"
                      includeMargin={false}
@@ -212,7 +212,7 @@ export default function EventTicket({ booking, onClose }) {
                     {t('ticket_id') || 'Ticket ID'}
                   </p>
                   <p className="text-[10px] font-black tracking-widest text-[var(--text-primary)]">
-                    {booking.id}
+                    {booking.ticket_code}
                   </p>
                </div>
 
