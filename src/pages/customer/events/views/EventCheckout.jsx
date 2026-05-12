@@ -45,6 +45,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       if (data.free_order) {
         onConfirm({
           id: data.ticket_code,
+          ticket_code: data.ticket_code,
           event_id: event.id,
           event_name: event.name,
           tier_name: tier.name,
@@ -105,6 +106,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       if (data.free_order) {
         onConfirm({
           id: data.ticket_code,
+          ticket_code: data.ticket_code,
           event_id: event.id,
           event_name: event.name,
           tier_name: tier.name,
