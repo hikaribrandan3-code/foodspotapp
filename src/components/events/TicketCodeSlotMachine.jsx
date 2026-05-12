@@ -19,41 +19,91 @@ function buildStrip(target, pool, count = 30) {
 }
 
 /**
+ * Parse the ticket code into 3 letters + 3 numbers.
+ * Expected format: "TKT-ABC-123" or "ABC123" → { letters: ['A','B','C'], numbers: ['1','2','3'] }
+ *
+ * If the code is malformed, returns null so the parent can show a fallback.
+ */
+function parseCode(ticketCode) {
+  const raw = (ticketCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+  if (raw.length < 6) return null
+
+  const segment = raw.slice(-6)
+  const letters = segment.slice(0, 3).split('')
+  const numbers = segment.slice(3, 6).split('')
+
+  // Validate: first 3 should be letters, last 3 should be digits
+  const validLetters = letters.every((ch) => /[A-Z]/.test(ch))
+  const validNumbers = numbers.every((ch) => /\d/.test(ch))
+
+  if (!validLetters || !validNumbers) return null
+  return { letters, numbers }
+}
+
+/**
  * TicketCodeSlotMachine
  *
- * Spins 6 reels for 3 seconds then lands on the actual ticket code.
- * Reels stay visible so staff can read & input the code for validation.
+ * Spins 3 letter reels + 3 number reels for 3 seconds,
+ * then lands on the actual ticket code.
  *
  * @param {Object} props
- * @param {string} props.ticketCode — e.g. "TKT-ABC-NNN" or "ABC123"
+ * @param {string} props.ticketCode — e.g. "TKT-ABC-123"
  * @param {boolean} props.revealed  — true after parent triggers 3s reveal
  */
 export default function TicketCodeSlotMachine({ ticketCode, revealed }) {
-  // Extract last 6 alphanumeric chars, pad with '0' if needed
-  const raw = (ticketCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-  const code = raw.padStart(6, '0').slice(-6)
-  const chars = code.split('')
+  const parsed = useMemo(() => parseCode(ticketCode), [ticketCode])
 
-  // Build strips once per mount so animation isn't reset on re-renders
-  const strips = useMemo(() => {
-    return chars.map((ch) => {
-      const isNum = /\d/.test(ch)
-      const pool = isNum ? NUMBERS : LETTERS
-      return buildStrip(ch, pool, 28 + Math.floor(Math.random() * 12))
-    })
-  }, [code])
+  const letterStrips = useMemo(() => {
+    if (!parsed) return null
+    return parsed.letters.map((ch) => buildStrip(ch, LETTERS, 28 + Math.floor(Math.random() * 12)))
+  }, [parsed])
+
+  const numberStrips = useMemo(() => {
+    if (!parsed) return null
+    return parsed.numbers.map((ch) => buildStrip(ch, NUMBERS, 28 + Math.floor(Math.random() * 12)))
+  }, [parsed])
+
+  // If we can't parse a valid code, show the raw code plainly instead of spinning garbage
+  if (!parsed || !letterStrips || !numberStrips) {
+    return (
+      <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-red-200 p-6 shadow-lg bg-gradient-to-br from-red-50 to-orange-50 dark:border-red-900 dark:from-slate-800 dark:to-slate-900">
+        <p className="text-center text-sm font-semibold text-red-600 dark:text-red-400">
+          Invalid ticket code
+        </p>
+        <p className="mt-1 text-center text-xs text-slate-500 dark:text-slate-400">
+          {ticketCode || 'No code provided'}
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-emerald-100 p-6 shadow-lg bg-gradient-to-br from-emerald-50 to-blue-50 dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
-      {/* Reels row — always visible */}
+      {/* Reels row */}
       <div className="flex items-center justify-center gap-3 h-24">
-        {strips.map((strip, idx) => (
+        {/* 3 Letter reels */}
+        {letterStrips.map((strip, idx) => (
           <Reel
-            key={`${code}-${idx}`}
+            key={`L-${idx}`}
             strip={strip}
-            targetChar={chars[idx]}
+            isLetter
             revealed={revealed}
+          />
+        ))}
 
+        {/* Divider */}
+        <div className="flex flex-col gap-1">
+          <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+          <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+        </div>
+
+        {/* 3 Number reels */}
+        {numberStrips.map((strip, idx) => (
+          <Reel
+            key={`N-${idx}`}
+            strip={strip}
+            isLetter={false}
+            revealed={revealed}
           />
         ))}
       </div>
@@ -73,9 +123,8 @@ export default function TicketCodeSlotMachine({ ticketCode, revealed }) {
   )
 }
 
-function Reel({ strip, targetChar, revealed }) {
+function Reel({ strip, isLetter, revealed }) {
   const finalY = -(strip.length - 1) * ITEM_H
-  const isLetter = !/\d/.test(targetChar)
 
   return (
     <div
