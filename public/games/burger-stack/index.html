@@ -218,9 +218,9 @@ FText.prototype.update=function(){this.y+=this.vy;this.vy*=.94;this.life-=.018;}
 FText.prototype.draw=function(){var a=this.life;if(a<=0)return;ctx.save();ctx.globalAlpha=a;ctx.font='900 '+this.sz+'px Arial Black';ctx.textAlign='center';ctx.strokeStyle='#000';ctx.lineWidth=6;ctx.strokeText(this.t,this.x,this.y);ctx.fillStyle=this.col;ctx.fillText(this.t,this.x,this.y);ctx.textAlign='left';ctx.restore();};
 
 function screenPunch(){punchScale=1.045;punchT=10;}
-function confettiBurst(x,y,n){n=n||50;for(var i=0;i<n;i++)parts.push(new Confetti(x,y));}
+function confettiBurst(x,y,n){n=n||30;for(var i=0;i<n;i++)parts.push(new Confetti(x,y));if(parts.length>80)parts.splice(0,parts.length-80);}
 function sparkleBurst(x,y,col,n){n=n||12;for(var i=0;i<n;i++)parts.push(new Sparkle(x,y,col));}
-function coinShower(x,y,n){n=n||8;for(var i=0;i<n;i++)coins.push(new Coin(x,y));sndCoin();}
+function coinShower(x,y,n){n=n||5;for(var i=0;i<n;i++)coins.push(new Coin(x,y));if(coins.length>30)coins.splice(0,coins.length-30);sndCoin();}
 function ftxt(x,y,t,c,s){floats.push(new FText(x,y,t,c,s));}
 
 function triggerSpeedLines(dur){dur=dur||18;speedLinesActive=dur;speedLinesTimer=dur;}
@@ -491,17 +491,17 @@ var SLOT_EMO=['🧀','⚡','💰','❄️','🌶️'];
 var SLOT_TXT=["🧀 WIDE LAYER!","⚡ FEVER MODE!","💰 +10 SCORE!","❄️ SLOW MO!","🌶️ SPEED BOOST!"];
 function startSlot(){dropping=null;cur=null;slotActive=true;slotTimer=0;slotRewardIdx=Math.floor(rnd(0,5));slotVals=[Math.floor(rnd(0,5)),Math.floor(rnd(0,5)),Math.floor(rnd(0,5))];slotTarget=[slotRewardIdx,slotRewardIdx,slotRewardIdx];slotDone=[false,false,false];sndSlot();gs='slot';}
 function applySlotReward(){
-  sndSlotWin();confettiBurst(W/2,H*.44,60);
+  sndSlotWin();confettiBurst(W/2,H*.44,30);
   if(slotRewardIdx===0)pendingWideBlock=true;else if(slotRewardIdx===1)activateFever();else if(slotRewardIdx===2){score+=10;ftxt(W/2,H*.44,'💰 +10 SCORE!','#FFD700',28);}else if(slotRewardIdx===3){pendingSlowMo=true;slowMoTimer=220;ftxt(W/2,H*.44,'❄️ SLOW MO!','#88CCFF',28);}else if(slotRewardIdx===4){curSpd=Math.max(1.5,curSpd-.9);ftxt(W/2,H*.44,'🌶️ SPICE UP!','#FF4400',28);}
   nextSlotScore=score+10;gs='playing';slotActive=false;spawnBlock();
 }
 function activateFever(){
   if(feverMode)return;feverMode=true;feverTimer=600;sndFever();vibe([30,10,30,10,60]);ftxt(W/2,H*.36,'🔥 KITCHEN ON FIRE! 🔥','#FF3860',28);
-  confettiBurst(W/2,H*.3,90);stopMusic();startMusic(192);screenPunch();triggerSpeedLines(30);triggerImpactFrame(0);
+  confettiBurst(W/2,H*.3,40);stopMusic();startMusic(192);screenPunch();triggerSpeedLines(30);triggerImpactFrame(0);
   for(var i=0;i<6;i++){(function(ii){setTimeout(function(){kanjiFloats.push(new FloatKanji(rnd(60,W-60),H*.4,'炎','#FF3860',rnd(32,48)));},ii*80);})(i);}
 }
 function checkMilestone(){
-  if(mIdx<MILESTONES.length&&score>=MILESTONES[mIdx]){var n=MILESTONES[mIdx];mIdx++;milestoneActive=true;milestoneTimer=100;sndMile();confettiBurst(W/2,H*.3,90);ftxt(W/2,H*.32,'🔔 '+n+' LAYERS! 🔔','#FFD700',32);flash=1;shakeAmt=7;screenPunch();triggerSpeedLines(22);}
+  if(mIdx<MILESTONES.length&&score>=MILESTONES[mIdx]){var n=MILESTONES[mIdx];mIdx++;milestoneActive=true;milestoneTimer=100;sndMile();confettiBurst(W/2,H*.3,40);ftxt(W/2,H*.32,'🔔 '+n+' LAYERS! 🔔','#FFD700',32);flash=1;shakeAmt=7;screenPunch();triggerSpeedLines(22);}
 }
 
 canvas.addEventListener('touchstart',function(e){e.preventDefault();var t=e.touches[0],r=canvas.getBoundingClientRect();handleInput((t.clientX-r.left)*(W/r.width),(t.clientY-r.top)*(H/r.height));},{passive:false});
@@ -603,7 +603,7 @@ function placeBlock(){
     var drizzleTypes=['ketchup','mustard','mayo'],dt=feverMode?drizzleTypes:drizzleTypes.slice(0,1+(combo>3?1:0)+(combo>6?1:0));
     dt.forEach(function(t,i){setTimeout(function(){spawnDrizzle(d.x,d.y+BH*.3,ow,t);},i*140);});
     if(combo>=2)triggerSideCombo(combo);streak++;combo++;if(combo>maxCombo)maxCombo=combo;flash=1;flashCol='255,255,100';sndPerfect();shakeAmt=2;
-    confettiBurst(d.x+d.width/2,d.y+camOffset,feverMode?90:55);sparkleBurst(d.x+d.width/2,d.y+camOffset,col,14);coinShower(d.x+d.width/2,d.y+camOffset,feverMode?14:8);
+    confettiBurst(d.x+d.width/2,d.y+camOffset,feverMode?40:25);sparkleBurst(d.x+d.width/2,d.y+camOffset,col,14);coinShower(d.x+d.width/2,d.y+camOffset,feverMode?8:5);
     ftxt(d.x+d.width/2,d.y+camOffset-22,'✨ PERFECT!','#FFD700',26);vibe([20,10,50]);burstTimer=18;burstMult=1.35;triggerSpeedLines(14);spawnKanji(d.x+d.width/2,d.y+camOffset-55);spawnAnimeWord(d.x+d.width/2+rnd(-30,30),d.y+camOffset-80);
     if(combo===5&&!feverMode)activateFever();else if(combo===10){comboCallout='💥 x10 COMBO!';comboT=90;screenPunch();triggerImpactFrame(0);triggerSpeedLines(25);triggerFreezeFrame();}else if(combo===20){comboCallout='🌟 x20 INSANE!';comboT=100;screenPunch();triggerImpactFrame(1);triggerFreezeFrame();}else if(combo>1)ftxt(d.x+d.width/2,d.y+camOffset-52,'×'+combo,'#FF6B00',20);
     stack.push({x:d.x,y:d.y,width:d.width,height:BH,ii:d.ii,glow:feverMode?2:1,squash:.9});
