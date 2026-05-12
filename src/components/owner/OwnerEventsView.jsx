@@ -99,24 +99,24 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   })()
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this event permanently?')) return
+    if (!window.confirm('Archive this event? It will be hidden from customers.')) return
     try {
       const { error } = await supabase
         .from('events')
-        .delete()
+        .update({ status: 'archived' })
         .eq('id', selectedEvent.id)
         .eq('business_id', businessId)
 
       if (error) {
-        alert(`Delete failed: ${error.message || JSON.stringify(error)}`)
+        alert(`Archive failed: ${error.message || JSON.stringify(error)}`)
         return
       }
 
       fetchEvents()
       setView('list')
     } catch (err) {
-      console.error('handleDelete error:', err)
-      alert(`Error deleting event: ${err?.message}`)
+      console.error('handleArchive error:', err)
+      alert(`Error archiving event: ${err?.message}`)
     }
   }
 
