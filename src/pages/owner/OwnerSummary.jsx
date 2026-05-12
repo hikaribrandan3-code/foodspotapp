@@ -605,6 +605,70 @@ function OwnerSummary() {
                                             </button>
                                         </div>
                                     </div>
+
+                                    {/* Mercado Pago Token Management */}
+                                    <div>
+                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-3">
+                                            🔐 Connect to Mercado Pago
+                                        </label>
+                                        <div className="space-y-3">
+                                            <div className="text-xs text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 border border-emerald-200 dark:border-emerald-800">
+                                                <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">How to get your API token:</p>
+                                                <ol className="list-decimal list-inside space-y-1 text-emerald-800 dark:text-emerald-200">
+                                                    <li>Go to <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                    <li>Sign in to your account</li>
+                                                    <li>Go to Settings → Credentials</li>
+                                                    <li>Copy your <span className="font-semibold">Access Token</span> (starts with <span className="font-mono text-[11px]">APP_USR</span>)</li>
+                                                    <li>Paste it below</li>
+                                                </ol>
+                                            </div>
+                                            <div className="flex gap-3 items-end">
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="password"
+                                                        placeholder="APP_USR_..."
+                                                        value={mpTokenInput}
+                                                        onChange={(e) => setMpTokenInput(e.target.value)}
+                                                        className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                    />
+                                                </div>
+                                                <button
+                                                    onClick={saveMpToken}
+                                                    disabled={mpTokenSaving || !mpTokenInput.trim()}
+                                                    className={`px-8 py-4 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
+                                                        mpTokenSaved
+                                                            ? 'bg-green-500 dark:bg-green-600 text-white'
+                                                            : mpTokenSaving
+                                                            ? 'bg-stone-300 dark:bg-[#475569] text-stone-600 dark:text-white cursor-not-allowed'
+                                                            : 'bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 text-white'
+                                                    }`}
+                                                >
+                                                    {mpTokenSaved ? (
+                                                        <>
+                                                            <Check size={16} /> Saved
+                                                        </>
+                                                    ) : mpTokenSaving ? (
+                                                        <>
+                                                            <RefreshCw size={16} className="animate-spin" /> Saving...
+                                                        </>
+                                                    ) : (
+                                                        'Save Token'
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {mpTokenInput && !mpTokenInput.startsWith('APP_USR_') && (
+                                                <p className="text-xs text-amber-600 dark:text-amber-400">
+                                                    ⚠️ Token should start with APP_USR_
+                                                </p>
+                                            )}
+                                            {mpTokenInput && (
+                                                <p className="text-xs text-stone-500 dark:text-stone-400">
+                                                    Token set: {mpTokenInput.substring(0, 15)}...
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-6 md:p-8 space-y-4 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <div>
