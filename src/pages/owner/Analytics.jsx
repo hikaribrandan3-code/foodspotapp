@@ -170,7 +170,7 @@ const Analytics = () => {
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {[
                         { id: 'analytics', label: 'Analytics' },
-                        { id: 'financials', label: 'Financials' },
+                        { id: 'financials', label: 'Expenses' },
                         { id: 'events', label: 'Create Events' },
                     ].map((tab) => (
                         <button
