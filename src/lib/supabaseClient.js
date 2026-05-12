@@ -264,7 +264,7 @@ let _knownBrandingColumns = null;
 const CORE_BRANDING_COLUMNS = [
     'business_name', 'font_family', 'font_weight',
     'navbar_color', 'confirmation_color', 'powered_by_color',
-    'hero_mode', 'hero_url', 'nav_icon_mode', 'hero_icon_mode',
+    'hero_mode', 'hero_url', 'hero_cover_image', 'hero_cover_image_uploaded_at', 'nav_icon_mode', 'hero_icon_mode',
     'is_paused', 'pause_message',
     'delivery_radius', 'delivery_fee', 'free_delivery_threshold',
     'pickup_enabled', 'delivery_enabled', 'dine_in_enabled', 'dine_in_payment_timing',

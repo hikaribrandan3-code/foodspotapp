@@ -150,6 +150,8 @@ const Settings = () => {
         // Other
         hero_mode: 'text',
         hero_url: '',
+        hero_cover_image: '',
+        hero_cover_image_uploaded_at: null,
         nav_icon_mode: 'white',
         hero_icon_mode: 'black',
         app_config: {},
@@ -279,6 +281,8 @@ const Settings = () => {
 
             hero_mode: tenant.hero_mode || 'text',
             hero_url: tenant.hero_url || '',
+            hero_cover_image: tenant.hero_cover_image || '',
+            hero_cover_image_uploaded_at: tenant.hero_cover_image_uploaded_at || null,
             nav_icon_mode: tenant.nav_icon_mode || 'white',
             hero_icon_mode: tenant.hero_icon_mode || 'black',
             app_config: {
@@ -511,6 +515,8 @@ const Settings = () => {
                 powered_by_color: draft.powered_by_color,
                 hero_mode: draft.hero_mode,
                 hero_url: draft.hero_url,
+                hero_cover_image: draft.hero_cover_image,
+                hero_cover_image_uploaded_at: draft.hero_cover_image_uploaded_at,
                 hero_icons: draft.hero_icons,
                 hero_icon_mode: draft.hero_icon_mode,
                 info_pills: draft.info_pills,
@@ -817,10 +823,17 @@ const Settings = () => {
                             }
                         })()}
                         onSave={(data) => {
+                            if (!data?.image) {
+                                console.error('onSave: No image data received');
+                                alert('Upload failed. Please try again.');
+                                return;
+                            }
                             const cleanUrl = data.image.split('?')[0];
                             const timestamp = Date.now();
                             // NEW STANDARD: px/py for percentage based positioning
                             const finalUrl = `${cleanUrl}?t=${timestamp}&s=${data.scale}&px=${data.posX}&py=${data.posY}`;
+                            updateDraftField('hero_cover_image', cleanUrl);
+                            updateDraftField('hero_cover_image_uploaded_at', new Date().toISOString());
                             updateDraftField('hero_url', finalUrl);
                             setShowCoverEditor(false);
                         }}
