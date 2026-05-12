@@ -298,7 +298,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
           <PartyPopper size={48} color={theme.textSecondary} style={{ margin: '0 auto 16px' }} />
           <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: theme.textPrimary }}>No events yet</h3>
           <p style={{ margin: '0 0 24px', fontSize: 14, color: theme.textSecondary }}>Create your first event to start selling tickets</p>
-          <button onClick={() => setView('create')} style={{ ...s.btnPrimary, margin: '0 auto', width: 'fit-content' }}>
+          <button onClick={() => setView('create')} style={{ ...s.btnPrimary, background: '#3B82F6', margin: '0 auto', width: 'fit-content' }}>
             <Plus size={16} /> Create Event
           </button>
         </motion.div>
@@ -373,7 +373,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
           <button onClick={onEdit} style={{ ...s.btnSecondary, padding: '8px 14px', fontSize: 13 }}>
             <Edit2 size={14} /> Edit
           </button>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, padding: '8px 14px', fontSize: 13 }}>
+          <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, background: '#3B82F6', padding: '8px 14px', fontSize: 13 }}>
             Check In
           </motion.button>
         </div>
@@ -405,7 +405,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, flex: 1, padding: 12, fontSize: 13 }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, background: '#3B82F6', flex: 1, padding: 12, fontSize: 13 }}>
           Check In
         </motion.button>
         <motion.button whileTap={{ scale: 0.95 }} onClick={onPromos} style={{ ...s.btnSecondary, flex: 1, padding: 12, fontSize: 13 }}>
@@ -417,7 +417,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
       <div style={{ ...s.card, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Ticket Tiers</h3>
-          <button onClick={onAttendees} style={{ background: 'none', border: 'none', color: theme.primary, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button onClick={onAttendees} style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
             <Users size={14} /> Attendees
           </button>
         </div>
@@ -1158,13 +1158,36 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
-      const cleanCode = code.toUpperCase().replace(/-/g, '')
-      const { data: order, error: orderError } = await supabase
+      const cleanCode = code.toUpperCase().replace(/[-\s]/g, '')
+
+      // Try multiple formats: exact match, no dashes, with dashes
+      let order = null, orderError = null
+
+      // First try: exact code as entered
+      const result1 = await supabase
         .from('event_orders')
         .select('id, event_id, customer_name, tier_snapshot, payment_status')
-        .eq('ticket_code', cleanCode)
+        .eq('ticket_code', code.toUpperCase())
         .eq('event_id', event.id)
         .single()
+
+      if (!result1.error) {
+        order = result1.data
+      } else {
+        // Second try: clean (no dashes/spaces)
+        const result2 = await supabase
+          .from('event_orders')
+          .select('id, event_id, customer_name, tier_snapshot, payment_status')
+          .eq('ticket_code', cleanCode)
+          .eq('event_id', event.id)
+          .single()
+
+        if (!result2.error) {
+          order = result2.data
+        } else {
+          orderError = result2.error
+        }
+      }
 
       if (orderError || !order) {
         setResult({ success: false, code, message: 'Code not found' })
