@@ -1158,36 +1158,26 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
-      // Strip all formatting (dashes, spaces) for comparison
+      // Strip all formatting — handles TKT-4TQ-26U, TKT4TQ26U, 4TQ26U all the same
       const cleanCode = code.toUpperCase().replace(/[-\s]/g, '')
-      console.log('[Checkin] Input code:', code, 'Cleaned:', cleanCode)
 
-      // Fetch all codes for this event, match in JavaScript
+      // Let RLS handle business isolation — don't double-filter with businessId prop
       const { data: orders, error } = await supabase
         .from('event_orders')
         .select('id, event_id, customer_name, tier_snapshot, payment_status, ticket_code')
         .eq('event_id', event.id)
-        .eq('business_id', businessId)
 
-      console.log('[Checkin] Query result - Orders:', orders?.length || 0, 'Error:', error)
-      if (orders) {
-        orders.forEach(o => {
-          const oClean = o.ticket_code?.replace(/[-\s]/g, '')
-          console.log('[Checkin] DB code:', o.ticket_code, '→', oClean)
-        })
-      }
-
-      if (error || !orders) {
-        console.error('[Checkin] Lookup failed:', error)
+      if (error) {
         setResult({ success: false, code, message: 'Lookup failed' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
         return
       }
 
-      // Find matching order by comparing stripped codes
-      const order = orders.find(o => o.ticket_code?.replace(/[-\s]/g, '') === cleanCode)
-      console.log('[Checkin] Match found:', !!order)
+      // Match in JavaScript — strips dashes from both sides
+      const order = (orders || []).find(o =>
+        o.ticket_code?.toUpperCase().replace(/[-\s]/g, '') === cleanCode
+      )
 
       if (!order) {
         setResult({ success: false, code, message: 'Code not found' })
