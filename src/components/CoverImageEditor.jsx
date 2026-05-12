@@ -490,7 +490,8 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                         position: 'relative',
                         height: coverHeight,
                         width: '100%',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        background: '#FFFFFF'
                     }}>
                         {image && (
                             <div style={{
