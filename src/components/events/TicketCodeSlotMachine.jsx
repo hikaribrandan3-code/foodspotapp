@@ -65,13 +65,17 @@ export default function TicketCodeSlotMachine({ ticketCode, revealed }) {
 
   // If we can't parse a valid code, show the raw code plainly instead of spinning garbage
   if (!parsed || !letterStrips || !numberStrips) {
+    console.warn('[TicketCodeSlotMachine] Failed to parse ticket code:', ticketCode);
     return (
-      <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-red-200 p-6 shadow-lg bg-gradient-to-br from-red-50 to-orange-50 dark:border-red-900 dark:from-slate-800 dark:to-slate-900">
-        <p className="text-center text-sm font-semibold text-red-600 dark:text-red-400">
-          Invalid ticket code
+      <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-emerald-200 p-6 shadow-lg bg-gradient-to-br from-emerald-50 to-blue-50 dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
+        <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-2">
+          CHECK-IN CODE
         </p>
-        <p className="mt-1 text-center text-xs text-slate-500 dark:text-slate-400">
-          {ticketCode || 'No code provided'}
+        <p className="text-center text-lg font-black tracking-widest text-emerald-600 dark:text-emerald-400 font-mono">
+          {ticketCode || 'NO CODE'}
+        </p>
+        <p className="mt-2 text-center text-[10px] text-slate-500 dark:text-slate-400">
+          Present this code at check-in
         </p>
       </div>
     )
