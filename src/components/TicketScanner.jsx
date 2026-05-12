@@ -104,8 +104,8 @@ function TicketScanner({ onClose }) {
                 const barcodes = await detector.detect(videoRef.current)
                 if (barcodes.length > 0) {
                     const raw = barcodes[0].rawValue
-                    // Support both event tickets (TKT-XXX-NNN) and food order tickets (FS-TICKET|...)
-                    if (raw.startsWith('TKT-') || raw.startsWith('FS-TICKET|')) {
+                    // Support old format (TKT-ABC-123), new format (ABC123), and food orders (FS-TICKET|...)
+                    if (raw.startsWith('TKT-') || raw.startsWith('FS-TICKET|') || /^[A-Z]{3}\d{3}$/.test(raw)) {
                         scanningRef.current = true
                         await handleTicketScan(raw)
                         return // Stop scanning after first hit
