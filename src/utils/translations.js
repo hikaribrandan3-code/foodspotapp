@@ -779,6 +779,13 @@ export const translations = {
     mp_user_id_instructions: { en: 'How to get your User ID:', es: 'Cómo obtener tu ID de Usuario:', pt: 'Como obter seu ID de Usuário:' },
     mp_find_user_id: { en: 'Find your User ID (a number, e.g. 123456789)', es: 'Encuentra tu ID de Usuario (un número, ej. 123456789)', pt: 'Encontre seu ID de Usuário (um número, ex. 123456789)' },
     cash_orders_hidden: { en: 'Cash orders hidden until verified by front desk', es: 'Pedidos en efectivo ocultos hasta ser verificados por recepción', pt: 'Pedidos em dinheiro ocultos até serem verificados pela recepção' },
-    all_caught_up: { en: 'All caught up. New orders appear here automatically.', es: 'Todo listo. Los nuevos pedidos aparecen aquí automáticamente.', pt: 'Tudo pronto. Novos pedidos aparecem aqui automaticamente.' }
+    all_caught_up: { en: 'All caught up. New orders appear here automatically.', es: 'Todo listo. Los nuevos pedidos aparecen aquí automáticamente.', pt: 'Tudo pronto. Novos pedidos aparecem aqui automaticamente.' },
+
+    // Events Module - Missing Keys
+    T: { en: 'T', es: 'T', pt: 'T' },
+    guest_token: { en: 'Guest Token', es: 'Token de Invitado', pt: 'Token de Convidado' },
+    order_id: { en: 'Order ID', es: 'ID de Pedido', pt: 'ID do Pedido' },
+    'Link copied to clipboard!': { en: 'Link copied to clipboard!', es: '¡Enlace copiado al portapapeles!', pt: 'Link copiado para a área de transferência!' },
+    'add_to_calendar': { en: 'Add to Calendar', es: 'Agregar al Calendario', pt: 'Adicionar ao Calendário' }
 };
 
