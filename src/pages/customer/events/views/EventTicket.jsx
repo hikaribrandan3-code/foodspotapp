@@ -15,6 +15,8 @@ export default function EventTicket({ booking, onClose }) {
   const ticketRef = useRef(null);
   const [activeTab, setActiveTab] = React.useState('ticket'); // 'ticket' or 'vouchers'
   const [showScanner, setShowScanner] = React.useState(false);
+  const [slotSpins, setSlotSpins] = React.useState({ slot1: 0, slot2: 0, slot3: 0 });
+  const [slotRevealed, setSlotRevealed] = React.useState(false);
 
   useEffect(() => {
     const duration = 3 * 1000;
@@ -33,12 +35,33 @@ export default function EventTicket({ booking, onClose }) {
       }
 
       const particleCount = 40 * (timeLeft / duration);
-      // since particles fall down, start them a bit higher than random
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Slot machine animation
+  useEffect(() => {
+    const spinInterval = setInterval(() => {
+      setSlotSpins({
+        slot1: Math.floor(Math.random() * 1000),
+        slot2: Math.floor(Math.random() * 1000),
+        slot3: Math.floor(Math.random() * 1000)
+      });
+    }, 50);
+
+    const revealTimer = setTimeout(() => {
+      clearInterval(spinInterval);
+      setSlotRevealed(true);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6', '#F59E0B'] });
+    }, 3000);
+
+    return () => {
+      clearInterval(spinInterval);
+      clearTimeout(revealTimer);
+    };
   }, []);
 
   const handleDownloadPDF = async () => {
@@ -197,23 +220,53 @@ export default function EventTicket({ booking, onClose }) {
             </div>
 
             <div className="p-4 flex flex-col items-center gap-4">
-               <div className="p-4 bg-white rounded-xl shadow-inner border border-slate-50">
-                  <QRCodeSVG
-                     value={booking.ticket_code}
-                     size={140}
-                     level="H"
-                     includeMargin={false}
-                     fgColor="#0f172a"
-                  />
-               </div>
-
-               <div className="text-center">
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">
-                    {t('ticket_id') || 'Ticket ID'}
-                  </p>
-                  <p className="text-[10px] font-black tracking-widest text-[var(--text-primary)]">
-                    {booking.ticket_code}
-                  </p>
+               <div className="p-6 bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl shadow-lg border border-emerald-100 dark:border-slate-700 w-full">
+                  {!slotRevealed ? (
+                    <div className="flex items-center justify-center gap-3 h-24">
+                      {/* Slot 1 */}
+                      <div className="w-16 h-20 bg-white dark:bg-slate-900 rounded-lg border-2 border-emerald-400 dark:border-emerald-600 overflow-hidden shadow-md flex items-center justify-center">
+                        <motion.div animate={{ y: slotSpins.slot1 * -30 }} transition={{ duration: 0.05 }} className="text-3xl font-black">
+                          {String.fromCharCode(65 + ((slotSpins.slot1 + 0) % 26))}
+                        </motion.div>
+                      </div>
+                      {/* Slot 2 */}
+                      <div className="w-16 h-20 bg-white dark:bg-slate-900 rounded-lg border-2 border-emerald-400 dark:border-emerald-600 overflow-hidden shadow-md flex items-center justify-center">
+                        <motion.div animate={{ y: slotSpins.slot2 * -30 }} transition={{ duration: 0.05 }} className="text-3xl font-black">
+                          {String.fromCharCode(65 + ((slotSpins.slot2 + 5) % 26))}
+                        </motion.div>
+                      </div>
+                      {/* Slot 3 */}
+                      <div className="w-16 h-20 bg-white dark:bg-slate-900 rounded-lg border-2 border-emerald-400 dark:border-emerald-600 overflow-hidden shadow-md flex items-center justify-center">
+                        <motion.div animate={{ y: slotSpins.slot3 * -30 }} transition={{ duration: 0.05 }} className="text-3xl font-black">
+                          {String.fromCharCode(65 + ((slotSpins.slot3 + 10) % 26))}
+                        </motion.div>
+                      </div>
+                      {/* Numbers */}
+                      <div className="w-14 h-20 bg-white dark:bg-slate-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 overflow-hidden shadow-md flex items-center justify-center">
+                        <motion.div animate={{ y: slotSpins.slot1 * -25 }} transition={{ duration: 0.05 }} className="text-2xl font-black">
+                          {(slotSpins.slot1 % 10)}
+                        </motion.div>
+                      </div>
+                      <div className="w-14 h-20 bg-white dark:bg-slate-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 overflow-hidden shadow-md flex items-center justify-center">
+                        <motion.div animate={{ y: slotSpins.slot2 * -25 }} transition={{ duration: 0.05 }} className="text-2xl font-black">
+                          {(slotSpins.slot2 % 10)}
+                        </motion.div>
+                      </div>
+                      <div className="w-14 h-20 bg-white dark:bg-slate-900 rounded-lg border-2 border-blue-400 dark:border-blue-600 overflow-hidden shadow-md flex items-center justify-center">
+                        <motion.div animate={{ y: slotSpins.slot3 * -25 }} transition={{ duration: 0.05 }} className="text-2xl font-black">
+                          {(slotSpins.slot3 % 10)}
+                        </motion.div>
+                      </div>
+                    </div>
+                  ) : (
+                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-4">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-60 mb-3">YOUR CHECK-IN CODE</p>
+                      <p className="text-5xl font-black tracking-widest text-transparent bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text mb-2">
+                        {booking.ticket_code}
+                      </p>
+                      <p className="text-[8px] text-[var(--text-secondary)] opacity-50">Show this code at entry</p>
+                    </motion.div>
+                  )}
                </div>
 
                {booking.category === 'Festivals' && (
