@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Html5Qrcode } from 'html5-qrcode'
 import confetti from 'canvas-confetti'
 import {
-  Calendar, MapPin, DollarSign, Ticket as TicketIcon, Plus, ArrowLeft, Edit2, QrCode,
+  Calendar, MapPin, DollarSign, Ticket as TicketIcon, Plus, ArrowLeft, Edit2,
   ChevronRight, Trash2, Users, Check, AlertCircle, X, Trophy, Clock,
   Tag, Share2, CheckCircle2, PartyPopper
 } from 'lucide-react'
@@ -366,7 +366,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
             <Edit2 size={14} /> Edit
           </button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, padding: '8px 14px', fontSize: 13 }}>
-            <QrCode size={14} /> Scan
+            Check In
           </motion.button>
         </div>
       </div>
@@ -398,7 +398,7 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
         <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, flex: 1, padding: 12, fontSize: 13 }}>
-          <QrCode size={16} /> Scan Tickets
+          Check In
         </motion.button>
         <motion.button whileTap={{ scale: 0.95 }} onClick={onPromos} style={{ ...s.btnSecondary, flex: 1, padding: 12, fontSize: 13 }}>
           <Tag size={16} /> Promo Codes
