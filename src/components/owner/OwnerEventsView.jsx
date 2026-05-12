@@ -1158,22 +1158,27 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
-      // Keep TKT- prefix (DB stores it), just remove other dashes/spaces
-      const cleanCode = code
-        .toUpperCase()
-        .replace(/[-\s]/g, '')
-        .replace(/^TKT/, 'TKT-') // Ensure TKT- format if they didn't include it
+      // Strip all formatting (dashes, spaces) for comparison
+      const cleanCode = code.toUpperCase().replace(/[-\s]/g, '')
 
-      // Single lookup: match database format exactly
-      const { data: order, error } = await supabase
+      // Fetch all codes for this event, match in JavaScript
+      const { data: orders, error } = await supabase
         .from('event_orders')
-        .select('id, event_id, customer_name, tier_snapshot, payment_status')
-        .eq('ticket_code', cleanCode)
+        .select('id, event_id, customer_name, tier_snapshot, payment_status, ticket_code')
         .eq('event_id', event.id)
         .eq('business_id', businessId)
-        .maybeSingle()
 
-      if (error || !order) {
+      if (error || !orders) {
+        setResult({ success: false, code, message: 'Lookup failed' })
+        setLoading(false)
+        setTimeout(() => setResult(null), 3000)
+        return
+      }
+
+      // Find matching order by comparing stripped codes
+      const order = orders.find(o => o.ticket_code?.replace(/[-\s]/g, '') === cleanCode)
+
+      if (!order) {
         setResult({ success: false, code, message: 'Code not found' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
