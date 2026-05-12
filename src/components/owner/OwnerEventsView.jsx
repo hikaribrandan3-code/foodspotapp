@@ -1210,10 +1210,10 @@ function CheckinView({ event, businessId, onBack }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 40 }}>
-      <button onClick={() => { stopScanner(); onBack() }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
-      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-in</h2>
+      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-in Guests</h2>
       <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{event.name}</p>
 
       {/* Counter */}
@@ -1226,7 +1226,7 @@ function CheckinView({ event, businessId, onBack }) {
       </div>
 
       {/* Code input */}
-      <Field label="Enter Check-in Code">
+      <Field label="Code">
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             style={{ ...s.input, flex: 1, fontSize: 18, letterSpacing: '0.2em', textTransform: 'uppercase' }}
