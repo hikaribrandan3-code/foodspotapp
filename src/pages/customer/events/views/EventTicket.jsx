@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText, Fingerprint, Zap, Wallet, Smartphone, Scan } from 'lucide-react';
+import { Share2, X, MapPin, Calendar, Ticket, CheckCircle2, FileText, Fingerprint, Zap, Scan } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { motion } from 'framer-motion';
@@ -16,7 +16,6 @@ export default function EventTicket({ booking, onClose }) {
   const ticketRef = useRef(null);
   const [activeTab, setActiveTab] = React.useState('ticket'); // 'ticket' or 'vouchers'
   const [showScanner, setShowScanner] = React.useState(false);
-  const [slotSpins, setSlotSpins] = React.useState({ slot1: 0, slot2: 0, slot3: 0 });
   const [slotRevealed, setSlotRevealed] = React.useState(false);
 
   useEffect(() => {
@@ -43,26 +42,14 @@ export default function EventTicket({ booking, onClose }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Slot machine animation
+  // Reveal slot-machine code after 3s
   useEffect(() => {
-    const spinInterval = setInterval(() => {
-      setSlotSpins({
-        slot1: Math.floor(Math.random() * 1000),
-        slot2: Math.floor(Math.random() * 1000),
-        slot3: Math.floor(Math.random() * 1000)
-      });
-    }, 50);
-
     const revealTimer = setTimeout(() => {
-      clearInterval(spinInterval);
       setSlotRevealed(true);
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6', '#F59E0B'] });
     }, 3000);
 
-    return () => {
-      clearInterval(spinInterval);
-      clearTimeout(revealTimer);
-    };
+    return () => clearTimeout(revealTimer);
   }, []);
 
   const handleDownloadPDF = async () => {
