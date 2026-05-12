@@ -1149,6 +1149,11 @@ function CheckinView({ event, businessId, onBack }) {
     setScanning(true)
     setResult(null)
     try {
+      // Check BarcodeDetector support
+      if (!('BarcodeDetector' in window)) {
+        throw new Error('BarcodeDetector not supported in this browser')
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       })
@@ -1173,16 +1178,17 @@ function CheckinView({ event, businessId, onBack }) {
             return
           }
         } catch (err) {
-          // Silently continue scanning
+          console.warn('Scan loop error:', err)
         }
         animationIdRef.current = requestAnimationFrame(scanLoop)
       }
 
       scanLoop()
     } catch (err) {
+      console.error('Scanner startup error:', err.message)
       setScanning(false)
-      setResult({ success: false, message: 'Camera unavailable — use manual input' })
-      setTimeout(() => setResult(null), 3000)
+      setResult({ success: false, message: `Camera unavailable: ${err.message}` })
+      setTimeout(() => setResult(null), 5000)
     }
   }
 
