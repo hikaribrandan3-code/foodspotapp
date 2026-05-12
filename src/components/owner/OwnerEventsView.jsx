@@ -164,6 +164,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   if (view === 'detail' && selectedEvent) return (
     <EventDetailView
       event={selectedEvent}
+      businessId={businessId}
       onBack={() => setView('list')}
       onEdit={() => setView('edit')}
       onAttendees={() => setView('attendees')}
@@ -379,11 +380,23 @@ function EventListCard({ event, onClick, delay = 0 }) {
 }
 
 // ── Detail View ───────────────────────────────────────────────────────────────
-function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onPromos, onDelete, onRefresh }) {
+function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onCheckin, onPromos, onDelete, onRefresh }) {
   const { t } = useLanguage()
   const tiers = event.ticket_tiers || []
   const totalSold = tiers.reduce((a, t) => a + (t.sold || 0), 0)
   const totalCap  = tiers.reduce((a, t) => a + (t.capacity || 0), 0)
+
+  const handleToggleSoldOut = async (tierId, currentlySoldOut) => {
+    const updatedTiers = tiers.map(tier =>
+      tier.id === tierId ? { ...tier, forced_sold_out: !currentlySoldOut } : tier
+    )
+    await supabase
+      .from('events')
+      .update({ ticket_tiers: updatedTiers })
+      .eq('id', event.id)
+      .eq('business_id', businessId)
+    onRefresh()
+  }
 
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
@@ -464,14 +477,25 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
                     style={{ height: '100%', background: rem === 0 ? theme.danger : theme.primary, borderRadius: 4 }}
                   />
                 </div>
-                {rem < 5 && rem > 0 && (
+                {rem < 5 && rem > 0 && !tier.forced_sold_out && (
                   <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <AlertCircle size={11} /> {t('only_left').replace('{count}', rem)}
                   </div>
                 )}
-                {rem === 0 && (
+                {(rem === 0 || tier.forced_sold_out) && (
                   <div style={{ fontSize: 11, color: theme.danger, marginTop: 4, fontWeight: 700 }}>{t('sold_out')}</div>
                 )}
+                <button
+                  onClick={() => handleToggleSoldOut(tier.id, !!tier.forced_sold_out)}
+                  style={{
+                    marginTop: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: 'none',
+                    background: tier.forced_sold_out ? '#FEE2E2' : '#F3F4F6',
+                    color: tier.forced_sold_out ? theme.danger : theme.textSecondary,
+                    borderRadius: 6, padding: '3px 8px'
+                  }}
+                >
+                  {tier.forced_sold_out ? '↩ Reopen tier' : 'Force sold out'}
+                </button>
               </div>
             )
           })}

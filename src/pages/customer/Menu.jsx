@@ -838,6 +838,15 @@ export default function Menu({ config: configProp }) {
                 </div>
             )}
 
+            {/* Empty state for new tenants with no menu items */}
+            {isDataLoaded && enabledCategories.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '60px 24px', color: '#9CA3AF' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
+                    <p style={{ fontSize: 18, fontWeight: 700, color: '#374151', marginBottom: 8 }}>Menu coming soon</p>
+                    <p style={{ fontSize: 14, margin: 0 }}>This restaurant is still setting up their menu. Check back shortly!</p>
+                </div>
+            )}
+
             {/* Grid */}
             <div style={{ padding: '0 8px' }}>
                 {enabledCategories.map(category => (

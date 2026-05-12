@@ -221,28 +221,33 @@ export default function EventDetail({ event, onBook, onBack }) {
           <div className="grid gap-4">
             {event.tiers.map(tier => {
               const isSelected = selectedZone && (
-                tier.id.toLowerCase().includes(selectedZone.toLowerCase()) || 
+                tier.id.toLowerCase().includes(selectedZone.toLowerCase()) ||
                 (selectedZone === 'Tables' && tier.name.toLowerCase().includes('table')) ||
                 (selectedZone === 'VIP_L' && tier.name.includes('VIP')) ||
                 (selectedZone === 'VIP_R' && tier.name.includes('VIP'))
               );
-              
+              const remaining = (tier.qty || tier.capacity || 0) - (tier.sold || 0);
+              const isSoldOut = tier.forced_sold_out || remaining <= 0;
+
               return (
               <button
                 key={tier.id}
-                onClick={() => onBook(tier)}
+                onClick={() => !isSoldOut && onBook(tier)}
+                disabled={isSoldOut}
                 className={`group relative flex items-center justify-between p-6 rounded-[32px] bg-white dark:bg-slate-900 border transition-all text-left shadow-sm overflow-hidden ${
-                  isSelected 
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-4 ring-[var(--color-primary)]/10 scale-[1.02]' 
-                    : 'border-[var(--border-color)] hover:border-[var(--color-primary)]/30 active:scale-[0.98]'
+                  isSoldOut
+                    ? 'border-[var(--border-color)] opacity-50 cursor-not-allowed'
+                    : isSelected
+                      ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-4 ring-[var(--color-primary)]/10 scale-[1.02]'
+                      : 'border-[var(--border-color)] hover:border-[var(--color-primary)]/30 active:scale-[0.98]'
                 }`}
               >
                 <div className="relative z-10 flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
-                    tier.name.toLowerCase().includes('table') 
-                      ? 'bg-purple-100 text-purple-600' 
-                      : tier.name.includes('VIP') 
-                        ? 'bg-orange-100 text-orange-600' 
+                    tier.name.toLowerCase().includes('table')
+                      ? 'bg-purple-100 text-purple-600'
+                      : tier.name.includes('VIP')
+                        ? 'bg-orange-100 text-orange-600'
                         : 'bg-slate-100 text-slate-600'
                   }`}>
                     <Tickets size={20} />
@@ -250,15 +255,17 @@ export default function EventDetail({ event, onBook, onBack }) {
                   <div>
                     <h4 className="font-black text-[var(--text-primary)] text-sm mb-0.5">{tier.name}</h4>
                     <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50">
-                      {tier.name.toLowerCase().includes('table') 
-                        ? 'Includes reserved premium seating' 
+                      {tier.name.toLowerCase().includes('table')
+                        ? 'Includes reserved premium seating'
                         : 'Admission for 1 person'}
                     </p>
                   </div>
                 </div>
                 <div className="relative z-10 text-right">
                   <p className="text-xl font-black text-[var(--color-primary)]">${tier.price}</p>
-                  <p className="text-[9px] font-black uppercase tracking-tight text-[var(--text-secondary)] opacity-50">Available</p>
+                  <p className={`text-[9px] font-black uppercase tracking-tight ${isSoldOut ? 'text-red-500 opacity-100' : 'text-[var(--text-secondary)] opacity-50'}`}>
+                    {isSoldOut ? 'Sold Out' : 'Available'}
+                  </p>
                 </div>
               </button>
             );

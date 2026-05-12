@@ -4,6 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTenant } from '../../contexts/TenantContext';
 import { useKDSSync } from '../../hooks/useKDSSync';
 import { useCamTechListener } from '../../hooks/useCamTech';
+import { useStaff } from '../../contexts/StaffContext';
 import BurgerLoader from '../../components/BurgerLoader';
 import { ORDER_STATUS } from '../../constants/database.js';
 
@@ -19,6 +20,13 @@ export const StaffKDS = () => {
     const { t } = useLanguage();
     const [isPaused, setIsPaused] = React.useState(false);
     const { orders, loading, transitionOrderState, fetchOrders } = useKDSSync(businessId);
+    const { currentShift, clockOut, clearStaff } = useStaff();
+
+    const handleEndShift = async () => {
+        if (!window.confirm('End your shift?')) return;
+        if (currentShift?.id) await clockOut(currentShift.id);
+        clearStaff();
+    };
 
     useCamTechListener({
         onPause: () => {
@@ -52,6 +60,16 @@ export const StaffKDS = () => {
 
     return (
         <div className="kds-container">
+            {currentShift && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px' }}>
+                    <button
+                        onClick={handleEndShift}
+                        style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+                    >
+                        End Shift
+                    </button>
+                </div>
+            )}
             <div className="kds-columns">
                 {KDS_COLUMNS.map(col => (
                     <div key={col.id} className={`kds-column kds-column--${col.color}`}>
