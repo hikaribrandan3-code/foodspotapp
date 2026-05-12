@@ -497,7 +497,6 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     if (!form.name.trim() || !form.start_date) { alert('Name and start date are required'); return }
     setSaving(true)
     try {
-      console.log('🔍 [DEBUG] Event publish starting. businessId:', businessId, 'type:', typeof businessId)
       const ticketTiers = form.ticket_tiers.map(t => ({
         id: t.id || crypto.randomUUID(),
         name: t.name,
@@ -526,17 +525,13 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           checkins_count: 0,
           lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
       };
-      console.log('📦 [DEBUG] Event payload:', eventPayload);
       const { error } = await supabase.from('events').insert([eventPayload]);
 
       if (error) {
-        console.error('❌ [DEBUG] handlePublish error:', error);
-        console.error('❌ [DEBUG] error.code:', error.code, 'error.message:', error.message, 'error.details:', error.details);
         alert('Failed to create event: ' + error.message);
         setSaving(false);
         return;
       }
-      console.log('✅ [DEBUG] Event created successfully');
 
       setShowSuccess(true)
       confetti({ particleCount: 140, spread: 80, origin: { y: 0.55 }, colors: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6'] })
@@ -841,8 +836,10 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                     </div>
                     <div style={{ flex: 1 }}>
                       <label style={s.label}>Capacity</label>
-                      <input type="number" style={s.input} placeholder="100" value={tier.capacity} onChange={e => {
-                        const tiers = [...form.ticket_tiers]; tiers[idx].capacity = Number(e.target.value); patch('ticket_tiers', tiers)
+                      <input type="number" style={s.input} placeholder="100" min="1" value={tier.capacity || ''} onChange={e => {
+                        const tiers = [...form.ticket_tiers]; tiers[idx].capacity = e.target.value === '' ? 0 : Math.max(1, parseInt(e.target.value) || 1); patch('ticket_tiers', tiers)
+                      }} onBlur={e => {
+                        if (!tier.capacity || tier.capacity < 1) { const tiers = [...form.ticket_tiers]; tiers[idx].capacity = 1; patch('ticket_tiers', tiers) }
                       }} />
                     </div>
                   </div>

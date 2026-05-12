@@ -43,9 +43,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       }
 
       if (data.free_order) {
-        onConfirm({
+        const booking = {
           id: data.ticket_code,
           ticket_code: data.ticket_code,
+          order_id: data.order_id,
           event_id: event.id,
           event_name: event.name,
           tier_name: tier.name,
@@ -60,7 +61,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           category: event.category,
           payment_method: 'free',
           guest_token: data.guest_token
-        });
+        };
+        const existing = JSON.parse(localStorage.getItem('event_bookings') || '[]');
+        localStorage.setItem('event_bookings', JSON.stringify([booking, ...existing].slice(0, 20)));
+        onConfirm(booking);
       }
     } catch (err) {
       console.error('Claim exception:', err);
@@ -104,9 +108,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
       // Free event — no MP redirect needed
       if (data.free_order) {
-        onConfirm({
+        const booking = {
           id: data.ticket_code,
           ticket_code: data.ticket_code,
+          order_id: data.order_id,
           event_id: event.id,
           event_name: event.name,
           tier_name: tier.name,
@@ -121,7 +126,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           category: event.category,
           payment_method: 'free',
           guest_token: data.guest_token
-        });
+        };
+        const existing = JSON.parse(localStorage.getItem('event_bookings') || '[]');
+        localStorage.setItem('event_bookings', JSON.stringify([booking, ...existing].slice(0, 20)));
+        onConfirm(booking);
         return;
       }
 
