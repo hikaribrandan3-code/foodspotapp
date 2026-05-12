@@ -1184,8 +1184,10 @@ function loop(ts){
   if(G.state==='paused'){drawPaused();ctx.restore();return;}
   const isHuman=G.turn===0||(G.gameMode==='2p'&&G.turn===1);
   if(G.state==='aim'&&isHuman){
-    if(keys.left){G.ang-=0.0084;lastDpadFrame=frameCount;}
-    if(keys.right){G.ang+=0.0084;lastDpadFrame=frameCount;}
+    const prev=G.shotPreview;let distanceScale=1;
+    if(prev){const previewDist=Math.hypot(prev.cueEndX-getCue().x,prev.cueEndY-getCue().y);const refDist=120;distanceScale=Math.min(1,refDist/Math.max(previewDist,refDist));}
+    if(keys.left){G.ang-=0.0084*distanceScale;lastDpadFrame=frameCount;}
+    if(keys.right){G.ang+=0.0084*distanceScale;lastDpadFrame=frameCount;}
     if(!G.charge){
       if(keys.up)spinY=Math.min(1,spinY+0.06);
       if(keys.down)spinY=Math.max(-1,spinY-0.06);
