@@ -1135,114 +1135,85 @@ function AttendeeListView({ event, businessId, onBack }) {
   )
 }
 
-// ── Check-in (QR Scanner) ─────────────────────────────────────────────────────
+// ── Check-in (Manual Code Entry) ───────────────────────────────────────────────
 function CheckinView({ event, businessId, onBack }) {
-  const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState(null)
   const [checkedIn, setCheckedIn] = useState(0)
-  const [manualInput, setManualInput] = useState('')
-  const scannerRef = useRef(null)
-  const html5QrRef = useRef(null)
+  const [codeInput, setCodeInput] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const startScanner = async () => {
-    setScanning(true)
-    setResult(null)
+  const handleCheckin = async (code) => {
+    if (!code.trim()) return
+    setLoading(true)
     try {
-      const scanner = new Html5Qrcode('qr-reader')
-      html5QrRef.current = scanner
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        (decodedText) => {
-          scanner.stop()
-          setScanning(false)
-          handleCheckin(decodedText)
-        },
-        () => {}
-      )
-    } catch (e) {
-      setScanning(false)
-      alert('Camera unavailable — use manual input')
-    }
-  }
-
-  const stopScanner = async () => {
-    if (html5QrRef.current) {
-      try { await html5QrRef.current.stop() } catch {}
-      html5QrRef.current = null
-    }
-    setScanning(false)
-  }
-
-  const handleCheckin = async (ticketId) => {
-    try {
-      // Look up order by ticket_code
       const { data: order, error: orderError } = await supabase
         .from('event_orders')
         .select('id, event_id, customer_name, tier_snapshot, payment_status')
-        .eq('ticket_code', ticketId)
+        .eq('ticket_code', code.toUpperCase())
         .eq('event_id', event.id)
-        .single();
+        .single()
 
       if (orderError || !order) {
-        setResult({ success: false, ticketId, message: 'Invalid ticket' })
+        setResult({ success: false, code, message: 'Code not found' })
+        setLoading(false)
         setTimeout(() => setResult(null), 3000)
-        return;
+        return
       }
 
       if (order.payment_status !== 'paid') {
-        setResult({ success: false, ticketId, message: 'Payment pending' })
+        setResult({ success: false, code, message: 'Payment pending' })
+        setLoading(false)
         setTimeout(() => setResult(null), 3000)
-        return;
+        return
       }
 
-      // Check if already checked in
-      const { data: existingCheckin, error: checkinError } = await supabase
+      const { data: existingCheckin } = await supabase
         .from('event_checkins')
         .select('id')
         .eq('order_id', order.id)
         .eq('event_id', event.id)
-        .single();
+        .single()
 
       if (existingCheckin) {
-        setResult({ success: false, ticketId, message: 'Already checked in' })
+        setResult({ success: false, code, message: 'Already checked in' })
+        setLoading(false)
         setTimeout(() => setResult(null), 3000)
-        return;
+        return
       }
 
-      // Record check-in
       await supabase
         .from('event_checkins')
         .insert({
           event_id: event.id,
           order_id: order.id,
-          checkin_method: 'qr_scan'
-        });
+          checkin_method: 'manual_code'
+        })
 
       setResult({
         success: true,
-        ticketId,
+        code,
         name: order.customer_name || 'Guest',
         tier: order.tier_snapshot?.name || 'General'
-      });
-      setCheckedIn(n => n + 1);
-      confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6'] });
-      setTimeout(() => setResult(null), 3000);
+      })
+      setCheckedIn(n => n + 1)
+      setCodeInput('')
+      confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6'] })
+      setLoading(false)
+      setTimeout(() => setResult(null), 3000)
     } catch (err) {
-      console.error('handleCheckin error:', err);
-      setResult({ success: false, ticketId, message: 'Check-in failed' });
-      setTimeout(() => setResult(null), 3000);
+      console.error('handleCheckin error:', err)
+      setResult({ success: false, code, message: 'Check-in failed' })
+      setLoading(false)
+      setTimeout(() => setResult(null), 3000)
     }
   }
 
-  useEffect(() => () => { stopScanner() }, [])
-
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 40 }}>
-      <button onClick={() => { stopScanner(); onBack() }} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
-      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-in</h2>
+      <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-in Guests</h2>
       <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{event.name}</p>
 
       {/* Counter */}
@@ -1254,35 +1225,24 @@ function CheckinView({ event, businessId, onBack }) {
         </div>
       </div>
 
-      {/* QR scanner area */}
-      {scanning ? (
-        <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', marginBottom: 16 }}>
-          <div id="qr-reader" style={{ width: '100%' }} />
-          <button onClick={stopScanner} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }}>
-            <X size={20} color="#fff" />
-          </button>
-        </div>
-      ) : (
-        <motion.button whileTap={{ scale: 0.97 }} onClick={startScanner} style={{ ...s.btnPrimary, width: '100%', padding: 16, marginBottom: 16, fontSize: 15 }}>
-          <QrCode size={20} /> Open Camera Scanner
-        </motion.button>
-      )}
-
-      {/* Manual input */}
-      <Field label="Or Enter Ticket ID Manually">
+      {/* Code input */}
+      <Field label="Code">
         <div style={{ display: 'flex', gap: 8 }}>
           <input
-            style={{ ...s.input, flex: 1 }}
-            placeholder="Paste ticket ID…"
-            value={manualInput}
-            onChange={e => setManualInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && manualInput) { handleCheckin(manualInput); setManualInput('') } }}
+            style={{ ...s.input, flex: 1, fontSize: 18, letterSpacing: '0.2em', textTransform: 'uppercase' }}
+            placeholder="ABC123"
+            value={codeInput}
+            onChange={e => setCodeInput(e.target.value.toUpperCase())}
+            onKeyDown={e => { if (e.key === 'Enter' && codeInput) handleCheckin(codeInput) }}
+            maxLength={6}
+            disabled={loading}
           />
           <button
-            onClick={() => { if (manualInput) { handleCheckin(manualInput); setManualInput('') } }}
-            style={{ ...s.btnPrimary, padding: '14px 18px', flexShrink: 0 }}
+            onClick={() => handleCheckin(codeInput)}
+            disabled={!codeInput || loading}
+            style={{ ...s.btnPrimary, padding: '14px 18px', flexShrink: 0, opacity: loading ? 0.6 : 1 }}
           >
-            <Check size={18} />
+            {loading ? '...' : <Check size={18} />}
           </button>
         </div>
       </Field>
@@ -1296,9 +1256,18 @@ function CheckinView({ event, businessId, onBack }) {
             exit={{ opacity: 0, y: 20 }}
             style={{ position: 'fixed', bottom: 40, left: 20, right: 20, background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', textAlign: 'center', zIndex: 200 }}
           >
-            <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 12px' }} />
-            <div style={{ fontWeight: 800, fontSize: 18, color: theme.textPrimary }}>Ticket Verified! ✓</div>
-            <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>{result.ticketId}</div>
+            {result.success ? (
+              <>
+                <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 12px' }} />
+                <div style={{ fontWeight: 800, fontSize: 18, color: theme.textPrimary }}>{result.name} ✓</div>
+                <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>{result.tier}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight: 800, fontSize: 18, color: '#EF4444', marginBottom: 8 }}>✕ {result.message}</div>
+                {result.ticketId && <div style={{ fontSize: 12, color: theme.textSecondary }}>{result.ticketId}</div>}
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

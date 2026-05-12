@@ -7,13 +7,7 @@ import { supabase } from '../../../../lib/supabaseClient';
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const { t } = useLanguage();
   const { tenantData } = useTenant();
-  const [email, setEmail] = useState('');
   const [qty, setQty] = useState(1);
-  const [promoCode, setPromoCode] = useState('');
-  const [isApplying, setIsApplying] = useState(false);
-  const [applied, setApplied] = useState(false);
-  const [promoError, setPromoError] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
 
@@ -36,8 +30,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           event_id: event.id,
           tier_id: tier.id,
           quantity: qty,
-          customer: { name: '', email: email || '', phone: '' },
-          promo_code: applied ? promoCode : null
+          customer: { name: '', email: '', phone: '' },
+          promo_code: null
         }
       });
 
@@ -51,7 +45,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       if (data.free_order) {
         onConfirm({
           id: data.ticket_code,
-          email,
           event_id: event.id,
           event_name: event.name,
           tier_name: tier.name,
@@ -87,8 +80,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           event_id: event.id,
           tier_id: tier.id,
           quantity: qty,
-          customer: { name: '', email: email || '', phone: '' },
-          promo_code: applied ? promoCode : null
+          customer: { name: '', email: '', phone: '' },
+          promo_code: null
         }
       });
 
@@ -112,7 +105,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       if (data.free_order) {
         onConfirm({
           id: data.ticket_code,
-          email,
           event_id: event.id,
           event_name: event.name,
           tier_name: tier.name,
@@ -132,8 +124,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       }
 
       // Mercado Pago — redirect to payment
-      if (data.init_point || data.redirect_url) {
-        window.location.href = data.redirect_url || data.init_point;
+      if (data.init_point) {
+        window.location.href = data.init_point;
         return;
       }
 
@@ -145,10 +137,6 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       setIsProcessing(false);
     }
   };
-
-  const paymentOptions = [
-    { id: 'card', name: 'Credit Card', icon: <CreditCard size={16} />, color: 'slate' }
-  ];
 
   return (
     <div className="flex flex-col h-full bg-[var(--canvas-bg)]">
@@ -215,159 +203,60 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           </div>
         </div>
 
-        {/* Futuristic Payment Methods */}
-        <div className="space-y-4">
-           <div className="flex flex-col px-2">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">Checkout Methods</h3>
-             <p className="text-[9px] font-bold text-[var(--text-secondary)] opacity-30 uppercase tracking-widest mt-1">Select your preferred way to pay</p>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-3">
-              {paymentOptions.map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => setPaymentMethod(opt.id)}
-                  className={`flex items-center gap-3 p-4 rounded-[24px] border transition-all text-left relative ${
-                    paymentMethod === opt.id
-                    ? opt.id === 'mercado' 
-                      ? 'bg-[#FFF059] border-[#FFF059] text-[#009EE3] shadow-lg shadow-yellow-500/20' 
-                      : 'bg-slate-900 border-slate-900 text-white shadow-lg'
-                    : 'bg-white dark:bg-slate-900 border-[var(--border-color)] text-[var(--text-primary)] hover:border-slate-400'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                    paymentMethod === opt.id 
-                    ? opt.id === 'mercado' ? 'bg-[#009EE3]/10' : 'bg-white/10' 
-                    : 'bg-slate-100 dark:bg-slate-800'
-                  }`}>
-                    {opt.icon}
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-tight">{opt.name}</span>
-                </button>
-              ))}
-           </div>
-        </div>
 
-        <div className="space-y-3">
-           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 px-2">{t('email_label') || 'Email (Optional)'}</h3>
-           <div className="flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-[var(--border-color)] transition-all shadow-sm">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t('email_placeholder') || 'your@email.com'}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)]"
-              />
-           </div>
-        </div>
-
-        <div className="space-y-3">
-           <div className="flex items-center justify-between px-2">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">Promo Code</h3>
-             {applied && (
-               <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
-                 {promoCode.startsWith('FOOD-') || promoCode.startsWith('REF-') ? (t('referral_bonus') || 'Referral Bonus Applied') : 'Code Applied!'}
-               </span>
-             )}
-           </div>
-           <div className={`flex gap-2 bg-white dark:bg-slate-900 p-2 rounded-[24px] border transition-all shadow-sm ${applied ? 'border-emerald-500/50 ring-1 ring-emerald-500/10' : 'border-[var(--border-color)]'}`}>
-              <input 
-                type="text" 
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                placeholder="Enter code"
-                disabled={applied}
-                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold px-4 text-[var(--text-primary)] placeholder:opacity-30 disabled:opacity-50"
-              />
-              <button 
-                onClick={async () => {
-                  if (!promoCode.trim()) return;
-                  setIsApplying(true);
-                  setPromoError(null);
-                  try {
-                    // Validation happens server-side in create-event-preference
-                    // For now, mark as applied; edge function will reject if invalid
-                    const isReferral = promoCode.toUpperCase().startsWith('FOOD-') || promoCode.toUpperCase().startsWith('REF-');
-                    if (isReferral) setPromoCode(promoCode.toUpperCase());
-                    setApplied(true);
-                  } catch (err) {
-                    console.error('Promo error:', err);
-                    setPromoError(err.message || 'Invalid code');
-                  } finally {
-                    setIsApplying(false);
-                  }
-                }}
-                disabled={applied || !promoCode || isApplying}
-                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  applied 
-                  ? 'bg-emerald-500 text-white' 
-                  : 'bg-slate-900 dark:bg-slate-700 text-white active:scale-95 disabled:opacity-50'
-                }`}
-              >
-                {isApplying ? 'Applying...' : applied ? 'Applied' : 'Apply'}
-              </button>
-           </div>
-           {promoError && (
-             <p className="text-[10px] font-bold text-rose-500 px-2 mt-1">{promoError}</p>
-           )}
-        </div>
-
-        {/* Free Ticket Claim or WhatsApp Confirmation */}
-        {isFreeTicket ? (
+        {/* Free Ticket Claim */}
+        {isFreeTicket && (
           <div>
-             <button
-               onClick={handleClaimFreeTicket}
-               disabled={isProcessing}
-               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-               <Ticket size={18} />
-               {isProcessing ? 'Claiming...' : 'Claim Ticket'}
-             </button>
-          </div>
-        ) : (
-          <div>
-             <button
-               onClick={() => {
-                 const whatsappNumber = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.business_info?.whatsapp || tenantData?.phone || '';
-                 if (!whatsappNumber) {
-                   setPaymentError('WhatsApp number not configured');
-                   return;
-                 }
-                 const message = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
-                 const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-                 window.open(whatsappUrl, '_blank');
-               }}
-               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20"
-             >
-               <MessageCircle size={18} />
-               Confirm via WhatsApp
-             </button>
+            <button
+              onClick={handleClaimFreeTicket}
+              disabled={isProcessing}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Ticket size={18} />
+              {isProcessing ? 'Claiming...' : 'Claim Ticket'}
+            </button>
           </div>
         )}
 
       </main>
 
       {!isFreeTicket && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
+        <div className="fixed bottom-20 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto space-y-3">
           {paymentError && (
-            <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
+            <div className="mb-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
               <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
             </div>
           )}
+          {/* Primary: Mercado Pago */}
           <button
             onClick={handleConfirm}
             disabled={isProcessing}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#009EE3] hover:bg-[#0082C3] text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing ? (
               <span className="animate-pulse">Processing...</span>
             ) : (
               <>
                 <CreditCard size={18} />
-                {t('confirm_payment')}
+                Pay with Mercado Pago
               </>
             )}
           </button>
+          {/* Secondary: WhatsApp (only if enabled for this business) */}
+          {tenantData?.app_config?.payment_methods?.whatsapp && (
+            <button
+              onClick={() => {
+                const whatsappNumber = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.phone || '';
+                if (!whatsappNumber) { setPaymentError('WhatsApp number not configured'); return; }
+                const msg = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
+                window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+              }}
+              className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-green-500/20"
+            >
+              <MessageCircle size={18} />
+              Checkout via WhatsApp
+            </button>
+          )}
         </div>
       )}
     </div>

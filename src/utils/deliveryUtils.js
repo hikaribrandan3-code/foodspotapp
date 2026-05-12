@@ -60,20 +60,26 @@ export const isWithinDeliveryRadius = (storeCoords, customerCoords, radiusKm) =>
  * @param {Object} order - The order object
  * @param {string} businessName - The business name
  * @param {string} paymentMethod - Payment method (PAYMENT_METHOD.CASH | PAYMENT_METHOD.CARD_ON_DELIVERY)
+ * @param {string} mpAlias - Optional Mercado Pago alias for payment reference
  * @returns {string} WhatsApp-formatted summary
  */
-export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMENT_METHOD.CASH, t = null) => {
+export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMENT_METHOD.CASH, mpAlias = null) => {
     const items = order.items.map(item =>
-        `• ${item.quantity}x ${item.name} - $${item.price * item.quantity}`
+        `${item.quantity}x ${item.name} - $${item.price * item.quantity}`
     ).join('\n');
 
-    const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\n⚠️ *TRAER POS*' : '';
-    const paymentLabel =
-        paymentMethod === PAYMENT_METHOD.CASH ? '💵 Efectivo' :
-        paymentMethod === PAYMENT_METHOD.WHATSAPP ? '📱 WhatsApp' :
-        '💳 Tarjeta';
+    const paymentNote = paymentMethod === PAYMENT_METHOD.CARD_ON_DELIVERY ? '\n\nNOTA: TRAER POS' : '';
+    let paymentLabel =
+        paymentMethod === PAYMENT_METHOD.CASH ? 'Efectivo' :
+        paymentMethod === PAYMENT_METHOD.WHATSAPP ? 'WhatsApp' :
+        'Tarjeta';
 
-    // 🛡️ STRUCTURED ADDRESS FORMATTER
+    // Add MP alias if available
+    if (mpAlias) {
+        paymentLabel += ` | Alias MP: ${mpAlias}`;
+    }
+
+    // STRUCTURED ADDRESS FORMATTER
     let addressDisplay = 'Retiro en local'
     if (order.customerInfo?.address) {
         const addr = order.customerInfo.address
@@ -89,16 +95,19 @@ export const buildWhatsAppSummary = (order, businessName, paymentMethod = PAYMEN
         }
     }
 
-    return `🍔 *NUEVO PEDIDO - ${businessName}*\n` +
-        `📋 Pedido #${order.orderNumber}\n\n` +
-        `*Items:*\n${items}\n\n` +
-        `*Subtotal:* $${order.subtotal}\n` +
-        `*Envío:* $${order.deliveryFee || 0}\n` +
-        `*Total:* $${order.total}\n\n` +
-        `💳 *Pago:* ${paymentLabel}\n` +
-        `👤 *Cliente:* ${order.customerInfo?.name || 'N/A'}\n` +
-        `📞 *Tel:* ${order.customerInfo?.phone || 'N/A'}\n` +
-        `📍 *Dirección:* ${addressDisplay}` +
+    return `NUEVO PEDIDO - ${businessName}\n` +
+        `═══════════════════════════\n` +
+        `Pedido #${order.orderNumber}\n\n` +
+        `ITEMS:\n${items}\n\n` +
+        `───────────────────────────\n` +
+        `Subtotal: $${order.subtotal}\n` +
+        `Envio: $${order.deliveryFee || 0}\n` +
+        `TOTAL: $${order.total}\n\n` +
+        `───────────────────────────\n` +
+        `Pago: ${paymentLabel}\n` +
+        `Cliente: ${order.customerInfo?.name || 'N/A'}\n` +
+        `Telefono: ${order.customerInfo?.phone || 'N/A'}\n` +
+        `Direccion: ${addressDisplay}` +
         paymentNote;
 };
 
