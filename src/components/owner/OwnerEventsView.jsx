@@ -1158,13 +1158,13 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
-      // Strip TKT- prefix, then remove all dashes/spaces
+      // Keep TKT- prefix (DB stores it), just remove other dashes/spaces
       const cleanCode = code
-        .replace(/^TKT-/, '')
         .toUpperCase()
         .replace(/[-\s]/g, '')
+        .replace(/^TKT/, 'TKT-') // Ensure TKT- format if they didn't include it
 
-      // Single lookup: strip prefix, uppercase, no dashes
+      // Single lookup: match database format exactly
       const { data: order, error } = await supabase
         .from('event_orders')
         .select('id, event_id, customer_name, tier_snapshot, payment_status')
