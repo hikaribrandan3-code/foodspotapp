@@ -113,9 +113,9 @@ const CURATED_GAMES = [
 ];
 
 const CONFIG = {
-  gamesDir: path.join(__dirname, '../grubclub/games'),
-  coversDir: path.join(__dirname, '../grubclub/assets/covers'),
-  registryFile: path.join(__dirname, '../grubclub/game-registry.json'),
+  gamesDir: path.join(__dirname, '../foodspot-arcade/games'),
+  coversDir: path.join(__dirname, '../foodspot-arcade/assets/covers'),
+  registryFile: path.join(__dirname, '../foodspot-arcade/game-registry.json'),
   maxFileSize: 10 * 1024 * 1024, // 10MB per file
   allowedExtensions: ['.html', '.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.json', '.mp3', '.wav', '.ogg']
 };

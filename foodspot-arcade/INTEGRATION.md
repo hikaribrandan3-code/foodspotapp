@@ -4,7 +4,7 @@
 
 ### 1. Copy GameHero.jsx to your app
 ```bash
-cp grubclub/GameHero.jsx src/components/
+cp foodspot-arcade/GameHero.jsx src/components/
 ```
 
 ### 2. Use it in your app
@@ -53,14 +53,14 @@ Games without GitHub Pages need to be hosted:
 
 ### Step 1: Download Games
 ```bash
-cd grubclub
+cd foodspot-arcade
 node scripts/download-all.js
 ```
 
 ### Step 2: Copy to public folder
 ```bash
 mkdir -p public/games
-cp -r grubclub/games/* public/games/
+cp -r foodspot-arcade/games/* public/games/
 ```
 
 ### Step 3: Deploy

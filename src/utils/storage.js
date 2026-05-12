@@ -1,4 +1,4 @@
-// localStorage utility functions for Grub Club App
+// localStorage utility functions for FoodSpot App
 
 // 🏢 PHASE 3: Dynamic tenant-aware storage prefix
 // Default is "fs_global_" until TenantContext resolves the businessId

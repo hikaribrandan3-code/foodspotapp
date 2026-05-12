@@ -164,7 +164,7 @@ export const defaultConfig = {
         address: "Av. Corrientes 1234, CABA",
         phone: "+54 11 1234-5678",
         whatsapp: "+5491112345678", // For wa.me link
-        instagram: "@grubclub.ar",
+        instagram: "@foodspot.ar",
         googleMapsLink: "https://maps.google.com/?q=Av.+Corrientes+1234,+CABA",
         description: "Tu café de barrio favorito ☕",
     },
@@ -266,7 +266,7 @@ export const defaultConfig = {
 };
 
 // Storage key
-export const CONFIG_STORAGE_KEY = "grub_config";
+export const CONFIG_STORAGE_KEY = "foodspot_config";
 
 // Demo branding storage key (must match demoSession.js)
 const ACTIVE_BRANDING_KEY = 'foodspot_active_branding';

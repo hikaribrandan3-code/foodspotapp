@@ -12,7 +12,7 @@ _Learn about the person you're helping. Update this as you go._
 
 _(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
 
-- **Current Project:** FoodSpot-OS / GrubClubApp
+- **Current Project:** FoodSpot-OS / FoodSpotApp
 - **Market Scope:** South America, Central America, North America
 - **Base Location:** Argentina
 - **Team:** Works with "Tech Beast" (development partner)

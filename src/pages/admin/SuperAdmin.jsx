@@ -970,7 +970,7 @@ function SuperAdmin({ config: configProp }) {
                                     <span style={{ fontSize: 13, color: '#374151', display: 'block', marginBottom: 6 }}>💳 Mercado Pago (Alias)</span>
                                     <input
                                         type="text"
-                                        placeholder="ej: grubclub.mp"
+                                        placeholder="ej: foodspot.mp"
                                         value={config.payments?.mercadoPagoAlias || ''}
                                         onChange={(e) => {
                                             const c = config.payments || {};
@@ -1481,9 +1481,9 @@ function SuperAdmin({ config: configProp }) {
                                                 if (confirm('⚠️ Esto borrará solo la IMAGEN DE PORTADA para liberar espacio. Tus logos no se tocarán. ¿Continuar?')) {
                                                     try {
                                                         // Clear ONLY header cover data
-                                                        const currentConfig = JSON.parse(localStorage.getItem('grub_config') || '{}')
+                                                        const currentConfig = JSON.parse(localStorage.getItem('foodspot_config') || '{}')
                                                         delete currentConfig.headerCover
-                                                        localStorage.setItem('grub_config', JSON.stringify(currentConfig))
+                                                        localStorage.setItem('foodspot_config', JSON.stringify(currentConfig))
 
                                                         // Dispatch sync
                                                         window.dispatchEvent(new CustomEvent('frontendSync'))

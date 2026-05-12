@@ -1,6 +1,6 @@
 import base64
-b64_path = '/Users/daiskebrandan/Desktop/GrubClubApp/public/games/pool/png_b64.txt'
-html_path = '/Users/daiskebrandan/Desktop/GrubClubApp/public/games/pool/convert.html'
+b64_path = '/Users/daiskebrandan/Desktop/FoodSpotApp/public/games/pool/png_b64.txt'
+html_path = '/Users/daiskebrandan/Desktop/FoodSpotApp/public/games/pool/convert.html'
 with open(b64_path, 'r') as f:
     b64_data = f.read().strip()
 

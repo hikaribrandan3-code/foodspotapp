@@ -73,7 +73,7 @@ export const defaultMenuData = {
 };
 
 // Storage key (DEPRECATED)
-export const MENU_STORAGE_KEY = "grub_menu";
+export const MENU_STORAGE_KEY = "foodspot_menu";
 
 // Get menu
 // 🛡️ REFACTOR: This used to read from localStorage.

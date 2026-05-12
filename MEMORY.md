@@ -1,6 +1,6 @@
 # MEMORY.md - Long-Term Context
 
-## Project: FoodSpot-OS / GrubClubApp
+## Project: FoodSpot-OS / FoodSpotApp
 **Type:** Mobile POS + Gaming Engine for Festivals, Pop-ups, Food Trucks
 **Goal:** #1 in Pop-ups/Festivals, #2 in Dine-ins/Nightclubs
 **Target Exit:** Toast acquisition $40M
@@ -48,7 +48,7 @@
 - Festival pilot case studies needed for Toast pitch
 
 ## Arcade Gaming Pipeline (GameHero)
-- **Location:** `/grubclub/` - Complete game system
+- **Location:** `/foodspot-arcade/` - Complete game system
 - **React Integration:** `GameHero.jsx` - Drop-in React component
 - **License File:** `LICENSE-ACKNOWLEDGMENTS.md` - MIT attributions
 
@@ -207,7 +207,7 @@ body.hikariboy-active .auth-container { display: none !important; }
 
 #### Option 1: Direct Iframe (Live Games - No Hosting)
 ```jsx
-import { GameHero } from './grubclub/GameHero';
+import { GameHero } from './foodspot-arcade/GameHero';
 
 function App() {
   return <GameHero onGameSelect={(g) => console.log(g)} />;
@@ -217,7 +217,7 @@ function App() {
 #### Option 2: Self-Hosted Games
 ```bash
 # Download games
-cd grubclub
+cd foodspot-arcade
 node scripts/download-all.js
 
 # Games go to public/games/{id}/
@@ -512,7 +512,7 @@ User Request Flow:
 **Status:** ACTIVE
 
 ### The Problem We Solved
-- My container (`/root/.openclaw/workspace`) ≠ Tech Beast's Mac (`~/Desktop/GrubClubApp`)
+- My container (`/root/.openclaw/workspace`) ≠ Tech Beast's Mac (`~/Desktop/FoodSpotApp`)
 - Direct file edits caused sync confusion
 - Two separate filesystems = broken "vibe coding" experience
 

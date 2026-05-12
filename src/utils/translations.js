@@ -186,7 +186,7 @@ export const translations = {
     notes_placeholder: { es: "ej: Timbre 2A, subir escaleras", en: "ex: Doorbell 2A, up the stairs", pt: "ex: Campainha 2A, subir as escadas" },
 
     mp_alias_label: { es: "Mercado Pago (Alias)", en: "Mercado Pago (Alias)", pt: "Mercado Pago (Alias)" },
-    mp_alias_placeholder: { es: "ej: grubclub.mp", en: "ex: yourstore.mp", pt: "ex: sualoja.mp" },
+    mp_alias_placeholder: { es: "ej: foodspot.mp", en: "ex: yourstore.mp", pt: "ex: sualoja.mp" },
 
     // Mercado Pago Setup
     mp_connect_title: { es: "Conecta Mercado Pago", en: "Connect Mercado Pago", pt: "Conecte Mercado Pago" },

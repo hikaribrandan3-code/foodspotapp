@@ -184,7 +184,7 @@ export async function uploadAsset(file, businessId, bucketName = 'assets') {
         const cacheBusterName = `${baseName}_${Date.now()}.${ext}`
 
         // 2. Upload to Supabase Storage with tenant-scoped path
-        // Path: {businessId}/{filename} → e.g., "grubclub-demo/logo_1735849200.png"
+        // Path: {businessId}/{filename} → e.g., "foodspot-demo/logo_1735849200.png"
         const storagePath = `${businessId}/${cacheBusterName}`
 
         const { data, error } = await supabase.storage

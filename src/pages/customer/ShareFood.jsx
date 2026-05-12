@@ -125,7 +125,7 @@ function ShareFood({ config: configProp }) {
                         <div>
                             <p style={{ fontWeight: 'var(--font-weight-medium)' }}>{t('upload_stories')}</p>
                             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                                Etiquetá a {appConfig.businessInfo?.instagram || '@grubclub.ar'}
+                                Etiquetá a {appConfig.businessInfo?.instagram || '@foodspot.ar'}
                             </p>
                         </div>
                     </div>

@@ -8,6 +8,7 @@ import confetti from 'canvas-confetti';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import TicketScanner from '../../../../components/TicketScanner';
+import TicketCodeSlotMachine from '../../../../components/events/TicketCodeSlotMachine';
 
 export default function EventTicket({ booking, onClose }) {
   const { t } = useLanguage();
@@ -15,6 +16,8 @@ export default function EventTicket({ booking, onClose }) {
   const ticketRef = useRef(null);
   const [activeTab, setActiveTab] = React.useState('ticket'); // 'ticket' or 'vouchers'
   const [showScanner, setShowScanner] = React.useState(false);
+  const [slotSpins, setSlotSpins] = React.useState({ slot1: 0, slot2: 0, slot3: 0 });
+  const [slotRevealed, setSlotRevealed] = React.useState(false);
 
   useEffect(() => {
     const duration = 3 * 1000;
@@ -33,12 +36,33 @@ export default function EventTicket({ booking, onClose }) {
       }
 
       const particleCount = 40 * (timeLeft / duration);
-      // since particles fall down, start them a bit higher than random
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Slot machine animation
+  useEffect(() => {
+    const spinInterval = setInterval(() => {
+      setSlotSpins({
+        slot1: Math.floor(Math.random() * 1000),
+        slot2: Math.floor(Math.random() * 1000),
+        slot3: Math.floor(Math.random() * 1000)
+      });
+    }, 50);
+
+    const revealTimer = setTimeout(() => {
+      clearInterval(spinInterval);
+      setSlotRevealed(true);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6', '#F59E0B'] });
+    }, 3000);
+
+    return () => {
+      clearInterval(spinInterval);
+      clearTimeout(revealTimer);
+    };
   }, []);
 
   const handleDownloadPDF = async () => {
@@ -165,10 +189,7 @@ export default function EventTicket({ booking, onClose }) {
                  <div className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
                    <CheckCircle2 size={14} />
                  </div>
-                 <div>
-                    <h4 className="text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 leading-none mb-1">Magic Link Sent</h4>
-                    <p className="text-[8px] font-bold text-emerald-600 dark:text-emerald-500/70 leading-none">Sent to {booking.email || 'your email'}</p>
-                 </div>
+                 {/* Email hidden for launch cleanup */}
                </div>
 
                <h2 className="text-lg font-black text-[var(--text-primary)] leading-tight mb-1">
@@ -197,24 +218,10 @@ export default function EventTicket({ booking, onClose }) {
             </div>
 
             <div className="p-4 flex flex-col items-center gap-4">
-               <div className="p-4 bg-white rounded-xl shadow-inner border border-slate-50">
-                  <QRCodeSVG 
-                     value={booking.id}
-                     size={140}
-                     level="H"
-                     includeMargin={false}
-                     fgColor="#0f172a"
-                  />
-               </div>
-
-               <div className="text-center">
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">
-                    {t('ticket_id') || 'Ticket ID'}
-                  </p>
-                  <p className="text-[10px] font-black tracking-widest text-[var(--text-primary)]">
-                    {booking.id}
-                  </p>
-               </div>
+               <TicketCodeSlotMachine
+                 ticketCode={booking.ticket_code}
+                 revealed={slotRevealed}
+               />
 
                {booking.category === 'Festivals' && (
                  <div className="w-full bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-dashed border-[var(--border-color)] flex flex-col items-center gap-1.5">

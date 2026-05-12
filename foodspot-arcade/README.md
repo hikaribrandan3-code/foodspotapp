@@ -6,7 +6,7 @@
 # 1. Install dependencies (none needed - pure HTML/JS)
 
 # 2. Scrape games from GitHub
-cd grubclub
+cd foodspot-arcade
 node scripts/game-scraper.js --list           # See available games
 node scripts/game-scraper.js --all            # Import all curated games
 node scripts/game-scraper.js --all --category=bar  # Import only bar games
@@ -142,7 +142,7 @@ window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'xxx' }, '*');
 ## File Structure
 
 ```
-grubclub/
+foodspot-arcade/
 ├── arcade.html              # Main TikTok-scroll UI
 ├── game-registry.json       # Game database
 ├── scripts/

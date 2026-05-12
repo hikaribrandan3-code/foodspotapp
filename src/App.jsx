@@ -438,7 +438,7 @@ function App() {
         };
         initCloudSync();
 
-        const handleStorage = (e) => { if (e.key === 'grub_config' || e.key === null) refreshConfig(); };
+        const handleStorage = (e) => { if (e.key === 'foodspot_config' || e.key === null) refreshConfig(); };
         
         window.addEventListener('storage', handleStorage);
         return () => { 
