@@ -278,7 +278,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
             <p style={{ margin: '2px 0 0', fontSize: 13, color: theme.textSecondary }}>Manage tickets & check-ins</p>
           </div>
         </div>
-        <motion.button whileTap={{ scale: 0.96 }} onClick={() => setView('create')} style={s.btnPrimary}>
+        <motion.button whileTap={{ scale: 0.96 }} onClick={() => setView('create')} style={{ ...s.btnPrimary, background: '#3B82F6' }}>
           <Plus size={18} /> Create
         </motion.button>
       </div>
