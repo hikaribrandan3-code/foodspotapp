@@ -1,146 +1,47 @@
-import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 
-const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
-const NUMBERS = '0123456789'.split('')
-const ITEM_H = 80 // px — matches Tailwind h-20
-
-/**
- * Build a vertical strip that ends with the target character.
- * The reel will land exactly on this last character.
- */
-function buildStrip(target, pool, count = 30) {
-  const s = []
-  for (let i = 0; i < count - 1; i++) {
-    s.push(pool[Math.floor(Math.random() * pool.length)])
-  }
-  s.push(target)
-  return s
-}
-
-/**
- * Parse the ticket code into 3 letters + 3 numbers.
- * Expected format: "TKT-ABC-123" or "ABC123" → { letters: ['A','B','C'], numbers: ['1','2','3'] }
- *
- * If the code is malformed, returns null so the parent can show a fallback.
- */
-function parseCode(ticketCode) {
-  const raw = (ticketCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
-  if (raw.length < 6) return null
-
-  const segment = raw.slice(-6)
-  const letters = segment.slice(0, 3).split('')
-  const numbers = segment.slice(3, 6).split('')
-
-  // Validate: first 3 should be letters, last 3 should be digits
-  const validLetters = letters.every((ch) => /[A-Z]/.test(ch))
-  const validNumbers = numbers.every((ch) => /\d/.test(ch))
-
-  if (!validLetters || !validNumbers) return null
-  return { letters, numbers }
-}
-
-/**
- * TicketCodeSlotMachine
- *
- * Spins 3 letter reels + 3 number reels for 3 seconds,
- * then lands on the actual ticket code.
- *
- * @param {Object} props
- * @param {string} props.ticketCode — e.g. "TKT-ABC-123"
- * @param {boolean} props.revealed  — true after parent triggers 3s reveal
- */
 export default function TicketCodeSlotMachine({ ticketCode, revealed }) {
-  const parsed = useMemo(() => parseCode(ticketCode), [ticketCode])
-
-  const letterStrips = useMemo(() => {
-    if (!parsed) return null
-    return parsed.letters.map((ch) => buildStrip(ch, LETTERS, 28 + Math.floor(Math.random() * 12)))
-  }, [parsed])
-
-  const numberStrips = useMemo(() => {
-    if (!parsed) return null
-    return parsed.numbers.map((ch) => buildStrip(ch, NUMBERS, 28 + Math.floor(Math.random() * 12)))
-  }, [parsed])
-
-  // If we can't parse a valid code, show the raw code plainly instead of spinning garbage
-  if (!parsed || !letterStrips || !numberStrips) {
-    console.warn('[TicketCodeSlotMachine] Failed to parse ticket code:', ticketCode);
+  if (!ticketCode) {
     return (
-      <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-emerald-200 p-6 shadow-lg bg-gradient-to-br from-emerald-50 to-blue-50 dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
-        <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-2">
-          CHECK-IN CODE
-        </p>
-        <p className="text-center text-lg font-black tracking-widest text-emerald-600 dark:text-emerald-400 font-mono">
-          {ticketCode || 'NO CODE'}
-        </p>
-        <p className="mt-2 text-center text-[10px] text-slate-500 dark:text-slate-400">
-          Present this code at check-in
+      <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-red-200 p-6 shadow-lg bg-gradient-to-br from-red-50 to-orange-50 dark:border-red-900 dark:from-slate-800 dark:to-slate-900">
+        <p className="text-center text-sm font-semibold text-red-600 dark:text-red-400">
+          No ticket code
         </p>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto w-full max-w-[400px] rounded-2xl border border-emerald-100 p-6 shadow-lg bg-gradient-to-br from-emerald-50 to-blue-50 dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
-      {/* Reels row */}
-      <div className="flex items-center justify-center gap-3 h-24">
-        {/* 3 Letter reels */}
-        {letterStrips.map((strip, idx) => (
-          <Reel
-            key={`L-${idx}`}
-            strip={strip}
-            isLetter
-            revealed={revealed}
-          />
-        ))}
-
-        {/* Divider */}
-        <div className="flex flex-col gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-          <div className="h-1.5 w-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-        </div>
-
-        {/* 3 Number reels */}
-        {numberStrips.map((strip, idx) => (
-          <Reel
-            key={`N-${idx}`}
-            strip={strip}
-            isLetter={false}
-            revealed={revealed}
-          />
-        ))}
-      </div>
-
-      {/* Label fades in once revealed */}
-      <motion.div
-        className="mt-3 text-center"
-        initial={{ opacity: 0, y: 6 }}
-        animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-      >
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-60">
-          CHECK-IN CODE
-        </p>
-      </motion.div>
-    </div>
-  )
-}
-
-function Reel({ strip, isLetter, revealed }) {
-  const finalY = -(strip.length - 1) * ITEM_H
-
-  return (
-    <div
-      className={`relative overflow-hidden rounded-lg border-2 shadow-md bg-white dark:bg-slate-900 h-20 ${
-        isLetter
-          ? 'w-16 border-emerald-400 dark:border-emerald-600'
-          : 'w-14 border-blue-400 dark:border-blue-600'
-      }`}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={revealed ? { opacity: 1, scale: 1 } : { opacity: 0.6, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="mx-auto w-full max-w-[400px]"
     >
-      {/* Glow overlay when revealed */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 z-20 rounded-lg"
+      <div className="rounded-3xl border-2 border-emerald-400 dark:border-emerald-600 p-8 shadow-2xl bg-gradient-to-br from-emerald-50 via-blue-50 to-emerald-50 dark:from-slate-800 dark:via-slate-900 dark:to-slate-800 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-400/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center gap-3">
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-700 dark:text-emerald-400">
+            CHECK-IN CODE
+          </p>
+
+          <div className="bg-white dark:bg-slate-950 rounded-2xl px-8 py-6 border-2 border-emerald-200 dark:border-emerald-800 shadow-md">
+            <p className="text-center text-3xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 font-mono">
+              {ticketCode}
+            </p>
+          </div>
+
+          <p className="text-center text-[10px] text-slate-600 dark:text-slate-400 font-medium mt-2">
+            Show this code at the gate or to staff
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  )
         initial={{ opacity: 0 }}
         animate={revealed ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.4 }}
