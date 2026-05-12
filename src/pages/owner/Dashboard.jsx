@@ -344,16 +344,16 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
 
 function ActiveTabPills({ tab, setTab, counts }) {
   return (
-    <div style={{ display: 'flex', gap: 10, padding: '0 16px 14px' }}>
+    <div style={{ display: 'flex', gap: 10, padding: '0 0 14px', flex: 1, minWidth: 0 }}>
       {[['active', 'Active', counts.active], ['completed', 'Completed', counts.completed]].map(([k, label, n]) => {
         const on = tab === k
         return (
           <button key={k} onClick={() => setTab(k)} style={{
             flex: 1, border: on ? `1.5px solid ${T.statPrep}` : `1px solid ${T.line}`,
             background: T.card, color: on ? T.statPrep : T.muted, fontWeight: 600,
-            fontSize: 14, padding: '11px 0', borderRadius: 12, cursor: 'pointer',
+            fontSize: 13, padding: '11px 8px', borderRadius: 12, cursor: 'pointer',
             fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 7, letterSpacing: '-0.005em',
+            gap: 5, letterSpacing: '-0.005em',
           }}>
             <Icon type="clock" color={on ? T.statPrep : T.muted} size={14} />
             {label}
@@ -725,7 +725,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 16px 12px', gap: 8, flexWrap: 'wrap' }}>
           <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
           <button onClick={nukeAllOrders} style={{
             padding: '6px 12px',
