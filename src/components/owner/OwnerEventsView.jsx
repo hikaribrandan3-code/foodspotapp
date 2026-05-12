@@ -1158,28 +1158,25 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
-      // Strip all formatting — handles TKT-4TQ-26U, TKT4TQ26U, 4TQ26U all the same
-      const cleanCode = code.toUpperCase().replace(/[-\s]/g, '')
+      // 6-digit code: strip all non-digits
+      const cleanCode = code.replace(/\D/g, '')
 
-      // Let RLS handle business isolation — don't double-filter with businessId prop
-      const { data: orders, error } = await supabase
-        .from('event_orders')
-        .select('id, event_id, customer_name, tier_snapshot, payment_status, ticket_code')
-        .eq('event_id', event.id)
-
-      if (error) {
-        setResult({ success: false, code, message: 'Lookup failed' })
+      if (cleanCode.length !== 6) {
+        setResult({ success: false, code, message: 'Code must be 6 digits' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
         return
       }
 
-      // Match in JavaScript — strips dashes from both sides
-      const order = (orders || []).find(o =>
-        o.ticket_code?.toUpperCase().replace(/[-\s]/g, '') === cleanCode
-      )
+      // Query by ticket code directly — RLS handles business isolation
+      const { data: order, error } = await supabase
+        .from('event_orders')
+        .select('id, event_id, customer_name, tier_snapshot, payment_status')
+        .eq('ticket_code', cleanCode)
+        .eq('event_id', event.id)
+        .maybeSingle()
 
-      if (!order) {
+      if (error || !order) {
         setResult({ success: false, code, message: 'Code not found' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
