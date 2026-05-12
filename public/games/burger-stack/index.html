@@ -90,9 +90,6 @@ const offHalftone=document.createElement('canvas');
 offHalftone.width=W;offHalftone.height=Math.ceil(COUNTER_Y);
 const offCRT=document.createElement('canvas');
 offCRT.width=W;offCRT.height=H;
-const offChroma=document.createElement('canvas');
-offChroma.width=W*dpr;offChroma.height=H*dpr;
-
 // Pre-render CRT scanlines once
 (function(){
   const c=offCRT.getContext('2d');
@@ -472,6 +469,7 @@ function resetGame(){
   trailPos=[];burstTimer=0;burstMult=1;spawnWobble=0;shrinkWarnTimer=0;
   dangerActive=false;dangerPulse=0;dangerIntensity=0;dangerWasActive=false;dangerZoom=1;
   goTimer=0;goCoinsSpawned=false;
+  freezeActive=false;freezeCanvas=null;
   kanjiFloats=[];dmgNumbers=[];scoreTickers=[];speedLinesActive=0;impactFrameTimer=0;
   auraPhase=0;bgKanjiTimer=0;bgKanjis=[];sideCombo.active=false;swayPhase=0;lvlUpTimer=0;
   BCHEFS.forEach(function(c){c.phase=0;c.taskT=0;});
@@ -865,7 +863,11 @@ function loop(timestamp){
   // Clamp dt to prevent spiral of death on lag spikes
   dt=Math.min(rawDt,FRAME_TIME*3);
   now=Date.now();
-  update();
+  acc+=dt;
+  while(acc>=FRAME_TIME){
+    update();
+    acc-=FRAME_TIME;
+  }
   render();
   requestAnimationFrame(loop);
 }
