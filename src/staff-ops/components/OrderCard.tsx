@@ -7,6 +7,7 @@ import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { getDistanceKm, getETAMinutes } from '@/lib/utils';
 import { useOrders } from '@/hooks/useOrders';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderCardProps {
   order: Order;
@@ -58,6 +59,7 @@ export default function OrderCard({
 }: OrderCardProps) {
   const { selectOrder, verifyCash, confirmDelivery, cancelOrder, confirmPayment } = useOrders();
   const { businessLat, businessLng } = useBusiness();
+  const { t } = useLanguage();
   const [isRemoving, setIsRemoving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const x = useMotionValue(0);
@@ -272,7 +274,7 @@ export default function OrderCard({
                     backgroundColor: order.deliveryType === 'delivery' ? 'rgba(168,85,247,0.12)' : order.deliveryType === 'dine_in' ? 'rgba(16,185,129,0.12)' : 'rgba(59,130,246,0.12)',
                     color: order.deliveryType === 'delivery' ? 'var(--status-icon-delivering)' : order.deliveryType === 'dine_in' ? 'var(--status-icon-dispatch)' : 'var(--status-icon-prep)',
                   }}>
-                  {order.deliveryType === 'delivery' ? 'Delivery' : order.deliveryType === 'dine_in' ? 'Dine In' : 'Take Out'}
+                  {order.deliveryType === 'delivery' ? t('delivery') : order.deliveryType === 'dine_in' ? t('dine_in') : t('take_out')}
                 </span>
               )}
               {order.tableNumber && (
@@ -418,14 +420,14 @@ export default function OrderCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (confirm('Cancel this order?')) {
+                if (confirm(t('cancel_confirm'))) {
                   cancelOrder(order.id);
                 }
               }}
               className="w-full py-2 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
               style={{ backgroundColor: 'rgba(220, 38, 38, 0.1)', color: '#DC2626' }}
             >
-              ✕ Cancel Order
+              ✕ {t('cancel_order')}
             </button>
           </div>
         )}

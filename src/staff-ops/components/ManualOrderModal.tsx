@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Search, ShoppingBag, User, Phone, MapPin, CreditCard, Loader2 } from 'lucide-react';
 import { useBusiness } from '@/contexts/BusinessContext';
 import { useOrders } from '@/hooks/useOrders';
+import { useLanguage } from '@/contexts/LanguageContext';
 // @ts-ignore
 import { supabase, createOrderCloud } from '../../lib/supabaseClient.js';
 
@@ -26,6 +27,7 @@ interface ManualOrderModalProps {
 export default function ManualOrderModal({ open, onClose }: ManualOrderModalProps) {
   const { businessId } = useBusiness();
   const { refreshOrders } = useOrders();
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Array<{ name: string; items: MenuItem[] }>>([]);
   const [activeCategory, setActiveCategory] = useState<string>('');
@@ -60,7 +62,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
           categoryItems.push(menuItem);
         });
         if (categoryItems.length > 0) {
-          groups.push({ name: cat.name || 'Uncategorized', items: categoryItems });
+          groups.push({ name: cat.name || t('uncategorized'), items: categoryItems });
         }
       });
       return { items, groups };
@@ -214,6 +216,18 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
     onClose();
   };
 
+  const orderTypeOptions = [
+    { value: 'dine_in' as const, label: t('dine_in'), icon: '🍽️' },
+    { value: 'pickup' as const, label: t('take_out'), icon: '🛍️' },
+    { value: 'delivery' as const, label: t('delivery'), icon: '🚗' },
+  ];
+
+  const paymentMethodOptions = [
+    { value: 'cash', label: t('cash') },
+    { value: 'card_on_delivery', label: t('card') },
+    { value: 'transfer', label: t('transfer') },
+  ];
+
   return (
     <AnimatePresence>
       {open && (
@@ -276,7 +290,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                   }}
                   disabled={s !== 'items' && cart.length === 0}
                 >
-                  {s === 'items' ? `Items${cartCount > 0 ? ` (${cartCount})` : ''}` : s === 'order-type' ? 'Order Type' : 'Details'}
+                  {s === 'items' ? `${t('items')}${cartCount > 0 ? ` (${cartCount})` : ''}` : s === 'order-type' ? t('order_type') : t('details')}
                 </button>
               ))}
             </div>
@@ -405,9 +419,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                   <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>What type of order?</p>
                   <div className="grid grid-cols-3 gap-2">
                     {([
-                      { value: 'dine_in' as const, label: 'Dine In', icon: '🍽️' },
-                      { value: 'pickup' as const, label: 'Take Out', icon: '🛍️' },
-                      { value: 'delivery' as const, label: 'Delivery', icon: '🚗' },
+                      ...orderTypeOptions,
                     ]).map(({ value, label, icon }) => (
                       <button
                         key={value}
@@ -483,7 +495,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                         />
                       </Field>
                       {orderType === 'delivery' && (
-                        <Field icon={<MapPin size={14} />} label="Delivery Address *">
+                        <Field icon={<MapPin size={14} />} label={`${t('delivery_address')} *`}>
                           <input
                             value={deliveryAddress}
                             onChange={e => setDeliveryAddress(e.target.value)}
@@ -497,11 +509,7 @@ export default function ManualOrderModal({ open, onClose }: ManualOrderModalProp
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider mb-1.5 px-1" style={{ color: 'var(--text-tertiary)' }}>Payment Method</p>
                         <div className="grid grid-cols-3 gap-1.5">
-                          {([
-                            { value: 'cash', label: 'Cash' },
-                            { value: 'card_on_delivery', label: 'Card' },
-                            { value: 'transfer', label: 'Transfer' },
-                          ] as const).map(({ value, label }) => (
+                          {paymentMethodOptions.map(({ value, label }) => (
                             <button
                               key={value}
                               onClick={() => setPaymentMethod(value)}
