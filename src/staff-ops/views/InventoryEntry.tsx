@@ -262,6 +262,11 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
     markDirty();
   };
 
+  const removeItem = (id: string) => {
+    setItems(prev => prev.filter(item => item.id !== id));
+    markDirty();
+  };
+
   const toggleExpand = (id: string) => {
     setExpandedItems(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
@@ -676,6 +681,17 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                           </button>
                         </div>
                       </div>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`${t('delete')} "${item.name}"?`)) {
+                            removeItem(item.id);
+                          }
+                        }}
+                        className="w-full h-11 mt-2 rounded-2xl border text-sm font-semibold active:opacity-80 transition-opacity cursor-pointer appearance-none"
+                        style={{ backgroundColor: '#FFF1F2', color: '#DC2626', borderColor: '#FECACA' }}
+                      >
+                        {t('delete')}
+                      </button>
                     </div>
                   )}
                 </div>
