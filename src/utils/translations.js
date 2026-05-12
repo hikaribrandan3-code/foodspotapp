@@ -732,6 +732,27 @@ export const translations = {
     car: { en: 'Car', es: 'Auto', pt: 'Carro' },
     scooter: { en: 'Scooter', es: 'Scooter', pt: 'Scooter' },
     other: { en: 'Other', es: 'Otro', pt: 'Outro' },
-    staff: { en: 'Staff', es: 'Personal', pt: 'Equipe' }
+    staff: { en: 'Staff', es: 'Personal', pt: 'Equipe' },
+
+    // Owner Events Module
+    events_subtitle: { en: 'Manage tickets & check-ins', es: 'Gestionar entradas y check-ins', pt: 'Gerenciar ingressos e check-ins' },
+    tickets_sold: { en: 'Tickets Sold', es: 'Entradas Vendidas', pt: 'Ingressos Vendidos' },
+    checkins: { en: 'Check-ins', es: 'Check-ins', pt: 'Check-ins' },
+    no_events_yet: { en: 'No events yet', es: 'Aún no hay eventos', pt: 'Nenhum evento ainda' },
+    no_events_description: { en: 'Create your first event to start selling tickets', es: 'Crea tu primer evento para empezar a vender entradas', pt: 'Crie seu primeiro evento para começar a vender ingressos' },
+    show_templates: { en: 'Show Templates', es: 'Mostrar Plantillas', pt: 'Mostrar Modelos' },
+    hide_templates: { en: 'Hide Templates', es: 'Ocultar Plantillas', pt: 'Ocultar Modelos' },
+    revenue_details: { en: 'Revenue Details', es: 'Detalles de Ingresos', pt: 'Detalhes de Receita' },
+    total_tickets: { en: 'total tickets', es: 'entradas totales', pt: 'ingressos totais' },
+    edit: { en: 'Edit', es: 'Editar', pt: 'Editar' },
+    promo_codes: { en: 'Promo Codes', es: 'Códigos Promocionales', pt: 'Códigos Promocionais' },
+    ticket_tiers: { en: 'Ticket Tiers', es: 'Categorías de Entradas', pt: 'Categorias de Ingressos' },
+    sold_out: { en: 'SOLD OUT', es: 'AGOTADO', pt: 'ESGOTADO' },
+    danger_zone: { en: 'Danger Zone', es: 'Zona de Peligro', pt: 'Zona de Perigo' },
+    delete_event_permanently: { en: 'Delete Event Permanently', es: 'Eliminar Evento Permanentemente', pt: 'Excluir Evento Permanentemente' },
+    delete_confirm_event: { en: 'Delete this event permanently? This cannot be undone.', es: '¿Eliminar este evento permanentemente? Esto no se puede deshacer.', pt: 'Excluir este evento permanentemente? Isso não pode ser desfeito.' },
+    only_left: { en: 'Only {count} left!', es: '¡Solo quedan {count}!', pt: 'Restam apenas {count}!' },
+    total_capacity_label: { en: 'Total Capacity', es: 'Capacidad Total', pt: 'Capacidade Total' },
+    people: { en: 'people', es: 'personas', pt: 'pessoas' }
 };
 

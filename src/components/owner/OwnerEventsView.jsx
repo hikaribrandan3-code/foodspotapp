@@ -10,6 +10,7 @@ import {
 import { supabase, uploadAsset } from '../../lib/supabaseClient'
 import { useOwnerEvents } from '../../hooks/useOwnerEvents'
 import { EVENT_TEMPLATES } from '../../utils/eventTemplates'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const theme = {
@@ -84,6 +85,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [statModal, setStatModal] = useState(null) // 'revenue' | 'tickets' | 'checkins' | null
   const [showTemplates, setShowTemplates] = useState(false)
+  const { t } = useLanguage()
 
   const { events: dbEvents, loading, error, refetch: fetchEvents, removeEvent } = useOwnerEvents(businessId)
 
@@ -119,7 +121,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   }, [dbEvents])
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this event permanently? This cannot be undone.')) return
+    if (!window.confirm(t('delete_confirm_event'))) return
     try {
       console.log('🔍 [DELETE] Starting delete. Event:', selectedEvent?.id, 'Business:', businessId)
 
@@ -188,9 +190,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> {t('back')}
         </button>
-        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Revenue Details</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('revenue_details')}</h2>
         <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>Total: ${(totalRev / 100).toFixed(2)}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {revenueSplits.map(e => (
@@ -210,9 +212,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> {t('back')}
         </button>
-        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Tickets Sold</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('tickets_sold')}</h2>
         <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{totalSold} total tickets</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {ticketBreakdown.map((t, i) => (
@@ -243,9 +245,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> {t('back')}
         </button>
-        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Check-ins</h2>
+        <h2 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('checkins')}</h2>
         <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{checkInsList.length} total</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {checkInsList.map((c, i) => (
@@ -274,12 +276,12 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
             </button>
           )}
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.textPrimary }}>Events</h1>
-            <p style={{ margin: '2px 0 0', fontSize: 13, color: theme.textSecondary }}>Manage tickets & check-ins</p>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: theme.textPrimary }}>{t('events')}</h1>
+            <p style={{ margin: '2px 0 0', fontSize: 13, color: theme.textSecondary }}>{t('events_subtitle')}</p>
           </div>
         </div>
         <motion.button whileTap={{ scale: 0.96 }} onClick={() => setView('create')} style={{ ...s.btnPrimary, background: '#3B82F6' }}>
-          <Plus size={18} /> Create
+          <Plus size={18} /> {t('create')}
         </motion.button>
       </div>
 
@@ -304,22 +306,22 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
       {/* Stats strip */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-        <StatCard label="Revenue" value={`$${(events.reduce((a, e) => a + (e.total_revenue_cents || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
-        <StatCard label="Tickets Sold" value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={TicketIcon} onClick={() => setStatModal('tickets')} />
-        <StatCard label="Live Events" value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
-        <StatCard label="Check-ins" value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
+        <StatCard label={t('revenue')} value={`$${(events.reduce((a, e) => a + (e.total_revenue_cents || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
+        <StatCard label={t('tickets_sold')} value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={TicketIcon} onClick={() => setStatModal('tickets')} />
+        <StatCard label={t('live_events')} value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
+        <StatCard label={t('checkins')} value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
       </div>
 
       {/* List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 60, color: theme.textSecondary }}>Loading events…</div>
+        <div style={{ textAlign: 'center', padding: 60, color: theme.textSecondary }}>{t('loading')}</div>
       ) : events.length === 0 ? (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ ...s.card, textAlign: 'center', padding: 60 }}>
           <PartyPopper size={48} color={theme.textSecondary} style={{ margin: '0 auto 16px' }} />
-          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: theme.textPrimary }}>No events yet</h3>
-          <p style={{ margin: '0 0 24px', fontSize: 14, color: theme.textSecondary }}>Create your first event to start selling tickets</p>
+          <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: theme.textPrimary }}>{t('no_events_yet')}</h3>
+          <p style={{ margin: '0 0 24px', fontSize: 14, color: theme.textSecondary }}>{t('no_events_description')}</p>
           <button onClick={() => setView('create')} style={{ ...s.btnPrimary, background: '#3B82F6', margin: '0 auto', width: 'fit-content' }}>
-            <Plus size={16} /> Create Event
+            <Plus size={16} /> {t('create_event')}
           </button>
         </motion.div>
       ) : (
@@ -378,6 +380,7 @@ function EventListCard({ event, onClick, delay = 0 }) {
 
 // ── Detail View ───────────────────────────────────────────────────────────────
 function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onPromos, onDelete, onRefresh }) {
+  const { t } = useLanguage()
   const tiers = event.ticket_tiers || []
   const totalSold = tiers.reduce((a, t) => a + (t.sold || 0), 0)
   const totalCap  = tiers.reduce((a, t) => a + (t.capacity || 0), 0)
@@ -387,14 +390,14 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14 }}>
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> {t('back')}
         </button>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onEdit} style={{ ...s.btnSecondary, padding: '8px 14px', fontSize: 13 }}>
-            <Edit2 size={14} /> Edit
+            <Edit2 size={14} /> {t('edit')}
           </button>
           <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, background: '#3B82F6', padding: '8px 14px', fontSize: 13 }}>
-            Check In
+            {t('check_in')}
           </motion.button>
         </div>
       </div>
@@ -417,28 +420,28 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-        <StatCard label="Revenue"    value={`$${(event.total_revenue_cents / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
-        <StatCard label="Sold"       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={TicketIcon} />
-        <StatCard label="Check-ins"  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
-        <StatCard label="Avg Ticket" value={`$${totalSold > 0 ? ((event.total_revenue_cents / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
+        <StatCard label={t('revenue')}    value={`$${(event.total_revenue_cents / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
+        <StatCard label={t('sold')}       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={TicketIcon} />
+        <StatCard label={t('checkins')}  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
+        <StatCard label={t('avg_ticket')} value={`$${totalSold > 0 ? ((event.total_revenue_cents / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
       </div>
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
         <motion.button whileTap={{ scale: 0.95 }} onClick={onCheckin} style={{ ...s.btnPrimary, background: '#3B82F6', flex: 1, padding: 12, fontSize: 13 }}>
-          Check In
+          {t('check_in')}
         </motion.button>
         <motion.button whileTap={{ scale: 0.95 }} onClick={onPromos} style={{ ...s.btnSecondary, flex: 1, padding: 12, fontSize: 13 }}>
-          <Tag size={16} /> Promo Codes
+          <Tag size={16} /> {t('promo_codes')}
         </motion.button>
       </div>
 
       {/* Tiers */}
       <div style={{ ...s.card, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Ticket Tiers</h3>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>{t('ticket_tiers')}</h3>
           <button onClick={onAttendees} style={{ background: 'none', border: 'none', color: '#3B82F6', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Users size={14} /> Attendees
+            <Users size={14} /> {t('attendees')}
           </button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -463,11 +466,11 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
                 </div>
                 {rem < 5 && rem > 0 && (
                   <div style={{ fontSize: 11, color: '#F59E0B', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <AlertCircle size={11} /> Only {rem} left!
+                    <AlertCircle size={11} /> {t('only_left').replace('{count}', rem)}
                   </div>
                 )}
                 {rem === 0 && (
-                  <div style={{ fontSize: 11, color: theme.danger, marginTop: 4, fontWeight: 700 }}>SOLD OUT</div>
+                  <div style={{ fontSize: 11, color: theme.danger, marginTop: 4, fontWeight: 700 }}>{t('sold_out')}</div>
                 )}
               </div>
             )
@@ -477,9 +480,9 @@ function EventDetailView({ event, onBack, onEdit, onAttendees, onCheckin, onProm
 
       {/* Danger zone */}
       <div style={{ padding: 16, background: '#FEF2F2', borderRadius: 16, border: '1px solid #FEE2E2' }}>
-        <h4 style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: theme.danger, textTransform: 'uppercase', letterSpacing: 1 }}>Danger Zone</h4>
+        <h4 style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: theme.danger, textTransform: 'uppercase', letterSpacing: 1 }}>{t('danger_zone')}</h4>
         <button onClick={onDelete} style={{ ...s.btnPrimary, background: theme.danger, width: '100%', padding: 12 }}>
-          <Trash2 size={15} /> Delete Event Permanently
+          <Trash2 size={15} /> {t('delete_event_permanently')}
         </button>
       </div>
     </motion.div>
