@@ -102,11 +102,14 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     if (!window.confirm('Delete this event permanently? This cannot be undone.')) return
     try {
       console.log('🔍 [DELETE] Starting delete. Event:', selectedEvent?.id, 'Business:', businessId)
-      const { error } = await supabase
+
+      // Delete and return the deleted row so we know it actually happened
+      const { data: deleted, error } = await supabase
         .from('events')
         .delete()
         .eq('id', selectedEvent.id)
         .eq('business_id', businessId)
+        .select('id')
 
       if (error) {
         console.error('🚨 [DELETE] Error details:', error.code, error.message, error.details)
@@ -114,11 +117,18 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         return
       }
 
+      if (!deleted || deleted.length === 0) {
+        console.error('🚨 [DELETE] No rows deleted — event not found or permission denied.')
+        alert('Delete failed: event not found or you do not have permission to delete it.')
+        return
+      }
+
       console.log('✅ [DELETE] Success! Deleted event:', selectedEvent.id)
+
+      // Wipe from local state immediately so it vanishes from the list
       removeEvent(selectedEvent.id)
       setSelectedEvent(null)
       setView('list')
-      fetchEvents()
     } catch (err) {
       console.error('💥 [DELETE] Exception:', err)
       alert(`Error deleting event: ${err?.message}`)
