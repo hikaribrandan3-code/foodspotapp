@@ -96,18 +96,53 @@ export default function EventTicket({ booking, onClose }) {
         logging: false,
         backgroundColor: theme === 'dark' ? '#0f172a' : '#ffffff'
       });
-      
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
         format: [canvas.width / 2, canvas.height / 2]
       });
-      
+
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
       pdf.save(`Ticket_${booking.event_name.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
+    }
+  };
+
+  const handleAddToCalendar = () => {
+    const eventDate = new Date(booking.date);
+    const [year, month, day] = booking.date.split('-');
+    const startDate = `${year}${month}${day}`;
+
+    // Google Calendar link
+    const title = `${booking.event_name} - ${booking.tier_name}`;
+    const description = `Ticket Code: ${booking.ticket_code}`;
+    const location = booking.venue_name;
+    const gcalUrl = `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(title)}&dates=${startDate}/${startDate}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+
+    window.open(gcalUrl, '_blank');
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: booking.event_name,
+      text: `I have a ticket for ${booking.event_name} on ${booking.date}. Code: ${booking.ticket_code}`,
+      url: window.location.href
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') console.error('Share error:', err);
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      const text = `${shareData.title}\n${shareData.text}\n${shareData.url}`;
+      navigator.clipboard.writeText(text);
+      alert('Link copied to clipboard!');
     }
   };
 
@@ -335,14 +370,20 @@ export default function EventTicket({ booking, onClose }) {
             <FileText size={16} /> {t('download_pdf_ticket') || 'Download PDF'}
           </button>
 
-          <button className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all">
+          <button
+            onClick={handleAddToCalendar}
+            className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
              <div className="text-[var(--color-primary)]">
                 <Calendar size={16} />
              </div>
              <span className="text-[8px] font-black uppercase tracking-widest">{t('add_to_calendar') || 'Add to Calendar'}</span>
           </button>
 
-          <button className="col-span-2 bg-emerald-500 text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10">
+          <button
+            onClick={handleShare}
+            className="col-span-2 bg-emerald-500 text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10 hover:bg-emerald-600"
+          >
             <Share2 size={16} /> {t('share') || 'Share on Social'}
           </button>
         </div>
