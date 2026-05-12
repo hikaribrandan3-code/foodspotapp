@@ -19,6 +19,7 @@ document.addEventListener('gesturechange',e=>e.preventDefault());
 document.addEventListener('gestureend',e=>e.preventDefault());
 document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
 document.addEventListener('dblclick',e=>e.preventDefault());
+window.addEventListener('beforeunload',cleanup);
 
 const isHikariBoy=window.parent!==window;
 const GAME_W=448,GAME_H=520;
@@ -458,6 +459,7 @@ function drawTrail(){
 }
 
 function computeCam(){if(!stack.length)return 0;var topY=stack[stack.length-1].y,TARGET=Math.round(H*.30);return Math.max(0,TARGET-topY);}
+function cleanup(){stopMusic();if(cdTimer)clearInterval(cdTimer);if(AC&&AC.state==='running')AC.suspend();}
 function resetGame(){
   score=0;stackH=0;streak=0;combo=0;maxCombo=0;comboCallout='';comboT=0;level=1;
   curSpd=2.64;camOffset=0;targetCamOffset=0;stack=[];slices=[];parts=[];floats=[];coins=[];steams=[];
@@ -517,7 +519,7 @@ window.addEventListener('message',function(e){
   if(e.data&&e.data.type==='BUTTON_PRESS'){var btn=e.data.button;
     if(btn==='start'){initAC();if(AC&&AC.state==='suspended')AC.resume();if(gs==='start'||gs==='countdown')startCD();else if(gs==='playing'){gs='paused';stopMusic();}else if(gs==='paused'){gs='playing';startMusic(feverMode?192:curBPM);}else if(gs==='gameover')gs='start';}
     if(btn==='a'){initAC();if(AC&&AC.state==='suspended')AC.resume();if(gs==='start')startCD();else if(gs==='playing')dropBlock();else if(gs==='gameover')gs='start';}
-    if(btn==='select'&&isHikariBoy)window.parent.postMessage({type:'GAME_EXIT',gameId:'burger-stack'},'*');}
+    if(btn==='select'&&isHikariBoy){cleanup();window.parent.postMessage({type:'GAME_EXIT',gameId:'burger-stack'},'*');}}
 });
 function handleInput(x,y,kb){
   initAC();if(AC&&AC.state==='suspended')AC.resume();
@@ -553,7 +555,7 @@ function update(){
     var el=now-failTimer;
     if(failPhase===1){shakeOff=Math.sin(el*.05)*12*(1-el/300);if(el>300){failPhase=2;shakeOff=0;}}
     else if(failPhase===2){fallBlocks.forEach(function(b){b.vy+=.65;b.x+=b.vx;b.y+=b.vy;b.r+=b.rs;});if(el>900){failPhase=3;goTimer=0;goCoinsSpawned=false;}}
-    else if(failPhase===3){if(el>1400){gs='gameover';failPhase=0;fallBlocks=[];}}
+    else if(failPhase===3){if(el>1400){gs='gameover';failPhase=0;fallBlocks=[];if(score>highScore){highScore=score;localStorage.setItem('bs_hi',highScore);}}}
     updateParticles();return;
   }
   if(comboT>0)comboT--;
@@ -625,7 +627,7 @@ function triggerFail(){
   sndOver();failPhase=1;failTimer=now;shakeAmt=15;stopMusic();feverMode=false;chromaIntensity=0;vibe([50,30,50,30,100]);triggerImpactFrame(1);
   for(var i=0;i<5;i++){(function(ii){setTimeout(function(){spawnKanji(rnd(80,W-80),H*.4,true);},ii*100);})(i);}
   stack.slice(-5).forEach(function(b,i){fallBlocks.push(Object.assign({},b,{vx:(Math.random()-.5)*7,vy:-3.5-i,r:0,rs:(Math.random()-.5)*.32}));});
-  dropping=null;cur=null;if(score>highScore){highScore=score;localStorage.setItem('bs_hi',highScore);}
+  dropping=null;cur=null;
 }
 
 function drawCRT(){
