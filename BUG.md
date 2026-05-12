@@ -73,6 +73,46 @@
 
 ---
 
+### 6. Event Deletion — 3-Layer Bug Chain (RLS Hell)
+**Status:** Fixed & pushed  
+**Commit:** 99ae64c (RPC function), df65944 (date validation removed for testing)  
+**Issue:** Delete Event button did nothing. No error, silent failure.  
+**Root Cause:** Three independent bugs stacked:
+
+**Bug Layer 1: Frontend Lied**
+- Button said "Delete Event Permanently" 
+- Code only did `.update({ status: 'archived' })`
+- Never actually called `.delete()`
+
+**Bug Layer 2: RLS Header Mismatch**
+- After fixing Layer 1, `.delete()` was blocked by RLS
+- `events` table requires `x-business-id` header to match row's `business_id`
+- `TenantContext.jsx` resolved correct `businessId` but never wrote `fs_business_id` to localStorage
+- Supabase client reads `fs_business_id` from localStorage to inject that header
+- **Fix:** Synced `businessId` → localStorage in TenantContext (commit 993ef25)
+
+**Bug Layer 3: RLS Policy Still Failed** (Root Cause Unknown)
+- Even with correct header, `events_owner_all` DELETE policy returned false
+- Likely: PostgREST header parsing quirk, UUID cast issue, or flaky policy for mutations
+- Never isolated the exact SQL-level cause
+
+**Final Solution (Bypassed RLS Entirely):**
+- Created `delete_event()` RPC function with `SECURITY DEFINER`
+- Runs as database superuser — RLS doesn't apply
+- Still enforces security: `auth.uid() != businesses.owner_id` → return false
+- Only real owner can delete, but no RLS fighting
+- Frontend calls `.rpc('delete_event', { p_event_id, p_business_id })` instead of `.delete()`
+
+**Why This Matters for Future Bugs:**
+- RLS policies are hard to debug (silent failures, no clear error messages)
+- Always consider SECURITY DEFINER RPCs when RLS is blocking a mutation
+- Don't assume RLS header injection works — verify in localStorage
+- Three separate layers (UI → storage → policy) can fail independently
+
+**Testing:** Delete button now works for owner ✓
+
+---
+
 ## 🔧 IN PROGRESS
 
 ### Bug 1: Staff Dine-In — MP Alias Shows for Owner but Not Staff

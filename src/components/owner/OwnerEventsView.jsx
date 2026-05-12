@@ -1158,10 +1158,11 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
+      const cleanCode = code.toUpperCase().replace(/-/g, '')
       const { data: order, error: orderError } = await supabase
         .from('event_orders')
         .select('id, event_id, customer_name, tier_snapshot, payment_status')
-        .eq('ticket_code', code.toUpperCase())
+        .eq('ticket_code', cleanCode)
         .eq('event_id', event.id)
         .single()
 
@@ -1246,7 +1247,6 @@ function CheckinView({ event, businessId, onBack }) {
             value={codeInput}
             onChange={e => setCodeInput(e.target.value.toUpperCase())}
             onKeyDown={e => { if (e.key === 'Enter' && codeInput) handleCheckin(codeInput) }}
-            maxLength={6}
             disabled={loading}
           />
           <button

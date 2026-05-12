@@ -309,6 +309,8 @@ export default function EventsView({ onViewTickets }) {
           if (!error && data) {
             const booking = {
               id: data.ticket_code,
+              ticket_code: data.ticket_code,
+              order_id: data.id,
               event_id: data.event_id,
               event_name: data.events?.name || 'Event',
               tier_name: data.tier_snapshot?.name || '',
@@ -316,8 +318,11 @@ export default function EventsView({ onViewTickets }) {
               total: data.total_cents / 100,
               purchase_date: data.created_at,
               venue_name: data.events?.venue_name || '',
+              date: data.events?.start_date || '',
               image: data.events?.image_url || '',
               description: data.events?.description || '',
+              category: data.events?.category || '',
+              payment_method: data.payment_method || '',
               guest_token: guestToken
             };
             setBookingData(booking);
