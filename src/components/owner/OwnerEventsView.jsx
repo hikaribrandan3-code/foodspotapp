@@ -965,13 +965,14 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
             disabled={step === 1 && (!form.name.trim() || !form.category || !form.image_url) || saving}
             style={{
               ...s.btnPrimary,
+              background: '#3B82F6',
               flex: step > 1 ? 2 : 1,
               width: step > 1 ? undefined : '100%',
               borderRadius: 14,
               padding: '14px 16px',
               fontSize: 15,
               fontWeight: 700,
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              boxShadow: '0 4px 14px rgba(59, 130, 246, 0.35)',
               opacity: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 0.5 : (saving ? 0.7 : 1),
               cursor: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 'not-allowed' : 'pointer',
             }}
@@ -1090,7 +1091,7 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
 
       <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
         <button onClick={onBack} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
-        <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving} style={{ ...s.btnPrimary, flex: 2, opacity: saving ? 0.7 : 1 }}>
+        <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving} style={{ ...s.btnPrimary, background: '#3B82F6', flex: 2, opacity: saving ? 0.7 : 1 }}>
           {saving ? 'Saving…' : 'Save Changes'}
         </motion.button>
       </div>
@@ -1458,13 +1459,13 @@ function PromosView({ event, businessId, onBack }) {
 
           <div style={{ display: 'flex', gap: 12 }}>
             <button onClick={() => setShowForm(false)} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
-            <motion.button whileTap={{ scale: 0.97 }} onClick={handleCreatePromo} style={{ ...s.btnPrimary, flex: 1 }}>
+            <motion.button whileTap={{ scale: 0.97 }} onClick={handleCreatePromo} style={{ ...s.btnPrimary, background: '#3B82F6', flex: 1 }}>
               Create Code
             </motion.button>
           </div>
         </motion.div>
       ) : (
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowForm(true)} style={{ ...s.btnPrimary, width: '100%', padding: 14, marginBottom: 20, justifyContent: 'center' }}>
+        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowForm(true)} style={{ ...s.btnPrimary, background: '#3B82F6', width: '100%', padding: 14, marginBottom: 20, justifyContent: 'center' }}>
           <Plus size={18} /> New Promo Code
         </motion.button>
       )}
