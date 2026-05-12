@@ -98,6 +98,21 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     })
   })()
 
+  // Listen for check-in success and refetch event to update attendee counts
+  useEffect(() => {
+    const handleCheckinSuccess = async () => {
+      await fetchEvents()
+      // Update selectedEvent if it exists
+      if (selectedEvent) {
+        const updated = dbEvents.find(e => e.id === selectedEvent.id)
+        if (updated) setSelectedEvent(updated)
+      }
+    }
+
+    window.addEventListener('event-checkin-success', handleCheckinSuccess)
+    return () => window.removeEventListener('event-checkin-success', handleCheckinSuccess)
+  }, [selectedEvent, fetchEvents, dbEvents])
+
   const handleDelete = async () => {
     if (!window.confirm('Delete this event permanently? This cannot be undone.')) return
     try {
@@ -1222,7 +1237,19 @@ function CheckinView({ event, businessId, onBack }) {
       setCodeInput('')
       confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 }, colors: ['#10B981', '#3B82F6'] })
       setLoading(false)
-      setTimeout(() => setResult(null), 3000)
+
+      // Refetch event to update attendee count
+      setTimeout(() => {
+        setResult(null)
+        // Update event's sold count in real-time by incrementing the tier
+        if (event?.ticket_tiers) {
+          const updatedTiers = event.ticket_tiers.map(t =>
+            t.id === order.tier_snapshot?.id ? { ...t, sold: (t.sold || 0) + 1 } : t
+          )
+          // Trigger parent refetch via window event
+          window.dispatchEvent(new Event('event-checkin-success'))
+        }
+      }, 3000)
     } catch (err) {
       console.error('handleCheckin error:', err)
       setResult({ success: false, code, message: 'Check-in failed' })
@@ -1253,7 +1280,7 @@ function CheckinView({ event, businessId, onBack }) {
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             style={{ ...s.input, flex: 1, fontSize: 18, letterSpacing: '0.2em', textTransform: 'uppercase' }}
-            placeholder="ABC123"
+            placeholder="123456"
             value={codeInput}
             onChange={e => setCodeInput(e.target.value.toUpperCase())}
             onKeyDown={e => { if (e.key === 'Enter' && codeInput) handleCheckin(codeInput) }}
