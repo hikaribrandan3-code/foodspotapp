@@ -221,7 +221,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       </main>
 
       {!isFreeTicket && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto space-y-3">
+        <div className="fixed bottom-20 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto space-y-3">
           {paymentError && (
             <div className="mb-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
               <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
