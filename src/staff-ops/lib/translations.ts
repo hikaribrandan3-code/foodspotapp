@@ -370,6 +370,11 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'waste_reason': { en: 'Waste Reason', es: 'Motivo', pt: 'Motivo' },
   'damaged': { en: 'Damaged', es: 'Dañado', pt: 'Danificado' },
   'poor_quality': { en: 'Poor Quality', es: 'Mala Calidad', pt: 'Má Qualidade' },
+  'cash_orders_hidden': { en: 'Cash orders hidden until verified by front desk.', es: 'Pedidos en efectivo ocultos hasta ser verificados por recepción.', pt: 'Pedidos em dinheiro ocultos até serem verificados pela recepção.' },
+  'all_caught_up': { en: 'All caught up', es: 'Todo listo', pt: 'Tudo pronto' },
+  'new_orders_appear': { en: 'New orders appear here automatically.', es: 'Los nuevos pedidos aparecen aquí automáticamente.', pt: 'Novos pedidos aparecem aqui automaticamente.' },
+  'active': { en: 'Active', es: 'Activo', pt: 'Ativo' },
+  'completed': { en: 'Completed', es: 'Completado', pt: 'Concluído' },
 };
 
 export function t(key: string, lang: string = 'en'): string {

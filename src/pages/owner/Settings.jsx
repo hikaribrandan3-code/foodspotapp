@@ -1271,7 +1271,7 @@ const Settings = () => {
                     {draft.service_modes?.dineIn && (
                         <div style={{ marginBottom: 20, padding: '10px 12px', background: '#F3F4F6', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: 13, color: '#6B7280', fontWeight: 500 }}>
-                                Dine-in customers pay at the end of their meal.
+                                {t('customers_pay_at_end')}
                             </span>
                         </div>
                     )}

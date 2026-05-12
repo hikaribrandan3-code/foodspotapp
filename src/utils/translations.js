@@ -754,6 +754,31 @@ export const translations = {
     delete_confirm_event: { en: 'Delete this event permanently? This cannot be undone.', es: '¿Eliminar este evento permanentemente? Esto no se puede deshacer.', pt: 'Excluir este evento permanentemente? Isso não pode ser desfeito.' },
     only_left: { en: 'Only {count} left!', es: '¡Solo quedan {count}!', pt: 'Restam apenas {count}!' },
     total_capacity_label: { en: 'Total Capacity', es: 'Capacidad Total', pt: 'Capacidade Total' },
-    people: { en: 'people', es: 'personas', pt: 'pessoas' }
+    people: { en: 'people', es: 'personas', pt: 'pessoas' },
+
+    // Missing Owner Backend Translations
+    customers_pay_at_end: { en: 'Customers pay at the end of their meal', es: 'Los clientes pagan al final de su comida', pt: 'Os clientes pagam no final da refeição' },
+    hero_image_tip: { en: 'For best results use images around 1200x600px', es: 'Para mejores resultados usa imágenes de alrededor de 1200x600px', pt: 'Para melhores resultados use imagens de aproximadamente 1200x600px' },
+    active: { en: 'Active', es: 'Activo', pt: 'Ativo' },
+    completed: { en: 'Completed', es: 'Completado', pt: 'Concluído' },
+    clear_all: { en: 'Clear All', es: 'Borra todo', pt: 'Limpar tudo' },
+    this_quarter: { en: 'This quarter', es: 'Este trimestre', pt: 'Este trimestre' },
+    expenses_label: { en: 'Expenses', es: 'Gastos', pt: 'Despesas' },
+    products: { en: 'Products', es: 'Productos', pt: 'Produtos' },
+    revenue_breakdown: { en: 'Revenue Breakdown', es: 'Desglose de Ingresos', pt: 'Detalhamento de Receita' },
+    total_expense: { en: 'Total Expense', es: 'Gasto Total', pt: 'Despesa Total' },
+    recent_activity: { en: 'Recent Activity', es: 'Actividad Reciente', pt: 'Atividade Recente' },
+    quick_expense: { en: 'Quick Expense', es: 'Gasto Rápido', pt: 'Despesa Rápida' },
+    mp_token_instructions: { en: 'How to get your API token:', es: 'Cómo obtener tu token API:', pt: 'Como obter seu token de API:' },
+    mp_go_to_site: { en: 'Go to mercadopago.com', es: 'Ve a mercadopago.com', pt: 'Vá para mercadopago.com' },
+    mp_sign_in: { en: 'Sign in to your account', es: 'Inicia sesión en tu cuenta', pt: 'Faça login em sua conta' },
+    mp_go_to_settings: { en: 'Go to Settings → Credentials', es: 'Ve a Ajustes → Credenciales', pt: 'Vá para Ajustes → Credenciais' },
+    mp_copy_token: { en: 'Copy your Access Token (starts with APP_USR)', es: 'Copia tu Token de Acceso (comienza con APP_USR)', pt: 'Copie seu Token de Acesso (começa com APP_USR)' },
+    mp_paste_below: { en: 'Paste it below', es: 'Pégalo a continuación', pt: 'Cole-o abaixo' },
+    mp_token_should_start: { en: 'Token should start with APP_USR_', es: 'El token debe comenzar con APP_USR_', pt: 'O token deve começar com APP_USR_' },
+    mp_user_id_instructions: { en: 'How to get your User ID:', es: 'Cómo obtener tu ID de Usuario:', pt: 'Como obter seu ID de Usuário:' },
+    mp_find_user_id: { en: 'Find your User ID (a number, e.g. 123456789)', es: 'Encuentra tu ID de Usuario (un número, ej. 123456789)', pt: 'Encontre seu ID de Usuário (um número, ex. 123456789)' },
+    cash_orders_hidden: { en: 'Cash orders hidden until verified by front desk', es: 'Pedidos en efectivo ocultos hasta ser verificados por recepción', pt: 'Pedidos em dinheiro ocultos até serem verificados pela recepção' },
+    all_caught_up: { en: 'All caught up. New orders appear here automatically.', es: 'Todo listo. Los nuevos pedidos aparecen aquí automáticamente.', pt: 'Tudo pronto. Novos pedidos aparecem aqui automaticamente.' }
 };
 

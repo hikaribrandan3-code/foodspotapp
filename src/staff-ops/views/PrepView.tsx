@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChefHat, Clock, PackageCheck } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import OrderCard from '@/components/OrderCard';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { t as staffT } from '@/lib/translations';
 
 export default function PrepView() {
   const { state, advanceOrderStatus } = useOrders();
+  const { language } = useLanguage();
   const [filter, setFilter] = useState<'TODO' | 'PREP'>('TODO');
   const [handoffId, setHandoffId] = useState<string | null>(null);
 
@@ -40,7 +43,7 @@ export default function PrepView() {
         </div>
 
         <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
-          Cash orders hidden until verified by front desk.
+          {staffT('cash_orders_hidden', language)}
         </p>
 
         {/* Filter tabs */}
@@ -74,8 +77,8 @@ export default function PrepView() {
             {filter === 'TODO' ? (
               <>
                 <ChefHat size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
-                <p className="text-sm">All caught up</p>
-                <p className="text-xs mt-1 opacity-60">New orders appear here automatically</p>
+                <p className="text-sm">{staffT('all_caught_up', language)}</p>
+                <p className="text-xs mt-1 opacity-60">{staffT('new_orders_appear', language)}</p>
               </>
             ) : (
               <>
