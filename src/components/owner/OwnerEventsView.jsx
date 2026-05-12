@@ -100,18 +100,23 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
   // Listen for check-in success and refetch event to update attendee counts
   useEffect(() => {
-    const handleCheckinSuccess = async () => {
-      await fetchEvents()
-      // Update selectedEvent if it exists
-      if (selectedEvent) {
-        const updated = dbEvents.find(e => e.id === selectedEvent.id)
-        if (updated) setSelectedEvent(updated)
-      }
+    const handleCheckinSuccess = () => {
+      fetchEvents()
     }
 
     window.addEventListener('event-checkin-success', handleCheckinSuccess)
     return () => window.removeEventListener('event-checkin-success', handleCheckinSuccess)
-  }, [selectedEvent, fetchEvents, dbEvents])
+  }, [fetchEvents])
+
+  // When dbEvents updates, refresh selectedEvent if it's in detail view
+  useEffect(() => {
+    if (selectedEvent && dbEvents && dbEvents.length > 0) {
+      const updated = dbEvents.find(e => e.id === selectedEvent.id)
+      if (updated) {
+        setSelectedEvent(updated)
+      }
+    }
+  }, [dbEvents])
 
   const handleDelete = async () => {
     if (!window.confirm('Delete this event permanently? This cannot be undone.')) return
@@ -1289,7 +1294,7 @@ function CheckinView({ event, businessId, onBack }) {
           <button
             onClick={() => handleCheckin(codeInput)}
             disabled={!codeInput || loading}
-            style={{ ...s.btnPrimary, padding: '14px 18px', flexShrink: 0, opacity: loading ? 0.6 : 1 }}
+            style={{ ...s.btnPrimary, background: '#3B82F6', padding: '14px 18px', flexShrink: 0, opacity: loading ? 0.6 : 1 }}
           >
             {loading ? '...' : <Check size={18} />}
           </button>
@@ -1300,10 +1305,10 @@ function CheckinView({ event, businessId, onBack }) {
       <AnimatePresence>
         {result && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            style={{ position: 'fixed', bottom: 40, left: 20, right: 20, background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', textAlign: 'center', zIndex: 200 }}
+            exit={{ opacity: 0, y: -20 }}
+            style={{ position: 'fixed', top: 120, left: 20, right: 20, background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', textAlign: 'center', zIndex: 200 }}
           >
             {result.success ? (
               <>

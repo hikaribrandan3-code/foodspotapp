@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { supabase } from '../../../../lib/supabaseClient';
 import TicketScanner from '../../../../components/TicketScanner';
 import TicketCodeSlotMachine from '../../../../components/events/TicketCodeSlotMachine';
 
@@ -17,6 +18,7 @@ export default function EventTicket({ booking, onClose }) {
   const [activeTab, setActiveTab] = React.useState('ticket'); // 'ticket' or 'vouchers'
   const [showScanner, setShowScanner] = React.useState(false);
   const [slotRevealed, setSlotRevealed] = React.useState(false);
+  const [isCheckedIn, setIsCheckedIn] = React.useState(false);
 
   useEffect(() => {
     const duration = 3 * 1000;
@@ -51,6 +53,38 @@ export default function EventTicket({ booking, onClose }) {
 
     return () => clearTimeout(revealTimer);
   }, []);
+
+  // Check if ticket has been scanned (checked in)
+  useEffect(() => {
+    const checkCheckinStatus = async () => {
+      if (!booking?.event_id) return;
+
+      // Get the order_id - it's stored in the local booking from MyTickets
+      // The booking.id is the ticket_code, we need to find the order by ticket_code
+      const { data: order } = await supabase
+        .from('event_orders')
+        .select('id')
+        .eq('ticket_code', booking.id)
+        .eq('event_id', booking.event_id)
+        .maybeSingle();
+
+      if (!order) return;
+
+      // Now check if this order has been checked in
+      const { data: checkin } = await supabase
+        .from('event_checkins')
+        .select('id')
+        .eq('order_id', order.id)
+        .eq('event_id', booking.event_id)
+        .maybeSingle();
+
+      if (checkin) {
+        setIsCheckedIn(true);
+      }
+    };
+
+    checkCheckinStatus();
+  }, [booking]);
 
   const handleDownloadPDF = async () => {
     if (!ticketRef.current) return;
@@ -160,14 +194,21 @@ export default function EventTicket({ booking, onClose }) {
               
               {/* Futuristic Sync Badge */}
               <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
+                {isCheckedIn && (
+                  <span className="bg-emerald-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                    <CheckCircle2 size={8} /> Scanned & Entered
+                  </span>
+                )}
                 {booking.payment_method === 'wristband' && (
                   <span className="bg-emerald-500 text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1 shadow-lg">
                     <Fingerprint size={8} /> Synced to Wristband
                   </span>
                 )}
-                <span className="bg-slate-900/40 backdrop-blur-md text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1 border border-white/20">
-                  <Zap size={8} className="text-amber-400" /> Instant Entry
-                </span>
+                {!isCheckedIn && (
+                  <span className="bg-slate-900/40 backdrop-blur-md text-white text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-lg flex items-center gap-1 border border-white/20">
+                    <Zap size={8} className="text-amber-400" /> Instant Entry
+                  </span>
+                )}
               </div>
             </div>
 
