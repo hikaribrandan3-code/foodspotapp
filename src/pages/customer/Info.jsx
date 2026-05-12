@@ -27,7 +27,6 @@ const Info = ({ config }) => {
     // Default colors for pills if not set
     const defaultPillColors = {
         whatsapp: '#E55F51',
-        mercadoPago: '#F4D03F',
         adminAccess: '#448AFF'
     };
 
