@@ -132,8 +132,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       }
 
       // Mercado Pago — redirect to payment
-      if (data.init_point || data.redirect_url) {
-        window.location.href = data.redirect_url || data.init_point;
+      if (data.init_point) {
+        window.location.href = data.init_point;
         return;
       }
 
@@ -312,62 +312,59 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
            )}
         </div>
 
-        {/* Free Ticket Claim or WhatsApp Confirmation */}
-        {isFreeTicket ? (
+        {/* Free Ticket Claim */}
+        {isFreeTicket && (
           <div>
-             <button
-               onClick={handleClaimFreeTicket}
-               disabled={isProcessing}
-               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-               <Ticket size={18} />
-               {isProcessing ? 'Claiming...' : 'Claim Ticket'}
-             </button>
-          </div>
-        ) : (
-          <div>
-             <button
-               onClick={() => {
-                 const whatsappNumber = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.business_info?.whatsapp || tenantData?.phone || '';
-                 if (!whatsappNumber) {
-                   setPaymentError('WhatsApp number not configured');
-                   return;
-                 }
-                 const message = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
-                 const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-                 window.open(whatsappUrl, '_blank');
-               }}
-               className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20"
-             >
-               <MessageCircle size={18} />
-               Confirm via WhatsApp
-             </button>
+            <button
+              onClick={handleClaimFreeTicket}
+              disabled={isProcessing}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Ticket size={18} />
+              {isProcessing ? 'Claiming...' : 'Claim Ticket'}
+            </button>
           </div>
         )}
 
       </main>
 
       {!isFreeTicket && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[var(--canvas-bg)] via-[var(--canvas-bg)] to-transparent max-w-lg mx-auto space-y-3">
           {paymentError && (
-            <div className="mb-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
+            <div className="mb-1 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4">
               <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
             </div>
           )}
+          {/* Primary: Mercado Pago */}
           <button
             onClick={handleConfirm}
             disabled={isProcessing}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-[#009EE3] hover:bg-[#0082C3] text-white rounded-[24px] py-5 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-2xl shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isProcessing ? (
               <span className="animate-pulse">Processing...</span>
             ) : (
               <>
                 <CreditCard size={18} />
-                {t('confirm_payment')}
+                Pay with Mercado Pago
               </>
             )}
           </button>
+          {/* Secondary: WhatsApp (only if enabled for this business) */}
+          {tenantData?.app_config?.payment_methods?.whatsapp && (
+            <button
+              onClick={() => {
+                const whatsappNumber = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.phone || '';
+                if (!whatsappNumber) { setPaymentError('WhatsApp number not configured'); return; }
+                const msg = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
+                window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
+              }}
+              className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-green-500/20"
+            >
+              <MessageCircle size={18} />
+              Checkout via WhatsApp
+            </button>
+          )}
         </div>
       )}
     </div>
