@@ -54,6 +54,12 @@ function OwnerSummary() {
     const [mpTokenSaved, setMpTokenSaved] = useState(false)
     const mpTokenInitialized = useRef(false)
 
+    // MP User ID local state
+    const [mpUserIdInput, setMpUserIdInput] = useState('')
+    const [mpUserIdSaving, setMpUserIdSaving] = useState(false)
+    const [mpUserIdSaved, setMpUserIdSaved] = useState(false)
+    const mpUserIdInitialized = useRef(false)
+
     // Business Currency
     const [businessCurrency, setBusinessCurrency] = useState('ARS')
     const [currencySaving, setCurrencySaving] = useState(false)
@@ -345,6 +351,14 @@ function OwnerSummary() {
         }
     }, [tenantData?.mp_access_token])
 
+    // Sync MP User ID from server on first load
+    useEffect(() => {
+        if (!mpUserIdInitialized.current && tenantData?.mp_user_id !== undefined) {
+            setMpUserIdInput(tenantData.mp_user_id || '')
+            mpUserIdInitialized.current = true
+        }
+    }, [tenantData?.mp_user_id])
+
     const updatePayments = (updates) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = setTimeout(async () => {
@@ -418,6 +432,20 @@ function OwnerSummary() {
             console.error('Failed to save MP token:', err)
         } finally {
             setMpTokenSaving(false)
+        }
+    }
+
+    const saveMpUserId = async () => {
+        setMpUserIdSaving(true)
+        setMpUserIdSaved(false)
+        try {
+            await supabase.from('branding').update({ mp_user_id: mpUserIdInput }).eq('business_id', businessId)
+            setMpUserIdSaved(true)
+            setTimeout(() => setMpUserIdSaved(false), 2000)
+        } catch (err) {
+            console.error('Failed to save MP User ID:', err)
+        } finally {
+            setMpUserIdSaving(false)
         }
     }
 
@@ -666,6 +694,66 @@ function OwnerSummary() {
                                                     Token set: {mpTokenInput.substring(0, 15)}...
                                                 </p>
                                             )}
+
+                                            <div className="border-t border-stone-200 dark:border-stone-700 pt-4 mt-4">
+                                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                                    🆔 Mercado Pago User ID
+                                                </label>
+                                                <div className="text-xs text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800 mb-3">
+                                                    <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">How to get your User ID:</p>
+                                                    <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200">
+                                                        <li>Go to <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                        <li>Sign in to your account</li>
+                                                        <li>Go to Settings → Account</li>
+                                                        <li>Find your <span className="font-semibold">User ID</span> (a number, e.g. <span className="font-mono text-[11px]">123456789</span>)</li>
+                                                        <li>Paste it below</li>
+                                                    </ol>
+                                                </div>
+                                                <div className="flex gap-3 items-end">
+                                                    <div className="flex-1">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="123456789"
+                                                            value={mpUserIdInput}
+                                                            onChange={(e) => setMpUserIdInput(e.target.value)}
+                                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-blue-600 transition-all"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={saveMpUserId}
+                                                        disabled={mpUserIdSaving || !mpUserIdInput.trim()}
+                                                        className={`px-8 py-4 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
+                                                            mpUserIdSaved
+                                                                ? 'bg-green-500 dark:bg-green-600 text-white'
+                                                                : mpUserIdSaving
+                                                                ? 'bg-stone-300 dark:bg-[#475569] text-stone-600 dark:text-white cursor-not-allowed'
+                                                                : 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white'
+                                                        }`}
+                                                    >
+                                                        {mpUserIdSaved ? (
+                                                            <>
+                                                                <Check size={16} /> Saved
+                                                            </>
+                                                        ) : mpUserIdSaving ? (
+                                                            <>
+                                                                <RefreshCw size={16} className="animate-spin" /> Saving...
+                                                            </>
+                                                        ) : (
+                                                            'Save User ID'
+                                                        )}
+                                                    </button>
+                                                </div>
+                                                {mpUserIdInput && !/^\d+$/.test(mpUserIdInput) && (
+                                                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                                                        ⚠️ User ID should be a number
+                                                    </p>
+                                                )}
+                                                {mpUserIdInput && (
+                                                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-2">
+                                                        User ID set: {mpUserIdInput}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
