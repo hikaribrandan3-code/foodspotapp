@@ -188,10 +188,7 @@ export default function EventTicket({ booking, onClose }) {
                  <div className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center text-emerald-600 shadow-sm shrink-0">
                    <CheckCircle2 size={14} />
                  </div>
-                 <div>
-                    <h4 className="text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400 leading-none mb-1">Magic Link Sent</h4>
-                    <p className="text-[8px] font-bold text-emerald-600 dark:text-emerald-500/70 leading-none">Sent to {booking.email || 'your email'}</p>
-                 </div>
+                 {/* Email hidden for launch cleanup */}
                </div>
 
                <h2 className="text-lg font-black text-[var(--text-primary)] leading-tight mb-1">
