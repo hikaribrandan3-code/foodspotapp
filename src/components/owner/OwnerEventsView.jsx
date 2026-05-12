@@ -1149,45 +1149,62 @@ function CheckinView({ event, businessId, onBack }) {
     setScanning(true)
     setResult(null)
     try {
-      // Check BarcodeDetector support
-      if (!('BarcodeDetector' in window)) {
-        throw new Error('BarcodeDetector not supported in this browser')
-      }
+      // Try BarcodeDetector first (modern browsers)
+      if ('BarcodeDetector' in window) {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        })
+        cameraStream.current = stream
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      })
-      cameraStream.current = stream
-
-      // Get video element and set stream
-      const videoElement = document.getElementById('qr-reader')
-      if (videoElement) {
-        videoElement.srcObject = stream
-      }
-
-      const detector = new BarcodeDetector({ formats: ['qr_code'] })
-
-      const scanLoop = async () => {
-        if (!videoRef.current) return
-        try {
-          const barcodes = await detector.detect(videoRef.current)
-          if (barcodes.length > 0) {
-            const rawValue = barcodes[0].rawValue
-            stopScanner()
-            await handleCheckin(rawValue)
-            return
-          }
-        } catch (err) {
-          console.warn('Scan loop error:', err)
+        const videoElement = document.getElementById('qr-reader')
+        if (videoElement) {
+          videoElement.srcObject = stream
         }
-        animationIdRef.current = requestAnimationFrame(scanLoop)
-      }
 
-      scanLoop()
+        const detector = new BarcodeDetector({ formats: ['qr_code'] })
+
+        const scanLoop = async () => {
+          if (!videoRef.current) return
+          try {
+            const barcodes = await detector.detect(videoRef.current)
+            if (barcodes.length > 0) {
+              const rawValue = barcodes[0].rawValue
+              stopScanner()
+              await handleCheckin(rawValue)
+              return
+            }
+          } catch (err) {
+            console.warn('Scan loop error:', err)
+          }
+          animationIdRef.current = requestAnimationFrame(scanLoop)
+        }
+
+        scanLoop()
+      } else {
+        // Fallback to html5-qrcode for older browsers
+        const Html5Qrcode = window.Html5Qrcode
+        if (!Html5Qrcode) {
+          throw new Error('Neither BarcodeDetector nor Html5Qrcode available')
+        }
+
+        const scanner = new Html5Qrcode('qr-reader')
+        cameraStream.current = scanner
+
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          (decodedText) => {
+            scanner.stop()
+            setScanning(false)
+            handleCheckin(decodedText)
+          },
+          () => {}
+        )
+      }
     } catch (err) {
       console.error('Scanner startup error:', err.message)
       setScanning(false)
-      setResult({ success: false, message: `Camera unavailable: ${err.message}` })
+      setResult({ success: false, message: `Camera error: ${err.message}` })
       setTimeout(() => setResult(null), 5000)
     }
   }
@@ -1197,7 +1214,15 @@ function CheckinView({ event, businessId, onBack }) {
       cancelAnimationFrame(animationIdRef.current)
     }
     if (cameraStream.current) {
-      cameraStream.current.getTracks().forEach(track => track.stop())
+      // Handle both MediaStream (BarcodeDetector) and Html5Qrcode instances
+      if (cameraStream.current.getTracks) {
+        cameraStream.current.getTracks().forEach(track => track.stop())
+      } else if (cameraStream.current.stop) {
+        // Html5Qrcode instance
+        try {
+          await cameraStream.current.stop()
+        } catch {}
+      }
       cameraStream.current = null
     }
     setScanning(false)
