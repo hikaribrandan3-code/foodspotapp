@@ -288,19 +288,12 @@ export default function EventTicket({ booking, onClose }) {
 
         <div className="w-full grid grid-cols-2 gap-2 mt-4 pb-10">
           <button
-            onClick={() => setShowScanner(true)}
-            className="col-span-2 bg-emerald-500 text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10"
-          >
-            <Scan size={16} /> {t('check_in') || 'Check In'}
-          </button>
-
-          <button
             onClick={handleDownloadPDF}
             className="col-span-2 bg-[var(--color-primary)] text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-[var(--color-primary)]/10"
           >
             <FileText size={16} /> {t('download_pdf_ticket') || 'Download PDF'}
           </button>
-          
+
           <button className="bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all">
              <div className="text-[var(--color-primary)]">
                 <Calendar size={16} />
@@ -308,37 +301,9 @@ export default function EventTicket({ booking, onClose }) {
              <span className="text-[8px] font-black uppercase tracking-widest">{t('add_to_calendar') || 'Add to Calendar'}</span>
           </button>
 
-          <button className="bg-black text-white rounded-[20px] py-3 flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] transition-all shadow-lg overflow-hidden relative group">
-             <div className="text-white relative z-10">
-                <Ticket size={16} />
-             </div>
-             <span className="text-[8px] font-black uppercase tracking-widest relative z-10">{t('add_to_wallet') || 'Add to Wallet'}</span>
-             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/0 via-emerald-500/0 to-emerald-500/20 group-hover:via-emerald-500/10 transition-all duration-700" />
+          <button className="col-span-2 bg-emerald-500 text-white rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10">
+            <Share2 size={16} /> {t('share') || 'Share on Social'}
           </button>
-
-          <button className="col-span-2 bg-white dark:bg-slate-900 border border-[var(--border-color)] text-[var(--text-primary)] rounded-[20px] py-4 flex items-center justify-center gap-3 active:scale-[0.98] transition-all font-black text-xs uppercase tracking-widest">
-            <Share2 size={16} /> {t('share') || 'Share'}
-          </button>
-          
-          {/* Futuristic Wristband Sync UI */}
-          <div className="col-span-2 bg-slate-900 dark:bg-white p-6 rounded-[32px] mt-2 flex flex-col items-center text-center gap-3 border border-white/10 shadow-2xl relative overflow-hidden group">
-            <div className="absolute -top-12 -left-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
-            
-            <div className="w-12 h-12 rounded-2xl bg-white/10 dark:bg-slate-900/10 flex items-center justify-center text-emerald-400 mb-1 relative">
-              <div className="absolute inset-0 bg-emerald-400 opacity-20 blur-lg animate-pulse" />
-              <Fingerprint size={28} className="relative z-10" />
-            </div>
-            
-            <div>
-              <h3 className="text-xs font-black uppercase tracking-widest text-white dark:text-slate-900">Futuristic Wristband</h3>
-              <p className="text-[10px] font-bold text-white/40 dark:text-slate-900/40 uppercase tracking-tight mt-1">Leave your phone behind. Sync with a smart wristband at the gate.</p>
-            </div>
-            
-            <button className="w-full bg-emerald-500 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-emerald-500/20">
-              {booking.payment_method === 'wristband' ? 'Voucher Synced' : 'Sync Ticket & Vouchers'}
-            </button>
-          </div>
         </div>
       </main>
     </div>
