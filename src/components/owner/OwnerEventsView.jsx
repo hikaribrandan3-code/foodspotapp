@@ -1246,7 +1246,6 @@ function CheckinView({ event, businessId, onBack }) {
             value={codeInput}
             onChange={e => setCodeInput(e.target.value.toUpperCase())}
             onKeyDown={e => { if (e.key === 'Enter' && codeInput) handleCheckin(codeInput) }}
-            maxLength={6}
             disabled={loading}
           />
           <button
