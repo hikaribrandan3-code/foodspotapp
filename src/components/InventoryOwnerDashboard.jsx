@@ -379,4 +379,3 @@ function ItemRow({ item, status, onHistory, onEdit, onDelete }) {
     </div>
   );
 }
-// cache-bust: Tue May 12 09:36:47 -03 2026
