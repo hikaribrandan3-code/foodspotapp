@@ -103,23 +103,21 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     try {
       console.log('🔍 [DELETE] Starting delete. Event:', selectedEvent?.id, 'Business:', businessId)
 
-      // Delete and return the deleted row so we know it actually happened
-      const { data: deleted, error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', selectedEvent.id)
-        .eq('business_id', businessId)
-        .select('id')
+      // Production-grade delete via RPC (bypasses RLS / trigger conflicts)
+      const { data: deleted, error } = await supabase.rpc('delete_event', {
+        p_event_id: selectedEvent.id,
+        p_business_id: businessId
+      })
 
       if (error) {
-        console.error('🚨 [DELETE] Error details:', error.code, error.message, error.details)
+        console.error('🚨 [DELETE] RPC error:', error.code, error.message, error.details)
         alert(`Delete failed: ${error.message || JSON.stringify(error)}`)
         return
       }
 
-      if (!deleted || deleted.length === 0) {
-        console.error('🚨 [DELETE] No rows deleted — event not found or permission denied.')
-        alert('Delete failed: event not found or you do not have permission to delete it.')
+      if (deleted !== true) {
+        console.error('🚨 [DELETE] RPC returned false — not owner or event not found.')
+        alert('Delete failed: you do not own this event or it was already deleted.')
         return
       }
 
