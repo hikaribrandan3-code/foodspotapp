@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Package, AlertTriangle, XCircle, CheckCircle, ChevronRight, X, History, Edit3 } from 'lucide-react';
+import { Package, AlertTriangle, XCircle, CheckCircle, ChevronRight, X, History, Edit3, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
 
@@ -106,6 +106,12 @@ export default function InventoryOwnerDashboard() {
     setEditItem(null);
   };
 
+  const deleteItem = async (itemId) => {
+    if (!window.confirm('Delete this inventory item?')) return;
+    await supabase.from('inventory').delete().eq('id', itemId).eq('business_id', businessId);
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
   const grouped = useMemo(() => {
     const out = items.filter((i) => i.quantity_available === 0);
     const low = items.filter((i) => i.quantity_available > 0 && i.quantity_available <= i.reorder_level);
@@ -165,6 +171,7 @@ export default function InventoryOwnerDashboard() {
                 status="out"
                 onHistory={() => openDrawer(item)}
                 onEdit={() => openEdit(item)}
+                onDelete={() => deleteItem(item.id)}
               />
             ))}
           </div>
@@ -185,6 +192,7 @@ export default function InventoryOwnerDashboard() {
                 status="low"
                 onHistory={() => openDrawer(item)}
                 onEdit={() => openEdit(item)}
+                onDelete={() => deleteItem(item.id)}
               />
             ))}
           </div>
@@ -205,6 +213,7 @@ export default function InventoryOwnerDashboard() {
                 status="ok"
                 onHistory={() => openDrawer(item)}
                 onEdit={() => openEdit(item)}
+                onDelete={() => deleteItem(item.id)}
               />
             ))}
           </div>
@@ -306,7 +315,7 @@ export default function InventoryOwnerDashboard() {
   );
 }
 
-function ItemRow({ item, status, onHistory, onEdit }) {
+function ItemRow({ item, status, onHistory, onEdit, onDelete }) {
   const pct = Math.min((item.quantity_available / Math.max(item.reorder_level, 1)) * 100, 100);
   const statusColor = status === 'out' ? '#DC2626' : status === 'low' ? '#F59E0B' : '#10B981';
 
@@ -343,6 +352,13 @@ function ItemRow({ item, status, onHistory, onEdit }) {
           title="Edit"
         >
           <Edit3 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onDelete}
+          style={{ padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#DC2626' }}
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
         </button>
       </div>
     </div>

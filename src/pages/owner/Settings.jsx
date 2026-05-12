@@ -1284,6 +1284,7 @@ const Settings = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                             {[
                                 { key: 'cash',         label: t('cash')         },
+                                { key: 'mercado_pago', label: t('label_mercado_pago') || 'Mercado Pago' },
                             ].map(({ key, label }) => {
                                 const on = draft.payment_methods?.[key] ?? true;
                                 return (
