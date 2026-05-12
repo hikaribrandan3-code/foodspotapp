@@ -9,13 +9,13 @@ const corsHeaders = {
 
 const MERCADO_PAGO_API = "https://api.mercadopago.com/checkout/preferences";
 
-// Generate ticket code: TKT-XXX-NNN
+// Generate ticket code: 3 letters + 3 digits (e.g. "ABC123")
 function generateTicketCode(): string {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = 'TKT-';
-    for (let i = 0; i < 3; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-    code += '-';
-    for (let i = 0; i < 3; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const digits = '23456789';
+    let code = '';
+    for (let i = 0; i < 3; i++) code += letters.charAt(Math.floor(Math.random() * letters.length));
+    for (let i = 0; i < 3; i++) code += digits.charAt(Math.floor(Math.random() * digits.length));
     return code;
 }
 
