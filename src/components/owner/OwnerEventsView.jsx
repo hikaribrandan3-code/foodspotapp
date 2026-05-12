@@ -1190,21 +1190,25 @@ function CheckinView({ event, businessId, onBack }) {
         scanLoop()
       } else {
         // Fallback to html5-qrcode for older browsers
-        const Html5Qrcode = window.Html5Qrcode
-        if (!Html5Qrcode) {
-          throw new Error('Neither BarcodeDetector nor Html5Qrcode available')
-        }
-
         const scanner = new Html5Qrcode('qr-reader')
         cameraStream.current = scanner
+
+        let detected = false
 
         await scanner.start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 240, height: 240 } },
-          (decodedText) => {
-            scanner.stop()
-            setScanning(false)
-            handleCheckin(decodedText)
+          async (decodedText) => {
+            if (detected) return
+            detected = true
+            console.log('QR detected:', decodedText)
+
+            // Keep scanner open for 800ms to show detection
+            setTimeout(async () => {
+              await scanner.stop()
+              setScanning(false)
+              await handleCheckin(decodedText)
+            }, 800)
           },
           () => {}
         )
