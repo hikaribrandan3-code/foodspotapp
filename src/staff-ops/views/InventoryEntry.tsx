@@ -262,9 +262,29 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
     markDirty();
   };
 
-  const removeItem = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
-    markDirty();
+  const removeItem = async (id: string) => {
+    const nextItems = items.filter(item => item.id !== id);
+    const effectiveBusinessId = businessId || ctxBusinessId;
+    if (!effectiveBusinessId) return;
+
+    setSaveStatus({ message: t('saving') || 'Saving...' });
+    try {
+      const payload = {
+        app_config: deepMergeAppConfig(cachedAppConfig || {}, {
+          inventory: { items: nextItems, categories }
+        })
+      };
+      await updateBranding(payload, effectiveBusinessId);
+      setItems(nextItems);
+      setSaveStatus({ message: t('saved') || 'Saved' });
+      if (isEmbedded && onItemsChange) {
+        onItemsChange(nextItems);
+      }
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (err) {
+      console.error('[InventoryEntry] Delete failed:', err);
+      setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
+    }
   };
 
   const toggleExpand = (id: string) => {
@@ -682,9 +702,9 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
                         </div>
                       </div>
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (window.confirm(`${t('delete')} "${item.name}"?`)) {
-                            removeItem(item.id);
+                            await removeItem(item.id);
                           }
                         }}
                         className="w-full h-11 mt-2 rounded-2xl border text-sm font-semibold active:opacity-80 transition-opacity cursor-pointer appearance-none"
