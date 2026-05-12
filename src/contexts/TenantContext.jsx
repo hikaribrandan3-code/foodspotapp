@@ -188,6 +188,7 @@ export function TenantProvider({ children }) {
 
                 // UPDATE PERSISTENCE
                 localStorage.setItem('fs_last_active_slug', slug)
+                localStorage.setItem('fs_business_id', data.business_id)
             }
         }
 
@@ -333,6 +334,7 @@ export function TenantProvider({ children }) {
                     language: tenantRow?.language ?? tenantData?.language ?? 'en'
                 }
                 setTenantData(data)
+                localStorage.setItem('fs_business_id', data.business_id)
                 console.log('✅ GLOBAL REFRESH COMPLETE')
             } else {
                 console.error('[TenantLock] Refresh failed: no branding row found for business_id:', businessId);
