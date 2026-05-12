@@ -1163,14 +1163,22 @@ function CheckinView({ event, businessId, onBack }) {
 
         const detector = new BarcodeDetector({ formats: ['qr_code'] })
 
+        let detected = false
+
         const scanLoop = async () => {
-          if (!videoRef.current) return
+          if (!videoRef.current || detected) return
           try {
             const barcodes = await detector.detect(videoRef.current)
             if (barcodes.length > 0) {
+              detected = true
               const rawValue = barcodes[0].rawValue
-              stopScanner()
-              await handleCheckin(rawValue)
+              console.log('QR detected:', rawValue)
+
+              // Keep scanner open for 800ms to show detection, then process
+              setTimeout(async () => {
+                await stopScanner()
+                await handleCheckin(rawValue)
+              }, 800)
               return
             }
           } catch (err) {
