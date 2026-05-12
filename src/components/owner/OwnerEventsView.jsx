@@ -1158,38 +1158,22 @@ function CheckinView({ event, businessId, onBack }) {
     if (!code.trim()) return
     setLoading(true)
     try {
-      const cleanCode = code.toUpperCase().replace(/[-\s]/g, '')
+      // Strip TKT- prefix, then remove all dashes/spaces
+      const cleanCode = code
+        .replace(/^TKT-/, '')
+        .toUpperCase()
+        .replace(/[-\s]/g, '')
 
-      // Try multiple formats: exact match, no dashes, with dashes
-      let order = null, orderError = null
-
-      // First try: exact code as entered
-      const result1 = await supabase
+      // Single lookup: strip prefix, uppercase, no dashes
+      const { data: order, error } = await supabase
         .from('event_orders')
         .select('id, event_id, customer_name, tier_snapshot, payment_status')
-        .eq('ticket_code', code.toUpperCase())
+        .eq('ticket_code', cleanCode)
         .eq('event_id', event.id)
-        .single()
+        .eq('business_id', businessId)
+        .maybeSingle()
 
-      if (!result1.error) {
-        order = result1.data
-      } else {
-        // Second try: clean (no dashes/spaces)
-        const result2 = await supabase
-          .from('event_orders')
-          .select('id, event_id, customer_name, tier_snapshot, payment_status')
-          .eq('ticket_code', cleanCode)
-          .eq('event_id', event.id)
-          .single()
-
-        if (!result2.error) {
-          order = result2.data
-        } else {
-          orderError = result2.error
-        }
-      }
-
-      if (orderError || !order) {
+      if (error || !order) {
         setResult({ success: false, code, message: 'Code not found' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
