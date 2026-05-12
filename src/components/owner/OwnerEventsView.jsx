@@ -1160,6 +1160,7 @@ function CheckinView({ event, businessId, onBack }) {
     try {
       // Strip all formatting (dashes, spaces) for comparison
       const cleanCode = code.toUpperCase().replace(/[-\s]/g, '')
+      console.log('[Checkin] Input code:', code, 'Cleaned:', cleanCode)
 
       // Fetch all codes for this event, match in JavaScript
       const { data: orders, error } = await supabase
@@ -1168,7 +1169,16 @@ function CheckinView({ event, businessId, onBack }) {
         .eq('event_id', event.id)
         .eq('business_id', businessId)
 
+      console.log('[Checkin] Query result - Orders:', orders?.length || 0, 'Error:', error)
+      if (orders) {
+        orders.forEach(o => {
+          const oClean = o.ticket_code?.replace(/[-\s]/g, '')
+          console.log('[Checkin] DB code:', o.ticket_code, '→', oClean)
+        })
+      }
+
       if (error || !orders) {
+        console.error('[Checkin] Lookup failed:', error)
         setResult({ success: false, code, message: 'Lookup failed' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
@@ -1177,6 +1187,7 @@ function CheckinView({ event, businessId, onBack }) {
 
       // Find matching order by comparing stripped codes
       const order = orders.find(o => o.ticket_code?.replace(/[-\s]/g, '') === cleanCode)
+      console.log('[Checkin] Match found:', !!order)
 
       if (!order) {
         setResult({ success: false, code, message: 'Code not found' })
