@@ -1141,35 +1141,58 @@ function CheckinView({ event, businessId, onBack }) {
   const [result, setResult] = useState(null)
   const [checkedIn, setCheckedIn] = useState(0)
   const [manualInput, setManualInput] = useState('')
-  const scannerRef = useRef(null)
-  const html5QrRef = useRef(null)
+  const videoRef = useRef(null)
+  const cameraStream = useRef(null)
+  const animationIdRef = useRef(null)
 
   const startScanner = async () => {
     setScanning(true)
     setResult(null)
     try {
-      const scanner = new Html5Qrcode('qr-reader')
-      html5QrRef.current = scanner
-      await scanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        (decodedText) => {
-          scanner.stop()
-          setScanning(false)
-          handleCheckin(decodedText)
-        },
-        () => {}
-      )
-    } catch (e) {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      })
+      cameraStream.current = stream
+
+      // Get video element and set stream
+      const videoElement = document.getElementById('qr-reader')
+      if (videoElement) {
+        videoElement.srcObject = stream
+      }
+
+      const detector = new BarcodeDetector({ formats: ['qr_code'] })
+
+      const scanLoop = async () => {
+        if (!videoRef.current) return
+        try {
+          const barcodes = await detector.detect(videoRef.current)
+          if (barcodes.length > 0) {
+            const rawValue = barcodes[0].rawValue
+            stopScanner()
+            await handleCheckin(rawValue)
+            return
+          }
+        } catch (err) {
+          // Silently continue scanning
+        }
+        animationIdRef.current = requestAnimationFrame(scanLoop)
+      }
+
+      scanLoop()
+    } catch (err) {
       setScanning(false)
-      alert('Camera unavailable — use manual input')
+      setResult({ success: false, message: 'Camera unavailable — use manual input' })
+      setTimeout(() => setResult(null), 3000)
     }
   }
 
   const stopScanner = async () => {
-    if (html5QrRef.current) {
-      try { await html5QrRef.current.stop() } catch {}
-      html5QrRef.current = null
+    if (animationIdRef.current) {
+      cancelAnimationFrame(animationIdRef.current)
+    }
+    if (cameraStream.current) {
+      cameraStream.current.getTracks().forEach(track => track.stop())
+      cameraStream.current = null
     }
     setScanning(false)
   }
@@ -1257,7 +1280,13 @@ function CheckinView({ event, businessId, onBack }) {
       {/* QR scanner area */}
       {scanning ? (
         <div style={{ position: 'relative', borderRadius: 20, overflow: 'hidden', marginBottom: 16 }}>
-          <div id="qr-reader" style={{ width: '100%' }} />
+          <video
+            ref={videoRef}
+            id="qr-reader"
+            autoPlay
+            playsInline
+            style={{ width: '100%', display: 'block', borderRadius: 20 }}
+          />
           <button onClick={stopScanner} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', padding: 8, cursor: 'pointer' }}>
             <X size={20} color="#fff" />
           </button>
@@ -1296,9 +1325,18 @@ function CheckinView({ event, businessId, onBack }) {
             exit={{ opacity: 0, y: 20 }}
             style={{ position: 'fixed', bottom: 40, left: 20, right: 20, background: '#fff', borderRadius: 20, padding: 24, boxShadow: '0 8px 32px rgba(0,0,0,0.18)', textAlign: 'center', zIndex: 200 }}
           >
-            <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 12px' }} />
-            <div style={{ fontWeight: 800, fontSize: 18, color: theme.textPrimary }}>Ticket Verified! ✓</div>
-            <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>{result.ticketId}</div>
+            {result.success ? (
+              <>
+                <CheckCircle2 size={48} color="#10B981" style={{ margin: '0 auto 12px' }} />
+                <div style={{ fontWeight: 800, fontSize: 18, color: theme.textPrimary }}>{result.name} ✓</div>
+                <div style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>{result.tier}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight: 800, fontSize: 18, color: '#EF4444', marginBottom: 8 }}>✕ {result.message}</div>
+                {result.ticketId && <div style={{ fontSize: 12, color: theme.textSecondary }}>{result.ticketId}</div>}
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
