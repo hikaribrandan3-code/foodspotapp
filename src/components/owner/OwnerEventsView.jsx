@@ -99,31 +99,28 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   })()
 
   const handleDelete = async () => {
-    if (!window.confirm('Archive this event? It will be hidden from customers.')) return
+    if (!window.confirm('Delete this event permanently? This cannot be undone.')) return
     try {
-      console.log('🔍 [ARCHIVE] Starting archive. Event:', selectedEvent?.id, 'Business:', businessId)
-      const { data, error } = await supabase
+      console.log('🔍 [DELETE] Starting delete. Event:', selectedEvent?.id, 'Business:', businessId)
+      const { error } = await supabase
         .from('events')
-        .update({ status: 'archived' })
+        .delete()
         .eq('id', selectedEvent.id)
         .eq('business_id', businessId)
-        .select()
-
-      console.log('📦 [ARCHIVE] Response data:', data)
-      console.log('❌ [ARCHIVE] Response error:', error)
 
       if (error) {
-        console.error('🚨 [ARCHIVE] Error details:', error.code, error.message, error.details)
-        alert(`Archive failed: ${error.message || JSON.stringify(error)}`)
+        console.error('🚨 [DELETE] Error details:', error.code, error.message, error.details)
+        alert(`Delete failed: ${error.message || JSON.stringify(error)}`)
         return
       }
 
-      console.log('✅ [ARCHIVE] Success! Archived event:', selectedEvent.id)
+      console.log('✅ [DELETE] Success! Deleted event:', selectedEvent.id)
       fetchEvents()
+      setSelectedEvent(null)
       setView('list')
     } catch (err) {
-      console.error('💥 [ARCHIVE] Exception:', err)
-      alert(`Error archiving event: ${err?.message}`)
+      console.error('💥 [DELETE] Exception:', err)
+      alert(`Error deleting event: ${err?.message}`)
     }
   }
 
