@@ -34,6 +34,12 @@ const GlobeIcon = ({ size = 16 }) => (
   </svg>
 )
 
+const ArrowBackIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+  </svg>
+)
+
 const LocationIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
@@ -66,6 +72,13 @@ const TRANSLATIONS = {
     logIn: 'Log In',
     noAccount: "Don't have an account?",
     signUp: 'Sign up',
+    forgotPasswordTitle: 'Forgot Password?',
+    forgotPasswordSubtitle: "Don't worry, it happens to the best of us. Enter your email to reset it.",
+    sendResetLink: 'Send Reset Link',
+    resetEmailPlaceholder: 'Enter your email address',
+    backToLogin: 'Back to Login',
+    resetSentTitle: 'Check Your Email',
+    resetSentMessage: "We've sent a password reset link to your email.",
     processing: 'Processing...',
     close: 'Close'
   },
@@ -91,6 +104,13 @@ const TRANSLATIONS = {
     logIn: 'Iniciar Sesión',
     noAccount: '¿No tienes una cuenta?',
     signUp: 'Regístrate',
+    forgotPasswordTitle: '¿Olvidaste tu Contraseña?',
+    forgotPasswordSubtitle: 'No te preocupes, le pasa a los mejores. Ingresa tu correo para restablecerla.',
+    sendResetLink: 'Enviar Enlace de Restablecimiento',
+    resetEmailPlaceholder: 'Ingresa tu dirección de correo',
+    backToLogin: 'Volver al Inicio de Sesión',
+    resetSentTitle: 'Revisa tu Correo',
+    resetSentMessage: 'Hemos enviado un enlace de restablecimiento a tu correo.',
     processing: 'Procesando...',
     close: 'Cerrar'
   },
@@ -116,6 +136,13 @@ const TRANSLATIONS = {
     logIn: 'Fazer Login',
     noAccount: 'Não tem uma conta?',
     signUp: 'Cadastre-se',
+    forgotPasswordTitle: 'Esqueceu a Senha?',
+    forgotPasswordSubtitle: 'Não se preocupe, acontece com os melhores. Digite seu e-mail para redefinir.',
+    sendResetLink: 'Enviar Link de Redefinição',
+    resetEmailPlaceholder: 'Digite seu endereço de e-mail',
+    backToLogin: 'Voltar ao Login',
+    resetSentTitle: 'Verifique seu E-mail',
+    resetSentMessage: 'Enviamos um link de redefinição de senha para seu e-mail.',
     processing: 'Processando...',
     close: 'Fechar'
   }
@@ -126,6 +153,7 @@ const TRANSLATIONS = {
 // ============================================
 const LoginModal = ({ onClose, lang, onLangCycle }) => {
   const l = TRANSLATIONS[lang]
+  const [view, setView] = useState('login') // 'login' | 'forgot' | 'resetSent'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -140,7 +168,7 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [onClose])
 
-  const handleSubmit = async (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -177,6 +205,31 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
     }
   }
 
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`
+      })
+      if (resetError) throw resetError
+      setView('resetSent')
+    } catch (err) {
+      setError(err.message || 'Failed to send reset email')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const isLogin = view === 'login'
+  const isForgot = view === 'forgot'
+  const isResetSent = view === 'resetSent'
+
+  const heroTitle = isLogin ? l.welcomeBack : isForgot ? l.forgotPasswordTitle : l.resetSentTitle
+  const heroSubtitle = isLogin ? l.loginSubtitle : isForgot ? l.forgotPasswordSubtitle : l.resetSentMessage
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-50">
       <div className="min-h-screen flex flex-col">
@@ -190,10 +243,10 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
           {/* Dark Overlay */}
           <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center px-4 text-center">
             <h1 className="!text-white mb-3 drop-shadow-md text-[44.8px] font-black">
-              {l.welcomeBack}
+              {heroTitle}
             </h1>
             <p className="!text-white/90 drop-shadow-sm font-medium text-[21.6px]">
-              {l.loginSubtitle}
+              {heroSubtitle}
             </p>
           </div>
         </div>
@@ -201,74 +254,116 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
         {/* Main Card Content */}
         <main className="flex-grow w-full max-w-[480px] mx-auto px-4 relative z-10 -mt-8 mb-12">
           <div className="bg-white rounded-[0.75rem] shadow-[0px_10px_15px_-3px_rgba(17,24,39,0.1)] p-6 md:p-8">
-            <h2 className="font-display text-2xl font-semibold text-gray-900 mb-6">{l.logIn}</h2>
-
-            {error && (
-              <div className="bg-red-50 text-red-700 p-3 rounded-[0.5rem] text-sm mb-4">{error}</div>
-            )}
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              {/* Email Input */}
-              <div className="flex flex-col gap-1">
-                <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-email">{l.emailLabel}</label>
-                <input
-                  id="login-email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder={l.emailPlaceholder}
-                  required
-                  autoFocus
-                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
-                />
-              </div>
-
-              {/* Password Input */}
-              <div className="flex flex-col gap-1">
-                <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-password">{l.passwordLabel}</label>
-                <input
-                  id="login-password"
-                  name="password"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder={l.passwordPlaceholder}
-                  required
-                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
-                />
-              </div>
-
-              {/* Forgot Password Link */}
-              <div className="flex justify-end mt-1">
-                <a href="#" className="font-sans text-xs font-medium text-emerald-700 hover:text-emerald-500 transition-colors">
-                  {l.forgotPassword}
-                </a>
-              </div>
-
-              {/* Primary Action Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-500 text-white font-sans text-sm font-semibold tracking-wider py-3.5 rounded-[0.5rem] mt-1 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
-              >
-                {loading ? l.processing : l.logIn}
-              </button>
-            </form>
-
-            {/* Sign Up Prompt */}
-            <div className="mt-6 pt-3 border-t border-gray-200 text-center">
-              <p className="font-sans text-sm text-gray-600">
-                {l.noAccount}{' '}
-                <a
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); onClose(); }}
-                  className="font-sans text-sm font-semibold tracking-wider text-emerald-700 hover:text-emerald-500 transition-colors ml-1"
+            {isResetSent ? (
+              /* Reset Sent View */
+              <div className="text-center flex flex-col gap-4 py-4">
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                  <svg width={28} height={28} viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                  </svg>
+                </div>
+                <p className="font-sans text-sm text-gray-600">{l.resetSentMessage}</p>
+                <button
+                  onClick={() => setView('login')}
+                  className="font-sans text-sm font-semibold tracking-wider text-emerald-700 hover:text-emerald-500 transition-colors inline-flex items-center justify-center gap-1"
                 >
-                  {l.signUp}
-                </a>
-              </p>
-            </div>
+                  <ArrowBackIcon size={16} />
+                  {l.backToLogin}
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 className="font-display text-2xl font-semibold text-gray-900 mb-6">
+                  {isLogin ? l.logIn : l.forgotPasswordTitle}
+                </h2>
+
+                {error && (
+                  <div className="bg-red-50 text-red-700 p-3 rounded-[0.5rem] text-sm mb-4">{error}</div>
+                )}
+
+                <form onSubmit={isLogin ? handleLoginSubmit : handleForgotSubmit} className="flex flex-col gap-3">
+                  {/* Email Input */}
+                  <div className="flex flex-col gap-1">
+                    <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-email">{l.emailLabel}</label>
+                    <input
+                      id="login-email"
+                      name="email"
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder={isLogin ? l.emailPlaceholder : l.resetEmailPlaceholder}
+                      required
+                      autoFocus
+                      className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Password Input (login only) */}
+                  {isLogin && (
+                    <div className="flex flex-col gap-1">
+                      <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-password">{l.passwordLabel}</label>
+                      <input
+                        id="login-password"
+                        name="password"
+                        type="password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder={l.passwordPlaceholder}
+                        required
+                        className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                      />
+                    </div>
+                  )}
+
+                  {/* Forgot Password Link (login only) */}
+                  {isLogin && (
+                    <div className="flex justify-end mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setView('forgot')}
+                        className="font-sans text-xs font-medium text-emerald-700 hover:text-emerald-500 transition-colors"
+                      >
+                        {l.forgotPassword}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Primary Action Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-emerald-500 text-white font-sans text-sm font-semibold tracking-wider py-3.5 rounded-[0.5rem] mt-1 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+                  >
+                    {loading ? l.processing : (isLogin ? l.logIn : l.sendResetLink)}
+                  </button>
+
+                  {/* Back / Toggle Link */}
+                  <div className="text-center mt-4">
+                    {isLogin ? (
+                      <p className="font-sans text-sm text-gray-600">
+                        {l.noAccount}{' '}
+                        <button
+                          type="button"
+                          onClick={onClose}
+                          className="font-sans text-sm font-semibold tracking-wider text-emerald-700 hover:text-emerald-500 transition-colors ml-1"
+                        >
+                          {l.signUp}
+                        </button>
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setView('login')}
+                        className="font-sans text-sm font-semibold tracking-wider text-emerald-700 hover:text-emerald-500 transition-colors inline-flex items-center justify-center gap-1"
+                      >
+                        <ArrowBackIcon size={16} />
+                        {l.backToLogin}
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </main>
 
