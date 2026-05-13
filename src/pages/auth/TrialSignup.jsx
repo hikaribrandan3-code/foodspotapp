@@ -201,15 +201,50 @@ const TrialSignup = () => {
       const trialEndsAt = new Date()
       trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
-      // Create branding record
-      await supabase.from('branding').insert({
-        business_id: businessId,
-        user_id: user.id,
-        business_name: businessName,
-        slug,
-        trial_ends_at: trialEndsAt.toISOString(),
-        language: 'es',
-        app_config: {
+      // Find template business (owned by hikaribrandan3@gmail.com or flagged as template)
+      const { data: templateBranding } = await supabase
+        .from('branding')
+        .select('*')
+        .eq('is_template', true)
+        .single()
+
+      if (templateBranding) {
+        // Clone from template business
+        const templateBusinessId = templateBranding.business_id
+
+        // Clone menu items
+        const { data: menuItems } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('business_id', templateBusinessId)
+
+        if (menuItems && menuItems.length > 0) {
+          const clonedMenuItems = menuItems.map(item => ({
+            ...item,
+            id: crypto.randomUUID(),
+            business_id: businessId
+          }))
+          await supabase.from('menu_items').insert(clonedMenuItems)
+        }
+
+        // Clone categories
+        const { data: categories } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('business_id', templateBusinessId)
+
+        if (categories && categories.length > 0) {
+          const clonedCategories = categories.map(cat => ({
+            ...cat,
+            id: crypto.randomUUID(),
+            business_id: businessId
+          }))
+          await supabase.from('categories').insert(clonedCategories)
+        }
+
+        // Create branding with cloned app_config
+        const clonedAppConfig = {
+          ...templateBranding.app_config,
           businessInfo: {
             businessType: formData.businessType,
             duration: formData.duration,
@@ -218,13 +253,44 @@ const TrialSignup = () => {
             priorAppUsage: formData.priorAppUsage,
             eventsInfo: formData.events,
             phoneNumber: formData.phoneNumber
-          },
-          externalOrdering: {},
-          payments: {},
-          notifications: {},
-          businessCurrency: 'ARS'
+          }
         }
-      })
+
+        await supabase.from('branding').insert({
+          business_id: businessId,
+          user_id: user.id,
+          business_name: businessName,
+          slug,
+          trial_ends_at: trialEndsAt.toISOString(),
+          language: 'es',
+          app_config: clonedAppConfig
+        })
+      } else {
+        // Fallback: create blank business if template not found
+        await supabase.from('branding').insert({
+          business_id: businessId,
+          user_id: user.id,
+          business_name: businessName,
+          slug,
+          trial_ends_at: trialEndsAt.toISOString(),
+          language: 'es',
+          app_config: {
+            businessInfo: {
+              businessType: formData.businessType,
+              duration: formData.duration,
+              serviceType: formData.serviceType,
+              socialMedia: formData.socialMedia,
+              priorAppUsage: formData.priorAppUsage,
+              eventsInfo: formData.events,
+              phoneNumber: formData.phoneNumber
+            },
+            externalOrdering: {},
+            payments: {},
+            notifications: {},
+            businessCurrency: 'ARS'
+          }
+        })
+      }
 
       // Create language_settings entry
       await supabase.from('language_settings').insert({
