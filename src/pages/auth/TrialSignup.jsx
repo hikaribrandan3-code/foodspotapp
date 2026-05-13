@@ -544,7 +544,6 @@ const TrialSignup = () => {
         business_name: businessName,
         slug,
         trial_ends_at: trialEndsAt.toISOString(),
-        language: 'es',
         app_config: {
           businessInfo: {
             businessType: formData.businessType,
