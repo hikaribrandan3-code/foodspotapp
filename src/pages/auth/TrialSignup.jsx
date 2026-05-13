@@ -432,10 +432,10 @@ const TrialSignup = () => {
           {/* Decorative Background Elements for Depth */}
           <div className="absolute inset-0 z-0 bg-black/60" />
           <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
-            <h1 style={{ color: '#ffffff' }} className="font-display text-5xl font-bold drop-shadow-md tracking-tight">
-              {l.headline}
+            <h1 className="font-display text-5xl font-bold !text-white tracking-tight">
+              <span style={{ color: '#ffffff' }}>{l.headline}</span>
             </h1>
-            <p style={{ color: '#baeed1' }} className="font-sans text-lg max-w-xl">
+            <p className="font-sans text-lg !text-white max-w-xl">
               {l.subheadline}
             </p>
           </div>
@@ -496,19 +496,19 @@ const TrialSignup = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-black flex flex-col items-center gap-6 py-4 px-4 text-center mt-auto border-t border-transparent">
+      <footer className="w-full bg-white flex flex-col items-center gap-6 py-4 px-4 text-center mt-auto border-t border-transparent">
         {/* Brand */}
-        <div className="font-display text-2xl font-semibold text-white">FoodSpot Mobile</div>
+        <div className="font-display text-2xl font-semibold text-emerald-700">FoodSpot Mobile</div>
 
         {/* Links */}
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-1">
-          <a href="#" className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors">Privacy</a>
-          <a href="#" className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors">Terms</a>
-          <a href="#" className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors">Location</a>
+          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Privacy</a>
+          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Terms</a>
+          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Location</a>
           <a
             href="#"
             onClick={(e) => { e.preventDefault(); cycleLang(); }}
-            className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors flex items-center gap-1"
+            className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors flex items-center gap-1"
           >
             <GlobeIcon size={16} />
             Language
@@ -517,7 +517,7 @@ const TrialSignup = () => {
 
         {/* Custom Additional Info & Copyright */}
         <div className="flex flex-col gap-1 items-center">
-          <div className="text-gray-400 font-sans text-sm flex items-center gap-1">
+          <div className="text-gray-600 font-sans text-sm flex items-center gap-1">
             <LocationIcon size={16} />
             {l.location}
           </div>
