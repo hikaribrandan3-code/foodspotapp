@@ -239,7 +239,7 @@ function App() {
                 if (session?.user?.user_metadata?.slug) {
                     const slug = session.user.user_metadata.slug;
                     const path = window.location.pathname;
-                    if (path === '/admin' || path === '/') {
+                    if (path === '/admin' || path === '/' || path === '/auth/callback' || path === '/start-trial') {
                         console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
                         window.location.assign(`/${slug}/owner/summary`);
                     }
@@ -511,6 +511,14 @@ function App() {
                                             <Route path="/login/owner" element={<OwnerLogin />} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
+                                            <Route path="/auth/callback" element={
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--canvas-bg, #fff)', color: 'var(--canvas-text, #000)' }}>
+                                                    <div style={{ textAlign: 'center' }}>
+                                                        <BurgerLoader />
+                                                        <p style={{ marginTop: 16, fontSize: 14, fontWeight: 500 }}>Completing sign in...</p>
+                                                    </div>
+                                                </div>
+                                            } />
 
                                             {/* TENANT ROUTES */}
                                             <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />

@@ -579,6 +579,20 @@ const TrialSignup = () => {
         language: 'es'
       })
 
+      // Create tenants row
+      await supabase.from('tenants').insert({
+        id: crypto.randomUUID(),
+        venue_name: slug,
+        owner_id: user.id,
+        language: 'es'
+      })
+
+      // Create profiles row
+      await supabase.from('profiles').insert({
+        id: user.id,
+        business_id: businessId
+      })
+
       // Update auth user
       await supabase.auth.updateUser({
         data: { slug, business_id: businessId, role: 'owner' }

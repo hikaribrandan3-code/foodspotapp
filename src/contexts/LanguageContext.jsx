@@ -15,8 +15,8 @@ export const LanguageProvider = ({ children }) => {
         const staffPref = localStorage.getItem('fs_staff_lang');
         if (staffPref) return staffPref;
 
-        // Load owner preference from language_settings table (will sync via effect below)
-        const initial = 'en';
+        // Use tenantData language if already hydrated, otherwise default to 'en'
+        const initial = tenantData?.language || 'en';
         console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (will sync from DB)`);
         return initial;
     });

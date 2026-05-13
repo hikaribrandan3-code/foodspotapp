@@ -57,7 +57,7 @@ const TenantContext = createContext(null)
 // 🚫 SYSTEM ROUTES (Reserved Slugs)
 const SYSTEM_ROUTES = [
     'admin', 'owner', 'login', 'signup', 'start-trial',
-    'status', 'checkout', 'order'
+    'status', 'checkout', 'order', 'auth'
 ]
 
 export function TenantProvider({ children }) {
