@@ -220,7 +220,7 @@ export default function OnboardingModal({ onComplete, isOpen }) {
             onClick={handleFinalSuccess}
             className="w-full py-4 bg-emerald-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-[0.98] outline-none"
           >
-            Crear cuenta
+            Abrir Negocio
           </button>
         </div>
       </div>
