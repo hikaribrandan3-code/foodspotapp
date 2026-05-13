@@ -22,7 +22,7 @@ const GoogleIcon = ({ size = 18 }) => (
 const TRANSLATIONS = {
   en: {
     headline: 'Foodspot: The Shopify of Food',
-    subheadline: 'Your menu. Their content. Your growth.',
+    subheadline: 'Launch your app. Turn diners into creators.',
     getStarted: 'Get Started',
     signupSubtitle: 'Sign up with Google to create your FoodSpot account',
     signupGoogle: 'Sign up with Google',
@@ -43,7 +43,7 @@ const TRANSLATIONS = {
   },
   es: {
     headline: 'Foodspot: El Shopify de la Comida',
-    subheadline: 'Tu menú. Su contenido. Tu crecimiento.',
+    subheadline: 'Lanza tu app. Convierte clientes en creadores.',
     getStarted: 'Comenzar',
     signupSubtitle: 'Regístrate con Google para crear tu cuenta de FoodSpot',
     signupGoogle: 'Registrarse con Google',
@@ -64,7 +64,7 @@ const TRANSLATIONS = {
   },
   pt: {
     headline: 'Foodspot: O Shopify da Comida',
-    subheadline: 'Seu menu. Seu conteúdo. Seu crescimento.',
+    subheadline: 'Lance seu app. Transforme clientes em criadores.',
     getStarted: 'Começar',
     signupSubtitle: 'Cadastre-se com Google para criar sua conta FoodSpot',
     signupGoogle: 'Cadastrar com Google',
@@ -411,10 +411,10 @@ const TrialSignup = () => {
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
-          <h1 style={{ color: '#ffffff' }} className="text-4xl md:text-5xl font-bold drop-shadow-lg leading-tight">
+          <h1 style={{ color: '#ffffff' }} className="!text-white text-4xl md:text-5xl font-bold drop-shadow-lg leading-tight">
             {l.headline}
           </h1>
-          <p style={{ color: '#ffffff' }} className="text-lg md:text-xl drop-shadow-md">
+          <p style={{ color: '#ffffff' }} className="!text-white text-lg md:text-xl drop-shadow-md">
             {l.subheadline}
           </p>
         </div>
