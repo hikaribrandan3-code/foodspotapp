@@ -626,7 +626,8 @@ const TrialSignup = () => {
     } catch (err) {
       console.error('[Onboarding] FATAL ERROR:', err)
       setError(err.message || 'Error creating account')
-      setShowOnboarding(false)
+      // Keep modal open so user can retry; re-throw so OnboardingModal shows submitError
+      throw err
     } finally {
       setLoading(false)
     }

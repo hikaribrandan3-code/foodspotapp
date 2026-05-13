@@ -26,7 +26,7 @@ export default function MenuManager() {
   const [activeCategory, setActiveCategory] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState(null);
-  const debounceRef = useRef(null);
+  const debounceRefs = useRef(new Map());
 
   // Delivery settings state
   const [deliveryRadius, setDeliveryRadius] = useState(5);
@@ -109,9 +109,11 @@ export default function MenuManager() {
       prev.map((item) => (item.id === itemId ? { ...item, ...updates } : item))
     );
 
-    // Debounce Supabase write
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
+    // Debounce Supabase write — per-item timer so editing A doesn't cancel B's save
+    const existing = debounceRefs.current.get(itemId);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(async () => {
       const { error } = await supabase
         .from('menu_items')
         .update(updates)
@@ -125,7 +127,10 @@ export default function MenuManager() {
         setSaveStatus({ error: false, message: t('saved') || 'Saved' });
         setTimeout(() => setSaveStatus(null), 2000);
       }
+      debounceRefs.current.delete(itemId);
     }, 600);
+
+    debounceRefs.current.set(itemId, timer);
   }, [businessId, t]);
 
   const handleDeleteItem = useCallback(async (itemId) => {

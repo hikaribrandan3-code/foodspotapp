@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Flame, Leaf, Star, Wheat, Camera } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { processAndStoreImage } from '../../../utils/imageOptimizer';
 
 export default function MenuItemCard({ item, onUpdate, onDelete }) {
@@ -13,6 +13,17 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [isFeatured, setIsFeatured] = useState(item.featured || false);
   const [imgUploading, setImgUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Sync local state when item prop changes (realtime updates, parent refresh)
+  useEffect(() => {
+    setInStock(item.available !== false);
+    setDescription(item.description || '');
+    setCalories(item.calories || item.kcal || 0);
+    setIsVegan(item.is_vegan || false);
+    setIsGlutenFree(item.is_gluten_free || false);
+    setIsSpicy(item.is_spicy || false);
+    setIsFeatured(item.featured || false);
+  }, [item.id, item.available, item.description, item.calories, item.kcal, item.is_vegan, item.is_gluten_free, item.is_spicy, item.featured]);
 
   const handleToggle = (field, value, setter) => {
     setter(value);

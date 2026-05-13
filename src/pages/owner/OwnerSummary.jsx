@@ -1244,8 +1244,8 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
     }
 
     useEffect(() => {
-        if (showTeamPanel) fetchStaff()
-    }, [showTeamPanel, businessId])
+        if (isOpen) fetchStaff()
+    }, [isOpen, businessId])
 
     const handleAddStaff = async () => {
         if (!newStaff.name || !newStaff.username || !newStaff.pin) return

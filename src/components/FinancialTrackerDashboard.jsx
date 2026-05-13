@@ -12,10 +12,7 @@ import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
 import { ORDER_STATUS } from '../constants/database.js';
 
-const fmtMoney = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n || 0);
-
-const todayStr = () => new Date().toISOString().split('T')[0];
+const todayStr = () => new Date().toLocaleDateString('sv-SE');
 
 const CATEGORIES = [
   { name: 'Food & Ingredients', color: '#F59E0B' },
@@ -60,7 +57,10 @@ function getCatMeta(name) {
 }
 
 export default function FinancialTrackerDashboard() {
-  const { businessId } = useTenant();
+  const { businessId, tenantData } = useTenant();
+  const currency = tenantData?.app_config?.businessCurrency || 'ARS';
+  const fmtMoney = (n) =>
+    new Intl.NumberFormat('es-AR', { style: 'currency', currency }).format(n || 0);
   const [orders, setOrders] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -425,7 +425,7 @@ export default function FinancialTrackerDashboard() {
                       <input
                         type="number"
                         placeholder="Set budget"
-                        value={budgets[cat.name] || ''}
+                        value={budgets[cat.name] ?? ''}
                         onChange={(e) => setBudgets((prev) => ({ ...prev, [cat.name]: parseFloat(e.target.value) || 0 }))}
                         style={{ width: 100, padding: '4px 8px', borderRadius: 6, border: '1px solid #E5E7EB', fontSize: 11, outline: 'none' }}
                       />

@@ -187,6 +187,26 @@ export default function OnboardingModal({ onComplete, isOpen }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
+  // Reset state when modal reopens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+      setShowSuccess(false);
+      setFormData({
+        businessName: '',
+        phoneNumber: '',
+        businessType: '',
+        duration: '',
+        serviceType: '',
+        socialMedia: '',
+        priorAppUsage: '',
+        events: ''
+      });
+      setSubmitError('');
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
   // Check if current field is filled
   const isCurrentFieldFilled = () => {
     const currentFieldId = ALL_STEPS[currentStep].id;
