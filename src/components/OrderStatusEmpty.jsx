@@ -41,12 +41,24 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     const primaryColor = config?.branding?.primaryColor || '#FF9500'
     const navBgColor = config?.branding?.navbar_color || primaryColor
 
+    // Calculate days until 2026 FIFA World Cup (June 11, 2026)
+    const calculateDaysToWorldCup = () => {
+        const worldCupDate = new Date(2026, 5, 11) // June 11, 2026 (0-indexed months)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        worldCupDate.setHours(0, 0, 0, 0)
+        const daysRemaining = Math.ceil((worldCupDate - today) / (1000 * 60 * 60 * 24))
+        return Math.max(0, daysRemaining)
+    }
+
+    const daysToWorldCup = calculateDaysToWorldCup()
+
     // Promo banner config (fallback to hardcoded)
     const promoConfig = {
         enabled: tenantData?.app_config?.promo_banner_enabled ?? true,
-        text: tenantData?.app_config?.promo_banner_text || 'Free delivery on your first order.',
-        subtext: tenantData?.app_config?.promo_banner_subtext || 'Up to 3 times per day',
-        cta: tenantData?.app_config?.promo_banner_cta || 'Claim Now',
+        text: tenantData?.app_config?.promo_banner_text || '¡Vamos Vamos Argentina! 🇦🇷',
+        subtext: tenantData?.app_config?.promo_banner_subtext || `${daysToWorldCup} days until FIFA World Cup 2026 ⚽`,
+        cta: tenantData?.app_config?.promo_banner_cta || 'Order Now',
         image: tenantData?.app_config?.promo_banner_image || null
     }
 
