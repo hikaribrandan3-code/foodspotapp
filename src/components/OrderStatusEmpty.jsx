@@ -360,14 +360,16 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         background: 'linear-gradient(135deg, #1C5AA0 0%, #4A90E2 50%, #87CEEB 100%)',
                         boxShadow: '0 8px 24px rgba(28, 90, 160, 0.25)',
                         position: 'relative',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        padding: '16px',
+                        minHeight: '120px'
                     }}>
                         {/* Full visible Argentina flag */}
                         <div style={{
                             position: 'absolute',
-                            top: -20,
-                            right: -30,
-                            fontSize: '200px',
+                            top: -10,
+                            right: -15,
+                            fontSize: '100px',
                             lineHeight: 1,
                             zIndex: 0,
                             opacity: 0.8
@@ -377,21 +379,21 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
 
                         <div className="ose-hero-content ose-hero-content-worldcup" style={{ position: 'relative', zIndex: 1 }}>
                             <h2 style={{
-                                fontSize: '32px',
+                                fontSize: '18px',
                                 fontWeight: 900,
                                 color: '#FFFFFF',
-                                margin: '0 0 12px 0',
+                                margin: '0 0 6px 0',
                                 textShadow: '2px 2px 4px rgba(28, 90, 160, 0.3), -1px -1px 2px rgba(255, 255, 255, 0.2)',
-                                letterSpacing: '1px'
+                                letterSpacing: '0.5px'
                             }}>
                                 {promoConfig.text}
                             </h2>
 
                             <div style={{
-                                fontSize: '20px',
+                                fontSize: '13px',
                                 fontWeight: 800,
                                 color: '#FFD700',
-                                marginBottom: '16px',
+                                marginBottom: '10px',
                                 textShadow: '1px 1px 3px rgba(28, 90, 160, 0.3)'
                             }}>
                                 ⏱️ {countdown} DAYS
@@ -401,13 +403,13 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                                 background: '#FFD700',
                                 color: '#1C5AA0',
                                 fontWeight: 900,
-                                fontSize: '18px',
-                                padding: '14px 32px',
-                                borderRadius: '24px',
+                                fontSize: '13px',
+                                padding: '10px 24px',
+                                borderRadius: '20px',
                                 border: '2px solid #fff',
                                 boxShadow: '0 4px 16px rgba(255, 215, 0, 0.4)',
                                 textTransform: 'uppercase',
-                                letterSpacing: '1px'
+                                letterSpacing: '0.5px'
                             }}>
                                 {promoConfig.cta}
                             </button>
@@ -416,7 +418,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                             {promoConfig.image ? (
                                 <img src={promoConfig.image} alt="World Cup" />
                             ) : (
-                                <div style={{ fontSize: '140px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
+                                <div style={{ fontSize: '70px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
                             )}
                         </div>
                     </section>
