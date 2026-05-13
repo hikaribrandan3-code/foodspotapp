@@ -13,7 +13,7 @@ import { useTenant } from '../contexts/TenantContext.jsx';
 import { ORDER_STATUS } from '../constants/database.js';
 
 const fmtMoney = (n) =>
-  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n || 0);
 
 const todayStr = () => new Date().toISOString().split('T')[0];
 

@@ -15,8 +15,8 @@ export const LanguageProvider = ({ children }) => {
         const staffPref = localStorage.getItem('fs_staff_lang');
         if (staffPref) return staffPref;
 
-        // Use tenantData language if already hydrated, otherwise default to 'en'
-        const initial = tenantData?.language || 'en';
+        // Hardcoded Spanish default — change to 'es' permanently
+        const initial = tenantData?.language || 'es';
         console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (will sync from DB)`);
         return initial;
     });
@@ -63,7 +63,7 @@ export const LanguageProvider = ({ children }) => {
             console.warn(`Translation key missing: ${key}`);
             return key;
         }
-        return translations[key][lang] || translations[key]['en'] || key;
+        return translations[key][lang] || translations[key]['es'] || translations[key]['en'] || key;
     };
 
     const changeLanguage = async (newLang) => {

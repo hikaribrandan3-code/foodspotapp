@@ -431,42 +431,46 @@ function OwnerSummary() {
         saveBusinessCurrency(currencyCode)
     }
 
+    const externalLinkDebounceRef = useRef(null)
     const saveExternalLink = async (field, input) => {
-        try {
-            const updates = { [field]: input }
-            const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
-            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
-        } catch (err) {
-            console.error('Failed to save:', err)
-        }
+        if (externalLinkDebounceRef.current) clearTimeout(externalLinkDebounceRef.current)
+        externalLinkDebounceRef.current = setTimeout(async () => {
+            try {
+                const updates = { [field]: input }
+                const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
+                await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            } catch (err) {
+                console.error('Failed to save:', err)
+            }
+        }, 600)
     }
 
     const saveMpToken = async () => {
         setMpTokenSaving(true)
         setMpTokenSaved(false)
-        try {
-            await supabase.from('branding').update({ mp_access_token: mpTokenInput }).eq('business_id', businessId)
+        const { error } = await supabase.from('branding').update({ mp_access_token: mpTokenInput }).eq('business_id', businessId)
+        if (error) {
+            console.error('Failed to save MP token:', error)
+            alert('Error al guardar token MP: ' + error.message)
+        } else {
             setMpTokenSaved(true)
             setTimeout(() => setMpTokenSaved(false), 2000)
-        } catch (err) {
-            console.error('Failed to save MP token:', err)
-        } finally {
-            setMpTokenSaving(false)
         }
+        setMpTokenSaving(false)
     }
 
     const saveMpUserId = async () => {
         setMpUserIdSaving(true)
         setMpUserIdSaved(false)
-        try {
-            await supabase.from('branding').update({ mp_user_id: mpUserIdInput }).eq('business_id', businessId)
+        const { error } = await supabase.from('branding').update({ mp_user_id: mpUserIdInput }).eq('business_id', businessId)
+        if (error) {
+            console.error('Failed to save MP User ID:', error)
+            alert('Error al guardar MP User ID: ' + error.message)
+        } else {
             setMpUserIdSaved(true)
             setTimeout(() => setMpUserIdSaved(false), 2000)
-        } catch (err) {
-            console.error('Failed to save MP User ID:', err)
-        } finally {
-            setMpUserIdSaving(false)
         }
+        setMpUserIdSaving(false)
     }
 
     return (
@@ -1354,7 +1358,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
                                             onClick={handleAddStaff}
-                                            disabled={saving || !newStaff.name || !newStaff.email || !newStaff.pin}
+                                            disabled={saving || !newStaff.name || !newStaff.username || !newStaff.pin}
                                             className="flex-1 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {saving ? '...' : (t('save') || 'Save')}

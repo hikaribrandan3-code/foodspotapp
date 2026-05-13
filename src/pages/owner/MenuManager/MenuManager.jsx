@@ -178,7 +178,15 @@ export default function MenuManager() {
 
     const { data, error } = await supabase
       .from('categories')
-      .insert({ name: categoryName.trim(), business_id: businessId })
+      .insert({
+        name: categoryName.trim(),
+        business_id: businessId,
+        sort_order: 0,
+        display_order: 0,
+        is_active: true,
+        is_enabled: true,
+        icon: ''
+      })
       .select();
 
     if (error) {

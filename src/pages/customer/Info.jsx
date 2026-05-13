@@ -197,15 +197,6 @@ const Info = ({ config }) => {
                     )}
 
                     {/* Hidden Owner Admin Pill */}
-                    {isOwner && (
-                        <button
-                            style={{ ...buttonBase, background: '#22C55E' }}
-                            onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
-                        >
-                            Hidden: Admin Access
-                        </button>
-                    )}
-
                     {/* Settings-configured Admin Access */}
                     {isPillEnabled('adminAccess') && (
                         <button

@@ -97,6 +97,12 @@ export default function MenuTab({
   const handleAddRecipe = () => {
     if (!newRecipe.name || !newRecipe.price) return;
 
+    const priceVal = parseFloat(newRecipe.price);
+    if (isNaN(priceVal) || priceVal <= 0 || priceVal > 999999) {
+      alert('Precio inválido. Debe ser entre 0.01 y 999,999.');
+      return;
+    }
+
     const categoryName = newRecipe.category || activeCategory || 'General';
     const categoryId = categoryMap[categoryName] || categoryName;
 
@@ -105,7 +111,7 @@ export default function MenuTab({
       business_id: businessId,
       name: newRecipe.name,
       description: newRecipe.description || 'A new discovery.',
-      price: Math.round(parseFloat(newRecipe.price) * 100),
+      price: Math.round(priceVal * 100),
       calories: parseInt(newRecipe.kcal) || 0,
       image_url: newRecipe.image,
       available: true,

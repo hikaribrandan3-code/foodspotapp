@@ -172,7 +172,6 @@ const ALL_STEPS = [...STEPS, ...LAST_STEPS];
 export default function OnboardingModal({ onComplete, isOpen }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [validationError, setValidationError] = useState('');
   const [formData, setFormData] = useState({
     businessName: '',
     phoneNumber: '',
@@ -202,23 +201,10 @@ export default function OnboardingModal({ onComplete, isOpen }) {
   if (!isOpen) return null;
 
   const handleNext = () => {
-    // Validate current field is filled before proceeding
-    if (!isCurrentFieldFilled()) {
-      setValidationError('Por favor completa este campo');
-      setTimeout(() => setValidationError(''), 2000);
-      return;
-    }
-
     if (currentStep < ALL_STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
-      setValidationError('');
     } else {
-      // Validate ALL fields before showing success
-      if (!areAllFieldsFilled()) {
-        setValidationError('Por favor completa todos los campos');
-        setTimeout(() => setValidationError(''), 2000);
-        return;
-      }
+      if (!areAllFieldsFilled()) return;
       setShowSuccess(true);
     }
   };
@@ -241,12 +227,7 @@ export default function OnboardingModal({ onComplete, isOpen }) {
   };
 
   const handleFinalSuccess = async () => {
-    // Final validation before creating account
-    if (!areAllFieldsFilled()) {
-      setValidationError('Por favor completa todos los campos de onboarding');
-      setTimeout(() => setValidationError(''), 2000);
-      return;
-    }
+    if (!areAllFieldsFilled()) return;
     setIsSubmitting(true);
     setSubmitError('');
     try {
@@ -427,11 +408,6 @@ export default function OnboardingModal({ onComplete, isOpen }) {
             </button>
 
             <div className="flex flex-col items-end gap-2">
-              {validationError && (
-                <p className="text-xs text-red-600 font-semibold animate-pulse">
-                  {validationError}
-                </p>
-              )}
               <button
                 onClick={handleNext}
                 disabled={!isCurrentFieldFilled()}
