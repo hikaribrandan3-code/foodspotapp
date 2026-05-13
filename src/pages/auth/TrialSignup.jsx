@@ -261,10 +261,10 @@ const TrialSignup = () => {
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-2 pt-10 pb-20">
-          <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-md leading-tight">
+          <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">
             {l.headline}
           </h1>
-          <p className="text-lg md:text-xl text-green-100 max-w-xl drop-shadow-sm">
+          <p className="text-lg md:text-xl text-white drop-shadow-md">
             {l.subheadline}
           </p>
         </div>
@@ -281,10 +281,10 @@ const TrialSignup = () => {
 
       {/* Card Section */}
       <main className="flex flex-col items-center px-4 -mt-32 relative z-20 pb-8">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col gap-6">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 flex flex-col gap-6">
           <div className="text-center flex flex-col gap-2">
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{l.getStarted}</h2>
-            <p className="text-gray-600 text-sm">{l.signupSubtitle}</p>
+            <p className="text-gray-700 text-sm">{l.signupSubtitle}</p>
           </div>
 
           {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
@@ -294,12 +294,11 @@ const TrialSignup = () => {
             disabled={loading}
             className="w-full min-h-12 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white rounded-full flex items-center justify-center gap-2 font-semibold transition-all duration-200 active:scale-95 shadow-sm"
           >
-            <span>🔐</span>
             {loading ? 'Processing...' : l.signupGoogle}
           </button>
 
           <div className="text-center border-t border-gray-200 pt-4">
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-700 text-sm">
               {l.haveAccount}{' '}
               <a href="#" className="text-green-600 font-semibold hover:text-green-700">
                 {l.login}
@@ -314,7 +313,6 @@ const TrialSignup = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 text-sm font-medium group"
             >
-              <span>💬</span>
               <span className="underline underline-offset-2">{l.needHelp}? {l.contactSupport}</span>
             </a>
           </div>
@@ -323,9 +321,9 @@ const TrialSignup = () => {
 
       {/* Footer */}
       <footer className="mt-auto w-full bg-gray-50 border-t border-gray-200 py-6 px-4 text-center">
-        <p className="text-gray-600 text-sm mb-2">FoodSpot Mobile</p>
-        <p className="text-gray-500 text-xs">© 2025 FoodSpot Mobile. All rights reserved.</p>
-        <p className="text-gray-500 text-xs mt-1">📍 {l.location}</p>
+        <p className="text-gray-900 font-semibold text-sm mb-2">FoodSpot Mobile</p>
+        <p className="text-gray-700 text-xs">© 2025 FoodSpot Mobile. All rights reserved.</p>
+        <p className="text-gray-700 text-xs mt-1">📍 {l.location}</p>
       </footer>
 
       <OnboardingModal
