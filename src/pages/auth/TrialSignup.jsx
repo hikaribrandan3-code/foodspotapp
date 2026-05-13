@@ -21,7 +21,7 @@ const GoogleIcon = ({ size = 18 }) => (
 // ============================================
 const TRANSLATIONS = {
   en: {
-    headline: 'Foodspot: The OS That Turns Diners Into Content Creators',
+    headline: 'Foodspot: The Shopify of Food',
     subheadline: 'Your menu. Their content. Your growth.',
     getStarted: 'Get Started',
     signupSubtitle: 'Sign up with Google to create your FoodSpot account',
@@ -42,7 +42,7 @@ const TRANSLATIONS = {
     close: 'Close'
   },
   es: {
-    headline: 'Foodspot: El SO Que Convierte Clientes En Creadores De Contenido',
+    headline: 'Foodspot: El Shopify de la Comida',
     subheadline: 'Tu menú. Su contenido. Tu crecimiento.',
     getStarted: 'Comenzar',
     signupSubtitle: 'Regístrate con Google para crear tu cuenta de FoodSpot',
@@ -63,7 +63,7 @@ const TRANSLATIONS = {
     close: 'Cerrar'
   },
   pt: {
-    headline: 'Foodspot: O SO Que Transforma Clientes Em Criadores De Conteúdo',
+    headline: 'Foodspot: O Shopify da Comida',
     subheadline: 'Seu menu. Seu conteúdo. Seu crescimento.',
     getStarted: 'Começar',
     signupSubtitle: 'Cadastre-se com Google para criar sua conta FoodSpot',
