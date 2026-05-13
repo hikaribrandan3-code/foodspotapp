@@ -405,44 +405,58 @@ const TrialSignup = () => {
   useEffect(() => {
     const { subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!['SIGNED_IN', 'INITIAL_SESSION'].includes(event) || !session?.user) return
-
-      const user = session.user
-      let { slug } = user.user_metadata || {}
-
-      // Check if user already has a business
-      if (!slug) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('business_id')
-          .eq('id', user.id)
-          .single()
-
-        if (profile?.business_id) {
-          const { data: branding } = await supabase
-            .from('branding')
-            .select('slug')
-            .eq('business_id', profile.business_id)
-            .single()
-
-          if (branding?.slug) {
-            slug = branding.slug
-            await supabase.auth.updateUser({
-              data: { slug, business_id: profile.business_id }
-            })
-          }
-        }
-      }
-
-      if (slug) {
-        window.location.replace(`/${slug}/owner/summary`)
-      } else {
-        // First time login - show onboarding
-        setShowOnboarding(true)
-      }
+      await handleAuthSession(session.user)
     })
 
     return () => subscription?.unsubscribe()
   }, [])
+
+  // Mount-time session check: listener might subscribe after INITIAL_SESSION already fired
+  useEffect(() => {
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        console.log('[TrialSignup] Existing session found on mount')
+        await handleAuthSession(session.user)
+      }
+    }
+    checkExistingSession()
+  }, [])
+
+  const handleAuthSession = async (user) => {
+    let { slug } = user.user_metadata || {}
+
+    // Check if user already has a business
+    if (!slug) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('business_id')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.business_id) {
+        const { data: branding } = await supabase
+          .from('branding')
+          .select('slug')
+          .eq('business_id', profile.business_id)
+          .single()
+
+        if (branding?.slug) {
+          slug = branding.slug
+          await supabase.auth.updateUser({
+            data: { slug, business_id: profile.business_id }
+          })
+        }
+      }
+    }
+
+    if (slug) {
+      window.location.replace(`/${slug}/owner/summary`)
+    } else {
+      // First time login - show onboarding
+      setShowOnboarding(true)
+    }
+  }
 
   const generateSlug = (name) =>
     name.toLowerCase().trim()
