@@ -5,7 +5,7 @@ import OnboardingModal from '../../components/Onboarding/OnboardingModal'
 import './TrialSignup.css'
 
 // ============================================
-// GOOGLE ICON
+// ICONS
 // ============================================
 const GoogleIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24">
@@ -13,6 +13,24 @@ const GoogleIcon = ({ size = 18 }) => (
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+  </svg>
+)
+
+const ChatIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+  </svg>
+)
+
+const GlobeIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+  </svg>
+)
+
+const LocationIcon = ({ size = 16 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
   </svg>
 )
 
@@ -401,83 +419,110 @@ const TrialSignup = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      {/* Hero Section */}
-      <section
-        className="h-[530px] min-h-[400px] w-full bg-cover bg-center flex flex-col items-center justify-center px-4 text-center relative overflow-hidden"
-        style={{
-          backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuB-P3U7v1O8MTwyyyOSCbZsMfSkvEXUg6v3oTiwqjE9VFKgUPfgJTmcimbn4eEKypIfL14gJ8pGbVv36LP0HRwMpVaMoAQKQTq1vdPLxLXUpRpsF7Ieas5qWn7aXmJDiT8NUktgSNzOER9YgM_2ArhxwhKW6F12KMIY6OyMEu_eXMGgO3QgetRwZ7QywBIKvgowlTOGBcniDH5EfalhhZ9LMyaq72B4rvOdPCNy-cg_xbXdYIjqHJ8CR7kFTgbLAfnq8uOyGK-scA')"
-        }}
-      >
-        <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
-          <h1 style={{ color: '#ffffff' }} className="!text-white text-4xl md:text-5xl font-bold drop-shadow-lg leading-tight">
-            {l.headline}
-          </h1>
-          <p style={{ color: '#ffffff' }} className="!text-white text-lg md:text-xl drop-shadow-md">
-            {l.subheadline}
-          </p>
-        </div>
-      </section>
-
-      {/* Language Switcher */}
-      <button
-        onClick={cycleLang}
-        className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors z-40"
-      >
-        <span>🌐</span>
-        {lang.toUpperCase()}
-      </button>
-
-      {/* Card Section */}
-      <main className="flex flex-col items-center px-4 -mt-32 relative z-20 pb-8">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 flex flex-col gap-6">
-          <div className="text-center flex flex-col gap-2">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{l.getStarted}</h2>
-            <p className="text-gray-700 text-sm">{l.signupSubtitle}</p>
-          </div>
-
-          {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
-
-          <button
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full min-h-12 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white rounded-full flex items-center justify-center gap-2 font-semibold transition-all duration-200 active:scale-95 shadow-sm"
-          >
-            <GoogleIcon size={18} />
-            {loading ? 'Processing...' : l.signupGoogle}
-          </button>
-
-          <div className="text-center border-t border-gray-200 pt-4">
-            <p className="text-gray-700 text-sm">
-              {l.haveAccount}{' '}
-              <button
-                onClick={() => setShowLoginModal(true)}
-                className="text-green-600 font-semibold hover:text-green-700"
-              >
-                {l.login}
-              </button>
+    <div className="min-h-screen flex flex-col bg-white antialiased selection:bg-emerald-500 selection:text-white">
+      {/* Main Content Area */}
+      <main className="flex-grow flex flex-col">
+        {/* Hero Section */}
+        <section
+          className="h-[530px] min-h-[400px] w-full bg-cover bg-center flex flex-col items-center justify-center px-4 text-center relative overflow-hidden"
+          style={{
+            backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuB-P3U7v1O8MTwyyyOSCbZsMfSkvEXUg6v3oTiwqjE9VFKgUPfgJTmcimbn4eEKypIfL14gJ8pGbVv36LP0HRwMpVaMoAQKQTq1vdPLxLXUpRpsF7Ieas5qWn7aXmJDiT8NUktgSNzOER9YgM_2ArhxwhKW6F12KMIY6OyMEu_eXMGgO3QgetRwZ7QywBIKvgowlTOGBcniDH5EfalhhZ9LMyaq72B4rvOdPCNy-cg_xbXdYIjqHJ8CR7kFTgbLAfnq8uOyGK-scA')"
+          }}
+        >
+          {/* Decorative Background Elements for Depth */}
+          <div className="absolute inset-0 z-0 bg-black/60" />
+          <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
+            <h1 className="font-display text-5xl font-bold text-white drop-shadow-md tracking-tight">
+              {l.headline}
+            </h1>
+            <p className="font-sans text-lg text-emerald-100 max-w-xl">
+              {l.subheadline}
             </p>
           </div>
+        </section>
 
-          <div className="pt-4 flex justify-center">
+        {/* Interactive Card Section */}
+        <section className="flex flex-col items-center px-4 -mt-[132px] relative z-20 pb-6">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-[0px_10px_15px_-3px_rgba(17,24,39,0.1)] p-6 flex flex-col gap-6 transition-transform duration-300 hover:shadow-[0px_15px_20px_-3px_rgba(17,24,39,0.15)]">
+            <div className="text-center flex flex-col gap-1">
+              <h2 className="font-display text-3xl font-bold text-gray-900">{l.getStarted}</h2>
+              <p className="font-sans text-base text-gray-600">{l.signupSubtitle}</p>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>
+            )}
+
+            <div className="flex flex-col gap-3 mt-1">
+              <button
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full min-h-[48px] bg-emerald-500 text-white rounded-full flex items-center justify-center gap-2 font-sans text-sm font-semibold tracking-wider transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
+              >
+                <GoogleIcon size={18} />
+                {loading ? 'Processing...' : l.signupGoogle}
+              </button>
+
+              <div className="text-center mt-2">
+                <p className="font-sans text-sm text-gray-600">
+                  {l.haveAccount}{' '}
+                  <a
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); setShowLoginModal(true); }}
+                    className="text-emerald-700 font-sans text-sm font-semibold tracking-wider hover:underline hover:text-emerald-800 transition-colors"
+                  >
+                    {l.login}
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* WhatsApp Link */}
+          <div className="mt-6">
             <a
               href="https://wa.me/543512122600?text=I need help with FoodSpot"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-green-600 hover:text-green-700 text-sm font-medium"
+              className="inline-flex items-center gap-2 text-emerald-700 hover:text-emerald-800 transition-colors font-sans text-sm group"
             >
-              <span className="underline underline-offset-2">{l.needHelp}? {l.contactSupport}</span>
+              <ChatIcon size={16} className="transition-transform group-hover:scale-110" />
+              <span className="underline underline-offset-2 decoration-emerald-700/30 group-hover:decoration-emerald-700">
+                {l.needHelp}? {l.contactSupport}
+              </span>
             </a>
           </div>
-        </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto w-full bg-gray-50 border-t border-gray-200 py-6 px-4 text-center">
-        <p className="text-gray-900 font-semibold text-sm mb-2">FoodSpot Mobile</p>
-        <p className="text-gray-700 text-xs">© 2025 FoodSpot Mobile. All rights reserved.</p>
-        <p className="text-gray-700 text-xs mt-1">📍 {l.location}</p>
+      <footer className="w-full bg-emerald-50 flex flex-col items-center gap-6 py-4 px-4 text-center mt-auto border-t border-transparent">
+        {/* Brand */}
+        <div className="font-display text-2xl font-semibold text-emerald-700">FoodSpot Mobile</div>
+
+        {/* Links */}
+        <nav className="flex flex-wrap justify-center gap-x-6 gap-y-1">
+          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Privacy</a>
+          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Terms</a>
+          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Location</a>
+          <a
+            href="#"
+            onClick={(e) => { e.preventDefault(); cycleLang(); }}
+            className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors flex items-center gap-1"
+          >
+            <GlobeIcon size={16} />
+            Language
+          </a>
+        </nav>
+
+        {/* Custom Additional Info & Copyright */}
+        <div className="flex flex-col gap-1 items-center">
+          <div className="text-gray-600 font-sans text-sm flex items-center gap-1">
+            <LocationIcon size={16} />
+            {l.location}
+          </div>
+          <div className="text-emerald-800 font-sans text-sm">© 2024 FoodSpot Mobile. All rights reserved.</div>
+        </div>
       </footer>
 
       <OnboardingModal
