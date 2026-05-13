@@ -92,8 +92,7 @@ export const LanguageProvider = ({ children }) => {
                 // Upsert into language_settings table
                 const { error, data } = await supabase
                     .from('language_settings')
-                    .upsert({ business_id: businessId, language: newLang })
-                    .eq('business_id', businessId);
+                    .upsert({ business_id: businessId, language: newLang });
 
                 if (error) {
                     console.error('[LanguageContext] ❌ Language update failed:', error.message, error.details);

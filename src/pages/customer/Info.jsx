@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { supabase } from '../../lib/supabaseClient';
 import HeaderClamp from '../../components/HeaderClamp.jsx';
 import BurgerLoader from '../../components/BurgerLoader';
 
@@ -9,6 +11,17 @@ const Info = ({ config }) => {
     const { tenantSlug } = useParams();
     const { tenantData, loading } = useTenant();
     const { t } = useLanguage();
+    const [authUser, setAuthUser] = useState(null);
+
+    useEffect(() => {
+        const checkOwner = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setAuthUser(user);
+        };
+        checkOwner();
+    }, []);
+
+    const isOwner = authUser && (authUser.id === tenantData?.user_id || authUser.id === tenantData?.owner_id);
 
     if (loading) return <BurgerLoader />;
 
@@ -183,11 +196,21 @@ const Info = ({ config }) => {
                         </div>
                     )}
 
-                    {/* Admin Access */}
+                    {/* Hidden Owner Admin Pill */}
+                    {isOwner && (
+                        <button
+                            style={{ ...buttonBase, background: '#22C55E' }}
+                            onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                        >
+                            🔒 Hidden: Admin Access
+                        </button>
+                    )}
+
+                    {/* Settings-configured Admin Access */}
                     {isPillEnabled('adminAccess') && (
                         <button
                             style={{ ...buttonBase, background: getPillColor('adminAccess') }}
-                            onClick={() => navigate(`/${tenantSlug}/owner`)}
+                            onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
                         >
                             {t('info_admin_access')}
                         </button>
