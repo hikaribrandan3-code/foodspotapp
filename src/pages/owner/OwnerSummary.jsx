@@ -736,7 +736,7 @@ function OwnerSummary() {
                                                             placeholder="123456789"
                                                             value={mpUserIdInput}
                                                             onChange={(e) => setMpUserIdInput(e.target.value)}
-                                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-blue-600 transition-all"
+                                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                                         />
                                                     </div>
                                                     <button
@@ -747,7 +747,7 @@ function OwnerSummary() {
                                                                 ? 'bg-green-500 dark:bg-green-600 text-white'
                                                                 : mpUserIdSaving
                                                                 ? 'bg-stone-300 dark:bg-[#475569] text-stone-600 dark:text-white cursor-not-allowed'
-                                                                : 'bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white'
+                                                                : 'bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 text-white'
                                                         }`}
                                                     >
                                                         {mpUserIdSaved ? (
@@ -1210,12 +1210,13 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
     const [staffList, setStaffList] = useState([])
     const [loading, setLoading] = useState(false)
     const [showAddForm, setShowAddForm] = useState(false)
-    const [newStaff, setNewStaff] = useState({ name: '', email: '', pin: '', role: 'cook' })
+    const [newStaff, setNewStaff] = useState({ name: '', username: '', pin: '', role: 'cook' })
     const [saving, setSaving] = useState(false)
 
     const fetchStaff = async () => {
         if (!businessId) return
         setLoading(true)
+        localStorage.setItem('fs_business_id', businessId)
         const { data, error } = await supabase
             .from('staff')
             .select('*')
@@ -1231,8 +1232,15 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
     }, [showTeamPanel, businessId])
 
     const handleAddStaff = async () => {
-        if (!newStaff.name || !newStaff.email || !newStaff.pin) return
+        if (!newStaff.name || !newStaff.username || !newStaff.pin) return
+        if (!businessId) {
+            alert('Business ID not found. Please refresh the page.')
+            return
+        }
         setSaving(true)
+
+        // Ensure x-business-id header is set for RLS
+        localStorage.setItem('fs_business_id', businessId)
 
         const simpleHash = (str) => {
             let hash = 0;
@@ -1249,17 +1257,20 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             .insert({
                 business_id: businessId,
                 name: newStaff.name,
-                email: newStaff.email.toLowerCase().trim(),
+                username: newStaff.username.toLowerCase().trim(),
                 pin: simpleHash(newStaff.pin),
                 role: newStaff.role,
                 status: 'active'
             })
 
         if (!error) {
-            setNewStaff({ name: '', email: '', pin: '', role: 'cook' })
+            setNewStaff({ name: '', username: '', pin: '', role: 'cook' })
             setShowAddForm(false)
             fetchStaff()
             onSaved?.()
+        } else {
+            console.error('[Staff Insert Error]', error?.message)
+            alert(`Failed to save staff: ${error?.message || 'Unknown error'}`)
         }
         setSaving(false)
     }
@@ -1318,8 +1329,8 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                     />
                                     <InputField
                                         label={t('username') || 'Username'}
-                                        value={newStaff.email}
-                                        onChange={(e) => setNewStaff(p => ({ ...p, email: e.target.value }))}
+                                        value={newStaff.username}
+                                        onChange={(e) => setNewStaff(p => ({ ...p, username: e.target.value }))}
                                         placeholder="juan_kitchen"
                                     />
                                     <InputField
@@ -1350,7 +1361,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         </motion.button>
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
-                                            onClick={() => { setShowAddForm(false); setNewStaff({ name: '', email: '', pin: '', role: 'cook' }); }}
+                                            onClick={() => { setShowAddForm(false); setNewStaff({ name: '', username: '', pin: '', role: 'cook' }); }}
                                             className="flex-1 py-3 rounded-2xl text-sm font-bold bg-stone-100 dark:bg-[#334155] text-stone-600 dark:text-white hover:bg-stone-200 dark:hover:bg-[#475569] transition-colors"
                                         >
                                             {t('cancel') || 'Cancel'}

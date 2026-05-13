@@ -84,6 +84,17 @@ const STEPS = [
     image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=1000'
   },
   {
+    id: 'phoneNumber',
+    title: '¿Número de teléfono de contacto?',
+    subtitle: 'Para que podamos comunicarnos contigo cuando lo necesites',
+    type: 'text',
+    placeholder: 'ej. +54 9 351 234 5678',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    ),
+    image: 'https://images.unsplash.com/photo-1577720643272-265ff904b1b8?auto=format&fit=crop&q=80&w=1000'
+  },
+  {
     id: 'businessType',
     title: '¿Qué tipo de negocio de comida diriges?',
     subtitle: 'Elige el estilo de tu restaurante—nos adaptamos a ti',
@@ -164,6 +175,7 @@ export default function OnboardingModal({ onComplete, isOpen }) {
   const [validationError, setValidationError] = useState('');
   const [formData, setFormData] = useState({
     businessName: '',
+    phoneNumber: '',
     businessType: '',
     duration: '',
     serviceType: '',
@@ -252,7 +264,7 @@ export default function OnboardingModal({ onComplete, isOpen }) {
             onClick={handleFinalSuccess}
             className="w-full py-4 bg-emerald-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-[0.98] outline-none"
           >
-            Crear cuenta
+            Abrir Negocio
           </button>
         </div>
       </div>

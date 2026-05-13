@@ -1,525 +1,94 @@
-/**
- * TrialSignup.jsx — Clean Refactor
- * 
- * Auth screen with signup/login modes.
- * Uses external CSS (TrialSignup.css) for maintainability.
- */
-
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal'
 import './TrialSignup.css'
 
 // ============================================
-// ICONS
+// GOOGLE ICON
 // ============================================
-const Icon = ({ name, size = 20, color = "currentColor" }) => {
-  const icons = {
-    storefront: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
-    mail: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,
-    lock: <><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></>,
-    language: <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>,
-    menu: <><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>,
-    bolt: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>,
-    groups: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
-    arrow: <><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>,
-    google: null  // rendered inline with fill colors
-  }
-
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      {icons[name] || null}
-    </svg>
-  )
-}
+const GoogleIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24">
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+  </svg>
+)
 
 // ============================================
 // TRANSLATIONS
 // ============================================
 const TRANSLATIONS = {
   en: {
-    createAccount: 'Create your account',
-    joinNetwork: 'Establish your professional culinary platform.',
-    businessName: 'Business Name',
-    businessPlaceholder: 'e.g., Le Gourmet Bistro',
+    headline: 'Foodspot: The OS That Turns Diners Into Content Creators',
+    subheadline: 'Your menu. Their content. Your growth.',
+    getStarted: 'Get Started',
+    signupSubtitle: 'Sign up with Google to create your FoodSpot account',
+    signupGoogle: 'Sign up with Google',
+    haveAccount: 'Already have an account?',
+    login: 'Log in',
+    needHelp: 'Need help',
+    contactSupport: 'Contact support on WhatsApp',
+    location: 'Córdoba, Argentina',
+    // Login modal
+    welcomeBack: 'Welcome Back',
+    loginSubtitle: 'Log in to FoodSpot OS',
     emailLabel: 'Email Address',
     emailPlaceholder: 'owner@restaurant.com',
     passwordLabel: 'Password',
-    strength: 'Security Strength',
-    good: 'Enterprise Ready',
-    moderate: 'Moderate',
-    weak: 'Weak',
-    startFreeTrial: 'Create Business Account',
-    login: 'Log in',
+    forgotPassword: 'Forgot password?',
     processing: 'Processing...',
-    orContinueWith: 'Or continue with',
-    alreadyHaveAccount: 'Already have an account?',
-    forgot: 'Forgot?',
-    newHere: 'New here?',
-    signUp: 'Create Account',
-    welcome: 'Welcome Back',
-    welcomePrefix: '',
-    welcomeBrand: 'Welcome Back',
-    welcomeSub: 'Log in to FoodSpot OS',
-    discoverFlavors: '',
-    google: 'Google',
-    email: 'Email',
-    liveMenus: 'Live Menus',
-    instantCheckout: 'Instant Checkout',
-    creatorLoop: 'Creator Loop',
-    trialDays: '14',
-    trialText: 'Day Trial',
-    headlineBrand: 'Foodspot: The OS',
-    headlinePrefix: ' That Turns Diners Into\n',
-    headlineAccent: 'Content Creators !',
-    headlineSuffix: '',
-    subheadline: 'Your menu. Their content. Your growth.',
-    forgotPassword: 'Forgot Password?',
-    sendCode: 'Send Reset Code',
-    enterCode: 'Enter 6-digit code sent to your email',
-    newPassword: 'New Password',
-    confirmPassword: 'Confirm Password',
-    resetPassword: 'Reset Password',
-    backToLogin: 'Back to Login',
-    codeSent: 'Check your email for the reset code',
-    passwordUpdated: 'Password updated! Log in now.',
-    resetTitle: 'Reset Password',
-    enterEmail: 'Enter your email',
-    needHelp: 'Need help?',
-    contactSupport: 'Contact support on WhatsApp'
+    close: 'Close'
   },
   es: {
-    createAccount: 'Crear cuenta empresarial',
-    joinNetwork: 'Establece tu plataforma culinaria profesional.',
-    businessName: 'Nombre del Negocio',
-    businessPlaceholder: 'ej. Le Gourmet Bistro',
+    headline: 'Foodspot: El SO Que Convierte Clientes En Creadores De Contenido',
+    subheadline: 'Tu menú. Su contenido. Tu crecimiento.',
+    getStarted: 'Comenzar',
+    signupSubtitle: 'Regístrate con Google para crear tu cuenta de FoodSpot',
+    signupGoogle: 'Registrarse con Google',
+    haveAccount: '¿Ya tienes una cuenta?',
+    login: 'Iniciar sesión',
+    needHelp: '¿Necesitas ayuda',
+    contactSupport: 'Contacta a soporte en WhatsApp',
+    location: 'Córdoba, Argentina',
+    // Login modal
+    welcomeBack: 'Bienvenido de Nuevo',
+    loginSubtitle: 'Inicia sesión en FoodSpot OS',
     emailLabel: 'Correo Electrónico',
     emailPlaceholder: 'propietario@restaurante.com',
     passwordLabel: 'Contraseña',
-    strength: 'Seguridad',
-    good: 'Listo para Empresas',
-    moderate: 'Media',
-    weak: 'Baja',
-    startFreeTrial: 'Crear Cuenta Empresarial',
-    login: 'Iniciar sesión',
-    processing: 'Procesando...',
-    orContinueWith: 'O continúa con',
-    alreadyHaveAccount: '¿Ya tienes cuenta?',
-    forgot: '¿Olvidaste?',
-    newHere: '¿Eres nuevo?',
-    signUp: 'Regístrate',
-    welcome: 'Bienvenido',
-    welcomePrefix: '',
-    welcomeBrand: 'Bienvenido',
-    welcomeSub: 'Inicia sesión en FoodSpot OS',
-    discoverFlavors: '',
-    google: 'Google',
-    email: 'Email',
-    liveMenus: 'Menús en Vivo',
-    instantCheckout: 'Checkout Instantáneo',
-    creatorLoop: 'Bucle de Creadores',
-    trialDays: '14',
-    trialText: 'Días de Prueba',
-    headlineBrand: 'Foodspot: El OS',
-    headlinePrefix: ' Que Convierte Clientes En ',
-    headlineAccent: 'Creadores De Contenido !',
-    headlineSuffix: '',
-    subheadline: 'Tu menú. Su contenido. Tu crecimiento.',
     forgotPassword: '¿Olvidaste tu contraseña?',
-    sendCode: 'Enviar Código',
-    enterCode: 'Ingresa el código de 6 dígitos enviado a tu email',
-    newPassword: 'Nueva Contraseña',
-    confirmPassword: 'Confirmar Contraseña',
-    resetPassword: 'Restablecer Contraseña',
-    backToLogin: 'Volver al inicio de sesión',
-    codeSent: 'Revisa tu email para el código',
-    passwordUpdated: '¡Contraseña actualizada! Inicia sesión ahora.',
-    resetTitle: 'Restablecer Contraseña',
-    enterEmail: 'Ingresa tu email',
-    needHelp: '¿Necesitas ayuda?',
-    contactSupport: 'Contacta soporte en WhatsApp'
+    processing: 'Procesando...',
+    close: 'Cerrar'
   },
   pt: {
-    createAccount: 'Criar conta empresarial',
-    joinNetwork: 'Estabeleça sua plataforma culinária profissional.',
-    businessName: 'Nome do Negócio',
-    businessPlaceholder: 'ex: Le Gourmet Bistro',
-    emailLabel: 'Endereço de Email',
+    headline: 'Foodspot: O SO Que Transforma Clientes Em Criadores De Conteúdo',
+    subheadline: 'Seu menu. Seu conteúdo. Seu crescimento.',
+    getStarted: 'Começar',
+    signupSubtitle: 'Cadastre-se com Google para criar sua conta FoodSpot',
+    signupGoogle: 'Cadastrar com Google',
+    haveAccount: 'Já tem uma conta?',
+    login: 'Faça login',
+    needHelp: 'Precisa de ajuda',
+    contactSupport: 'Contate o suporte no WhatsApp',
+    location: 'Córdoba, Argentina',
+    // Login modal
+    welcomeBack: 'Bem-vindo de Volta',
+    loginSubtitle: 'Faça login no FoodSpot OS',
+    emailLabel: 'E-mail',
     emailPlaceholder: 'proprietario@restaurante.com',
     passwordLabel: 'Senha',
-    strength: 'Força da Senha',
-    good: 'Pronto para Empresas',
-    moderate: 'Média',
-    weak: 'Baixa',
-    startFreeTrial: 'Criar Conta Empresarial',
-    login: 'Entrar',
+    forgotPassword: 'Esqueceu a senha?',
     processing: 'Processando...',
-    orContinueWith: 'Ou continue com',
-    alreadyHaveAccount: 'Já tem uma conta?',
-    forgot: 'Esqueceu?',
-    newHere: 'É novo aqui?',
-    signUp: 'Cadastre-se',
-    welcome: 'Bem-vindo',
-    welcomePrefix: '',
-    welcomeBrand: 'Bem-vindo',
-    welcomeSub: 'Faça login no FoodSpot OS',
-    discoverFlavors: '',
-    google: 'Google',
-    email: 'Email',
-    liveMenus: 'Cardápios Ao Vivo',
-    instantCheckout: 'Checkout Instantâneo',
-    creatorLoop: 'Loop de Criadores',
-    trialDays: '14',
-    trialText: 'Dias de Teste',
-    headlineBrand: 'Foodspot: O OS',
-    headlinePrefix: ' Que Transforma Clientes Em ',
-    headlineAccent: 'Criadores De Conteúdo !',
-    headlineSuffix: '',
-    subheadline: 'Seu cardápio. O conteúdo deles. Seu crescimento.',
-    forgotPassword: 'Esqueceu sua senha?',
-    sendCode: 'Enviar Código',
-    enterCode: 'Insira o código de 6 dígitos enviado ao seu email',
-    newPassword: 'Nova Senha',
-    confirmPassword: 'Confirmar Senha',
-    resetPassword: 'Redefinir Senha',
-    backToLogin: 'Voltar ao login',
-    codeSent: 'Verifique seu email para o código',
-    passwordUpdated: 'Senha atualizada! Faça login agora.',
-    resetTitle: 'Redefinir Senha',
-    enterEmail: 'Insira seu email',
-    needHelp: 'Precisa de ajuda?',
-    contactSupport: 'Contato com suporte no WhatsApp'
+    close: 'Fechar'
   }
-}
-
-// ============================================
-// COMPONENTS
-// ============================================
-
-const HeroBackground = () => (
-  <div className="dm-hero-bg">
-    <div className="dm-hero-gradient" />
-    <img
-      className="dm-hero-img"
-      src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4E7XYx2ZjDvx6ntI5oFq9nX98OsUxwRVdEzyOQ7fRmCSXpvN_ILKYn9vWuk01lcHqxzC8TVUYqIcNUqGjzgduax3rwYyFgPBIkz4OSPpKeEpWxIMlcKrMLxJ2oGEO1_agJB4B2EutVtrioCEEEbwcknPcHVc-Gur71hdWwyw9J92INZRg5SujiKhlAiqmmfzQL1SBfhU0vH8bHgSWyOV5ZnrwHfKFkVCMnBdfFgufuDYid5_-XPXMfXlaldejcPTe7rwNRDcn3kFe"
-      alt="Culinary OS Festival"
-      loading="eager"
-    />
-  </div>
-)
-
-const NavBrand = () => (
-  <span className="dm-nav__brand">FoodSpot</span>
-)
-
-const FeatureItem = ({ icon, text }) => (
-  <div className="dm-feature">
-    <div className="dm-feature__icon">
-      <Icon name={icon} size={18} color="#FF5733" />
-    </div>
-    <span className="dm-feature__text">{text}</span>
-  </div>
-)
-
-const InputField = ({ label, type, placeholder, value, onChange, icon, disabled, autoFocus, rightElement }) => (
-  <div className="dm-field">
-    <div className="dm-field__header">
-      <label className="dm-input-label">{label}</label>
-      {rightElement}
-    </div>
-    <div className="dm-input-box">
-      <span className="dm-input__icon"><Icon name={icon} size={20} /></span>
-      <input 
-        className="dm-input" 
-        type={type} 
-        placeholder={placeholder} 
-        value={value} 
-        onChange={onChange}
-        disabled={disabled}
-        autoFocus={autoFocus}
-        required
-      />
-    </div>
-  </div>
-)
-
-const PasswordStrength = ({ password, labels }) => {
-  const getStrength = () => {
-    if (password.length > 8) return { label: labels.good, segments: 4 }
-    if (password.length > 5) return { label: labels.good, segments: 3 }
-    if (password.length > 3) return { label: labels.moderate, segments: 2 }
-    if (password.length > 0) return { label: labels.weak, segments: 1 }
-    return { label: labels.weak, segments: 0 }
-  }
-  
-  const { label, segments } = getStrength()
-  
-  return (
-    <div className="dm-strength">
-      <div className="dm-strength__header">
-        <span className="dm-strength__label">{labels.strength}</span>
-        <span className="dm-strength__value">{label}</span>
-      </div>
-      <div className="dm-strength__bar">
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} className={`dm-strength__segment ${i < segments ? 'dm-strength__segment--active' : ''}`} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-const SocialButtons = ({ onGoogle, onEmail, labels, loading }) => (
-  <div className="dm-social-row">
-    <div className="dm-divider">
-      <div className="dm-divider__line" />
-      <span className="dm-divider__text">{labels.orContinueWith}</span>
-      <div className="dm-divider__line" />
-    </div>
-    <div className="dm-social-buttons">
-      <button type="button" onClick={onGoogle} disabled={loading} className="dm-social-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        <span>{labels.google}</span>
-      </button>
-      <button type="button" onClick={onEmail} className="dm-social-btn">
-        <Icon name="mail" size={18} />
-        <span>{labels.email}</span>
-      </button>
-    </div>
-  </div>
-)
-
-const FloatingBadge = ({ number, text }) => (
-  <div className="dm-float-deco">
-    <div style={{ textAlign: 'center' }}>
-      <span className="dm-float-deco__number">{number}</span>
-      <span className="dm-float-deco__text">{text}</span>
-    </div>
-  </div>
-)
-
-// ============================================
-// FORGOT PASSWORD MODAL
-// ============================================
-
-const ForgotPasswordModal = ({ onClose, onSuccess, lang }) => {
-  const l = TRANSLATIONS[lang]
-  const [step, setStep] = useState('email')
-  const [resetEmail, setResetEmail] = useState('')
-  const [codeDigits, setCodeDigits] = useState(['', '', '', '', '', ''])
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const codeInputRefs = useRef([])
-
-  const handleSendCode = async (e) => {
-    e.preventDefault()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail)) {
-      setError('Please enter a valid email address')
-      return
-    }
-    setLoading(true)
-    setError(null)
-    try {
-      await supabase.functions.invoke('generate-reset-code', {
-        body: { email: resetEmail }
-      })
-    } catch (_) {
-      // intentional: always advance to code step for security (no email enumeration)
-    } finally {
-      setLoading(false)
-      setStep('code')
-    }
-  }
-
-  const handleDigitChange = (index, value) => {
-    if (!/^\d?$/.test(value)) return
-    const next = [...codeDigits]
-    next[index] = value
-    setCodeDigits(next)
-    if (value && index < 5) codeInputRefs.current[index + 1]?.focus()
-  }
-
-  const handleDigitKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !codeDigits[index] && index > 0) {
-      codeInputRefs.current[index - 1]?.focus()
-    }
-  }
-
-  const handlePaste = (e) => {
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
-    if (pasted.length === 6) {
-      setCodeDigits(pasted.split(''))
-      codeInputRefs.current[5]?.focus()
-    }
-    e.preventDefault()
-  }
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault()
-    const code = codeDigits.join('')
-    if (code.length !== 6 || !/^\d{6}$/.test(code)) { setError('Please enter the complete 6-digit code'); return }
-    if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return }
-    if (newPassword !== confirmPassword) { setError("Passwords don't match"); return }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      // Step 1: verify the code via edge function (marks it as used)
-      const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-reset-code', {
-        body: { email: resetEmail, code }
-      })
-      if (verifyError || !verifyData?.valid) {
-        const msg = verifyData?.error || verifyError?.message || ''
-        throw Object.assign(new Error(msg || 'Invalid or expired code'), { isCodeError: true })
-      }
-
-      // Step 2: update password via edge function (uses admin API, no session needed)
-      const { data: updateData, error: updateError } = await supabase.functions.invoke('update-password', {
-        body: { email: resetEmail, code, password: newPassword }
-      })
-      if (updateError || !updateData?.success) {
-        throw new Error(updateData?.error || updateError?.message || 'Failed to update password')
-      }
-
-      setStep('success')
-      setTimeout(() => onSuccess(), 2000)
-    } catch (err) {
-      const msg = err.message || ''
-      if (err.isCodeError || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('expired')) {
-        setError('Invalid or expired code')
-        setStep('email')
-        setCodeDigits(['', '', '', '', '', ''])
-      } else {
-        setError(msg || 'Something went wrong, try again')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="dm-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="dm-modal">
-
-        {step === 'email' && (
-          <>
-            <h3 className="dm-modal__title">🔑 {l.resetTitle}</h3>
-            {error && <div className="dm-error">{error}</div>}
-            <form onSubmit={handleSendCode} className="dm-form">
-              <div className="dm-field">
-                <label className="dm-input-label">{l.enterEmail}</label>
-                <div className="dm-input-box">
-                  <span className="dm-input__icon"><Icon name="mail" size={20} /></span>
-                  <input
-                    className="dm-input"
-                    type="email"
-                    placeholder={l.emailPlaceholder}
-                    value={resetEmail}
-                    onChange={e => setResetEmail(e.target.value)}
-                    disabled={loading}
-                    autoFocus
-                    required
-                  />
-                </div>
-              </div>
-              <button type="submit" disabled={loading} className="dm-btn-primary">
-                {loading ? l.processing : l.sendCode}
-              </button>
-            </form>
-            <button type="button" onClick={onClose} className="dm-modal__back">
-              {l.backToLogin}
-            </button>
-          </>
-        )}
-
-        {step === 'code' && (
-          <>
-            <h3 className="dm-modal__title">{l.enterCode}</h3>
-            <p className="dm-modal__hint">{l.codeSent}</p>
-            {error && <div className="dm-error">{error}</div>}
-            <form onSubmit={handleResetPassword} className="dm-form">
-              <div className="dm-otp-row" onPaste={handlePaste}>
-                {codeDigits.map((digit, i) => (
-                  <input
-                    key={i}
-                    ref={el => { codeInputRefs.current[i] = el }}
-                    className="dm-otp-input"
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={e => handleDigitChange(i, e.target.value)}
-                    onKeyDown={e => handleDigitKeyDown(i, e)}
-                    autoFocus={i === 0}
-                  />
-                ))}
-              </div>
-              <div className="dm-field">
-                <label className="dm-input-label">{l.newPassword}</label>
-                <div className="dm-input-box">
-                  <span className="dm-input__icon"><Icon name="lock" size={20} /></span>
-                  <input
-                    className="dm-input"
-                    type="password"
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    disabled={loading}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="dm-field">
-                <label className="dm-input-label">{l.confirmPassword}</label>
-                <div className="dm-input-box">
-                  <span className="dm-input__icon"><Icon name="lock" size={20} /></span>
-                  <input
-                    className="dm-input"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    disabled={loading}
-                    required
-                  />
-                </div>
-              </div>
-              <button type="submit" disabled={loading} className="dm-btn-primary">
-                {loading ? l.processing : l.resetPassword}
-              </button>
-            </form>
-            <button type="button" onClick={() => { setStep('email'); setError(null); setCodeDigits(['','','','','','']) }} className="dm-modal__back">
-              {l.backToLogin}
-            </button>
-          </>
-        )}
-
-        {step === 'success' && (
-          <div className="dm-modal__success">
-            <div className="dm-modal__success-icon">✓</div>
-            <p className="dm-modal__success-text">{l.passwordUpdated}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
 }
 
 // ============================================
 // LOGIN MODAL
 // ============================================
-
-const LoginModal = ({ onClose, onForgotPassword, lang }) => {
+const LoginModal = ({ onClose, lang }) => {
   const l = TRANSLATIONS[lang]
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -536,7 +105,7 @@ const LoginModal = ({ onClose, onForgotPassword, lang }) => {
       if (loginError) throw loginError
 
       const user = data.user
-      let { slug, role = 'owner' } = user.user_metadata || {}
+      let { slug } = user.user_metadata || {}
 
       // Recovery fallback
       if (!slug) {
@@ -564,45 +133,57 @@ const LoginModal = ({ onClose, onForgotPassword, lang }) => {
   }
 
   return (
-    <div className="dm-modal-backdrop" onClick={onClose}>
-      <div className="dm-modal" onClick={e => e.stopPropagation()}>
-        <h3 className="dm-modal__title">{l.welcome}</h3>
-        <p className="dm-modal__hint">{l.welcomeSub}</p>
-        {error && <div className="dm-error">{error}</div>}
-        <form onSubmit={handleSubmit} className="dm-form">
-          <InputField
-            label={l.emailLabel}
-            type="email"
-            placeholder={l.emailPlaceholder}
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            icon="mail"
-            disabled={loading}
-            autoFocus
-          />
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 flex flex-col gap-5"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold text-gray-900">{l.welcomeBack}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <p className="text-gray-600 text-sm -mt-2">{l.loginSubtitle}</p>
+
+        {error && (
+          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>
+        )}
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <InputField
-              label={l.passwordLabel}
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              icon="lock"
-              disabled={loading}
-              rightElement={
-                <a href="#" className="dm-input-link" onClick={(e) => { e.preventDefault(); onForgotPassword() }}>
-                  {l.forgot}
-                </a>
-              }
+            <label className="block text-sm font-medium text-gray-700 mb-1">{l.emailLabel}</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder={l.emailPlaceholder}
+              required
+              autoFocus
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
             />
           </div>
-          <button type="submit" disabled={loading} className="dm-btn-primary">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{l.passwordLabel}</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold transition-all active:scale-95"
+          >
             {loading ? l.processing : l.login}
           </button>
         </form>
-        <button type="button" onClick={onClose} className="dm-modal__back">
-          {l.backToLogin}
-        </button>
       </div>
     </div>
   )
@@ -613,44 +194,23 @@ const LoginModal = ({ onClose, onForgotPassword, lang }) => {
 // ============================================
 
 const TrialSignup = () => {
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  
-  const [mode, setMode] = useState('signup')
   const [lang, setLang] = useState('en')
-  const [businessName, setBusinessName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [showResetModal, setShowResetModal] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const [successToast, setSuccessToast] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const l = TRANSLATIONS[lang]
-
-  const handleResetSuccess = () => {
-    setShowResetModal(false)
-    setSuccessToast(l.passwordUpdated)
-    setTimeout(() => setSuccessToast(null), 4000)
-  }
-
-  // Pre-fill business name from URL
-  useEffect(() => {
-    const nameParam = searchParams.get('name')
-    if (nameParam) setBusinessName(decodeURIComponent(nameParam))
-  }, [searchParams])
 
   // Auth state listener for redirects
   useEffect(() => {
     const { subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event !== 'SIGNED_IN' || !session?.user) return
-      
-      const user = session.user
-      let { slug, role = 'owner' } = user.user_metadata || {}
 
-      // Self-healing slug recovery
+      const user = session.user
+      let { slug } = user.user_metadata || {}
+
+      // Check if user already has a business
       if (!slug) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -674,19 +234,18 @@ const TrialSignup = () => {
         }
       }
 
-      const redirectPath = slug 
-        ? role === 'customer' ? `/${slug}/menu`
-          : role === 'staff' ? `/${slug}/staff/dashboard`
-          : `/${slug}/owner/summary`
-        : '/admin'
-
-      window.location.replace(redirectPath)
+      if (slug) {
+        window.location.replace(`/${slug}/owner/summary`)
+      } else {
+        // First time login - show onboarding
+        setShowOnboarding(true)
+      }
     })
 
     return () => subscription?.unsubscribe()
   }, [])
 
-  const generateSlug = (name) => 
+  const generateSlug = (name) =>
     name.toLowerCase().trim()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
@@ -703,18 +262,9 @@ const TrialSignup = () => {
       })
       if (oauthError) throw oauthError
     } catch (err) {
-      setError(err.message || 'Google login failed')
+      setError(err.message || 'Google sign-in failed')
       setLoading(false)
     }
-  }
-
-  const handleSignup = (e) => {
-    e.preventDefault()
-    setError(null)
-    if (!businessName.trim()) { setError('Please enter a business name'); return }
-    if (password.length < 8) { setError('Password must be at least 8 characters'); return }
-    if (!email.trim()) { setError('Please enter your email'); return }
-    setShowOnboarding(true)
   }
 
   const handleOnboardingComplete = async (formData) => {
@@ -722,47 +272,120 @@ const TrialSignup = () => {
     setError(null)
 
     try {
-      const slug = generateSlug(formData.businessName)
-      if (!slug) throw new Error('Please enter a valid business name')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { business_name: formData.businessName, slug, role: 'owner', onboarding: formData } }
-      })
+      const businessName = formData.businessName || 'My Business'
+      const slug = generateSlug(businessName)
+      if (!slug) throw new Error('Invalid business name')
 
-      if (authError) throw authError
-      if (!authData.user) throw new Error('Failed to create user')
-
+      const businessId = crypto.randomUUID()
       const trialEndsAt = new Date()
       trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
-      const businessId = crypto.randomUUID()
+      // Find template business (owned by hikaribrandan3@gmail.com or flagged as template)
+      const { data: templateBranding } = await supabase
+        .from('branding')
+        .select('*')
+        .eq('is_template', true)
+        .single()
 
-      await supabase.from('branding').insert({
-        business_id: businessId,
-        user_id: authData.user.id,
-        business_name: businessName,
-        slug,
-        trial_ends_at: trialEndsAt.toISOString(),
-        language: 'es',
-        app_config: {
+      if (templateBranding) {
+        // Clone from template business
+        const templateBusinessId = templateBranding.business_id
+
+        // Clone menu items
+        const { data: menuItems } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('business_id', templateBusinessId)
+
+        if (menuItems && menuItems.length > 0) {
+          const clonedMenuItems = menuItems.map(item => ({
+            ...item,
+            id: crypto.randomUUID(),
+            business_id: businessId
+          }))
+          await supabase.from('menu_items').insert(clonedMenuItems)
+        }
+
+        // Clone categories
+        const { data: categories } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('business_id', templateBusinessId)
+
+        if (categories && categories.length > 0) {
+          const clonedCategories = categories.map(cat => ({
+            ...cat,
+            id: crypto.randomUUID(),
+            business_id: businessId
+          }))
+          await supabase.from('categories').insert(clonedCategories)
+        }
+
+        // Create branding with cloned app_config
+        const clonedAppConfig = {
+          ...templateBranding.app_config,
           businessInfo: {
             businessType: formData.businessType,
             duration: formData.duration,
             serviceType: formData.serviceType,
             socialMedia: formData.socialMedia,
             priorAppUsage: formData.priorAppUsage,
-            eventsInfo: formData.events
-          },
-          externalOrdering: {},
-          payments: {},
-          notifications: {},
-          businessCurrency: 'ARS'
+            eventsInfo: formData.events,
+            phoneNumber: formData.phoneNumber
+          }
         }
-      }).catch(console.error)
 
-      setTenantStoragePrefix(authData.user.id)
+        await supabase.from('branding').insert({
+          business_id: businessId,
+          user_id: user.id,
+          business_name: businessName,
+          slug,
+          trial_ends_at: trialEndsAt.toISOString(),
+          language: 'es',
+          app_config: clonedAppConfig
+        })
+      } else {
+        // Fallback: create blank business if template not found
+        await supabase.from('branding').insert({
+          business_id: businessId,
+          user_id: user.id,
+          business_name: businessName,
+          slug,
+          trial_ends_at: trialEndsAt.toISOString(),
+          language: 'es',
+          app_config: {
+            businessInfo: {
+              businessType: formData.businessType,
+              duration: formData.duration,
+              serviceType: formData.serviceType,
+              socialMedia: formData.socialMedia,
+              priorAppUsage: formData.priorAppUsage,
+              eventsInfo: formData.events,
+              phoneNumber: formData.phoneNumber
+            },
+            externalOrdering: {},
+            payments: {},
+            notifications: {},
+            businessCurrency: 'ARS'
+          }
+        })
+      }
+
+      // Create language_settings entry
+      await supabase.from('language_settings').insert({
+        business_id: businessId,
+        language: 'es'
+      })
+
+      // Update auth user
+      await supabase.auth.updateUser({
+        data: { slug, business_id: businessId, role: 'owner' }
+      })
+
+      setTenantStoragePrefix(businessId)
       window.location.href = `/${slug}/owner/summary`
 
     } catch (err) {
@@ -773,230 +396,102 @@ const TrialSignup = () => {
     }
   }
 
-  const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password })
-      if (loginError) throw loginError
-
-      const user = data.user
-      let { slug } = user?.user_metadata || {}
-
-      // Recovery fallback
-      if (!slug) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('business_id')
-          .eq('id', user.id)
-          .single()
-
-        if (profile?.business_id) {
-          const { data: branding } = await supabase
-            .from('branding')
-            .select('slug')
-            .eq('business_id', profile.business_id)
-            .single()
-          if (branding?.slug) slug = branding.slug
-        }
-      }
-
-      window.location.replace(slug ? `/${slug}/owner/summary` : '/admin')
-
-    } catch (err) {
-      setError(err.message || 'Login failed')
-      setLoading(false)
-    }
-  }
-
   const cycleLang = () => {
     setLang(prev => prev === 'en' ? 'es' : prev === 'es' ? 'pt' : 'en')
   }
 
-  const focusEmail = () => {
-    document.querySelector('input[type="email"]')?.focus()
-  }
-
-  const switchMode = (newMode) => {
-    setMode(newMode)
-    setError(null)
-  }
-
-  const isSignup = mode === 'signup'
-
   return (
-    <>
-      {showResetModal && (
-        <ForgotPasswordModal
-          onClose={() => setShowResetModal(false)}
-          onSuccess={handleResetSuccess}
-          lang={lang}
-        />
-      )}
-      {showLoginModal && (
-        <LoginModal
-          onClose={() => setShowLoginModal(false)}
-          onForgotPassword={() => { setShowLoginModal(false); setShowResetModal(true) }}
-          lang={lang}
-        />
-      )}
-      {successToast && <div className="dm-toast">{successToast}</div>}
-      <HeroBackground />
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* Hero Section */}
+      <section
+        className="h-[530px] min-h-[400px] w-full bg-cover bg-center flex flex-col items-center justify-center px-4 text-center relative overflow-hidden"
+        style={{
+          backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuB-P3U7v1O8MTwyyyOSCbZsMfSkvEXUg6v3oTiwqjE9VFKgUPfgJTmcimbn4eEKypIfL14gJ8pGbVv36LP0HRwMpVaMoAQKQTq1vdPLxLXUpRpsF7Ieas5qWn7aXmJDiT8NUktgSNzOER9YgM_2ArhxwhKW6F12KMIY6OyMEu_eXMGgO3QgetRwZ7QywBIKvgowlTOGBcniDH5EfalhhZ9LMyaq72B4rvOdPCNy-cg_xbXdYIjqHJ8CR7kFTgbLAfnq8uOyGK-scA')"
+        }}
+      >
+        <div className="absolute inset-0 bg-black/60 z-0" />
+        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
+          <h1 style={{ color: '#ffffff' }} className="text-4xl md:text-5xl font-bold drop-shadow-lg leading-tight">
+            {l.headline}
+          </h1>
+          <p style={{ color: '#ffffff' }} className="text-lg md:text-xl drop-shadow-md">
+            {l.subheadline}
+          </p>
+        </div>
+      </section>
 
       {/* Language Switcher */}
-      <button onClick={cycleLang} className="lang-switcher">
-        <Icon name="language" size={18} />
+      <button
+        onClick={cycleLang}
+        className="fixed top-4 right-4 bg-gray-600 hover:bg-gray-700 text-white rounded-full px-4 py-2 flex items-center gap-2 text-sm font-medium transition-colors z-40"
+      >
+        <span>🌐</span>
         {lang.toUpperCase()}
       </button>
 
-      {/* Navigation */}
-      <header className={`dm-nav ${!isSignup ? 'dm-nav--centered' : ''}`}>
-        <NavBrand />
-        {isSignup && (
-          <button onClick={() => switchMode('login')} className="dm-nav__link">
-            {l.login}
-          </button>
-        )}
-      </header>
-
-      {/* Main Content */}
-      <main className="dm-main">
-        <div className={`dm-grid ${!isSignup ? 'dm-grid--single' : ''}`}>
-          
-          {/* Headline Section */}
-          <div className="dm-text-center">
-            <h1 className={`dm-h1 ${!isSignup ? 'dm-h1--small' : ''}`} style={{ whiteSpace: 'pre-line', color: '#ffffff' }}>
-              {isSignup ? (
-                <>
-                  <span style={{ color: '#ffffff' }}>{l.headlineBrand}</span>
-                  <span style={{ color: '#ffffff' }}>{l.headlinePrefix}</span>
-                  <span className="dm-h1__accent">{l.headlineAccent}</span>
-                  <span style={{ color: '#ffffff' }}>{l.headlineSuffix}</span>
-                </>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#ffffff' }}>{l.welcomeBrand}</span>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{l.welcomeSub}</span>
-                </div>
-              )}
-            </h1>
-            {isSignup ? (
-              <>
-                <p className="dm-p dm-p--light">{l.subheadline}</p>
-                <div className="dm-features">
-                  <FeatureItem icon="menu" text={l.liveMenus} />
-                  <FeatureItem icon="bolt" text={l.instantCheckout} />
-                  <FeatureItem icon="groups" text={l.creatorLoop} />
-                </div>
-              </>
-            ) : null}
+      {/* Card Section */}
+      <main className="flex flex-col items-center px-4 -mt-32 relative z-20 pb-8">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 md:p-8 flex flex-col gap-6">
+          <div className="text-center flex flex-col gap-2">
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{l.getStarted}</h2>
+            <p className="text-gray-700 text-sm">{l.signupSubtitle}</p>
           </div>
 
-          {/* Form Card */}
-          <div className="dm-glass-wrapper">
-            <div className="dm-glass-card">
-              <div className="dm-glass-card__header">
-                <h2 className="dm-h2">{isSignup ? l.createAccount : l.welcome}</h2>
-                {isSignup && <p className="dm-glass-card__subtitle">{l.joinNetwork}</p>}
-              </div>
+          {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
 
-              {error && <div className="dm-error">{error}</div>}
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full min-h-12 bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white rounded-full flex items-center justify-center gap-2 font-semibold transition-all duration-200 active:scale-95 shadow-sm"
+          >
+            <GoogleIcon size={18} />
+            {loading ? 'Processing...' : l.signupGoogle}
+          </button>
 
-              <form onSubmit={isSignup ? handleSignup : handleLogin} className="dm-form">
-                {isSignup && (
-                  <InputField
-                    label={l.businessName}
-                    type="text"
-                    placeholder={l.businessPlaceholder}
-                    value={businessName}
-                    onChange={e => setBusinessName(e.target.value)}
-                    icon="storefront"
-                    disabled={loading}
-                  />
-                )}
+          <div className="text-center border-t border-gray-200 pt-4">
+            <p className="text-gray-700 text-sm">
+              {l.haveAccount}{' '}
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="text-green-600 font-semibold hover:text-green-700"
+              >
+                {l.login}
+              </button>
+            </p>
+          </div>
 
-                <InputField
-                  label={l.emailLabel}
-                  type="email"
-                  placeholder={l.emailPlaceholder}
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  icon="mail"
-                  disabled={loading}
-                  autoFocus={!isSignup}
-                />
-
-                <div>
-                  <InputField
-                    label={l.passwordLabel}
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    icon="lock"
-                    disabled={loading}
-                    rightElement={isSignup ? (
-                      <a href="#" className="dm-input-link" onClick={(e) => { e.preventDefault(); setShowLoginModal(true) }}>
-                        {l.alreadyHaveAccount}
-                      </a>
-                    ) : (
-                      <a href="#" className="dm-input-link" onClick={(e) => { e.preventDefault(); setShowResetModal(true) }}>
-                        {l.forgot}
-                      </a>
-                    )}
-                  />
-                  {isSignup && <PasswordStrength password={password} labels={l} />}
-                </div>
-
-                <button type="submit" disabled={loading} className="dm-btn-primary">
-                  {loading ? l.processing : isSignup ? l.startFreeTrial : l.login}
-                </button>
-              </form>
-
-              <SocialButtons 
-                onGoogle={handleGoogleLogin} 
-                onEmail={focusEmail} 
-                labels={l} 
-                loading={loading}
-              />
-
-              {!isSignup && (
-                <div className="dm-footer">
-                  <p className="dm-footer__text">
-                    {l.newHere}{' '}
-                    <a href="#" onClick={(e) => { e.preventDefault(); switchMode('signup') }} className="dm-footer__link">
-                      {l.signUp}
-                    </a>
-                  </p>
-                </div>
-              )}
-
-              <div className="dm-footer" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '20px', marginBottom: isSignup ? '80px' : '0' }}>
-                <p className="dm-footer__text">
-                  {l.needHelp}{' '}
-                  <a href="https://wa.me/543512122600?text=I need help with FoodSpot" target="_blank" rel="noopener noreferrer" className="dm-footer__link">
-                    {l.contactSupport}
-                  </a>
-                </p>
-              </div>
-
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '20px', paddingTop: '16px', textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
-                📍 Córdoba, Capital, Argentina
-              </div>
-            </div>
-
-            {isSignup && <FloatingBadge number={l.trialDays} text={l.trialText} />}
+          <div className="pt-4 flex justify-center">
+            <a
+              href="https://wa.me/543512122600?text=I need help with FoodSpot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-green-600 hover:text-green-700 text-sm font-medium"
+            >
+              <span className="underline underline-offset-2">{l.needHelp}? {l.contactSupport}</span>
+            </a>
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="mt-auto w-full bg-gray-50 border-t border-gray-200 py-6 px-4 text-center">
+        <p className="text-gray-900 font-semibold text-sm mb-2">FoodSpot Mobile</p>
+        <p className="text-gray-700 text-xs">© 2025 FoodSpot Mobile. All rights reserved.</p>
+        <p className="text-gray-700 text-xs mt-1">📍 {l.location}</p>
+      </footer>
 
       <OnboardingModal
         isOpen={showOnboarding}
         onComplete={handleOnboardingComplete}
       />
-    </>
+
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          lang={lang}
+        />
+      )}
+    </div>
   )
 }
 

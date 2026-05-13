@@ -6,17 +6,19 @@ import { translations } from '../utils/translations';
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-    const { tenantData, businessId } = useTenant();
+    const { tenantData, businessId, refreshTenantData } = useTenant();
     const isLocked = useRef(false);
     const lockTimer = useRef(null);
-    const dbLangLoaded = useRef(false);
 
     // 🛡️ PERSONAL TRACK: Load staff preference from local storage if it exists
-    // Otherwise fall back to tenantData.language (legacy) until language_settings loads
     const [lang, setLang] = useState(() => {
         const staffPref = localStorage.getItem('fs_staff_lang');
         if (staffPref) return staffPref;
-        return tenantData?.language || 'en';
+
+        // Load owner preference from language_settings table (will sync via effect below)
+        const initial = 'en';
+        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (will sync from DB)`);
+        return initial;
     });
 
     // 🔄 Fetch language from language_settings table on mount
@@ -31,14 +33,30 @@ export const LanguageProvider = ({ children }) => {
                 .maybeSingle();
 
             if (!error && data?.language) {
-                console.log(`[LanguageContext] 📡 Loaded from language_settings: ${data.language}`);
+                console.log(`[LanguageContext] 📡 Loaded from DB: ${data.language}`);
                 setLang(data.language);
             }
-            dbLangLoaded.current = true;
         };
 
         fetchLanguage();
     }, [businessId]);
+
+    // 🔄 GLOBAL TRACK SYNC: Only sync from DB if there is NO staff preference locked in
+    useEffect(() => {
+        const staffPref = localStorage.getItem('fs_staff_lang');
+        if (staffPref) {
+            if (lang !== staffPref) setLang(staffPref);
+            return; // Staff preference overrides Global Sync
+        }
+
+        if (!tenantData?.language) return;
+
+        if (tenantData.language !== lang) {
+            if (isLocked.current) return;
+            console.log(`[LanguageContext] 🔄 Global Syncing to DB language: ${tenantData.language}`);
+            setLang(tenantData.language);
+        }
+    }, [tenantData?.language, lang]);
 
     const t = (key) => {
         if (!translations[key]) {
@@ -66,16 +84,19 @@ export const LanguageProvider = ({ children }) => {
             if (lockTimer.current) clearTimeout(lockTimer.current);
 
             try {
-                // Upsert into language_settings table, conflicting on business_id
-                const { error } = await supabase
+                if (!businessId) {
+                    console.warn('[LanguageContext] ⚠️ No businessId, skipping DB update');
+                    return;
+                }
+
+                // Upsert into language_settings table
+                const { error, data } = await supabase
                     .from('language_settings')
-                    .upsert(
-                        { business_id: businessId, language: newLang },
-                        { onConflict: 'business_id' }
-                    );
+                    .upsert({ business_id: businessId, language: newLang })
+                    .eq('business_id', businessId);
 
                 if (error) {
-                    console.error('[LanguageContext] ❌ Language update failed:', error.message);
+                    console.error('[LanguageContext] ❌ Language update failed:', error.message, error.details);
                 } else {
                     console.log('[LanguageContext] ✅ Language saved to DB:', { businessId, language: newLang });
                 }
