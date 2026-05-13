@@ -354,7 +354,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                     </div>
                 </section>
 
-                {/* Hero Banner - Argentina World Cup */}
+                {/* Hero Banner - Argentina World Cup Champion */}
                 {promoConfig.enabled && (
                     <section className="ose-hero ose-hero-worldcup" style={{
                         background: 'linear-gradient(135deg, #1C5AA0 0%, #4A90E2 50%, #87CEEB 100%)',
@@ -362,63 +362,79 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         position: 'relative',
                         overflow: 'hidden',
                         padding: '16px',
-                        minHeight: '120px'
+                        minHeight: '130px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
                     }}>
                         {/* Full visible Argentina flag */}
                         <div style={{
                             position: 'absolute',
-                            top: -10,
-                            right: -15,
-                            fontSize: '100px',
+                            top: -15,
+                            right: 60,
+                            fontSize: '110px',
                             lineHeight: 1,
                             zIndex: 0,
-                            opacity: 0.8
+                            opacity: 0.7
                         }}>
                             🇦🇷
                         </div>
 
-                        <div className="ose-hero-content ose-hero-content-worldcup" style={{ position: 'relative', zIndex: 1 }}>
+                        <div style={{ position: 'relative', zIndex: 1, flex: 1 }}>
                             <h2 style={{
-                                fontSize: '18px',
+                                fontSize: '24px',
                                 fontWeight: 900,
                                 color: '#FFFFFF',
-                                margin: '0 0 6px 0',
-                                textShadow: '2px 2px 4px rgba(28, 90, 160, 0.3), -1px -1px 2px rgba(255, 255, 255, 0.2)',
-                                letterSpacing: '0.5px'
+                                margin: '0 0 8px 0',
+                                textShadow: '3px 3px 6px rgba(28, 90, 160, 0.5)',
+                                letterSpacing: '1.5px',
+                                lineHeight: 1.1
                             }}>
-                                {promoConfig.text}
+                                ¡VAMOS VAMOS<br/>ARGENTINA!
                             </h2>
 
                             <div style={{
-                                fontSize: '13px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '16px',
                                 fontWeight: 800,
                                 color: '#FFD700',
-                                marginBottom: '10px',
-                                textShadow: '1px 1px 3px rgba(28, 90, 160, 0.3)'
+                                marginBottom: '12px',
+                                textShadow: '2px 2px 4px rgba(28, 90, 160, 0.4)',
+                                backgroundColor: 'rgba(255, 215, 0, 0.15)',
+                                padding: '6px 12px',
+                                borderRadius: '12px',
+                                width: 'fit-content'
                             }}>
-                                ⏱️ {countdown} DAYS
+                                <span>⏱️</span>
+                                <span>{countdown}</span>
+                                <span>DAYS</span>
                             </div>
 
                             <button className="ose-hero-cta ose-hero-cta-worldcup" onClick={handleClaimPromo} style={{
                                 background: '#FFD700',
                                 color: '#1C5AA0',
                                 fontWeight: 900,
-                                fontSize: '13px',
-                                padding: '10px 24px',
-                                borderRadius: '20px',
-                                border: '2px solid #fff',
-                                boxShadow: '0 4px 16px rgba(255, 215, 0, 0.4)',
+                                fontSize: '14px',
+                                padding: '11px 28px',
+                                borderRadius: '22px',
+                                border: '3px solid #fff',
+                                boxShadow: '0 6px 20px rgba(255, 215, 0, 0.5)',
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
+                                letterSpacing: '1px',
+                                cursor: 'pointer',
+                                transition: 'transform 0.2s'
                             }}>
                                 {promoConfig.cta}
                             </button>
                         </div>
-                        <div className="ose-hero-image">
+
+                        <div style={{ position: 'relative', zIndex: 1, marginLeft: '10px' }}>
                             {promoConfig.image ? (
-                                <img src={promoConfig.image} alt="World Cup" />
+                                <img src={promoConfig.image} alt="World Cup" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
                             ) : (
-                                <div style={{ fontSize: '70px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
+                                <div style={{ fontSize: '80px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
                             )}
                         </div>
                     </section>
