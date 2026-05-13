@@ -519,16 +519,18 @@ const TrialSignup = () => {
             <GlobeIcon size={16} />
             Language
           </a>
-          <a
-            href="https://www.instagram.com/foodspotmobile?igsh=MXBvZjk0dWJjcGR0OA%3D%3D&utm_source=qr"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-emerald-700 font-sans text-sm cursor-pointer hover:text-emerald-800 transition-colors flex items-center gap-1"
-          >
-            <InstagramIcon size={16} />
-            Instagram
-          </a>
         </nav>
+
+        {/* Instagram */}
+        <a
+          href="https://www.instagram.com/foodspotmobile?igsh=MXBvZjk0dWJjcGR0OA%3D%3D&utm_source=qr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-gray-600 hover:text-emerald-700 transition-colors flex items-center gap-1 font-sans text-sm"
+        >
+          <InstagramIcon size={16} />
+          Instagram
+        </a>
 
         {/* Custom Additional Info & Copyright */}
         <div className="flex flex-col gap-1 items-center">
