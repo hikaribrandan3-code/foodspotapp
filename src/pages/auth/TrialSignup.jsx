@@ -157,7 +157,7 @@ const LoginModal = ({ onClose, lang }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 md:p-8 flex flex-col gap-5"
+        className="bg-white rounded-[1rem] shadow-2xl w-full max-w-md p-6 md:p-8 flex flex-col gap-5"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -180,7 +180,7 @@ const LoginModal = ({ onClose, lang }) => {
               placeholder={l.emailPlaceholder}
               required
               autoFocus
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+              className="w-full px-4 py-3 rounded-[0.75rem] border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
             />
           </div>
           <div>
@@ -191,7 +191,7 @@ const LoginModal = ({ onClose, lang }) => {
               onChange={e => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
+              className="w-full px-4 py-3 rounded-[0.75rem] border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
             />
           </div>
           <button
@@ -432,10 +432,10 @@ const TrialSignup = () => {
           {/* Decorative Background Elements for Depth */}
           <div className="absolute inset-0 z-0 bg-black/60" />
           <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
-            <h1 className="font-display text-5xl font-bold text-white drop-shadow-md tracking-tight">
+            <h1 style={{ color: '#ffffff' }} className="font-display text-5xl font-bold drop-shadow-md tracking-tight">
               {l.headline}
             </h1>
-            <p className="font-sans text-lg text-emerald-100 max-w-xl">
+            <p style={{ color: '#baeed1' }} className="font-sans text-lg max-w-xl">
               {l.subheadline}
             </p>
           </div>
@@ -443,14 +443,14 @@ const TrialSignup = () => {
 
         {/* Interactive Card Section */}
         <section className="flex flex-col items-center px-4 -mt-[132px] relative z-20 pb-6">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-[0px_10px_15px_-3px_rgba(17,24,39,0.1)] p-6 flex flex-col gap-6 transition-transform duration-300 hover:shadow-[0px_15px_20px_-3px_rgba(17,24,39,0.15)]">
+          <div className="w-full max-w-md bg-white rounded-[0.75rem] shadow-[0px_10px_15px_-3px_rgba(17,24,39,0.1)] p-6 flex flex-col gap-6 transition-transform duration-300 hover:shadow-[0px_15px_20px_-3px_rgba(17,24,39,0.15)]">
             <div className="text-center flex flex-col gap-1">
               <h2 className="font-display text-3xl font-bold text-gray-900">{l.getStarted}</h2>
               <p className="font-sans text-base text-gray-600">{l.signupSubtitle}</p>
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>
+              <div className="bg-red-50 text-red-700 p-3 rounded-[0.5rem] text-sm">{error}</div>
             )}
 
             <div className="flex flex-col gap-3 mt-1">
@@ -496,19 +496,19 @@ const TrialSignup = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-emerald-50 flex flex-col items-center gap-6 py-4 px-4 text-center mt-auto border-t border-transparent">
+      <footer className="w-full bg-black flex flex-col items-center gap-6 py-4 px-4 text-center mt-auto border-t border-transparent">
         {/* Brand */}
-        <div className="font-display text-2xl font-semibold text-emerald-700">FoodSpot Mobile</div>
+        <div className="font-display text-2xl font-semibold text-white">FoodSpot Mobile</div>
 
         {/* Links */}
         <nav className="flex flex-wrap justify-center gap-x-6 gap-y-1">
-          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Privacy</a>
-          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Terms</a>
-          <a href="#" className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors">Location</a>
+          <a href="#" className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors">Privacy</a>
+          <a href="#" className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors">Terms</a>
+          <a href="#" className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors">Location</a>
           <a
             href="#"
             onClick={(e) => { e.preventDefault(); cycleLang(); }}
-            className="text-gray-600 font-sans text-sm cursor-pointer hover:text-emerald-700 transition-colors flex items-center gap-1"
+            className="text-gray-400 font-sans text-sm cursor-pointer hover:text-white transition-colors flex items-center gap-1"
           >
             <GlobeIcon size={16} />
             Language
@@ -517,11 +517,11 @@ const TrialSignup = () => {
 
         {/* Custom Additional Info & Copyright */}
         <div className="flex flex-col gap-1 items-center">
-          <div className="text-gray-600 font-sans text-sm flex items-center gap-1">
+          <div className="text-gray-400 font-sans text-sm flex items-center gap-1">
             <LocationIcon size={16} />
             {l.location}
           </div>
-          <div className="text-emerald-800 font-sans text-sm">© 2024 FoodSpot Mobile. All rights reserved.</div>
+          <div className="text-gray-500 font-sans text-sm">© 2024 FoodSpot Mobile. All rights reserved.</div>
         </div>
       </footer>
 
