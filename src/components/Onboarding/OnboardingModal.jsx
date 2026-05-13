@@ -161,6 +161,7 @@ const ALL_STEPS = [...STEPS, ...LAST_STEPS];
 export default function OnboardingModal({ onComplete, isOpen }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const [formData, setFormData] = useState({
     businessName: '',
     businessType: '',
@@ -171,12 +172,37 @@ export default function OnboardingModal({ onComplete, isOpen }) {
     events: ''
   });
 
+  // Check if current field is filled
+  const isCurrentFieldFilled = () => {
+    const currentFieldId = ALL_STEPS[currentStep].id;
+    return formData[currentFieldId] && formData[currentFieldId].trim() !== '';
+  };
+
+  // Check if all fields are filled
+  const areAllFieldsFilled = () => {
+    return Object.values(formData).every(value => value && value.trim() !== '');
+  };
+
   if (!isOpen) return null;
 
   const handleNext = () => {
+    // Validate current field is filled before proceeding
+    if (!isCurrentFieldFilled()) {
+      setValidationError('Por favor completa este campo');
+      setTimeout(() => setValidationError(''), 2000);
+      return;
+    }
+
     if (currentStep < ALL_STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
+      setValidationError('');
     } else {
+      // Validate ALL fields before showing success
+      if (!areAllFieldsFilled()) {
+        setValidationError('Por favor completa todos los campos');
+        setTimeout(() => setValidationError(''), 2000);
+        return;
+      }
       setShowSuccess(true);
     }
   };
@@ -199,6 +225,12 @@ export default function OnboardingModal({ onComplete, isOpen }) {
   };
 
   const handleFinalSuccess = () => {
+    // Final validation before creating account
+    if (!areAllFieldsFilled()) {
+      setValidationError('Por favor completa todos los campos de onboarding');
+      setTimeout(() => setValidationError(''), 2000);
+      return;
+    }
     onComplete(formData);
   };
 
@@ -361,22 +393,34 @@ export default function OnboardingModal({ onComplete, isOpen }) {
               Atrás
             </button>
 
-            <button
-              onClick={handleNext}
-              className="flex items-center gap-2 px-6 py-2 text-xs font-black uppercase tracking-widest text-white transition-all rounded-xl bg-emerald-600 border-2 border-white hover:bg-emerald-700 active:scale-95 shadow-md shadow-black/10 outline-none"
-            >
-              {currentStep === ALL_STEPS.length - 1 ? (
-                <>
-                  Continuar
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </>
-              ) : (
-                <>
-                  Siguiente
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </>
+            <div className="flex flex-col items-end gap-2">
+              {validationError && (
+                <p className="text-xs text-red-600 font-semibold animate-pulse">
+                  {validationError}
+                </p>
               )}
-            </button>
+              <button
+                onClick={handleNext}
+                disabled={!isCurrentFieldFilled()}
+                className={`flex items-center gap-2 px-6 py-2 text-xs font-black uppercase tracking-widest transition-all rounded-xl border-2 outline-none ${
+                  isCurrentFieldFilled()
+                    ? 'bg-emerald-600 text-white border-white hover:bg-emerald-700 active:scale-95 shadow-md shadow-black/10 cursor-pointer'
+                    : 'bg-gray-200 text-gray-400 border-gray-200 cursor-not-allowed'
+                }`}
+              >
+                {currentStep === ALL_STEPS.length - 1 ? (
+                  <>
+                    Continuar
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </>
+                ) : (
+                  <>
+                    Siguiente
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>

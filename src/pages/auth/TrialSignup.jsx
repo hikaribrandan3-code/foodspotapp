@@ -623,13 +623,13 @@ const TrialSignup = () => {
     setError(null)
 
     try {
-      const slug = generateSlug(businessName)
+      const slug = generateSlug(formData.businessName)
       if (!slug) throw new Error('Please enter a valid business name')
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { business_name: businessName, slug, role: 'owner', onboarding: formData } }
+        options: { data: { business_name: formData.businessName, slug, role: 'owner', onboarding: formData } }
       })
 
       if (authError) throw authError

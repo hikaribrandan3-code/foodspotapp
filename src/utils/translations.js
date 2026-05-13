@@ -883,6 +883,11 @@ export const translations = {
     vamosArgentina: { en: "¡Vamos Vamos Argentina! 🇦🇷", es: "¡Vamos Vamos Argentina! 🇦🇷", pt: "¡Vamos Vamos Argentina! 🇦🇷" },
     daysUntilWorldCup: { en: "days until FIFA World Cup 2026 ⚽", es: "días hasta la Copa del Mundo 2026 ⚽", pt: "dias até a Copa do Mundo 2026 ⚽" },
     orderNow: { en: "Order Now", es: "Pedir Ahora", pt: "Pedir Agora" },
-    worldCup: { en: "World Cup", es: "Copa del Mundo", pt: "Copa do Mundo" }
+    worldCup: { en: "World Cup", es: "Copa del Mundo", pt: "Copa do Mundo" },
+    // OrderStatusEmpty - UI Text
+    search_placeholder: { en: 'Search for burgers, fries...', es: 'Busca hamburguesas, papas...', pt: 'Procure por hambúrgueres, batatas...' },
+    browse_categories: { en: 'Browse Categories', es: 'Explorar Categorías', pt: 'Explorar Categorias' },
+    recommended_for_you: { en: 'Recommended for you', es: 'Recomendado para ti', pt: 'Recomendado para você' },
+    see_more: { en: 'See More', es: 'Ver Más', pt: 'Ver Mais' }
 };
 
