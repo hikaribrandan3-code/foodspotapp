@@ -236,14 +236,26 @@ export default function OnboardingModal({ onComplete, isOpen }) {
     setFormData(prev => ({ ...prev, [ALL_STEPS[currentStep].id]: e.target.value }));
   };
 
-  const handleFinalSuccess = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const handleFinalSuccess = async () => {
     // Final validation before creating account
     if (!areAllFieldsFilled()) {
       setValidationError('Por favor completa todos los campos de onboarding');
       setTimeout(() => setValidationError(''), 2000);
       return;
     }
-    onComplete(formData);
+    setIsSubmitting(true);
+    setSubmitError('');
+    try {
+      await onComplete(formData);
+    } catch (err) {
+      console.error('[OnboardingModal] onComplete failed:', err);
+      setSubmitError(err?.message || 'Error al crear la cuenta. Intenta de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (showSuccess) {
@@ -260,11 +272,19 @@ export default function OnboardingModal({ onComplete, isOpen }) {
           <p className="text-gray-500 mb-8 max-w-sm text-sm">
             Tu perfil ha sido configurado correctamente. Haz clic abajo para finalizar y empezar.
           </p>
+          {submitError && (
+            <p className="text-red-600 text-sm font-semibold mb-4 bg-red-50 px-4 py-3 rounded-xl">
+              {submitError}
+            </p>
+          )}
           <button
             onClick={handleFinalSuccess}
-            className="w-full py-4 bg-emerald-600 text-white font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 active:scale-[0.98] outline-none"
+            disabled={isSubmitting}
+            className={`w-full py-4 text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-200 active:scale-[0.98] outline-none ${
+              isSubmitting ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
           >
-            Abrir Negocio
+            {isSubmitting ? 'Creando tu negocio...' : 'Abrir Negocio'}
           </button>
         </div>
       </div>

@@ -520,13 +520,16 @@ const TrialSignup = () => {
   const handleOnboardingComplete = async (formData) => {
     setLoading(true)
     setError(null)
+    console.log('[Onboarding] Starting account creation...')
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('[Onboarding] Auth user:', user?.id || 'NONE')
       if (!user) throw new Error('Not authenticated')
 
       const businessName = formData.businessName || user.user_metadata?.temp_business_name || 'My Business'
       const slug = generateSlug(businessName)
+      console.log('[Onboarding] Business name:', businessName, '| Slug:', slug)
       if (!slug) throw new Error('Invalid business name')
 
       const businessId = crypto.randomUUID()
@@ -538,15 +541,21 @@ const TrialSignup = () => {
       localStorage.removeItem('fs_business_id')
 
       // Create businesses row (required for events/orders FK constraints)
+      console.log('[Onboarding] Inserting businesses row...')
       const { error: bizError } = await supabase.from('businesses').insert({
         id: businessId,
         slug,
         name: businessName,
         owner_id: user.id
       })
-      if (bizError) console.error('[Onboarding] businesses insert failed:', bizError)
+      if (bizError) {
+        console.error('[Onboarding] businesses insert failed:', bizError)
+        throw new Error('Failed to create business record: ' + bizError.message)
+      }
+      console.log('[Onboarding] businesses row created:', businessId)
 
       // Create blank branding row (no template cloning)
+      console.log('[Onboarding] Inserting branding row...')
       const { error: brandingError } = await supabase.from('branding').insert({
         business_id: businessId,
         user_id: user.id,
@@ -571,10 +580,12 @@ const TrialSignup = () => {
       })
       if (brandingError) {
         console.error('[Onboarding] branding insert failed:', brandingError)
-        throw new Error('Failed to create business branding')
+        throw new Error('Failed to create business branding: ' + brandingError.message)
       }
+      console.log('[Onboarding] branding row created')
 
       // Create language_settings entry
+      console.log('[Onboarding] Inserting language_settings...')
       const { error: langError } = await supabase.from('language_settings').insert({
         business_id: businessId,
         language: 'es'
@@ -582,6 +593,7 @@ const TrialSignup = () => {
       if (langError) console.error('[Onboarding] language_settings insert failed:', langError)
 
       // Create tenants row
+      console.log('[Onboarding] Inserting tenants row...')
       const { error: tenantsError } = await supabase.from('tenants').insert({
         id: crypto.randomUUID(),
         venue_name: slug,
@@ -591,6 +603,7 @@ const TrialSignup = () => {
       if (tenantsError) console.error('[Onboarding] tenants insert failed:', tenantsError)
 
       // Create profiles row
+      console.log('[Onboarding] Inserting profiles row...')
       const { error: profilesError } = await supabase.from('profiles').insert({
         id: user.id,
         business_id: businessId
@@ -598,6 +611,7 @@ const TrialSignup = () => {
       if (profilesError) console.error('[Onboarding] profiles insert failed:', profilesError)
 
       // Update auth user
+      console.log('[Onboarding] Updating auth user metadata...')
       await supabase.auth.updateUser({
         data: { slug, business_id: businessId, role: 'owner' }
       })
@@ -606,9 +620,11 @@ const TrialSignup = () => {
       localStorage.setItem('fs_last_active_slug', slug)
       localStorage.setItem('fs_business_id', businessId)
       setTenantStoragePrefix(businessId)
+      console.log('[Onboarding] Redirecting to:', `/${slug}/owner/summary`)
       window.location.href = `/${slug}/owner/summary`
 
     } catch (err) {
+      console.error('[Onboarding] FATAL ERROR:', err)
       setError(err.message || 'Error creating account')
       setShowOnboarding(false)
     } finally {
