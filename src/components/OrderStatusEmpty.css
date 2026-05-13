@@ -186,6 +186,27 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+/* World Cup Edition */
+.ose-hero-worldcup {
+    min-height: 160px;
+    padding: 24px;
+    border-radius: 20px;
+    position: relative;
+}
+
+.ose-hero-decoration {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+.ose-hero-content-worldcup {
+    max-width: 70%;
+}
+
 .ose-hero-content {
     flex: 1;
     z-index: 1;
