@@ -657,7 +657,7 @@ function OwnerSummary() {
                                     {/* Mercado Pago Token Management */}
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-3">
-                                            🔐 Connect to Mercado Pago
+                                            Connect to Mercado Pago
                                         </label>
                                         <div className="space-y-3">
                                             <div className="text-xs text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 border border-emerald-200 dark:border-emerald-800">
@@ -717,7 +717,7 @@ function OwnerSummary() {
 
                                             <div className="border-t border-stone-200 dark:border-stone-700 pt-4 mt-4">
                                                 <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
-                                                    🆔 Mercado Pago User ID
+                                                    Mercado Pago User ID
                                                 </label>
                                                 <div className="text-xs text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800 mb-3">
                                                     <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">How to get your User ID:</p>

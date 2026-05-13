@@ -15,10 +15,31 @@ export const LanguageProvider = ({ children }) => {
         const staffPref = localStorage.getItem('fs_staff_lang');
         if (staffPref) return staffPref;
 
-        const initial = tenantData?.language || 'en';
-        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (tenantData: ${tenantData?.language})`);
+        // Load owner preference from language_settings table (will sync via effect below)
+        const initial = 'en';
+        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (will sync from DB)`);
         return initial;
     });
+
+    // 🔄 Fetch language from language_settings table on mount
+    useEffect(() => {
+        if (!businessId) return;
+
+        const fetchLanguage = async () => {
+            const { data, error } = await supabase
+                .from('language_settings')
+                .select('language')
+                .eq('business_id', businessId)
+                .maybeSingle();
+
+            if (!error && data?.language) {
+                console.log(`[LanguageContext] 📡 Loaded from DB: ${data.language}`);
+                setLang(data.language);
+            }
+        };
+
+        fetchLanguage();
+    }, [businessId]);
 
     // 🔄 GLOBAL TRACK SYNC: Only sync from DB if there is NO staff preference locked in
     useEffect(() => {
@@ -63,18 +84,27 @@ export const LanguageProvider = ({ children }) => {
             if (lockTimer.current) clearTimeout(lockTimer.current);
 
             try {
-                if (!tenantData?.id) return;
-                const { error } = await supabase
-                    .from('tenants')
-                    .update({ language: newLang })
-                    .eq('id', tenantData.id);
+                if (!businessId) {
+                    console.warn('[LanguageContext] ⚠️ No businessId, skipping DB update');
+                    return;
+                }
 
-                refreshTenantData();
+                // Upsert into language_settings table (business_id is UNIQUE, no .eq() needed)
+                const { error, data } = await supabase
+                    .from('language_settings')
+                    .upsert({ business_id: businessId, language: newLang });
+
+                if (error) {
+                    console.error('[LanguageContext] ❌ Language update failed:', error.message, error.details);
+                } else {
+                    console.log('[LanguageContext] ✅ Language saved to DB:', { businessId, language: newLang });
+                }
+
                 lockTimer.current = setTimeout(() => {
                     isLocked.current = false;
                 }, 1500);
             } catch (err) {
-                console.error('Owner language update failed:', err);
+                console.error('[LanguageContext] 💥 Language update crashed:', err);
                 isLocked.current = false;
             }
         } else {
