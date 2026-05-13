@@ -333,7 +333,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                     </div>
                 </section>
 
-                {/* Hero Banner - Argentina World Cup */}
+                {/* Hero Banner - Argentina World Cup with Messi */}
                 {promoConfig.enabled && (
                     <section className="ose-hero ose-hero-worldcup" style={{
                         background: 'linear-gradient(135deg, #1C5AA0 0%, #4A90E2 50%, #87CEEB 100%)',
@@ -341,44 +341,64 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         position: 'relative',
                         overflow: 'hidden'
                     }}>
-                        {/* Decorative Argentina flag pattern */}
+                        {/* Prominent Argentina flag */}
                         <div className="ose-hero-decoration" style={{
                             position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            fontSize: '120px',
-                            opacity: 0.15,
-                            lineHeight: 1
+                            top: -10,
+                            right: -10,
+                            fontSize: '180px',
+                            opacity: 0.4,
+                            lineHeight: 1,
+                            animation: 'float 3s ease-in-out infinite'
                         }}>
                             🇦🇷
                         </div>
 
-                        <div className="ose-hero-content ose-hero-content-worldcup">
+                        {/* Jersey number 10 - Messi */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 10,
+                            right: 20,
+                            fontSize: '72px',
+                            fontWeight: 900,
+                            color: 'rgba(255, 255, 255, 0.25)',
+                            lineHeight: 1,
+                            zIndex: 0
+                        }}>
+                            10
+                        </div>
+
+                        <div className="ose-hero-content ose-hero-content-worldcup" style={{ position: 'relative', zIndex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                                 <span style={{ fontSize: '28px' }}>⚽</span>
                                 <h2 className="ose-hero-title" style={{ fontSize: '26px', margin: 0 }}>{promoConfig.text}</h2>
                             </div>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: '2px 0 4px 0' }}>
+                                🌟 MESSI
+                            </p>
                             <p className="ose-hero-subtext" style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>
                                 ⏱️ {promoConfig.subtext}
                             </p>
                             <button className="ose-hero-cta ose-hero-cta-worldcup" onClick={handleClaimPromo} style={{
                                 background: '#FFD700',
                                 color: '#1C5AA0',
-                                fontWeight: 800,
-                                fontSize: '14px',
-                                padding: '12px 28px',
+                                fontWeight: 900,
+                                fontSize: '18px',
+                                padding: '14px 32px',
                                 borderRadius: '24px',
                                 border: '2px solid #fff',
-                                boxShadow: '0 4px 16px rgba(255, 215, 0, 0.4)'
+                                boxShadow: '0 4px 16px rgba(255, 215, 0, 0.4)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
                             }}>
-                                🔥 {promoConfig.cta}
+                                {promoConfig.cta}
                             </button>
                         </div>
                         <div className="ose-hero-image">
                             {promoConfig.image ? (
-                                <img src={promoConfig.image} alt="Promo" />
+                                <img src={promoConfig.image} alt="Messi" />
                             ) : (
-                                <div style={{ fontSize: '140px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
+                                <div style={{ fontSize: '140px', lineHeight: 1, textAlign: 'center' }}>👑</div>
                             )}
                         </div>
                     </section>
