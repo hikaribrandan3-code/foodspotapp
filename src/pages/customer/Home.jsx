@@ -739,7 +739,6 @@ function Home({ config: configProp }) {
                             gap: 6
                         }}
                     >
-                        <span style={{ fontSize: 10 }}>🔒</span>
                         Hidden: Admin Access
                     </button>
                 </div>

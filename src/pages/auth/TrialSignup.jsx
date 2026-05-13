@@ -537,6 +537,14 @@ const TrialSignup = () => {
       localStorage.removeItem('fs_last_active_slug')
       localStorage.removeItem('fs_business_id')
 
+      // Create businesses row (required for events/orders FK constraints)
+      const { error: bizError } = await supabase.from('businesses').insert({
+        id: businessId,
+        slug,
+        name: businessName
+      })
+      if (bizError) console.error('[Onboarding] businesses insert failed:', bizError)
+
       // Create blank branding row (no template cloning)
       const { error: brandingError } = await supabase.from('branding').insert({
         business_id: businessId,

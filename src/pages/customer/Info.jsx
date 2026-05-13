@@ -202,7 +202,7 @@ const Info = ({ config }) => {
                             style={{ ...buttonBase, background: '#22C55E' }}
                             onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
                         >
-                            🔒 Hidden: Admin Access
+                            Hidden: Admin Access
                         </button>
                     )}
 

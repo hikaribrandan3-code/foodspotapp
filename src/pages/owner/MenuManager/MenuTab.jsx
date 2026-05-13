@@ -106,7 +106,7 @@ export default function MenuTab({
       name: newRecipe.name,
       description: newRecipe.description || 'A new discovery.',
       price: Math.round(parseFloat(newRecipe.price) * 100),
-      kcal: parseInt(newRecipe.kcal) || 0,
+      calories: parseInt(newRecipe.kcal) || 0,
       image_url: newRecipe.image,
       available: true,
       featured: newRecipe.featured,

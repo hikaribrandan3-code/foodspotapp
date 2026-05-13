@@ -194,7 +194,12 @@ export default function FinancialTrackerDashboard() {
       is_recurring: !!recurring,
     };
     const { data, error } = await supabase.from('expenses').insert(newExpense).select().single();
-    if (!error && data) {
+    if (error) {
+      console.error('[Expenses] Insert failed:', error);
+      alert('Failed to save expense: ' + error.message);
+      return;
+    }
+    if (data) {
       setExpenses((prev) => [data, ...prev]);
     }
     setDesc('');
