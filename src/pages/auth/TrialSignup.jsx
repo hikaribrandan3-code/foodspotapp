@@ -56,12 +56,16 @@ const TRANSLATIONS = {
     contactSupport: 'Contact support on WhatsApp',
     location: 'Córdoba, Argentina',
     // Login modal
-    welcomeBack: 'Welcome Back',
-    loginSubtitle: 'Log in to FoodSpot OS',
-    emailLabel: 'Email Address',
-    emailPlaceholder: 'owner@restaurant.com',
+    welcomeBack: 'Welcome Back to FoodSpot!',
+    loginSubtitle: 'Your menu. Their content. Your growth.',
+    emailLabel: 'Email',
+    emailPlaceholder: 'Enter your email',
     passwordLabel: 'Password',
+    passwordPlaceholder: 'Enter your password',
     forgotPassword: 'Forgot password?',
+    logIn: 'Log In',
+    noAccount: "Don't have an account?",
+    signUp: 'Sign up',
     processing: 'Processing...',
     close: 'Close'
   },
@@ -77,12 +81,16 @@ const TRANSLATIONS = {
     contactSupport: 'Contacta a soporte en WhatsApp',
     location: 'Córdoba, Argentina',
     // Login modal
-    welcomeBack: 'Bienvenido de Nuevo',
-    loginSubtitle: 'Inicia sesión en FoodSpot OS',
-    emailLabel: 'Correo Electrónico',
-    emailPlaceholder: 'propietario@restaurante.com',
+    welcomeBack: '¡Bienvenido de Nuevo a FoodSpot!',
+    loginSubtitle: 'Tu menú. Su contenido. Tu crecimiento.',
+    emailLabel: 'Correo',
+    emailPlaceholder: 'Ingresa tu correo',
     passwordLabel: 'Contraseña',
+    passwordPlaceholder: 'Ingresa tu contraseña',
     forgotPassword: '¿Olvidaste tu contraseña?',
+    logIn: 'Iniciar Sesión',
+    noAccount: '¿No tienes una cuenta?',
+    signUp: 'Regístrate',
     processing: 'Procesando...',
     close: 'Cerrar'
   },
@@ -98,12 +106,16 @@ const TRANSLATIONS = {
     contactSupport: 'Contate o suporte no WhatsApp',
     location: 'Córdoba, Argentina',
     // Login modal
-    welcomeBack: 'Bem-vindo de Volta',
-    loginSubtitle: 'Faça login no FoodSpot OS',
+    welcomeBack: 'Bem-vindo de Volta ao FoodSpot!',
+    loginSubtitle: 'Seu cardápio. O conteúdo deles. Seu crescimento.',
     emailLabel: 'E-mail',
-    emailPlaceholder: 'proprietario@restaurante.com',
+    emailPlaceholder: 'Digite seu e-mail',
     passwordLabel: 'Senha',
+    passwordPlaceholder: 'Digite sua senha',
     forgotPassword: 'Esqueceu a senha?',
+    logIn: 'Fazer Login',
+    noAccount: 'Não tem uma conta?',
+    signUp: 'Cadastre-se',
     processing: 'Processando...',
     close: 'Fechar'
   }
@@ -112,12 +124,21 @@ const TRANSLATIONS = {
 // ============================================
 // LOGIN MODAL
 // ============================================
-const LoginModal = ({ onClose, lang }) => {
+const LoginModal = ({ onClose, lang, onLangCycle }) => {
   const l = TRANSLATIONS[lang]
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Close on Escape
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [onClose])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -157,57 +178,116 @@ const LoginModal = ({ onClose, lang }) => {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-[1rem] shadow-2xl w-full max-w-md p-6 md:p-8 flex flex-col gap-5"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900">{l.welcomeBack}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-50">
+      <div className="min-h-screen flex flex-col">
+        {/* Hero Section */}
+        <div
+          className="relative w-full h-[35vh] min-h-[280px] bg-cover bg-center"
+          style={{
+            backgroundImage: "url('https://lh3.googleusercontent.com/aida/ADBb0uhhpgNNMYRQ-lR6Vqmp2NpPewOT5p1A9awoNA1Ylqhh7qtCNsR4Ztj97n9cKjgxnny8jqrjnCJFHOAVqDHGY4jqw8IGRTtyKHvX1S9TN8lw3DqUVeMNK7djrE0ze_K09Ha28XKOyEiZyYpkK9dMBrgzSnk3rg8WW4S7QQ5SVBuG9HHNBrMPaDsQjJk7xr0vblLoi4OK_3-TjKtxQ3x02G5Ub7kstra9xXleDDMB6R3KZNvSIWGsFcOqfA')"
+          }}
+        >
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center px-4 text-center">
+            <h1 className="!text-white mb-3 drop-shadow-md text-[44.8px] font-black">
+              {l.welcomeBack}
+            </h1>
+            <p className="!text-white/90 drop-shadow-sm font-medium text-[21.6px]">
+              {l.loginSubtitle}
+            </p>
+          </div>
         </div>
-        <p className="text-gray-600 text-sm -mt-2">{l.loginSubtitle}</p>
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>
-        )}
+        {/* Main Card Content */}
+        <main className="flex-grow w-full max-w-[480px] mx-auto px-4 relative z-10 -mt-8 mb-12">
+          <div className="bg-white rounded-[0.75rem] shadow-[0px_10px_15px_-3px_rgba(17,24,39,0.1)] p-6 md:p-8">
+            <h2 className="font-display text-2xl font-semibold text-gray-900 mb-6">{l.logIn}</h2>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{l.emailLabel}</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder={l.emailPlaceholder}
-              required
-              autoFocus
-              className="w-full px-4 py-3 rounded-[0.75rem] border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
-            />
+            {error && (
+              <div className="bg-red-50 text-red-700 p-3 rounded-[0.5rem] text-sm mb-4">{error}</div>
+            )}
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              {/* Email Input */}
+              <div className="flex flex-col gap-1">
+                <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-email">{l.emailLabel}</label>
+                <input
+                  id="login-email"
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder={l.emailPlaceholder}
+                  required
+                  autoFocus
+                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                />
+              </div>
+
+              {/* Password Input */}
+              <div className="flex flex-col gap-1">
+                <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-password">{l.passwordLabel}</label>
+                <input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder={l.passwordPlaceholder}
+                  required
+                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                />
+              </div>
+
+              {/* Forgot Password Link */}
+              <div className="flex justify-end mt-1">
+                <a href="#" className="font-sans text-xs font-medium text-emerald-700 hover:text-emerald-500 transition-colors">
+                  {l.forgotPassword}
+                </a>
+              </div>
+
+              {/* Primary Action Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-emerald-500 text-white font-sans text-sm font-semibold tracking-wider py-3.5 rounded-[0.5rem] mt-1 hover:opacity-90 active:scale-[0.98] transition-all shadow-sm"
+              >
+                {loading ? l.processing : l.logIn}
+              </button>
+            </form>
+
+            {/* Sign Up Prompt */}
+            <div className="mt-6 pt-3 border-t border-gray-200 text-center">
+              <p className="font-sans text-sm text-gray-600">
+                {l.noAccount}{' '}
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); onClose(); }}
+                  className="font-sans text-sm font-semibold tracking-wider text-emerald-700 hover:text-emerald-500 transition-colors ml-1"
+                >
+                  {l.signUp}
+                </a>
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{l.passwordLabel}</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full px-4 py-3 rounded-[0.75rem] border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 outline-none transition-all"
-            />
-          </div>
+        </main>
+
+        {/* Contextual Footer */}
+        <footer className="w-full py-8 px-4 flex flex-col items-center gap-1 text-center bg-gray-50 mt-auto">
+          <p className="font-display text-xl font-semibold text-gray-600 opacity-80">FoodSpot Mobile</p>
+          <p className="font-sans text-sm text-gray-500">© 2025 FoodSpot Mobile. All rights reserved.</p>
+          <p className="font-sans text-sm text-gray-500">{l.location}</p>
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold transition-all active:scale-95"
+            onClick={onLangCycle}
+            className="mt-3 flex items-center gap-2 cursor-pointer text-gray-600 hover:text-emerald-700 transition-colors"
           >
-            {loading ? l.processing : l.login}
+            <GlobeIcon size={20} />
+            <span className="font-sans text-xs font-medium">{lang.toUpperCase()}</span>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
           </button>
-        </form>
+        </footer>
       </div>
     </div>
   )
@@ -551,6 +631,7 @@ const TrialSignup = () => {
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           lang={lang}
+          onLangCycle={cycleLang}
         />
       )}
     </div>
