@@ -654,13 +654,20 @@ const TrialSignup = () => {
             serviceType: formData.serviceType,
             socialMedia: formData.socialMedia,
             priorAppUsage: formData.priorAppUsage,
-            eventsInfo: formData.events
+            eventsInfo: formData.events,
+            phoneNumber: formData.phoneNumber
           },
           externalOrdering: {},
           payments: {},
           notifications: {},
           businessCurrency: 'ARS'
         }
+      }).catch(console.error)
+
+      // Also create language_settings entry for this new business
+      await supabase.from('language_settings').insert({
+        business_id: businessId,
+        language: 'es'
       }).catch(console.error)
 
       setTenantStoragePrefix(authData.user.id)
