@@ -401,7 +401,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         {/* FoodSpot Argentina Dog Mascot */}
                         <div style={{ position: 'relative', zIndex: 1, marginLeft: '12px', flexShrink: 0 }}>
                             <img
-                                src="/src/assets/images/argentina-dog.png"
+                                src="/assets/images/foodspotmundialdog.png"
                                 alt="FoodSpot Argentina"
                                 style={{
                                     width: '120px',
