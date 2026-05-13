@@ -289,6 +289,7 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
                       id="login-email"
                       name="email"
                       type="email"
+                      autoComplete="username webauthn"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder={isLogin ? l.emailPlaceholder : l.resetEmailPlaceholder}
@@ -306,6 +307,7 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
                         id="login-password"
                         name="password"
                         type="password"
+                        autoComplete="current-password webauthn"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
                         placeholder={l.passwordPlaceholder}
@@ -496,12 +498,16 @@ const TrialSignup = () => {
       const trialEndsAt = new Date()
       trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
+      // Clear any stale slug from localStorage so old broken tenants don't poison the session
+      localStorage.removeItem('fs_last_active_slug')
+      localStorage.removeItem('fs_business_id')
+
       // Find template business (owned by hikaribrandan3@gmail.com or flagged as template)
-      const { data: templateBranding } = await supabase
+      const { data: templateBranding, error: templateError } = await supabase
         .from('branding')
         .select('*')
         .eq('is_template', true)
-        .single()
+        .maybeSingle()
 
       if (templateBranding) {
         // Clone from template business
@@ -588,30 +594,36 @@ const TrialSignup = () => {
       }
 
       // Create language_settings entry
-      await supabase.from('language_settings').insert({
+      const { error: langError } = await supabase.from('language_settings').insert({
         business_id: businessId,
         language: 'es'
       })
+      if (langError) console.error('[Onboarding] language_settings insert failed:', langError)
 
       // Create tenants row
-      await supabase.from('tenants').insert({
+      const { error: tenantsError } = await supabase.from('tenants').insert({
         id: crypto.randomUUID(),
         venue_name: slug,
         owner_id: user.id,
         language: 'es'
       })
+      if (tenantsError) console.error('[Onboarding] tenants insert failed:', tenantsError)
 
       // Create profiles row
-      await supabase.from('profiles').insert({
+      const { error: profilesError } = await supabase.from('profiles').insert({
         id: user.id,
         business_id: businessId
       })
+      if (profilesError) console.error('[Onboarding] profiles insert failed:', profilesError)
 
       // Update auth user
       await supabase.auth.updateUser({
         data: { slug, business_id: businessId, role: 'owner' }
       })
 
+      // Seed localStorage so TenantContext resolves correctly on next load
+      localStorage.setItem('fs_last_active_slug', slug)
+      localStorage.setItem('fs_business_id', businessId)
       setTenantStoragePrefix(businessId)
       window.location.href = `/${slug}/owner/summary`
 

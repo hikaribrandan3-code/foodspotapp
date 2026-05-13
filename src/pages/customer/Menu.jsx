@@ -315,7 +315,7 @@ export default function Menu({ config: configProp }) {
                     .eq('id', user.id)
                     .single()
 
-                if ((profile && profile.business_id === businessId) || (user.id === tenantData?.owner_id)) {
+                if ((profile && profile.business_id === businessId) || (user.id === tenantData?.owner_id) || (user.id === tenantData?.user_id)) {
                     setIsOwnerMode(true)
                 }
             }

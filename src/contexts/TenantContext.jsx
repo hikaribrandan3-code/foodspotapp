@@ -133,6 +133,9 @@ export function TenantProvider({ children }) {
 
             if (!brandingData) {
                 console.error(`[TenantLock] No branding row found for slug: ${slug}`);
+                // Clear stale slug so broken tenants don't poison future loads
+                localStorage.removeItem('fs_last_active_slug');
+                localStorage.removeItem('fs_business_id');
                 throw new Error(`No branding data found for '${slug}'`);
             }
 
