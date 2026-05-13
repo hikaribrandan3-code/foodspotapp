@@ -737,6 +737,7 @@ export default function Dashboard() {
             borderRadius: 10,
             cursor: 'pointer',
             letterSpacing: '0.02em',
+            transform: 'translateY(-3px)',
           }}>
             Delete
           </button>
