@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FoodSpot - Log In</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Outfit:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#82f5c1",
+                        "surface-tint": "#006c49",
+                        "surface-container-highest": "#dde4dd",
+                        "tertiary-container": "#84ab98",
+                        "surface-container": "#e8f0e9",
+                        "primary-container": "#10b981",
+                        "tertiary-fixed": "#c3ecd7",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#00422b",
+                        "on-error-container": "#93000a",
+                        "on-background": "#161d19",
+                        "on-secondary-fixed-variant": "#005137",
+                        "on-primary-fixed-variant": "#005236",
+                        "surface-container-high": "#e3eae3",
+                        "on-tertiary-fixed-variant": "#294e3f",
+                        "on-tertiary-container": "#1b3f31",
+                        "primary-fixed-dim": "#4edea3",
+                        "on-primary": "#ffffff",
+                        "background": "#f4fbf4",
+                        "tertiary-fixed-dim": "#a8cfbc",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#eef6ee",
+                        "on-primary-fixed": "#002113",
+                        "on-tertiary-fixed": "#002115",
+                        "tertiary": "#416656",
+                        "on-secondary-fixed": "#002114",
+                        "surface-bright": "#f4fbf4",
+                        "surface-dim": "#d4dcd5",
+                        "primary": "#006c49",
+                        "surface-variant": "#dde4dd",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#68dba9",
+                        "on-surface": "#161d19",
+                        "on-secondary-container": "#00714e",
+                        "inverse-surface": "#2b322d",
+                        "on-surface-variant": "#3c4a42",
+                        "outline": "#6c7a71",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#85f8c4",
+                        "inverse-on-surface": "#ebf3eb",
+                        "secondary": "#006c4a",
+                        "surface": "#f4fbf4",
+                        "outline-variant": "#bbcabf",
+                        "inverse-primary": "#4edea3",
+                        "primary-fixed": "#6ffbbe",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "64px",
+                        "sm": "12px",
+                        "gutter": "20px",
+                        "margin-mobile": "16px",
+                        "max-width": "1280px",
+                        "base": "8px",
+                        "lg": "40px",
+                        "xs": "4px",
+                        "margin-desktop": "48px",
+                        "md": "24px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Outfit"],
+                        "headline-lg": ["Outfit"],
+                        "headline-md": ["Outfit"],
+                        "display-lg": ["Outfit"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f4fbf4;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<main class="flex-grow flex flex-col md:flex-row h-screen">
+<!-- Left Side: Hero Brand Area -->
+<section class="hidden md:flex md:w-1/2 relative overflow-hidden items-center justify-center p-xl bg-black">
+<img alt="Healthy Salad Backdrop" class="absolute inset-0 w-full h-full object-cover opacity-80" data-alt="A vibrant, high-end healthy salad bowl featuring fresh greens, cherry tomatoes, avocado slices, and quinoa, presented on a minimalist ceramic plate. The lighting is soft and natural, emphasizing the freshness of the ingredients within a clean, tech-inspired light-mode aesthetic. The composition is professional and appetizing, embodying a sense of health and efficiency for a modern food marketplace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNltQv12sL6-N5ahSdUkUAodjqisHdIHSKJPAx097SR-FwgyIJDQeHHzxaPYdhRt3lmf5iSfD6OU74AkyJ5182KSBMlgHG2kprBoJq9zyiIYr9J2JfBHFWlSaBlshFIpsz_FQfUpiKMj9RiOqPhnSxnl7Zu0zpVySBh9ZlwGQoT6_7GhvOPLjnfLNwgjqoZWvxDg_R75N_fRqOImB8yo7OZYJwGf3SdO3t2G8-3widZ2qJ7FD35NJjJv4VBRr4Vd7NxHNdH3sVwkM"/>
+<div class="relative z-10 text-on-primary max-w-lg drop-shadow-2xl">
+<div class="flex items-center gap-3 mb-base">
+<span class="material-symbols-outlined text-[72px]" data-icon="restaurant_menu">restaurant_menu</span>
+<h1 class="font-headline-lg leading-none font-bold tracking-tight text-6xl" style="color:#ffffff">FoodSpot</h1>
+</div>
+<p class="font-label-md uppercase tracking-[0.2em] mb-md opacity-90 text-2xl" style="color:#ffffff">The Shopify of Food</p>
+<h2 class="font-display-lg mb-md text-[64px] leading-[1.1] font-bold" style="color:#ffffff">
+                    Your menu. <br/>
+                    Their content. <br/>
+                    Your growth.
+                </h2>
+<div class="w-16 h-1 bg-secondary-container rounded-full"></div>
+</div>
+</section>
+<!-- Right Side: Login Form Area -->
+<section class="flex-grow flex items-center justify-center p-margin-mobile md:p-margin-desktop bg-surface-container-lowest">
+<div class="w-full max-w-md space-y-lg">
+<div class="text-center md:text-left">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Log In</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Enter your credentials to access your account.</p>
+</div>
+<form id="login-form" class="space-y-md">
+<div class="space-y-xs">
+<label class="font-label-md text-label-md text-on-surface">Email address</label>
+<input id="login-email" class="w-full p-sm rounded-lg border border-outline-variant bg-surface text-on-surface focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all" placeholder="name@company.com" type="email" required/>
+</div>
+<div class="space-y-xs">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface">Password</label>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="/forgot-password-desktop.html">Forgot Password?</a>
+</div>
+<input id="login-password" class="w-full p-sm rounded-lg border border-outline-variant bg-surface text-on-surface focus:outline-none focus:ring-2 focus:ring-primary-container focus:border-primary transition-all" placeholder="••••••••" type="password" required/>
+</div>
+<div id="login-error" class="hidden text-error font-label-sm text-label-sm"></div>
+<button class="w-full py-sm bg-primary-container text-on-primary-container font-label-md text-label-md rounded-full shadow-sm hover:opacity-90 active:scale-[0.98] transition-all" type="submit">
+                        Log In
+                    </button>
+</form>
+<div class="relative py-base">
+<div class="absolute inset-0 flex items-center"><div class="w-full border-t border-outline-variant"></div></div>
+<div class="relative flex justify-center"><span class="bg-surface-container-lowest px-sm text-label-sm text-on-surface-variant uppercase tracking-wider">or continue with</span></div>
+</div>
+<button id="google-signin-btn" class="w-full py-sm flex items-center justify-center gap-3 border border-outline-variant bg-surface rounded-full font-label-md text-label-md text-on-surface hover:bg-surface-container-low active:scale-[0.98] transition-all">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+                    Sign in with Google
+                </button>
+<div class="text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Don't have an account? <a class="text-primary font-bold hover:underline" href="/signup-desktop.html">Sign Up</a>
+</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Component -->
+<footer class="w-full bottom-0 bg-surface-container-lowest dark:bg-surface-dim flex flex-col md:flex-row justify-between items-center py-md px-margin-desktop border-t border-outline-variant">
+<div class="flex flex-col md:flex-row items-center gap-md">
+<span class="font-headline-md text-headline-md font-bold text-primary">FoodSpot</span>
+<p class="font-label-md text-label-md text-on-surface-variant">© 2025 FoodSpot Mobile. All rights reserved.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-md my-md md:my-0">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline decoration-primary transition-colors" href="#">Locations</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline decoration-primary transition-colors" href="#">Language</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline decoration-primary transition-colors" href="#">Support</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline decoration-primary transition-colors" href="#">Privacy</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline decoration-primary transition-colors" href="#">Terms</a>
+</div>
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-label-md text-on-surface-variant">FoodSpot Mobile</span>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="phone_iphone">phone_iphone</span>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="tablet_mac">tablet_mac</span>
+</div>
+</div>
+</footer>
+
+<!-- Supabase Auth Wiring -->
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  (function() {
+    var supabaseUrl = 'https://buendqgmwpxdixwvlkhd.supabase.co'
+    var supabaseKey = 'sb_publishable_iv5xVk4DIMCq2l_oXvSNeQ_kwY038TD'
+    var supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey)
+
+    // Redirect already-logged-in users
+    supabaseClient.auth.getSession().then(function(res) {
+      if (res.data && res.data.session && res.data.session.user) {
+        window.location.href = '/'
+      }
+    })
+
+    // Email/password login
+    var loginForm = document.getElementById('login-form')
+    var errorDiv = document.getElementById('login-error')
+    if (loginForm) {
+      loginForm.addEventListener('submit', function(e) {
+        e.preventDefault()
+        errorDiv.classList.add('hidden')
+        var email = document.getElementById('login-email').value
+        var password = document.getElementById('login-password').value
+        supabaseClient.auth.signInWithPassword({ email: email, password: password }).then(function(result) {
+          if (result.error) {
+            errorDiv.textContent = result.error.message
+            errorDiv.classList.remove('hidden')
+          } else {
+            window.location.href = '/'
+          }
+        })
+      })
+    }
+
+    // Google sign in
+    var googleBtn = document.getElementById('google-signin-btn')
+    if (googleBtn) {
+      googleBtn.addEventListener('click', function() {
+        supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin + '/auth/callback' }
+        }).then(function(result) {
+          if (result.error) alert(result.error.message)
+        })
+      })
+    }
+  })()
+</script>
+</body></html>
