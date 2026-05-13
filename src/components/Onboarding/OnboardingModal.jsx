@@ -184,6 +184,10 @@ export default function OnboardingModal({ onComplete, isOpen }) {
     events: ''
   });
 
+  // Loading/error state for final submit (MUST be before early return)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
   // Check if current field is filled
   const isCurrentFieldFilled = () => {
     const currentFieldId = ALL_STEPS[currentStep].id;
@@ -235,9 +239,6 @@ export default function OnboardingModal({ onComplete, isOpen }) {
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [ALL_STEPS[currentStep].id]: e.target.value }));
   };
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
 
   const handleFinalSuccess = async () => {
     // Final validation before creating account

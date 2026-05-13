@@ -195,14 +195,14 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
           .from('profiles')
           .select('business_id')
           .eq('id', user.id)
-          .single()
+          .maybeSingle()
 
         if (profile?.business_id) {
           const { data: branding } = await supabase
             .from('branding')
             .select('slug')
             .eq('business_id', profile.business_id)
-            .single()
+            .maybeSingle()
           if (branding?.slug) slug = branding.slug
         }
       }
@@ -448,14 +448,14 @@ const TrialSignup = () => {
         .from('profiles')
         .select('business_id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (profile?.business_id) {
         const { data: branding } = await supabase
           .from('branding')
           .select('slug')
           .eq('business_id', profile.business_id)
-          .single()
+          .maybeSingle()
 
         if (branding?.slug) {
           slug = branding.slug
