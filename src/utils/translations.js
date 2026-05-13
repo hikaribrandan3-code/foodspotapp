@@ -786,6 +786,12 @@ export const translations = {
     guest_token: { en: 'Guest Token', es: 'Token de Invitado', pt: 'Token de Convidado' },
     order_id: { en: 'Order ID', es: 'ID de Pedido', pt: 'ID do Pedido' },
     'Link copied to clipboard!': { en: 'Link copied to clipboard!', es: '¡Enlace copiado al portapapeles!', pt: 'Link copiado para a área de transferência!' },
-    'add_to_calendar': { en: 'Add to Calendar', es: 'Agregar al Calendario', pt: 'Adicionar ao Calendário' }
+    'add_to_calendar': { en: 'Add to Calendar', es: 'Agregar al Calendario', pt: 'Adicionar ao Calendário' },
+
+    // OrderStatusEmpty - UI Text
+    search_placeholder: { en: 'Search for burgers, fries...', es: 'Busca hamburguesas, papas...', pt: 'Procure por hambúrgueres, batatas...' },
+    browse_categories: { en: 'Browse Categories', es: 'Explorar Categorías', pt: 'Explorar Categorias' },
+    recommended_for_you: { en: 'Recommended for you', es: 'Recomendado para ti', pt: 'Recomendado para você' },
+    see_more: { en: 'See More', es: 'Ver Más', pt: 'Ver Mais' }
 };
 

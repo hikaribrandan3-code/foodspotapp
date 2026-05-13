@@ -42,21 +42,31 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     const primaryColor = config?.branding?.primaryColor || '#FF9500'
     const navBgColor = config?.branding?.navbar_color || primaryColor
 
-    // Real countdown timer to World Cup
+    // Real digital countdown timer to World Cup
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+
     useEffect(() => {
-        const calculateDaysToWorldCup = () => {
-            const worldCupDate = new Date(2026, 5, 11) // June 11, 2026
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            worldCupDate.setHours(0, 0, 0, 0)
-            const daysRemaining = Math.ceil((worldCupDate - today) / (1000 * 60 * 60 * 24))
-            return Math.max(0, daysRemaining)
+        const calculateTimeToWorldCup = () => {
+            const worldCupDate = new Date(2026, 5, 11, 0, 0, 0) // June 11, 2026 midnight
+            const now = new Date()
+            const diff = worldCupDate - now
+
+            if (diff <= 0) {
+                return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+            return { days, hours, minutes, seconds }
         }
 
-        setCountdown(calculateDaysToWorldCup())
+        setTimeLeft(calculateTimeToWorldCup())
 
         const interval = setInterval(() => {
-            setCountdown(calculateDaysToWorldCup())
+            setTimeLeft(calculateTimeToWorldCup())
         }, 1000) // Update every second
 
         return () => clearInterval(interval)
@@ -232,12 +242,12 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     }
 
     const handleItemClick = (itemId) => {
-        navigate(`/${tenantSlug}/menu/${itemId}`)
+        navigate(`/${tenantSlug}/menu`)
     }
 
     const handleClaimPromo = () => {
-        // Same endpoint as Promos (coming soon)
-        navigate(`/${tenantSlug}/promos`)
+        // Navigate to menu
+        navigate(`/${tenantSlug}/menu`)
     }
 
     const handleSearch = (e) => {
@@ -252,7 +262,10 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     const DRINK_EMOJIS = ['🥤', '🧃', '🥛', '🍹', '🧉', '☕', '🍵']
     const getCategoryEmoji = (categoryName, index = 0) => {
         const name = (categoryName || '').toLowerCase()
-        
+
+        // Promos
+        if (name.includes('promo') || name.includes('offer') || name.includes('deal')) return '🎁'
+
         // Unique food categories
         if (name.includes('burger') || name.includes('hamburg')) return '🍔'
         if (name.includes('fries') || name.includes('side') || name.includes('entrada') || name.includes('appetizer') || name.includes('starter') || name.includes('snack')) return '🍟'
@@ -275,15 +288,15 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
         if (name.includes('hot dog')) return '🌭'
         if (name.includes('soup') || name.includes('sopa')) return '🍲'
         if (name.includes('fish') || name.includes('pescado')) return '🐟'
-        
+
         // Drinks/Bebidas — cycle through different emojis by index to guarantee uniqueness
         if (name.includes('drink') || name.includes('bebida') || name.includes('beverage') || name.includes('refresco') || name.includes('gaseosa')) {
             return DRINK_EMOJIS[index % DRINK_EMOJIS.length]
         }
-        
+
         // Desserts
         if (name.includes('sweet') || name.includes('postre') || name.includes('dessert') || name.includes('dulce')) return '🍰'
-        
+
         return '🍽️'
     }
 
@@ -354,63 +367,56 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                     </div>
                 </section>
 
-                {/* Hero Banner - Argentina World Cup Champion with FoodSpot Dog */}
+                {/* Hero Banner - Argentina World Cup with Digital Timer */}
                 {promoConfig.enabled && (
-                    <section className="ose-hero ose-hero-worldcup" style={{
-                        background: 'linear-gradient(135deg, #1C5AA0 0%, #4A90E2 50%, #87CEEB 100%)',
-                        boxShadow: '0 8px 24px rgba(28, 90, 160, 0.25)',
+                    <section style={{
+                        backgroundImage: 'url(/assets/images/foodspotmundialdog.png)',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center right',
+                        backgroundRepeat: 'no-repeat',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        minHeight: '160px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
                         position: 'relative',
                         overflow: 'hidden',
-                        padding: '16px',
-                        minHeight: '140px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
+                        boxShadow: '0 8px 24px rgba(28, 90, 160, 0.25)'
                     }}>
-                        <div style={{ position: 'relative', zIndex: 1, flex: 1 }}>
-                            <h2 style={{
-                                fontSize: '24px',
-                                fontWeight: 900,
-                                color: '#FFFFFF',
-                                margin: '0 0 16px 0',
-                                textShadow: '3px 3px 6px rgba(28, 90, 160, 0.5)',
-                                letterSpacing: '1.5px',
-                                lineHeight: 1.1
-                            }}>
-                                ¡VAMOS VAMOS<br/>ARGENTINA!
-                            </h2>
-
-                            <button className="ose-hero-cta ose-hero-cta-worldcup" onClick={handleClaimPromo} style={{
-                                background: '#FFD700',
-                                color: '#1C5AA0',
-                                fontWeight: 900,
-                                fontSize: '14px',
-                                padding: '11px 28px',
-                                borderRadius: '22px',
-                                border: '3px solid #fff',
-                                boxShadow: '0 6px 20px rgba(255, 215, 0, 0.5)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '1px',
-                                cursor: 'pointer',
-                                transition: 'transform 0.2s'
-                            }}>
-                                {promoConfig.cta}
-                            </button>
+                        {/* Digital Countdown Timer - Left Above ORDER NOW */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '68px',
+                            left: '28px',
+                            fontFamily: 'monospace',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#FFD700',
+                            textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                            letterSpacing: '1px',
+                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            zIndex: 10
+                        }}>
+                            {String(timeLeft.days).padStart(2, '0')}D {String(timeLeft.hours).padStart(2, '0')}H {String(timeLeft.minutes).padStart(2, '0')}M {String(timeLeft.seconds).padStart(2, '0')}S
                         </div>
 
-                        {/* FoodSpot Argentina Dog Mascot */}
-                        <div style={{ position: 'relative', zIndex: 1, marginLeft: '12px', flexShrink: 0 }}>
-                            <img
-                                src="/assets/images/foodspotmundialdog.png"
-                                alt="FoodSpot Argentina"
-                                style={{
-                                    width: '120px',
-                                    height: '120px',
-                                    objectFit: 'contain',
-                                    filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2))'
-                                }}
-                            />
-                        </div>
+
+                        {/* Invisible Button - Over ORDER NOW text in image */}
+                        <button onClick={handleClaimPromo} style={{
+                            position: 'absolute',
+                            bottom: '18px',
+                            left: '18px',
+                            width: '120px',
+                            height: '44px',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            zIndex: 20
+                        }} />
+
                     </section>
                 )}
 
