@@ -7,15 +7,6 @@ import './TrialSignup.css'
 // ============================================
 // ICONS
 // ============================================
-const GoogleIcon = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24">
-    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-  </svg>
-)
-
 const ChatIcon = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
     <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
@@ -54,8 +45,14 @@ const TRANSLATIONS = {
     headline: 'Foodspot: The Shopify of Food',
     subheadline: 'Launch your app. Turn diners into creators.',
     getStarted: 'Get Started',
-    signupSubtitle: 'Sign up with Google to create your FoodSpot account',
-    signupGoogle: 'Sign up with Google',
+    signupSubtitle: 'Create your account to get started',
+    createAccount: 'Create Account',
+    emailLabel: 'Email',
+    emailPlaceholder: 'you@example.com',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'Create a password',
+    businessNameLabel: 'Business Name',
+    businessNamePlaceholder: 'Your Restaurant Name',
     haveAccount: 'Already have an account?',
     login: 'Log in',
     needHelp: 'Need help',
@@ -86,8 +83,14 @@ const TRANSLATIONS = {
     headline: 'Foodspot: El Shopify de la Comida',
     subheadline: 'Lanza tu app. Convierte clientes en creadores.',
     getStarted: 'Comenzar',
-    signupSubtitle: 'Regístrate con Google para crear tu cuenta de FoodSpot',
-    signupGoogle: 'Registrarse con Google',
+    signupSubtitle: 'Crea tu cuenta para comenzar',
+    createAccount: 'Crear Cuenta',
+    emailLabel: 'Correo',
+    emailPlaceholder: 'tu@ejemplo.com',
+    passwordLabel: 'Contraseña',
+    passwordPlaceholder: 'Crea una contraseña',
+    businessNameLabel: 'Nombre del Negocio',
+    businessNamePlaceholder: 'Nombre de tu Restaurante',
     haveAccount: '¿Ya tienes una cuenta?',
     login: 'Iniciar sesión',
     needHelp: '¿Necesitas ayuda',
@@ -118,8 +121,14 @@ const TRANSLATIONS = {
     headline: 'Foodspot: O Shopify da Comida',
     subheadline: 'Lance seu app. Transforme clientes em criadores.',
     getStarted: 'Começar',
-    signupSubtitle: 'Cadastre-se com Google para criar sua conta FoodSpot',
-    signupGoogle: 'Cadastrar com Google',
+    signupSubtitle: 'Crie sua conta para começar',
+    createAccount: 'Criar Conta',
+    emailLabel: 'E-mail',
+    emailPlaceholder: 'voce@exemplo.com',
+    passwordLabel: 'Senha',
+    passwordPlaceholder: 'Crie uma senha',
+    businessNameLabel: 'Nome do Negócio',
+    businessNamePlaceholder: 'Nome do seu Restaurante',
     haveAccount: 'Já tem uma conta?',
     login: 'Faça login',
     needHelp: 'Precisa de ajuda',
@@ -401,6 +410,11 @@ const TrialSignup = () => {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
 
+  // Email/password signup form state
+  const [signupEmail, setSignupEmail] = useState('')
+  const [signupPassword, setSignupPassword] = useState('')
+  const [signupBusinessName, setSignupBusinessName] = useState('')
+
   const l = TRANSLATIONS[lang]
 
   // Auth state listener for redirects
@@ -467,17 +481,38 @@ const TrialSignup = () => {
       .replace(/-+/g, '-')
       .substring(0, 50)
 
-  const handleGoogleLogin = async () => {
+  const handleEmailSignup = async (e) => {
+    e.preventDefault()
     setLoading(true)
     setError(null)
+
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback` }
+      if (!signupEmail || !signupPassword || !signupBusinessName) {
+        throw new Error('Please fill in all fields')
+      }
+      if (signupPassword.length < 6) {
+        throw new Error('Password must be at least 6 characters')
+      }
+
+      // Create auth user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: signupPassword
       })
-      if (oauthError) throw oauthError
+      if (signUpError) throw signUpError
+      if (!authData.user) throw new Error('Signup failed — no user returned')
+
+      // Store business name for onboarding
+      const slug = generateSlug(signupBusinessName)
+      await supabase.auth.updateUser({
+        data: { temp_business_name: signupBusinessName, temp_slug: slug }
+      })
+
+      // Show onboarding modal
+      setShowOnboarding(true)
     } catch (err) {
-      setError(err.message || 'Google sign-in failed')
+      setError(err.message || 'Sign up failed')
+    } finally {
       setLoading(false)
     }
   }
@@ -490,7 +525,7 @@ const TrialSignup = () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      const businessName = formData.businessName || 'My Business'
+      const businessName = formData.businessName || user.user_metadata?.temp_business_name || 'My Business'
       const slug = generateSlug(businessName)
       if (!slug) throw new Error('Invalid business name')
 
@@ -502,50 +537,15 @@ const TrialSignup = () => {
       localStorage.removeItem('fs_last_active_slug')
       localStorage.removeItem('fs_business_id')
 
-      // Find template business (owned by hikaribrandan3@gmail.com or flagged as template)
-      const { data: templateBranding, error: templateError } = await supabase
-        .from('branding')
-        .select('*')
-        .eq('is_template', true)
-        .maybeSingle()
-
-      if (templateBranding) {
-        // Clone from template business
-        const templateBusinessId = templateBranding.business_id
-
-        // Clone menu items
-        const { data: menuItems } = await supabase
-          .from('menu_items')
-          .select('*')
-          .eq('business_id', templateBusinessId)
-
-        if (menuItems && menuItems.length > 0) {
-          const clonedMenuItems = menuItems.map(item => ({
-            ...item,
-            id: crypto.randomUUID(),
-            business_id: businessId
-          }))
-          await supabase.from('menu_items').insert(clonedMenuItems)
-        }
-
-        // Clone categories
-        const { data: categories } = await supabase
-          .from('categories')
-          .select('*')
-          .eq('business_id', templateBusinessId)
-
-        if (categories && categories.length > 0) {
-          const clonedCategories = categories.map(cat => ({
-            ...cat,
-            id: crypto.randomUUID(),
-            business_id: businessId
-          }))
-          await supabase.from('categories').insert(clonedCategories)
-        }
-
-        // Create branding with cloned app_config
-        const clonedAppConfig = {
-          ...templateBranding.app_config,
+      // Create blank branding row (no template cloning)
+      const { error: brandingError } = await supabase.from('branding').insert({
+        business_id: businessId,
+        user_id: user.id,
+        business_name: businessName,
+        slug,
+        trial_ends_at: trialEndsAt.toISOString(),
+        language: 'es',
+        app_config: {
           businessInfo: {
             businessType: formData.businessType,
             duration: formData.duration,
@@ -554,43 +554,16 @@ const TrialSignup = () => {
             priorAppUsage: formData.priorAppUsage,
             eventsInfo: formData.events,
             phoneNumber: formData.phoneNumber
-          }
+          },
+          externalOrdering: {},
+          payments: {},
+          notifications: {},
+          businessCurrency: 'ARS'
         }
-
-        await supabase.from('branding').insert({
-          business_id: businessId,
-          user_id: user.id,
-          business_name: businessName,
-          slug,
-          trial_ends_at: trialEndsAt.toISOString(),
-          language: 'es',
-          app_config: clonedAppConfig
-        })
-      } else {
-        // Fallback: create blank business if template not found
-        await supabase.from('branding').insert({
-          business_id: businessId,
-          user_id: user.id,
-          business_name: businessName,
-          slug,
-          trial_ends_at: trialEndsAt.toISOString(),
-          language: 'es',
-          app_config: {
-            businessInfo: {
-              businessType: formData.businessType,
-              duration: formData.duration,
-              serviceType: formData.serviceType,
-              socialMedia: formData.socialMedia,
-              priorAppUsage: formData.priorAppUsage,
-              eventsInfo: formData.events,
-              phoneNumber: formData.phoneNumber
-            },
-            externalOrdering: {},
-            payments: {},
-            notifications: {},
-            businessCurrency: 'ARS'
-          }
-        })
+      })
+      if (brandingError) {
+        console.error('[Onboarding] branding insert failed:', brandingError)
+        throw new Error('Failed to create business branding')
       }
 
       // Create language_settings entry
@@ -674,14 +647,47 @@ const TrialSignup = () => {
               <div className="bg-red-50 text-red-700 p-3 rounded-[0.5rem] text-sm">{error}</div>
             )}
 
-            <div className="flex flex-col gap-3 mt-1">
+            <form onSubmit={handleEmailSignup} className="flex flex-col gap-3 mt-1">
+              <div className="flex flex-col gap-1 text-left">
+                <label className="font-sans text-xs font-medium text-gray-600">{l.businessNameLabel}</label>
+                <input
+                  type="text"
+                  value={signupBusinessName}
+                  onChange={e => setSignupBusinessName(e.target.value)}
+                  placeholder={l.businessNamePlaceholder}
+                  required
+                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                />
+              </div>
+              <div className="flex flex-col gap-1 text-left">
+                <label className="font-sans text-xs font-medium text-gray-600">{l.emailLabel}</label>
+                <input
+                  type="email"
+                  value={signupEmail}
+                  onChange={e => setSignupEmail(e.target.value)}
+                  placeholder={l.emailPlaceholder}
+                  required
+                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                />
+              </div>
+              <div className="flex flex-col gap-1 text-left">
+                <label className="font-sans text-xs font-medium text-gray-600">{l.passwordLabel}</label>
+                <input
+                  type="password"
+                  value={signupPassword}
+                  onChange={e => setSignupPassword(e.target.value)}
+                  placeholder={l.passwordPlaceholder}
+                  required
+                  minLength={6}
+                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                />
+              </div>
               <button
-                onClick={handleGoogleLogin}
+                type="submit"
                 disabled={loading}
                 className="w-full min-h-[48px] bg-emerald-500 text-white rounded-full flex items-center justify-center gap-2 font-sans text-sm font-semibold tracking-wider transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
               >
-                <GoogleIcon size={18} />
-                {loading ? 'Processing...' : l.signupGoogle}
+                {loading ? 'Processing...' : l.createAccount}
               </button>
 
               <div className="text-center mt-2">
@@ -696,7 +702,7 @@ const TrialSignup = () => {
                   </a>
                 </p>
               </div>
-            </div>
+            </form>
           </div>
 
           {/* WhatsApp Link */}

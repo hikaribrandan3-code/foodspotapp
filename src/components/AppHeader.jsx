@@ -46,7 +46,9 @@ function AppHeader({ config: configProp, isHomePage = false }) {
         // LEGACY SCALE: We still support scale for zoom, but fitment is driven by object-fit
         const scale = cover.scale || 1.0;
 
-        const coverContent = (
+        const hasImage = !!config?.headerCover?.image
+
+        const coverContent = hasImage ? (
             <div style={{
                 position: 'absolute',
                 width: '100%',
@@ -60,11 +62,30 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                 <div className="cover-content menu-header-bg" style={{
                     width: '100%',
                     height: '100%',
-                    backgroundImage: config?.headerCover?.image ? `url(${config.headerCover.image})` : undefined,
+                    backgroundImage: `url(${config.headerCover.image})`,
                     backgroundSize: 'cover',
                     backgroundPosition: `${posX}% ${posY}%`,
                     backgroundRepeat: 'no-repeat'
                 }} />
+            </div>
+        ) : (
+            <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8
+            }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span style={{ fontSize: 12, color: '#9CA3AF', fontFamily: 'Inter, sans-serif' }}>
+                    No image uploaded
+                </span>
             </div>
         )
 
@@ -83,7 +104,7 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                         maxHeight: breakpoint === 'mobile' ? (isHomePage ? 220 : 180) : undefined,
                         position: 'relative',
                         overflow: 'hidden',
-                        background: '#F1F5F9' // Clean skeleton background
+                        background: hasImage ? '#F1F5F9' : 'transparent'
                     }}
                 >
                     {coverContent}

@@ -125,6 +125,18 @@ function Home({ config: configProp }) {
     const [isSaving, setIsSaving] = useState(false)
     const [showArcade, setShowArcade] = useState(false)
     const [activeOrder, setActiveOrder] = useState(null)
+    const [authUser, setAuthUser] = useState(null)
+
+    // 🛡️ OWNER DETECTION: Check if current user owns this restaurant
+    useEffect(() => {
+        const checkOwner = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            setAuthUser(user)
+        }
+        checkOwner()
+    }, [])
+
+    const isOwner = authUser && (authUser.id === tenantData?.user_id || authUser.id === tenantData?.owner_id)
 
     useEffect(() => {
         // console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
@@ -700,6 +712,38 @@ function Home({ config: configProp }) {
             }}
         >
             <HeaderClamp config={config} isHomePage={true} />
+
+            {/* 🛡️ ADMIN PILL — Hidden owner access */}
+            {isOwner && (
+                <div style={{
+                    position: 'absolute',
+                    top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+                    right: 12,
+                    zIndex: 100
+                }}>
+                    <button
+                        onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                        style={{
+                            padding: '6px 14px',
+                            background: '#22C55E',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: 20,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            fontFamily: 'Inter, sans-serif',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(34, 197, 94, 0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6
+                        }}
+                    >
+                        <span style={{ fontSize: 10 }}>🔒</span>
+                        Hidden: Admin Access
+                    </button>
+                </div>
+            )}
 
             {/* 🛎️ ACTIVE ORDER BANNER — persists even if customer closes tab */}
             {activeOrder && (

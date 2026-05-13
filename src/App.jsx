@@ -79,7 +79,6 @@ import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
-import AuthCallback from './pages/auth/AuthCallback.jsx'
 import BurgerLoader from './components/BurgerLoader.jsx'
 
 // Camera Suite
@@ -512,7 +511,6 @@ function App() {
                                             <Route path="/login/owner" element={<OwnerLogin />} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
-                                            <Route path="/auth/callback" element={<AuthCallback />} />
 
                                             {/* TENANT ROUTES */}
                                             <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
