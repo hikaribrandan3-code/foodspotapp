@@ -201,7 +201,7 @@ const Info = ({ config }) => {
                     {isPillEnabled('adminAccess') && (
                         <button
                             style={{ ...buttonBase, background: getPillColor('adminAccess') }}
-                            onClick={() => navigate(`/${tenantSlug}/owner`)
+                            onClick={() => navigate(`/${tenantSlug}/owner`)}
                         >
                             {t('info_admin_access')}
                         </button>
