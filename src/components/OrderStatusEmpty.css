@@ -356,19 +356,19 @@
 
 /* MunchBoy Arcade Card */
 .ose-arcade {
-    background: linear-gradient(135deg, #4e4a9e, #6B0FCC);
+    background: linear-gradient(135deg, #1C5AA0, #2A7BBF);
     border-radius: 16px;
     padding: 20px 24px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 16px rgba(107, 15, 204, 0.25);
+    box-shadow: 0 4px 16px rgba(28, 90, 160, 0.25);
     position: relative;
     overflow: hidden;
 }
 
 .ose-arcade:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(107, 15, 204, 0.35);
+    box-shadow: 0 8px 24px rgba(28, 90, 160, 0.35);
 }
 
 .ose-arcade:active {

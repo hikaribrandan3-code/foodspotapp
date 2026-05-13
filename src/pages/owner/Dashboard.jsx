@@ -728,17 +728,17 @@ export default function Dashboard() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 16px 12px', gap: 8, flexWrap: 'wrap' }}>
           <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
           <button onClick={nukeAllOrders} style={{
-            padding: '6px 12px',
-            fontSize: 11,
+            padding: '11px 14px',
+            fontSize: 12,
             fontWeight: 600,
             background: '#EF4444',
             color: '#FFF',
             border: 'none',
-            borderRadius: 6,
+            borderRadius: 10,
             cursor: 'pointer',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.02em',
           }}>
-            🗑️ NUKE
+            Delete
           </button>
         </div>
 
