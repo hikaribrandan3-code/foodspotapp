@@ -37,9 +37,30 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     const displayCity = extractedCity || tenantData?.city || ''
 
     const [showArcade, setShowArcade] = useState(false)
+    const [countdown, setCountdown] = useState(0)
 
     const primaryColor = config?.branding?.primaryColor || '#FF9500'
     const navBgColor = config?.branding?.navbar_color || primaryColor
+
+    // Real countdown timer to World Cup
+    useEffect(() => {
+        const calculateDaysToWorldCup = () => {
+            const worldCupDate = new Date(2026, 5, 11) // June 11, 2026
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            worldCupDate.setHours(0, 0, 0, 0)
+            const daysRemaining = Math.ceil((worldCupDate - today) / (1000 * 60 * 60 * 24))
+            return Math.max(0, daysRemaining)
+        }
+
+        setCountdown(calculateDaysToWorldCup())
+
+        const interval = setInterval(() => {
+            setCountdown(calculateDaysToWorldCup())
+        }, 1000) // Update every second
+
+        return () => clearInterval(interval)
+    }, [])
 
     // Calculate days until 2026 FIFA World Cup (June 11, 2026)
     const calculateDaysToWorldCup = () => {
@@ -333,7 +354,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                     </div>
                 </section>
 
-                {/* Hero Banner - Argentina World Cup with Messi */}
+                {/* Hero Banner - Argentina World Cup */}
                 {promoConfig.enabled && (
                     <section className="ose-hero ose-hero-worldcup" style={{
                         background: 'linear-gradient(135deg, #1C5AA0 0%, #4A90E2 50%, #87CEEB 100%)',
@@ -341,44 +362,41 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         position: 'relative',
                         overflow: 'hidden'
                     }}>
-                        {/* Prominent Argentina flag */}
-                        <div className="ose-hero-decoration" style={{
+                        {/* Full visible Argentina flag */}
+                        <div style={{
                             position: 'absolute',
-                            top: -10,
-                            right: -10,
-                            fontSize: '180px',
-                            opacity: 0.4,
+                            top: -20,
+                            right: -30,
+                            fontSize: '200px',
                             lineHeight: 1,
-                            animation: 'float 3s ease-in-out infinite'
+                            zIndex: 0,
+                            opacity: 0.8
                         }}>
                             🇦🇷
                         </div>
 
-                        {/* Jersey number 10 - Messi */}
-                        <div style={{
-                            position: 'absolute',
-                            bottom: 10,
-                            right: 20,
-                            fontSize: '72px',
-                            fontWeight: 900,
-                            color: 'rgba(255, 255, 255, 0.25)',
-                            lineHeight: 1,
-                            zIndex: 0
-                        }}>
-                            10
-                        </div>
-
                         <div className="ose-hero-content ose-hero-content-worldcup" style={{ position: 'relative', zIndex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <span style={{ fontSize: '28px' }}>⚽</span>
-                                <h2 className="ose-hero-title" style={{ fontSize: '26px', margin: 0 }}>{promoConfig.text}</h2>
+                            <h2 style={{
+                                fontSize: '32px',
+                                fontWeight: 900,
+                                color: '#FFFFFF',
+                                margin: '0 0 12px 0',
+                                textShadow: '2px 2px 4px rgba(28, 90, 160, 0.3), -1px -1px 2px rgba(255, 255, 255, 0.2)',
+                                letterSpacing: '1px'
+                            }}>
+                                {promoConfig.text}
+                            </h2>
+
+                            <div style={{
+                                fontSize: '20px',
+                                fontWeight: 800,
+                                color: '#FFD700',
+                                marginBottom: '16px',
+                                textShadow: '1px 1px 3px rgba(28, 90, 160, 0.3)'
+                            }}>
+                                ⏱️ {countdown} DAYS
                             </div>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: '2px 0 4px 0' }}>
-                                🌟 MESSI
-                            </p>
-                            <p className="ose-hero-subtext" style={{ fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}>
-                                ⏱️ {promoConfig.subtext}
-                            </p>
+
                             <button className="ose-hero-cta ose-hero-cta-worldcup" onClick={handleClaimPromo} style={{
                                 background: '#FFD700',
                                 color: '#1C5AA0',
@@ -396,9 +414,9 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         </div>
                         <div className="ose-hero-image">
                             {promoConfig.image ? (
-                                <img src={promoConfig.image} alt="Messi" />
+                                <img src={promoConfig.image} alt="World Cup" />
                             ) : (
-                                <div style={{ fontSize: '140px', lineHeight: 1, textAlign: 'center' }}>👑</div>
+                                <div style={{ fontSize: '140px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
                             )}
                         </div>
                     </section>
