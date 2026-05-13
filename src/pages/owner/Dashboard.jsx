@@ -725,7 +725,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 12px', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 16px 12px', gap: 8, flexWrap: 'wrap' }}>
           <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
           <button onClick={nukeAllOrders} style={{
             padding: '11px 14px',
@@ -737,7 +737,6 @@ export default function Dashboard() {
             borderRadius: 10,
             cursor: 'pointer',
             letterSpacing: '0.02em',
-            transform: 'translateY(-3px)',
           }}>
             Delete
           </button>
