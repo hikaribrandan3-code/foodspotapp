@@ -73,16 +73,16 @@ export default function ForgotPasswordPage() {
       {/* Main Content */}
       <main className="relative z-10 flex-1 flex flex-col justify-center px-4 md:px-8 py-6 max-w-lg mx-auto w-full">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-md">
+          <h1 style={{ color: '#ffffff' }} className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-md">
             {l.title}
           </h1>
-          <p className="text-gray-200 drop-shadow-sm">{l.subtitle}</p>
+          <p style={{ color: '#ffffff' }} className="drop-shadow-sm">{l.subtitle}</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
+        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
                 {l.email}
               </label>
               <input
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={l.emailPlaceholder}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
                 required
               />
             </div>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold py-3 rounded-lg transition-all duration-200 active:scale-95 mt-6 shadow-sm"
+              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold py-3 rounded-full transition-all duration-200 active:scale-95 mt-6 shadow-sm"
             >
               {loading ? 'Sending...' : l.sendReset}
             </button>

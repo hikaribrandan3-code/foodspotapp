@@ -260,11 +260,11 @@ const TrialSignup = () => {
         }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-2 pt-10 pb-20">
-          <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">
+        <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
+          <h1 style={{ color: '#ffffff' }} className="text-4xl md:text-5xl font-bold drop-shadow-lg leading-tight">
             {l.headline}
           </h1>
-          <p className="text-lg md:text-xl text-white drop-shadow-md">
+          <p style={{ color: '#ffffff' }} className="text-lg md:text-xl drop-shadow-md">
             {l.subheadline}
           </p>
         </div>
@@ -300,18 +300,18 @@ const TrialSignup = () => {
           <div className="text-center border-t border-gray-200 pt-4">
             <p className="text-gray-700 text-sm">
               {l.haveAccount}{' '}
-              <a href="#" className="text-green-600 font-semibold hover:text-green-700">
+              <a href="/login" className="text-green-600 font-semibold hover:text-green-700">
                 {l.login}
               </a>
             </p>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 flex justify-center">
             <a
               href="https://wa.me/543512122600?text=I need help with FoodSpot"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 text-sm font-medium group"
+              className="text-green-600 hover:text-green-700 text-sm font-medium"
             >
               <span className="underline underline-offset-2">{l.needHelp}? {l.contactSupport}</span>
             </a>

@@ -76,10 +76,10 @@ export default function LoginPage() {
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 text-center px-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-md">
+          <h1 style={{ color: '#ffffff' }} className="text-3xl md:text-4xl font-bold mb-2 drop-shadow-md">
             {l.welcomeBack}
           </h1>
-          <p className="text-white/90 text-lg drop-shadow-sm">{l.subheadline}</p>
+          <p style={{ color: '#ffffff' }} className="text-lg drop-shadow-sm">{l.subheadline}</p>
         </div>
       </div>
 
@@ -100,26 +100,26 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">{l.email}</label>
+              <label className="text-sm font-semibold text-gray-900">{l.email}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={l.emailPlaceholder}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
                 required
               />
             </div>
 
             {/* Password */}
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-semibold text-gray-700">{l.password}</label>
+              <label className="text-sm font-semibold text-gray-900">{l.password}</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={l.passwordPlaceholder}
-                className="w-full bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
                 required
               />
             </div>
@@ -135,7 +135,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold py-3 rounded-lg transition-all duration-200 active:scale-95 mt-6 shadow-sm"
+              className="w-full bg-green-500 hover:bg-green-600 disabled:opacity-60 text-white font-semibold py-3 rounded-full transition-all duration-200 active:scale-95 mt-6 shadow-sm"
             >
               {loading ? 'Loading...' : l.loginButton}
             </button>
@@ -143,7 +143,7 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-900 text-sm">
               {l.noAccount}{' '}
               <a href="/" className="font-semibold text-green-600 hover:text-green-700">
                 {l.signup}
