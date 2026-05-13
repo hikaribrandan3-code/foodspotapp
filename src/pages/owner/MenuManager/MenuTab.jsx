@@ -32,7 +32,8 @@ export default function MenuTab({
     description: '',
     price: '',
     kcal: '',
-    category: activeCategory || '',
+    categoryId: activeCategory || (categories[0]?.id || ''),
+    categoryName: categories.find(c => c.id === activeCategory)?.name || categories[0]?.name || 'General',
     image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
     is_vegan: false,
     is_gluten_free: false,
@@ -103,8 +104,14 @@ export default function MenuTab({
       return;
     }
 
-    const categoryName = newRecipe.category || activeCategory || 'General';
-    const categoryId = categoryMap[categoryName] || categoryName;
+    // Use explicitly selected category, or fall back to activeCategory, then first category
+    const selectedCategoryId = newRecipe.categoryId || activeCategory || categories[0]?.id;
+    if (!selectedCategoryId) {
+      alert('Por favor selecciona una categoría.');
+      return;
+    }
+    const selectedCategory = categories.find(c => c.id === selectedCategoryId);
+    const categoryName = selectedCategory?.name || 'General';
 
     const item = {
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9),
@@ -119,7 +126,8 @@ export default function MenuTab({
       is_vegan: newRecipe.is_vegan,
       is_gluten_free: newRecipe.is_gluten_free,
       is_spicy: newRecipe.is_spicy,
-      category_id: categoryId
+      category_id: selectedCategoryId,
+      category: categoryName
     };
 
     onAddItem(item);
@@ -129,7 +137,8 @@ export default function MenuTab({
       description: '',
       price: '',
       kcal: '',
-      category: activeCategory || '',
+      categoryId: activeCategory || (categories[0]?.id || ''),
+      categoryName: categories.find(c => c.id === activeCategory)?.name || categories[0]?.name || 'General',
       image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800',
       is_vegan: false,
       is_gluten_free: false,
@@ -442,6 +451,23 @@ export default function MenuTab({
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest">{t('category') || 'Category'}</label>
+                    <select
+                      className="w-full bg-stone-50 border-none rounded-xl p-4 font-bold text-stone-950 outline-none focus:bg-stone-100 transition-all"
+                      value={newRecipe.categoryId}
+                      onChange={(e) => {
+                        const catId = e.target.value;
+                        const cat = categories.find(c => c.id === catId);
+                        setNewRecipe({ ...newRecipe, categoryId: catId, categoryName: cat?.name || 'General' });
+                      }}
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="space-y-1">

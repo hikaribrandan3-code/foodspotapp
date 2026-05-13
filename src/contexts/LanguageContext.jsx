@@ -12,10 +12,8 @@ export const LanguageProvider = ({ children }) => {
 
     // 🛡️ PERSONAL TRACK: Load staff preference from local storage if it exists
     const [lang, setLang] = useState(() => {
-        const staffPref = localStorage.getItem('fs_staff_lang');
-        if (staffPref) return staffPref;
-
-        // Hardcoded Spanish default — change to 'es' permanently
+        // Don't unconditionally load staff pref — we need to know the user role first.
+        // Default to Spanish/DB value; role-aware init happens in the mount effect below.
         const initial = tenantData?.language || 'es';
         console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (will sync from DB)`);
         return initial;
@@ -41,21 +39,52 @@ export const LanguageProvider = ({ children }) => {
         fetchLanguage();
     }, [businessId]);
 
-    // 🔄 GLOBAL TRACK SYNC: Only sync from DB if there is NO staff preference locked in
+    // 🔄 Role-aware language initialization on mount
     useEffect(() => {
-        const staffPref = localStorage.getItem('fs_staff_lang');
-        if (staffPref) {
-            if (lang !== staffPref) setLang(staffPref);
-            return; // Staff preference overrides Global Sync
-        }
+        const initLanguage = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const role = session?.user?.user_metadata?.role;
+            const isStaff = role && role !== 'owner' && role !== 'superadmin';
 
-        if (!tenantData?.language) return;
+            if (isStaff) {
+                const staffPref = localStorage.getItem('fs_staff_lang');
+                if (staffPref && staffPref !== lang) {
+                    setLang(staffPref);
+                }
+            } else {
+                // Owner or unauthenticated: clear stale staff pref and sync from DB
+                localStorage.removeItem('fs_staff_lang');
+                if (tenantData?.language && tenantData.language !== lang) {
+                    setLang(tenantData.language);
+                }
+            }
+        };
+        initLanguage();
+    }, []); // Run once on mount
 
-        if (tenantData.language !== lang) {
-            if (isLocked.current) return;
-            console.log(`[LanguageContext] 🔄 Global Syncing to DB language: ${tenantData.language}`);
-            setLang(tenantData.language);
-        }
+    // 🔄 GLOBAL TRACK SYNC: Only honor staff pref for staff users
+    useEffect(() => {
+        const syncLanguage = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const role = session?.user?.user_metadata?.role;
+            const isStaff = role && role !== 'owner' && role !== 'superadmin';
+
+            if (isStaff) {
+                const staffPref = localStorage.getItem('fs_staff_lang');
+                if (staffPref && lang !== staffPref) {
+                    setLang(staffPref);
+                    return;
+                }
+            }
+
+            if (!tenantData?.language) return;
+            if (tenantData.language !== lang) {
+                if (isLocked.current) return;
+                console.log(`[LanguageContext] 🔄 Global Syncing to DB language: ${tenantData.language}`);
+                setLang(tenantData.language);
+            }
+        };
+        syncLanguage();
     }, [tenantData?.language, lang]);
 
     const t = (key) => {

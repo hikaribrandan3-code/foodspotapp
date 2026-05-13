@@ -431,10 +431,22 @@ function OwnerSummary() {
         saveBusinessCurrency(currencyCode)
     }
 
-    const externalLinkDebounceRef = useRef(null)
+    const instagramDebounceRef = useRef(null)
+    const tiktokDebounceRef = useRef(null)
+    const mapsDebounceRef = useRef(null)
+    const googleReviewDebounceRef = useRef(null)
+
     const saveExternalLink = async (field, input) => {
-        if (externalLinkDebounceRef.current) clearTimeout(externalLinkDebounceRef.current)
-        externalLinkDebounceRef.current = setTimeout(async () => {
+        const refMap = {
+            instagramUrl: instagramDebounceRef,
+            tiktokUrl: tiktokDebounceRef,
+            mapsLink: mapsDebounceRef,
+            googleReviewUrl: googleReviewDebounceRef,
+        }
+        const ref = refMap[field]
+        if (!ref) return
+        if (ref.current) clearTimeout(ref.current)
+        ref.current = setTimeout(async () => {
             try {
                 const updates = { [field]: input }
                 const updatedConfig = { ...appConfig, externalOrdering: { ...appConfig?.externalOrdering, ...updates } }
