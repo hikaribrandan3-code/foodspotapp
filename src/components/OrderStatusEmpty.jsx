@@ -354,7 +354,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                     </div>
                 </section>
 
-                {/* Hero Banner - Argentina World Cup Champion */}
+                {/* Hero Banner - Argentina World Cup Champion with FoodSpot Dog */}
                 {promoConfig.enabled && (
                     <section className="ose-hero ose-hero-worldcup" style={{
                         background: 'linear-gradient(135deg, #1C5AA0 0%, #4A90E2 50%, #87CEEB 100%)',
@@ -362,55 +362,23 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         position: 'relative',
                         overflow: 'hidden',
                         padding: '16px',
-                        minHeight: '130px',
+                        minHeight: '140px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between'
                     }}>
-                        {/* Full visible Argentina flag */}
-                        <div style={{
-                            position: 'absolute',
-                            top: -15,
-                            right: 60,
-                            fontSize: '110px',
-                            lineHeight: 1,
-                            zIndex: 0,
-                            opacity: 0.7
-                        }}>
-                            🇦🇷
-                        </div>
-
                         <div style={{ position: 'relative', zIndex: 1, flex: 1 }}>
                             <h2 style={{
                                 fontSize: '24px',
                                 fontWeight: 900,
                                 color: '#FFFFFF',
-                                margin: '0 0 8px 0',
+                                margin: '0 0 16px 0',
                                 textShadow: '3px 3px 6px rgba(28, 90, 160, 0.5)',
                                 letterSpacing: '1.5px',
                                 lineHeight: 1.1
                             }}>
                                 ¡VAMOS VAMOS<br/>ARGENTINA!
                             </h2>
-
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '16px',
-                                fontWeight: 800,
-                                color: '#FFD700',
-                                marginBottom: '12px',
-                                textShadow: '2px 2px 4px rgba(28, 90, 160, 0.4)',
-                                backgroundColor: 'rgba(255, 215, 0, 0.15)',
-                                padding: '6px 12px',
-                                borderRadius: '12px',
-                                width: 'fit-content'
-                            }}>
-                                <span>⏱️</span>
-                                <span>{countdown}</span>
-                                <span>DAYS</span>
-                            </div>
 
                             <button className="ose-hero-cta ose-hero-cta-worldcup" onClick={handleClaimPromo} style={{
                                 background: '#FFD700',
@@ -430,12 +398,18 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                             </button>
                         </div>
 
-                        <div style={{ position: 'relative', zIndex: 1, marginLeft: '10px' }}>
-                            {promoConfig.image ? (
-                                <img src={promoConfig.image} alt="World Cup" style={{ width: '80px', height: '80px', objectFit: 'contain' }} />
-                            ) : (
-                                <div style={{ fontSize: '80px', lineHeight: 1, textAlign: 'center' }}>⚽</div>
-                            )}
+                        {/* FoodSpot Argentina Dog Mascot */}
+                        <div style={{ position: 'relative', zIndex: 1, marginLeft: '12px', flexShrink: 0 }}>
+                            <img
+                                src="/src/assets/images/argentina-dog.png"
+                                alt="FoodSpot Argentina"
+                                style={{
+                                    width: '120px',
+                                    height: '120px',
+                                    objectFit: 'contain',
+                                    filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2))'
+                                }}
+                            />
                         </div>
                     </section>
                 )}
