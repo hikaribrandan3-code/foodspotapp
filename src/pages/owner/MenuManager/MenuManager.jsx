@@ -273,7 +273,7 @@ export default function MenuManager() {
             image: i.image_url,
             available: i.available,
             description: i.description,
-            calories: i.kcal
+            calories: i.calories || i.kcal || 0
           }))
       }))
     };

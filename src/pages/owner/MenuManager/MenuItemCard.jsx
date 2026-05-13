@@ -6,7 +6,7 @@ import { processAndStoreImage } from '../../../utils/imageOptimizer';
 export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [inStock, setInStock] = useState(item.available !== false);
   const [description, setDescription] = useState(item.description || '');
-  const [kcal, setKcal] = useState(item.kcal || 0);
+  const [calories, setCalories] = useState(item.calories || item.kcal || 0);
   const [isVegan, setIsVegan] = useState(item.is_vegan || false);
   const [isGlutenFree, setIsGlutenFree] = useState(item.is_gluten_free || false);
   const [isSpicy, setIsSpicy] = useState(item.is_spicy || false);
@@ -26,8 +26,8 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
 
   const handleKcalChange = (e) => {
     const val = parseInt(e.target.value) || 0;
-    setKcal(val);
-    onUpdate(item.id, { kcal: val });
+    setCalories(val);
+    onUpdate(item.id, { calories: val });
   };
 
   const priceDisplay = typeof item.price === 'number'
@@ -94,7 +94,7 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
             <Flame className="h-3.5 w-3.5 text-emerald-600 fill-current" />
             <input
               type="text"
-              value={kcal}
+              value={calories}
               onChange={handleKcalChange}
               className="w-10 bg-transparent text-[10px] font-bold uppercase tracking-[0.1em] border-none outline-none focus:text-emerald-600"
             />

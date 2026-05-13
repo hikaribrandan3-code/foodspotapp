@@ -541,7 +541,8 @@ const TrialSignup = () => {
       const { error: bizError } = await supabase.from('businesses').insert({
         id: businessId,
         slug,
-        name: businessName
+        name: businessName,
+        owner_id: user.id
       })
       if (bizError) console.error('[Onboarding] businesses insert failed:', bizError)
 

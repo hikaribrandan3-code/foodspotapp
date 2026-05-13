@@ -126,7 +126,12 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
         })
       };
       updateBranding(payload, businessId)
-        .then(() => {
+        .then((result) => {
+          if (result?.error) {
+            console.error('[InventoryEntry] Save failed:', result.error);
+            setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
+            return;
+          }
           setSaveStatus({ message: t('saved') || 'Saved' });
           setIsDirty(false);
         })
@@ -274,7 +279,12 @@ export const InventoryEntry: React.FC<InventoryEntryProps> = ({
           inventory: { items: nextItems, categories }
         })
       };
-      await updateBranding(payload, effectiveBusinessId);
+      const result = await updateBranding(payload, effectiveBusinessId);
+      if (result?.error) {
+        console.error('[InventoryEntry] Delete failed:', result.error);
+        setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
+        return;
+      }
       setItems(nextItems);
       setSaveStatus({ message: t('saved') || 'Saved' });
       if (isEmbedded && onItemsChange) {

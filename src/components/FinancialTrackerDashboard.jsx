@@ -209,7 +209,12 @@ export default function FinancialTrackerDashboard() {
   };
 
   const deleteExpense = async (id) => {
-    await supabase.from('expenses').delete().eq('id', id);
+    const { error } = await supabase.from('expenses').delete().eq('id', id).eq('business_id', businessId);
+    if (error) {
+      console.error('[Expenses] Delete failed:', error);
+      alert('Failed to delete expense: ' + error.message);
+      return;
+    }
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   };
 

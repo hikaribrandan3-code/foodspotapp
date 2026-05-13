@@ -74,18 +74,23 @@ export default function MenuInventoryView({ lang = 'en' }) {
         })
       };
       updateBranding(payload, effectiveBusinessId)
-        .then(() => {
+        .then((result) => {
+          if (result.error) {
+            const isForbidden = result.error?.code === '42501' || result.error?.status === 403 || result.error?.message?.includes('permission');
+            if (isForbidden) {
+              console.error('[MenuInventoryView] 🚨 403 FORBIDDEN — Inventory save blocked. Please log in as owner.');
+            } else {
+              console.error('[MenuInventoryView] Save failed:', result.error);
+            }
+            setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
+            return;
+          }
           setSaveStatus({ message: t('saved') || 'Saved' });
           setIsDirty(false);
           isSyncing.current = true;
         })
         .catch(err => {
-          const isForbidden = err?.code === '42501' || err?.status === 403 || err?.message?.includes('permission');
-          if (isForbidden) {
-            console.error('[MenuInventoryView] 🚨 403 FORBIDDEN — Inventory save blocked. Please log in as owner.');
-          } else {
-            console.error('[MenuInventoryView] Save failed:', err);
-          }
+          console.error('[MenuInventoryView] Save failed:', err);
           setSaveStatus({ error: true, message: t('save_failed') || 'Save failed' });
         });
     }, 1000);
