@@ -678,17 +678,17 @@ function OwnerSummary() {
                                     {/* Mercado Pago Token Management */}
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-3">
-                                            Connect to Mercado Pago
+                                            {t('mp_connect_mercado_pago') || 'Connect to Mercado Pago'}
                                         </label>
                                         <div className="space-y-3">
                                             <div className="text-xs text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 border border-emerald-200 dark:border-emerald-800">
-                                                <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">How to get your API token:</p>
+                                                <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">{t('mp_api_token_how_to_title')}</p>
                                                 <ol className="list-decimal list-inside space-y-1 text-emerald-800 dark:text-emerald-200">
-                                                    <li>Go to <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
-                                                    <li>Sign in to your account</li>
-                                                    <li>Go to Settings → Credentials</li>
-                                                    <li>Copy your <span className="font-semibold">Access Token</span> (starts with <span className="font-mono text-[11px]">APP_USR</span>)</li>
-                                                    <li>Paste it below</li>
+                                                    <li>{t('mp_api_token_step_1')} <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                    <li>{t('mp_api_token_step_2')}</li>
+                                                    <li>{t('mp_api_token_step_3')}</li>
+                                                    <li>{t('mp_api_token_step_4')} <span className="font-mono text-[11px]">APP_USR</span>)</li>
+                                                    <li>{t('mp_api_token_step_5')}</li>
                                                 </ol>
                                             </div>
                                             <div className="flex gap-3 items-end">
@@ -727,27 +727,27 @@ function OwnerSummary() {
                                             </div>
                                             {mpTokenInput && !mpTokenInput.startsWith('APP_USR_') && (
                                                 <p className="text-xs text-amber-600 dark:text-amber-400">
-                                                    ⚠️ Token should start with APP_USR_
+                                                    {t('mp_api_token_error_prefix')}
                                                 </p>
                                             )}
                                             {mpTokenInput && (
                                                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                                                    Token set: {mpTokenInput.substring(0, 15)}...
+                                                    {t('mp_api_token_set_label')} {mpTokenInput.substring(0, 15)}...
                                                 </p>
                                             )}
 
                                             <div className="border-t border-stone-200 dark:border-stone-700 pt-4 mt-4">
                                                 <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
-                                                    Mercado Pago User ID
+                                                    {t('mp_user_id_label')}
                                                 </label>
                                                 <div className="text-xs text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800 mb-3">
-                                                    <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">How to get your User ID:</p>
+                                                    <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">{t('mp_user_id_how_to_title')}</p>
                                                     <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200">
-                                                        <li>Go to <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
-                                                        <li>Sign in to your account</li>
-                                                        <li>Go to Settings → Account</li>
-                                                        <li>Find your <span className="font-semibold">User ID</span> (a number, e.g. <span className="font-mono text-[11px]">123456789</span>)</li>
-                                                        <li>Paste it below</li>
+                                                        <li>{t('mp_user_id_step_1')} <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                        <li>{t('mp_user_id_step_2')}</li>
+                                                        <li>{t('mp_user_id_step_3')}</li>
+                                                        <li>{t('mp_user_id_step_4')} <span className="font-mono text-[11px]">123456789</span>)</li>
+                                                        <li>{t('mp_user_id_step_5')}</li>
                                                     </ol>
                                                 </div>
                                                 <div className="flex gap-3 items-end">
@@ -786,12 +786,12 @@ function OwnerSummary() {
                                                 </div>
                                                 {mpUserIdInput && !/^\d+$/.test(mpUserIdInput) && (
                                                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                                                        ⚠️ User ID should be a number
+                                                        {t('mp_user_id_error_message')}
                                                     </p>
                                                 )}
                                                 {mpUserIdInput && (
                                                     <p className="text-xs text-stone-500 dark:text-stone-400 mt-2">
-                                                        User ID set: {mpUserIdInput}
+                                                        {t('mp_user_id_set_label')} {mpUserIdInput}
                                                     </p>
                                                 )}
                                             </div>
