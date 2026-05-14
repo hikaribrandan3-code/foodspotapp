@@ -425,6 +425,9 @@ body {
 header,
 .page-header {
   background: var(--canvas-bg) !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
 }
 
 /* Hero tiles use dynamic CSS variables set by App.jsx */
