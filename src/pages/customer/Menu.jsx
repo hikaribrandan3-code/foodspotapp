@@ -230,12 +230,19 @@ export default function Menu({ config: configProp }) {
                 is_vegan: item.is_vegan || false,
                 is_gluten_free: item.is_gluten_free || false,
                 is_spicy: item.is_spicy || false,
-                featured: item.featured || false
+                featured: item.featured || false,
+                display_order: item.display_order ?? 0,
+                sort_order: item.sort_order ?? 0
             })
         })
 
-        // Return in the same order as backend categories (sort_order)
-        return Object.values(grouped).sort((a, b) => (a.sort_order - b.sort_order))
+        // Sort categories by sort_order, then items inside each category by display_order
+        return Object.values(grouped)
+            .sort((a, b) => (a.sort_order - b.sort_order))
+            .map(cat => ({
+                ...cat,
+                items: cat.items.sort((a, b) => (a.display_order - b.display_order))
+            }))
     }
 
     useEffect(() => {
@@ -246,7 +253,7 @@ export default function Menu({ config: configProp }) {
             try {
                 // PRIMARY: Always fetch fresh relational data to match backend MenuManager
                 const [{ data: items, error: itemsError }, { data: categories, error: catError }] = await Promise.all([
-                    supabase.from('menu_items').select('*').eq('business_id', businessId).limit(200),
+                    supabase.from('menu_items').select('*').eq('business_id', businessId).order('display_order', { ascending: true }).limit(200),
                     supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
                 ])
 
