@@ -27,7 +27,7 @@ function OwnerSummary() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
-    const { lang, t, changeLanguage } = useLanguage()
+    const { t } = useLanguage()
     const { theme, setTheme } = useTheme()
     const appConfig = tenantData?.app_config || {}
     const [businessInfoLocal, setBusinessInfoLocal] = useState({})
@@ -82,8 +82,6 @@ function OwnerSummary() {
         team: false,
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
-
-    // 🌍 LANGUAGE — now auto-saves via changeLanguage() directly
 
     // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
     const [orders, setOrders] = useState([])
@@ -179,16 +177,6 @@ function OwnerSummary() {
         window.location.href = `/${tenantSlug}`
     }
 
-    const handleLanguageChange = async (newLang) => {
-        try {
-            await changeLanguage(newLang)
-            setAutoSaveStatus({ type: 'language', timestamp: Date.now() })
-            setTimeout(() => setAutoSaveStatus(null), 2000)
-        } catch (err) {
-            console.error('Language save failed:', err)
-        }
-    }
-
     // Stats calculations (from Supabase data)
     const stats = useMemo(() => {
         const today = new Date().toDateString()
@@ -262,10 +250,27 @@ function OwnerSummary() {
                 } catch (e) {
                     console.error('Save failed:', e)
                 }
-            }, 800)
+            }, 300)
 
             return next
         })
+    }
+
+    // 🚽 Flush debounced save immediately (used on blur to prevent lost digits)
+    const flushBusinessInfoSave = async () => {
+        if (businessInfoDebounceRef.current) {
+            clearTimeout(businessInfoDebounceRef.current)
+            businessInfoDebounceRef.current = null
+        }
+        const currentLocal = businessInfoLocalRef.current
+        const newBusinessInfo = { ...appConfig?.businessInfo, ...currentLocal }
+        const updatedConfig = { ...appConfig, businessInfo: newBusinessInfo }
+        try {
+            await supabase.from('branding').update({ app_config: updatedConfig }).eq('business_id', businessId)
+            await refreshTenantData()
+        } catch (e) {
+            console.error('Flush save failed:', e)
+        }
     }
 
     // Update payment methods
@@ -635,7 +640,7 @@ function OwnerSummary() {
                                             value={businessInfoLocal?.whatsapp || ''}
                                             onFocus={() => { isTypingRef.current = true }}
                                             onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
-                                            onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
+                                            onBlur={() => { isTypingRef.current = false; flushBusinessInfoSave(); showVenueSavedPill() }}
                                             placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
                                             className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
@@ -1008,46 +1013,6 @@ function OwnerSummary() {
                     </AnimatePresence>
                 </motion.div>
 
-                {/* Language */}
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-                    <SectionHeader
-                        icon={<Globe size={14} />}
-                        title={t('language_setting') || 'Language'}
-                        isOpen={openSections.language}
-                        onToggle={() => toggleSection('language')}
-                    />
-                    <AnimatePresence>
-                        {openSections.language && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-2 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    {['EN', 'ES', 'PT'].map((l) => {
-                                        const isSelected = lang === l.toLowerCase()
-                                        return (
-                                            <button
-                                                key={l}
-                                                onClick={() => handleLanguageChange(l.toLowerCase())}
-                                                className={`w-full flex items-center justify-between px-4 py-3.5 text-sm font-medium border-b border-stone-100 dark:border-white/5 last:border-0 transition-colors ${
-                                                    isSelected
-                                                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
-                                                        : 'text-stone-400 dark:text-white hover:bg-stone-50 dark:hover:bg-white/5'
-                                                }`}
-                                            >
-                                                <span>{l}</span>
-                                                {isSelected && <Check size={16} className="text-emerald-600 dark:text-emerald-400" />}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </motion.div>
-
                 {/* Team Management */}
                 <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.confirmation_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} onSaved={() => { setAutoSaveStatus({ type: 'team', timestamp: Date.now() }); setTimeout(() => setAutoSaveStatus(null), 2000) }} />
 
@@ -1237,6 +1202,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             .from('staff')
             .select('*')
             .eq('business_id', businessId)
+            .eq('status', 'active')
             .order('name')
 
         if (!error && data) setStaffList(data)

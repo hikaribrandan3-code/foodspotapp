@@ -415,6 +415,21 @@ export default function MenuTab({
                   </button>
                 </div>
 
+                {categories.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-stone-100 flex items-center justify-center">
+                      <Plus className="h-8 w-8 text-stone-400" />
+                    </div>
+                    <p className="text-stone-600 font-medium">{t('create_category_first') || 'Crea una categoría primero para agregar platos.'}</p>
+                    <button
+                      onClick={() => { setIsAdding(false); onAddCategory(); }}
+                      className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-500 transition-colors"
+                    >
+                      {t('add_category') || '+ Add Category'}
+                    </button>
+                  </div>
+                ) : (
+                <>
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest">{t('dish_name') || 'Dish Name'}</label>
@@ -525,6 +540,8 @@ export default function MenuTab({
                 >
                   {t('add_to_menu') || 'Add to Menu'}
                 </button>
+              </>
+              )}
               </div>
             </motion.div>
           </div>

@@ -61,10 +61,6 @@ const TRANSLATIONS = {
     // Login modal
     welcomeBack: 'Welcome Back to FoodSpot!',
     loginSubtitle: 'Your menu. Their content. Your growth.',
-    emailLabel: 'Email',
-    emailPlaceholder: 'Enter your email',
-    passwordLabel: 'Password',
-    passwordPlaceholder: 'Enter your password',
     forgotPassword: 'Forgot password?',
     logIn: 'Log In',
     noAccount: "Don't have an account?",
@@ -99,10 +95,6 @@ const TRANSLATIONS = {
     // Login modal
     welcomeBack: '¡Bienvenido de Nuevo a FoodSpot!',
     loginSubtitle: 'Tu menú. Su contenido. Tu crecimiento.',
-    emailLabel: 'Correo',
-    emailPlaceholder: 'Ingresa tu correo',
-    passwordLabel: 'Contraseña',
-    passwordPlaceholder: 'Ingresa tu contraseña',
     forgotPassword: '¿Olvidaste tu contraseña?',
     logIn: 'Iniciar Sesión',
     noAccount: '¿No tienes una cuenta?',
@@ -137,10 +129,6 @@ const TRANSLATIONS = {
     // Login modal
     welcomeBack: 'Bem-vindo de Volta ao FoodSpot!',
     loginSubtitle: 'Seu cardápio. O conteúdo deles. Seu crescimento.',
-    emailLabel: 'E-mail',
-    emailPlaceholder: 'Digite seu e-mail',
-    passwordLabel: 'Senha',
-    passwordPlaceholder: 'Digite sua senha',
     forgotPassword: 'Esqueceu a senha?',
     logIn: 'Fazer Login',
     noAccount: 'Não tem uma conta?',

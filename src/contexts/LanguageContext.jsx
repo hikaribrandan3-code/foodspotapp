@@ -1,91 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabaseClient';
-import { useTenant } from './TenantContext';
+import React, { createContext, useContext, useState } from 'react';
 import { translations } from '../utils/translations';
 
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-    const { tenantData, businessId, refreshTenantData } = useTenant();
-    const isLocked = useRef(false);
-    const lockTimer = useRef(null);
-
-    // 🛡️ PERSONAL TRACK: Load staff preference from local storage if it exists
-    const [lang, setLang] = useState(() => {
-        // Don't unconditionally load staff pref — we need to know the user role first.
-        // Default to Spanish/DB value; role-aware init happens in the mount effect below.
-        const initial = tenantData?.language || 'es';
-        console.log(`[LanguageContext] 🏁 Initializing with: ${initial} (will sync from DB)`);
-        return initial;
-    });
-
-    // 🔄 Fetch language from language_settings table on mount
-    useEffect(() => {
-        if (!businessId) return;
-
-        const fetchLanguage = async () => {
-            const { data, error } = await supabase
-                .from('language_settings')
-                .select('language')
-                .eq('business_id', businessId)
-                .maybeSingle();
-
-            if (!error && data?.language) {
-                console.log(`[LanguageContext] 📡 Loaded from DB: ${data.language}`);
-                setLang(data.language);
-            }
-        };
-
-        fetchLanguage();
-    }, [businessId]);
-
-    // 🔄 Role-aware language initialization on mount
-    useEffect(() => {
-        const initLanguage = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const role = session?.user?.user_metadata?.role;
-            const isStaff = role && role !== 'owner' && role !== 'superadmin';
-
-            if (isStaff) {
-                const staffPref = localStorage.getItem('fs_staff_lang');
-                if (staffPref && staffPref !== lang) {
-                    setLang(staffPref);
-                }
-            } else {
-                // Owner or unauthenticated: clear stale staff pref and sync from DB
-                localStorage.removeItem('fs_staff_lang');
-                if (tenantData?.language && tenantData.language !== lang) {
-                    setLang(tenantData.language);
-                }
-            }
-        };
-        initLanguage();
-    }, []); // Run once on mount
-
-    // 🔄 GLOBAL TRACK SYNC: Only honor staff pref for staff users
-    useEffect(() => {
-        const syncLanguage = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            const role = session?.user?.user_metadata?.role;
-            const isStaff = role && role !== 'owner' && role !== 'superadmin';
-
-            if (isStaff) {
-                const staffPref = localStorage.getItem('fs_staff_lang');
-                if (staffPref && lang !== staffPref) {
-                    setLang(staffPref);
-                    return;
-                }
-            }
-
-            if (!tenantData?.language) return;
-            if (tenantData.language !== lang) {
-                if (isLocked.current) return;
-                console.log(`[LanguageContext] 🔄 Global Syncing to DB language: ${tenantData.language}`);
-                setLang(tenantData.language);
-            }
-        };
-        syncLanguage();
-    }, [tenantData?.language, lang]);
+    // 🔒 Spanish is hardwired globally — no switching, no localStorage, no DB sync
+    const [lang] = useState('es');
 
     const t = (key) => {
         if (!translations[key]) {
@@ -95,53 +15,9 @@ export const LanguageProvider = ({ children }) => {
         return translations[key][lang] || translations[key]['es'] || translations[key]['en'] || key;
     };
 
-    const changeLanguage = async (newLang) => {
-        if (!businessId) return;
-
-        // 1. Check if user is Staff or Owner
-        const { data: { session } } = await supabase.auth.getSession();
-        const role = session?.user?.user_metadata?.role;
-        const isOwner = role === 'owner' || role === 'superadmin';
-
-        if (isOwner) {
-            // 🌎 GLOBAL CHANGE: Updates DB for all Customers
-            console.log(`[LanguageContext] 🌎 OWNER CHANGE: Setting Global to ${newLang}`);
-            isLocked.current = true;
-            setLang(newLang);
-            localStorage.removeItem('fs_staff_lang'); // Owners shouldn't have sticky personal prefs
-
-            if (lockTimer.current) clearTimeout(lockTimer.current);
-
-            try {
-                if (!businessId) {
-                    console.warn('[LanguageContext] ⚠️ No businessId, skipping DB update');
-                    return;
-                }
-
-                // Upsert into language_settings table
-                const { error, data } = await supabase
-                    .from('language_settings')
-                    .upsert({ business_id: businessId, language: newLang });
-
-                if (error) {
-                    console.error('[LanguageContext] ❌ Language update failed:', error.message, error.details);
-                } else {
-                    console.log('[LanguageContext] ✅ Language saved to DB:', { businessId, language: newLang });
-                }
-
-                lockTimer.current = setTimeout(() => {
-                    isLocked.current = false;
-                }, 1500);
-            } catch (err) {
-                console.error('[LanguageContext] 💥 Language update crashed:', err);
-                isLocked.current = false;
-            }
-        } else {
-            // 👤 PERSONAL CHANGE: Local Staff Preference Only
-            console.log(`[LanguageContext] 👤 STAFF CHANGE: Setting Personal Preference to ${newLang}`);
-            setLang(newLang);
-            localStorage.setItem('fs_staff_lang', newLang);
-        }
+    // No-op — language is locked to Spanish
+    const changeLanguage = async () => {
+        console.log('[LanguageContext] Language is hardwired to Spanish (es)');
     };
 
     return (

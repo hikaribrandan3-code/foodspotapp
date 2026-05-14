@@ -196,7 +196,7 @@ export const defaultConfig = {
     infoPills: {
         whatsapp: { bgColor: '#C4856A', textColor: 'white' },
         mercadoPago: { bgColor: '#FFE600', textColor: '#009EE3' },
-        adminAccess: { bgColor: '#FFFFFF', textColor: '#9CA3AF', borderColor: '#E5E7EB' },
+        adminAccess: { bgColor: '#448AFF', textColor: 'white', borderColor: '#E5E7EB' },
         demo: { bgColor: '#84CC16', textColor: 'white' },
         // Extra custom pill (limit: 1)
         custom: { enabled: false, label: '', url: '', bgColor: '#6366F1', textColor: 'white' }

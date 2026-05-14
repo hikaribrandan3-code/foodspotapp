@@ -16,7 +16,7 @@ function simpleHash(str) {
 function OwnerLogin() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
-    const { tenantData } = useTenant()
+    const { tenantData, businessId: contextBusinessId } = useTenant()
     
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -35,7 +35,7 @@ function OwnerLogin() {
     const [fpError, setFpError] = useState('')
 
     const t = useMemo(() => {
-        const lang = tenantData?.language || 'es';
+        const lang = 'es';
         return (key) => {
             const translations = {
                 es: {
@@ -195,7 +195,7 @@ function OwnerLogin() {
         setError('');
 
         try {
-            const businessId = tenantData?.id;
+            const businessId = contextBusinessId;
             if (!businessId) {
                 throw new Error('Business ID not found');
             }
@@ -206,7 +206,7 @@ function OwnerLogin() {
                 .from('staff')
                 .select('*')
                 .eq('business_id', businessId)
-                .eq('email', email.toLowerCase().trim())
+                .eq('username', email.toLowerCase().trim())
                 .eq('pin', passwordHash)
                 .eq('status', 'active')
                 .maybeSingle();
@@ -233,7 +233,7 @@ function OwnerLogin() {
                 business_id: staff.business_id,
                 name: staff.name,
                 role: staff.role,
-                email: staff.email
+                email: staff.email || staff.username
             };
 
             localStorage.setItem('fs_staff_member', JSON.stringify(staffData));

@@ -50,6 +50,8 @@ const Info = ({ config }) => {
 
     // Check if pill is enabled (default to true for backward compatibility)
     const isPillEnabled = (pillId) => {
+        // Admin access is always visible — hardwired regardless of config
+        if (pillId === 'adminAccess') return true;
         // If explicitly set to false, hide it. Otherwise show.
         return infoPills[pillId]?.enabled !== false;
     };
