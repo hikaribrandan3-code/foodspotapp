@@ -503,7 +503,7 @@ export async function getMenuCloud(businessId) {
                         price: item.price,
                         available: item.available,
                         featured: item.featured,
-                        image: item.image_url,
+                        image: item.image_url || item.image,
                         description: item.description
                     }))
             }))

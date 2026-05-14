@@ -647,7 +647,7 @@ export default function Menu({ config: configProp }) {
                     category_id: cat.id,
                     name: item.name,
                     price: item.price || 0,
-                    image: item.image || null,
+                    image_url: item.image_url || item.image || null,
                     available: item.available ?? true,
                     display_order: idx,
                     sort_order: idx

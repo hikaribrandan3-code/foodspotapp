@@ -299,7 +299,7 @@ export default function MenuManager() {
             id: i.id,
             name: i.name,
             price: i.price,
-            image: i.image_url,
+            image: i.image_url || i.image,
             available: i.available,
             description: i.description,
             calories: i.calories || i.kcal || 0
