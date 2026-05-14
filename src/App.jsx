@@ -239,7 +239,7 @@ function App() {
                 if (session?.user?.user_metadata?.slug) {
                     const slug = session.user.user_metadata.slug;
                     const path = window.location.pathname;
-                    if (slug && (path === '/admin' || path === '/' || path === '/auth/callback' || path === '/start-trial')) {
+                    if (slug && (path === '/admin' || path === '/' || path === '/auth/callback')) {
                         console.log("🚀 AUTH GUARD: Redirecting to owner dashboard:", slug);
                         window.location.assign(`/${slug}/owner/summary`);
                     }

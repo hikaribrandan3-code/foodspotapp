@@ -415,16 +415,15 @@ const TrialSignup = () => {
     return () => subscription?.unsubscribe()
   }, [])
 
-  // Mount-time session check: listener might subscribe after INITIAL_SESSION already fired
+  // 🛡️ FORCE FRESH SIGNUP: Clear any lingering session so users always see the form
   useEffect(() => {
-    const checkExistingSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        console.log('[TrialSignup] Existing session found on mount')
-        await handleAuthSession(session.user)
-      }
+    const clearSession = async () => {
+      await supabase.auth.signOut()
+      // Also nuke any cached auth tokens Supabase may have restored
+      const authKey = Object.keys(localStorage).find(k => k.includes('auth-token'))
+      if (authKey) localStorage.removeItem(authKey)
     }
-    checkExistingSession()
+    clearSession()
   }, [])
 
   const handleAuthSession = async (user) => {
