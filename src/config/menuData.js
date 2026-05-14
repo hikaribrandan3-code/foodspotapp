@@ -261,9 +261,10 @@ export function getFeaturedItem() {
     return null;
 }
 
-// Format price in Argentine Pesos
+// Format price in Argentine Pesos (prices stored in cents)
 export function formatPrice(price) {
-    return `$${price.toLocaleString('es-AR')}`;
+    const pesos = (price ?? 0) / 100;
+    return `$${pesos.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 // Reset menu to defaults

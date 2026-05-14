@@ -408,7 +408,8 @@ export default function Menu({ config: configProp }) {
     // =========================================================================
     const formatPrice = (price) => {
         if (typeof price !== 'number') return '$0'
-        return '$' + price.toLocaleString('es-AR')
+        const pesos = price / 100
+        return '$' + pesos.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
     }
 
     const getItemImage = (item) => {

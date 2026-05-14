@@ -195,7 +195,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         return <OrderStatusEmpty config={config} featuredItems={featuredItems} tenantSlug={tenantSlug} />
     }
 
-    const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    const fmt = (n) => (n / 100).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
     const isDelivery = order.order_type === 'delivery'
     const whatsappNumber = tenantData?.whatsapp_number || ''
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hola, necesito ayuda con mi pedido #${order.order_number}`

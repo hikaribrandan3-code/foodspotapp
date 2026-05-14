@@ -17,7 +17,7 @@ const PrintMenu = ({ menu, tenantData, tenantSlug }) => {
       style: 'currency',
       currency: 'ARS',
       minimumFractionDigits: 0
-    }).format(price);
+    }).format((price ?? 0) / 100);
   };
 
   if (!categories.length) {

@@ -240,7 +240,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--text-primary, #0F1B2D)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                               </div>
-                              <span style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-secondary, #7A8699)', flexShrink: 0 }}>${item.price.toFixed(2)}</span>
+                              <span style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--text-secondary, #7A8699)', flexShrink: 0 }}>${(item.price / 100).toFixed(2)}</span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                                 {inCart && (
                                   <>
@@ -272,12 +272,12 @@ export default function CreateOrderModal({ businessId, onClose }) {
                 {cart.map(c => (
                   <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 4 }}>
                     <span style={{ color: 'var(--text-primary, #0F1B2D)' }}>{c.quantity}× {c.name}</span>
-                    <span style={{ color: 'var(--text-secondary, #7A8699)' }}>${(c.price * c.quantity).toFixed(2)}</span>
+                    <span style={{ color: 'var(--text-secondary, #7A8699)' }}>${((c.price / 100) * c.quantity).toFixed(2)}</span>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid var(--card-border, #E6EAF0)', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: 'var(--text-primary, #0F1B2D)' }}>
                   <span>Total</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>${(cartTotal / 100).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -374,7 +374,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
                 opacity: cart.length === 0 ? 0.5 : 1,
                 touchAction: 'manipulation', WebkitTouchCallout: 'none',
               }}>
-              Continue — {cartCount} item{cartCount !== 1 ? 's' : ''} · ${cartTotal.toFixed(2)}
+              Continue — {cartCount} item{cartCount !== 1 ? 's' : ''} · ${(cartTotal / 100).toFixed(2)}
             </button>
           ) : (
             <button onClick={handleSubmit} onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); !submitting && canSubmit && handleSubmit(); }} disabled={submitting || !canSubmit}
@@ -385,7 +385,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
                 opacity: (submitting || !canSubmit) ? 0.6 : 1,
                 touchAction: 'manipulation', WebkitTouchCallout: 'none',
               }}>
-              {submitting ? 'Placing order…' : `Place Order · $${cartTotal.toFixed(2)}`}
+              {submitting ? 'Placing order…' : `Place Order · $${(cartTotal / 100).toFixed(2)}`}
             </button>
           )}
         </div>

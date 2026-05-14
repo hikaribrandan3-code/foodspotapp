@@ -2,7 +2,21 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Camera, X, Flame, Leaf, Wheat, Star, Edit2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { processAndStoreImage } from '../../../utils/imageOptimizer';
 import MenuItemCard from './MenuItemCard';
+
+// Convert a base64 data URL to a File object for Supabase Storage upload
+function dataURLtoFile(dataurl, filename) {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
 
 export default function MenuTab({
   menuItems,
@@ -95,7 +109,7 @@ export default function MenuTab({
     onDeleteCategory(categoryId, categoryName);
   };
 
-  const handleAddRecipe = () => {
+  const handleAddRecipe = async () => {
     if (!newRecipe.name || !newRecipe.price) return;
 
     const priceVal = parseFloat(newRecipe.price);
@@ -113,6 +127,20 @@ export default function MenuTab({
     const selectedCategory = categories.find(c => c.id === selectedCategoryId);
     const categoryName = selectedCategory?.name || 'General';
 
+    // Upload image to Supabase Storage if it's a base64 data URL
+    let imageUrl = newRecipe.image;
+    if (imageUrl?.startsWith('data:')) {
+      try {
+        const file = dataURLtoFile(imageUrl, `dish-${Date.now()}.jpg`);
+        const { publicUrl } = await processAndStoreImage(file);
+        imageUrl = publicUrl;
+      } catch (err) {
+        console.error('[MenuTab] Image upload failed:', err);
+        alert('Image upload failed. Using default image.');
+        imageUrl = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800';
+      }
+    }
+
     const item = {
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9),
       business_id: businessId,
@@ -120,7 +148,7 @@ export default function MenuTab({
       description: newRecipe.description || 'A new discovery.',
       price: Math.round(priceVal * 100),
       calories: parseInt(newRecipe.kcal) || 0,
-      image_url: newRecipe.image,
+      image_url: imageUrl,
       available: true,
       featured: newRecipe.featured,
       is_vegan: newRecipe.is_vegan,

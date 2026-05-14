@@ -168,14 +168,14 @@ export default function Receipt() {
                     <span style={{ fontSize: 14, color: '#374151' }}>{item.name}</span>
                   </div>
                   <span style={{ fontSize: 14, fontWeight: 500 }}>
-                    ${((item.price || 0) * item.quantity).toFixed(2)}
+                    ${(((item.price || 0) / 100) * item.quantity).toFixed(2)}
                   </span>
                 </div>
               ))}
             </div>
             <div style={{ borderTop: '1px solid #F3F4F6', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 600, color: '#111827' }}>Total</span>
-              <span style={{ fontSize: 18, fontWeight: 700 }}>${Number(order.total).toFixed(2)}</span>
+              <span style={{ fontSize: 18, fontWeight: 700 }}>${(Number(order.total) / 100).toFixed(2)}</span>
             </div>
           </div>
 

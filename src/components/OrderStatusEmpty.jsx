@@ -301,7 +301,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     }
 
     const formatPrice = (price) => {
-        return `$${parseFloat(price).toFixed(2)}`
+        return `$${(parseFloat(price) / 100).toFixed(2)}`
     }
 
     if (loading) {
