@@ -129,6 +129,16 @@ export function normalizeTenantConfig(baseConfig, tenantData) {
             baseConfig?.homeConfig ||
             defaultConfig.homeConfig,
 
+        // Delivery Config (flat DB columns → nested config object)
+        delivery: {
+            ...(baseConfig?.delivery || defaultConfig.delivery),
+            radiusKm: tenantData.delivery_radius || tenantData.delivery_radius_km || baseConfig?.delivery?.radiusKm || defaultConfig.delivery.radiusKm,
+            flatFee: tenantData.delivery_fee !== undefined ? Number(tenantData.delivery_fee) : (baseConfig?.delivery?.flatFee ?? defaultConfig.delivery.flatFee),
+            freeDeliveryThreshold: tenantData.free_delivery_threshold !== undefined ? Number(tenantData.free_delivery_threshold) : (baseConfig?.delivery?.freeDeliveryThreshold ?? defaultConfig.delivery.freeDeliveryThreshold),
+            originAddress: tenantData.address || baseConfig?.delivery?.originAddress || defaultConfig.delivery.originAddress,
+            paused: tenantData.is_paused || tenantData.pause_orders || baseConfig?.delivery?.paused || defaultConfig.delivery.paused,
+        },
+
         // Branding Colors (Confirmation + Powered By)
         colors: {
             ...(baseConfig?.colors || defaultConfig.colors),

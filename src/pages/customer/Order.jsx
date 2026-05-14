@@ -250,7 +250,7 @@ function Order({ config: configProp }) {
 
     const handleSubmit = async () => {
         if (isSubmitting || submitted || !order?.items?.length) return
-        if (config.pauseOrders) return
+        if (tenantData?.is_paused || tenantData?.pause_orders) return
         if (isOutOfRadius) return
 
         // ─── STEP 1: VALIDATION ───────────────────────────
@@ -431,7 +431,7 @@ function Order({ config: configProp }) {
     // 📲 WHATSAPP HYBRID: DB insert + open WhatsApp
     const handleWhatsAppSubmit = async () => {
         if (isSubmitting || submitted || !order?.items?.length) return
-        if (config.pauseOrders) return
+        if (tenantData?.is_paused || tenantData?.pause_orders) return
         if (isOutOfRadius) return
 
         // Validation (same as handleSubmit)
@@ -720,9 +720,9 @@ function Order({ config: configProp }) {
                         })()}
                     </div>
 
-                    {config.pauseOrders && (
+                    {(tenantData?.is_paused || tenantData?.pause_orders) && (
                         <div style={{ background: '#FEF3C7', padding: 12, borderRadius: 12, marginBottom: 16, textAlign: 'center' }}>
-                            <p style={{ color: '#92400E', fontSize: 14 }}>⏸️ {config.pauseOrdersMessage || 'Pedidos pausados'}</p>
+                            <p style={{ color: '#92400E', fontSize: 14 }}>⏸️ {tenantData?.pause_message || 'Pedidos pausados'}</p>
                         </div>
                     )}
                 </div>
@@ -995,7 +995,7 @@ function Order({ config: configProp }) {
             }}>
                 <button
                     onClick={handleSubmit}
-                    disabled={isSubmitting || config.pauseOrders || isOutOfRadius}
+                    disabled={isSubmitting || tenantData?.is_paused || tenantData?.pause_orders || isOutOfRadius}
                     style={{
                         width: '100%', padding: 18,
                         background: isOutOfRadius ? '#EF4444' : (tenantData?.confirmation_color || '#C4856A'),
@@ -1003,7 +1003,7 @@ function Order({ config: configProp }) {
                         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                         fontSize: 18, fontWeight: 700,
                         cursor: isOutOfRadius ? 'not-allowed' : 'pointer',
-                        opacity: (isSubmitting || config.pauseOrders) ? 0.6 : 1,
+                        opacity: (isSubmitting || tenantData?.is_paused || tenantData?.pause_orders) ? 0.6 : 1,
                         boxShadow: '0 8px 24px -4px rgba(0,0,0,0.2)',
                         transform: 'translateZ(0)'
                     }}

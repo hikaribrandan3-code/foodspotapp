@@ -35,6 +35,8 @@ export default function MenuManager() {
   const [isDeliveryFeeEnabled, setIsDeliveryFeeEnabled] = useState(true);
   const [isFreeDeliveryEnabled, setIsFreeDeliveryEnabled] = useState(true);
   const [isDeliveryPaused, setIsDeliveryPaused] = useState(false);
+  const [storeLat, setStoreLat] = useState('');
+  const [storeLon, setStoreLon] = useState('');
 
   // Fetch menu items and delivery settings on mount / businessId change
   useEffect(() => {
@@ -92,14 +94,26 @@ export default function MenuManager() {
   };
 
   const loadDeliverySettings = () => {
+    // FLAT COLUMNS FIRST (canonical source of truth per DB Bible v2.2)
+    const flatRadius = tenantData?.delivery_radius ?? tenantData?.delivery_radius_km ?? null;
+    const flatFee = tenantData?.delivery_fee ?? null;
+    const flatThreshold = tenantData?.free_delivery_threshold ?? null;
+    const flatPaused = tenantData?.is_paused ?? tenantData?.pause_orders ?? null;
+    const flatLat = tenantData?.store_lat ?? null;
+    const flatLon = tenantData?.store_lon ?? null;
+    // FALLBACK: legacy JSONB nested delivery object (migration safety)
     const appConfig = tenantData?.app_config || {};
     const delivery = appConfig.delivery || {};
-    setDeliveryRadius(delivery.radius || 5);
-    setDeliveryFee(String(delivery.fee || '2.99'));
-    setFreeDeliveryThreshold(String(delivery.free_threshold || '35.00'));
+
+    setDeliveryRadius(flatRadius !== null ? Number(flatRadius) : (delivery.radius || 5));
+    setDeliveryFee(String(flatFee !== null ? flatFee : (delivery.fee || '2.99')));
+    setFreeDeliveryThreshold(String(flatThreshold !== null ? flatThreshold : (delivery.free_threshold || '35.00')));
     setIsDeliveryFeeEnabled(delivery.fee_enabled !== false);
     setIsFreeDeliveryEnabled(delivery.free_enabled !== false);
-    setIsDeliveryPaused(delivery.paused || false);
+    setIsDeliveryPaused(flatPaused !== null ? Boolean(flatPaused) : (delivery.paused || false));
+    setStoreLat(flatLat !== null ? String(flatLat) : '');
+    setStoreLon(flatLon !== null ? String(flatLon) : '');
+
   };
 
   // Debounced save for item field changes
@@ -314,18 +328,27 @@ export default function MenuManager() {
     }
   };
 
-  // Save delivery settings to app_config JSONB
+  // Save delivery settings to flat branding columns (canonical per DB Bible v2.2)
   const saveDeliverySettings = useCallback(async () => {
     if (!businessId) return;
+
     const payload = {
+      delivery_radius: Number(deliveryRadius) || 5,
+      delivery_fee: deliveryFee === '' ? 0 : Number(deliveryFee),
+      free_delivery_threshold: freeDeliveryThreshold === '' ? 0 : Number(freeDeliveryThreshold),
+      is_paused: Boolean(isDeliveryPaused),
+      pause_orders: Boolean(isDeliveryPaused),
+      store_lat: storeLat === '' ? null : Number(storeLat),
+      store_lon: storeLon === '' ? null : Number(storeLon),
+      // Backward-compat: also keep JSONB in sync during migration
       app_config: deepMergeAppConfig(tenantData?.app_config || {}, {
         delivery: {
-          radius: deliveryRadius,
-          fee: deliveryFee,
-          free_threshold: freeDeliveryThreshold,
+          radius: Number(deliveryRadius) || 5,
+          fee: deliveryFee === '' ? 0 : Number(deliveryFee),
+          free_threshold: freeDeliveryThreshold === '' ? 0 : Number(freeDeliveryThreshold),
           fee_enabled: isDeliveryFeeEnabled,
           free_enabled: isFreeDeliveryEnabled,
-          paused: isDeliveryPaused
+          paused: Boolean(isDeliveryPaused)
         }
       })
     };
@@ -348,7 +371,7 @@ export default function MenuManager() {
     }
   }, [
     businessId, tenantData, deliveryRadius, deliveryFee, freeDeliveryThreshold,
-    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused, t
+    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused, storeLat, storeLon, t
   ]);
 
   // Auto-save delivery settings when they change
@@ -360,7 +383,8 @@ export default function MenuManager() {
     return () => clearTimeout(timer);
   }, [
     deliveryRadius, deliveryFee, freeDeliveryThreshold,
-    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused
+    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused,
+    storeLat, storeLon
   ]);
 
   if (isLoading) {
@@ -417,6 +441,10 @@ export default function MenuManager() {
               setIsFreeDeliveryEnabled={setIsFreeDeliveryEnabled}
               isDeliveryPaused={isDeliveryPaused}
               setIsDeliveryPaused={setIsDeliveryPaused}
+              storeLat={storeLat}
+              setStoreLat={setStoreLat}
+              storeLon={storeLon}
+              setStoreLon={setStoreLon}
             />
           </div>
         ) : (

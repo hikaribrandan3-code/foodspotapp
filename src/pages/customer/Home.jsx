@@ -1080,7 +1080,7 @@ function Home({ config: configProp }) {
             })()}
 
             {/* Pause Orders Message */}
-            {config.pauseOrders && (
+            {(tenantData?.is_paused || tenantData?.pause_orders) && (
                 <div style={{
                     marginTop: 20,
                     padding: 12,
@@ -1090,7 +1090,7 @@ function Home({ config: configProp }) {
                     border: '1px solid #FEE2E2'
                 }}>
                     <p style={{ fontSize: 12, color: '#DC2626', margin: 0, fontWeight: 500 }}>
-                        {config.pauseOrdersMessage}
+                        {tenantData?.pause_message || 'Pedidos pausados'}
                     </p>
                 </div>
             )}

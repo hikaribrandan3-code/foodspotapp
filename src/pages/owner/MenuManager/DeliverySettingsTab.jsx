@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { Gift, Leaf, Store } from 'lucide-react';
+import { Gift, Leaf, Store, MapPin } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { useTenant } from '../../../contexts/TenantContext';
 
 export default function DeliverySettingsTab({
   deliveryRadius,
@@ -14,9 +15,14 @@ export default function DeliverySettingsTab({
   isFreeDeliveryEnabled,
   setIsFreeDeliveryEnabled,
   isDeliveryPaused,
-  setIsDeliveryPaused
+  setIsDeliveryPaused,
+  storeLat,
+  setStoreLat,
+  storeLon,
+  setStoreLon
 }) {
   const { t } = useLanguage();
+  const { tenantData } = useTenant();
 
   return (
     <section className="border-t border-stone-200 pt-8 md:pt-24 mb-16 md:mb-32">
@@ -175,6 +181,53 @@ export default function DeliverySettingsTab({
                 className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-14 py-5 md:py-8 rounded-3xl focus:bg-white/20 transition-all text-4xl md:text-5xl outline-none placeholder-white/20"
                 placeholder="--.--"
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Store Location */}
+        <div className="col-span-12 mt-3">
+          <div className="bg-white rounded-[2.5rem] border border-stone-200 p-6 md:p-10 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-stone-600" />
+              </div>
+              <div>
+                <h3 className="text-lg md:text-xl font-['Outfit',sans-serif] font-black text-stone-950 uppercase tracking-tight italic">{t('store_location') || 'Store Location'}</h3>
+                <p className="text-xs text-stone-400 font-medium">{t('store_location_subtitle') || 'Used to calculate delivery distance & enforce radius.'}</p>
+              </div>
+            </div>
+
+            {tenantData?.address && (
+              <div className="mb-5 px-4 py-3 bg-stone-50 rounded-2xl border border-stone-100">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 mb-1">{t('linked_address') || 'Linked Address'}</p>
+                <p className="text-sm font-medium text-stone-700">{tenantData.address}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 block mb-2">{t('latitude') || 'Latitude'}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={storeLat}
+                  onChange={(e) => setStoreLat(e.target.value)}
+                  placeholder="-34.6037"
+                  className="w-full bg-stone-50 text-stone-950 font-['Outfit',sans-serif] font-black px-5 py-4 rounded-2xl focus:bg-white transition-all text-xl outline-none border border-stone-100 focus:border-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 block mb-2">{t('longitude') || 'Longitude'}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={storeLon}
+                  onChange={(e) => setStoreLon(e.target.value)}
+                  placeholder="-58.3816"
+                  className="w-full bg-stone-50 text-stone-950 font-['Outfit',sans-serif] font-black px-5 py-4 rounded-2xl focus:bg-white transition-all text-xl outline-none border border-stone-100 focus:border-emerald-300"
+                />
+              </div>
             </div>
           </div>
         </div>

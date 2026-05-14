@@ -251,6 +251,16 @@ export function TenantProvider({ children }) {
                         delivery_enabled: payload.new.delivery_enabled !== undefined ? payload.new.delivery_enabled : prev.delivery_enabled,
                         dine_in_enabled: payload.new.dine_in_enabled !== undefined ? payload.new.dine_in_enabled : prev.dine_in_enabled,
                         dine_in_payment_timing: payload.new.dine_in_payment_timing !== undefined ? payload.new.dine_in_payment_timing : prev.dine_in_payment_timing,
+                        // Delivery operational columns (Fix B)
+                        delivery_radius: payload.new.delivery_radius !== undefined ? payload.new.delivery_radius : prev.delivery_radius,
+                        delivery_radius_km: payload.new.delivery_radius_km !== undefined ? payload.new.delivery_radius_km : prev.delivery_radius_km,
+                        delivery_fee: payload.new.delivery_fee !== undefined ? payload.new.delivery_fee : prev.delivery_fee,
+                        free_delivery_threshold: payload.new.free_delivery_threshold !== undefined ? payload.new.free_delivery_threshold : prev.free_delivery_threshold,
+                        store_lat: payload.new.store_lat !== undefined ? payload.new.store_lat : prev.store_lat,
+                        store_lon: payload.new.store_lon !== undefined ? payload.new.store_lon : prev.store_lon,
+                        pause_orders: payload.new.pause_orders !== undefined ? payload.new.pause_orders : prev.pause_orders,
+                        is_paused: payload.new.is_paused !== undefined ? payload.new.is_paused : prev.is_paused,
+                        pause_message: payload.new.pause_message !== undefined ? payload.new.pause_message : prev.pause_message,
                     }));
                 }
             )
