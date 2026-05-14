@@ -40,7 +40,7 @@ const Info = ({ config }) => {
     // Default colors for pills if not set
     const defaultPillColors = {
         whatsapp: '#E55F51',
-        adminAccess: '#448AFF'
+        adminAccess: '#22C55E'
     };
 
     // Get pill color from config or fallback to default
