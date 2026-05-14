@@ -35,8 +35,7 @@ export default function MenuManager() {
   const [isDeliveryFeeEnabled, setIsDeliveryFeeEnabled] = useState(true);
   const [isFreeDeliveryEnabled, setIsFreeDeliveryEnabled] = useState(true);
   const [isDeliveryPaused, setIsDeliveryPaused] = useState(false);
-  const [storeLat, setStoreLat] = useState('');
-  const [storeLon, setStoreLon] = useState('');
+
 
   // Fetch menu items and delivery settings on mount / businessId change
   useEffect(() => {
@@ -111,8 +110,7 @@ export default function MenuManager() {
     setIsDeliveryFeeEnabled(delivery.fee_enabled !== false);
     setIsFreeDeliveryEnabled(delivery.free_enabled !== false);
     setIsDeliveryPaused(flatPaused !== null ? Boolean(flatPaused) : (delivery.paused || false));
-    setStoreLat(flatLat !== null ? String(flatLat) : '');
-    setStoreLon(flatLon !== null ? String(flatLon) : '');
+
 
   };
 
@@ -338,8 +336,6 @@ export default function MenuManager() {
       free_delivery_threshold: freeDeliveryThreshold === '' ? 0 : Number(freeDeliveryThreshold),
       is_paused: Boolean(isDeliveryPaused),
       pause_orders: Boolean(isDeliveryPaused),
-      store_lat: storeLat === '' ? null : Number(storeLat),
-      store_lon: storeLon === '' ? null : Number(storeLon),
       // Backward-compat: also keep JSONB in sync during migration
       app_config: deepMergeAppConfig(tenantData?.app_config || {}, {
         delivery: {
@@ -371,7 +367,7 @@ export default function MenuManager() {
     }
   }, [
     businessId, tenantData, deliveryRadius, deliveryFee, freeDeliveryThreshold,
-    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused, storeLat, storeLon, t
+    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused, t
   ]);
 
   // Auto-save delivery settings when they change
@@ -383,8 +379,7 @@ export default function MenuManager() {
     return () => clearTimeout(timer);
   }, [
     deliveryRadius, deliveryFee, freeDeliveryThreshold,
-    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused,
-    storeLat, storeLon
+    isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused
   ]);
 
   if (isLoading) {
@@ -441,10 +436,7 @@ export default function MenuManager() {
               setIsFreeDeliveryEnabled={setIsFreeDeliveryEnabled}
               isDeliveryPaused={isDeliveryPaused}
               setIsDeliveryPaused={setIsDeliveryPaused}
-              storeLat={storeLat}
-              setStoreLat={setStoreLat}
-              storeLon={storeLon}
-              setStoreLon={setStoreLon}
+
             />
           </div>
         ) : (
