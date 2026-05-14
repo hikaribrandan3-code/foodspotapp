@@ -784,8 +784,7 @@ const Settings = () => {
                         </div>
                         {/* Guidelines for best results */}
                         <p style={{ fontSize: 11, color: '#64748B', marginTop: 10, marginBottom: 0, textAlign: 'center' }}>
-                            <strong>Tip:</strong> For best results, use images around <strong>1200×800px</strong> or <strong>16:9 ratio</strong>, under <strong>500KB</strong>.
-                            <br />Larger files may take longer to upload on slow connections.
+                            {t('hero_image_tip')}
                         </p>
                         </>
 
@@ -1003,7 +1002,7 @@ const Settings = () => {
                     <div className="section-header">
                         <h3>Munchboy Arcade</h3>
                     </div>
-                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>Customize the gaming experience branding</p>
+                    <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('munchboy_subtitle')}</p>
                     
                     {/* Visual Emulator Preview */}
                     <div 

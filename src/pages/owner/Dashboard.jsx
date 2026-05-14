@@ -343,9 +343,10 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
 }
 
 function ActiveTabPills({ tab, setTab, counts }) {
+  const { t } = useLanguage()
   return (
     <div style={{ display: 'flex', gap: 10, padding: '0 0 14px', flex: 1, minWidth: 0 }}>
-      {[['active', 'Active', counts.active], ['completed', 'Completed', counts.completed]].map(([k, label, n]) => {
+      {[['active', t('active'), counts.active], ['completed', t('completed'), counts.completed]].map(([k, label, n]) => {
         const on = tab === k
         return (
           <button key={k} onClick={() => setTab(k)} style={{
@@ -684,7 +685,7 @@ export default function Dashboard() {
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              New Order
+              {t('new_order')}
             </button>
           </div>
           <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
@@ -697,7 +698,7 @@ export default function Dashboard() {
           }}>
             <div>
               <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 4 }}>
-                RECENT ORDERS
+                {t('recent_orders')?.toUpperCase()}
               </div>
               <div style={{
                 fontSize: 26, fontWeight: 800, color: T.ink, letterSpacing: '-0.025em', lineHeight: 1,
@@ -738,7 +739,7 @@ export default function Dashboard() {
             cursor: 'pointer',
             letterSpacing: '0.02em',
           }}>
-            Delete
+            {t('delete_label')}
           </button>
         </div>
 

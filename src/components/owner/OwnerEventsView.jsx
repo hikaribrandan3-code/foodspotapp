@@ -302,7 +302,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
           transition: 'all 0.15s',
         }}
       >
-        {showTemplates ? '✓' : '+'} {showTemplates ? 'Hide' : 'Show'} Templates
+        {showTemplates ? '✓ ' + t('hide_templates') : '+ ' + t('show_templates')}
       </button>
 
       {/* Stats strip */}
@@ -675,8 +675,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
       </div>
 
       <div style={{ padding: '20px 16px 24px' }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Use a Template</h2>
-        <p style={{ margin: '0 0 16px', fontSize: 14, color: theme.textSecondary }}>Quick start with proven event formats or create from scratch</p>
+        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('use_template')}</h2>
+        <p style={{ margin: '0 0 16px', fontSize: 14, color: theme.textSecondary }}>{t('template_subtitle')}</p>
 
         <div style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
           {EVENT_TEMPLATES.map(template => (
@@ -739,7 +739,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
             e.currentTarget.style.background = theme.bgWhite;
           }}
         >
-          ➕ Start From Scratch
+          ➕ {t('start_from_scratch')}
         </button>
       </div>
     </div>
@@ -752,7 +752,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
           <ArrowLeft size={22} color={theme.textPrimary} />
         </button>
-        <span style={{ flex: 1, fontSize: 16, fontWeight: 800, color: theme.textPrimary }}>Create Event</span>
+        <span style={{ flex: 1, fontSize: 16, fontWeight: 800, color: theme.textPrimary }}>{t('create_event')}</span>
         <div style={{ display: 'flex', gap: 6 }}>
           {[1, 2, 3].map(n => (
             <motion.div
@@ -770,10 +770,10 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Event Details</h2>
-              <Field label="Event Name">
+              <Field label={t('event_name')}>
                 <input style={s.input} placeholder="e.g. Taco Night" value={form.name} onChange={e => patch('name', e.target.value)} />
               </Field>
-              <Field label="Description">
+              <Field label={t('event_description')}>
                 <textarea style={{ ...s.input, minHeight: 72, resize: 'none' }} placeholder="Tell us what makes this special…" value={form.description} onChange={e => patch('description', e.target.value)} />
               </Field>
               <Field label="Category">
@@ -848,19 +848,19 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
 
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Date & Venue</h2>
+              <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('date_and_venue')}</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <Field label="Start Date">
+                <Field label={t('start_date')}>
                   <input type="date" style={s.input} value={form.start_date.split('T')[0] || ''} onChange={e => patch('start_date', e.target.value)} />
                 </Field>
-                <Field label="Start Time">
+                <Field label={t('start_time')}>
                   <input type="time" style={s.input} value={form.start_date.includes('T') ? form.start_date.split('T')[1] : ''} onChange={e => patch('start_date', (form.start_date.split('T')[0] || '') + 'T' + e.target.value)} />
                 </Field>
               </div>
-              <Field label="Venue Name">
+              <Field label={t('venue_name')}>
                 <input style={s.input} placeholder="The Grand Plaza" value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
               </Field>
-              <Field label="Address">
+              <Field label={t('address_label')}>
                 <input style={s.input} placeholder="Full address" value={form.address} onChange={e => patch('address', e.target.value)} />
               </Field>
             </motion.div>
@@ -868,8 +868,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
 
           {step === 3 && (
             <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Ticket Tiers</h2>
-              <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>Set prices and capacity for each tier</p>
+              <h2 style={{ margin: '0 0 6px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('ticket_tiers')}</h2>
+              <p style={{ margin: '0 0 20px', fontSize: 13, color: theme.textSecondary }}>{t('ticket_tiers_subtitle')}</p>
 
               {form.ticket_tiers.map((tier, idx) => (
                 <motion.div
@@ -1004,7 +1004,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
               cursor: (step === 1 && (!form.name.trim() || !form.category || !form.image_url)) ? 'not-allowed' : 'pointer',
             }}
           >
-            {step === 3 ? (saving ? 'Publishing…' : 'Publish Event') : 'Continue'}
+            {step === 3 ? (saving ? t('publishing') || 'Publicando…' : t('publish_event')) : t('continue_btn')}
           </motion.button>
         </div>
       </div>

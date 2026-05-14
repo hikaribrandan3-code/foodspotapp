@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import { supabase } from '../lib/supabaseClient.js';
 import { useTenant } from '../contexts/TenantContext.jsx';
+import { useLanguage } from '../contexts/LanguageContext.jsx';
 import { ORDER_STATUS } from '../constants/database.js';
 
 const todayStr = () => new Date().toLocaleDateString('sv-SE');
@@ -57,6 +58,7 @@ function getCatMeta(name) {
 }
 
 export default function FinancialTrackerDashboard() {
+  const { t } = useLanguage();
   const { businessId, tenantData } = useTenant();
   const currency = tenantData?.app_config?.businessCurrency || 'ARS';
   const fmtMoney = (n) =>
@@ -256,7 +258,7 @@ export default function FinancialTrackerDashboard() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>
-          Expenses
+          {t('expenses_label')}
         </h2>
         <button
           onClick={() => setShowCalc(true)}
@@ -283,10 +285,10 @@ export default function FinancialTrackerDashboard() {
       {/* Date Filter */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
         {[
-          { key: 'all', label: 'All Time' },
-          { key: 'week', label: 'This Week' },
-          { key: 'month', label: 'This Month' },
-          { key: 'quarter', label: 'This Quarter' },
+          { key: 'all', label: t('all_time') },
+          { key: 'week', label: t('this_week') },
+          { key: 'month', label: t('this_month') },
+          { key: 'quarter', label: t('this_quarter') },
         ].map((f) => (
           <button
             key={f.key}
@@ -307,19 +309,19 @@ export default function FinancialTrackerDashboard() {
       {/* KPI Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
-          <span style={labelStyle}>Net Profit</span>
+          <span style={labelStyle}>{t('net_profit')}</span>
           <h3 style={{ ...valueStyle, color: netProfit >= 0 ? primaryColor : '#DC2626' }}>
             {fmtMoney(netProfit)}
           </h3>
           <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-            {filteredOrders.length} orders
+            {filteredOrders.length} {t('orders_lowercase')}
           </p>
         </div>
         <div style={cardStyle}>
-          <span style={labelStyle}>Expenses</span>
+          <span style={labelStyle}>{t('expenses_label')}</span>
           <h3 style={{ ...valueStyle, color: '#DC2626' }}>{fmtMoney(totalExpenses)}</h3>
           <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-            {filteredExpenses.length} entries
+            {filteredExpenses.length} {t('entries_lowercase')}
           </p>
         </div>
         <div style={cardStyle}>
@@ -442,17 +444,17 @@ export default function FinancialTrackerDashboard() {
       {/* Revenue Breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20, marginTop: 20 }}>
         <div style={cardStyle}>
-          <span style={{ ...labelStyle, marginBottom: 16 }}>Revenue Breakdown</span>
+          <span style={{ ...labelStyle, marginBottom: 16 }}>{t('revenue_breakdown')}</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
-            <span style={{ fontSize: 14, color: '#6B7280' }}>Total Revenue</span>
+            <span style={{ fontSize: 14, color: '#6B7280' }}>{t('total_revenue')}</span>
             <span style={{ fontSize: 18, fontWeight: 700, color: primaryColor }}>{fmtMoney(totalRevenue)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
-            <span style={{ fontSize: 14, color: '#6B7280' }}>Total Expenses</span>
+            <span style={{ fontSize: 14, color: '#6B7280' }}>{t('total_expense')}</span>
             <span style={{ fontSize: 18, fontWeight: 700, color: '#DC2626' }}>-{fmtMoney(totalExpenses)}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0 0' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Net Profit</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{t('net_profit')}</span>
             <span style={{ fontSize: 20, fontWeight: 800, color: netProfit >= 0 ? primaryColor : '#DC2626' }}>
               {fmtMoney(netProfit)}
             </span>
@@ -465,7 +467,7 @@ export default function FinancialTrackerDashboard() {
         {/* Recent Activity */}
         <div style={cardStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={labelStyle}>Recent Activity</span>
+            <span style={labelStyle}>{t('recent_activity')}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 12, color: '#9CA3AF' }}>{filteredExpenses.length} expenses</span>
               <button
@@ -539,7 +541,7 @@ export default function FinancialTrackerDashboard() {
 
       {/* Quick Add Form */}
       <div id="expense-form" style={cardStyle}>
-        <span style={{ ...labelStyle, marginBottom: 16 }}>Quick Expense Add</span>
+        <span style={{ ...labelStyle, marginBottom: 16 }}>{t('quick_expense')}</span>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div style={{ gridColumn: '1 / -1' }}>
             <input
@@ -579,7 +581,7 @@ export default function FinancialTrackerDashboard() {
             onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
           >
             <Plus className="w-4 h-4" />
-            Add Transaction
+            {t('add_transaction')}
           </button>
         </div>
       </div>
