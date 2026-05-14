@@ -205,6 +205,21 @@ export default function MenuManager() {
   }, [businessId, t]);
 
   const handleDeleteCategory = useCallback(async (categoryId, categoryName) => {
+    if (!window.confirm(`Delete "${categoryName}" and all its dishes? This cannot be undone.`)) return;
+
+    // Cascade: delete menu items in this category first
+    const { error: itemsError } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('category_id', categoryId)
+      .eq('business_id', businessId);
+
+    if (itemsError) {
+      console.error('[MenuManager] Delete category items error:', itemsError);
+      setSaveStatus({ error: true, message: 'Failed to delete category dishes.' });
+      return;
+    }
+
     const { error } = await supabase
       .from('categories')
       .delete()
@@ -221,6 +236,7 @@ export default function MenuManager() {
         setActiveCategory('');
       }
       fetchCategories();
+      fetchMenuItems();
     }
   }, [businessId, activeCategory, t]);
 

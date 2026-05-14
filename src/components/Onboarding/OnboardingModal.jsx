@@ -237,9 +237,7 @@ export default function OnboardingModal({ onComplete, isOpen }) {
 
   const handleOptionSelect = (option) => {
     setFormData(prev => ({ ...prev, [ALL_STEPS[currentStep].id]: option }));
-    setTimeout(() => {
-      handleNext();
-    }, 400);
+    // Manual advance only — user clicks Continue button
   };
 
   const handleChange = (e) => {
@@ -400,7 +398,7 @@ export default function OnboardingModal({ onComplete, isOpen }) {
                             : 'border-gray-100 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50/30'
                         }`}
                       >
-                        <span className="truncate pr-2">{option}</span>
+                        <span className="text-left leading-tight pr-2">{option}</span>
                         {formData[ALL_STEPS[currentStep].id] === option && (
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
                         )}

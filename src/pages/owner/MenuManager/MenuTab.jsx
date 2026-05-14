@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Camera, X, Flame, Leaf, Wheat, Star, Edit2 } from 'lucide-react';
+import { Plus, Camera, X, Flame, Leaf, Wheat, Star, Edit2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import MenuItemCard from './MenuItemCard';
 
@@ -415,21 +415,6 @@ export default function MenuTab({
                   </button>
                 </div>
 
-                {categories.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-                    <div className="h-16 w-16 rounded-full bg-stone-100 flex items-center justify-center">
-                      <Plus className="h-8 w-8 text-stone-400" />
-                    </div>
-                    <p className="text-stone-600 font-medium">{t('create_category_first') || 'Crea una categoría primero para agregar platos.'}</p>
-                    <button
-                      onClick={() => { setIsAdding(false); onAddCategory(); }}
-                      className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-500 transition-colors"
-                    >
-                      {t('add_category') || '+ Add Category'}
-                    </button>
-                  </div>
-                ) : (
-                <>
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest">{t('dish_name') || 'Dish Name'}</label>
@@ -468,20 +453,41 @@ export default function MenuTab({
                     </div>
                   </div>
 
+                  {categories.length === 0 && (
+                    <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3">
+                      <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-red-700">{t('no_categories') || 'No categories yet'}</p>
+                        <p className="text-xs text-red-600 mt-0.5">{t('create_category_to_add') || 'Create a category first to add dishes.'}</p>
+                      </div>
+                      <button
+                        onClick={() => { setIsAdding(false); onAddCategory(); }}
+                        className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-xl hover:bg-red-500 transition-colors shrink-0"
+                      >
+                        {t('add_category') || '+ Category'}
+                      </button>
+                    </div>
+                  )}
+
                   <div className="space-y-1">
                     <label className="text-[9px] font-black text-stone-400 uppercase tracking-widest">{t('category') || 'Category'}</label>
                     <select
-                      className="w-full bg-stone-50 border-none rounded-xl p-4 font-bold text-stone-950 outline-none focus:bg-stone-100 transition-all"
+                      className={`w-full border-none rounded-xl p-4 font-bold text-stone-950 outline-none focus:bg-stone-100 transition-all ${categories.length === 0 ? 'bg-stone-100 text-stone-400 cursor-not-allowed' : 'bg-stone-50'}`}
                       value={newRecipe.categoryId}
+                      disabled={categories.length === 0}
                       onChange={(e) => {
                         const catId = e.target.value;
                         const cat = categories.find(c => c.id === catId);
                         setNewRecipe({ ...newRecipe, categoryId: catId, categoryName: cat?.name || 'General' });
                       }}
                     >
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
+                      {categories.length === 0 ? (
+                        <option value="">{t('no_categories_option') || 'No categories available'}</option>
+                      ) : (
+                        categories.map((cat) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))
+                      )}
                     </select>
                   </div>
 
@@ -536,12 +542,15 @@ export default function MenuTab({
 
                 <button
                   onClick={handleAddRecipe}
-                  className="w-full bg-emerald-600 text-white font-['Outfit',sans-serif] font-black uppercase tracking-[0.15em] italic py-4 rounded-2xl hover:bg-emerald-500 transition-all flex items-center justify-center"
+                  disabled={categories.length === 0}
+                  className={`w-full font-['Outfit',sans-serif] font-black uppercase tracking-[0.15em] italic py-4 rounded-2xl transition-all flex items-center justify-center ${
+                    categories.length === 0
+                      ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                      : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                  }`}
                 >
-                  {t('add_to_menu') || 'Add to Menu'}
+                  {categories.length === 0 ? (t('create_category_first_btn') || 'Create a category first') : (t('add_to_menu') || 'Add to Menu')}
                 </button>
-              </>
-              )}
               </div>
             </motion.div>
           </div>
