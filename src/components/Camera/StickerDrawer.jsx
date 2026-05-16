@@ -132,16 +132,13 @@ const STICKERS = [
     { id: 'arg_13', icon: '📻' },
     { id: 'arg_14', icon: '❤️' },
     { id: 'arg_15', icon: '🔥' },
-    // Lambo stickers (9 individual)
-    { id: 'lambo_01', type: 'image', src: '/assets/images/lambo_stickers/lambo_01.png' },
-    { id: 'lambo_02', type: 'image', src: '/assets/images/lambo_stickers/lambo_02.png' },
-    { id: 'lambo_03', type: 'image', src: '/assets/images/lambo_stickers/lambo_03.png' },
-    { id: 'lambo_04', type: 'image', src: '/assets/images/lambo_stickers/lambo_04.png' },
-    { id: 'lambo_05', type: 'image', src: '/assets/images/lambo_stickers/lambo_05.png' },
-    { id: 'lambo_06', type: 'image', src: '/assets/images/lambo_stickers/lambo_06.png' },
-    { id: 'lambo_07', type: 'image', src: '/assets/images/lambo_stickers/lambo_07.png' },
-    { id: 'lambo_08', type: 'image', src: '/assets/images/lambo_stickers/lambo_08.png' },
-    { id: 'lambo_09', type: 'image', src: '/assets/images/lambo_stickers/lambo_09.png' }
+    // Lambo stickers (6 custom)
+    { id: 'lambo_01', type: 'image', src: '/assets/images/lambo_stickers/sticker_01.png' },
+    { id: 'lambo_02', type: 'image', src: '/assets/images/lambo_stickers/sticker_02.png' },
+    { id: 'lambo_03', type: 'image', src: '/assets/images/lambo_stickers/sticker_03.png' },
+    { id: 'lambo_04', type: 'image', src: '/assets/images/lambo_stickers/sticker_04.png' },
+    { id: 'lambo_05', type: 'image', src: '/assets/images/lambo_stickers/sticker_05.png' },
+    { id: 'lambo_06', type: 'image', src: '/assets/images/lambo_stickers/sticker_06.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
