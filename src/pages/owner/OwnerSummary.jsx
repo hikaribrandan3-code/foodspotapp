@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CreditCard, Banknote, DollarSign, MapPin, Link as LinkIcon, Globe,
     Settings, Phone, ChevronRight, ChevronDown, RefreshCw, BarChart3,
-    Shield, Check, X, Users, Moon, Sun
+    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download
 } from 'lucide-react'
+import { QRCodeCanvas } from 'qrcode.react'
 import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
@@ -71,6 +72,26 @@ function OwnerSummary() {
     const [currencySaving, setCurrencySaving] = useState(false)
     const businessCurrencyInitialized = useRef(false)
 
+    const qrCanvasRef = useRef(null)
+    const [urlCopied, setUrlCopied] = useState(false)
+    const storeUrl = `${window.location.protocol}//${window.location.host}/${tenantSlug}`
+
+    const downloadQR = () => {
+        const canvas = qrCanvasRef.current
+        if (!canvas) return
+        const url = canvas.toDataURL('image/png')
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `qr-${tenantSlug}.png`
+        a.click()
+    }
+
+    const copyStoreUrl = () => {
+        navigator.clipboard.writeText(storeUrl)
+        setUrlCopied(true)
+        setTimeout(() => setUrlCopied(false), 2000)
+    }
+
     // Collapsible sections
     const [openSections, setOpenSections] = useState({
         payments: true,
@@ -78,6 +99,7 @@ function OwnerSummary() {
         links: false,
         mp: false,
         currency: true,
+        qr: false,
         language: false,
         team: false,
     })
@@ -1015,6 +1037,71 @@ function OwnerSummary() {
 
                 {/* Team Management */}
                 <TeamManagement businessId={businessId} t={t} primaryColor={tenantData?.confirmation_color} isOpen={openSections.team} onToggle={() => toggleSection('team')} onSaved={() => { setAutoSaveStatus({ type: 'team', timestamp: Date.now() }); setTimeout(() => setAutoSaveStatus(null), 2000) }} />
+
+                {/* Promote Your Store / QR Code */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
+                    <SectionHeader
+                        icon={<QrCode size={14} />}
+                        title="Promover tu Tienda"
+                        isOpen={openSections.qr}
+                        onToggle={() => toggleSection('qr')}
+                    />
+                    <AnimatePresence>
+                        {openSections.qr && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-[2.5rem] bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Tu Link de Pedidos</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                readOnly
+                                                value={storeUrl}
+                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none select-all"
+                                            />
+                                            <motion.button
+                                                whileTap={{ scale: 0.97 }}
+                                                onClick={copyStoreUrl}
+                                                className="px-5 py-3 rounded-2xl text-sm font-black bg-stone-100 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white flex items-center gap-2 whitespace-nowrap"
+                                            >
+                                                {urlCopied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+                                            </motion.button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="p-5 bg-white rounded-2xl border border-stone-200 dark:border-white/10">
+                                            <QRCodeCanvas
+                                                ref={qrCanvasRef}
+                                                value={storeUrl}
+                                                size={200}
+                                                bgColor="#ffffff"
+                                                fgColor="#000000"
+                                                level="H"
+                                            />
+                                        </div>
+                                        <motion.button
+                                            whileTap={{ scale: 0.97 }}
+                                            onClick={downloadQR}
+                                            className="w-full py-4 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2"
+                                        >
+                                            <Download size={16} />
+                                            Descargar QR (PNG)
+                                        </motion.button>
+                                        <p className="text-xs text-stone-400 dark:text-stone-500 text-center leading-relaxed">
+                                            Imprimí este QR y pegalo en mesas, bolsas de delivery y la puerta de tu local.
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
 
                 {/* Superadmin */}
                 {session?.role === 'superadmin' && (
