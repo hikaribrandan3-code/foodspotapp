@@ -45,6 +45,9 @@
     align-items: center;
     justify-content: center;
     font-size: 48px;
+    background: transparent !important;
+    overflow: hidden;
+    border-radius: 8px;
 }
 
 /* Emoji element styling */
