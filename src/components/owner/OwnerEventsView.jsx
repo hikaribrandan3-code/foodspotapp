@@ -550,7 +550,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     setStep(1)
   }
 
-  const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sport', 'Dating']
+  const categories = ['Food', 'Music', 'Art', 'Classes', 'Drinks', 'Sports', 'Games', 'Dating']
 
   const patch = (key, val) => setForm(f => ({ ...f, [key]: val }))
 
