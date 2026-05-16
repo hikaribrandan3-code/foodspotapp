@@ -291,7 +291,12 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             y: 0.5,
             scale: 1,
             rotation: 0,
-            data: { stickerId: sticker.id, content: sticker.icon }
+            data: {
+                stickerId: sticker.id,
+                content: sticker.icon,
+                isImage: sticker.type === 'image',
+                src: sticker.src
+            }
         }
         setPlacedElements(prev => [...prev, newElement])
     }, [canvasDimensions])

@@ -198,7 +198,11 @@ function DraggableElement({ element, canvasWidth, canvasHeight, onUpdate, onRemo
             case 'sticker':
                 return (
                     <div className="draggable-sticker">
-                        {element.data?.content || '📷'}
+                        {element.data?.isImage ? (
+                            <img src={element.data.src} alt={element.data.stickerId} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        ) : (
+                            element.data?.content || '📷'
+                        )}
                     </div>
                 )
             case 'emoji':
