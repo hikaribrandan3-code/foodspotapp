@@ -131,7 +131,9 @@ const STICKERS = [
     { id: 'arg_12', icon: '🎺' },
     { id: 'arg_13', icon: '📻' },
     { id: 'arg_14', icon: '❤️' },
-    { id: 'arg_15', icon: '🔥' }
+    { id: 'arg_15', icon: '🔥' },
+    // Image stickers
+    { id: 'lambo_stickers', type: 'image', src: '/assets/images/foodspotlambostickers.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
@@ -225,7 +227,11 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
                             onClick={() => handleStickerSelect(sticker)}
                             aria-label={sticker.id}
                         >
-                            <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
+                            {sticker.type === 'image' ? (
+                                <img src={sticker.src} alt={sticker.id} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : (
+                                <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
+                            )}
                         </button>
                     ))}
                 </div>
