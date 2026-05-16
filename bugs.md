@@ -6,6 +6,36 @@
 
 ---
 
+## 🧪 DEBUG CHECKLIST — Translation Hook Crashes
+
+When a component renders with `ReferenceError: Can't find variable: t`, check this first:
+
+**Pattern:** Component uses `t('key')` in JSX but doesn't call `useLanguage()` in the function body.
+
+```jsx
+// ❌ BROKEN
+function CreateEventView({ businessId, onBack, onSuccess }) {
+  return <h1>{t('event_name')}</h1>  // ERROR: t is undefined
+}
+
+// ✅ FIXED
+function CreateEventView({ businessId, onBack, onSuccess }) {
+  const { t } = useLanguage()  // Add this line
+  return <h1>{t('event_name')}</h1>
+}
+```
+
+**Root Cause:** CreateEventView and similar sub-components (EditEventView, CheckinView, PromosView, AttendeeListView) are defined *inside* parent components and don't receive `t` as a prop — they must call the hook directly.
+
+**Quick Audit:**
+```bash
+grep -r "t('" src/ | grep -v "useLanguage" | head -20
+```
+
+**Real Files at Risk:** ~10 admin/event sub-components (not the 102 false positives in utility/context files, which receive `t` from props).
+
+---
+
 ## ✅ COMPLETED (Applied to Supabase)
 
 ### Performance Fixes Applied
