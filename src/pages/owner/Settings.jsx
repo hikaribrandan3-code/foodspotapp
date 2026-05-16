@@ -674,6 +674,9 @@ const Settings = () => {
                             onChange={handleNameChange}
                             placeholder={t('business_name_placeholder')}
                         />
+                        <p style={{ fontSize: '11px', color: '#10B981', fontWeight: '600', textAlign: 'center', margin: '0', letterSpacing: '0.02em' }}>
+                            💡 Agregá un emoji al nombre — aparece en la cámara de tus clientes
+                        </p>
                         <div className="typo-grid">
                             {/* Font Family Dropdown */}
                             <div className="custom-dropdown" ref={fontMenuRef}>
