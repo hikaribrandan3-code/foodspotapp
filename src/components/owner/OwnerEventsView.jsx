@@ -515,6 +515,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
 
 // ── Create Event (3-step wizard) ──────────────────────────────────────────────
 function CreateEventView({ businessId, onBack, onSuccess }) {
+  const { t } = useLanguage()
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)

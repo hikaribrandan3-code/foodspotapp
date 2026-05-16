@@ -65,6 +65,7 @@ export const translations = {
     cash: { es: "Efectivo", en: "Cash", pt: "Dinheiro" },
     total_day: { es: "Total del día", en: "Total for the day", pt: "Total do dia" },
     orders_count: { es: "pedidos", en: "orders", pt: "pedidos" },
+    across: { es: "en", en: "across", pt: "em" },
     sessions: { es: "SESIONES", en: "SESSIONS", pt: "SESSÕES" },
     this_week: { es: "Esta semana", en: "This week", pt: "Esta semana" },
     this_month: { es: "Este mes", en: "This month", pt: "Este mês" },
