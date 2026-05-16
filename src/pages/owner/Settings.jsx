@@ -994,6 +994,9 @@ const Settings = () => {
                 {/* ========== 5. THEME COLORS ========== */}
                 <section className="branding-card">
                     <h3>5. {t('theme_colors')}</h3>
+                    <p style={{ fontSize: '11px', color: '#10B981', fontWeight: '600', marginBottom: '12px', letterSpacing: '0.02em' }}>
+                        Estos colores aparecen en botones de pago, confirmaciones y recibos
+                    </p>
                     <div className="color-grid">
                         <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-primary" defaultValue={DEFAULTS.confirmation} />
                         <ColorPillar label={t('powered_by')} keyName="powered_by_color" cssVar="--color-powered" defaultValue={DEFAULTS.poweredBy} />
