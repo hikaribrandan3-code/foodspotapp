@@ -74,31 +74,38 @@ export function useCamera() {
         const track = currentStream.getVideoTracks()[0]
         if (!track) return
 
-        // Defer capabilities probing to requestIdleCallback (non-blocking)
-        if (typeof requestIdleCallback !== 'undefined') {
-            requestIdleCallback(() => probeCapabilities(track), { timeout: 3000 })
-        } else {
-            setTimeout(() => probeCapabilities(track), 100)
-        }
-
-        // Try 1: Seamless applyConstraints upgrade (no flicker, 300ms timeout)
-        try {
-            console.log('--- UPGRADE: trying applyConstraints ---')
-            const constraintPromise = track.applyConstraints({
-                width: { ideal: 1920 },
-                height: { ideal: 3840 }
-            })
-
-            // Don't block on this - it might take 500ms+
-            constraintPromise.then(() => {
+        // Non-blocking background upgrade: try 4K, fall back to 1080p
+        const upgradeAsync = async () => {
+            try {
+                // Try 4K with soft constraints (no min, just ideal)
+                console.log('--- UPGRADE: attempting 4K ---')
+                await track.applyConstraints({
+                    width: { ideal: 3840 },
+                    height: { ideal: 2160 }
+                })
                 const settings = track.getSettings()
-                console.log(`--- UPGRADE: applyConstraints succeeded ${settings.width}x${settings.height} ---`)
-            }).catch(() => {
-                console.warn('--- UPGRADE: applyConstraints failed ---')
-            })
-        } catch (e) {
-            console.warn('--- UPGRADE: applyConstraints error ---')
+                console.log(`--- 4K SUCCESS: ${settings.width}x${settings.height} ---`)
+            } catch (err) {
+                // Fallback: try 1080p
+                try {
+                    console.log('--- UPGRADE: 4K failed, trying 1080p ---')
+                    await track.applyConstraints({
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    })
+                    const settings = track.getSettings()
+                    console.log(`--- 1080p SUCCESS: ${settings.width}x${settings.height} ---`)
+                } catch (e2) {
+                    console.warn('--- UPGRADE: Resolution upgrade failed, keeping preview ---')
+                }
+            }
+
+            // Probe capabilities after resolution is set
+            await probeCapabilities(track)
         }
+
+        // Fire in background (non-blocking)
+        upgradeAsync().catch(() => {})
     }, [probeCapabilities])
 
     const initCamera = useCallback(async () => {
