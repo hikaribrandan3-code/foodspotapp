@@ -39,22 +39,6 @@ const STICKERS = [
     { id: 'aaastickerfolder_26', type: 'image', src: '/assets/images/aaastickerfolder/sticker_05.png' },
     { id: 'aaastickerfolder_27', type: 'image', src: '/assets/images/aaastickerfolder/sticker_06.png' },
 
-    // Argentina (15)
-    { id: 'arg_01', icon: '🇦🇷' },
-    { id: 'arg_02', icon: '⚽' },
-    { id: 'arg_03', icon: '🧉' },
-    { id: 'arg_04', icon: '🎭' },
-    { id: 'arg_05', icon: '💃' },
-    { id: 'arg_06', icon: '🤠' },
-    { id: 'arg_07', icon: '🏆' },
-    { id: 'arg_08', icon: '🎸' },
-    { id: 'arg_09', icon: '🌶️' },
-    { id: 'arg_10', icon: '🐄' },
-    { id: 'arg_11', icon: '🌽' },
-    { id: 'arg_12', icon: '🎺' },
-    { id: 'arg_13', icon: '📻' },
-    { id: 'arg_14', icon: '❤️' },
-    { id: 'arg_15', icon: '🔥' },
     // Lambo v2 stickers (6)
     { id: 'lambo_v2_01', type: 'image', src: '/assets/images/lambo_stickers/sticker_01.png' },
     { id: 'lambo_v2_02', type: 'image', src: '/assets/images/lambo_stickers/sticker_02.png' },
