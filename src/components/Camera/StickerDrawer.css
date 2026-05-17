@@ -26,10 +26,10 @@
     }
 }
 
-/* Drawer - 75% width, dark rounded card */
+/* Drawer - responsive width, dark rounded card */
 .sticker-drawer {
     width: 75%;
-    max-width: 320px;
+    max-width: 380px;
     height: 100%;
     background: rgba(0, 0, 0, 0.22);
     backdrop-filter: blur(22px);
@@ -43,6 +43,12 @@
     overflow: hidden;
     /* Respect safe-area top */
     padding-top: env(safe-area-inset-top);
+}
+
+@media (max-width: 480px) {
+    .sticker-drawer {
+        max-width: 360px;
+    }
 }
 
 @keyframes slideInRight {
