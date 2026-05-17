@@ -74,62 +74,32 @@ export function useCamera() {
         const track = currentStream.getVideoTracks()[0]
         if (!track) return
 
-        // Parallel 4K request (don't block, just fire and forget)
-        const request4K = async () => {
-            try {
-                console.log('--- 4K REQUEST: Starting parallel 4K stream request ---')
-                const fourKConstraints = {
-                    video: {
-                        facingMode: facingMode,
-                        width: { min: 2160, ideal: 3840, max: 4320 },
-                        height: { min: 3840, ideal: 2160, max: 4320 },
-                        aspectRatio: { ideal: 9 / 16 }
-                    },
-                    audio: false
-                }
-
-                const newStream = await Promise.race([
-                    navigator.mediaDevices.getUserMedia(fourKConstraints),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('4K timeout')), 2000))
-                ])
-
-                const newTrack = newStream.getVideoTracks()[0]
-                const settings = newTrack.getSettings()
-                console.log(`--- 4K SUCCESS: ${settings.width}x${settings.height} @ ${settings.frameRate}fps ---`)
-
-                // Validate we got decent resolution
-                if (settings.width >= 2160 || settings.height >= 2160) {
-                    if (videoRef.current) {
-                        // Smooth transition
-                        const oldStream = streamRef.current
-                        videoRef.current.srcObject = newStream
-
-                        // Stop old stream after video element switches
-                        setTimeout(() => {
-                            if (oldStream) oldStream.getTracks().forEach(t => t.stop())
-                        }, 100)
-
-                        streamRef.current = newStream
-                        trackRef.current = newTrack
-                    }
-                }
-
-                // Now probe capabilities on the 4K track
-                await probeCapabilities(newTrack)
-            } catch (err) {
-                console.warn(`--- 4K FALLBACK: ${err.message}, keeping preview quality ---`)
-                // Fallback: probe capabilities on preview track
-                if (typeof requestIdleCallback !== 'undefined') {
-                    requestIdleCallback(() => probeCapabilities(track), { timeout: 3000 })
-                } else {
-                    setTimeout(() => probeCapabilities(track), 100)
-                }
-            }
+        // Defer capabilities probing to requestIdleCallback (non-blocking)
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(() => probeCapabilities(track), { timeout: 3000 })
+        } else {
+            setTimeout(() => probeCapabilities(track), 100)
         }
 
-        // Fire 4K request in background (non-blocking)
-        request4K().catch(() => {})
-    }, [facingMode, probeCapabilities])
+        // Try 1: Seamless applyConstraints upgrade (no flicker, 300ms timeout)
+        try {
+            console.log('--- UPGRADE: trying applyConstraints ---')
+            const constraintPromise = track.applyConstraints({
+                width: { ideal: 1920 },
+                height: { ideal: 3840 }
+            })
+
+            // Don't block on this - it might take 500ms+
+            constraintPromise.then(() => {
+                const settings = track.getSettings()
+                console.log(`--- UPGRADE: applyConstraints succeeded ${settings.width}x${settings.height} ---`)
+            }).catch(() => {
+                console.warn('--- UPGRADE: applyConstraints failed ---')
+            })
+        } catch (e) {
+            console.warn('--- UPGRADE: applyConstraints error ---')
+        }
+    }, [probeCapabilities])
 
     const initCamera = useCallback(async () => {
         try {
