@@ -151,13 +151,6 @@ const STICKERS = [
     { id: 'lambo_v10_04', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_04.png' },
     { id: 'lambo_v10_05', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_05.png' },
     { id: 'lambo_v10_06', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_06.png' },
-    // 11111 pack (6)
-    { id: '11111_01', type: 'image', src: '/assets/images/11111/sticker_01.png' },
-    { id: '11111_02', type: 'image', src: '/assets/images/11111/sticker_02.png' },
-    { id: '11111_03', type: 'image', src: '/assets/images/11111/sticker_03.png' },
-    { id: '11111_04', type: 'image', src: '/assets/images/11111/sticker_04.png' },
-    { id: '11111_05', type: 'image', src: '/assets/images/11111/sticker_05.png' },
-    { id: '11111_06', type: 'image', src: '/assets/images/11111/sticker_06.png' },
     // 11111111111111 pack (6)
     { id: 'stickers_mega_01', type: 'image', src: '/assets/images/11111111111111/sticker_01.png' },
     { id: 'stickers_mega_02', type: 'image', src: '/assets/images/11111111111111/sticker_02.png' },
@@ -208,19 +201,10 @@ const STICKERS = [
     { id: 'onepiecesticker_05', type: 'image', src: '/assets/images/onepiecesticker/sticker_05.png' },
     { id: 'onepiecesticker_06', type: 'image', src: '/assets/images/onepiecesticker/sticker_06.png' },
     { id: 'onepiecesticker_07', type: 'image', src: '/assets/images/onepiecesticker/sticker_07.png' },
-    { id: 'onepiecesticker_08', type: 'image', src: '/assets/images/onepiecesticker/sticker_08.png' },
-    { id: 'onepiecesticker_09', type: 'image', src: '/assets/images/onepiecesticker/sticker_09.png' },
-    { id: 'onepiecesticker_10', type: 'image', src: '/assets/images/onepiecesticker/sticker_10.png' },
-    { id: 'onepiecesticker_11', type: 'image', src: '/assets/images/onepiecesticker/sticker_11.png' },
-    { id: 'onepiecesticker_12', type: 'image', src: '/assets/images/onepiecesticker/sticker_12.png' },
-    { id: 'onepiecesticker_13', type: 'image', src: '/assets/images/onepiecesticker/sticker_13.png' },
-    { id: 'onepiecesticker_14', type: 'image', src: '/assets/images/onepiecesticker/sticker_14.png' },
-    { id: 'onepiecesticker_15', type: 'image', src: '/assets/images/onepiecesticker/sticker_15.png' },
     // One Piece food pack (6)
     { id: 'onepiecefood_01', type: 'image', src: '/assets/images/onepiecefood/sticker_01.png' },
     { id: 'onepiecefood_02', type: 'image', src: '/assets/images/onepiecefood/sticker_02.png' },
     { id: 'onepiecefood_03', type: 'image', src: '/assets/images/onepiecefood/sticker_03.png' },
-    { id: 'onepiecefood_04', type: 'image', src: '/assets/images/onepiecefood/sticker_04.png' },
     { id: 'onepiecefood_05', type: 'image', src: '/assets/images/onepiecefood/sticker_05.png' },
     { id: 'onepiecefood_06', type: 'image', src: '/assets/images/onepiecefood/sticker_06.png' },
     // Argentina stick v1 (6)
@@ -228,8 +212,6 @@ const STICKERS = [
     { id: 'argstick1_02', type: 'image', src: '/assets/images/argstick1/sticker_02.png' },
     { id: 'argstick1_03', type: 'image', src: '/assets/images/argstick1/sticker_03.png' },
     { id: 'argstick1_04', type: 'image', src: '/assets/images/argstick1/sticker_04.png' },
-    { id: 'argstick1_05', type: 'image', src: '/assets/images/argstick1/sticker_05.png' },
-    { id: 'argstick1_06', type: 'image', src: '/assets/images/argstick1/sticker_06.png' },
     // Boca stick (6)
     { id: 'bocastick_01', type: 'image', src: '/assets/images/bocastick/sticker_01.png' },
     { id: 'bocastick_02', type: 'image', src: '/assets/images/bocastick/sticker_02.png' },
@@ -241,9 +223,6 @@ const STICKERS = [
     { id: 'argst_01', type: 'image', src: '/assets/images/argst/sticker_01.png' },
     { id: 'argst_02', type: 'image', src: '/assets/images/argst/sticker_02.png' },
     { id: 'argst_03', type: 'image', src: '/assets/images/argst/sticker_03.png' },
-    { id: 'argst_04', type: 'image', src: '/assets/images/argst/sticker_04.png' },
-    { id: 'argst_05', type: 'image', src: '/assets/images/argst/sticker_05.png' },
-    { id: 'argst_06', type: 'image', src: '/assets/images/argst/sticker_06.png' },
     // Arg (6)
     { id: 'arg_stickers_01', type: 'image', src: '/assets/images/arg/sticker_01.png' },
     { id: 'arg_stickers_02', type: 'image', src: '/assets/images/arg/sticker_02.png' },
