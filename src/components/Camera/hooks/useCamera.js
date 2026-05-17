@@ -20,6 +20,7 @@ export function useCamera() {
     const canvasRef = useRef(null)
     const streamRef = useRef(null)
     const trackRef = useRef(null)
+    const isInitializingRef = useRef(false)
 
     const [isReady, setIsReady] = useState(false)
     const [facingMode, setFacingMode] = useState('environment')
@@ -109,6 +110,10 @@ export function useCamera() {
     }, [probeCapabilities])
 
     const initCamera = useCallback(async () => {
+        // Guard: prevent overlapping inits
+        if (isInitializingRef.current) return
+        isInitializingRef.current = true
+
         try {
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 setError('Camera access requires HTTPS.')
@@ -121,7 +126,6 @@ export function useCamera() {
             }
 
             // === PHASE 1: FAST PREVIEW (instant) ===
-            console.log('--- FAST PREVIEW: starting minimal stream ---')
             const fastConstraints = {
                 video: { facingMode: facingMode },
                 audio: false
@@ -140,13 +144,13 @@ export function useCamera() {
             }
 
             // === PHASE 2: BACKGROUND HIGH-RES UPGRADE ===
-            upgradeResolution(stream).catch(err => {
-                console.warn('Background upgrade failed, keeping fast preview:', err)
-            })
+            upgradeResolution(stream).catch(() => {})
         } catch (err) {
             console.error('Camera initialization error:', err)
             setError(err.message)
             setIsReady(false)
+        } finally {
+            isInitializingRef.current = false
         }
     }, [facingMode, upgradeResolution])
 
@@ -281,19 +285,19 @@ export function useCamera() {
 
     const initCameraWithRecovery = useCallback(async () => {
         await initCamera()
-        // Fast preview should show immediately; keep a short safety net
+        // Only retry if video is truly black (videoWidth === 0 = no actual frame)
         const recoveryTimeout = setTimeout(() => {
-            if (videoRef.current && videoRef.current.readyState < 2) {
+            const video = videoRef.current
+            if (video && video.videoWidth === 0 && !isInitializingRef.current) {
                 console.warn('Camera black screen detected, retrying...')
-                stopCamera()
-                setTimeout(() => initCamera(), 100)
+                initCamera()
             }
-        }, 800)
+        }, 1500)
         if (videoRef.current) {
             videoRef.current.addEventListener('playing', () => clearTimeout(recoveryTimeout), { once: true })
         }
         return () => clearTimeout(recoveryTimeout)
-    }, [initCamera, stopCamera])
+    }, [initCamera])
 
     useEffect(() => {
         const handleVisibilityChange = () => {
