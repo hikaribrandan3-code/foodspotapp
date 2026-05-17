@@ -88,6 +88,7 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
             src={item.image_url || item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'}
             alt={item.name}
             className="h-full w-full object-cover transition-transform duration-1000 group-hover/card:scale-110"
+            style={{ objectPosition: `center ${item.image_offset_y ?? 50}%` }}
           />
           {imgUploading && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">

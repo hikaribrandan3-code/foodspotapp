@@ -116,8 +116,6 @@ export default function MenuManager() {
 
   // Debounced save for item field changes
   const saveItemField = useCallback(async (itemId, updates) => {
-    console.log('[saveItemField] Saving item:', { itemId, updates, businessId });
-
     // Optimistic local update
     setMenuItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, ...updates } : item))
@@ -128,14 +126,12 @@ export default function MenuManager() {
     if (existing) clearTimeout(existing);
 
     const timer = setTimeout(async () => {
-      console.log('[saveItemField] Sending to Supabase:', { itemId, updates, businessId });
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('menu_items')
         .update(updates)
         .eq('id', itemId)
         .eq('business_id', businessId);
 
-      console.log('[saveItemField] Supabase response:', { error, data });
       if (error) {
         console.error('[MenuManager] Save item error:', error);
         setSaveStatus({ error: true, message: t('save_error') || 'Save failed.' });
