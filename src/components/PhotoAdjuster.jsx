@@ -62,7 +62,7 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: 16,
+      gap: 12,
       padding: 16,
       background: '#FFFFFF',
       borderRadius: 16,
@@ -77,161 +77,115 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
         Adjust Image Position
       </h3>
 
-      <div style={{
-        display: 'flex',
-        gap: 12,
-        alignItems: 'flex-start'
-      }}>
-        {/* Preview: 1:1 square with offset applied */}
-        <div style={{
-          flex: 1,
-          aspectRatio: '1',
-          background: '#E8E4DD',
-          borderRadius: 12,
-          overflow: 'hidden',
-          position: 'relative',
-          cursor: isDragging ? 'grabbing' : 'grab'
-        }}>
-          <img
-            src={imageSrc}
-            alt={item.name}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: `center ${offsetY}%`
-            }}
-            draggable={false}
-          />
-          {/* Current offset indicator */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: `linear-gradient(to bottom, transparent 0%, rgba(59, 130, 246, 0.5) ${offsetY}%, transparent 100%)`,
-            pointerEvents: 'none'
-          }} />
-        </div>
-
-        {/* Controls */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          minWidth: 80
-        }}>
-          <button
-            onClick={() => handleQuickAdjust(-10)}
-            style={{
-              padding: '8px 12px',
-              background: '#F3F4F6',
-              border: '1px solid #E5E7EB',
-              borderRadius: 8,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 4,
-              fontSize: 12,
-              color: '#1F2937',
-              fontWeight: 500,
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { e.target.style.background = '#E5E7EB' }}
-            onMouseLeave={(e) => { e.target.style.background = '#F3F4F6' }}
-          >
-            <ChevronUp size={14} /> Up
-          </button>
-
-          <div style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: '#3B82F6',
-            textAlign: 'center'
-          }}>
-            {offsetY}%
-          </div>
-
-          <button
-            onClick={() => handleQuickAdjust(10)}
-            style={{
-              padding: '8px 12px',
-              background: '#F3F4F6',
-              border: '1px solid #E5E7EB',
-              borderRadius: 8,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 4,
-              fontSize: 12,
-              color: '#1F2937',
-              fontWeight: 500,
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => { e.target.style.background = '#E5E7EB' }}
-            onMouseLeave={(e) => { e.target.style.background = '#F3F4F6' }}
-          >
-            <ChevronDown size={14} /> Down
-          </button>
-        </div>
-      </div>
-
-      {/* Drag zone */}
+      {/* Preview: full-width, draggable */}
       <div
         ref={dragZoneRef}
         onMouseDown={handleDragStart}
         onTouchStart={handleDragStart}
         style={{
-          height: 120,
-          background: 'linear-gradient(to bottom, #F0F9FF, #FFFFFF, #F0F9FF)',
-          border: '2px solid #DBEAFE',
+          width: '100%',
+          aspectRatio: '1',
+          background: '#E8E4DD',
           borderRadius: 12,
-          cursor: isDragging ? 'grabbing' : 'grab',
+          overflow: 'hidden',
           position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          cursor: isDragging ? 'grabbing' : 'grab',
           userSelect: 'none'
         }}
       >
+        <img
+          src={imageSrc}
+          alt={item.name}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: `center ${offsetY}%`
+          }}
+          draggable={false}
+        />
+        {/* Crop indicator line */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0,
-          pointerEvents: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          height: '2px',
+          background: '#3B82F6',
+          boxShadow: '0 0 8px rgba(59, 130, 246, 0.5)',
+          transform: `translateY(${(offsetY / 100) * 100}%)`
+        }} />
+      </div>
+
+      {/* Minimal controls: Up/Down buttons + percentage */}
+      <div style={{
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <button
+          onClick={() => handleQuickAdjust(-10)}
+          style={{
+            padding: '6px 10px',
+            background: '#F3F4F6',
+            border: '1px solid #E5E7EB',
+            borderRadius: 6,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 11,
+            color: '#1F2937',
+            fontWeight: 500,
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => { e.target.style.background = '#E5E7EB' }}
+          onMouseLeave={(e) => { e.target.style.background = '#F3F4F6' }}
+        >
+          <ChevronUp size={12} />
+        </button>
+
+        <div style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color: '#3B82F6',
+          minWidth: 40,
+          textAlign: 'center'
         }}>
-          <div style={{
-            fontSize: 12,
-            color: '#94A3B8',
-            fontWeight: 500
-          }}>
-            Drag to adjust
-          </div>
+          {offsetY}%
         </div>
 
-        {/* Indicator marker at current position */}
-        <div
+        <button
+          onClick={() => handleQuickAdjust(10)}
           style={{
-            position: 'absolute',
-            top: `${(offsetY / 100) * 120}px`,
-            left: 0,
-            right: 0,
-            height: '3px',
-            background: '#3B82F6',
-            boxShadow: '0 0 8px rgba(59, 130, 246, 0.3)',
-            borderRadius: 2,
-            pointerEvents: 'none',
-            transition: isDragging ? 'none' : 'top 0.15s ease'
+            padding: '6px 10px',
+            background: '#F3F4F6',
+            border: '1px solid #E5E7EB',
+            borderRadius: 6,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 11,
+            color: '#1F2937',
+            fontWeight: 500,
+            transition: 'all 0.2s'
           }}
-        />
+          onMouseEnter={(e) => { e.target.style.background = '#E5E7EB' }}
+          onMouseLeave={(e) => { e.target.style.background = '#F3F4F6' }}
+        >
+          <ChevronDown size={12} />
+        </button>
+      </div>
+
+      <div style={{
+        fontSize: 12,
+        color: '#9CA3AF',
+        textAlign: 'center',
+        fontStyle: 'italic'
+      }}>
+        Drag image to adjust crop position
       </div>
 
       {/* Action buttons */}
