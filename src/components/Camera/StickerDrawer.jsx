@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
-import { FixedSizeGrid } from 'react-window'
+import { Grid } from 'react-window'
 import './StickerDrawer.css'
 
 /**
@@ -477,18 +477,18 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
                     <span className="drawer-title">Stickers</span>
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                    <FixedSizeGrid
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                    <Grid
                         columnCount={COLS}
-                        columnSize={ITEM_SIZE}
+                        columnWidth={ITEM_SIZE}
                         height={480}
                         rowCount={rows}
-                        rowSize={ITEM_SIZE}
+                        rowHeight={ITEM_SIZE}
                         width={COLS * ITEM_SIZE}
                         itemData={gridData}
                     >
                         {StickerCell}
-                    </FixedSizeGrid>
+                    </Grid>
                 </div>
             </div>
         </div>
