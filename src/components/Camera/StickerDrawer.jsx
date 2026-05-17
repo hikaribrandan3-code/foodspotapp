@@ -386,13 +386,6 @@ const STICKERS = [
     { id: 'aaasasdsd_04', type: 'image', src: '/assets/images/aaasasdsd/sticker_04.png' },
     { id: 'aaasasdsd_05', type: 'image', src: '/assets/images/aaasasdsd/sticker_05.png' },
     { id: 'aaasasdsd_06', type: 'image', src: '/assets/images/aaasasdsd/sticker_06.png' },
-    // AAA drink pack (6)
-    { id: 'aaadrink_01', type: 'image', src: '/assets/images/aaadrink/sticker_01.png' },
-    { id: 'aaadrink_02', type: 'image', src: '/assets/images/aaadrink/sticker_02.png' },
-    { id: 'aaadrink_03', type: 'image', src: '/assets/images/aaadrink/sticker_03.png' },
-    { id: 'aaadrink_04', type: 'image', src: '/assets/images/aaadrink/sticker_04.png' },
-    { id: 'aaadrink_05', type: 'image', src: '/assets/images/aaadrink/sticker_05.png' },
-    { id: 'aaadrink_06', type: 'image', src: '/assets/images/aaadrink/sticker_06.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
