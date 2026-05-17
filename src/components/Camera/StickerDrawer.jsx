@@ -181,20 +181,6 @@ const STICKERS = [
     { id: 'lambo_v11_04', type: 'image', src: '/assets/images/lambo_v11/sticker_04.png' },
     { id: 'lambo_v11_05', type: 'image', src: '/assets/images/lambo_v11/sticker_05.png' },
     { id: 'lambo_v11_06', type: 'image', src: '/assets/images/lambo_v11/sticker_06.png' },
-    // Converted stickers (6)
-    { id: 'converted_01', type: 'image', src: '/assets/images/stickers_converted/sticker_01.png' },
-    { id: 'converted_02', type: 'image', src: '/assets/images/stickers_converted/sticker_02.png' },
-    { id: 'converted_03', type: 'image', src: '/assets/images/stickers_converted/sticker_03.png' },
-    { id: 'converted_04', type: 'image', src: '/assets/images/stickers_converted/sticker_04.png' },
-    { id: 'converted_05', type: 'image', src: '/assets/images/stickers_converted/sticker_05.png' },
-    { id: 'converted_06', type: 'image', src: '/assets/images/stickers_converted/sticker_06.png' },
-    // One Piece stickers (6)
-    { id: 'onepiece_01', type: 'image', src: '/assets/images/onepiece/sticker_01.png' },
-    { id: 'onepiece_02', type: 'image', src: '/assets/images/onepiece/sticker_02.png' },
-    { id: 'onepiece_03', type: 'image', src: '/assets/images/onepiece/sticker_03.png' },
-    { id: 'onepiece_04', type: 'image', src: '/assets/images/onepiece/sticker_04.png' },
-    { id: 'onepiece_05', type: 'image', src: '/assets/images/onepiece/sticker_05.png' },
-    { id: 'onepiece_06', type: 'image', src: '/assets/images/onepiece/sticker_06.png' },
     // One Piece v2 stickers (6)
     { id: 'onepiece_v2_01', type: 'image', src: '/assets/images/onepiece_v2/sticker_01.png' },
     { id: 'onepiece_v2_02', type: 'image', src: '/assets/images/onepiece_v2/sticker_02.png' },
