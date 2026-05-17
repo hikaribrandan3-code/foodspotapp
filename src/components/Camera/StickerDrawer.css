@@ -106,8 +106,7 @@
 /* Sticker Item */
 .sticker-item {
     aspect-ratio: 1;
-    min-width: 0;
-    overflow: hidden;
+    width: 100%;
     background: rgba(255, 255, 255, 0.08);
     border: none;
     border-radius: 12px;
