@@ -116,7 +116,6 @@ export default function MenuManager() {
 
   // Debounced save for item field changes
   const saveItemField = useCallback(async (itemId, updates) => {
-    debugger;
     console.log('[saveItemField] Saving item:', { itemId, updates, businessId });
 
     // Optimistic local update
