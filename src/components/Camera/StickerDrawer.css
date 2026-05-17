@@ -26,10 +26,10 @@
     }
 }
 
-/* Drawer - responsive width, dark rounded card */
+/* Drawer - 75% width, dark rounded card */
 .sticker-drawer {
     width: 75%;
-    max-width: 380px;
+    max-width: 320px;
     height: 100%;
     background: rgba(0, 0, 0, 0.22);
     backdrop-filter: blur(22px);
@@ -43,12 +43,6 @@
     overflow: hidden;
     /* Respect safe-area top */
     padding-top: env(safe-area-inset-top);
-}
-
-@media (max-width: 480px) {
-    .sticker-drawer {
-        max-width: 360px;
-    }
 }
 
 @keyframes slideInRight {
@@ -66,7 +60,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -89,10 +83,10 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px;
+    padding: 12px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 8px;
     -webkit-overflow-scrolling: touch;
 }
 
