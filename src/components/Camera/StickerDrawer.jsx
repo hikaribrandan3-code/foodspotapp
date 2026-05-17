@@ -132,13 +132,48 @@ const STICKERS = [
     { id: 'arg_13', icon: '📻' },
     { id: 'arg_14', icon: '❤️' },
     { id: 'arg_15', icon: '🔥' },
-    // Lambo stickers (6 custom)
-    { id: 'lambo_01', type: 'image', src: '/assets/images/lambo_stickers/sticker_01.png' },
-    { id: 'lambo_02', type: 'image', src: '/assets/images/lambo_stickers/sticker_02.png' },
-    { id: 'lambo_03', type: 'image', src: '/assets/images/lambo_stickers/sticker_03.png' },
-    { id: 'lambo_04', type: 'image', src: '/assets/images/lambo_stickers/sticker_04.png' },
-    { id: 'lambo_05', type: 'image', src: '/assets/images/lambo_stickers/sticker_05.png' },
-    { id: 'lambo_06', type: 'image', src: '/assets/images/lambo_stickers/sticker_06.png' }
+    // Lambo v2 stickers (6)
+    { id: 'lambo_v2_01', type: 'image', src: '/assets/images/lambo_stickers/sticker_01.png' },
+    { id: 'lambo_v2_02', type: 'image', src: '/assets/images/lambo_stickers/sticker_02.png' },
+    { id: 'lambo_v2_03', type: 'image', src: '/assets/images/lambo_stickers/sticker_03.png' },
+    { id: 'lambo_v2_04', type: 'image', src: '/assets/images/lambo_stickers/sticker_04.png' },
+    { id: 'lambo_v2_05', type: 'image', src: '/assets/images/lambo_stickers/sticker_05.png' },
+    { id: 'lambo_v2_06', type: 'image', src: '/assets/images/lambo_stickers/sticker_06.png' },
+    // Lambo v3 stickers (6)
+    { id: 'lambo_v3_01', type: 'image', src: '/assets/images/lambo_v3/sticker_01.png' },
+    { id: 'lambo_v3_02', type: 'image', src: '/assets/images/lambo_v3/sticker_02.png' },
+    { id: 'lambo_v3_03', type: 'image', src: '/assets/images/lambo_v3/sticker_03.png' },
+    { id: 'lambo_v3_04', type: 'image', src: '/assets/images/lambo_v3/sticker_04.png' },
+    { id: 'lambo_v3_05', type: 'image', src: '/assets/images/lambo_v3/sticker_05.png' },
+    { id: 'lambo_v3_06', type: 'image', src: '/assets/images/lambo_v3/sticker_06.png' },
+    // Lambo v4 stickers (6)
+    { id: 'lambo_v4_01', type: 'image', src: '/assets/images/lambo_v4/sticker_01.png' },
+    { id: 'lambo_v4_02', type: 'image', src: '/assets/images/lambo_v4/sticker_02.png' },
+    { id: 'lambo_v4_03', type: 'image', src: '/assets/images/lambo_v4/sticker_03.png' },
+    { id: 'lambo_v4_04', type: 'image', src: '/assets/images/lambo_v4/sticker_04.png' },
+    { id: 'lambo_v4_05', type: 'image', src: '/assets/images/lambo_v4/sticker_05.png' },
+    { id: 'lambo_v4_06', type: 'image', src: '/assets/images/lambo_v4/sticker_06.png' },
+    // Lambo v6 stickers (6)
+    { id: 'lambo_v6_01', type: 'image', src: '/assets/images/lambo_v6/sticker_01.png' },
+    { id: 'lambo_v6_02', type: 'image', src: '/assets/images/lambo_v6/sticker_02.png' },
+    { id: 'lambo_v6_03', type: 'image', src: '/assets/images/lambo_v6/sticker_03.png' },
+    { id: 'lambo_v6_04', type: 'image', src: '/assets/images/lambo_v6/sticker_04.png' },
+    { id: 'lambo_v6_05', type: 'image', src: '/assets/images/lambo_v6/sticker_05.png' },
+    { id: 'lambo_v6_06', type: 'image', src: '/assets/images/lambo_v6/sticker_06.png' },
+    // Mobile v5 stickers (6)
+    { id: 'mobile_v5_01', type: 'image', src: '/assets/images/mobile_v5/sticker_01.png' },
+    { id: 'mobile_v5_02', type: 'image', src: '/assets/images/mobile_v5/sticker_02.png' },
+    { id: 'mobile_v5_03', type: 'image', src: '/assets/images/mobile_v5/sticker_03.png' },
+    { id: 'mobile_v5_04', type: 'image', src: '/assets/images/mobile_v5/sticker_04.png' },
+    { id: 'mobile_v5_05', type: 'image', src: '/assets/images/mobile_v5/sticker_05.png' },
+    { id: 'mobile_v5_06', type: 'image', src: '/assets/images/mobile_v5/sticker_06.png' },
+    // Lambo v7 stickers (6)
+    { id: 'lambo_v7_01', type: 'image', src: '/assets/images/lambo_v7/sticker_01.png' },
+    { id: 'lambo_v7_02', type: 'image', src: '/assets/images/lambo_v7/sticker_02.png' },
+    { id: 'lambo_v7_03', type: 'image', src: '/assets/images/lambo_v7/sticker_03.png' },
+    { id: 'lambo_v7_04', type: 'image', src: '/assets/images/lambo_v7/sticker_04.png' },
+    { id: 'lambo_v7_05', type: 'image', src: '/assets/images/lambo_v7/sticker_05.png' },
+    { id: 'lambo_v7_06', type: 'image', src: '/assets/images/lambo_v7/sticker_06.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
