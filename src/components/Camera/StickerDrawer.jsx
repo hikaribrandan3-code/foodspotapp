@@ -243,7 +243,56 @@ const STICKERS = [
     { id: 'lambo_v10_03', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_03.png' },
     { id: 'lambo_v10_04', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_04.png' },
     { id: 'lambo_v10_05', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_05.png' },
-    { id: 'lambo_v10_06', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_06.png' }
+    { id: 'lambo_v10_06', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_06.png' },
+    // 11111 pack (6)
+    { id: '11111_01', type: 'image', src: '/assets/images/11111/sticker_01.png' },
+    { id: '11111_02', type: 'image', src: '/assets/images/11111/sticker_02.png' },
+    { id: '11111_03', type: 'image', src: '/assets/images/11111/sticker_03.png' },
+    { id: '11111_04', type: 'image', src: '/assets/images/11111/sticker_04.png' },
+    { id: '11111_05', type: 'image', src: '/assets/images/11111/sticker_05.png' },
+    { id: '11111_06', type: 'image', src: '/assets/images/11111/sticker_06.png' },
+    // 11111111111111 pack (6)
+    { id: 'stickers_mega_01', type: 'image', src: '/assets/images/11111111111111/sticker_01.png' },
+    { id: 'stickers_mega_02', type: 'image', src: '/assets/images/11111111111111/sticker_02.png' },
+    { id: 'stickers_mega_03', type: 'image', src: '/assets/images/11111111111111/sticker_03.png' },
+    { id: 'stickers_mega_04', type: 'image', src: '/assets/images/11111111111111/sticker_04.png' },
+    { id: 'stickers_mega_05', type: 'image', src: '/assets/images/11111111111111/sticker_05.png' },
+    { id: 'stickers_mega_06', type: 'image', src: '/assets/images/11111111111111/sticker_06.png' },
+    // Argentina stickers (6)
+    { id: 'argentina_pack_01', type: 'image', src: '/assets/images/argentinastickers1/sticker_01.png' },
+    { id: 'argentina_pack_02', type: 'image', src: '/assets/images/argentinastickers1/sticker_02.png' },
+    { id: 'argentina_pack_03', type: 'image', src: '/assets/images/argentinastickers1/sticker_03.png' },
+    { id: 'argentina_pack_04', type: 'image', src: '/assets/images/argentinastickers1/sticker_04.png' },
+    { id: 'argentina_pack_05', type: 'image', src: '/assets/images/argentinastickers1/sticker_05.png' },
+    { id: 'argentina_pack_06', type: 'image', src: '/assets/images/argentinastickers1/sticker_06.png' },
+    // Dish v1 stickers (6)
+    { id: 'dish1_01', type: 'image', src: '/assets/images/dish1/sticker_01.png' },
+    { id: 'dish1_02', type: 'image', src: '/assets/images/dish1/sticker_02.png' },
+    { id: 'dish1_03', type: 'image', src: '/assets/images/dish1/sticker_03.png' },
+    { id: 'dish1_04', type: 'image', src: '/assets/images/dish1/sticker_04.png' },
+    { id: 'dish1_05', type: 'image', src: '/assets/images/dish1/sticker_05.png' },
+    { id: 'dish1_06', type: 'image', src: '/assets/images/dish1/sticker_06.png' },
+    // Dish v2 stickers (6)
+    { id: 'dish2_01', type: 'image', src: '/assets/images/dish2/sticker_01.png' },
+    { id: 'dish2_02', type: 'image', src: '/assets/images/dish2/sticker_02.png' },
+    { id: 'dish2_03', type: 'image', src: '/assets/images/dish2/sticker_03.png' },
+    { id: 'dish2_04', type: 'image', src: '/assets/images/dish2/sticker_04.png' },
+    { id: 'dish2_05', type: 'image', src: '/assets/images/dish2/sticker_05.png' },
+    { id: 'dish2_06', type: 'image', src: '/assets/images/dish2/sticker_06.png' },
+    // Dish v3 stickers (6)
+    { id: 'dish3_01', type: 'image', src: '/assets/images/dish3/sticker_01.png' },
+    { id: 'dish3_02', type: 'image', src: '/assets/images/dish3/sticker_02.png' },
+    { id: 'dish3_03', type: 'image', src: '/assets/images/dish3/sticker_03.png' },
+    { id: 'dish3_04', type: 'image', src: '/assets/images/dish3/sticker_04.png' },
+    { id: 'dish3_05', type: 'image', src: '/assets/images/dish3/sticker_05.png' },
+    { id: 'dish3_06', type: 'image', src: '/assets/images/dish3/sticker_06.png' },
+    // Dish v4 stickers (6)
+    { id: 'dish4_01', type: 'image', src: '/assets/images/dish4/sticker_01.png' },
+    { id: 'dish4_02', type: 'image', src: '/assets/images/dish4/sticker_02.png' },
+    { id: 'dish4_03', type: 'image', src: '/assets/images/dish4/sticker_03.png' },
+    { id: 'dish4_04', type: 'image', src: '/assets/images/dish4/sticker_04.png' },
+    { id: 'dish4_05', type: 'image', src: '/assets/images/dish4/sticker_05.png' },
+    { id: 'dish4_06', type: 'image', src: '/assets/images/dish4/sticker_06.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
