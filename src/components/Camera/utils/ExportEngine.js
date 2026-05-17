@@ -173,15 +173,25 @@ function drawStrokes(ctx, strokes, scale = 1) {
     })
 }
 
-function drawSticker(ctx, element, exportWidth, exportHeight, scale = 1) {
-    const fontSize = 48 * element.scale * scale
+function drawSticker(ctx, element, exportWidth, exportHeight, scale = 1, loadedImages = {}) {
     ctx.save()
     ctx.translate(element.x * exportWidth, element.y * exportHeight)
     ctx.rotate((element.rotation * Math.PI) / 180)
-    ctx.font = `${fontSize}px -apple-system, sans-serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(element.data?.content || '📷', 0, 0)
+
+    if (element.data?.isImage && loadedImages[element.data.stickerId]) {
+        const img = loadedImages[element.data.stickerId]
+        const size = 80 * element.scale * scale
+        ctx.drawImage(img, -size / 2, -size / 2, size, size)
+    } else if (element.data?.isImage) {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)'
+        ctx.fillRect(-40 * element.scale * scale, -40 * element.scale * scale, 80 * element.scale * scale, 80 * element.scale * scale)
+    } else {
+        const fontSize = 48 * element.scale * scale
+        ctx.font = `${fontSize}px -apple-system, sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(element.data?.content || '📷', 0, 0)
+    }
     ctx.restore()
 }
 
@@ -335,8 +345,25 @@ export async function exportImage({
         return (o[a.type] || 0) - (o[b.type] || 0)
     })
 
+    // Pre-load all image stickers
+    const imageStickers = sorted.filter(el => el.type === 'sticker' && el.data?.isImage)
+    const loadedImages = {}
+
+    for (const sticker of imageStickers) {
+        await new Promise((resolve) => {
+            const img = new Image()
+            img.crossOrigin = 'anonymous'
+            img.onload = () => {
+                loadedImages[sticker.data.stickerId] = img
+                resolve()
+            }
+            img.onerror = () => resolve()
+            img.src = sticker.data.src
+        })
+    }
+
     sorted.forEach(el => {
-        if (el.type === 'sticker') drawSticker(ctx, el, exportWidth, exportHeight, scale)
+        if (el.type === 'sticker') drawSticker(ctx, el, exportWidth, exportHeight, scale, loadedImages)
         else if (el.type === 'emoji') drawEmoji(ctx, el, exportWidth, exportHeight, scale)
         else if (el.type === 'text') drawText(ctx, el, exportWidth, exportHeight, scale)
     })
