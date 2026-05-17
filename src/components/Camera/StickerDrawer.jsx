@@ -1,11 +1,55 @@
-import { useRef, useEffect, useCallback, useState } from 'react'
+import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
+import { FixedSizeGrid } from 'react-window'
 import './StickerDrawer.css'
 
 /**
  * StickerDrawer Component - Hikari CamTech Engine v3.1
  * Right-side slide-out drawer per Gemini mock (Image A)
- * NO categories - single scrollable grid per PRD
+ * Virtual scrolling for 500+ stickers + lazy image loading
  */
+
+const LazyImage = ({ src, alt, index }) => {
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const imgRef = useRef(null)
+
+  useEffect(() => {
+    const img = imgRef.current
+    if (!img) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            img.src = src
+            observer.unobserve(img)
+          }
+        })
+      },
+      { rootMargin: '50px' }
+    )
+
+    observer.observe(img)
+    return () => observer.disconnect()
+  }, [src])
+
+  return (
+    <img
+      ref={imgRef}
+      alt={alt}
+      onLoad={() => setIsLoaded(true)}
+      onError={() => setHasError(true)}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        opacity: isLoaded ? 1 : 0.5,
+        transition: 'opacity 0.2s',
+        backgroundColor: hasError ? '#f0f0f0' : 'transparent'
+      }}
+    />
+  )
+}
 
 // 120+ stickers: 105 food + 15 Argentina-related
 const STICKERS = [
@@ -305,11 +349,61 @@ const STICKERS = [
     { id: 'newstickers_36', type: 'image', src: '/assets/images/newstickers/w36654545.png' },
 ]
 
+const StickerCell = ({ columnIndex, rowIndex, style, data }) => {
+  const { stickers, onSelect, onClose, cols } = data
+  const index = rowIndex * cols + columnIndex
+  const sticker = stickers[index]
+
+  if (!sticker) return <div style={style} />
+
+  return (
+    <div style={style} className="sticker-cell-wrapper">
+      <button
+        className="sticker-item"
+        onClick={() => {
+          onSelect(sticker)
+          onClose()
+        }}
+        aria-label={sticker.id}
+        style={{ position: 'relative', width: '100%', height: '100%', padding: '8px', boxSizing: 'border-box' }}
+      >
+        {sticker.type === 'image' ? (
+          <LazyImage src={sticker.src} alt={sticker.id} index={index} />
+        ) : (
+          <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
+        )}
+        <div style={{
+          position: 'absolute',
+          bottom: '2px',
+          right: '2px',
+          background: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          borderRadius: '50%',
+          width: '20px',
+          height: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          zIndex: 10
+        }}>
+          {index + 1}
+        </div>
+      </button>
+    </div>
+  )
+}
+
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
     const drawerRef = useRef(null)
     const [isDragging, setIsDragging] = useState(false)
     const [dragStartX, setDragStartX] = useState(0)
     const [dragOffsetX, setDragOffsetX] = useState(0)
+
+    const COLS = 4
+    const ITEM_SIZE = 80
+    const rows = Math.ceil(STICKERS.length / COLS)
 
     // Handle swipe to close
     const handleTouchStart = useCallback((e) => {
@@ -322,7 +416,6 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
         if (!isDragging) return
         const currentX = e.touches[0].clientX
         const delta = currentX - dragStartX
-        // Only allow dragging to the right (positive delta)
         if (delta > 0) {
             setDragOffsetX(delta)
         }
@@ -330,7 +423,6 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
 
     const handleTouchEnd = useCallback(() => {
         if (isDragging) {
-            // If dragged more than 100px, close the drawer
             if (dragOffsetX > 100) {
                 onClose()
             }
@@ -339,20 +431,19 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
         }
     }, [isDragging, dragOffsetX, onClose])
 
-    // Handle overlay click to close
     const handleOverlayClick = useCallback((e) => {
         if (e.target.classList.contains('sticker-drawer-overlay')) {
             onClose()
         }
     }, [onClose])
 
-    // Handle sticker selection
-    const handleStickerSelect = useCallback((sticker) => {
-        onSelect(sticker)
-        onClose() // Auto-close on selection per PRD
-    }, [onSelect, onClose])
+    const gridData = useMemo(() => ({
+        stickers: STICKERS,
+        onSelect,
+        onClose,
+        cols: COLS
+    }), [onSelect, onClose])
 
-    // Prevent body scroll when drawer is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'
@@ -381,46 +472,23 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
             >
-                {/* Drawer Header */}
                 <div className="sticker-drawer-header">
                     <div className="drawer-handle" />
                     <span className="drawer-title">Stickers</span>
                 </div>
 
-                {/* Sticker Grid - Single scrollable grid, NO categories */}
-                <div className="sticker-grid scrollable">
-                    {STICKERS.map((sticker, index) => (
-                        <button
-                            key={sticker.id}
-                            className="sticker-item"
-                            onClick={() => handleStickerSelect(sticker)}
-                            aria-label={sticker.id}
-                            style={{ position: 'relative' }}
-                        >
-                            {sticker.type === 'image' ? (
-                                <img src={sticker.src} alt={sticker.id} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            ) : (
-                                <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
-                            )}
-                            <div style={{
-                                position: 'absolute',
-                                bottom: '2px',
-                                right: '2px',
-                                background: 'rgba(0,0,0,0.7)',
-                                color: 'white',
-                                borderRadius: '50%',
-                                width: '20px',
-                                height: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '10px',
-                                fontWeight: 'bold',
-                            }}>
-                                {index + 1}
-                            </div>
-                        </button>
-                    ))}
+                <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                    <FixedSizeGrid
+                        columnCount={COLS}
+                        columnSize={ITEM_SIZE}
+                        height={480}
+                        rowCount={rows}
+                        rowSize={ITEM_SIZE}
+                        width={COLS * ITEM_SIZE}
+                        itemData={gridData}
+                    >
+                        {StickerCell}
+                    </FixedSizeGrid>
                 </div>
             </div>
         </div>
