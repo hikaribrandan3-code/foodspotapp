@@ -379,18 +379,36 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
 
                 {/* Sticker Grid - Single scrollable grid, NO categories */}
                 <div className="sticker-grid scrollable">
-                    {STICKERS.map((sticker) => (
+                    {STICKERS.map((sticker, index) => (
                         <button
                             key={sticker.id}
                             className="sticker-item"
                             onClick={() => handleStickerSelect(sticker)}
                             aria-label={sticker.id}
+                            style={{ position: 'relative' }}
                         >
                             {sticker.type === 'image' ? (
                                 <img src={sticker.src} alt={sticker.id} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             ) : (
                                 <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
                             )}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '2px',
+                                right: '2px',
+                                background: 'rgba(0,0,0,0.7)',
+                                color: 'white',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                            }}>
+                                {index + 1}
+                            </div>
                         </button>
                     ))}
                 </div>
