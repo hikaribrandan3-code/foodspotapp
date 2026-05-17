@@ -173,7 +173,70 @@ const STICKERS = [
     { id: 'lambo_v7_03', type: 'image', src: '/assets/images/lambo_v7/sticker_03.png' },
     { id: 'lambo_v7_04', type: 'image', src: '/assets/images/lambo_v7/sticker_04.png' },
     { id: 'lambo_v7_05', type: 'image', src: '/assets/images/lambo_v7/sticker_05.png' },
-    { id: 'lambo_v7_06', type: 'image', src: '/assets/images/lambo_v7/sticker_06.png' }
+    { id: 'lambo_v7_06', type: 'image', src: '/assets/images/lambo_v7/sticker_06.png' },
+    // Lambo v11 stickers (6)
+    { id: 'lambo_v11_01', type: 'image', src: '/assets/images/lambo_v11/sticker_01.png' },
+    { id: 'lambo_v11_02', type: 'image', src: '/assets/images/lambo_v11/sticker_02.png' },
+    { id: 'lambo_v11_03', type: 'image', src: '/assets/images/lambo_v11/sticker_03.png' },
+    { id: 'lambo_v11_04', type: 'image', src: '/assets/images/lambo_v11/sticker_04.png' },
+    { id: 'lambo_v11_05', type: 'image', src: '/assets/images/lambo_v11/sticker_05.png' },
+    { id: 'lambo_v11_06', type: 'image', src: '/assets/images/lambo_v11/sticker_06.png' },
+    // Converted stickers (6)
+    { id: 'converted_01', type: 'image', src: '/assets/images/stickers_converted/sticker_01.png' },
+    { id: 'converted_02', type: 'image', src: '/assets/images/stickers_converted/sticker_02.png' },
+    { id: 'converted_03', type: 'image', src: '/assets/images/stickers_converted/sticker_03.png' },
+    { id: 'converted_04', type: 'image', src: '/assets/images/stickers_converted/sticker_04.png' },
+    { id: 'converted_05', type: 'image', src: '/assets/images/stickers_converted/sticker_05.png' },
+    { id: 'converted_06', type: 'image', src: '/assets/images/stickers_converted/sticker_06.png' },
+    // One Piece stickers (6)
+    { id: 'onepiece_01', type: 'image', src: '/assets/images/onepiece/sticker_01.png' },
+    { id: 'onepiece_02', type: 'image', src: '/assets/images/onepiece/sticker_02.png' },
+    { id: 'onepiece_03', type: 'image', src: '/assets/images/onepiece/sticker_03.png' },
+    { id: 'onepiece_04', type: 'image', src: '/assets/images/onepiece/sticker_04.png' },
+    { id: 'onepiece_05', type: 'image', src: '/assets/images/onepiece/sticker_05.png' },
+    { id: 'onepiece_06', type: 'image', src: '/assets/images/onepiece/sticker_06.png' },
+    // One Piece v2 stickers (6)
+    { id: 'onepiece_v2_01', type: 'image', src: '/assets/images/onepiece_v2/sticker_01.png' },
+    { id: 'onepiece_v2_02', type: 'image', src: '/assets/images/onepiece_v2/sticker_02.png' },
+    { id: 'onepiece_v2_03', type: 'image', src: '/assets/images/onepiece_v2/sticker_03.png' },
+    { id: 'onepiece_v2_04', type: 'image', src: '/assets/images/onepiece_v2/sticker_04.png' },
+    { id: 'onepiece_v2_05', type: 'image', src: '/assets/images/onepiece_v2/sticker_05.png' },
+    { id: 'onepiece_v2_06', type: 'image', src: '/assets/images/onepiece_v2/sticker_06.png' },
+    // One Piece v4 stickers (6)
+    { id: 'onepiece_v4_01', type: 'image', src: '/assets/images/onepiece_v4/sticker_01.png' },
+    { id: 'onepiece_v4_02', type: 'image', src: '/assets/images/onepiece_v4/sticker_02.png' },
+    { id: 'onepiece_v4_03', type: 'image', src: '/assets/images/onepiece_v4/sticker_03.png' },
+    { id: 'onepiece_v4_04', type: 'image', src: '/assets/images/onepiece_v4/sticker_04.png' },
+    { id: 'onepiece_v4_05', type: 'image', src: '/assets/images/onepiece_v4/sticker_05.png' },
+    { id: 'onepiece_v4_06', type: 'image', src: '/assets/images/onepiece_v4/sticker_06.png' },
+    // Power Rangers stickers (6)
+    { id: 'powerrangers_01', type: 'image', src: '/assets/images/powerrangers/sticker_01.png' },
+    { id: 'powerrangers_02', type: 'image', src: '/assets/images/powerrangers/sticker_02.png' },
+    { id: 'powerrangers_03', type: 'image', src: '/assets/images/powerrangers/sticker_03.png' },
+    { id: 'powerrangers_04', type: 'image', src: '/assets/images/powerrangers/sticker_04.png' },
+    { id: 'powerrangers_05', type: 'image', src: '/assets/images/powerrangers/sticker_05.png' },
+    { id: 'powerrangers_06', type: 'image', src: '/assets/images/powerrangers/sticker_06.png' },
+    // One Piece alt stickers (6)
+    { id: 'onepiece_alt_01', type: 'image', src: '/assets/images/onepiece_alt/sticker_01.png' },
+    { id: 'onepiece_alt_02', type: 'image', src: '/assets/images/onepiece_alt/sticker_02.png' },
+    { id: 'onepiece_alt_03', type: 'image', src: '/assets/images/onepiece_alt/sticker_03.png' },
+    { id: 'onepiece_alt_04', type: 'image', src: '/assets/images/onepiece_alt/sticker_04.png' },
+    { id: 'onepiece_alt_05', type: 'image', src: '/assets/images/onepiece_alt/sticker_05.png' },
+    { id: 'onepiece_alt_06', type: 'image', src: '/assets/images/onepiece_alt/sticker_06.png' },
+    // Pokemon stickers (6)
+    { id: 'pokemon_01', type: 'image', src: '/assets/images/pokemon/sticker_01.png' },
+    { id: 'pokemon_02', type: 'image', src: '/assets/images/pokemon/sticker_02.png' },
+    { id: 'pokemon_03', type: 'image', src: '/assets/images/pokemon/sticker_03.png' },
+    { id: 'pokemon_04', type: 'image', src: '/assets/images/pokemon/sticker_04.png' },
+    { id: 'pokemon_05', type: 'image', src: '/assets/images/pokemon/sticker_05.png' },
+    { id: 'pokemon_06', type: 'image', src: '/assets/images/pokemon/sticker_06.png' },
+    // Teen Titans stickers (6)
+    { id: 'teentitan_01', type: 'image', src: '/assets/images/teentitan/sticker_01.png' },
+    { id: 'teentitan_02', type: 'image', src: '/assets/images/teentitan/sticker_02.png' },
+    { id: 'teentitan_03', type: 'image', src: '/assets/images/teentitan/sticker_03.png' },
+    { id: 'teentitan_04', type: 'image', src: '/assets/images/teentitan/sticker_04.png' },
+    { id: 'teentitan_05', type: 'image', src: '/assets/images/teentitan/sticker_05.png' },
+    { id: 'teentitan_06', type: 'image', src: '/assets/images/teentitan/sticker_06.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
