@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
-import { Flame, Leaf, Star, Wheat, Camera } from 'lucide-react';
+import { Flame, Leaf, Star, Wheat, Camera, Crop } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { processAndStoreImage } from '../../../utils/imageOptimizer';
+import PhotoAdjuster from '../../../components/PhotoAdjuster';
 
 export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [inStock, setInStock] = useState(item.available !== false);
@@ -12,6 +13,7 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
   const [isSpicy, setIsSpicy] = useState(item.is_spicy || false);
   const [isFeatured, setIsFeatured] = useState(item.featured || false);
   const [imgUploading, setImgUploading] = useState(false);
+  const [showPhotoAdjuster, setShowPhotoAdjuster] = useState(false);
   const fileInputRef = useRef(null);
 
   // Sync local state when item prop changes (realtime updates, parent refresh)
@@ -93,9 +95,22 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
             </div>
           )}
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center">
-            <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg">
-              <Camera className="h-4 w-4 text-stone-700" />
-              <span className="text-xs font-bold uppercase tracking-widest text-stone-700">Change Photo</span>
+            <div className="flex flex-col gap-2 items-center">
+              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg">
+                <Camera className="h-4 w-4 text-stone-700" />
+                <span className="text-xs font-bold uppercase tracking-widest text-stone-700">Change Photo</span>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPhotoAdjuster(true);
+                }}
+                className="flex items-center gap-2 bg-emerald-600/90 backdrop-blur-md px-4 py-2 rounded-full shadow-lg hover:bg-emerald-700 transition-colors"
+              >
+                <Crop className="h-4 w-4 text-white" />
+                <span className="text-xs font-bold uppercase tracking-widest text-white">Adjust</span>
+              </button>
             </div>
           </div>
         </button>
@@ -234,6 +249,27 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
           </div>
         </div>
       </div>
+
+      {/* PhotoAdjuster Modal */}
+      {showPhotoAdjuster && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="w-full max-w-sm max-h-[90vh] overflow-y-auto"
+          >
+            <PhotoAdjuster
+              item={item}
+              onSave={(offsetY) => {
+                onUpdate(item.id, { image_offset_y: offsetY });
+                setShowPhotoAdjuster(false);
+              }}
+              onCancel={() => setShowPhotoAdjuster(false)}
+            />
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }

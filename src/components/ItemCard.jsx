@@ -75,14 +75,14 @@ const ItemCard = ({
             }}
         >
             <div style={{ width: '100%', aspectRatio: '1', background: '#E8E4DD', pointerEvents: 'none', opacity: isPlaceholder ? 0 : 1, position: 'relative' }}>
-                <img 
-                    src={imageSrc} 
-                    alt="" 
+                <img
+                    src={imageSrc}
+                    alt=""
                     loading="lazy"
                     decoding="async"
                     onError={() => setImgError(true)}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    draggable={false} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `center ${item.image_offset_y ?? 50}%` }}
+                    draggable={false}
                 />
 
                 {/* Tag dots on image */}

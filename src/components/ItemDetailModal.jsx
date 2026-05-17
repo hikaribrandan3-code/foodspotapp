@@ -79,6 +79,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
               decoding="async"
               onError={() => setImgError(true)}
               className="w-full h-full object-cover"
+              style={{ objectPosition: `center ${item.image_offset_y ?? 50}%` }}
               draggable={false}
             />
 
