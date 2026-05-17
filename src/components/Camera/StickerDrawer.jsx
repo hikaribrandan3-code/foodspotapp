@@ -222,7 +222,28 @@ const STICKERS = [
     { id: 'teentitan_03', type: 'image', src: '/assets/images/teentitan/sticker_03.png' },
     { id: 'teentitan_04', type: 'image', src: '/assets/images/teentitan/sticker_04.png' },
     { id: 'teentitan_05', type: 'image', src: '/assets/images/teentitan/sticker_05.png' },
-    { id: 'teentitan_06', type: 'image', src: '/assets/images/teentitan/sticker_06.png' }
+    { id: 'teentitan_06', type: 'image', src: '/assets/images/teentitan/sticker_06.png' },
+    // More stickers (6)
+    { id: 'morestickers_01', type: 'image', src: '/assets/images/morestickers/sticker_01.png' },
+    { id: 'morestickers_02', type: 'image', src: '/assets/images/morestickers/sticker_02.png' },
+    { id: 'morestickers_03', type: 'image', src: '/assets/images/morestickers/sticker_03.png' },
+    { id: 'morestickers_04', type: 'image', src: '/assets/images/morestickers/sticker_04.png' },
+    { id: 'morestickers_05', type: 'image', src: '/assets/images/morestickers/sticker_05.png' },
+    { id: 'morestickers_06', type: 'image', src: '/assets/images/morestickers/sticker_06.png' },
+    // Stickers v10 (6)
+    { id: 'stickers10_01', type: 'image', src: '/assets/images/stickers10/sticker_01.png' },
+    { id: 'stickers10_02', type: 'image', src: '/assets/images/stickers10/sticker_02.png' },
+    { id: 'stickers10_03', type: 'image', src: '/assets/images/stickers10/sticker_03.png' },
+    { id: 'stickers10_04', type: 'image', src: '/assets/images/stickers10/sticker_04.png' },
+    { id: 'stickers10_05', type: 'image', src: '/assets/images/stickers10/sticker_05.png' },
+    { id: 'stickers10_06', type: 'image', src: '/assets/images/stickers10/sticker_06.png' },
+    // Lambo v10 stickers (6)
+    { id: 'lambo_v10_01', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_01.png' },
+    { id: 'lambo_v10_02', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_02.png' },
+    { id: 'lambo_v10_03', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_03.png' },
+    { id: 'lambo_v10_04', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_04.png' },
+    { id: 'lambo_v10_05', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_05.png' },
+    { id: 'lambo_v10_06', type: 'image', src: '/assets/images/foodspotlambostickersv10/sticker_06.png' }
 ]
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
