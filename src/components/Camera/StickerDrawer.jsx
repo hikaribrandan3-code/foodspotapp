@@ -188,7 +188,6 @@ const STICKERS = [
     { id: 'dish3_06', type: 'image', src: '/assets/images/dish3/sticker_06.png' },
     // Dish v4 stickers (6)
     { id: 'dish4_01', type: 'image', src: '/assets/images/dish4/sticker_01.png' },
-    { id: 'dish4_02', type: 'image', src: '/assets/images/dish4/sticker_02.png' },
     { id: 'dish4_03', type: 'image', src: '/assets/images/dish4/sticker_03.png' },
     { id: 'dish4_04', type: 'image', src: '/assets/images/dish4/sticker_04.png' },
     { id: 'dish4_05', type: 'image', src: '/assets/images/dish4/sticker_05.png' },
@@ -196,11 +195,7 @@ const STICKERS = [
     // One Piece sticker pack (15)
     { id: 'onepiecesticker_01', type: 'image', src: '/assets/images/onepiecesticker/sticker_01.png' },
     { id: 'onepiecesticker_02', type: 'image', src: '/assets/images/onepiecesticker/sticker_02.png' },
-    { id: 'onepiecesticker_03', type: 'image', src: '/assets/images/onepiecesticker/sticker_03.png' },
-    { id: 'onepiecesticker_04', type: 'image', src: '/assets/images/onepiecesticker/sticker_04.png' },
-    { id: 'onepiecesticker_05', type: 'image', src: '/assets/images/onepiecesticker/sticker_05.png' },
     { id: 'onepiecesticker_06', type: 'image', src: '/assets/images/onepiecesticker/sticker_06.png' },
-    { id: 'onepiecesticker_07', type: 'image', src: '/assets/images/onepiecesticker/sticker_07.png' },
     // One Piece food pack (6)
     { id: 'onepiecefood_01', type: 'image', src: '/assets/images/onepiecefood/sticker_01.png' },
     { id: 'onepiecefood_02', type: 'image', src: '/assets/images/onepiecefood/sticker_02.png' },
@@ -250,7 +245,6 @@ const STICKERS = [
     { id: 'aaaaaaaaaaa_03', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_03.png' },
     { id: 'aaaaaaaaaaa_04', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_04.png' },
     { id: 'aaaaaaaaaaa_05', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_05.png' },
-    { id: 'aaaaaaaaaaa_06', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_06.png' },
     // AAAA pack (6)
     { id: 'aaaa_01', type: 'image', src: '/assets/images/aaaa/sticker_01.png' },
     { id: 'aaaa_02', type: 'image', src: '/assets/images/aaaa/sticker_02.png' },
