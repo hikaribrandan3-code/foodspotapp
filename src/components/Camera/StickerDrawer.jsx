@@ -358,13 +358,6 @@ const STICKERS = [
     { id: 'aaaaaaaaaa_04', type: 'image', src: '/assets/images/aaaaaaaaaa/sticker_04.png' },
     { id: 'aaaaaaaaaa_05', type: 'image', src: '/assets/images/aaaaaaaaaa/sticker_05.png' },
     { id: 'aaaaaaaaaa_06', type: 'image', src: '/assets/images/aaaaaaaaaa/sticker_06.png' },
-    // AAAAAAAAAAA pack (6)
-    { id: 'aaaaaaaaaaa_01', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_01.png' },
-    { id: 'aaaaaaaaaaa_02', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_02.png' },
-    { id: 'aaaaaaaaaaa_03', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_03.png' },
-    { id: 'aaaaaaaaaaa_04', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_04.png' },
-    { id: 'aaaaaaaaaaa_05', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_05.png' },
-    { id: 'aaaaaaaaaaa_06', type: 'image', src: '/assets/images/aaaaaaaaaaa/sticker_06.png' },
     // AAAA pack (6)
     { id: 'aaaa_01', type: 'image', src: '/assets/images/aaaa/sticker_01.png' },
     { id: 'aaaa_02', type: 'image', src: '/assets/images/aaaa/sticker_02.png' },
@@ -372,13 +365,6 @@ const STICKERS = [
     { id: 'aaaa_04', type: 'image', src: '/assets/images/aaaa/sticker_04.png' },
     { id: 'aaaa_05', type: 'image', src: '/assets/images/aaaa/sticker_05.png' },
     { id: 'aaaa_06', type: 'image', src: '/assets/images/aaaa/sticker_06.png' },
-    // AAAAAAAAA pack (6)
-    { id: 'aaaaaaaaa_01', type: 'image', src: '/assets/images/aaaaaaaaa/sticker_01.png' },
-    { id: 'aaaaaaaaa_02', type: 'image', src: '/assets/images/aaaaaaaaa/sticker_02.png' },
-    { id: 'aaaaaaaaa_03', type: 'image', src: '/assets/images/aaaaaaaaa/sticker_03.png' },
-    { id: 'aaaaaaaaa_04', type: 'image', src: '/assets/images/aaaaaaaaa/sticker_04.png' },
-    { id: 'aaaaaaaaa_05', type: 'image', src: '/assets/images/aaaaaaaaa/sticker_05.png' },
-    { id: 'aaaaaaaaa_06', type: 'image', src: '/assets/images/aaaaaaaaa/sticker_06.png' },
     // AAASASDSD pack (6)
     { id: 'aaasasdsd_01', type: 'image', src: '/assets/images/aaasasdsd/sticker_01.png' },
     { id: 'aaasasdsd_02', type: 'image', src: '/assets/images/aaasasdsd/sticker_02.png' },
