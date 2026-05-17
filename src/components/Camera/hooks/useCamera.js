@@ -74,55 +74,32 @@ export function useCamera() {
         const track = currentStream.getVideoTracks()[0]
         if (!track) return
 
-        // Try 1: Seamless applyConstraints upgrade (no flicker)
+        // Defer capabilities probing to requestIdleCallback (non-blocking)
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(() => probeCapabilities(track), { timeout: 3000 })
+        } else {
+            setTimeout(() => probeCapabilities(track), 100)
+        }
+
+        // Try 1: Seamless applyConstraints upgrade (no flicker, 300ms timeout)
         try {
             console.log('--- UPGRADE: trying applyConstraints ---')
-            await track.applyConstraints({
+            const constraintPromise = track.applyConstraints({
                 width: { ideal: 1920 },
                 height: { ideal: 3840 }
             })
-            const settings = track.getSettings()
-            console.log(`--- UPGRADE: applyConstraints succeeded ${settings.width}x${settings.height} ---`)
-            if (settings.width >= 1080) {
-                await probeCapabilities(track)
-                return
-            }
+
+            // Don't block on this - it might take 500ms+
+            constraintPromise.then(() => {
+                const settings = track.getSettings()
+                console.log(`--- UPGRADE: applyConstraints succeeded ${settings.width}x${settings.height} ---`)
+            }).catch(() => {
+                console.warn('--- UPGRADE: applyConstraints failed ---')
+            })
         } catch (e) {
-            console.warn('--- UPGRADE: applyConstraints failed, trying re-negotiation ---')
+            console.warn('--- UPGRADE: applyConstraints error ---')
         }
-
-        // Try 2: Re-negotiate with high-res constraints (brief swap)
-        try {
-            const highResConstraints = {
-                video: {
-                    facingMode: facingMode,
-                    aspectRatio: { ideal: 9 / 16 },
-                    width: { min: 1080, ideal: 1920, max: 3840 },
-                    height: { min: 1920, ideal: 3840, max: 2160 }
-                },
-                audio: false
-            }
-            const newStream = await navigator.mediaDevices.getUserMedia(highResConstraints)
-
-            if (videoRef.current) {
-                const oldStream = streamRef.current
-                videoRef.current.srcObject = newStream
-                await videoRef.current.play()
-
-                if (oldStream) {
-                    oldStream.getTracks().forEach(t => t.stop())
-                }
-
-                streamRef.current = newStream
-                trackRef.current = newStream.getVideoTracks()[0]
-                console.log('--- UPGRADE: re-negotiation succeeded ---')
-            }
-
-            await probeCapabilities(trackRef.current)
-        } catch (err) {
-            console.warn('--- UPGRADE: re-negotiation also failed, keeping preview quality ---')
-        }
-    }, [facingMode, probeCapabilities])
+    }, [probeCapabilities])
 
     const initCamera = useCallback(async () => {
         try {
