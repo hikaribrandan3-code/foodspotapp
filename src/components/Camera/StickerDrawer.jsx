@@ -1,16 +1,15 @@
-import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
-import { Grid } from 'react-window'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import './StickerDrawer.css'
 
 /**
  * StickerDrawer Component - Hikari CamTech Engine v3.1
  * Right-side slide-out drawer per Gemini mock (Image A)
- * Virtual scrolling for 500+ stickers + lazy image loading
+ * Lazy image loading via Intersection Observer (non-blocking)
  */
 
-const LazyImage = ({ src, alt, index }) => {
+const LazyImage = ({ src, alt }) => {
+  const [imageSrc, setImageSrc] = useState(null)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [hasError, setHasError] = useState(false)
   const imgRef = useRef(null)
 
   useEffect(() => {
@@ -21,31 +20,32 @@ const LazyImage = ({ src, alt, index }) => {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            img.src = src
+            setImageSrc(src)
             observer.unobserve(img)
           }
         })
       },
-      { rootMargin: '50px' }
+      { rootMargin: '100px' }
     )
 
     observer.observe(img)
-    return () => observer.disconnect()
+    return () => {
+      if (img) observer.unobserve(img)
+    }
   }, [src])
 
   return (
     <img
       ref={imgRef}
       alt={alt}
+      src={imageSrc}
       onLoad={() => setIsLoaded(true)}
-      onError={() => setHasError(true)}
       style={{
         width: '100%',
         height: '100%',
         objectFit: 'contain',
-        opacity: isLoaded ? 1 : 0.5,
-        transition: 'opacity 0.2s',
-        backgroundColor: hasError ? '#f0f0f0' : 'transparent'
+        opacity: isLoaded ? 1 : 0.4,
+        transition: 'opacity 0.3s ease'
       }}
     />
   )
@@ -374,61 +374,12 @@ const STICKERS = [
     { id: 'newstickers2_24', type: 'image', src: '/assets/images/newstickers2/xxx.png' },
 ]
 
-const StickerCell = ({ columnIndex, rowIndex, style, data }) => {
-  const { stickers, onSelect, onClose, cols } = data
-  const index = rowIndex * cols + columnIndex
-  const sticker = stickers[index]
-
-  if (!sticker) return <div style={style} />
-
-  return (
-    <div style={style} className="sticker-cell-wrapper">
-      <button
-        className="sticker-item"
-        onClick={() => {
-          onSelect(sticker)
-          onClose()
-        }}
-        aria-label={sticker.id}
-        style={{ position: 'relative', width: '100%', height: '100%', padding: '8px', boxSizing: 'border-box' }}
-      >
-        {sticker.type === 'image' ? (
-          <LazyImage src={sticker.src} alt={sticker.id} index={index} />
-        ) : (
-          <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
-        )}
-        <div style={{
-          position: 'absolute',
-          bottom: '2px',
-          right: '2px',
-          background: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          borderRadius: '50%',
-          width: '20px',
-          height: '20px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          zIndex: 10
-        }}>
-          {index + 1}
-        </div>
-      </button>
-    </div>
-  )
-}
 
 export default function StickerDrawer({ isOpen, onClose, onSelect }) {
     const drawerRef = useRef(null)
     const [isDragging, setIsDragging] = useState(false)
     const [dragStartX, setDragStartX] = useState(0)
     const [dragOffsetX, setDragOffsetX] = useState(0)
-
-    const COLS = 4
-    const ITEM_SIZE = 80
-    const rows = Math.ceil(STICKERS.length / COLS)
 
     // Handle swipe to close
     const handleTouchStart = useCallback((e) => {
@@ -462,12 +413,10 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
         }
     }, [onClose])
 
-    const gridData = useMemo(() => ({
-        stickers: STICKERS,
-        onSelect,
-        onClose,
-        cols: COLS
-    }), [onSelect, onClose])
+    const handleStickerSelect = useCallback((sticker) => {
+        onSelect(sticker)
+        onClose()
+    }, [onSelect, onClose])
 
     useEffect(() => {
         if (isOpen) {
@@ -502,18 +451,39 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
                     <span className="drawer-title">Stickers</span>
                 </div>
 
-                <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <Grid
-                        columnCount={COLS}
-                        columnWidth={ITEM_SIZE}
-                        height={480}
-                        rowCount={rows}
-                        rowHeight={ITEM_SIZE}
-                        width={COLS * ITEM_SIZE}
-                        itemData={gridData}
-                    >
-                        {StickerCell}
-                    </Grid>
+                <div className="sticker-grid scrollable">
+                    {STICKERS.map((sticker, index) => (
+                        <button
+                            key={sticker.id}
+                            className="sticker-item"
+                            onClick={() => handleStickerSelect(sticker)}
+                            aria-label={sticker.id}
+                            style={{ position: 'relative' }}
+                        >
+                            {sticker.type === 'image' ? (
+                                <LazyImage src={sticker.src} alt={sticker.id} />
+                            ) : (
+                                <span style={{ fontSize: '32px' }}>{sticker.icon}</span>
+                            )}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '2px',
+                                right: '2px',
+                                background: 'rgba(0,0,0,0.7)',
+                                color: 'white',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '10px',
+                                fontWeight: 'bold',
+                            }}>
+                                {index + 1}
+                            </div>
+                        </button>
+                    ))}
                 </div>
             </div>
         </div>

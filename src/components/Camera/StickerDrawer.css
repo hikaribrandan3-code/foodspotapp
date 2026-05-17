@@ -78,17 +78,34 @@
     color: #fff;
 }
 
-/* Virtual Sticker Grid */
-.sticker-cell-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Sticker Grid - Single scrollable grid, NO categories */
+.sticker-grid {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Sticker Item - Virtual grid */
+.sticker-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sticker-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sticker-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* Sticker Item */
 .sticker-item {
-    width: 100%;
-    height: 100%;
+    aspect-ratio: 1;
     background: rgba(255, 255, 255, 0.08);
     border: none;
     border-radius: 12px;
@@ -98,8 +115,6 @@
     justify-content: center;
     transition: all 0.15s ease;
     -webkit-tap-highlight-color: transparent;
-    margin: 8px;
-    box-sizing: border-box;
 }
 
 .sticker-item:active {
