@@ -1,5 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 const PhotoAdjuster = ({ item, onSave, onCancel }) => {
   const [offsetY, setOffsetY] = useState(item.image_offset_y ?? 50)
@@ -28,27 +27,21 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
     setIsDragging(false)
   }, [])
 
-  // Global drag listeners
-  const handleMouseMove = (e) => handleDragMove(e)
-  const handleMouseUp = () => handleDragEnd()
-  const handleTouchMove = (e) => handleDragMove(e)
-  const handleTouchEnd = () => handleDragEnd()
-
-  useState(() => {
+  useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove)
-      window.addEventListener('mouseup', handleMouseUp)
-      window.addEventListener('touchmove', handleTouchMove, { passive: false })
-      window.addEventListener('touchend', handleTouchEnd)
+      window.addEventListener('mousemove', handleDragMove)
+      window.addEventListener('mouseup', handleDragEnd)
+      window.addEventListener('touchmove', handleDragMove, { passive: false })
+      window.addEventListener('touchend', handleDragEnd)
 
       return () => {
-        window.removeEventListener('mousemove', handleMouseMove)
-        window.removeEventListener('mouseup', handleMouseUp)
-        window.removeEventListener('touchmove', handleTouchMove)
-        window.removeEventListener('touchend', handleTouchEnd)
+        window.removeEventListener('mousemove', handleDragMove)
+        window.removeEventListener('mouseup', handleDragEnd)
+        window.removeEventListener('touchmove', handleDragMove)
+        window.removeEventListener('touchend', handleDragEnd)
       }
     }
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
+  }, [isDragging, handleDragMove, handleDragEnd])
 
   const handleSave = () => {
     onSave(offsetY)
@@ -62,7 +55,7 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
+      gap: 16,
       padding: 16,
       background: '#FFFFFF',
       borderRadius: 16,
@@ -74,23 +67,24 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
         color: '#1F2937',
         margin: 0
       }}>
-        Adjust Image Position
+        Adjust Image for Menu Card
       </h3>
 
-      {/* Preview: full-width, draggable */}
+      {/* Preview: matches menu card aspect ratio (16:10) */}
       <div
         ref={dragZoneRef}
         onMouseDown={handleDragStart}
         onTouchStart={handleDragStart}
         style={{
           width: '100%',
-          aspectRatio: '1',
+          aspectRatio: '16/10',
           background: '#E8E4DD',
           borderRadius: 12,
           overflow: 'hidden',
           position: 'relative',
           cursor: isDragging ? 'grabbing' : 'grab',
-          userSelect: 'none'
+          userSelect: 'none',
+          border: '2px solid #E5E7EB'
         }}
       >
         <img
@@ -104,78 +98,72 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
           }}
           draggable={false}
         />
-        {/* Crop indicator line */}
+        {/* Vertical crop indicator */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          height: '2px',
+          height: '3px',
           background: '#3B82F6',
-          boxShadow: '0 0 8px rgba(59, 130, 246, 0.5)',
-          transform: `translateY(${(offsetY / 100) * 100}%)`
+          boxShadow: '0 0 8px rgba(59, 130, 246, 0.6)',
+          transform: `translateY(${(offsetY / 100) * (100 * 10) / 16}%)`
         }} />
       </div>
 
-      {/* Minimal controls: Up/Down buttons + percentage */}
+      {/* Controls: vertical drag hint + up/down + percentage */}
       <div style={{
         display: 'flex',
-        gap: 8,
+        gap: 12,
         alignItems: 'center',
         justifyContent: 'center'
       }}>
         <button
-          onClick={() => handleQuickAdjust(-10)}
+          onClick={() => handleQuickAdjust(-5)}
           style={{
-            padding: '6px 10px',
+            padding: '8px 12px',
             background: '#F3F4F6',
             border: '1px solid #E5E7EB',
             borderRadius: 6,
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 11,
+            fontSize: 12,
             color: '#1F2937',
-            fontWeight: 500,
+            fontWeight: 600,
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => { e.target.style.background = '#E5E7EB' }}
           onMouseLeave={(e) => { e.target.style.background = '#F3F4F6' }}
         >
-          <ChevronUp size={12} />
+          ↑ Up
         </button>
 
         <div style={{
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 700,
           color: '#3B82F6',
-          minWidth: 40,
+          minWidth: 50,
           textAlign: 'center'
         }}>
           {offsetY}%
         </div>
 
         <button
-          onClick={() => handleQuickAdjust(10)}
+          onClick={() => handleQuickAdjust(5)}
           style={{
-            padding: '6px 10px',
+            padding: '8px 12px',
             background: '#F3F4F6',
             border: '1px solid #E5E7EB',
             borderRadius: 6,
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 11,
+            fontSize: 12,
             color: '#1F2937',
-            fontWeight: 500,
+            fontWeight: 600,
             transition: 'all 0.2s'
           }}
           onMouseEnter={(e) => { e.target.style.background = '#E5E7EB' }}
           onMouseLeave={(e) => { e.target.style.background = '#F3F4F6' }}
         >
-          <ChevronDown size={12} />
+          ↓ Down
         </button>
       </div>
 
@@ -185,7 +173,7 @@ const PhotoAdjuster = ({ item, onSave, onCancel }) => {
         textAlign: 'center',
         fontStyle: 'italic'
       }}>
-        Drag image to adjust crop position
+        Drag or use buttons to adjust vertical position
       </div>
 
       {/* Action buttons */}
