@@ -115,15 +115,6 @@
     justify-content: center;
     transition: all 0.15s ease;
     -webkit-tap-highlight-color: transparent;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.sticker-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
 }
 
 .sticker-item:active {
