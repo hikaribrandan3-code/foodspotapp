@@ -85,7 +85,7 @@
     overflow-x: hidden;
     padding: 12px;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     -webkit-overflow-scrolling: touch;
 }
@@ -106,6 +106,8 @@
 /* Sticker Item */
 .sticker-item {
     aspect-ratio: 1;
+    min-width: 0;
+    overflow: hidden;
     background: rgba(255, 255, 255, 0.08);
     border: none;
     border-radius: 12px;
