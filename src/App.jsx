@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 
+import { detectAndroidInAppBrowser, getChromeIntentUrl } from './utils/detectBrowser.js'
 import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
 import { sanitizeForAdmin } from './utils/adminSanitize.js'
@@ -14,6 +15,37 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { StaffProvider } from './contexts/StaffContext.jsx'
+
+// Interstitial: Open in Chrome
+function OpenInChromeInterstitial() {
+    const intentUrl = getChromeIntentUrl();
+
+    return (
+        <div style={styles.interstitialContainer}>
+            <div style={styles.interstitialCard}>
+                <div style={styles.interstitialIcon}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                    </svg>
+                </div>
+
+                <h2 style={styles.interstitialTitle}>Open in Chrome to share photos</h2>
+                <p style={styles.interstitialBody}>
+                    For the best experience with photo sharing, open this app in Chrome.
+                </p>
+
+                <a href={intentUrl} style={styles.interstitialButton}>
+                    Open in Chrome
+                </a>
+
+                <p style={styles.interstitialHint}>
+                    Chrome will open this page automatically.
+                </p>
+            </div>
+        </div>
+    );
+}
 
 // Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
 function parseHeroUrl(heroUrl) {
@@ -206,6 +238,14 @@ function App() {
 
     const safeConfig = useMemo(() => config ?? normalizeConfig({}), [config]);
     const trialExpired = false;
+
+    // ANDROID IN-APP BROWSER DETECTION: Show interstitial on tenant routes
+    const { shouldBlock: isAndroidInApp } = useMemo(() => detectAndroidInAppBrowser(), []);
+    const isTenantRoute = /^\/[a-zA-Z0-9_-]+($|\/)/.test(pathname);
+
+    if (isAndroidInApp && isTenantRoute) {
+        return <OpenInChromeInterstitial />;
+    }
 
     // Effect hooks
     useEffect(() => { incrementVisit(); }, []);
@@ -570,6 +610,71 @@ function App() {
         </AdminIntentProvider>
     );
 }
+
+const styles = {
+    interstitialContainer: {
+        position: 'fixed',
+        inset: 0,
+        background: '#0a0a0a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        zIndex: 9999,
+    },
+    interstitialCard: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        gap: '16px',
+        maxWidth: '320px',
+        width: '100%',
+    },
+    interstitialIcon: {
+        width: '80px',
+        height: '80px',
+        borderRadius: '24px',
+        background: 'rgba(255,255,255,0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: '8px',
+    },
+    interstitialTitle: {
+        color: '#fff',
+        fontSize: '22px',
+        fontWeight: 700,
+        margin: 0,
+        lineHeight: 1.2,
+    },
+    interstitialBody: {
+        color: 'rgba(255,255,255,0.55)',
+        fontSize: '15px',
+        lineHeight: 1.5,
+        margin: 0,
+    },
+    interstitialButton: {
+        display: 'block',
+        width: '100%',
+        padding: '16px',
+        marginTop: '8px',
+        background: '#4285F4',
+        color: '#fff',
+        borderRadius: '14px',
+        fontSize: '16px',
+        fontWeight: 700,
+        textDecoration: 'none',
+        textAlign: 'center',
+        boxSizing: 'border-box',
+    },
+    interstitialHint: {
+        color: 'rgba(255,255,255,0.3)',
+        fontSize: '12px',
+        margin: 0,
+    },
+};
 
 export default App
 // force deploy Fri Apr 17 16:07:07 -03 2026
