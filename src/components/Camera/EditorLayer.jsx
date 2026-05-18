@@ -24,6 +24,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const baseCanvasRef = useRef(null)
     const drawCanvasRef = useRef(null)
     const canvasContainerRef = useRef(null)
+    // Pre-loaded source image — avoids re-fetching blob URL on every export
+    const sourceImgRef = useRef(null)
 
     // Canvas dimensions state
     const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 })
@@ -141,6 +143,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             // Draw image using cover logic (cropped to fill)
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, renderWidth, renderHeight)
+
+            // Store loaded image so handleDone can reuse it without re-fetching the blob URL
+            sourceImgRef.current = img
         }
         img.src = imageData?.objectURL || imageData // Support both old string and new object
     }, [imageData])
@@ -317,7 +322,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Handle Done button - export preview and show DualPostScreen
     const handleDone = useCallback(async () => {
-        if (!baseCanvasRef.current || !imageData) return
+        // Use pre-loaded image ref — never re-fetch the blob URL (it may be revoked on second call)
+        const img = sourceImgRef.current
+        if (!img || !baseCanvasRef.current) return
         setIsExporting(true)
 
         try {
@@ -330,27 +337,18 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // TRUE RECT: Get actual container dimensions
             const containerRect = canvasContainerRef.current.getBoundingClientRect()
 
-            // High-res reconstruction — no display-p3 or willReadFrequently (both slow on Android/budget chips)
+            // High-res reconstruction from pre-loaded image — no blob URL dependency
             const highResCanvas = document.createElement('canvas')
             const highResCtx = highResCanvas.getContext('2d')
-
-            const img = new Image()
-            await new Promise((resolve, reject) => {
-                img.onload = resolve
-                img.onerror = reject
-                img.src = imageData.objectURL || imageData
-            })
-
             highResCanvas.width = img.width
             highResCanvas.height = img.height
             highResCtx.drawImage(img, 0, 0)
 
-            // Pass TRUE container rect, not display dimensions
             const { objectURL, blob } = await exportPreview({
                 baseCanvas: highResCanvas,
                 strokes,
                 elements: placedElements,
-                containerRect: { // TRUE RECT passed here
+                containerRect: {
                     width: containerRect.width,
                     height: containerRect.height
                 },
@@ -365,7 +363,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         } finally {
             setIsExporting(false)
         }
-    }, [imageData, strokes, placedElements, neonContext, branding, businessName])
+    }, [strokes, placedElements, neonContext, branding, businessName])
 
     return (
         <div className="editor-layer" ref={containerRef}>
