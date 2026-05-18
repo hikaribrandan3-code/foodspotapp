@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CameraLayer from './CameraLayer.jsx'
 import EditorLayer from './EditorLayer.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
+import ChromeRedirectBanner from './ChromeRedirectBanner.jsx'
 import { useCamTechBroadcaster } from '../../hooks/useCamTech'
 import './CameraLayer.css'
 import './EditorLayer.css'
@@ -75,6 +76,8 @@ function Camera({ neonContext = null, branding = null }) {
             zIndex: 1000,
             pointerEvents: 'auto'
         }}>
+            <ChromeRedirectBanner />
+
             {mode === 'CAMERA' && (
                 <CameraLayer
                     onCapture={handleCapture}
