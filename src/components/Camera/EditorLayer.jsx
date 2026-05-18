@@ -626,9 +626,16 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             touchAction: 'manipulation'
                         }}
                     >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                        </svg>
+                        {isExporting ? (
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                                style={{ animation: 'spin 0.8s linear infinite' }}>
+                                <path d="M12 2a10 10 0 0 1 10 10" />
+                            </svg>
+                        ) : (
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                            </svg>
+                        )}
                     </button>
                 </div>
             )}

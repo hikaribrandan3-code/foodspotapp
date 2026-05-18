@@ -4,8 +4,8 @@
  * Synchronized 9:16 center-crop with UI layer
  */
 
-const MAX_EXPORT_WIDTH = 4096
-const MAX_EXPORT_HEIGHT = 4096
+const MAX_EXPORT_WIDTH = 1080
+const MAX_EXPORT_HEIGHT = 1920
 
 const BRUSH_SIZES = {
     small: 4,
