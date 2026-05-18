@@ -23,24 +23,31 @@ function OpenInChromeInterstitial() {
     return (
         <div style={styles.interstitialContainer}>
             <div style={styles.interstitialCard}>
-                <div style={styles.interstitialIcon}>
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
-                        <circle cx="12" cy="13" r="4" />
+                {/* Chrome Logo */}
+                <div style={styles.chromeLogoWrap}>
+                    <svg width="56" height="56" viewBox="0 0 192 192" fill="none">
+                        <circle cx="96" cy="96" r="88" fill="#fff" stroke="none"/>
+                        <circle cx="96" cy="96" r="76" fill="#1f2937"/>
+                        {/* Chrome logo segments */}
+                        <circle cx="96" cy="60" r="20" fill="#EA4335"/>
+                        <circle cx="120" cy="96" r="20" fill="#FBBC04"/>
+                        <circle cx="96" cy="132" r="20" fill="#34A853"/>
+                        <circle cx="72" cy="96" r="20" fill="#4285F4"/>
+                        <circle cx="96" cy="96" r="16" fill="#1f2937"/>
                     </svg>
                 </div>
 
-                <h2 style={styles.interstitialTitle}>Open in Chrome to share photos</h2>
+                <h1 style={styles.interstitialTitle}>Open in Chrome</h1>
                 <p style={styles.interstitialBody}>
-                    For the best experience with photo sharing, open this app in Chrome.
+                    Photo sharing works best in Chrome. We'll open this page for you.
                 </p>
 
                 <a href={intentUrl} style={styles.interstitialButton}>
                     Open in Chrome
                 </a>
 
-                <p style={styles.interstitialHint}>
-                    Chrome will open this page automatically.
+                <p style={styles.interstitialFooter}>
+                    It only takes a tap
                 </p>
             </div>
         </div>
@@ -615,12 +622,12 @@ const styles = {
     interstitialContainer: {
         position: 'fixed',
         inset: 0,
-        background: '#0a0a0a',
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        padding: '20px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         zIndex: 9999,
     },
     interstitialCard: {
@@ -628,51 +635,56 @@ const styles = {
         flexDirection: 'column',
         alignItems: 'center',
         textAlign: 'center',
-        gap: '16px',
-        maxWidth: '320px',
+        gap: '20px',
+        maxWidth: '360px',
         width: '100%',
     },
-    interstitialIcon: {
+    chromeLogoWrap: {
         width: '80px',
         height: '80px',
-        borderRadius: '24px',
-        background: 'rgba(255,255,255,0.08)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: '8px',
+        marginBottom: '4px',
     },
     interstitialTitle: {
         color: '#fff',
-        fontSize: '22px',
+        fontSize: '28px',
         fontWeight: 700,
         margin: 0,
         lineHeight: 1.2,
+        letterSpacing: '-0.5px',
     },
     interstitialBody: {
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: '15px',
-        lineHeight: 1.5,
+        color: '#e0e0e0',
+        fontSize: '16px',
+        lineHeight: 1.6,
         margin: 0,
+        fontWeight: 400,
     },
     interstitialButton: {
         display: 'block',
         width: '100%',
-        padding: '16px',
-        marginTop: '8px',
+        padding: '14px 24px',
+        marginTop: '4px',
         background: '#4285F4',
         color: '#fff',
-        borderRadius: '14px',
+        borderRadius: '8px',
         fontSize: '16px',
-        fontWeight: 700,
+        fontWeight: 600,
         textDecoration: 'none',
         textAlign: 'center',
         boxSizing: 'border-box',
+        border: 'none',
+        cursor: 'pointer',
+        transition: 'background 200ms ease',
+        boxShadow: '0 2px 8px rgba(66, 133, 244, 0.3)',
     },
-    interstitialHint: {
-        color: 'rgba(255,255,255,0.3)',
-        fontSize: '12px',
+    interstitialFooter: {
+        color: '#9e9e9e',
+        fontSize: '13px',
         margin: 0,
+        fontWeight: 500,
     },
 };
 
