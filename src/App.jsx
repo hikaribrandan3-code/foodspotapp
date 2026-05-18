@@ -18,7 +18,10 @@ import { StaffProvider } from './contexts/StaffContext.jsx'
 
 // Interstitial: Open in Chrome via Instagram Menu
 function OpenInChromeInterstitial() {
-    const { language } = useLanguage();
+    // Detect language from localStorage or browser (doesn't need LanguageProvider)
+    const language = typeof window !== 'undefined'
+        ? localStorage.getItem('language') || navigator.language.split('-')[0]
+        : 'en';
 
     const copy = {
         en: {
