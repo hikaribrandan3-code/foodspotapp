@@ -54,11 +54,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Export state
     const [isExporting, setIsExporting] = useState(false)
-    const [exportResult, setExportResult] = useState(null)
 
-    // DualPost state
-    const [showDualPost, setShowDualPost] = useState(false)
-    const [dualPostData, setDualPostData] = useState(null)
+    // DualPost state — single atomic object so show + URL always update together
+    const [preview, setPreview] = useState(null) // null = hidden, { objectURL, blob } = visible
 
     // PATCH 15: Rapid action protection
     const lastActionRef = useRef(0)
@@ -72,8 +70,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // PATCH 15: Determine if draggable elements should be interactive
     const elementsInteractive = useMemo(() =>
-        !isDrawMode && !isAnyModalOpen && !isExporting && !showDualPost,
-        [isDrawMode, isAnyModalOpen, isExporting, showDualPost]
+        !isDrawMode && !isAnyModalOpen && !isExporting && !preview,
+        [isDrawMode, isAnyModalOpen, isExporting, !!preview]
     )
 
     // Render frozen frame to base canvas - <50ms mount
@@ -153,7 +151,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     // Handle tap on canvas area (for text creation) with gesture guards
     const handleCanvasTap = useCallback((e) => {
         // CRITICAL: block ALL canvas taps while Preview is showing
-        if (showDualPost) return
+        if (!!preview) return
         // Gesture guards: don't create text if any modal is open or in draw mode
         if (isEditingText) return
         if (isDrawMode) return
@@ -178,7 +176,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setInitialTextStyle(null)
         setActiveTextId(null)
         setIsEditingText(true)
-    }, [showDualPost, isEditingText, isDrawMode, isStickerDrawerOpen, isEmojiPickerOpen, activeTool])
+    }, [!!preview, isEditingText, isDrawMode, isStickerDrawerOpen, isEmojiPickerOpen, activeTool])
 
     // Handle tap on existing text element (re-edit)
     const handleTextElementTap = useCallback((element) => {
@@ -356,8 +354,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 branding: { ...branding, businessName }
             })
 
-            setDualPostData({ objectURL, blob })
-            setShowDualPost(true)
+            setPreview({ objectURL, blob })
         } catch (error) {
             console.error('Export failed:', error)
         } finally {
@@ -368,7 +365,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     return (
         <div className="editor-layer" ref={containerRef}>
             {/* Close (X) button - top left, always above keyboard */}
-            {!showDualPost && (
+            {!preview && (
                 <button
                     onClick={onRetake}
                     aria-label="Close"
@@ -399,7 +396,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             )}
 
             {/* ── TOP LEFT: Location Pill (Restored for Editor Parity) ── */}
-            {!showDualPost && (
+            {!preview && (
                 <div style={{
                     position: 'absolute',
                     top: '72px',
@@ -431,7 +428,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 ref={canvasContainerRef}
                 onClick={handleCanvasTap}
                 style={{
-                    ...(showDualPost ? { pointerEvents: 'none' } : {}),
+                    ...(!!preview ? { pointerEvents: 'none' } : {}),
                     aspectRatio: '9/16',
                     width: '100%',
                     maxWidth: '100vw',
@@ -483,7 +480,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             </div>
 
             {/* Text Editor Overlay (IG-style) — UNMOUNTED when Preview is open */}
-            {!showDualPost && (
+            {!preview && (
                 <TextEditor
                     isActive={isEditingText}
                     initialText={initialTextValue}
@@ -495,7 +492,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             )}
 
             {/* Layer 4: UI Layer - Right Action Bar (hidden in draw mode AND preview) */}
-            {!isDrawMode && !showDualPost && (
+            {!isDrawMode && !preview && (
                 <div style={{
                     position: 'absolute',
                     top: '100px',
@@ -651,14 +648,13 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             />
 
             {/* DualPost Decision Screen overlay */}
-            {showDualPost && dualPostData && (
+            {preview && (
                 <DualPostScreen
-                    previewDataURL={dualPostData.objectURL}
-                    previewBlob={dualPostData.blob}
+                    previewDataURL={preview.objectURL}
+                    previewBlob={preview.blob}
                     onClose={() => {
-                        // MASTER NEGATIVE: Final cleanup
-                        if (dualPostData.objectURL) URL.revokeObjectURL(dualPostData.objectURL)
-                        setShowDualPost(false)
+                        URL.revokeObjectURL(preview.objectURL)
+                        setPreview(null)
                     }}
                     onComplete={onDone}
                 />
