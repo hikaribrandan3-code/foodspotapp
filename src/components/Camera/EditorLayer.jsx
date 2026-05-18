@@ -24,8 +24,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const baseCanvasRef = useRef(null)
     const drawCanvasRef = useRef(null)
     const canvasContainerRef = useRef(null)
-    // Pre-loaded source image — avoids re-fetching blob URL on every export
-    const sourceImgRef = useRef(null)
+    // Offscreen canvas with source pixels — completely detached from blob URL
+    // Safari can re-fetch blob URL when drawImage(img) is called; canvas pixels cannot be revoked
+    const sourceCanvasRef = useRef(null)
 
     // Canvas dimensions state
     const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 })
@@ -142,8 +143,14 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // Draw image using cover logic (cropped to fill)
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, renderWidth, renderHeight)
 
-            // Store loaded image so handleDone can reuse it without re-fetching the blob URL
-            sourceImgRef.current = img
+            // Copy full image pixels into offscreen canvas — detached from blob URL forever.
+            // Safari can silently re-fetch blob URL when drawImage(img) is called later;
+            // drawing from a canvas element uses GPU pixel buffer with no URL dependency.
+            const offscreen = document.createElement('canvas')
+            offscreen.width = img.width
+            offscreen.height = img.height
+            offscreen.getContext('2d').drawImage(img, 0, 0)
+            sourceCanvasRef.current = offscreen
         }
         img.src = imageData?.objectURL || imageData // Support both old string and new object
     }, [imageData])
@@ -320,9 +327,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Handle Done button - export preview and show DualPostScreen
     const handleDone = useCallback(async () => {
-        // Use pre-loaded image ref — never re-fetch the blob URL (it may be revoked on second call)
-        const img = sourceImgRef.current
-        if (!img || !baseCanvasRef.current) return
+        // Use offscreen canvas — pixels are fully detached from blob URL, safe to reuse indefinitely
+        const sourceCanvas = sourceCanvasRef.current
+        if (!sourceCanvas || !baseCanvasRef.current) return
         setIsExporting(true)
 
         try {
@@ -335,12 +342,12 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // TRUE RECT: Get actual container dimensions
             const containerRect = canvasContainerRef.current.getBoundingClientRect()
 
-            // High-res reconstruction from pre-loaded image — no blob URL dependency
+            // High-res reconstruction from offscreen canvas — zero blob URL dependency
             const highResCanvas = document.createElement('canvas')
             const highResCtx = highResCanvas.getContext('2d')
-            highResCanvas.width = img.width
-            highResCanvas.height = img.height
-            highResCtx.drawImage(img, 0, 0)
+            highResCanvas.width = sourceCanvas.width
+            highResCanvas.height = sourceCanvas.height
+            highResCtx.drawImage(sourceCanvas, 0, 0)
 
             const { objectURL, blob } = await exportPreview({
                 baseCanvas: highResCanvas,
