@@ -20,6 +20,16 @@ import { StaffProvider } from './contexts/StaffContext.jsx'
 function OpenInChromeInterstitial() {
     const intentUrl = getChromeIntentUrl();
 
+    const handleOpenChrome = () => {
+        // Try intent:// first (Android Chrome deep link)
+        window.location.href = intentUrl;
+
+        // Fallback: if intent didn't work after 2 seconds, try Play Store
+        setTimeout(() => {
+            window.location.href = 'https://play.google.com/store/apps/details?id=com.android.chrome';
+        }, 2000);
+    };
+
     return (
         <div style={styles.interstitialContainer}>
             <div style={styles.interstitialCard}>
@@ -42,9 +52,9 @@ function OpenInChromeInterstitial() {
                     All features available in Chrome
                 </p>
 
-                <a href={intentUrl} style={styles.interstitialButton}>
-                    Open in Chrome
-                </a>
+                <button onClick={handleOpenChrome} style={styles.interstitialButton}>
+                    OPEN IN CHROME
+                </button>
 
                 <p style={styles.interstitialFooter}>
                     It only takes a tap
@@ -666,9 +676,9 @@ const styles = {
         display: 'block',
         width: '100%',
         padding: '16px 24px',
-        marginTop: '4px',
-        background: '#4285F4',
-        color: '#ffffff',
+        marginTop: '12px',
+        background: '#ffffff',
+        color: '#000000',
         borderRadius: '8px',
         fontSize: '17px',
         fontWeight: 700,
@@ -677,8 +687,7 @@ const styles = {
         boxSizing: 'border-box',
         border: 'none',
         cursor: 'pointer',
-        transition: 'background 200ms ease',
-        boxShadow: '0 2px 8px rgba(66, 133, 244, 0.3)',
+        transition: 'opacity 200ms ease',
     },
     interstitialFooter: {
         color: '#9e9e9e',
