@@ -399,7 +399,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: '#fff',
-                        zIndex: 1000
+                        zIndex: 1000,
+                        touchAction: 'manipulation'
                     }}
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -537,7 +538,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '18px',
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            touchAction: 'manipulation'
                         }}
                     >Aa</button>
 
@@ -555,7 +557,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -577,7 +580,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -599,7 +603,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -623,7 +628,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            opacity: isExporting ? 0.5 : 1
+                            opacity: isExporting ? 0.5 : 1,
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
