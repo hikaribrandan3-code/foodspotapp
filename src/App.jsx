@@ -18,49 +18,50 @@ import { StaffProvider } from './contexts/StaffContext.jsx'
 
 // Interstitial: Open in Chrome
 function OpenInChromeInterstitial() {
-    const intentUrl = getChromeIntentUrl();
-
-    const handleOpenChrome = () => {
-        // Try intent:// first (Android Chrome deep link)
-        window.location.href = intentUrl;
-
-        // Fallback: if intent didn't work after 2 seconds, try Play Store
-        setTimeout(() => {
-            window.location.href = 'https://play.google.com/store/apps/details?id=com.android.chrome';
-        }, 2000);
-    };
+    const currentUrl = encodeURIComponent(window.location.href);
+    // googlechrome:// is Chrome's native URL scheme — works as anchor tap in Instagram's browser
+    const chromeUrl = `googlechrome://navigate?url=${currentUrl}`;
 
     return (
-        <div style={styles.interstitialContainer}>
-            <div style={styles.interstitialCard}>
-                {/* Chrome Logo */}
-                <div style={styles.chromeLogoWrap}>
-                    <svg width="56" height="56" viewBox="0 0 192 192" fill="none">
-                        <circle cx="96" cy="96" r="88" fill="#fff" stroke="none"/>
-                        <circle cx="96" cy="96" r="76" fill="#1f2937"/>
-                        {/* Chrome logo segments */}
-                        <circle cx="96" cy="60" r="20" fill="#EA4335"/>
-                        <circle cx="120" cy="96" r="20" fill="#FBBC04"/>
-                        <circle cx="96" cy="132" r="20" fill="#34A853"/>
-                        <circle cx="72" cy="96" r="20" fill="#4285F4"/>
-                        <circle cx="96" cy="96" r="16" fill="#1f2937"/>
+        <>
+            <style>{`
+                #fs-chrome-interstitial * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }
+                #fs-chrome-interstitial h1 { color: #ffffff !important; font-size: 28px !important; font-weight: 700 !important; margin: 0 !important; line-height: 1.2 !important; letter-spacing: -0.5px !important; }
+                #fs-chrome-interstitial p { color: #e0e0e0 !important; font-size: 15px !important; margin: 0 !important; font-weight: 400 !important; }
+                #fs-chrome-interstitial .fs-chrome-btn { display: block !important; width: 100% !important; padding: 16px 24px !important; background: #ffffff !important; color: #000000 !important; border-radius: 8px !important; font-size: 17px !important; font-weight: 700 !important; text-decoration: none !important; text-align: center !important; border: none !important; cursor: pointer !important; }
+                #fs-chrome-interstitial .fs-chrome-hint { color: #9e9e9e !important; font-size: 13px !important; }
+            `}</style>
+            <div id="fs-chrome-interstitial" style={{ position:'fixed', inset:0, background:'linear-gradient(135deg,#1a1a1a 0%,#0f0f0f 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', zIndex:99999 }}>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap:'20px', maxWidth:'320px', width:'100%' }}>
+
+                    <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+                        <circle cx="36" cy="36" r="36" fill="#fff"/>
+                        <circle cx="36" cy="36" r="28" fill="#fff"/>
+                        {/* Red segment */}
+                        <path d="M36 8 A28 28 0 0 1 60.25 22 L36 36 Z" fill="#EA4335"/>
+                        {/* Yellow segment */}
+                        <path d="M60.25 22 A28 28 0 0 1 60.25 50 L36 36 Z" fill="#FBBC04"/>
+                        {/* Green segment */}
+                        <path d="M60.25 50 A28 28 0 0 1 11.75 50 L36 36 Z" fill="#34A853"/>
+                        {/* Blue segment */}
+                        <path d="M11.75 50 A28 28 0 0 1 11.75 22 L36 36 Z" fill="#4285F4"/>
+                        {/* Blue top segment */}
+                        <path d="M11.75 22 A28 28 0 0 1 36 8 L36 36 Z" fill="#4285F4"/>
+                        <circle cx="36" cy="36" r="11" fill="#fff"/>
+                        <circle cx="36" cy="36" r="10" fill="#1a1a1a"/>
                     </svg>
+
+                    <h1>Open in Chrome</h1>
+                    <p>All features available in Chrome</p>
+
+                    <a href={chromeUrl} className="fs-chrome-btn">
+                        OPEN IN CHROME
+                    </a>
+
+                    <p className="fs-chrome-hint">It only takes a tap</p>
                 </div>
-
-                <h1 style={styles.interstitialTitle}>Open in Chrome</h1>
-                <p style={styles.interstitialBody}>
-                    All features available in Chrome
-                </p>
-
-                <button onClick={handleOpenChrome} style={styles.interstitialButton}>
-                    OPEN IN CHROME
-                </button>
-
-                <p style={styles.interstitialFooter}>
-                    It only takes a tap
-                </p>
             </div>
-        </div>
+        </>
     );
 }
 
