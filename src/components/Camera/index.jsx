@@ -23,28 +23,6 @@ function Camera({ neonContext = null, branding = null }) {
     const [showSettings, setShowSettings] = useState(false)
     const [toolPosition, setToolPosition] = useState('right')
 
-    // --- MEMORY REVOLUTION: ObjectURL Lifecycle Management ---
-    const lastObjectURLRef = useRef(null)
-
-    useEffect(() => {
-        // Cleanup on unmount or when capturedImage changes
-        if (capturedImage?.objectURL && capturedImage.objectURL !== lastObjectURLRef.current) {
-            // If we have a new objectURL, we should revoke the OLD one if it exists
-            if (lastObjectURLRef.current) {
-                URL.revokeObjectURL(lastObjectURLRef.current)
-            }
-            lastObjectURLRef.current = capturedImage.objectURL
-        }
-
-        return () => {
-            // Final cleanup on unmount
-            if (lastObjectURLRef.current) {
-                URL.revokeObjectURL(lastObjectURLRef.current)
-                lastObjectURLRef.current = null
-            }
-        }
-    }, [capturedImage])
-
     // --- CAMTECH BLACK BOX: Global State Management ---
     useEffect(() => {
         activateCamera()
@@ -63,8 +41,11 @@ function Camera({ neonContext = null, branding = null }) {
     }
 
     const handleDone = () => {
-        setCapturedImage(null)
+        // Don't revoke blob here — EditorLayer still needs it for DualPostScreen.
+        // Let EditorLayer manage the blob lifecycle via its own useEffect cleanup.
         setMode('CAMERA')
+        // Clear capturedImage only after a tick so EditorLayer can unmount cleanly
+        setTimeout(() => setCapturedImage(null), 0)
     }
 
     const handleClose = () => {

@@ -75,6 +75,15 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         [isDrawMode, isAnyModalOpen, isExporting, !!preview]
     )
 
+    // Cleanup blob URL when EditorLayer unmounts (safe after DualPostScreen closes)
+    useEffect(() => {
+        return () => {
+            if (imageData?.objectURL) {
+                URL.revokeObjectURL(imageData.objectURL)
+            }
+        }
+    }, [imageData])
+
     // Render frozen frame to base canvas - <50ms mount
     useEffect(() => {
         if (!imageData || !baseCanvasRef.current || !canvasContainerRef.current) return
