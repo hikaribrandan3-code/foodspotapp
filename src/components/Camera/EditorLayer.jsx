@@ -363,12 +363,6 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             setDualPostData({ objectURL, blob })
             setShowDualPost(true)
-
-            // MASTER NEGATIVE: Performance Polish
-            // Revoke the master negative URL now that we've generated the high-res 9:16 export
-            if (imageData?.objectURL) {
-                URL.revokeObjectURL(imageData.objectURL)
-            }
         } catch (error) {
             console.error('Export failed:', error)
         } finally {
