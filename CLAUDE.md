@@ -96,6 +96,7 @@ Located at `src/components/Camera/`. The pipeline is:
 4. **CAMERA LOCK** — do not modify `CameraLayer.jsx` or scanning internals.
 5. **LOCALE-AWARE** — use `useLanguage()` / the translations system. No hardcoded Spanish or English strings in components.
 6. **OPTIMISTIC UI** — assume network can drop. Write offline-tolerant code; use `offlineQueue.ts` in staff-ops for mutation queueing.
+7. **STATUS CONTRACT — LOCKED PAIR** — `src/constants/database.js` ORDER_STATUS values and the DB `orders_status_valid` CHECK constraint are a **locked pair**. Changing one WITHOUT the other WILL break order creation in production. Any PR that touches `database.js` status values MUST include the corresponding SQL migration saved to the database bible. No exceptions. This caused a Level 1 production incident on 2026-05-18.
 
 ---
 
