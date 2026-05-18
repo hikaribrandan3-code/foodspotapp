@@ -24,6 +24,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const baseCanvasRef = useRef(null)
     const drawCanvasRef = useRef(null)
     const canvasContainerRef = useRef(null)
+    // Offscreen canvas with source pixels — completely detached from blob URL
+    // Safari can re-fetch blob URL when drawImage(img) is called; canvas pixels cannot be revoked
+    const sourceCanvasRef = useRef(null)
 
     // Canvas dimensions state
     const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 })
@@ -52,11 +55,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Export state
     const [isExporting, setIsExporting] = useState(false)
-    const [exportResult, setExportResult] = useState(null)
 
-    // DualPost state
-    const [showDualPost, setShowDualPost] = useState(false)
-    const [dualPostData, setDualPostData] = useState(null)
+    // DualPost state — single atomic object so show + URL always update together
+    const [preview, setPreview] = useState(null) // null = hidden, { objectURL, blob } = visible
 
     // PATCH 15: Rapid action protection
     const lastActionRef = useRef(0)
@@ -70,9 +71,18 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // PATCH 15: Determine if draggable elements should be interactive
     const elementsInteractive = useMemo(() =>
-        !isDrawMode && !isAnyModalOpen && !isExporting && !showDualPost,
-        [isDrawMode, isAnyModalOpen, isExporting, showDualPost]
+        !isDrawMode && !isAnyModalOpen && !isExporting && !preview,
+        [isDrawMode, isAnyModalOpen, isExporting, !!preview]
     )
+
+    // Cleanup blob URL when EditorLayer unmounts (safe after DualPostScreen closes)
+    useEffect(() => {
+        return () => {
+            if (imageData?.objectURL) {
+                URL.revokeObjectURL(imageData.objectURL)
+            }
+        }
+    }, [imageData])
 
     // Render frozen frame to base canvas - <50ms mount
     useEffect(() => {
@@ -141,6 +151,15 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             // Draw image using cover logic (cropped to fill)
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, renderWidth, renderHeight)
+
+            // Copy full image pixels into offscreen canvas — detached from blob URL forever.
+            // Safari can silently re-fetch blob URL when drawImage(img) is called later;
+            // drawing from a canvas element uses GPU pixel buffer with no URL dependency.
+            const offscreen = document.createElement('canvas')
+            offscreen.width = img.width
+            offscreen.height = img.height
+            offscreen.getContext('2d').drawImage(img, 0, 0)
+            sourceCanvasRef.current = offscreen
         }
         img.src = imageData?.objectURL || imageData // Support both old string and new object
     }, [imageData])
@@ -148,7 +167,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     // Handle tap on canvas area (for text creation) with gesture guards
     const handleCanvasTap = useCallback((e) => {
         // CRITICAL: block ALL canvas taps while Preview is showing
-        if (showDualPost) return
+        if (!!preview) return
         // Gesture guards: don't create text if any modal is open or in draw mode
         if (isEditingText) return
         if (isDrawMode) return
@@ -173,7 +192,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setInitialTextStyle(null)
         setActiveTextId(null)
         setIsEditingText(true)
-    }, [showDualPost, isEditingText, isDrawMode, isStickerDrawerOpen, isEmojiPickerOpen, activeTool])
+    }, [!!preview, isEditingText, isDrawMode, isStickerDrawerOpen, isEmojiPickerOpen, activeTool])
 
     // Handle tap on existing text element (re-edit)
     const handleTextElementTap = useCallback((element) => {
@@ -317,7 +336,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     // Handle Done button - export preview and show DualPostScreen
     const handleDone = useCallback(async () => {
-        if (!baseCanvasRef.current || !imageData) return
+        // Use offscreen canvas — pixels are fully detached from blob URL, safe to reuse indefinitely
+        const sourceCanvas = sourceCanvasRef.current
+        if (!sourceCanvas || !baseCanvasRef.current) return
         setIsExporting(true)
 
         try {
@@ -330,30 +351,18 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // TRUE RECT: Get actual container dimensions
             const containerRect = canvasContainerRef.current.getBoundingClientRect()
 
-            // High-res reconstruction
+            // High-res reconstruction from offscreen canvas — zero blob URL dependency
             const highResCanvas = document.createElement('canvas')
-            const highResCtx = highResCanvas.getContext('2d', {
-                colorSpace: 'display-p3',
-                willReadFrequently: true
-            })
+            const highResCtx = highResCanvas.getContext('2d')
+            highResCanvas.width = sourceCanvas.width
+            highResCanvas.height = sourceCanvas.height
+            highResCtx.drawImage(sourceCanvas, 0, 0)
 
-            const img = new Image()
-            await new Promise((resolve, reject) => {
-                img.onload = resolve
-                img.onerror = reject
-                img.src = imageData.objectURL || imageData
-            })
-
-            highResCanvas.width = img.width
-            highResCanvas.height = img.height
-            highResCtx.drawImage(img, 0, 0)
-
-            // Pass TRUE container rect, not display dimensions
             const { objectURL, blob } = await exportPreview({
                 baseCanvas: highResCanvas,
                 strokes,
                 elements: placedElements,
-                containerRect: { // TRUE RECT passed here
+                containerRect: {
                     width: containerRect.width,
                     height: containerRect.height
                 },
@@ -361,25 +370,18 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 branding: { ...branding, businessName }
             })
 
-            setDualPostData({ objectURL, blob })
-            setShowDualPost(true)
-
-            // MASTER NEGATIVE: Performance Polish
-            // Revoke the master negative URL now that we've generated the high-res 9:16 export
-            if (imageData?.objectURL) {
-                URL.revokeObjectURL(imageData.objectURL)
-            }
+            setPreview({ objectURL, blob })
         } catch (error) {
             console.error('Export failed:', error)
         } finally {
             setIsExporting(false)
         }
-    }, [imageData, strokes, placedElements, neonContext, branding, businessName])
+    }, [strokes, placedElements, neonContext, branding, businessName])
 
     return (
         <div className="editor-layer" ref={containerRef}>
             {/* Close (X) button - top left, always above keyboard */}
-            {!showDualPost && (
+            {!preview && (
                 <button
                     onClick={onRetake}
                     aria-label="Close"
@@ -399,7 +401,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: '#fff',
-                        zIndex: 1000
+                        zIndex: 1000,
+                        touchAction: 'manipulation'
                     }}
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -409,7 +412,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             )}
 
             {/* ── TOP LEFT: Location Pill (Restored for Editor Parity) ── */}
-            {!showDualPost && (
+            {!preview && (
                 <div style={{
                     position: 'absolute',
                     top: '72px',
@@ -441,7 +444,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 ref={canvasContainerRef}
                 onClick={handleCanvasTap}
                 style={{
-                    ...(showDualPost ? { pointerEvents: 'none' } : {}),
+                    ...(!!preview ? { pointerEvents: 'none' } : {}),
                     aspectRatio: '9/16',
                     width: '100%',
                     maxWidth: '100vw',
@@ -493,7 +496,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             </div>
 
             {/* Text Editor Overlay (IG-style) — UNMOUNTED when Preview is open */}
-            {!showDualPost && (
+            {!preview && (
                 <TextEditor
                     isActive={isEditingText}
                     initialText={initialTextValue}
@@ -505,7 +508,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             )}
 
             {/* Layer 4: UI Layer - Right Action Bar (hidden in draw mode AND preview) */}
-            {!isDrawMode && !showDualPost && (
+            {!isDrawMode && !preview && (
                 <div style={{
                     position: 'absolute',
                     top: '100px',
@@ -537,7 +540,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '18px',
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            touchAction: 'manipulation'
                         }}
                     >Aa</button>
 
@@ -555,7 +559,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -577,7 +582,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -599,7 +605,8 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             color: '#fff',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            touchAction: 'manipulation'
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -623,12 +630,20 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            opacity: isExporting ? 0.5 : 1
+                            opacity: isExporting ? 0.5 : 1,
+                            touchAction: 'manipulation'
                         }}
                     >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                        </svg>
+                        {isExporting ? (
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                                style={{ animation: 'spin 0.8s linear infinite' }}>
+                                <path d="M12 2a10 10 0 0 1 10 10" />
+                            </svg>
+                        ) : (
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                            </svg>
+                        )}
                     </button>
                 </div>
             )}
@@ -649,14 +664,13 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             />
 
             {/* DualPost Decision Screen overlay */}
-            {showDualPost && dualPostData && (
+            {preview && (
                 <DualPostScreen
-                    previewDataURL={dualPostData.objectURL}
-                    previewBlob={dualPostData.blob}
+                    previewDataURL={preview.objectURL}
+                    previewBlob={preview.blob}
                     onClose={() => {
-                        // MASTER NEGATIVE: Final cleanup
-                        if (dualPostData.objectURL) URL.revokeObjectURL(dualPostData.objectURL)
-                        setShowDualPost(false)
+                        URL.revokeObjectURL(preview.objectURL)
+                        setPreview(null)
                     }}
                     onComplete={onDone}
                 />

@@ -49,6 +49,27 @@ export default function TextEditor({
 }) {
     const inputRef = useRef(null)
     const containerRef = useRef(null)
+    const [keyboardOffset, setKeyboardOffset] = useState(0)
+
+    // Lift toolbar above Android keyboard using visualViewport
+    useEffect(() => {
+        if (!isActive || !window.visualViewport) return
+
+        const handleResize = () => {
+            const offset = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop
+            setKeyboardOffset(Math.max(0, offset))
+        }
+
+        window.visualViewport.addEventListener('resize', handleResize)
+        window.visualViewport.addEventListener('scroll', handleResize)
+        handleResize()
+
+        return () => {
+            window.visualViewport.removeEventListener('resize', handleResize)
+            window.visualViewport.removeEventListener('scroll', handleResize)
+            setKeyboardOffset(0)
+        }
+    }, [isActive])
 
     // Text style state
     const [currentStyle, setCurrentStyle] = useState({
@@ -190,8 +211,8 @@ export default function TextEditor({
                 />
             </div>
 
-            {/* Styling Tools Container - Bottom */}
-            <div className="text-styling-tools">
+            {/* Styling Tools Container - Bottom, lifted above Android keyboard */}
+            <div className="text-styling-tools" style={keyboardOffset > 0 ? { bottom: keyboardOffset } : undefined}>
                 {/* Font Row */}
                 <div className="font-row">
                     {FONTS.map((font) => (
