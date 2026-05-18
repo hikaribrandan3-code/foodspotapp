@@ -18,9 +18,26 @@ import { StaffProvider } from './contexts/StaffContext.jsx'
 
 // Interstitial: Open in Chrome
 function OpenInChromeInterstitial() {
-    const currentUrl = encodeURIComponent(window.location.href);
-    // googlechrome:// is Chrome's native URL scheme — works as anchor tap in Instagram's browser
-    const chromeUrl = `googlechrome://navigate?url=${currentUrl}`;
+    const currentUrl = window.location.href;
+    const chromePlayStoreUrl = 'https://play.google.com/store/apps/details?id=com.android.chrome';
+
+    const handleOpenChrome = () => {
+        // Try multiple approaches to open Chrome
+        const encodedUrl = encodeURIComponent(currentUrl);
+
+        // Approach 1: googlechrome:// scheme
+        window.location.href = `googlechrome://navigate?url=${encodedUrl}`;
+
+        // Approach 2: After 1.5 seconds, try intent:// scheme
+        setTimeout(() => {
+            window.location.href = `intent://${new URL(currentUrl).host}${new URL(currentUrl).pathname}${new URL(currentUrl).search}#Intent;scheme=${new URL(currentUrl).protocol.replace(':', '')};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(currentUrl)};end`;
+        }, 1500);
+
+        // Approach 3: After 3 seconds, open Play Store (Chrome not installed or all schemes blocked)
+        setTimeout(() => {
+            window.location.href = chromePlayStoreUrl;
+        }, 3000);
+    };
 
     return (
         <>
@@ -37,15 +54,10 @@ function OpenInChromeInterstitial() {
                     <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
                         <circle cx="36" cy="36" r="36" fill="#fff"/>
                         <circle cx="36" cy="36" r="28" fill="#fff"/>
-                        {/* Red segment */}
                         <path d="M36 8 A28 28 0 0 1 60.25 22 L36 36 Z" fill="#EA4335"/>
-                        {/* Yellow segment */}
                         <path d="M60.25 22 A28 28 0 0 1 60.25 50 L36 36 Z" fill="#FBBC04"/>
-                        {/* Green segment */}
                         <path d="M60.25 50 A28 28 0 0 1 11.75 50 L36 36 Z" fill="#34A853"/>
-                        {/* Blue segment */}
                         <path d="M11.75 50 A28 28 0 0 1 11.75 22 L36 36 Z" fill="#4285F4"/>
-                        {/* Blue top segment */}
                         <path d="M11.75 22 A28 28 0 0 1 36 8 L36 36 Z" fill="#4285F4"/>
                         <circle cx="36" cy="36" r="11" fill="#fff"/>
                         <circle cx="36" cy="36" r="10" fill="#1a1a1a"/>
@@ -54,9 +66,9 @@ function OpenInChromeInterstitial() {
                     <h1>Open in Chrome</h1>
                     <p>All features available in Chrome</p>
 
-                    <a href={chromeUrl} className="fs-chrome-btn">
+                    <button onClick={handleOpenChrome} className="fs-chrome-btn">
                         OPEN IN CHROME
-                    </a>
+                    </button>
 
                     <p className="fs-chrome-hint">It only takes a tap</p>
                 </div>
