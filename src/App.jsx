@@ -16,40 +16,21 @@ import { ThemeProvider } from './contexts/ThemeContext.jsx'
 import { SessionProvider } from './contexts/SessionContext.jsx'
 import { StaffProvider } from './contexts/StaffContext.jsx'
 
-// Interstitial: Open in Chrome
+// Interstitial: Open in Chrome via Instagram Menu
 function OpenInChromeInterstitial() {
-    const currentUrl = window.location.href;
-    const chromePlayStoreUrl = 'https://play.google.com/store/apps/details?id=com.android.chrome';
-
-    const handleOpenChrome = () => {
-        // Try multiple approaches to open Chrome
-        const encodedUrl = encodeURIComponent(currentUrl);
-
-        // Approach 1: googlechrome:// scheme
-        window.location.href = `googlechrome://navigate?url=${encodedUrl}`;
-
-        // Approach 2: After 1.5 seconds, try intent:// scheme
-        setTimeout(() => {
-            window.location.href = `intent://${new URL(currentUrl).host}${new URL(currentUrl).pathname}${new URL(currentUrl).search}#Intent;scheme=${new URL(currentUrl).protocol.replace(':', '')};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(currentUrl)};end`;
-        }, 1500);
-
-        // Approach 3: After 3 seconds, open Play Store (Chrome not installed or all schemes blocked)
-        setTimeout(() => {
-            window.location.href = chromePlayStoreUrl;
-        }, 3000);
-    };
-
     return (
         <>
             <style>{`
                 #fs-chrome-interstitial * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }
                 #fs-chrome-interstitial h1 { color: #ffffff !important; font-size: 28px !important; font-weight: 700 !important; margin: 0 !important; line-height: 1.2 !important; letter-spacing: -0.5px !important; }
-                #fs-chrome-interstitial p { color: #e0e0e0 !important; font-size: 15px !important; margin: 0 !important; font-weight: 400 !important; }
-                #fs-chrome-interstitial .fs-chrome-btn { display: block !important; width: 100% !important; padding: 16px 24px !important; background: #ffffff !important; color: #000000 !important; border-radius: 8px !important; font-size: 17px !important; font-weight: 700 !important; text-decoration: none !important; text-align: center !important; border: none !important; cursor: pointer !important; }
-                #fs-chrome-interstitial .fs-chrome-hint { color: #9e9e9e !important; font-size: 13px !important; }
+                #fs-chrome-interstitial p { color: #e0e0e0 !important; font-size: 15px !important; margin: 0 !important; font-weight: 400 !important; line-height: 1.5 !important; }
+                #fs-chrome-interstitial .fs-step { background: rgba(255,255,255,0.08) !important; border-radius: 12px !important; padding: 16px !important; text-align: left !important; }
+                #fs-chrome-interstitial .fs-step-num { display: inline-block !important; background: #4285F4 !important; color: #fff !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; text-align: center !important; line-height: 32px !important; font-weight: 700 !important; margin-right: 12px !important; font-size: 16px !important; }
+                #fs-chrome-interstitial .fs-step-text { display: inline-block !important; vertical-align: middle !important; color: #e0e0e0 !important; }
+                #fs-chrome-interstitial .fs-hint { color: #9e9e9e !important; font-size: 13px !important; }
             `}</style>
             <div id="fs-chrome-interstitial" style={{ position:'fixed', inset:0, background:'linear-gradient(135deg,#1a1a1a 0%,#0f0f0f 100%)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', zIndex:99999 }}>
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap:'20px', maxWidth:'320px', width:'100%' }}>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap:'20px', maxWidth:'340px', width:'100%' }}>
 
                     <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
                         <circle cx="36" cy="36" r="36" fill="#fff"/>
@@ -64,13 +45,24 @@ function OpenInChromeInterstitial() {
                     </svg>
 
                     <h1>Open in Chrome</h1>
-                    <p>All features available in Chrome</p>
+                    <p>Camera & sharing work best in Chrome</p>
 
-                    <button onClick={handleOpenChrome} className="fs-chrome-btn">
-                        OPEN IN CHROME
-                    </button>
+                    <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:'12px' }}>
+                        <div className="fs-step">
+                            <span className="fs-step-num">1</span>
+                            <span className="fs-step-text">Tap the <strong>⋮ menu</strong> (top right)</span>
+                        </div>
+                        <div className="fs-step">
+                            <span className="fs-step-num">2</span>
+                            <span className="fs-step-text">Select <strong>"Open in browser"</strong></span>
+                        </div>
+                        <div className="fs-step">
+                            <span className="fs-step-num">3</span>
+                            <span className="fs-step-text">Choose <strong>Chrome</strong></span>
+                        </div>
+                    </div>
 
-                    <p className="fs-chrome-hint">It only takes a tap</p>
+                    <p className="fs-hint">That's it! Full access in Chrome.</p>
                 </div>
             </div>
         </>
