@@ -18,6 +18,37 @@ import { StaffProvider } from './contexts/StaffContext.jsx'
 
 // Interstitial: Open in Chrome via Instagram Menu
 function OpenInChromeInterstitial() {
+    const { language } = useLanguage();
+
+    const copy = {
+        en: {
+            title: 'Open in Chrome',
+            subtitle: 'Camera & sharing work best in Chrome',
+            step1: 'Tap the ⋮ menu (top right)',
+            step2: 'Select "Open in browser"',
+            step3: 'Choose Chrome',
+            hint: "That's it! Full access in Chrome."
+        },
+        es: {
+            title: 'Abrir en Chrome',
+            subtitle: 'La cámara y compartir funcionan mejor en Chrome',
+            step1: 'Toca el menú ⋮ (arriba a la derecha)',
+            step2: 'Selecciona "Abrir en navegador"',
+            step3: 'Elige Chrome',
+            hint: '¡Eso es! Acceso completo en Chrome.'
+        },
+        pt: {
+            title: 'Abrir no Chrome',
+            subtitle: 'Câmera e compartilhamento funcionam melhor no Chrome',
+            step1: 'Toque o menu ⋮ (canto superior direito)',
+            step2: 'Selecione "Abrir no navegador"',
+            step3: 'Escolha o Chrome',
+            hint: 'Pronto! Acesso total no Chrome.'
+        }
+    };
+
+    const t = copy[language] || copy.en;
+
     return (
         <>
             <style>{`
@@ -44,25 +75,25 @@ function OpenInChromeInterstitial() {
                         <circle cx="36" cy="36" r="10" fill="#1a1a1a"/>
                     </svg>
 
-                    <h1>Open in Chrome</h1>
-                    <p>Camera & sharing work best in Chrome</p>
+                    <h1>{t.title}</h1>
+                    <p>{t.subtitle}</p>
 
                     <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:'12px' }}>
                         <div className="fs-step">
                             <span className="fs-step-num">1</span>
-                            <span className="fs-step-text">Tap the <strong>⋮ menu</strong> (top right)</span>
+                            <span className="fs-step-text">{t.step1}</span>
                         </div>
                         <div className="fs-step">
                             <span className="fs-step-num">2</span>
-                            <span className="fs-step-text">Select <strong>"Open in browser"</strong></span>
+                            <span className="fs-step-text">{t.step2}</span>
                         </div>
                         <div className="fs-step">
                             <span className="fs-step-num">3</span>
-                            <span className="fs-step-text">Choose <strong>Chrome</strong></span>
+                            <span className="fs-step-text">{t.step3}</span>
                         </div>
                     </div>
 
-                    <p className="fs-hint">That's it! Full access in Chrome.</p>
+                    <p className="fs-hint">{t.hint}</p>
                 </div>
             </div>
         </>
