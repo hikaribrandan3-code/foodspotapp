@@ -71,7 +71,7 @@ export default function LoginPage() {
       <div
         className="relative w-full h-[280px] md:h-[35vh] bg-cover bg-center flex items-center justify-center"
         style={{
-          backgroundImage: "url('https://lh3.googleusercontent.com/aida/ADBb0uhhpgNNMYRQ-lR6Vqmp2NpPewOT5p1A9awoNA1Ylqhh7qtCNsR4Ztj97n9cKjgxnny8jqrjnCJFHOAVqDHGY4jqw8IGRTtyKHvX1S9TN8lw3DqUVeMNK7djrE0ze_K09Ha28XKOyEiZyYpkK9dMBrgzSnk3rg8WW4S7QQ5SVBuG9HHNBrMPaDsQjJk7xr0vblLoi4OK_3-TjKtxQ3x02G5Ub7kstra9xXleDDMB6R3KZNvSIWGsFcOqfA')"
+          backgroundImage: "url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80')"
         }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
