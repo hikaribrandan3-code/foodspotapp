@@ -39,7 +39,7 @@ function OpenInChromeInterstitial() {
 
                 <h1 style={styles.interstitialTitle}>Open in Chrome</h1>
                 <p style={styles.interstitialBody}>
-                    Photo sharing works best in Chrome. We'll open this page for you.
+                    All features available in Chrome
                 </p>
 
                 <a href={intentUrl} style={styles.interstitialButton}>
@@ -665,13 +665,13 @@ const styles = {
     interstitialButton: {
         display: 'block',
         width: '100%',
-        padding: '14px 24px',
+        padding: '16px 24px',
         marginTop: '4px',
         background: '#4285F4',
-        color: '#fff',
+        color: '#ffffff',
         borderRadius: '8px',
-        fontSize: '16px',
-        fontWeight: 600,
+        fontSize: '17px',
+        fontWeight: 700,
         textDecoration: 'none',
         textAlign: 'center',
         boxSizing: 'border-box',
