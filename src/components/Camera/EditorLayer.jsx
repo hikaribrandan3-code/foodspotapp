@@ -330,12 +330,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // TRUE RECT: Get actual container dimensions
             const containerRect = canvasContainerRef.current.getBoundingClientRect()
 
-            // High-res reconstruction
+            // High-res reconstruction — no display-p3 or willReadFrequently (both slow on Android/budget chips)
             const highResCanvas = document.createElement('canvas')
-            const highResCtx = highResCanvas.getContext('2d', {
-                colorSpace: 'display-p3',
-                willReadFrequently: true
-            })
+            const highResCtx = highResCanvas.getContext('2d')
 
             const img = new Image()
             await new Promise((resolve, reject) => {
