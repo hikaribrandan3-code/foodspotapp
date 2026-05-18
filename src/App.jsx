@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 
-import { detectAndroidInAppBrowser, openInChrome } from './utils/detectBrowser.js'
 import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
 import { sanitizeForAdmin } from './utils/adminSanitize.js'
@@ -83,7 +82,7 @@ import TrialSignup from './pages/auth/TrialSignup.jsx'
 import BurgerLoader from './components/BurgerLoader.jsx'
 
 // Camera Suite
-import Camera from './components/Camera/index.jsx'
+import CameraGuard from './components/Camera/CameraGuard.jsx'
 
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
@@ -210,18 +209,6 @@ function App() {
 
     // Effect hooks
     useEffect(() => { incrementVisit(); }, []);
-
-    // CAMERA CHROME REDIRECT: Intercept Android in-app browser access to camera BEFORE render
-    useEffect(() => {
-        const isCameraRoute = pathname.includes('/camera');
-        if (isCameraRoute) {
-            const { shouldRedirectToChrome } = detectAndroidInAppBrowser();
-            if (shouldRedirectToChrome) {
-                console.log('[App] 🔴 Android in-app browser detected on camera route → redirecting to Chrome');
-                openInChrome();
-            }
-        }
-    }, [pathname]);
 
     // Admin ready state
     const [adminReady, setAdminReady] = useState(!pathname.startsWith('/admin'));
@@ -528,7 +515,7 @@ function App() {
                                             {/* TENANT ROUTES */}
                                             <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
                                             <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/camera" element={<Camera />} />
+                                            <Route path="/:tenantSlug/camera" element={<CameraGuard />} />
                                             <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
                                             <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
                                             <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
