@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal'
-import './TrialSignup.css'
 
 // ============================================
 // ICONS
@@ -280,8 +279,8 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
 
                 <form onSubmit={isLogin ? handleLoginSubmit : handleForgotSubmit} className="flex flex-col gap-3">
                   {/* Email Input */}
-                  <div className="flex flex-col gap-1">
-                    <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-email">{l.emailLabel}</label>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="font-sans text-xs font-medium text-gray-700 uppercase tracking-wide" htmlFor="login-email">{l.emailLabel}</label>
                     <input
                       id="login-email"
                       name="email"
@@ -292,14 +291,14 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
                       placeholder={isLogin ? l.emailPlaceholder : l.resetEmailPlaceholder}
                       required
                       autoFocus
-                      className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                      className="w-full bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-3 font-sans text-base focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
                     />
                   </div>
 
                   {/* Password Input (login only) */}
                   {isLogin && (
-                    <div className="flex flex-col gap-1">
-                      <label className="font-sans text-xs font-medium text-gray-600" htmlFor="login-password">{l.passwordLabel}</label>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-sans text-xs font-medium text-gray-700 uppercase tracking-wide" htmlFor="login-password">{l.passwordLabel}</label>
                       <input
                         id="login-password"
                         name="password"
@@ -309,7 +308,7 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
                         onChange={e => setPassword(e.target.value)}
                         placeholder={l.passwordPlaceholder}
                         required
-                        className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                        className="w-full bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-3 font-sans text-base focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
                       />
                     </div>
                   )}
@@ -637,11 +636,11 @@ const TrialSignup = () => {
         >
           {/* Decorative Background Elements for Depth */}
           <div className="absolute inset-0 z-0 bg-black/60" />
-          <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
-            <h1 className="font-display text-5xl font-bold !text-white tracking-tight">
+          <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center gap-3 pt-10 pb-20">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold !text-white tracking-tight">
               <span style={{ color: '#ffffff' }}>{l.headline}</span>
             </h1>
-            <p className="font-sans text-lg !text-white max-w-xl">
+            <p className="font-sans text-base sm:text-lg !text-white max-w-xl">
               {l.subheadline}
             </p>
           </div>
@@ -649,10 +648,10 @@ const TrialSignup = () => {
 
         {/* Interactive Card Section */}
         <section className="flex flex-col items-center px-4 -mt-[132px] relative z-20 pb-6">
-          <div className="w-full max-w-md bg-white rounded-[0.75rem] shadow-[0px_10px_15px_-3px_rgba(17,24,39,0.1)] p-6 flex flex-col gap-6 transition-transform duration-300 hover:shadow-[0px_15px_20px_-3px_rgba(17,24,39,0.15)]">
-            <div className="text-center flex flex-col gap-1">
-              <h2 className="font-display text-3xl font-bold text-gray-900">{l.getStarted}</h2>
-              <p className="font-sans text-base text-gray-600">{l.signupSubtitle}</p>
+          <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-6 md:p-8 flex flex-col gap-6 border border-gray-100 transition-all duration-300 hover:shadow-xl hover:border-emerald-100">
+            <div className="text-center flex flex-col gap-2">
+              <h2 className="font-display text-2xl md:text-3xl font-bold text-gray-900">{l.getStarted}</h2>
+              <p className="font-sans text-sm md:text-base text-gray-600">{l.signupSubtitle}</p>
             </div>
 
             {error && (
@@ -660,30 +659,30 @@ const TrialSignup = () => {
             )}
 
             <form onSubmit={handleEmailSignup} className="flex flex-col gap-3 mt-1">
-              <div className="flex flex-col gap-1 text-left">
-                <label className="font-sans text-xs font-medium text-gray-600">{l.businessNameLabel}</label>
+              <div className="flex flex-col gap-1.5 text-left">
+                <label className="font-sans text-xs font-medium text-gray-700 uppercase tracking-wide">{l.businessNameLabel}</label>
                 <input
                   type="text"
                   value={signupBusinessName}
                   onChange={e => setSignupBusinessName(e.target.value)}
                   placeholder={l.businessNamePlaceholder}
                   required
-                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                  className="w-full bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-3 font-sans text-base focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
                 />
               </div>
-              <div className="flex flex-col gap-1 text-left">
-                <label className="font-sans text-xs font-medium text-gray-600">{l.emailLabel}</label>
+              <div className="flex flex-col gap-1.5 text-left">
+                <label className="font-sans text-xs font-medium text-gray-700 uppercase tracking-wide">{l.emailLabel}</label>
                 <input
                   type="email"
                   value={signupEmail}
                   onChange={e => setSignupEmail(e.target.value)}
                   placeholder={l.emailPlaceholder}
                   required
-                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                  className="w-full bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-3 font-sans text-base focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
                 />
               </div>
-              <div className="flex flex-col gap-1 text-left">
-                <label className="font-sans text-xs font-medium text-gray-600">{l.passwordLabel}</label>
+              <div className="flex flex-col gap-1.5 text-left">
+                <label className="font-sans text-xs font-medium text-gray-700 uppercase tracking-wide">{l.passwordLabel}</label>
                 <input
                   type="password"
                   value={signupPassword}
@@ -691,15 +690,15 @@ const TrialSignup = () => {
                   placeholder={l.passwordPlaceholder}
                   required
                   minLength={6}
-                  className="w-full bg-gray-100 text-gray-900 border-none rounded-[0.5rem] px-4 py-3 font-sans text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-shadow placeholder:text-gray-400"
+                  className="w-full bg-white text-gray-900 border border-gray-200 rounded-lg px-4 py-3 font-sans text-base focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition-all placeholder:text-gray-400 hover:border-gray-300"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full min-h-[48px] bg-emerald-500 text-white rounded-full flex items-center justify-center gap-2 font-sans text-sm font-semibold tracking-wider transition-all duration-200 hover:bg-emerald-700 hover:shadow-md active:scale-95 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2"
+                className="w-full min-h-[48px] bg-emerald-500 text-white rounded-lg flex items-center justify-center gap-2 font-sans text-sm font-semibold tracking-wider transition-all duration-200 hover:bg-emerald-600 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
               >
-                {loading ? 'Processing...' : l.createAccount}
+                {loading ? l.processing || 'Processing...' : l.createAccount}
               </button>
 
               <div className="text-center mt-2">
