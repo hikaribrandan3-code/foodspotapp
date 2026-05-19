@@ -80,8 +80,8 @@ export default function Receipt() {
 
   // Use actual order type from database, fallback to inferring from delivery address
   const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
-  // Flat 1s delay for all order types — banner appears 1s after delivery
-  const finalDelayVariant = 1000
+  // Flat 0.8s delay for all order types — banner appears 0.8s after delivery
+  const finalDelayVariant = 800
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
