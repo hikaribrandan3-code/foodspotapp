@@ -230,12 +230,21 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-50">
       <div className="min-h-screen flex flex-col">
         {/* Hero Section */}
-        <div
-          className="relative w-full h-[35vh] min-h-[280px] bg-cover bg-center"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&h=600&fit=crop')"
-          }}
-        >
+        <div className="relative w-full h-[35vh] min-h-[280px] overflow-hidden">
+          {/* Video Background */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/foodspotherovideo.mp4" type="video/mp4" />
+            <div className="absolute inset-0 bg-cover bg-center" style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&h=600&fit=crop')"
+            }} />
+          </video>
+
           {/* Dark Overlay */}
           <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center px-4 text-center">
             <h1 className="!text-white mb-3 drop-shadow-lg text-[44.8px] font-black" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}>
