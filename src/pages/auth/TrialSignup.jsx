@@ -76,11 +76,11 @@ const TRANSLATIONS = {
     close: 'Close'
   },
   es: {
-    headline: 'Mucho más que un menú digital. Tu propia App con marketing automático y gestión de eventos.',
-    subheadline: 'La única App en LATAM con cámara UGC, eventos y checkout integrado. Creada para restaurantes y negocios gastronómicos que quieren mejorar su gestión sin depender de 5 apps distintas. Diseño simple, fácil de aprender y listo para usar.',
+    headline: 'Foodspot: El Shopify de la Comida',
+    subheadline: 'Lanza tu app. Convierte clientes en creadores.',
     getStarted: 'Comenzar',
     signupSubtitle: 'Crea tu cuenta para comenzar',
-    createAccount: 'Crear mi cuenta gratis',
+    createAccount: 'Crear Cuenta',
     emailLabel: 'Correo',
     emailPlaceholder: 'tu@ejemplo.com',
     passwordLabel: 'Contraseña',
@@ -92,7 +92,6 @@ const TRANSLATIONS = {
     needHelp: '¿Necesitas ayuda',
     contactSupport: 'Contacta a soporte en WhatsApp',
     location: 'Córdoba, Argentina',
-    trustText: '✅ 14 días gratis. ✅ Sin tarjeta de crédito. ✅ 0% comisión en ventas.',
     // Login modal
     welcomeBack: '¡Bienvenido de Nuevo a FoodSpot!',
     loginSubtitle: 'Tu menú. Su contenido. Tu crecimiento.',
@@ -702,12 +701,6 @@ const TrialSignup = () => {
               >
                 {loading ? 'Processing...' : l.createAccount}
               </button>
-
-              {lang === 'es' && l.trustText && (
-                <p className="font-sans text-xs text-gray-600 text-center mt-3">
-                  {l.trustText}
-                </p>
-              )}
 
               <div className="text-center mt-2">
                 <p className="font-sans text-sm text-gray-600">
