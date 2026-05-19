@@ -233,7 +233,9 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
         <div
           className="relative w-full h-[35vh] min-h-[280px] bg-cover bg-center"
           style={{
-            backgroundImage: "url('https://lh3.googleusercontent.com/aida/ADBb0uhhpgNNMYRQ-lR6Vqmp2NpPewOT5p1A9awoNA1Ylqhh7qtCNsR4Ztj97n9cKjgxnny8jqrjnCJFHOAVqDHGY4jqw8IGRTtyKHvX1S9TN8lw3DqUVeMNK7djrE0ze_K09Ha28XKOyEiZyYpkK9dMBrgzSnk3rg8WW4S7QQ5SVBuG9HHNBrMPaDsQjJk7xr0vblLoi4OK_3-TjKtxQ3x02G5Ub7kstra9xXleDDMB6R3KZNvSIWGsFcOqfA')"
+            backgroundImage: isForgot
+              ? "url('https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=1200&h=600&fit=crop')"
+              : "url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&h=600&fit=crop')"
           }}
         >
           {/* Dark Overlay */}
