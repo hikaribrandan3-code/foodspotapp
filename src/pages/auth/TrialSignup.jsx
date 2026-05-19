@@ -233,17 +233,15 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
         <div
           className="relative w-full h-[35vh] min-h-[280px] bg-cover bg-center"
           style={{
-            backgroundImage: isForgot
-              ? "url('https://images.unsplash.com/photo-1432139555190-58524dae6a55?w=1200&h=600&fit=crop')"
-              : "url('https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&h=600&fit=crop')"
+            backgroundImage: "url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&h=600&fit=crop')"
           }}
         >
           {/* Dark Overlay */}
           <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center px-4 text-center">
-            <h1 className="!text-white mb-3 drop-shadow-md text-[44.8px] font-black">
+            <h1 className="!text-white mb-3 drop-shadow-lg text-[44.8px] font-black" style={{ textShadow: '0 4px 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5)' }}>
               {heroTitle}
             </h1>
-            <p className="!text-white/90 drop-shadow-sm font-medium text-[21.6px]">
+            <p className="!text-white/90 drop-shadow-md font-medium text-[21.6px]" style={{ textShadow: '0 3px 6px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)' }}>
               {heroSubtitle}
             </p>
           </div>
