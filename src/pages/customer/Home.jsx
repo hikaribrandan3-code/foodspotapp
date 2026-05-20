@@ -116,6 +116,21 @@ function Home({ config: configProp }) {
 
     // Edit mode state
     const [isEditMode, setIsEditMode] = useState(false)
+
+    // Owner mode activation via URL parameter only (from BackendHeader)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        const ownerStart = params.get('ownerStart') === 'true'
+        const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
+
+        if (ownerStart || forceEdit) {
+            setIsOwnerMode(true)
+            if (forceEdit) {
+                if (navigator.vibrate) navigator.vibrate([30, 50])
+                setIsEditMode(true)
+            }
+        }
+    }, [])
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
     const [hasChanges, setHasChanges] = useState(false)

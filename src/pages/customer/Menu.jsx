@@ -294,25 +294,18 @@ export default function Menu({ config: configProp }) {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
+        const ownerStart = params.get('ownerStart') === 'true'
+        const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
         const categoryParam = params.get('category')
 
-        // 🛡️ AUTH CHECK: Verify owner status via session only
-        const checkOwnerStatus = async () => {
-            if (!businessId) return
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('business_id')
-                .eq('id', user.id)
-                .single()
-
-            if ((profile && profile.business_id === businessId) || (user.id === tenantData?.owner_id) || (user.id === tenantData?.user_id)) {
-                setIsOwnerMode(true)
+        // Owner mode only activates via URL parameter (from BackendHeader)
+        if (ownerStart || forceEdit) {
+            setIsOwnerMode(true)
+            if (forceEdit) {
+                setIsEditMode(true)
+                if (navigator.vibrate) navigator.vibrate([30, 50, 30])
             }
         }
-        checkOwnerStatus()
 
         // 📂 CATEGORY SCROLL: If category param is present, scroll to it after menu loads
         if (categoryParam && menu?.categories?.length > 0) {
