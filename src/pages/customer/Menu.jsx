@@ -294,40 +294,25 @@ export default function Menu({ config: configProp }) {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
-        // 🛡️ PARAMS: 'ownerStart' detects owner but stays calm. 'editMode' forces jiggle.
-        const ownerStart = params.get('ownerStart') === 'true'
-        const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
         const categoryParam = params.get('category')
 
-        // 🔓 BYPASS LOGIC
-        if (ownerStart || forceEdit) {
-            console.log("🚀 OWNER MODE ACTIVATED via URL")
-            setIsOwnerMode(true)
+        // 🛡️ AUTH CHECK: Verify owner status via session only
+        const checkOwnerStatus = async () => {
+            if (!businessId) return
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
 
-            // Only auto-jiggle if explicitly requested via legacy param
-            if (forceEdit) {
-                setIsEditMode(true)
-                if (navigator.vibrate) navigator.vibrate([30, 50, 30])
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('business_id')
+                .eq('id', user.id)
+                .single()
+
+            if ((profile && profile.business_id === businessId) || (user.id === tenantData?.owner_id) || (user.id === tenantData?.user_id)) {
+                setIsOwnerMode(true)
             }
-        } else {
-            // Normal Check
-            const checkOwnerStatus = async () => {
-                if (!businessId) return
-                const { data: { user } } = await supabase.auth.getUser()
-                if (!user) return
-
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('business_id')
-                    .eq('id', user.id)
-                    .single()
-
-                if ((profile && profile.business_id === businessId) || (user.id === tenantData?.owner_id) || (user.id === tenantData?.user_id)) {
-                    setIsOwnerMode(true)
-                }
-            }
-            checkOwnerStatus()
         }
+        checkOwnerStatus()
 
         // 📂 CATEGORY SCROLL: If category param is present, scroll to it after menu loads
         if (categoryParam && menu?.categories?.length > 0) {
@@ -952,10 +937,9 @@ export default function Menu({ config: configProp }) {
                 </div>
             )}
 
-            {/* Owner Pill - 🛡️ IMMORTAL: Uses localStorage safety check */}
+            {/* Owner Pill - Auth-only check */}
             {(() => {
-                const activeOwner = isOwnerMode || localStorage.getItem('foodspot_owner_mode') === 'true';
-                return activeOwner && !isEditMode ? (
+                return isOwnerMode && !isEditMode ? (
                     <button onClick={() => setIsEditMode(true)} style={{
                         position: 'fixed', bottom: 100, right: 24, zIndex: 9999, background: '#22C55E', color: 'white', padding: '12px 20px',
                         borderRadius: 50, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontWeight: 700, fontSize: 14, display: 'flex',

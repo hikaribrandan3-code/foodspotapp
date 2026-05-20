@@ -1,0 +1,109 @@
+[div] FoodSpot
+[a] Cómo Funciona
+[a] Testimonios
+[a] Contactos
+[span] Cómo Funciona
+[span] Testimonios
+[span] Contactos
+[h1] FoodSpot Mobile
+[p] La única App en LATAM con cámara de contenido para tu negocio gastronómico.
+[a] Crear mi cuenta gratis
+[p] 14 días gratis. Sin tarjeta de crédito.
+[h2] Convertí a cada cliente en contenido
+[p] El 71% de las personas te visita porque un amigo subió una foto.
+[span] Foto
+[span] Compartir
+[span] Nueva Cliente
+[h2] De tu cocina al mundo en 3 pasos
+[p] Tres simples pasos para digitalizar tu restaurante.
+[h3] Crea tu menu en minutos
+[p] Subi fotos, precios y categorias. Incluso podes agregar calorias, advertencias de salud y etiquetas personalizadas para casos especiales. Tu tienda lista al instante. 100% NO-CODE
+[h3] Personaliza tu marca
+[p] Colores, logos e identidad. Dale vida a tu app con nuestras mascotas animadas.
+[h3] Lanza y vende
+[p] Sin hardware. Sin papelería. Sin drama. Conecta Mercado Pago con token + user ID. Cobra al instante. Todo ocurre en el app.
+[h2] Convierte cada pedido en contenido viral
+[a] Empieza ahora
+[h2] Foodspot AI
+[p] Tu asistente personal de estrategia gastronomica. Genera promociones inteligentes y optimiza tus costos analizando tus datos en tiempo real.
+[h2] Preguntas frecuentes
+[p] Todo lo que necesitas saber sobre FoodSpot Mobile.
+[span] ¿Necesito saber programar?
+[span] ¿Cuanto tardo en configurar mi tienda?
+[span] ¿Cuanto cuesta FoodSpot Mobile?
+[span] ¿Funciona FoodSpot Mobile en mi telefono?
+[span] ¿Me cobran comision en FoodSpot Mobile?
+[span] ¿Para que tipo de restaurante sirve FoodSpot Mobile?
+[span] ¿Funciona en toda LATAM?
+[h2] Listo para transformar tu negocio?
+[a] Proba gratis 14 dias !
+[p] Sin tarjeta de credito. Sin vueltas.
+[h2] Lo que dicen nuestros clientes
+[p] Desde que usamos FoodSpot, nuestras ventas directas aumentaron un 40%. La interfaz es tan intuitiva que nuestro equipo aprendio a usarla en un dia.
+[div] Martin Gomez
+[p] Dueno, Burger Station
+[p] Las herramientas de IA para inventario y promociones nos ahorran horas cada semana. Es literalmente como tener un gerente extra trabajando 24/7.
+[div] Sofia Reyes
+[p] Directora, Green Bowl
+[p] Dejamos de pagar comisiones abusivas a las apps de delivery. FoodSpot nos dio la independencia que necesitabamos para crecer nuestro propio canal.
+[div] Carlos Mendoza
+[p] Fundador, La Masa
+[h2] Planes simples, sin sorpresas
+[p] Elige el plan que mejor se adapte al tamano de tu negocio.
+[h3] Prueba Gratis
+[span] /14 dias
+[p] Prueba la version completa con todas las funcionalidades por 14 dias sin tarjeta de credito.
+[li] Acceso total 14 dias
+[li] Setup inicial guiado
+[li] Sin tarjeta requerida
+[a] Empezar Prueba Gratis
+[div] Mas Popular
+[h3] Pro
+[span] $25
+[span] /mes
+[p] Todas las herramientas profesionales para escalar tu negocio.
+[p] Pedidos y Operaciones
+[li] Pedidos ilimitados (sin limite mensual)
+[li] Panel de pedidos en tiempo real
+[p] Delivery
+[li] Radio de delivery inteligente (validado en servidor)
+[li] Umbral de envio gratis (lo definis vos)
+[p] Pagos
+[li] Integracion directa con Mercado Pago
+[li] 0% de comision para FoodSpot — te quedas con el 100%
+[li] Pagos instantaneos
+[p] Tienda
+[li] Menu digital limpio (editas en minutos)
+[li] Colores y branding personalizables
+[li] Soporte bilingue (Espanol / Ingles)
+[p] Eventos
+[li] Crea y promociona eventos especiales dentro de la app
+[li] Genera trafico en horas valle
+[p] Marketing
+[li] Los clientes capturan y comparten fotos en el punto de compra
+[li] Convierte cada pedido en prueba social y marketing
+[p] Analiticas
+[li] Dashboard completo con metricas en tiempo real
+[li] Chatbot con IA integrado a tu negocio
+[p] Soporte
+[li] Soporte prioritario por email y chat
+[a] Suscribirse Ahora
+[div] FoodSpot Mobile
+[p] La única App en LATAM con cámara de contenido para tu negocio gastronómico.
+[h4] Contactos
+[a] +54 351 212 2600
+[a] info@foodspotmobile.com
+[h4] Síguenos
+[span] Instagram
+[p] Hecho con amor en Cordoba Capital, Argentina para el mundo.
+[p] 2025 FoodSpot Mobile. All rights reserved.
+[h3] Producto
+[a] Caracteristicas
+[a] Plantillas
+[h3] Compania
+[a] Sobre Nosotros
+[a] Contacto
+[a] Ubicacion
+[a] WhatsApp
+[a] Privacidad
+[a] Terminos

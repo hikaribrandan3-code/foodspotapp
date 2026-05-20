@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1350" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1350px; overflow: hidden; background: #000; }
+    [data-composition-id="ig-3step"] {
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+    .frame { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 40px; text-align: center; }
+    .frame h1, .frame h2 { font-family: 'Outfit', sans-serif; font-weight: 700; line-height: 1.2; }
+    .cta-btn { background: #15803D; color: #FFF; padding: 16px 32px; border-radius: 40px; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; border: none; }
+
+    .intro { background: linear-gradient(135deg, #15803D 0%, #006C49 100%); }
+    .intro h1 { font-size: 52px; color: #FFF; }
+
+    .step { background: #F8F9FF; }
+    .step h2 { font-size: 40px; color: #151C26; margin-bottom: 30px; }
+    .step-num { width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: 700; color: #FFF; margin: 20px auto; }
+    .step-1 .step-num { background: #006C49; }
+    .step-2 .step-num { background: #15803D; }
+    .step-3 .step-num { background: #006687; }
+    .step p { font-size: 16px; color: #151C26; margin: 20px 0; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="ig-3step" data-width="1080" data-height="1350" data-start="0" data-duration="14" data-track-index="1" style="position: relative;">
+    <div class="frame intro" id="intro">
+      <h1>De tu cocina<br/>al mundo</h1>
+      <h1 style="font-size: 48px; margin-top: 10px;">en 3 pasos</h1>
+    </div>
+
+    <div class="frame step step-1" id="step1" style="opacity: 0;">
+      <h2>1️⃣ Crea tu menú</h2>
+      <div class="step-num">100%</div>
+      <p><strong>NO-CODE</strong></p>
+      <p>Sube fotos, precios y categorías<br/>Tu tienda lista al instante</p>
+    </div>
+
+    <div class="frame step step-2" id="step2" style="opacity: 0;">
+      <h2>2️⃣ Personaliza</h2>
+      <div class="step-num">🎨</div>
+      <p><strong>Colores, logos, identidad</strong></p>
+      <p>Dale vida a tu app con diseño único</p>
+    </div>
+
+    <div class="frame step step-3" id="step3" style="opacity: 0;">
+      <h2>3️⃣ Lanza y vende</h2>
+      <div class="step-num">💳</div>
+      <p><strong>Mercado Pago integrado</strong></p>
+      <p>Cobra al instante. 0% comisión.<br/>Sin hardware. Sin drama.</p>
+      <button class="cta-btn" style="margin-top: 30px;">Empezar Ahora →</button>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Intro entrance
+      tl.from("#intro h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 0.2);
+
+      // Step 1
+      tl.to("#intro", { opacity: 0, duration: 0.4 }, 3.5);
+      tl.to("#step1", { opacity: 1, duration: 0.5 }, 3.6);
+      tl.from("#step1 h2", { opacity: 0, y: 30, duration: 0.6, ease: "power3.out" }, 3.7);
+      tl.from("#step1 .step-num", { opacity: 0, scale: 0.5, duration: 0.6, ease: "back.out" }, 3.9);
+      tl.from("#step1 p", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 4.2);
+
+      // Step 2
+      tl.to("#step1", { opacity: 0, duration: 0.4 }, 6.5);
+      tl.to("#step2", { opacity: 1, duration: 0.5 }, 6.6);
+      tl.from("#step2 h2", { opacity: 0, y: 30, duration: 0.6, ease: "power3.out" }, 6.7);
+      tl.from("#step2 .step-num", { opacity: 0, scale: 0.5, duration: 0.6, ease: "back.out" }, 6.9);
+      tl.from("#step2 p", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 7.2);
+
+      // Step 3
+      tl.to("#step2", { opacity: 0, duration: 0.4 }, 9.5);
+      tl.to("#step3", { opacity: 1, duration: 0.5 }, 9.6);
+      tl.from("#step3 h2", { opacity: 0, y: 30, duration: 0.6, ease: "power3.out" }, 9.7);
+      tl.from("#step3 .step-num", { opacity: 0, scale: 0.5, duration: 0.6, ease: "back.out" }, 9.9);
+      tl.from("#step3 p", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 10.2);
+      tl.from("#step3 .cta-btn", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out" }, 10.5);
+
+      window.__timelines["ig-3step"] = tl;
+    </script>
+  </div>
+</body>
+</html>

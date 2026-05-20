@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1350" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1350px; overflow: hidden; background: #000; }
+    [data-composition-id="ig-trial"] { width: 100%; height: 100%; }
+    .frame { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 40px; text-align: center; }
+    .frame-trial { background: linear-gradient(135deg, #006C49 0%, #004d38 100%); }
+    .frame-pricing { background: #F8F9FF; }
+    h1 { font-family: 'Outfit', sans-serif; font-size: 52px; font-weight: 700; color: #FFF; line-height: 1.3; margin-bottom: 30px; }
+    .frame-pricing h1 { color: #151C26; }
+    .emoji { font-size: 60px; margin-bottom: 20px; }
+    .subtitle { font-size: 20px; color: rgba(255,255,255,0.9); margin-bottom: 40px; line-height: 1.5; }
+    .frame-pricing .subtitle { color: #151C26; }
+    .cta-btn { background: #15803D; color: #FFF; padding: 18px 40px; border-radius: 50px; font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; border: none; margin-top: 30px; }
+    .price-card { background: #FFFFFF; border-radius: 12px; padding: 40px 30px; max-width: 500px; margin: 20px auto; text-align: left; }
+    .price-card h2 { font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 700; color: #006C49; margin-bottom: 20px; text-align: center; }
+    .price-card ul { list-style: none; font-size: 16px; color: #151C26; }
+    .price-card li { padding: 10px 0; border-bottom: 1px solid #E5E7EB; }
+    .price-card li:before { content: "✓ "; color: #15803D; font-weight: 700; margin-right: 8px; }
+    .price-card li:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="ig-trial" data-width="1080" data-height="1350" data-start="0" data-duration="10" data-track-index="1" style="position: relative;">
+    <div class="frame frame-trial" id="trial">
+      <div class="emoji">🎉</div>
+      <h1>14 días<br/>GRATIS</h1>
+      <p class="subtitle">Sin tarjeta de crédito<br/>Sin sorpresas</p>
+      <button class="cta-btn">Comienza Ahora →</button>
+    </div>
+
+    <div class="frame frame-pricing" id="pricing" style="opacity: 0;">
+      <h1>Plan Pro</h1>
+      <div class="price-card">
+        <h2>$25 / mes</h2>
+        <ul>
+          <li>Pedidos ilimitados</li>
+          <li>Panel en tiempo real</li>
+          <li>Mercado Pago integrado</li>
+          <li>0% comisión</li>
+          <li>Menú digital ilimitado</li>
+          <li>Cámara UGC incluida</li>
+        </ul>
+      </div>
+      <button class="cta-btn">Suscribirse Ahora →</button>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#trial .emoji", { opacity: 0, scale: 0.5, duration: 0.6, ease: "back.out" }, 0.2);
+      tl.from("#trial h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 0.4);
+      tl.from("#trial p", { opacity: 0, y: 30, duration: 0.6, ease: "power2.out" }, 0.7);
+      tl.from("#trial .cta-btn", { opacity: 0, scale: 0.9, duration: 0.5, ease: "back.out" }, 1.0);
+
+      tl.to("#trial", { opacity: 0, duration: 0.4 }, 4.5);
+      tl.to("#pricing", { opacity: 1, duration: 0.5 }, 4.6);
+      tl.from("#pricing h1", { opacity: 0, y: 30, duration: 0.6, ease: "power3.out" }, 4.8);
+      tl.from("#pricing .price-card", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 5.0);
+      tl.from("#pricing .cta-btn", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out" }, 5.3);
+
+      window.__timelines["ig-trial"] = tl;
+    </script>
+  </div>
+</body>
+</html>

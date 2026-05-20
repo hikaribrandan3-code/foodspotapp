@@ -108,13 +108,10 @@ function Home({ config: configProp }) {
 
     // Owner/SuperAdmin/Demo mode detection - all can edit home icons
     const session = getSession()
-    // 🛡️ VAULT-SEAL FIX: Owner Mode Persistence
-    // Survives polls by checking localStorage 'foodspot_owner_mode'
     const [isOwnerMode, setIsOwnerMode] = useState(
         session?.role === 'superadmin' ||
         session?.role === 'owner' ||
-        isInDemoMode() ||
-        localStorage.getItem('foodspot_owner_mode') === 'true'
+        isInDemoMode()
     )
 
     // Edit mode state
@@ -174,29 +171,6 @@ function Home({ config: configProp }) {
         fetchActiveOrder()
     }, [tenantSlug, businessId])
 
-    // Detect 'Ver Tienda' edit intent from URL
-    // Detect 'Ver Tienda' edit intent from URL (Case-Insensitive Hardened)
-    // Detect 'Ver Tienda' edit intent from URL
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search)
-        // 🛡️ PARAMS: 'ownerStart' detects owner but stays calm. 'editMode' forces jiggle.
-        const ownerStart = params.get('ownerStart') === 'true'
-        const forceEdit = params.get('editMode') === 'true' || params.get('editmode') === 'true'
-
-        if (ownerStart || forceEdit) {
-            // console.log("🚀 OWNER MODE ACTIVE (Home via URL)")
-            setIsOwnerMode(true)
-            // Note: isOwnerMode is derived from session, but we also trust the URL for the visual 'Start' signal if needed
-            // Actually, isOwnerMode logic in Home is strictly session-based.
-            // But if we came from Backend, we ARE owner.
-
-            if (forceEdit) {
-                // console.log("🚀 ANTIGRAVITY ACTIVATED")
-                if (navigator.vibrate) navigator.vibrate([30, 50])
-                setIsEditMode(true)
-            }
-        }
-    }, [isOwnerMode])
 
     // CRITICAL: Global drag lock to prevent navigation corruption
     const isDraggingRef = useRef(false)

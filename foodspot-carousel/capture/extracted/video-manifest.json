@@ -1,0 +1,24 @@
+[
+  {
+    "index": 0,
+    "url": "https://www.foodspotmobile.com/foodspotherovideo.webm",
+    "filename": "foodspotherovideo.webm",
+    "width": 1920,
+    "height": 918,
+    "heading": "FoodSpot Mobile",
+    "caption": "La única App en LATAM con cámara de contenido para tu negocio gastronómico.",
+    "ariaLabel": "",
+    "preview": "assets/videos/previews/video-0-preview.png"
+  },
+  {
+    "index": 1,
+    "url": "https://www.foodspotmobile.com/ugc.webm",
+    "filename": "ugc.webm",
+    "width": 288,
+    "height": 550,
+    "heading": "Convertí a cada cliente en contenido",
+    "caption": "El 71% de las personas te visita porque un amigo subió una foto.",
+    "ariaLabel": "",
+    "preview": "assets/videos/previews/video-1-preview.png"
+  }
+]

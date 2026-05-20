@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+    [data-composition-id="tt-testimonials"] { width: 100%; height: 100%; }
+    .frame { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 100px 40px; text-align: center; }
+    .frame-intro { background: linear-gradient(135deg, #15803D 0%, #006C49 100%); }
+    .frame-testi { background: #FFFFFF; }
+    h1 { font-family: 'Outfit', sans-serif; font-size: 48px; font-weight: 700; }
+    .frame-intro h1 { color: #FFF; }
+    .stars { font-size: 36px; margin: 20px 0; }
+    .quote { font-size: 28px; font-family: 'Outfit', sans-serif; font-weight: 600; color: #151C26; margin: 30px 0; line-height: 1.4; font-style: italic; }
+    .frame-testi.teal { background: #006687; }
+    .frame-testi.teal .quote { color: #FFF; }
+    .author { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: #15803D; margin: 20px 0; }
+    .frame-testi.teal .author { color: #FFF; }
+    .role { font-size: 14px; color: #666; }
+    .frame-testi.teal .role { color: rgba(255,255,255,0.8); }
+    .cta-btn { background: #15803D; color: #FFF; padding: 16px 40px; border-radius: 40px; font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; border: none; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="tt-testimonials" data-width="1080" data-height="1920" data-start="0" data-duration="13" data-track-index="1" style="position: relative;">
+    <div class="frame frame-intro" id="intro">
+      <h1>⭐⭐⭐⭐⭐</h1>
+      <h1 style="font-size: 56px; margin-top: 20px;">Lo que dicen<br/>nuestros clientes</h1>
+    </div>
+
+    <div class="frame frame-testi" id="testi1" style="opacity: 0;">
+      <div class="quote">"Desde FoodSpot,<br/>nuestras ventas<br/>aumentaron 40%"</div>
+      <p class="author">Martín Gómez</p>
+      <p class="role">Dueño, Burger Station</p>
+    </div>
+
+    <div class="frame frame-testi teal" id="testi2" style="opacity: 0;">
+      <div class="quote">"Las herramientas IA<br/>para promociones<br/>nos ahorran HORAS"</div>
+      <p class="author">Sofía Reyes</p>
+      <p class="role" style="color: rgba(255,255,255,0.7);">Directora, Green Bowl</p>
+    </div>
+
+    <div class="frame frame-testi" id="testi3" style="opacity: 0;">
+      <div class="quote">"Dejamos de pagar<br/>comisiones abusivas<br/>a las apps de delivery"</div>
+      <p class="author">Carlos Mendoza</p>
+      <p class="role">Fundador, La Masa</p>
+      <button class="cta-btn">Únete a ellos →</button>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#intro h1", { opacity: 0, y: 50, duration: 0.8, ease: "power3.out" }, 0.2);
+
+      tl.to("#intro", { opacity: 0, duration: 0.4 }, 3.8);
+      tl.to("#testi1", { opacity: 1, duration: 0.5 }, 3.9);
+      tl.from("#testi1 .quote", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 4.1);
+      tl.from("#testi1 .author", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 4.4);
+      tl.from("#testi1 .role", { opacity: 0, y: 10, duration: 0.4, ease: "power2.out" }, 4.6);
+
+      tl.to("#testi1", { opacity: 0, duration: 0.4 }, 6.8);
+      tl.to("#testi2", { opacity: 1, duration: 0.5 }, 6.9);
+      tl.from("#testi2 .quote", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 7.1);
+      tl.from("#testi2 .author", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 7.4);
+      tl.from("#testi2 .role", { opacity: 0, y: 10, duration: 0.4, ease: "power2.out" }, 7.6);
+
+      tl.to("#testi2", { opacity: 0, duration: 0.4 }, 9.8);
+      tl.to("#testi3", { opacity: 1, duration: 0.5 }, 9.9);
+      tl.from("#testi3 .quote", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 10.1);
+      tl.from("#testi3 .author", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 10.4);
+      tl.from("#testi3 .cta-btn", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out" }, 10.8);
+
+      window.__timelines["tt-testimonials"] = tl;
+    </script>
+  </div>
+</body>
+</html>

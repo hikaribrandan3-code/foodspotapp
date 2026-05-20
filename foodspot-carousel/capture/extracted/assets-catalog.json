@@ -1,0 +1,178 @@
+[
+  {
+    "url": "https://www.foodspotmobile.com/ugc-benefits.webp",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "UGC Benefits",
+    "description": "UGC Benefits",
+    "nearestHeading": "Convertí a cada cliente en contenido",
+    "sectionClasses": "py-16 px-6 max-w-7xl mx-auto",
+    "aboveFold": false
+  },
+  {
+    "url": "https://www.foodspotmobile.com/1menu.png",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "Crea tu menu en minutos",
+    "description": "Crea tu menu en minutos",
+    "nearestHeading": "De tu cocina al mundo en 3 pasos",
+    "sectionClasses": "py-20 px-6 bg-white overflow-hidden",
+    "aboveFold": false
+  },
+  {
+    "url": "https://www.foodspotmobile.com/2brand.png",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "Personaliza tu marca",
+    "description": "Personaliza tu marca",
+    "nearestHeading": "De tu cocina al mundo en 3 pasos",
+    "sectionClasses": "py-20 px-6 bg-white overflow-hidden",
+    "aboveFold": false
+  },
+  {
+    "url": "https://www.foodspotmobile.com/3pago.png",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "Lanza y vende",
+    "description": "Lanza y vende",
+    "nearestHeading": "De tu cocina al mundo en 3 pasos",
+    "sectionClasses": "py-20 px-6 bg-white overflow-hidden",
+    "aboveFold": false
+  },
+  {
+    "url": "https://www.foodspotmobile.com/foodspotaiimage.png",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "FoodSpot AI Features",
+    "description": "FoodSpot AI Features",
+    "nearestHeading": "Foodspot AI",
+    "sectionClasses": "py-20 px-6 max-w-7xl mx-auto",
+    "aboveFold": false
+  },
+  {
+    "url": "https://lh3.googleusercontent.com/aida-public/AB6AXuAkvYIARZavcH4JACEszHpL5_jqSjXfbsXp5RlGI9QH2YljWq5EdLCWXOJSgoZ0zlOtWLJJaXh6v7J7UU8EpZaN1nWYs5A1EXdL3JdQECl3J12jh-7FDwyPWhSCLt4Or1IlayQ6RKHL2i4INhb3wo0Ku-Kj4Dp0bMheZcCNlcf-GcaiwpUivImdtm6QUyzWz23its8Rggr47Pqf9ZEuG0AY2-HN4Hcg8cjEa0b-anB0RfF9QM9GQGObaCo-ZKq5dlLjQv_cWt_7qzsn",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "Martin Gomez",
+    "description": "Martin Gomez",
+    "nearestHeading": "Lo que dicen nuestros clientes",
+    "sectionClasses": "py-20 px-6 bg-gray-50",
+    "aboveFold": false
+  },
+  {
+    "url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDGcybAYVHqJNMmwISRAYhpLrymKa7EgQyOMRINv8BVx8Yr2EoZ-xEldWS28HM85pOZJYg_ufD7SL9yIn1hCm_MfQtCVYgr0cb9liTb7NXePW7Z1UDVMD-503h9cIrU1KfPfTpB_2UwUpk1bMZeBOqE5rXlm4lVsvqixqnNIU0syeto1f7SxdGbuD3ehHGs8IV31xVNQkRKz9H4yEMj4t5e_ssG5V0ziP5hkxcBUwu9fQzjlsWzdIvvYDIJGAWv4vX8ANJ_LOb-r5qO",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "Sofia Reyes",
+    "description": "Sofia Reyes",
+    "nearestHeading": "Lo que dicen nuestros clientes",
+    "sectionClasses": "py-20 px-6 bg-gray-50",
+    "aboveFold": false
+  },
+  {
+    "url": "https://lh3.googleusercontent.com/aida-public/AB6AXuDIvfupqrNB2CpVZfh9pV_wo498HNQCUy9zw6OKqR8LmD3ibJE3_o1eCfmQruWDyRHI5UifB_FY5a54aldfei48bIeCiqtjHGRM9-71t-tuqTNj1b7gjjoz1kHcRL4_abPjk1j_4CKleded3ksLGKbGwoncQ0c_e8CrshG53EvWfdITrhmu7auVAEdxp5b2txFJgBX9jwW_hDtKNrxq-54So42HebU6gD-vwKyD43Mx7iOVGushrKqe7Zbz7GIdLYClMBo1VMRxQ1mw",
+    "type": "Image",
+    "contexts": [
+      "img[src]"
+    ],
+    "notes": "Carlos Mendoza",
+    "description": "Carlos Mendoza",
+    "nearestHeading": "Lo que dicen nuestros clientes",
+    "sectionClasses": "py-20 px-6 bg-gray-50",
+    "aboveFold": false
+  },
+  {
+    "url": "https://www.foodspotmobile.com/1menu.webp",
+    "type": "Image",
+    "contexts": [
+      "source[srcset]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/2brand.webp",
+    "type": "Image",
+    "contexts": [
+      "source[srcset]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/3pago.webp",
+    "type": "Image",
+    "contexts": [
+      "source[srcset]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/foodspotaiimage.webp",
+    "type": "Image",
+    "contexts": [
+      "source[srcset]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/foodspotherovideo.webm",
+    "type": "Video",
+    "contexts": [
+      "video source[src]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/foodspotherovideo.mp4",
+    "type": "Video",
+    "contexts": [
+      "video source[src]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/ugc.webm",
+    "type": "Video",
+    "contexts": [
+      "video source[src]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/ugc.mp4",
+    "type": "Video",
+    "contexts": [
+      "video source[src]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/favicon.svg",
+    "type": "Icon",
+    "contexts": [
+      "link[rel=\"icon\"]"
+    ],
+    "notes": null
+  },
+  {
+    "url": "https://www.foodspotmobile.com/hero.webp",
+    "type": "Image",
+    "contexts": [
+      "link[rel=\"preload\"]"
+    ],
+    "notes": null
+  }
+]

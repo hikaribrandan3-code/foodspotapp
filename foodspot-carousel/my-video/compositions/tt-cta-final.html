@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+    [data-composition-id="tt-cta"] { width: 100%; height: 100%; }
+    .frame { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 100px 40px; text-align: center; }
+    .frame-hero { background: linear-gradient(135deg, #006C49 0%, #004d38 100%); }
+    .frame-benefits { background: linear-gradient(135deg, #15803D 0%, #006C49 100%); }
+    h1 { font-family: 'Outfit', sans-serif; font-size: 56px; font-weight: 700; color: #FFF; line-height: 1.3; }
+    .rocket { font-size: 80px; margin-bottom: 30px; }
+    .benefit-box { background: rgba(255,255,255,0.15); border-radius: 12px; padding: 20px; margin: 15px 0; font-size: 18px; color: #FFF; backdrop-filter: blur(10px); }
+    .benefit-box strong { color: #FFF; display: block; font-family: 'Outfit', sans-serif; font-size: 22px; margin-bottom: 5px; }
+    .cta-btn { background: #15803D; color: #FFF; padding: 20px 50px; border-radius: 40px; font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700; border: none; margin-top: 40px; cursor: pointer; }
+    .cta-btn:hover { background: #0f5c2a; }
+    .feature-list { max-width: 500px; }
+    .subtitle { font-size: 20px; margin-bottom: 40px; opacity: 0.95; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="tt-cta" data-width="1080" data-height="1920" data-start="0" data-duration="10" data-track-index="1" style="position: relative;">
+    <div class="frame frame-hero" id="hero">
+      <div class="rocket">🚀</div>
+      <h1>Listo para<br/>transformar tu<br/>negocio?</h1>
+      <p class="subtitle">Aquí estamos para ayudarte</p>
+      <button class="cta-btn">14 Días Gratis</button>
+    </div>
+
+    <div class="frame frame-benefits" id="benefits" style="opacity: 0;">
+      <h1 style="font-size: 48px; margin-bottom: 30px;">Todo lo que necesitas</h1>
+
+      <div class="feature-list">
+        <div class="benefit-box">
+          <strong>✓ Sin tarjeta de crédito</strong>
+          Prueba sin compromiso
+        </div>
+        <div class="benefit-box">
+          <strong>✓ Acceso total 14 días</strong>
+          Todas las herramientas profesionales
+        </div>
+        <div class="benefit-box">
+          <strong>✓ Setup guiado</strong>
+          Te ayudamos en cada paso
+        </div>
+        <div class="benefit-box">
+          <strong>✓ 0% comisión</strong>
+          Te quedas con el 100%
+        </div>
+      </div>
+
+      <button class="cta-btn">Comienza AHORA →</button>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#hero .rocket", { opacity: 0, scale: 0.5, duration: 0.7, ease: "back.out" }, 0.2);
+      tl.from("#hero h1", { opacity: 0, y: 50, duration: 0.8, ease: "power3.out" }, 0.5);
+      tl.from("#hero p", { opacity: 0, y: 30, duration: 0.6, ease: "power2.out" }, 1.0);
+      tl.from("#hero .cta-btn", { opacity: 0, scale: 0.8, duration: 0.6, ease: "back.out" }, 1.3);
+
+      tl.to("#hero", { opacity: 0, duration: 0.4 }, 4.5);
+      tl.to("#benefits", { opacity: 1, duration: 0.5 }, 4.6);
+      tl.from("#benefits h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 4.8);
+      tl.from("#benefits .benefit-box", { opacity: 0, x: -40, duration: 0.6, ease: "power2.out", stagger: 0.15 }, 5.1);
+      tl.from("#benefits .cta-btn", { opacity: 0, scale: 0.8, duration: 0.6, ease: "back.out" }, 6.8);
+
+      window.__timelines["tt-cta"] = tl;
+    </script>
+  </div>
+</body>
+</html>

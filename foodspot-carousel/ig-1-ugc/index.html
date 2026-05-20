@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1350" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1350px; overflow: hidden; background: #000; }
+    [data-composition-id="ig-ugc"] {
+      width: 100%;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+    .frame { position: absolute; width: 100%; height: 100%; }
+    .frame-1 {
+      background: linear-gradient(135deg, #006C49 0%, #004d38 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 40px;
+      text-align: center;
+    }
+    .frame-1 h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 56px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+    .frame-1 p {
+      font-size: 20px;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 50px;
+    }
+    .cta-btn {
+      background: #15803D;
+      color: #FFFFFF;
+      padding: 18px 40px;
+      border-radius: 50px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+    }
+    .frame-2 {
+      background: #F8F9FF;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px 40px;
+      text-align: center;
+    }
+    .emoji { font-size: 80px; margin-bottom: 30px; }
+    .frame-2 h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: #151C26;
+      line-height: 1.3;
+      margin-bottom: 40px;
+    }
+    .frame-2 p {
+      font-size: 18px;
+      color: #151C26;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    .highlight { color: #15803D; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="ig-ugc" data-width="1080" data-height="1350" data-start="0" data-duration="10" data-track-index="1" style="position: relative;">
+    <!-- Frame 1: Hero -->
+    <div class="frame frame-1" id="frame1">
+      <h1>Convierte cada<br/>cliente en<br/>contenido</h1>
+      <p>El 71% de tus clientes vuelven<br/>porque un amigo compartió una foto</p>
+      <button class="cta-btn">Probar Gratis →</button>
+    </div>
+
+    <!-- Frame 2: Camera Feature -->
+    <div class="frame frame-2" id="frame2" style="opacity: 0;">
+      <div class="emoji">📸</div>
+      <h2>Tu cámara de<br/>contenido</h2>
+      <p>Los clientes capturan fotos<br/><span class="highlight">EN tu negocio</span></p>
+      <p>Tú recibes el contenido<br/>automáticamente</p>
+      <button class="cta-btn" style="background: #006C49;">Ver Más →</button>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      // Frame 1: Entrance
+      tl.from("#frame1 h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 0.2);
+      tl.from("#frame1 p", { opacity: 0, y: 30, duration: 0.6, ease: "power2.out" }, 0.4);
+      tl.from("#frame1 .cta-btn", { opacity: 0, scale: 0.9, duration: 0.5, ease: "back.out" }, 0.7);
+
+      // Frame 1: Exit → Frame 2: Transition
+      tl.to("#frame1", { opacity: 0, duration: 0.4, ease: "power2.in" }, 4.8);
+      tl.to("#frame2", { opacity: 1, duration: 0.5, ease: "power2.out" }, 5.0);
+
+      // Frame 2: Entrance
+      tl.from("#frame2 .emoji", { opacity: 0, scale: 0.5, duration: 0.6, ease: "back.out" }, 5.1);
+      tl.from("#frame2 h2", { opacity: 0, y: 30, duration: 0.6, ease: "power3.out" }, 5.3);
+      tl.from("#frame2 p", { opacity: 0, y: 20, duration: 0.5, ease: "power2.out" }, 5.5);
+      tl.from("#frame2 .cta-btn", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out" }, 5.7);
+
+      window.__timelines["ig-ugc"] = tl;
+    </script>
+  </div>
+</body>
+</html>
