@@ -28,9 +28,17 @@ export function detectAndroidInAppBrowser() {
  * Build a Chrome intent URL for the current page.
  * Use as href on an <a> tag — NOT with window.location (Instagram blocks that).
  * The S.browser_fallback_url handles devices without Chrome installed.
+ * Strips tracking params (fbclid, utm_*) to prevent redirect loops back to Instagram.
  */
 export function getChromeIntentUrl() {
   const url = new URL(window.location.href);
-  const fallback = encodeURIComponent(window.location.href);
-  return `intent://${url.host}${url.pathname}${url.search}#Intent;scheme=${url.protocol.replace(':', '')};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
+
+  // Strip Instagram/Meta tracking params that trigger redirects
+  const paramsToStrip = ['fbclid', 'utm_source', 'utm_medium', 'utm_content', 'utm_campaign', 'utm_term'];
+  paramsToStrip.forEach(param => url.searchParams.delete(param));
+
+  const cleanUrl = url.href;
+  const fallback = encodeURIComponent(cleanUrl);
+  const search = url.search === '?' ? '' : url.search;
+  return `intent://${url.host}${url.pathname}${search}#Intent;scheme=${url.protocol.replace(':', '')};package=com.android.chrome;S.browser_fallback_url=${fallback};end`;
 }
