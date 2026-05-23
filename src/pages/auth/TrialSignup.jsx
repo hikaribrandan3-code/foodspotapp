@@ -57,8 +57,6 @@ const TRANSLATIONS = {
     needHelp: 'Need help',
     contactSupport: 'Contact support on WhatsApp',
     location: 'Córdoba, Argentina',
-    demo: 'See Demo',
-    demoSubtitle: 'Click to see a FoodSpot demo',
     // Login modal
     welcomeBack: 'Welcome Back to FoodSpot!',
     loginSubtitle: 'Your menu. Their content. Your growth.',
@@ -93,8 +91,6 @@ const TRANSLATIONS = {
     needHelp: '¿Necesitas ayuda',
     contactSupport: 'Contacta a soporte en WhatsApp',
     location: 'Córdoba, Argentina',
-    demo: 'Ver Demo',
-    demoSubtitle: 'Haz clic para ver una demo de FoodSpot',
     // Login modal
     welcomeBack: '¡Bienvenido de Nuevo a FoodSpot!',
     loginSubtitle: 'Tu menú. Su contenido. Tu crecimiento.',
@@ -129,8 +125,6 @@ const TRANSLATIONS = {
     needHelp: 'Precisa de ajuda',
     contactSupport: 'Contate o suporte no WhatsApp',
     location: 'Córdoba, Argentina',
-    demo: 'Ver Demo',
-    demoSubtitle: 'Clique para ver uma demo do FoodSpot',
     // Login modal
     welcomeBack: 'Bem-vindo de Volta ao FoodSpot!',
     loginSubtitle: 'Seu cardápio. O conteúdo deles. Seu crescimento.',
@@ -743,19 +737,6 @@ const TrialSignup = () => {
               <span className="underline underline-offset-2 decoration-emerald-700/30 group-hover:decoration-emerald-700">
                 {l.needHelp}? {l.contactSupport}
               </span>
-            </a>
-          </div>
-
-          {/* Demo Button */}
-          <div className="mt-8 w-full max-w-md">
-            <a
-              href="https://foodspotapp.vercel.app/foodspot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 w-full bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 rounded-lg px-6 py-4 font-sans text-sm font-semibold transition-all duration-200 border border-emerald-200 hover:border-emerald-400 group"
-            >
-              <span className="text-base">{l.demo}</span>
-              <span className="text-xs text-emerald-600 group-hover:text-emerald-700">{l.demoSubtitle}</span>
             </a>
           </div>
         </section>
