@@ -668,93 +668,60 @@ function drawCannon(t){
 function drawUI(t){
   const barH=GY-R*.3,pad=R*.6;
   const levelCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+  const shotsLeft=Math.max(0,levelCfg.shots-shots);
+  const urgent=shotsLeft<=5&&shotsLeft>0;
+  const hudPulse=Math.sin(t*.006)*.5+.5;
   cx.save();
 
   // ── BAR BACKGROUND ──
   const barG=cx.createLinearGradient(0,0,0,barH);barG.addColorStop(0,'rgba(80,0,120,0.88)');barG.addColorStop(1,'rgba(40,0,80,0.95)');
   cx.fillStyle=barG;cx.beginPath();cx.roundRect(pad*.5,R*.3,W-pad,barH-R*.5,R*.6);cx.fill();
-  const hudPulse=Math.sin(t*.006)*.5+.5;
   cx.strokeStyle=`rgba(255,${Math.round(100+hudPulse*80)},0,${0.75+hudPulse*.25})`;
   cx.lineWidth=3+hudPulse*1.5;
   cx.beginPath();cx.roundRect(pad*.5,R*.3,W-pad,barH-R*.5,R*.6);cx.stroke();
 
-  // ── ROW 1: Level (left) | SCORE (center) | Shots (right) ──
-  const row1Y=barH*.24;
-  // Level badge
-  cx.font=`bold ${Math.round(R*.58)}px Arial`;cx.textAlign='left';cx.textBaseline='middle';
-  cx.fillStyle='#FFE040';cx.fillText(`Lv.${currentLevel+1} ${levelCfg.name}`,pad+R*.4,row1Y);
-  // Score
+  // ── TOP SECTION: HUGE CENTERED SCORE ──
+  const scoreY=barH*.35;
   const sc=animators.score.bounce>0?1+animators.score.bounce*.3:1;if(animators.score.bounce>0)animators.score.bounce=Math.max(0,animators.score.bounce-.08);
-  cx.save();cx.translate(W/2,row1Y);cx.scale(sc,sc);
-  cx.font=`900 ${Math.round(R*1.7)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.strokeStyle='#000';cx.lineWidth=7;cx.lineJoin='round';cx.strokeText(score,0,0);
-  const scG=cx.createLinearGradient(0,-R,0,R);scG.addColorStop(0,'#FFF');scG.addColorStop(.5,'#FFB3E6');scG.addColorStop(1,'#FF69B4');
+  cx.save();cx.translate(W/2,scoreY);cx.scale(sc,sc);
+  cx.font=`900 ${Math.round(R*2.8)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.strokeStyle='#000';cx.lineWidth=9;cx.lineJoin='round';cx.strokeText(score,0,0);
+  const scG=cx.createLinearGradient(0,-R*1.5,0,R*1.5);
+  scG.addColorStop(0,'#FF6EB4');scG.addColorStop(.5,'#FFE040');scG.addColorStop(1,'#FF69B4');
   cx.fillStyle=scG;cx.fillText(score,0,0);cx.restore();
-  // Shots remaining — pulses red+scale when ≤5
-  const shotsLeft=Math.max(0,levelCfg.shots-shots);
-  const urgent=shotsLeft<=5&&shotsLeft>0;
+
+  // ── MIDDLE SECTION: Level (left) | Shots (right) ──
+  const midY=barH*.65;
+  // Level name
+  cx.font=`bold ${Math.round(R*1.0)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
+  cx.strokeStyle='#000';cx.lineWidth=5;cx.strokeText(`Lv.${currentLevel+1} ${levelCfg.name}`,pad+R*.6,midY);
+  cx.fillStyle='#FFE040';cx.fillText(`Lv.${currentLevel+1} ${levelCfg.name}`,pad+R*.6,midY);
+  // Shots remaining — pulses when ≤5
   const shotPulse=urgent?1+Math.sin(t*.018)*.12:1;
-  cx.save();cx.translate(W-pad-R*.4,row1Y);cx.scale(shotPulse,shotPulse);
-  cx.font=`bold ${Math.round(R*.62)}px Arial`;cx.textAlign='right';cx.textBaseline='middle';
-  cx.fillStyle=urgent?`rgba(255,${Math.round(60+hudPulse*40)},60,1)`:'#88EEFF';
-  cx.fillText(`${shotsLeft} shots`,0,0);
+  cx.save();cx.translate(W-pad-R*.6,midY);cx.scale(shotPulse,shotPulse);
+  cx.font=`bold ${Math.round(R*1.0)}px Arial Black`;cx.textAlign='right';cx.textBaseline='middle';
+  cx.strokeStyle='#000';cx.lineWidth=5;
+  const shotCol=urgent?`rgba(255,${Math.round(60+hudPulse*40)},60,1)`:'#88EEFF';
+  cx.strokeText(`SHOTS: ${shotsLeft}`,0,0);
+  cx.fillStyle=shotCol;cx.fillText(`SHOTS: ${shotsLeft}`,0,0);
   cx.restore();
 
-  // ── ROW 2: TARGET PROGRESS BAR ──
-  const tpY=barH*.46,tpX=pad,tpW=W-pad*2,tpH=R*.42;
-  const lvlScore=score-levelStartScore;
-  const tPct=Math.min(1,lvlScore/levelCfg.targetScore);
-  const nearTarget=tPct>=.8;
-  cx.save();
-  cx.fillStyle='rgba(0,0,0,0.35)';cx.beginPath();cx.roundRect(tpX,tpY,tpW,tpH,tpH/2);cx.fill();
-  if(tPct>0){
-    const tg=cx.createLinearGradient(tpX,0,tpX+tpW*tPct,0);
-    if(tPct>=1){tg.addColorStop(0,'#00FF88');tg.addColorStop(1,'#FFE040');}
-    else if(nearTarget){tg.addColorStop(0,'#00DD66');tg.addColorStop(1,'#AAFFCC');}
-    else{tg.addColorStop(0,'#00AA55');tg.addColorStop(1,'#FFE040');}
-    cx.fillStyle=tg;cx.beginPath();cx.roundRect(tpX,tpY,tpW*tPct,tpH,tpH/2);cx.fill();
-    // Gloss
-    cx.fillStyle='rgba(255,255,255,0.22)';cx.beginPath();cx.roundRect(tpX+2,tpY+1,tpW*tPct*.55,tpH*.42,tpH*.2);cx.fill();
+  // ── BOTTOM SECTION: THICK COMBO METER ──
+  const cmY=barH-R*1.3,cmX=pad,cmW=W-pad*2,cmH=R*1.1;
+  const fill=Math.min(1,animators.combo.current);
+  // Background
+  cx.save();cx.fillStyle='rgba(0,0,0,0.4)';cx.beginPath();cx.roundRect(cmX,cmY,cmW,cmH,cmH/2);cx.fill();
+  // Filled portion with gradient
+  if(fill>0){
+    const mc=fill>.7?'#FF2200':fill>.4?'#FF8800':'#FF6EB4';
+    const mg=cx.createLinearGradient(cmX,0,cmX+cmW*fill,0);
+    mg.addColorStop(0,mc);mg.addColorStop(1,'#FFE040');
+    cx.fillStyle=mg;cx.beginPath();cx.roundRect(cmX,cmY,cmW*fill,cmH,cmH/2);cx.fill();
+    // Gloss shine
+    cx.fillStyle='rgba(255,255,255,0.25)';cx.beginPath();cx.roundRect(cmX+2,cmY+2,cmW*fill*.55,cmH*.35,cmH*.2);cx.fill();
   }
-  // Near-target glow pulse
-  if(nearTarget&&tPct<1){const gp=Math.sin(t*.01)*.5+.5;cx.strokeStyle=`rgba(0,255,136,${gp*.5})`;cx.lineWidth=2.5;cx.beginPath();cx.roundRect(tpX,tpY,tpW*tPct,tpH,tpH/2);cx.stroke();}
-  cx.font=`bold ${Math.round(R*.46)}px Arial`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.fillStyle=tPct>=1?'#003322':'rgba(255,255,255,0.88)';
-  cx.fillText(tPct>=1?'✓ TARGET HIT!':`${lvlScore} / ${levelCfg.targetScore}`,W/2,tpY+tpH/2);
-  cx.restore();
-
-  // ── ROW 3: BEST pill (compact) ──
-  cx.save();
-  const bNum=`${hiScore}`;
-  cx.font=`900 ${Math.round(R*.72)}px Arial Black`;cx.textAlign='left';cx.textBaseline='middle';
-  const bLabelW=cx.measureText('BEST ').width;
-  cx.font=`900 ${Math.round(R*1.05)}px Arial Black`;
-  const bNumW=cx.measureText(bNum).width;
-  const pillH=R*1.55,pillX=W/2,pillY=barH*.68;
-  const pillW=bLabelW+bNumW+R*1.6;
-  const pillBG=cx.createLinearGradient(pillX-pillW/2,pillY,pillX+pillW/2,pillY);
-  pillBG.addColorStop(0,'rgba(20,0,40,0.9)');pillBG.addColorStop(.5,'rgba(40,0,70,0.95)');pillBG.addColorStop(1,'rgba(20,0,40,0.9)');
-  cx.fillStyle=pillBG;cx.beginPath();cx.roundRect(pillX-pillW/2,pillY-pillH/2,pillW,pillH,pillH/2);cx.fill();
-  const pillPerim=2*(pillW-pillH)+Math.PI*pillH;
-  const rainbowCols=['#FF6EB4','#FF8C00','#FFE040','#00E5A0','#29B6F6','#CE93D8'];
-  const segLen=pillPerim/6,offset=((t*.08)%pillPerim);
-  cx.lineWidth=2.5;cx.lineJoin='round';cx.lineCap='round';
-  rainbowCols.forEach((col,i)=>{cx.strokeStyle=col;cx.setLineDash([segLen*.72,pillPerim-segLen*.72]);cx.lineDashOffset=-(offset-i*segLen);cx.beginPath();cx.roundRect(pillX-pillW/2,pillY-pillH/2,pillW,pillH,pillH/2);cx.stroke();});
-  cx.setLineDash([]);
-  const totalW=bLabelW+bNumW,startX=pillX-totalW/2;
-  cx.font=`900 ${Math.round(R*.72)}px Arial Black`;cx.textAlign='left';
-  cx.strokeStyle='#7B0037';cx.lineWidth=4;cx.strokeText('BEST ',startX,pillY+R*.06);
-  cx.fillStyle='#FFD700';cx.fillText('BEST ',startX,pillY+R*.06);
-  cx.font=`900 ${Math.round(R*1.05)}px Arial Black`;
-  cx.fillStyle='#FFF';cx.fillText(bNum,startX+bLabelW,pillY+R*.06);
-  cx.restore();
-
-  // ── ROW 4: COMBO METER + color dots ──
-  const cmY=barH-R*.7,cmX=pad,cmW=W-pad*2,cmH=R*1.05,fill=Math.min(1,animators.combo.current);
-  cx.save();cx.fillStyle='rgba(0,0,0,0.3)';cx.beginPath();cx.roundRect(cmX,cmY,cmW,cmH,cmH/2);cx.fill();
-  if(fill>0){const mc=fill>.7?'#FF2200':fill>.4?'#FF8800':'#FF6EB4';const mg=cx.createLinearGradient(cmX,0,cmX+cmW*fill,0);mg.addColorStop(0,mc);mg.addColorStop(1,'#FFE040');cx.fillStyle=mg;cx.beginPath();cx.roundRect(cmX,cmY,cmW*fill,cmH,cmH/2);cx.fill();cx.fillStyle='rgba(255,255,255,0.2)';cx.beginPath();cx.roundRect(cmX+2,cmY+1,cmW*fill*.55,cmH*.38,cmH*.2);cx.fill();}
-  const cdY=cmY+cmH+R*.42;
-  for(let i=0;i<6;i++){const dx=pad*.5+i*R*.9,filled=i<actPal.length;cx.fillStyle=filled?actPal[i].c:'rgba(255,255,255,0.1)';cx.beginPath();cx.arc(dx,cdY,R*.16,0,Math.PI*2);cx.fill();}
+  // Border glow
+  if(fill>.5){const gp=Math.sin(t*.012)*.5+.5;cx.strokeStyle=`rgba(255,${Math.round(100+fill*155)},0,${0.5+gp*.3})`;cx.lineWidth=2.5;cx.beginPath();cx.roundRect(cmX,cmY,cmW*fill,cmH,cmH/2);cx.stroke();}
   cx.restore();
 
   // ── FREEZE ACTIVE BADGE ──
