@@ -76,11 +76,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     )
 
     // Cleanup blob URL when EditorLayer unmounts (safe after DualPostScreen closes)
-    // Also cancel the 60s safety timeout from useCamera — we own the blob now.
     useEffect(() => {
-        if (imageData?._blobSafetyTimeout) {
-            clearTimeout(imageData._blobSafetyTimeout)
-        }
         return () => {
             if (imageData?.objectURL) {
                 URL.revokeObjectURL(imageData.objectURL)

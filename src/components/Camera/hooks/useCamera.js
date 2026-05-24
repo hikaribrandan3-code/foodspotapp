@@ -1,15 +1,10 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
 
 /**
- * useCamera Hook - CamTech v2.2 (Fast Preview + Background Upgrade)
+ * useCamera Hook - CamTech v2.1 (Fast Preview + Background Upgrade)
  * Phase 1: Minimal constraints for instant preview
  * Phase 2: Background high-res upgrade via applyConstraints or re-negotiation
  * Color Science: display-p3 enabled.
- *
- * v2.2 fixes:
- *  - Blob URL safety net (auto-revoke after 60s if consumer doesn't claim it)
- *  - Zoom debounce (coalesce pinch events, apply constraint once per 50ms)
- *  - Adaptive JPEG quality (resolution-aware compression)
  */
 
 export const FILTER_STYLES = {
@@ -36,7 +31,6 @@ export function useCamera() {
     const [zoomLevel, setZoomLevel] = useState(1)
     const [zoomSupported, setZoomSupported] = useState(false)
     const zoomRangeRef = useRef({ min: 1, max: 1 })
-    const zoomDebounceRef = useRef(null) // FIX #2: coalesce pinch-to-zoom constraint calls
 
     const probeCapabilities = useCallback(async (videoTrack) => {
         if (!videoTrack?.getCapabilities) return
@@ -172,23 +166,13 @@ export function useCamera() {
         })
     }, [])
 
-    // FIX #2: Debounced zoom — update UI immediately but coalesce hardware
-    // constraint calls to once per 50ms. Prevents Android from choking on
-    // rapid applyConstraints() during pinch gestures.
     const setZoom = useCallback((newZoom) => {
         if (!zoomSupported || !trackRef.current) return
         const clampedZoom = Math.max(zoomRangeRef.current.min, Math.min(newZoom, zoomRangeRef.current.max))
-
-        // UI feedback is instant — no debounce on the React state
-        setZoomLevel(clampedZoom)
-
-        // Hardware constraint is debounced: clear any pending call, schedule new one
-        clearTimeout(zoomDebounceRef.current)
-        zoomDebounceRef.current = setTimeout(() => {
-            try {
-                trackRef.current?.applyConstraints({ advanced: [{ zoom: clampedZoom }] })
-            } catch (e) { /* constraint failure is non-fatal */ }
-        }, 50)
+        try {
+            trackRef.current.applyConstraints({ advanced: [{ zoom: clampedZoom }] })
+            setZoomLevel(clampedZoom)
+        } catch (e) { }
     }, [zoomSupported])
 
     const applyFlash = useCallback(async (mode) => {
@@ -272,47 +256,24 @@ export function useCamera() {
 
         if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
 
-        // FIX #3: Adaptive JPEG quality — preserve detail at high res,
-        // save bandwidth at low res. Falls back to 0.95 on any edge case.
-        const pixels = canvas.width * canvas.height
-        let quality = 0.95 // default — matches previous behavior exactly
-        if (pixels > 8_000_000) quality = 0.98      // 4K+ (3840×2160 = 8.3M) — preserve detail
-        else if (pixels < 921_600) quality = 0.92    // 720p or lower (1280×720 = 0.9M) — save bytes
-
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => {
-                if (!blob) {
+                if (blob) {
+                    resolve({
+                        blob,
+                        objectURL: URL.createObjectURL(blob),
+                        width: canvas.width,
+                        height: canvas.height,
+                        aspectRatio: canvas.width / canvas.height
+                    })
+                } else {
                     reject(new Error('Failed to create image blob'))
-                    return
                 }
-
-                const objectURL = URL.createObjectURL(blob)
-
-                // FIX #1: Blob URL safety net — if nothing revokes this URL
-                // within 60s (e.g. capture succeeded but EditorLayer never
-                // mounted due to a crash), auto-revoke to prevent RAM leak.
-                // EditorLayer's own cleanup (revokeObjectURL on unmount) fires
-                // well before 60s in normal flow, so this is purely defensive.
-                const safetyTimeout = setTimeout(() => {
-                    try { URL.revokeObjectURL(objectURL) } catch (_) { }
-                }, 60_000)
-
-                resolve({
-                    blob,
-                    objectURL,
-                    width: canvas.width,
-                    height: canvas.height,
-                    aspectRatio: canvas.width / canvas.height,
-                    _blobSafetyTimeout: safetyTimeout // EditorLayer can clear if needed
-                })
-            }, 'image/jpeg', quality)
+            }, 'image/jpeg', 0.95)
         })
     }, [flashMode, applyFlash, facingMode, selectedFilter, applyPixelFilter])
 
     const stopCamera = useCallback(() => {
-        // Clear any pending zoom constraint call
-        clearTimeout(zoomDebounceRef.current)
-
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop())
             streamRef.current = null
