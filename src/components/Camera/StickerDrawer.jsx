@@ -384,6 +384,20 @@ const STICKERS = [
     { id: 'catcabribari2_04', type: 'image', src: '/assets/images/catcabribari2/sticker_04.png' },
     { id: 'catcabribari2_05', type: 'image', src: '/assets/images/catcabribari2/sticker_05.png' },
     { id: 'catcabribari2_06', type: 'image', src: '/assets/images/catcabribari2/sticker_06.png' },
+    // === CAT ELEPHANT PACK ===
+    { id: 'catelephant1_01', type: 'image', src: '/assets/images/catelephant1/sticker_01.png' },
+    { id: 'catelephant1_02', type: 'image', src: '/assets/images/catelephant1/sticker_02.png' },
+    { id: 'catelephant1_03', type: 'image', src: '/assets/images/catelephant1/sticker_03.png' },
+    { id: 'catelephant1_04', type: 'image', src: '/assets/images/catelephant1/sticker_04.png' },
+    { id: 'catelephant1_05', type: 'image', src: '/assets/images/catelephant1/sticker_05.png' },
+    { id: 'catelephant1_06', type: 'image', src: '/assets/images/catelephant1/sticker_06.png' },
+    // === JESUS STICKERS PACK ===
+    { id: 'jesusstickers_01', type: 'image', src: '/assets/images/jesusstickers/sticker_01.png' },
+    { id: 'jesusstickers_02', type: 'image', src: '/assets/images/jesusstickers/sticker_02.png' },
+    { id: 'jesusstickers_03', type: 'image', src: '/assets/images/jesusstickers/sticker_03.png' },
+    { id: 'jesusstickers_04', type: 'image', src: '/assets/images/jesusstickers/sticker_04.png' },
+    { id: 'jesusstickers_05', type: 'image', src: '/assets/images/jesusstickers/sticker_05.png' },
+    { id: 'jesusstickers_06', type: 'image', src: '/assets/images/jesusstickers/sticker_06.png' },
 ]
 
 

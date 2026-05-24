@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+    [data-composition-id="tt-journey"] { width: 100%; height: 100%; }
+    .frame { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 100px 40px; text-align: center; }
+    .frame-step { background: linear-gradient(135deg, #15803D 0%, #006C49 100%); }
+    h1 { font-family: 'Outfit', sans-serif; font-size: 52px; font-weight: 700; color: #FFF; line-height: 1.3; }
+    .step-label { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .app-screenshot { width: 100%; max-width: 320px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; margin: 40px auto; }
+    .app-screenshot img { width: 100%; height: auto; display: block; }
+    p { font-size: 18px; color: rgba(255,255,255,0.9); line-height: 1.6; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="tt-journey" data-width="1080" data-height="1920" data-start="0" data-duration="10" data-track-index="1" style="position: relative;">
+    <div class="frame frame-step" id="s1">
+      <p class="step-label">Paso 1</p>
+      <h1>Elige lo que quieres</h1>
+      <div class="app-screenshot">
+        <img src="./foodspotcustomermenu.png" alt="Menu" />
+      </div>
+    </div>
+
+    <div class="frame frame-step" id="s2" style="opacity: 0;">
+      <p class="step-label">Paso 2</p>
+      <h1>Paga en segundos</h1>
+      <div class="app-screenshot">
+        <img src="./foodspotcheckoutpage.png" alt="Checkout" />
+      </div>
+    </div>
+
+    <div class="frame frame-step" id="s3" style="opacity: 0;">
+      <p class="step-label">Paso 3</p>
+      <h1>Recibe tu orden</h1>
+      <div class="app-screenshot">
+        <img src="./foodspotugcrecieptmode.png" alt="Receipt" />
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#s1 .step-label", { opacity: 0, y: 20, duration: 0.4, ease: "power2.out" }, 0.1);
+      tl.from("#s1 h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 0.3);
+      tl.from("#s1 .app-screenshot", { opacity: 0, scale: 0.9, duration: 0.7, ease: "back.out" }, 0.9);
+
+      tl.to("#s1", { opacity: 0, duration: 0.4 }, 3.2);
+      tl.to("#s2", { opacity: 1, duration: 0.4 }, 3.3);
+      tl.from("#s2 .step-label", { opacity: 0, y: 20, duration: 0.4, ease: "power2.out" }, 3.4);
+      tl.from("#s2 h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 3.6);
+      tl.from("#s2 .app-screenshot", { opacity: 0, scale: 0.9, duration: 0.7, ease: "back.out" }, 4.2);
+
+      tl.to("#s2", { opacity: 0, duration: 0.4 }, 6.4);
+      tl.to("#s3", { opacity: 1, duration: 0.4 }, 6.5);
+      tl.from("#s3 .step-label", { opacity: 0, y: 20, duration: 0.4, ease: "power2.out" }, 6.6);
+      tl.from("#s3 h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 6.8);
+      tl.from("#s3 .app-screenshot", { opacity: 0, scale: 0.9, duration: 0.7, ease: "back.out" }, 7.4);
+
+      window.__timelines["tt-journey"] = tl;
+      document.addEventListener("DOMContentLoaded", function() { tl.play(); });
+    </script>
+  </div>
+</body>
+</html>

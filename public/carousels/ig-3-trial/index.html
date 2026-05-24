@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1080, height=1350" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 1080px; height: 1350px; overflow: hidden; background: #000; }
+    [data-composition-id="ig-trial"] { width: 100%; height: 100%; }
+    .frame { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 40px; text-align: center; }
+    .frame-offer { background: linear-gradient(135deg, #006C49 0%, #004d38 100%); }
+    .frame-pricing { background: #F8F9FF; }
+    h1 { font-family: 'Outfit', sans-serif; font-size: 56px; font-weight: 700; color: #FFF; line-height: 1.2; }
+    .frame-pricing h1 { color: #151C26; }
+    .tagline { font-size: 18px; color: rgba(255,255,255,0.9); margin: 20px 0; }
+    .frame-pricing .tagline { color: #151C26; }
+    .price { font-size: 48px; font-weight: 900; color: #FFF; margin: 20px 0; }
+    .frame-pricing .price { color: #15803D; }
+    .features { text-align: left; max-width: 400px; margin: 30px auto; font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.8; }
+    .frame-pricing .features { color: #151C26; }
+    .features li { margin: 8px 0; }
+    .cta-btn { background: #15803D; color: #FFF; padding: 16px 40px; border-radius: 50px; font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 700; border: none; margin-top: 30px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div data-composition-id="ig-trial" data-width="1080" data-height="1350" data-start="0" data-duration="10" data-track-index="1" style="position: relative;">
+    <div class="frame frame-offer" id="offer">
+      <h1>14 días GRATIS</h1>
+      <p class="tagline">Sin tarjeta de crédito<br/>Sin sorpresas</p>
+      <button class="cta-btn">Comienza Ahora →</button>
+    </div>
+
+    <div class="frame frame-pricing" id="pricing" style="opacity: 0;">
+      <h1>Plan Pro</h1>
+      <p class="price">$25/mes</p>
+      <ul class="features" style="list-style: none; padding: 0;">
+        <li>✓ Pedidos ilimitados</li>
+        <li>✓ Panel en tiempo real</li>
+        <li>✓ Mercado Pago integrado</li>
+        <li>✓ 0% comisión</li>
+        <li>✓ Cámara UGC incluida</li>
+      </ul>
+      <button class="cta-btn">Suscribirse Ahora →</button>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      tl.from("#offer h1", { opacity: 0, y: 40, duration: 0.7, ease: "power3.out" }, 0.2);
+      tl.from("#offer p", { opacity: 0, y: 30, duration: 0.6, ease: "power2.out" }, 0.7);
+      tl.from("#offer .cta-btn", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out" }, 1.1);
+
+      tl.to("#offer", { opacity: 0, duration: 0.4 }, 4.5);
+      tl.to("#pricing", { opacity: 1, duration: 0.5 }, 4.6);
+      tl.from("#pricing h1", { opacity: 0, y: 30, duration: 0.6, ease: "power3.out" }, 4.8);
+      tl.from("#pricing .price", { opacity: 0, y: 25, duration: 0.6, ease: "power3.out" }, 5.2);
+      tl.from("#pricing .features li", { opacity: 0, x: -30, duration: 0.5, ease: "power2.out", stagger: 0.1 }, 5.6);
+      tl.from("#pricing .cta-btn", { opacity: 0, scale: 0.8, duration: 0.5, ease: "back.out" }, 6.8);
+
+      window.__timelines["ig-trial"] = tl;
+      document.addEventListener("DOMContentLoaded", function() { tl.play(); });
+    </script>
+  </div>
+</body>
+</html>
