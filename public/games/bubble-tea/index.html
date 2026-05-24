@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0,user-scalable=no">
 <title>Bubble Tea Blast</title>
-<!-- v4.0 - performance optimized: shadowBlur removal, particle caps, swap-and-pop arrays -->
+<!-- v5.0 - gameplay overhaul: level system, danger line, smart ceiling, power-up fixes -->
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a0030;display:flex;justify-content:center;align-items:center;width:100vw;height:100vh;overflow:hidden;touch-action:none}#gc{display:block;touch-action:none}</style>
 </head>
 <body>
@@ -106,7 +106,11 @@ const LEVELS=[
 ];
 
 
+let currentLevel=0;
 let actPal=[...PALETTE.slice(0,MAX_COLORS_START)];
+let missedShots=0;
+let freezeShots=0;
+let lastPowerUpCount=0;
 
 function rndCol(isPowerUp=false){
   if(isPowerUp){
@@ -118,7 +122,12 @@ function rndCol(isPowerUp=false){
     if(r<.80) return COL_FIREBALL;
     return COL_FREEZE;
   }
-  // Normal bubble - no random power-up chance here (handled by pity timer)
+  // Normal bubble — pity timer: guarantee power-up every 12 pops
+  lastPowerUpCount++;
+  if(lastPowerUpCount>=12){
+    lastPowerUpCount=0;
+    return rndCol(true);
+  }
   return actPal[Math.floor(Math.random()*actPal.length)];
 }
 
@@ -258,6 +267,17 @@ function drawBG(t){
   cx.fillStyle='#FFE040'; for(let i=0;i<7;i++) drawStar((i+1)*W/8,GY-R*.8,5,R*.38,R*.18);
   const fg=cx.createLinearGradient(0,CNY+R*3,0,H); fg.addColorStop(0,bot); fg.addColorStop(1,'#1A0030');
   cx.fillStyle=fg; cx.fillRect(0,CNY+R*3,W,H);
+  // DANGER LINE (phase 2)
+  const dangerY=CNY-R*2;
+  let lowestBubbleY=-Infinity;
+  for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])lowestBubbleY=Math.max(lowestBubbleY,grid[r][c].y);
+  const distToDanger=lowestBubbleY>-Infinity?dangerY-lowestBubbleY:Infinity;
+  const dangerAlpha=distToDanger<R*3?0.8:distToDanger<R*6?0.5:0.2;
+  const dangerCol=distToDanger<R?'#FF0000':distToDanger<R*3?'#FF6600':'#FFE040';
+  cx.save();cx.globalAlpha=dangerAlpha;cx.setLineDash([R*.6,R*.6]);cx.strokeStyle=dangerCol;cx.lineWidth=2.5;
+  cx.beginPath();cx.moveTo(GX-R,dangerY);cx.lineTo(GX+NC*R*2+R,dangerY);cx.stroke();
+  if(distToDanger<R){cx.globalAlpha=0.6+Math.sin(t*.02)*0.2;cx.strokeStyle='#FF0000';cx.lineWidth=4.5;cx.beginPath();cx.moveTo(GX-R,dangerY);cx.lineTo(GX+NC*R*2+R,dangerY);cx.stroke();}
+  cx.restore();
   if(flashAlpha>0){ cx.save(); cx.globalAlpha=flashAlpha; cx.fillStyle=flashCol; cx.fillRect(0,0,W,H); cx.restore(); flashAlpha=Math.max(0,flashAlpha-.04); }
 }
 
@@ -429,7 +449,7 @@ function colsInRow(r){return NC;}
 function bobaXY(r,c){return {x:GX+c*R*2+rowOX(r),y:GY+r*R*1.732+ceilOff};}
 function isVal(r,c){if(r<0||r>=ROWS)return false;return c>=0&&c<colsInRow(r);}
 function getNbrs(r,c){ const e=r%2===0,off=e?[[-1,-1],[-1,0],[0,-1],[0,1],[1,-1],[1,0]]:[[-1,0],[-1,1],[0,-1],[0,1],[1,0],[1,1]]; return off.map(([dr,dc])=>({r:r+dr,c:c+dc})).filter(n=>isVal(n.r,n.c)&&grid[n.r][n.c]); }
-function findMatch(sr,sc,ct){ const res=[],vis=new Set(),q=[{r:sr,c:sc}]; while(q.length){const {r,c}=q.shift(),k=`${r},${c}`;if(vis.has(k))continue;vis.add(k);const b=grid[r][c];if(!b)continue;const m=ct.name==='rainbow'||ct.name==='lightning'||b.ct.name==='rainbow'||ct.name===b.ct.name;if(m){res.push({r,c,b});getNbrs(r,c).forEach(n=>{if(!vis.has(`${n.r},${n.c}`))q.push(n);});}}return res; }
+function findMatch(sr,sc,ct){ const res=[],vis=new Set(),q=[{r:sr,c:sc}]; while(q.length){const {r,c}=q.shift(),k=`${r},${c}`;if(vis.has(k))continue;vis.add(k);const b=grid[r][c];if(!b)continue;const m=ct.name==='rainbow'||b.ct.name==='rainbow'||ct.name===b.ct.name;if(m){res.push({r,c,b});getNbrs(r,c).forEach(n=>{if(!vis.has(`${n.r},${n.c}`))q.push(n);});}}return res; }
 function findFloat(){ const vis=new Set(),q=[]; for(let c=0;c<(grid[0]||[]).length;c++)if(grid[0][c]){q.push({r:0,c});vis.add(`0,${c}`);} while(q.length){const {r,c}=q.shift();getNbrs(r,c).forEach(n=>{const k=`${n.r},${n.c}`;if(!vis.has(k)){vis.add(k);q.push(n);}});} const fl=[]; for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c]&&!vis.has(`${r},${c}`))fl.push({r,c,b:grid[r][c]}); return fl; }
 function findSpot(x,y){
   let best=null,bestD=Infinity;
@@ -445,7 +465,8 @@ function updPos(){for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++
 function updateLowestRow(){trackedLowestRow=0;for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++)if(grid[r][c])trackedLowestRow=Math.max(trackedLowestRow,r);}
 function initGrid(){
   grid=[];
-  const sR=4; // Classic: fixed 4 starting rows
+  const levelCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+  const sR=levelCfg.rows;
   for(let r=0;r<ROWS;r++){grid[r]=[];const cols=colsInRow(r);for(let c=0;c<cols;c++){if(r<sR){const p=bobaXY(r,c);grid[r][c]=new Boba(rndCol(),p.x,p.y);}else grid[r][c]=null;}}
   highlightDirty=true;
 }
@@ -649,13 +670,20 @@ function drawUI(t){
   cx.strokeStyle=`rgba(255,${Math.round(100+hudPulse*80)},0,${0.75+hudPulse*.25})`;
   cx.lineWidth=3+hudPulse*1.5;
   cx.beginPath();cx.roundRect(pad*.5,R*.3,W-pad,barH-R*.5,R*.6);cx.stroke();
-  // SCORE
+  // LEVEL NAME (top-left)
+  const levelCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+  cx.font=`bold ${Math.round(R*.65)}px Arial`;cx.textAlign='left';cx.textBaseline='middle';
+  cx.fillStyle='#FFE040';cx.fillText(`${currentLevel+1}. ${levelCfg.name}`,pad+R*.3,barH*.28);
+  // SCORE (center)
   const sc=scoreBounce>0?1+scoreBounce*.3:1;if(scoreBounce>0)scoreBounce=Math.max(0,scoreBounce-.08);
   cx.save();cx.translate(W/2,barH*.28);cx.scale(sc,sc);
   cx.font=`900 ${Math.round(R*1.75)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
   cx.strokeStyle='#000';cx.lineWidth=7;cx.lineJoin='round';cx.strokeText(score,0,0);
   const scG=cx.createLinearGradient(0,-R,0,R);scG.addColorStop(0,'#FFF');scG.addColorStop(.5,'#FFB3E6');scG.addColorStop(1,'#FF69B4');
   cx.fillStyle=scG;cx.fillText(score,0,0);cx.restore();
+  // SHOTS (top-right)
+  cx.font=`bold ${Math.round(R*.65)}px Arial`;cx.textAlign='right';cx.textBaseline='middle';
+  cx.fillStyle='#88EEFF';cx.fillText(`${shots}/${levelCfg.shots}`,W-pad-R*.3,barH*.28);
   // BEST - Glowing Banner Pill
   cx.save();
   const bNum=`${hiScore}`;
@@ -931,6 +959,8 @@ function doFreeze(){
   flashAlpha=.4;flashCol='#88EEFF';playFX('freeze');
   ftexts.push(new FloatText(W/2,H*.44,'❄️ FROZEN! ❄️','#88EEFF',true));
   shockwaves.push(new Shockwave(CNX,CNY,'rgba(136,238,255,1)'));
+  freezeShots=5; // Pause ceiling for 5 shots
+  Haptics.fire(Haptics.freeze,true);
 }
 
 function cascadeDrop(sources,bonusPts){
@@ -948,6 +978,7 @@ function cascadeDrop(sources,bonusPts){
       for(let j=0;j<6;j++)parts.push(new Particle(f.b.x,f.b.y,f.b.ct.c||'#FFF'));
       rings.push(new Ring(f.b.x,f.b.y,f.b.ct.c||'#FFF'));
       grid[f.r][f.c]=null;
+      lastPowerUpCount++; // Pity timer increment
       playFX('pop');
     }});
   });
@@ -984,8 +1015,7 @@ function onStop(p){
   let madeMatch=false;
   if(!spot){
     // Safety: if no spot found, just clear projectile and continue
-    shots++;shotsSinceCeiling++;
-    if(shotsSinceCeiling>=6){dropCeiling();shotsSinceCeiling=0;}
+    shots++;
     if(checkGO())endGame();
     return;
   }
@@ -1029,21 +1059,34 @@ function onStop(p){
   }
   shots++;
   highlightDirty=true;
-  
-  // Classic: ceiling drops every 6 shots
-  shotsSinceCeiling++;
-  if(shotsSinceCeiling>=6){
-    dropCeiling();
-    shotsSinceCeiling=0;
+
+  // PHASE 3: Smart ceiling — only drops on misses, with freeze pause (phase 4)
+  if(!madeMatch){
+    missedShots++;
+  } else {
+    missedShots=0; // Reset on successful match
   }
-  
-  // Board clear bonus
+
+  if(freezeShots>0){
+    freezeShots--;
+  } else if(missedShots>=CEILING_THRESHOLD){
+    dropCeiling();
+    missedShots=0;
+  }
+
+  // Board clear → level transition
   if(checkObjective()){
     score+=1000;scoreBounce=1;
     ftexts.push(new FloatText(W/2,H*.44,'BOARD CLEAR! +1000','#FFE040',true));
     playFX('combo');Haptics.fire(Haptics.levelClear,true);
     for(let i=0;i<60;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,Math.random()*H*.5));
-    dropCeiling();
+    // Level transition (phase 1)
+    setTimeout(()=>{
+      currentLevel++;
+      if(currentLevel>=LEVELS.length){currentLevel=0;} // Loop back
+      resetGame();
+    },1200);
+    return; // Don't check game over yet
   } else if(checkGO())endGame();
 }
 
@@ -1074,8 +1117,10 @@ function endGame(){
   setTimeout(()=>{gameState='gameover';},1200);
 }
 function resetGame(){
-  score=0;shots=0;ceilOff=0;gameState='playing';combo=0;shotsSinceCeiling=0;
-  actPal=[...PALETTE.slice(0,MAX_COLORS_START)];cInt=CI_BASE;
+  score=0;shots=0;ceilOff=0;gameState='playing';combo=0;missedShots=0;freezeShots=0;lastPowerUpCount=0;
+  const levelCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+  actPal=[...PALETTE.slice(0,levelCfg.colors)]; // Phase 1: colors scale with level
+  cInt=CI_BASE;
   parts=[];rings=[];confettiArr=[];ftexts=[];sparkArr=[];lbolts=[];shockwaves=[];comboStack=[];pendingActions=[];
   proj=null;aimAngle=-Math.PI/2;mascot=null;
   comboMeter=0;comboMeterTarget=0;bgComboPct=0;
