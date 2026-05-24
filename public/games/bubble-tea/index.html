@@ -808,10 +808,9 @@ function drawPause(){
 }
 function drawLevelClear(t){
   cx.save();
-  // Vibrant overlay with gradient
-  const ov=cx.createLinearGradient(0,0,0,H);
-  ov.addColorStop(0,'rgba(20,100,60,0.85)');ov.addColorStop(.5,'rgba(0,60,40,0.92)');ov.addColorStop(1,'rgba(0,20,10,0.95)');
-  cx.fillStyle=ov;cx.fillRect(0,0,W,H);
+  // Draw background image if loaded, otherwise use gradient
+  if(levelClearImg && levelClearImg.complete){cx.drawImage(levelClearImg,0,0,W,H);}
+  else{const ov=cx.createLinearGradient(0,0,0,H);ov.addColorStop(0,'rgba(20,100,60,0.85)');ov.addColorStop(.5,'rgba(0,60,40,0.92)');ov.addColorStop(1,'rgba(0,20,10,0.95)');cx.fillStyle=ov;cx.fillRect(0,0,W,H);}
   const cx2=W/2,lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
   const pw=Math.min(W-R*2,380);
   const lvlScore=score-levelStartScore;
@@ -879,8 +878,8 @@ function drawLevelClear(t){
   cx.fillStyle=bg;cx.beginPath();cx.roundRect(cx2-btnW/2,btnY,btnW,btnH,R*.8);cx.fill();
   cx.fillStyle='rgba(255,255,255,0.3)';cx.beginPath();cx.roundRect(cx2-btnW/2+R*.3,btnY+R*.25,btnW-R*.6,btnH*.35,R*.55);cx.fill();
   cx.font=`900 ${Math.round(R*1.45)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.strokeStyle='rgba(0,0,0,0.7)';cx.lineWidth=6;cx.strokeText(isLast?'▶ PLAY AGAIN':'▶ NEXT LEVEL',cx2,btnY+btnH*.52);
-  cx.fillStyle='#000';cx.fillText(isLast?'▶ PLAY AGAIN':'▶ NEXT LEVEL',cx2,btnY+btnH*.52);
+  cx.strokeStyle='rgba(0,0,0,0.7)';cx.lineWidth=6;cx.strokeText(isLast?'▶ PLAY AGAIN':'▶ CONTINUE',cx2,btnY+btnH*.52);
+  cx.fillStyle='#000';cx.fillText(isLast?'▶ PLAY AGAIN':'▶ CONTINUE',cx2,btnY+btnH*.52);
   cx.restore();
   cx.restore();
 }
@@ -959,28 +958,13 @@ function drawLevelFail(t){
 }
 function drawGameOver(t){
   cx.save();
-  // Vibrant colorful overlay
-  const ov=cx.createLinearGradient(0,0,0,H);
-  ov.addColorStop(0,'rgba(80,20,100,0.88)');ov.addColorStop(.5,'rgba(40,10,60,0.92)');ov.addColorStop(1,'rgba(20,0,30,0.96)');
-  cx.fillStyle=ov;cx.fillRect(0,0,W,H);
+  // Draw background image if loaded, otherwise use gradient
+  if(gameOverImg && gameOverImg.complete){cx.drawImage(gameOverImg,0,0,W,H);}
+  else{const ov=cx.createLinearGradient(0,0,0,H);ov.addColorStop(0,'rgba(80,20,100,0.88)');ov.addColorStop(.5,'rgba(40,10,60,0.92)');ov.addColorStop(1,'rgba(20,0,30,0.96)');cx.fillStyle=ov;cx.fillRect(0,0,W,H);}
 
   const cx2=W/2,pw=Math.min(W-R*2,380);
 
-  // ── GAME OVER TITLE - MASSIVE & COLORFUL ──
-  const goY=H*.16;
-  cx.save();cx.translate(cx2,goY);
-  const goBounce=1+Math.sin(t*.003)*.05;cx.scale(goBounce,goBounce);
-  cx.font=`900 ${Math.round(R*3.8)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  // Outline
-  cx.strokeStyle='#000';cx.lineWidth=16;cx.lineJoin='round';
-  cx.strokeText('GAME OVER!',0,0);
-  // Gradient fill - rainbow
-  const gg=cx.createLinearGradient(-R*8,-R*2,R*8,R*2);
-  gg.addColorStop(0,'#FF6EB4');gg.addColorStop(.25,'#FF8C00');gg.addColorStop(.5,'#FFE040');gg.addColorStop(.75,'#00FF88');gg.addColorStop(1,'#FF6EB4');
-  cx.fillStyle=gg;cx.fillText('GAME OVER!',0,0);
-  // Glow
-  cx.strokeStyle='rgba(255,255,255,0.35)';cx.lineWidth=4;cx.strokeText('GAME OVER!',0,0);
-  cx.restore();
+  // Title is on the background image, skip drawing it here
 
   // ── SCORE PANEL - VIBRANT GRADIENT ──
   const scPY=H*.48,scPW=pw*.88,scPH=R*4.4;
@@ -1420,8 +1404,15 @@ function loop(t){
   cx.restore(); 
 }
 
+// ── IMAGE ASSETS ──────────────────────────────────────────────────
+let levelClearImg=null,gameOverImg=null;
+function loadGameImages(){
+  if(!levelClearImg){levelClearImg=new Image();levelClearImg.src='/games/bubble-tea/images/level-clear-bg.png';}
+  if(!gameOverImg){gameOverImg=new Image();gameOverImg.src='/games/bubble-tea/images/game-over-bg.png';}
+}
+
 // ── INIT ──────────────────────────────────────────────────────────
-resize();initParallax();initAnimeFX();buildGradientCache();rebuildBgCache();
+resize();initParallax();initAnimeFX();buildGradientCache();rebuildBgCache();loadGameImages();
 if(isHikariBoy){resetGame();initAudio();startMusic();}
 requestAnimationFrame(loop);
 </script>
