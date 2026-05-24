@@ -64,8 +64,8 @@ window.addEventListener('message',(e)=>{
   if(button==='select'){window.parent.postMessage({type:'GAME_EXIT',gameId:'bubble-tea-blast'},'*');return;}
   if(button==='a'){
     if(gameState==='gameover'){currentLevel=0;resetGame();startMusic();}
-    else if(gameState==='levelclear'){currentLevel++;if(currentLevel>=LEVELS.length)currentLevel=0;resetGame();startMusic();}
-    else if(gameState==='levelfail'){resetGame();startMusic();}
+    else if(gameState==='levelclear'){const cs=score;currentLevel++;if(currentLevel>=LEVELS.length)currentLevel=0;resetGame();score=cs;levelStartScore=cs;startMusic();}
+    else if(gameState==='levelfail'){const bs=levelStartScore;resetGame();score=bs;levelStartScore=bs;startMusic();}
     else if(gameState==='paused'){if(pauseSelection===0){gameState='playing';startMusic();}else{currentLevel=0;resetGame();startMusic();gameState='playing';}}
     else if(gameState==='playing'){fire();}
     return;
@@ -109,6 +109,8 @@ const LEVELS=[
 
 
 let currentLevel=0;
+let levelStartScore=0; // score at the start of current level (for carry-over + relative win check)
+let levelBannerFrames=0; // level entry announcement countdown
 let actPal=[...PALETTE.slice(0,MAX_COLORS_START)];
 let missedShots=0;
 let freezeShots=0;
@@ -700,7 +702,8 @@ function drawUI(t){
 
   // ── ROW 2: TARGET PROGRESS BAR ──
   const tpY=barH*.46,tpX=pad,tpW=W-pad*2,tpH=R*.42;
-  const tPct=Math.min(1,score/levelCfg.targetScore);
+  const lvlScore=score-levelStartScore;
+  const tPct=Math.min(1,lvlScore/levelCfg.targetScore);
   const nearTarget=tPct>=.8;
   cx.save();
   cx.fillStyle='rgba(0,0,0,0.35)';cx.beginPath();cx.roundRect(tpX,tpY,tpW,tpH,tpH/2);cx.fill();
@@ -717,7 +720,7 @@ function drawUI(t){
   if(nearTarget&&tPct<1){const gp=Math.sin(t*.01)*.5+.5;cx.strokeStyle=`rgba(0,255,136,${gp*.5})`;cx.lineWidth=2.5;cx.beginPath();cx.roundRect(tpX,tpY,tpW*tPct,tpH,tpH/2);cx.stroke();}
   cx.font=`bold ${Math.round(R*.46)}px Arial`;cx.textAlign='center';cx.textBaseline='middle';
   cx.fillStyle=tPct>=1?'#003322':'rgba(255,255,255,0.88)';
-  cx.fillText(tPct>=1?'✓ TARGET HIT!':`${score} / ${levelCfg.targetScore}`,W/2,tpY+tpH/2);
+  cx.fillText(tPct>=1?'✓ TARGET HIT!':`${lvlScore} / ${levelCfg.targetScore}`,W/2,tpY+tpH/2);
   cx.restore();
 
   // ── ROW 3: BEST pill (compact) ──
@@ -843,6 +846,7 @@ function drawLevelClear(t){
   cx.fillStyle=ov;cx.fillRect(0,0,W,H);
   const cx2=W/2,lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
   const pw=Math.min(W-R*2,380);
+  const lvlScore=score-levelStartScore; // this level's contribution
 
   // ── TITLE ──
   const titleY=H*.18;
@@ -858,7 +862,7 @@ function drawLevelClear(t){
   cx.restore();
 
   // ── STAR RATING ──
-  const ratio=score/lvlCfg.targetScore;
+  const ratio=lvlScore/lvlCfg.targetScore;
   const stars=ratio>=2?3:ratio>=1.4?2:1;
   const starY=H*.42,starSpacing=R*3.2;
   for(let i=0;i<3;i++){
@@ -889,12 +893,14 @@ function drawLevelClear(t){
   });
   cx.setLineDash([]);
   cx.font=`900 ${Math.round(R*.7)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.fillStyle='rgba(0,255,136,0.85)';cx.fillText('✦  SCORE  ✦',cx2,scPY+R*.9);
+  cx.fillStyle='rgba(0,255,136,0.85)';cx.fillText('✦  LEVEL SCORE  ✦',cx2,scPY+R*.9);
   cx.font=`900 ${Math.round(R*2.3)}px Arial Black`;
-  cx.strokeStyle='#000';cx.lineWidth=9;cx.lineJoin='round';cx.strokeText(`${score}`,cx2,scPY+scPH*.72);
+  cx.strokeStyle='#000';cx.lineWidth=9;cx.lineJoin='round';cx.strokeText(`${lvlScore}`,cx2,scPY+scPH*.72);
   const snG=cx.createLinearGradient(0,scPY+R*.8,0,scPY+scPH);
   snG.addColorStop(0,'#FFFFFF');snG.addColorStop(.4,'#FFE040');snG.addColorStop(1,'#00FF88');
-  cx.fillStyle=snG;cx.fillText(`${score}`,cx2,scPY+scPH*.72);
+  cx.fillStyle=snG;cx.fillText(`${lvlScore}`,cx2,scPY+scPH*.72);
+  // Total score (smaller, below)
+  if(levelStartScore>0){cx.font=`bold ${Math.round(R*.58)}px Arial`;cx.fillStyle='rgba(180,255,200,0.7)';cx.fillText(`TOTAL: ${score}`,cx2,scPY+scPH+R*.52);}
   cx.restore();
 
   // ── BONUS & NEXT LEVEL ──
@@ -926,6 +932,7 @@ function drawLevelFail(t){
   cx.fillStyle=ov;cx.fillRect(0,0,W,H);
   const cx2=W/2,lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
   const pw=Math.min(W-R*2,380);
+  const lvlScore=score-levelStartScore; // this level's earned score
 
   // ── TITLE ──
   const titleY=H*.18;
@@ -956,7 +963,7 @@ function drawLevelFail(t){
   cx.setLineDash([]);cx.shadowBlur=0;
   // Target row
   cx.font=`bold ${Math.round(R*.68)}px Arial`;cx.textAlign='left';cx.textBaseline='middle';
-  cx.fillStyle='rgba(255,180,180,0.8)';cx.fillText('TARGET',cx2-scPW/2+R,scPY+R*1.2);
+  cx.fillStyle='rgba(255,180,180,0.8)';cx.fillText('NEED',cx2-scPW/2+R,scPY+R*1.2);
   cx.font=`900 ${Math.round(R*1.4)}px Arial Black`;cx.textAlign='right';
   cx.fillStyle='rgba(255,200,200,0.9)';cx.fillText(`${lvlCfg.targetScore}`,cx2+scPW/2-R,scPY+R*1.35);
   // Divider
@@ -964,15 +971,15 @@ function drawLevelFail(t){
   cx.beginPath();cx.moveTo(cx2-scPW/2+R,scPY+scPH*.5);cx.lineTo(cx2+scPW/2-R,scPY+scPH*.5);cx.stroke();cx.setLineDash([]);
   // Your score row
   cx.font=`bold ${Math.round(R*.68)}px Arial`;cx.textAlign='left';cx.textBaseline='middle';
-  cx.fillStyle='rgba(255,255,255,0.7)';cx.fillText('YOU',cx2-scPW/2+R,scPY+R*3.3);
+  cx.fillStyle='rgba(255,255,255,0.7)';cx.fillText('GOT',cx2-scPW/2+R,scPY+R*3.3);
   cx.font=`900 ${Math.round(R*1.8)}px Arial Black`;cx.textAlign='right';
-  cx.strokeStyle='#000';cx.lineWidth=8;cx.lineJoin='round';cx.strokeText(`${score}`,cx2+scPW/2-R,scPY+R*3.5);
+  cx.strokeStyle='#000';cx.lineWidth=8;cx.lineJoin='round';cx.strokeText(`${lvlScore}`,cx2+scPW/2-R,scPY+R*3.5);
   const yG=cx.createLinearGradient(0,scPY+R*2,0,scPY+scPH);yG.addColorStop(0,'#FFF');yG.addColorStop(.5,'#FFE040');yG.addColorStop(1,'#FF4400');
-  cx.fillStyle=yG;cx.fillText(`${score}`,cx2+scPW/2-R,scPY+R*3.5);
+  cx.fillStyle=yG;cx.fillText(`${lvlScore}`,cx2+scPW/2-R,scPY+R*3.5);
   cx.restore();
 
   // ── GAP LABEL ──
-  const gap=Math.max(0,lvlCfg.targetScore-score);
+  const gap=Math.max(0,lvlCfg.targetScore-lvlScore);
   cx.font=`bold ${Math.round(R*.82)}px Arial`;cx.textAlign='center';cx.textBaseline='middle';
   cx.fillStyle=gap>0?'rgba(255,140,140,0.9)':'rgba(100,255,140,0.9)';
   cx.fillText(gap>0?`${gap} pts short 😭`:'You had it! 🔥 So close',cx2,H*.73);
@@ -1087,6 +1094,32 @@ function drawGameOver(t){
   cx.restore();
 
   cx.restore();
+}
+
+// ── LEVEL ENTRY BANNER ───────────────────────────────────────────
+function drawLevelBanner(t){
+  if(levelBannerFrames<=0||gameState!=='playing')return;
+  const lf=levelBannerFrames;
+  const fadeIn=lf>120?1:lf/120; // full alpha first 30 frames
+  const fadeOut=lf<30?lf/30:1; // fade out last 30 frames
+  const alpha=Math.min(fadeIn,fadeOut)*0.96;
+  const lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+  const by=H*.38;
+  const bw=Math.min(W-R*4,320),bh=R*4.2;
+  const slide=lf>120?(1-(lf-120)/30)*R*2:0; // slide in from top
+  cx.save();
+  cx.globalAlpha=alpha;
+  cx.fillStyle='rgba(0,0,20,0.88)';
+  cx.beginPath();cx.roundRect(W/2-bw/2,by-bh/2+slide,bw,bh,R*.8);cx.fill();
+  cx.strokeStyle='#FFE040';cx.lineWidth=2.5;cx.beginPath();cx.roundRect(W/2-bw/2,by-bh/2+slide,bw,bh,R*.8);cx.stroke();
+  cx.font=`bold ${Math.round(R*.64)}px Arial`;cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillStyle='#FFE040';cx.fillText(`LEVEL ${currentLevel+1}`,W/2,by-R*.85+slide);
+  cx.font=`900 ${Math.round(R*1.35)}px Arial Black`;
+  cx.strokeStyle='#000';cx.lineWidth=5;cx.lineJoin='round';
+  cx.strokeText(lvlCfg.name,W/2,by+R*.6+slide);
+  cx.fillStyle='#FFF';cx.fillText(lvlCfg.name,W/2,by+R*.6+slide);
+  cx.restore();
+  levelBannerFrames--;
 }
 
 // ── SHAKE ─────────────────────────────────────────────────────────
@@ -1208,7 +1241,7 @@ function onStop(p){
     // Safety: grid full or no landing spot — still counts as a shot
     shots++;
     const _c=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
-    if(score>=_c.targetScore){levelWon(false);return;}
+    if(score-levelStartScore>=_c.targetScore){levelWon(false);return;}
     if(shots>=_c.shots){levelFailed();return;}
     if(checkGO())endGame();
     return;
@@ -1277,8 +1310,8 @@ function onStop(p){
     return;
   }
 
-  // Win by hitting target score
-  if(score>=lvlCfg.targetScore){
+  // Win by hitting target score (relative to level start, so carry-over doesn't auto-win)
+  if(score-levelStartScore>=lvlCfg.targetScore){
     levelWon(false);
     return;
   }
@@ -1348,7 +1381,7 @@ function levelFailed(){
   for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;b.frighten();}
 }
 function resetGame(){
-  score=0;shots=0;ceilOff=0;gameState='playing';combo=0;missedShots=0;freezeShots=0;lastPowerUpCount=0;
+  score=0;shots=0;ceilOff=0;gameState='playing';combo=0;missedShots=0;freezeShots=0;lastPowerUpCount=0;levelStartScore=0;levelBannerFrames=150;checkGOCooldown=0;
   const levelCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
   actPal=[...PALETTE.slice(0,levelCfg.colors)]; // Phase 1: colors scale with level
   cInt=CI_BASE;
@@ -1369,8 +1402,8 @@ cv.addEventListener('pointerdown',e=>{
   e.preventDefault();
   if(gameState==='splash'){gameState='playing';resetGame();initAudio();startMusic();return;}
   if(gameState==='gameover'){currentLevel=0;resetGame();initAudio();startMusic();return;}
-  if(gameState==='levelclear'){currentLevel++;if(currentLevel>=LEVELS.length)currentLevel=0;resetGame();startMusic();return;}
-  if(gameState==='levelfail'){resetGame();startMusic();return;}
+  if(gameState==='levelclear'){const cs=score;currentLevel++;if(currentLevel>=LEVELS.length)currentLevel=0;resetGame();score=cs;levelStartScore=cs;startMusic();return;}
+  if(gameState==='levelfail'){const bs=levelStartScore;resetGame();score=bs;levelStartScore=bs;startMusic();return;}
   if(gameState==='paused'){gameState='playing';startMusic();return;}
   if(gameState==='playing'){fire();}
 },{passive:false});
@@ -1430,6 +1463,7 @@ function loop(t){
   for(let i=ftexts.length-1;i>=0;i--){ftexts[i].update();ftexts[i].draw();if(ftexts[i].life<=0){ftexts[i]=ftexts[ftexts.length-1];ftexts.pop();}}
   if(mascot){mascot.update();mascot.draw();if(mascot.life<=0)mascot=null;}
   drawNextPreview();drawComboStack(t);drawUI(t);
+  drawLevelBanner(t);
   if(gameState==='paused')drawPause();
   if(gameState==='levelclear')drawLevelClear(t);
   if(gameState==='levelfail')drawLevelFail(t);
