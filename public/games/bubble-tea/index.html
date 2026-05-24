@@ -809,7 +809,7 @@ function drawPause(){
 function drawLevelClear(t){
   cx.save();
   // Draw background image if loaded, otherwise use gradient
-  if(levelClearImg && levelClearImg.complete){cx.drawImage(levelClearImg,0,0,W,H);}
+  if(celebrationImg && celebrationImg.complete){cx.drawImage(celebrationImg,0,0,W,H);}
   else{const ov=cx.createLinearGradient(0,0,0,H);ov.addColorStop(0,'rgba(20,100,60,0.85)');ov.addColorStop(.5,'rgba(0,60,40,0.92)');ov.addColorStop(1,'rgba(0,20,10,0.95)');cx.fillStyle=ov;cx.fillRect(0,0,W,H);}
   const cx2=W/2,lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
   const pw=Math.min(W-R*2,380);
@@ -842,20 +842,27 @@ function drawLevelClear(t){
     cx.restore();
   }
 
-  // ── SCORE PANEL — purple/magenta so it pops off green image ──
-  const scPY=H*.38,scPW=pw*.84,scPH=R*3.8;
-  cx.save();
-  const scBG=cx.createLinearGradient(cx2-scPW/2,scPY,cx2+scPW/2,scPY+scPH);
-  scBG.addColorStop(0,'rgba(100,0,120,0.96)');scBG.addColorStop(.5,'rgba(70,0,90,0.97)');scBG.addColorStop(1,'rgba(50,0,70,0.98)');
-  cx.fillStyle=scBG;cx.beginPath();cx.roundRect(cx2-scPW/2,scPY,scPW,scPH,R*.8);cx.fill();
-  cx.strokeStyle='rgba(255,100,255,0.8)';cx.lineWidth=3.5;cx.beginPath();cx.roundRect(cx2-scPW/2,scPY,scPW,scPH,R*.8);cx.stroke();
-  cx.font=`900 ${Math.round(R*.75)}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
-  cx.fillStyle='#FF88FF';cx.fillText('★  LEVEL SCORE  ★',cx2,scPY+R*.9);
-  cx.font=`900 ${Math.round(R*2.4)}px Arial Black`;
-  cx.strokeStyle='#000';cx.lineWidth=9;cx.lineJoin='round';cx.strokeText(`${lvlScore}`,cx2,scPY+scPH*.70);
-  const snG=cx.createLinearGradient(0,scPY+R*.5,0,scPY+scPH);
-  snG.addColorStop(0,'#FFFFFF');snG.addColorStop(.4,'#FFE040');snG.addColorStop(1,'#FF88FF');
-  cx.fillStyle=snG;cx.fillText(`${lvlScore}`,cx2,scPY+scPH*.70);
+  // ── HUGE SCORE — NO CONTAINER, fills available space ──
+  const scoreY=H*.36,scoreFontSize=Math.round(R*5.5);
+  const pulseScale=1.0+Math.sin(t*.005)*.08;
+  cx.save();cx.translate(cx2,scoreY);cx.scale(pulseScale,pulseScale);cx.translate(-cx2,-scoreY);
+
+  // Multi-layer score rendering for impact
+  cx.font=`900 ${scoreFontSize}px Arial Black`;cx.textAlign='center';cx.textBaseline='middle';
+
+  // Layer 1: Heavy black shadow
+  cx.strokeStyle='rgba(0,0,0,0.7)';cx.lineWidth=18;cx.lineJoin='round';cx.strokeText(`${lvlScore}`,cx2,scoreY);
+
+  // Layer 2: Orange/gold shadow for depth
+  cx.strokeStyle='#FF6600';cx.lineWidth=12;cx.strokeText(`${lvlScore}`,cx2,scoreY);
+
+  // Layer 3: Main gradient fill (white to gold)
+  const scoreGrad=cx.createLinearGradient(0,scoreY-scoreFontSize/2,0,scoreY+scoreFontSize/2);
+  scoreGrad.addColorStop(0,'#FFFFFF');scoreGrad.addColorStop(.3,'#FFFF00');scoreGrad.addColorStop(.6,'#FFE040');scoreGrad.addColorStop(1,'#FFAA00');
+  cx.fillStyle=scoreGrad;cx.fillText(`${lvlScore}`,cx2,scoreY);
+
+  // Layer 4: Bright outline
+  cx.strokeStyle='rgba(255,255,255,0.8)';cx.lineWidth=4;cx.strokeText(`${lvlScore}`,cx2,scoreY);
   cx.restore();
 
   // ── CONTINUE BUTTON — BIG, GOLD, WHITE TEXT, fits on mobile ──
@@ -1381,10 +1388,11 @@ function loop(t){
 }
 
 // ── IMAGE ASSETS ──────────────────────────────────────────────────
-let levelClearImg=null,gameOverImg=null;
+let levelClearImg=null,gameOverImg=null,celebrationImg=null;
 function loadGameImages(){
   if(!levelClearImg){levelClearImg=new Image();levelClearImg.src='/games/bubble-tea/images/level-clear-bg.jpeg';}
   if(!gameOverImg){gameOverImg=new Image();gameOverImg.src='/games/bubble-tea/images/game-over-bg.jpg';}
+  if(!celebrationImg){celebrationImg=new Image();celebrationImg.src='/games/bubble-tea/images/celebration.jpeg';}
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
