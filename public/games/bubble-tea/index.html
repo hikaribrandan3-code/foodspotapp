@@ -1149,7 +1149,8 @@ function doFreeze(){
   flashAlpha=.4;flashCol='#88EEFF';playFX('freeze');
   ftexts.push(new FloatText(W/2,H*.44,'❄️ FROZEN! ❄️','#88EEFF',true));
   shockwaves.push(new Shockwave(CNX,CNY,'rgba(136,238,255,1)'));
-  freezeShots=5; // Pause ceiling for 5 shots
+  freezeShots=5;   // Pause ceiling for 5 shots
+  missedShots=0;   // Clear pre-freeze penalty so it doesn't carry over
   Haptics.fire(Haptics.freeze,true);
 }
 
@@ -1204,8 +1205,11 @@ function onStop(p){
   const ct=(p.boba&&p.boba.ct)||actPal[0];
   let madeMatch=false;
   if(!spot){
-    // Safety: if no spot found, just clear projectile and continue
+    // Safety: grid full or no landing spot — still counts as a shot
     shots++;
+    const _c=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+    if(score>=_c.targetScore){levelWon(false);return;}
+    if(shots>=_c.shots){levelFailed();return;}
     if(checkGO())endGame();
     return;
   }
@@ -1266,10 +1270,9 @@ function onStop(p){
 
   const lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
 
-  // Board clear = instant win + big bonus
+  // Board clear = instant win (levelWon handles the +5000 bonus, don't add here)
   if(checkObjective()){
-    score+=5000;scoreBounce=1;
-    ftexts.push(new FloatText(W/2,H*.44,'🎉 BOARD CLEAR! +5000','#FFE040',true));
+    ftexts.push(new FloatText(W/2,H*.44,'🎉 BOARD CLEAR!','#FFE040',true));
     levelWon(true);
     return;
   }
@@ -1319,17 +1322,26 @@ function endGame(){
 function levelWon(boardClear=false){
   if(gameState!=='playing')return;
   gameState='levelclear';
+  pendingActions=[]; // Clear any mid-cascade actions so they don't bleed into next level
   stopMusic();
   playFX('combo');Haptics.fire(Haptics.levelClear,true);
   shake(10);flashAlpha=.5;flashCol='#FFE040';
-  const bonus=boardClear?5000:Math.max(0,(LEVELS[Math.min(currentLevel,LEVELS.length-1)].shots-shots)*50);
-  score+=bonus;scoreBounce=1;
+  const lvlCfg=LEVELS[Math.min(currentLevel,LEVELS.length-1)];
+  const shotBonus=Math.max(0,(lvlCfg.shots-shots)*50);
+  const clearBonus=boardClear?5000:0;
+  const bonus=clearBonus+shotBonus;
+  if(bonus>0){
+    score+=bonus;scoreBounce=1;
+    const label=boardClear?`+${clearBonus} clear +${shotBonus} speed!`:`+${shotBonus} shots left!`;
+    ftexts.push(new FloatText(W/2,H*.5,label,'#FFE040',false));
+  }
   if(score>hiScore){hiScore=score;try{localStorage.setItem('bbt_hi',hiScore);}catch(e){}}
   for(let i=0;i<80;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,Math.random()*H*.5));
 }
 function levelFailed(){
   if(gameState!=='playing')return;
   gameState='levelfail';
+  pendingActions=[]; // Clear cascades so they don't bleed into retry
   stopMusic();
   playFX('gameover');Haptics.fire(Haptics.gameOver,true);
   shake(12);flashAlpha=.6;flashCol='#FF0000';
