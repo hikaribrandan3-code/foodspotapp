@@ -55,6 +55,10 @@ export const defaultConfig = {
     // Single source of truth for hero icon defaults
     // Used by App.jsx, Home.jsx, Settings.jsx, SuperAdmin.jsx
 
+    // Camera Pin Style — controls the location pill color in the camera view
+    // Options: 'classic' | 'cafe' | 'vegan' | 'burger'
+    cameraPinStyle: 'classic',
+
     // Color Theme (matches warm beige/brown palette)
     colors: {
         primary: "#8B7355",

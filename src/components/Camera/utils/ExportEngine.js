@@ -95,10 +95,17 @@ export function applyNanoBanana(ctx, width, height, context) {
  * Aura Tag Branding — EXACT MATCH to CameraLayer UI
  * Uses identical positioning and styling for consistency
  */
+const PIN_STYLE_COLORS = {
+    classic: 'rgba(255, 255, 255, 0.22)',
+    cafe:    'rgba(130, 90, 60, 0.55)',
+    vegan:   'rgba(40, 160, 80, 0.55)',
+    burger:  'rgba(200, 160, 0, 0.55)',
+}
+
 function burnBranding(ctx, width, height, branding, trueScale) {
     if (!branding?.businessName) return
 
-    const { businessName } = branding
+    const { businessName, cameraPinStyle } = branding
     const scale = trueScale || (width / 1080)
 
     // EXACT MATCH to CameraLayer.jsx styling
@@ -122,11 +129,12 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const pillX = leftOffset
     const pillY = topOffset
 
-    // Glassmorphism pill background
+    // Glassmorphism pill background — color driven by cameraPinStyle
+    const pillColor = PIN_STYLE_COLORS[cameraPinStyle] || PIN_STYLE_COLORS.classic
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
     ctx.shadowBlur = 8 * scale
     ctx.shadowOffsetY = 2 * scale
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'
+    ctx.fillStyle = pillColor
 
     const r = Math.min(20 * scale, pillH / 2) // 20px border radius
     ctx.beginPath()

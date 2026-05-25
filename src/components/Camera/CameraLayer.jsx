@@ -64,6 +64,16 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
+    // Camera pin style — controls the location pill background color
+    const PIN_STYLE_COLORS = {
+        classic: 'rgba(255, 255, 255, 0.22)',
+        cafe:    'rgba(130, 90, 60, 0.55)',
+        vegan:   'rgba(40, 160, 80, 0.55)',
+        burger:  'rgba(200, 160, 0, 0.55)',
+    }
+    const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
+    const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
+
     const [showFilterToast, setShowFilterToast] = useState(false)
     const [filterToastName, setFilterToastName] = useState('')
     const toastTimeoutRef = useRef(null)
@@ -282,7 +292,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 alignItems: 'center',
                 gap: '5px',
                 padding: '6px 12px',
-                background: 'rgba(255, 255, 255, 0.22)',
+                background: pinBg,
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 borderRadius: '20px',

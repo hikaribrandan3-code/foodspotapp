@@ -312,7 +312,9 @@ const Settings = () => {
                     shell_color: tenant.munchboy_shell_color || '#6B0FCC',
                     a_color: tenant.munchboy_a_color || '#D1D5DB',
                     b_color: tenant.munchboy_b_color || '#D1D5DB'
-                }
+                },
+                // Camera Pin Style
+                cameraPinStyle: tenant.app_config?.cameraPinStyle || 'classic'
             },
             menu_data: tenant.menu_data || { categories: [] }
         });
@@ -529,7 +531,8 @@ const Settings = () => {
                     {
                         service_modes: draft.service_modes,
                         payment_methods: draft.payment_methods,
-                        munchboy: draft.app_config?.munchboy
+                        munchboy: draft.app_config?.munchboy,
+                        cameraPinStyle: draft.app_config?.cameraPinStyle || 'classic'
                     }
                 ),
                 menu_data: draft.menu_data,
@@ -1003,10 +1006,72 @@ const Settings = () => {
                     </div>
                 </section>
 
-                {/* ========== 6. MUNCHBOY BRANDING ========== */}
+                {/* ========== 6. CAMERA PIN STYLE ========== */}
+                <section className="branding-card">
+                    <h3>6. Camera Pin Style</h3>
+                    <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '16px' }}>
+                        Color del pin de ubicación en la cámara y fotos exportadas
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                        {[
+                            { id: 'classic', label: 'Classic', bg: 'rgba(255,255,255,0.22)', border: 'rgba(255,255,255,0.4)' },
+                            { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)',   border: 'rgba(130,90,60,0.8)' },
+                            { id: 'vegan',   label: 'Vegan',   bg: 'rgba(40,160,80,0.55)',   border: 'rgba(40,160,80,0.8)' },
+                            { id: 'burger',  label: 'Burger',  bg: 'rgba(200,160,0,0.55)',   border: 'rgba(200,160,0,0.8)' },
+                        ].map(({ id, label, bg, border }) => {
+                            const isActive = (draft.app_config?.cameraPinStyle || 'classic') === id
+                            return (
+                                <button
+                                    key={id}
+                                    onClick={() => {
+                                        setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, cameraPinStyle: id } }))
+                                        setHasChanges(true)
+                                    }}
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        padding: '12px 8px',
+                                        borderRadius: 12,
+                                        border: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
+                                        background: isActive ? 'rgba(139,115,85,0.08)' : 'transparent',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease',
+                                    }}
+                                >
+                                    {/* Mini pill preview */}
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        padding: '5px 10px',
+                                        background: bg,
+                                        border: `1px solid ${border}`,
+                                        borderRadius: 20,
+                                        backdropFilter: 'blur(4px)',
+                                        backgroundColor: id === 'classic' ? '#444' : undefined,
+                                    }}>
+                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="white">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                                        </svg>
+                                        <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>
+                                            {label.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <span style={{ fontSize: 11, fontWeight: isActive ? 700 : 400, color: isActive ? 'var(--color-primary)' : '#64748B' }}>
+                                        {label}
+                                    </span>
+                                </button>
+                            )
+                        })}
+                    </div>
+                </section>
+
+                {/* ========== 7. MUNCHBOY BRANDING ========== */}
                 <section className="branding-card">
                     <div className="section-header">
-                        <h3>Munchboy Arcade</h3>
+                        <h3>7. Munchboy Arcade</h3>
                     </div>
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('munchboy_subtitle')}</p>
                     
