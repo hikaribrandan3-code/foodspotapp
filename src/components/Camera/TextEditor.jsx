@@ -165,7 +165,8 @@ export default function TextEditor({
             fontFamily: font.family,
             fontWeight: font.weight || '400',
             color: currentStyle.color,
-            textAlign: currentStyle.textAlign
+            textAlign: currentStyle.textAlign,
+            padding: '8px 12px' // Match DraggableElement default padding
         }
 
         // Apply style mode
