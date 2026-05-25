@@ -341,6 +341,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         if (!sourceCanvas || !baseCanvasRef.current) return
         setIsExporting(true)
 
+        // DEBUG: Log what cameraPinStyle EditorLayer is reading
+        const currentPinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
+        console.log('[EditorLayer] 📝 handleDone called, cameraPinStyle:', currentPinStyle, 'full app_config:', tenantData?.app_config)
+
         try {
             // If text editor is open, auto-save whatever is typed before exporting
             // (Done button is now z-index 700, above the overlay at 600, so this fires correctly)

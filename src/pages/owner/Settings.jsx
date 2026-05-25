@@ -1019,11 +1019,11 @@ const Settings = () => {
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                         {[
-                            { id: 'classic', label: 'Classic', bg: 'rgba(255,255,255,0.22)' },
+                            { id: 'classic', label: 'Classic', bg: '#4B5563', note: '(UI preview only - camera uses white)' },
                             { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)' },
                             { id: 'vegan',   label: 'Vegan',   bg: 'rgba(145,170,100,0.55)' },
                             { id: 'burger',  label: 'Burger',  bg: 'rgba(255,193,7,0.60)' },
-                        ].map(({ id, label, bg }) => {
+                        ].map(({ id, label, bg, note }) => {
                             const isActive = (draft.app_config?.cameraPinStyle || 'classic') === id
                             return (
                                 <button

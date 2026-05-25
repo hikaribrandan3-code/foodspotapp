@@ -26,6 +26,9 @@ export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinS
     const pinStyle = cameraPinStyle || tenantData?.app_config?.cameraPinStyle || 'classic'
     const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
 
+    // DEBUG: Log what DualPostScreen receives
+    console.log('[DualPostScreen] 🎬 cameraPinStyle prop:', cameraPinStyle, 'tenantData.app_config:', tenantData?.app_config, 'final pinStyle:', pinStyle, 'pinBg:', pinBg)
+
     return (
         <div style={styles.container}>
 

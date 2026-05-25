@@ -42,6 +42,14 @@ const FLASH_ICONS = {
 }
 
 export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }) {
+    const { tenantData } = useTenant()
+
+    // DEBUG: Log camera pin style on mount and when it changes
+    useEffect(() => {
+        const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
+        console.log('[CameraLayer] 🎥 cameraPinStyle:', pinStyle, 'tenantData:', tenantData?.app_config)
+    }, [tenantData?.app_config?.cameraPinStyle])
+
     const {
         videoRef,
         canvasRef,
@@ -61,7 +69,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         zoomSupported
     } = useCamera()
 
-    const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
     // Camera pin style — controls the location pill background color
