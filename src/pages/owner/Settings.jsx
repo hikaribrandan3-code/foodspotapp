@@ -578,6 +578,10 @@ const Settings = () => {
             };
 
             console.log('[Settings] 📡 DISPATCHING frontendSync with full payload:', frontendSyncData);
+            // CRITICAL: Store cameraPinStyle in sessionStorage so it survives navigation to camera
+            // EditorLayer will read this if tenantData.app_config.cameraPinStyle is not yet updated
+            sessionStorage.setItem(`cameraPinStyle_${businessId}`, payload.app_config?.cameraPinStyle || 'classic');
+
             window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
 
             if (tenant.slug) {
