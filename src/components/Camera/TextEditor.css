@@ -15,19 +15,23 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Text Input Container - stays above keyboard */
+/* Text Input Container — Instagram approach
+   Fixed position + fixed width = immune to canvas reflows.
+   Transform centering is stable because width never changes. */
 .text-input-container {
-    position: absolute;
-    /* Use standard CSS centering: left: 0; right: 0; with margin auto
-       This prevents the 50% transform quirk where centering shifts as width changes */
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    /* Block layout, shrinks to content — no flex quirks that change width with Y position */
-    display: block;
-    width: fit-content;
+    position: fixed;
+    left: 50%;
+    /* top is set inline via style={{ top: position.y }} */
+    transform: translateX(-50%);
+    width: 300px;
     max-width: 90vw;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
     text-align: center;
+    /* Isolate from all canvas reflows */
+    will-change: transform;
+    z-index: 601;
 }
 
 .text-input {
