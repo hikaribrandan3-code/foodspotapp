@@ -274,13 +274,24 @@ export function TenantProvider({ children }) {
         // This ensures cameraPinStyle and other app_config changes update tenantData immediately
         const handleFrontendSync = (e) => {
             const syncData = e.detail;
-            if (syncData?.app_config) {
-                console.log('[TenantLock] 🎯 frontendSync event received. app_config:', syncData.app_config, 'cameraPinStyle:', syncData.app_config.cameraPinStyle);
-                setTenantData(prev => ({
-                    ...prev,
-                    app_config: syncData.app_config,
-                    ...syncData  // Merge other fields too (colors, branding, etc.)
-                }));
+            console.log('[TenantLock] 🎯 frontendSync event received (full detail):', syncData);
+            console.log('[TenantLock] 🎯 app_config:', syncData?.app_config, 'cameraPinStyle:', syncData?.app_config?.cameraPinStyle);
+
+            if (syncData) {
+                // CRITICAL: Merge app_config first, then other branding/colors fields
+                const updatedData = {
+                    ...tenantData,
+                    ...syncData,
+                };
+                // EXPLICIT: Ensure app_config overwrites completely (not shallow merge)
+                if (syncData.app_config) {
+                    updatedData.app_config = {
+                        ...(tenantData?.app_config || {}),
+                        ...syncData.app_config  // cameraPinStyle will be here
+                    };
+                }
+                console.log('[TenantLock] 🎯 Setting tenantData with app_config:', updatedData.app_config);
+                setTenantData(updatedData);
             }
         };
         window.addEventListener('frontendSync', handleFrontendSync);

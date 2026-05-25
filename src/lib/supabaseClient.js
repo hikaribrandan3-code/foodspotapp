@@ -279,6 +279,8 @@ export async function updateBranding(updates, businessId) {
         return { data: null, error: new Error('Missing business ID') }
     }
 
+    console.log('[updateBranding] 📥 RECEIVED updates with app_config.cameraPinStyle:', updates?.app_config?.cameraPinStyle, 'full app_config:', updates?.app_config);
+
     try {
         // 🗺️ GHOST DATA FIX: Map Frontend keys to Backend Columns
         const dbUpdates = { updated_at: new Date().toISOString() }
@@ -288,6 +290,9 @@ export async function updateBranding(updates, businessId) {
             // Skip frontend-only keys that need mapping
             if (!['pauseOrders', 'pauseOrdersMessage', 'radiusKm', 'flatFee', 'freeDeliveryThreshold'].includes(key)) {
                 dbUpdates[key] = updates[key]
+                if (key === 'app_config') {
+                    console.log('[updateBranding] 📝 app_config passed through to dbUpdates:', dbUpdates[key])
+                }
             }
         })
 

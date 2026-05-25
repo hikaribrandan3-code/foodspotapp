@@ -19,6 +19,11 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
+    // DEBUG: Log tenantData.app_config.cameraPinStyle whenever it changes
+    useEffect(() => {
+        console.log('[EditorLayer] 📊 tenantData.app_config.cameraPinStyle UPDATED TO:', tenantData?.app_config?.cameraPinStyle, 'full app_config:', tenantData?.app_config);
+    }, [tenantData?.app_config?.cameraPinStyle, tenantData?.app_config]);
+
     // Canvas refs for layer architecture
     const containerRef = useRef(null)
     const baseCanvasRef = useRef(null)

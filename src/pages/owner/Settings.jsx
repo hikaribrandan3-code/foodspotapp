@@ -538,6 +538,11 @@ const Settings = () => {
                 menu_data: draft.menu_data,
             };
 
+            console.log('[Settings] 🔍 PRE-SAVE PAYLOAD AUDIT:');
+            console.log('  draft.app_config?.cameraPinStyle:', draft.app_config?.cameraPinStyle);
+            console.log('  payload.app_config.cameraPinStyle:', payload.app_config?.cameraPinStyle);
+            console.log('  full payload.app_config:', payload.app_config);
+
             const { data: savedData, error: saveError } = await updateBranding(payload, businessId);
 
             // STRICT CHECK: Only show success if data was actually written
@@ -572,7 +577,12 @@ const Settings = () => {
                 app_config: savedData.app_config  // Include full app_config (cameraPinStyle, munchboy, etc.)
             };
 
+            console.log('[Settings] 📡 DISPATCHING frontendSync with full payload:', frontendSyncData);
             window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
+
+            // CRITICAL: Force TenantContext to refresh from database immediately
+            // This ensures cameraPinStyle and other app_config values are guaranteed to be in sync
+            refreshTenantData();
 
             if (tenant.slug) {
                 const cacheKey = `tenant_lock_${tenant.slug}`;
