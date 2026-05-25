@@ -270,12 +270,28 @@ export function TenantProvider({ children }) {
             console.warn('[TenantLock] ⚠️ Branding realtime unavailable:', err?.message);
         }
 
+        // 📡 FRONTEND SYNC EVENT LISTENER: Catch Settings saves instantly (no real-time delay)
+        // This ensures cameraPinStyle and other app_config changes update tenantData immediately
+        const handleFrontendSync = (e) => {
+            const syncData = e.detail;
+            if (syncData?.app_config) {
+                console.log('[TenantLock] 🎯 frontendSync event received. app_config:', syncData.app_config, 'cameraPinStyle:', syncData.app_config.cameraPinStyle);
+                setTenantData(prev => ({
+                    ...prev,
+                    app_config: syncData.app_config,
+                    ...syncData  // Merge other fields too (colors, branding, etc.)
+                }));
+            }
+        };
+        window.addEventListener('frontendSync', handleFrontendSync);
+
         if (forceRefresh > 0 && businessId) {
             refreshTenantData()
         }
 
         return () => {
             mounted = false;
+            window.removeEventListener('frontendSync', handleFrontendSync);
             if (tenantChannel) supabase.removeChannel(tenantChannel);
             if (brandingChannel) supabase.removeChannel(brandingChannel);
         }
