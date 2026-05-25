@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en" data-composition-variables='[
+  {"id":"voiceover_audio","type":"string","label":"Voiceover Audio File","default":""},
+  {"id":"background_music","type":"string","label":"Background Music","default":""},
+  {"id":"brand_color","type":"color","label":"Brand Color (Primary)","default":"#10b981"},
+  {"id":"text_color","type":"color","label":"Text Color","default":"#ffffff"}
+]'>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>26% AI Hook - FoodSpot</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    [data-composition-id="ai-hook-26"] {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* TALKING HEAD SAFE ZONE - CENTER 60% */
+    .safe-zone {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60%;
+      height: 80%;
+      border: 2px dashed rgba(16, 185, 129, 0.2);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* HOOK SCENE (0-3s) */
+    .hook-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .hook-text {
+      font-size: 72px;
+      font-weight: 900;
+      text-align: center;
+      color: #0f172a;
+      line-height: 1.2;
+      letter-spacing: -2px;
+      max-width: 90%;
+      text-shadow: none;
+    }
+
+    .hook-text .highlight {
+      color: #10b981;
+      display: block;
+      font-size: 96px;
+    }
+
+    .hook-indicator {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid #10b981;
+      bottom: 80px;
+      right: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56px;
+      font-weight: bold;
+      color: #10b981;
+    }
+
+    /* PROBLEM SCENE (3-15s) */
+    .problem-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 60px 40px;
+      gap: 30px;
+      z-index: 5;
+    }
+
+    .chatgpt-mock {
+      width: 45%;
+      height: 70%;
+      background: #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .chatgpt-mock.error {
+      border: 3px solid #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .chat-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d1d5db;
+    }
+
+    .chat-message {
+      font-size: 13px;
+      color: #6b7280;
+      background: #f3f4f6;
+      padding: 10px 12px;
+      border-radius: 8px;
+      line-height: 1.4;
+    }
+
+    .chat-message.ai-response {
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
+      border-left: 3px solid #ef4444;
+    }
+
+    /* Money flying away */
+    .money-particle {
+      position: absolute;
+      font-size: 48px;
+      opacity: 0.8;
+    }
+
+    /* SOLUTION SCENE (15-40s) */
+    .solution-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      gap: 40px;
+      z-index: 5;
+    }
+
+    .dashboard-mock {
+      width: 95%;
+      max-width: 900px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 2px solid #10b981;
+      border-radius: 16px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.2);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .data-card {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    .data-card.active {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10b981;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .data-label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .data-value {
+      font-size: 32px;
+      font-weight: 900;
+      color: #10b981;
+    }
+
+    .data-icon {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 20px;
+      opacity: 0.6;
+    }
+
+    .checkmark {
+      font-size: 24px;
+      color: #10b981;
+      margin-right: 8px;
+    }
+
+    /* Comparison Section */
+    .comparison-section {
+      width: 95%;
+      max-width: 900px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .comparison-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .comparison-card.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+    }
+
+    .comparison-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+
+    .comparison-label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+    }
+
+    /* VISION SCENE (35-40s) */
+    .vision-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      z-index: 5;
+    }
+
+    .vision-content {
+      text-align: center;
+      max-width: 800px;
+    }
+
+    .vision-text {
+      font-size: 48px;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.3;
+      margin-bottom: 20px;
+      text-shadow: none;
+    }
+
+    .vision-subtext {
+      font-size: 18px;
+      color: #374151;
+      line-height: 1.6;
+    }
+
+    .glow-effect {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(40px);
+      z-index: -1;
+    }
+
+    /* CTA SCENE (40-45s) */
+    .cta-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      padding: 60px 40px;
+      z-index: 10;
+      background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.1) 100%);
+    }
+
+    .cta-headline {
+      font-size: 56px;
+      font-weight: 900;
+      text-align: center;
+      color: #0f172a;
+      line-height: 1.2;
+      max-width: 90%;
+      text-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+    }
+
+    .cta-headline .emerald {
+      color: #10b981;
+    }
+
+    .cta-subtext {
+      font-size: 16px;
+      color: #374151;
+      font-weight: 500;
+    }
+
+    .cta-button-mock {
+      padding: 16px 40px;
+      background: #10b981;
+      color: #0f172a;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    /* AUDIO ELEMENTS */
+    audio {
+      display: none;
+    }
+
+    video {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div data-composition-id="ai-hook-26" data-width="1080" data-height="1920">
+
+    <!-- SAFE ZONE GUIDE (remove for production) -->
+    <div class="safe-zone"></div>
+
+    <!-- HOOK SCENE (0–2s) -->
+    <div id="hook-scene" data-start="0" data-duration="2" data-track-index="0" class="clip hook-container">
+      <div class="hook-text">
+        <span class="highlight">26%</span>
+        use AI
+      </div>
+      <div class="hook-indicator">📊</div>
+    </div>
+
+    <!-- PROBLEM SCENE (2–8s) -->
+    <div id="problem-scene" data-start="2" data-duration="6" data-track-index="1" class="clip problem-container">
+      <div class="chatgpt-mock error">
+        <div class="chat-header">ChatGPT</div>
+        <div class="chat-message">How do I price my menu?</div>
+        <div class="chat-message ai-response">Based on industry averages, consider a 30% markup...</div>
+        <div class="chat-message" style="margin-top: auto; text-align: center; color: #ef4444; font-weight: 600;">
+          ❌ WRONG
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;">
+        <div style="font-size: 48px;">💰</div>
+        <div style="font-size: 32px; color: #ef4444; font-weight: 900;">Lost Money</div>
+        <div style="font-size: 13px; color: rgba(255,255,255,0.6); text-align: center; max-width: 150px;">
+          Guesses without your data
+        </div>
+      </div>
+
+      <div id="money-1" class="money-particle">💸</div>
+      <div id="money-2" class="money-particle">💵</div>
+      <div id="money-3" class="money-particle">💴</div>
+    </div>
+
+    <!-- SOLUTION SCENE (8–16s) -->
+    <div id="solution-scene" data-start="8" data-duration="8" data-track-index="2" class="clip solution-container">
+      <div style="text-align: center; max-width: 800px;">
+        <div style="font-size: 28px; font-weight: 700; color: #10b981; margin-bottom: 8px;">
+          FoodSpot Dashboard
+        </div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.7);">
+          <span class="checkmark">✓</span>Knows YOUR data. Makes precise decisions.
+        </div>
+      </div>
+
+      <div class="dashboard-mock">
+        <div id="card-costs" class="data-card">
+          <div class="data-icon">📦</div>
+          <div class="data-label">Ingredient Cost</div>
+          <div class="data-value">28%</div>
+        </div>
+        <div id="card-margins" class="data-card">
+          <div class="data-icon">📈</div>
+          <div class="data-label">Profit Margin</div>
+          <div class="data-value">42%</div>
+        </div>
+        <div id="card-competition" class="data-card">
+          <div class="data-icon">🎯</div>
+          <div class="data-label">Competitor Pricing</div>
+          <div class="data-value">Real-time</div>
+        </div>
+        <div id="card-ltv" class="data-card">
+          <div class="data-icon">👥</div>
+          <div class="data-label">Customer LTV</div>
+          <div class="data-value">$420</div>
+        </div>
+      </div>
+
+      <div class="comparison-section">
+        <div class="comparison-card">
+          <div class="comparison-title">Generic AI</div>
+          <div class="comparison-label">Guesses. No context. Wrong.</div>
+        </div>
+        <div id="comparison-active" class="comparison-card">
+          <div class="comparison-title">FoodSpot AI</div>
+          <div class="comparison-label"><span class="checkmark">✓</span>Knows your data. Precise.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISION SCENE (16–18s) -->
+    <div id="vision-scene" data-start="16" data-duration="2" data-track-index="3" class="clip vision-container">
+      <div class="glow-effect"></div>
+      <div class="vision-content">
+        <div class="vision-text">
+          Not generic advice.
+          <br>
+          <span style="color: #10b981;">Your numbers.</span>
+          <br>
+          Your decisions.
+        </div>
+        <div class="vision-subtext">
+          This is the difference between guessing and knowing.
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA SCENE (18–20s) -->
+    <div id="cta-scene" data-start="18" data-duration="2" data-track-index="4" class="clip cta-container">
+      <div class="cta-headline">
+        FoodSpot<br>
+        <span class="emerald">Your numbers</span><br>
+        Your edge
+      </div>
+      <div class="cta-subtext">
+        26% of restaurant owners use AI.<br>
+        Be smarter than them.
+      </div>
+      <div class="cta-button-mock">
+        Start Free → Link in Bio
+      </div>
+    </div>
+
+
+  </div>
+
+  <script>
+    const { brand_color, text_color } = window.__hyperframes?.getVariables?.() || { brand_color: '#10b981', text_color: '#ffffff' };
+
+    const tl = gsap.timeline({ paused: true });
+
+    // ===== HOOK SCENE (0–3s) =====
+    tl.from('#hook-scene .hook-text', {
+      y: 40,
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power3.out',
+    }, 0.2);
+
+    tl.from('#hook-scene .hook-indicator', {
+      scale: 0,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'back.out',
+    }, 0.5);
+
+    // Money particles floating away (3–15s problem scene)
+    tl.to('#money-1', {
+      x: -200,
+      y: -200,
+      opacity: 0,
+      duration: 1.5,
+      ease: 'power2.in',
+    }, 3.5);
+
+    tl.to('#money-2', {
+      x: 200,
+      y: -150,
+      opacity: 0,
+      duration: 1.2,
+      ease: 'power2.in',
+    }, 3.8);
+
+    tl.to('#money-3', {
+      x: -100,
+      y: -180,
+      opacity: 0,
+      duration: 1.3,
+      ease: 'power2.in',
+    }, 4.1);
+
+    // ===== PROBLEM SCENE (3–15s) =====
+    tl.from('#problem-scene .chatgpt-mock', {
+      x: -60,
+      opacity: 0,
+      duration: 0.7,
+      ease: 'power3.out',
+    }, 3.2);
+
+    tl.from('#problem-scene .money-particle:first-of-type', {
+      opacity: 0,
+      y: 0,
+      duration: 0,
+    }, 3.5);
+
+    // ===== SOLUTION SCENE (15–40s) =====
+    tl.from('#solution-scene', {
+      opacity: 0,
+      duration: 0.4,
+    }, 15);
+
+    // Dashboard cards enter one by one
+    tl.from('#card-costs', {
+      y: 30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+    }, 15.5);
+
+    tl.from('#card-margins', {
+      y: 30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+    }, 16);
+
+    tl.from('#card-competition', {
+      y: 30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+    }, 16.5);
+
+    tl.from('#card-ltv', {
+      y: 30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+    }, 17);
+
+    // Highlight each card
+    tl.to('#card-costs', { duration: 0.3, ease: 'power2.out', overwrite: false }, 17.5);
+    tl.to('#card-margins', { duration: 0.3, ease: 'power2.out', overwrite: false }, 18.2);
+    tl.to('#card-competition', { duration: 0.3, ease: 'power2.out', overwrite: false }, 18.9);
+    tl.to('#card-ltv', { duration: 0.3, ease: 'power2.out', overwrite: false }, 19.6);
+
+    // Mark cards as active
+    tl.set('#card-costs', { classList: { add: 'active' } }, 17.5);
+    tl.set('#card-margins', { classList: { add: 'active' } }, 18.2);
+    tl.set('#card-competition', { classList: { add: 'active' } }, 18.9);
+    tl.set('#card-ltv', { classList: { add: 'active' } }, 19.6);
+
+    // Comparison section
+    tl.from('#comparison-active', {
+      y: 20,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+    }, 24);
+
+    // ===== VISION SCENE (35–40s) =====
+    tl.from('#vision-scene .vision-text', {
+      y: 40,
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power3.out',
+    }, 35.3);
+
+    tl.from('#vision-scene .vision-subtext', {
+      y: 20,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'power3.out',
+    }, 35.8);
+
+    tl.from('#vision-scene .glow-effect', {
+      scale: 0,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power2.out',
+    }, 35);
+
+    // ===== CTA SCENE (40–45s) =====
+    tl.from('#cta-scene .cta-headline', {
+      y: 30,
+      opacity: 0,
+      duration: 0.6,
+      ease: 'power3.out',
+    }, 40.3);
+
+    tl.from('#cta-scene .cta-subtext', {
+      y: 15,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power3.out',
+    }, 40.7);
+
+    tl.from('#cta-scene .cta-button-mock', {
+      scale: 0.9,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'back.out',
+    }, 41.1);
+
+    // Register timeline
+    window.__timelines = window.__timelines || {};
+    window.__timelines['ai-hook-26'] = tl;
+  </script>
+</body>
+</html>

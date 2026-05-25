@@ -18,8 +18,11 @@
 /* Text Input Container - stays above keyboard */
 .text-input-container {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+    /* Use standard CSS centering: left: 0; right: 0; with margin auto
+       This prevents the 50% transform quirk where centering shifts as width changes */
+    left: 0;
+    right: 0;
+    margin: 0 auto;
     /* Block layout, shrinks to content — no flex quirks that change width with Y position */
     display: block;
     width: fit-content;

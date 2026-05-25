@@ -346,7 +346,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             // (Done button is now z-index 700, above the overlay at 600, so this fires correctly)
             let elementsForExport = placedElements
             if (isEditingText) {
-                const textEl = document.querySelector('.text-input[contenteditable]')
+                const textEl = document.querySelector('.text-input')
                 const text = textEl?.innerText?.trim()
                 if (text) {
                     const style = initialTextStyle || { fontId: 'classic', color: '#FFFFFF', textAlign: 'center', styleMode: null }
