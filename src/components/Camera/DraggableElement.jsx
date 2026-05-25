@@ -171,7 +171,8 @@ function DraggableElement({ element, canvasWidth, canvasHeight, onUpdate, onRemo
                     fontWeight: style.fontId === 'bold' ? '700' : '400',
                     color: style.color || '#fff',
                     textAlign: style.textAlign || 'center',
-                    lineHeight: '1.2' // Matches ExportEngine.js logic exactly
+                    lineHeight: '1.2', // Matches ExportEngine.js logic exactly
+                    padding: '8px 12px' // Match editor's base padding
                 }
 
                 // Apply style mode
