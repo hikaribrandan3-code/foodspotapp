@@ -21,14 +21,15 @@
     transform-origin: center center;
 }
 
-/* Text element styling - Instagram-style wrapping */
+/* Text element styling - tight wrap around content like Instagram */
 .draggable-text {
     padding: 8px 12px;
     font-size: 24px;
     color: #fff;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-    /* Strict parity with TextEditor width */
-    width: 280px;
+    /* Shrinks to hug text content, not a fixed 280px box */
+    display: inline-block;
+    width: auto;
     max-width: 280px;
     white-space: pre-wrap;
     word-wrap: break-word;

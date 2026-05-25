@@ -91,21 +91,25 @@ export default function TextEditor({
         }
     }
 
-    // Focus input when activated - use rAF for reliable iOS Safari focus
+    // Focus contenteditable when activated - use rAF for reliable iOS Safari focus
     useEffect(() => {
         if (isActive && inputRef.current) {
-            // requestAnimationFrame ensures DOM is painted before focus
-            // This guarantees keyboard + toolbar appear together
-            requestAnimationFrame(() => {
-                if (inputRef.current) {
-                    inputRef.current.focus()
-                    const len = inputRef.current.value.length
-                    inputRef.current.setSelectionRange(len, len)
+            // Set initial text content
+            const el = inputRef.current
+            el.innerText = initialText || ''
 
-                    // Auto-resize on mount to prevent clipping previously typed multiline text
-                    inputRef.current.style.height = 'auto'
-                    inputRef.current.style.height = inputRef.current.scrollHeight + 'px'
-                }
+            requestAnimationFrame(() => {
+                if (!inputRef.current) return
+                inputRef.current.focus()
+                // Place cursor at end using Range API (contenteditable, not textarea)
+                try {
+                    const range = document.createRange()
+                    const sel = window.getSelection()
+                    range.selectNodeContents(inputRef.current)
+                    range.collapse(false)
+                    sel.removeAllRanges()
+                    sel.addRange(range)
+                } catch (_) {}
             })
         }
     }, [isActive])
@@ -124,14 +128,14 @@ export default function TextEditor({
 
     // Handle tap outside to finish - works from any zone
     const handleContainerClick = useCallback((e) => {
-        // Don't exit if tapping the textarea itself
-        if (e.target === inputRef.current) return
+        // Don't exit if tapping the contenteditable itself
+        if (e.target === inputRef.current || inputRef.current?.contains(e.target)) return
 
         // Don't exit if tapping a button (font/color/style/align buttons)
         if (e.target.closest('button')) return
 
         // Exit: save if text exists, cancel if empty
-        const text = inputRef.current?.value?.trim()
+        const text = inputRef.current?.innerText?.trim()
         if (text) {
             onSave(text, currentStyle)
         } else {
@@ -143,7 +147,7 @@ export default function TextEditor({
     const handleKeyDown = useCallback((e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
-            const text = inputRef.current?.value?.trim()
+            const text = inputRef.current?.innerText?.trim()
             if (text) {
                 onSave(text, currentStyle)
             } else {
@@ -191,23 +195,19 @@ export default function TextEditor({
             className="text-editor-overlay"
             onClick={handleContainerClick}
         >
-            {/* Text Input Area - Instagram-style wrapping */}
+            {/* Text Input Area - Instagram-style tight wrapping */}
             <div className="text-input-container" style={{ top: position?.y || '40%' }}>
-                <textarea
+                <div
                     ref={inputRef}
-                    defaultValue={initialText || ''}
+                    contentEditable="true"
+                    suppressContentEditableWarning
                     onKeyDown={handleKeyDown}
-                    placeholder="Type here..."
+                    data-placeholder="Type here..."
                     autoCapitalize="sentences"
                     autoCorrect="on"
+                    spellCheck="true"
                     className="text-input"
                     style={getTextStyle()}
-                    rows={1}
-                    onInput={(e) => {
-                        // Auto-resize height
-                        e.target.style.height = 'auto'
-                        e.target.style.height = e.target.scrollHeight + 'px'
-                    }}
                 />
             </div>
 

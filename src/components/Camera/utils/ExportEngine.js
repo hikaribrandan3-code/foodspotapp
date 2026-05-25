@@ -246,13 +246,25 @@ function drawText(ctx, element, exportWidth, exportHeight, scale = 1) {
     if (style.styleMode === 'background') {
         const pad = 8 * scale
         ctx.fillStyle = color
-        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2, maxLW + pad * 2, totalHeight, 4 * scale)
-        ctx.fill()
+        // Per-line rects — each line gets its own tight background (Instagram style)
+        lines.forEach((line, i) => {
+            const lw = ctx.measureText(line).width
+            const ly = startY + i * lineHeight
+            ctx.beginPath()
+            ctx.roundRect(-lw / 2 - pad, ly - lineHeight / 2, lw + pad * 2, lineHeight, 4 * scale)
+            ctx.fill()
+        })
     } else if (style.styleMode === 'highlight') {
         const pad = 12 * scale
         ctx.fillStyle = color
-        ctx.roundRect(-maxLW / 2 - pad, -totalHeight / 2 - pad / 2, maxLW + pad * 2, totalHeight + pad, 8 * scale)
-        ctx.fill()
+        // Per-line rects with larger padding (Instagram highlight style)
+        lines.forEach((line, i) => {
+            const lw = ctx.measureText(line).width
+            const ly = startY + i * lineHeight
+            ctx.beginPath()
+            ctx.roundRect(-lw / 2 - pad, ly - lineHeight / 2 - pad / 4, lw + pad * 2, lineHeight + pad / 2, 8 * scale)
+            ctx.fill()
+        })
     }
 
     const startY = -totalHeight / 2 + lineHeight / 2
