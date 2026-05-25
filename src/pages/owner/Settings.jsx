@@ -580,10 +580,6 @@ const Settings = () => {
             console.log('[Settings] 📡 DISPATCHING frontendSync with full payload:', frontendSyncData);
             window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
 
-            // CRITICAL: Force TenantContext to refresh from database immediately
-            // This ensures cameraPinStyle and other app_config values are guaranteed to be in sync
-            refreshTenantData();
-
             if (tenant.slug) {
                 const cacheKey = `tenant_lock_${tenant.slug}`;
                 const cached = localStorage.getItem(cacheKey);
