@@ -18,25 +18,36 @@ const getCategory = (index) => {
 // SVG Icons for categories
 const FoodIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2L4 8V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L12 2Z" fill="currentColor"/>
-    <circle cx="12" cy="14" r="3" fill="white" opacity="0.3"/>
+    {/* Plate */}
+    <circle cx="12" cy="14" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    {/* Fork */}
+    <path d="M7 8L6 16M9 8L8 16M11 8L10 16M6 8C5 8 4 8.5 4 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
   </svg>
 )
 
 const ArgentinaIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="10" fill="currentColor"/>
-    <path d="M12 8L14.5 14.5H21.5L16 18.5L18.5 25L12 21L5.5 25L8 18.5L2.5 14.5H9.5L12 8Z" fill="white" opacity="0.8"/>
+    {/* Soccer ball */}
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    {/* Pentagon pattern */}
+    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.7"/>
+    <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
+    <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
   </svg>
 )
 
 const AnimeIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="8" cy="10" r="2.5" fill="currentColor"/>
-    <circle cx="16" cy="10" r="2.5" fill="currentColor"/>
-    <path d="M8 10C8 10 10 16 12 16C14 16 16 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-    <path d="M5 5C5 8 6 11 8 13" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
-    <path d="M19 5C19 8 18 11 16 13" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+    {/* Anime character eyes */}
+    <ellipse cx="9" cy="10" rx="1.5" ry="3" fill="currentColor"/>
+    <ellipse cx="15" cy="10" rx="1.5" ry="3" fill="currentColor"/>
+    {/* Shine in eyes */}
+    <circle cx="9.5" cy="9" r="0.6" fill="white"/>
+    <circle cx="15.5" cy="9" r="0.6" fill="white"/>
+    {/* Mouth */}
+    <path d="M9 15C10 16 14 16 15 15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+    {/* Hair/top */}
+    <path d="M7 6C7 6 8 4 12 4C16 4 17 6 17 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
   </svg>
 )
 
