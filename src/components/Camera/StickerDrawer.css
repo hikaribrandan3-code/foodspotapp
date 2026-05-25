@@ -160,11 +160,11 @@
     gap: 4px;
     width: 75px;
     height: 75px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.15);
     border-radius: 16px;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.6);
     transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     font-size: 12px;
@@ -172,7 +172,7 @@
 }
 
 .category-tab:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .category-tab:active {
@@ -180,9 +180,9 @@
 }
 
 .category-tab.active {
-    background: rgba(16, 185, 129, 0.3);
-    border-color: #10b981;
-    color: #10b981;
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #000000;
 }
 
 .category-tab svg {
