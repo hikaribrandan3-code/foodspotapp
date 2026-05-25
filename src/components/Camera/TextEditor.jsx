@@ -158,30 +158,29 @@ export default function TextEditor({
         }
     }, [onSave, onCancel, currentStyle])
 
-    // Get text style for preview — MUST match DraggableElement.jsx logic exactly
+    // Get text style for preview
     const getTextStyle = () => {
         const font = getCurrentFont()
         const style = {
             fontFamily: font.family,
             fontWeight: font.weight || '400',
             color: currentStyle.color,
-            textAlign: currentStyle.textAlign,
-            padding: '8px 12px' // Base padding (matches .text-input CSS)
+            textAlign: currentStyle.textAlign
         }
 
-        // Apply style mode — SYNC with DraggableElement.jsx lines 178-191
+        // Apply style mode
         if (currentStyle.styleMode === 'stroke') {
             style.WebkitTextStroke = `1px ${currentStyle.color}`
             style.color = 'transparent'
         } else if (currentStyle.styleMode === 'background') {
             style.backgroundColor = currentStyle.color
             style.color = currentStyle.color === '#FFFFFF' || currentStyle.color === '#FFCC00' ? '#000' : '#FFF'
-            style.padding = '4px 12px' // Match DraggableElement.jsx:184
+            style.padding = '4px 12px'
             style.borderRadius = '4px'
         } else if (currentStyle.styleMode === 'highlight') {
             style.backgroundColor = currentStyle.color
             style.color = currentStyle.color === '#FFFFFF' || currentStyle.color === '#FFCC00' ? '#000' : '#FFF'
-            style.padding = '8px 16px' // Match DraggableElement.jsx:189
+            style.padding = '8px 16px'
             style.borderRadius = '8px'
         }
 
