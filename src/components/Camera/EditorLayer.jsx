@@ -548,7 +548,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 }}>
                     {/* Text */}
                     <button
-                        onClick={() => handleToolPress('text')}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleToolPress('text')
+                        }}
                         aria-label="Add Text"
                         style={{
                             width: '44px',
@@ -563,13 +566,19 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             justifyContent: 'center',
                             fontSize: '18px',
                             fontWeight: '600',
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            pointerEvents: 'auto',
+                            position: 'relative',
+                            zIndex: 800
                         }}
                     >Aa</button>
 
                     {/* Stickers */}
                     <button
-                        onClick={() => handleToolPress('stickers')}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleToolPress('stickers')
+                        }}
                         aria-label="Add Stickers"
                         style={{
                             width: '44px',
@@ -582,7 +591,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            pointerEvents: 'auto',
+                            position: 'relative',
+                            zIndex: 800
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -592,7 +604,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                     {/* Draw */}
                     <button
-                        onClick={() => handleToolPress('draw')}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleToolPress('draw')
+                        }}
                         aria-label="Draw"
                         style={{
                             width: '44px',
@@ -605,7 +620,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            pointerEvents: 'auto',
+                            position: 'relative',
+                            zIndex: 800
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -615,7 +633,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                     {/* Retake */}
                     <button
-                        onClick={onRetake}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onRetake()
+                        }}
                         aria-label="Retake"
                         style={{
                             width: '44px',
@@ -628,7 +649,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            pointerEvents: 'auto',
+                            position: 'relative',
+                            zIndex: 800
                         }}
                     >
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -638,7 +662,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
                     {/* Done */}
                     <button
-                        onClick={handleDone}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            handleDone()
+                        }}
                         disabled={isExporting}
                         aria-label="Done"
                         style={{
@@ -653,7 +680,10 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             alignItems: 'center',
                             justifyContent: 'center',
                             opacity: isExporting ? 0.5 : 1,
-                            touchAction: 'manipulation'
+                            touchAction: 'manipulation',
+                            pointerEvents: 'auto',
+                            position: 'relative',
+                            zIndex: 800
                         }}
                     >
                         {isExporting ? (
