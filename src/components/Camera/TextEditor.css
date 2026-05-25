@@ -20,12 +20,11 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: auto;
-    max-width: 90%;
-    display: flex;
-    justify-content: center;
-    /* Ensure text input is never covered by keyboard/tools */
-    padding-bottom: 200px;
+    /* Block layout, shrinks to content — no flex quirks that change width with Y position */
+    display: block;
+    width: fit-content;
+    max-width: 90vw;
+    text-align: center;
 }
 
 .text-input {

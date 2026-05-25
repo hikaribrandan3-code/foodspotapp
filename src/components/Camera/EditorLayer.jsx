@@ -342,6 +342,28 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         setIsExporting(true)
 
         try {
+            // If text editor is open, auto-save whatever is typed before exporting
+            // (Done button is now z-index 700, above the overlay at 600, so this fires correctly)
+            let elementsForExport = placedElements
+            if (isEditingText) {
+                const textEl = document.querySelector('.text-input[contenteditable]')
+                const text = textEl?.innerText?.trim()
+                if (text) {
+                    const style = initialTextStyle || { fontId: 'classic', color: '#FFFFFF', textAlign: 'center', styleMode: null }
+                    elementsForExport = activeTextId
+                        ? placedElements.map(el =>
+                            el.id === activeTextId ? { ...el, data: { ...el.data, text } } : el
+                        )
+                        : [...placedElements, {
+                            id: `text-${Date.now()}`,
+                            type: 'text', x: 0.5, y: 0.5,
+                            scale: 1, rotation: 0,
+                            data: { text, style }
+                        }]
+                    setPlacedElements(elementsForExport)
+                }
+            }
+
             setIsEditingText(false)
             setActiveTextId(null)
             if (document.activeElement && document.activeElement !== document.body) {
@@ -361,7 +383,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             const { objectURL, blob } = await exportPreview({
                 baseCanvas: highResCanvas,
                 strokes,
-                elements: placedElements,
+                elements: elementsForExport,
                 containerRect: {
                     width: containerRect.width,
                     height: containerRect.height
@@ -376,7 +398,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
         } finally {
             setIsExporting(false)
         }
-    }, [strokes, placedElements, neonContext, branding, businessName])
+    }, [strokes, placedElements, isEditingText, activeTextId, initialTextStyle, neonContext, branding, businessName])
 
     return (
         <div className="editor-layer" ref={containerRef}>
@@ -522,7 +544,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                     borderRadius: '24px',
-                    zIndex: 100
+                    zIndex: 700  // Above TextEditor overlay (600) so Done is always tappable
                 }}>
                     {/* Text */}
                     <button
