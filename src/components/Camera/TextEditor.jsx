@@ -219,16 +219,14 @@ export default function TextEditor({
                         <button
                             key={font.id}
                             className={`font-button ${currentStyle.fontId === font.id ? 'font-button-active' : ''}`}
-                            onMouseDown={(e) => {
-                                // Prevent focus loss from textarea (desktop fix)
+                            onPointerDown={(e) => {
+                                // Prevent focus loss from textarea (touch + mouse)
                                 e.preventDefault()
                             }}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 e.preventDefault()
                                 updateStyle({ fontId: font.id })
-                                // Refocus textarea to maintain edit state
-                                inputRef.current?.focus()
                             }}
                             style={{ fontFamily: font.family, fontWeight: font.weight }}
                         >
@@ -243,16 +241,14 @@ export default function TextEditor({
                         <button
                             key={color}
                             className={`color-button ${currentStyle.color === color ? 'color-button-active' : ''}`}
-                            onMouseDown={(e) => {
-                                // Prevent focus loss from textarea (desktop fix)
+                            onPointerDown={(e) => {
+                                // Prevent focus loss from textarea (touch + mouse)
                                 e.preventDefault()
                             }}
                             onClick={(e) => {
                                 e.stopPropagation()
                                 e.preventDefault()
                                 updateStyle({ color })
-                                // Refocus textarea to maintain edit state
-                                inputRef.current?.focus()
                             }}
                             style={{ backgroundColor: color }}
                             aria-label={`Color ${color}`}
@@ -268,16 +264,14 @@ export default function TextEditor({
                             <button
                                 key={align.id}
                                 className={`align-button ${currentStyle.textAlign === align.id ? 'align-button-active' : ''}`}
-                                onMouseDown={(e) => {
-                                    // Prevent focus loss from textarea (desktop fix)
+                                onPointerDown={(e) => {
+                                    // Prevent focus loss from textarea (touch + mouse)
                                     e.preventDefault()
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     e.preventDefault()
                                     updateStyle({ textAlign: align.id })
-                                    // Refocus textarea to maintain edit state
-                                    inputRef.current?.focus()
                                 }}
                                 aria-label={`Align ${align.id}`}
                             >
@@ -306,8 +300,8 @@ export default function TextEditor({
                             <button
                                 key={mode.id}
                                 className={`style-button style-button-${mode.id} ${currentStyle.styleMode === mode.id ? 'style-button-active' : ''}`}
-                                onMouseDown={(e) => {
-                                    // Prevent focus loss from textarea (desktop fix)
+                                onPointerDown={(e) => {
+                                    // Prevent focus loss from textarea (touch + mouse)
                                     e.preventDefault()
                                 }}
                                 onClick={(e) => {
@@ -315,8 +309,6 @@ export default function TextEditor({
                                     e.preventDefault()
                                     // Toggle off if same, otherwise set
                                     updateStyle({ styleMode: currentStyle.styleMode === mode.id ? null : mode.id })
-                                    // Refocus textarea to maintain edit state
-                                    inputRef.current?.focus()
                                 }}
                                 aria-label={`Style ${mode.id}`}
                             >
