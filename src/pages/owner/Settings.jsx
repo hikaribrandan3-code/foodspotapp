@@ -547,6 +547,7 @@ const Settings = () => {
 
             // DEBUG: Log what was actually saved
             console.log('[Settings] ✅ Save successful. savedData.app_config:', savedData?.app_config, 'cameraPinStyle:', savedData?.app_config?.cameraPinStyle)
+            console.log('[Settings] 📡 Dispatching frontendSync with app_config.cameraPinStyle:', savedData?.app_config?.cameraPinStyle)
 
             // Apply confirmed data to context + cache
             Object.assign(tenant, savedData);
@@ -567,7 +568,8 @@ const Settings = () => {
                     fontWeight: savedData.font_weight
                 },
                 infoPills: savedData.info_pills,
-                heroIcons: savedData.hero_icons
+                heroIcons: savedData.hero_icons,
+                app_config: savedData.app_config  // Include full app_config (cameraPinStyle, munchboy, etc.)
             };
 
             window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
