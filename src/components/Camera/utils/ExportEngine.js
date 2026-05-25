@@ -98,8 +98,8 @@ export function applyNanoBanana(ctx, width, height, context) {
 const PIN_STYLE_COLORS = {
     classic: 'rgba(255, 255, 255, 0.22)',
     cafe:    'rgba(130, 90, 60, 0.55)',
-    vegan:   'rgba(40, 160, 80, 0.55)',
-    burger:  'rgba(200, 160, 0, 0.55)',
+    vegan:   'rgba(145, 170, 100, 0.55)',
+    burger:  'rgba(255, 193, 7, 0.60)',
 }
 
 function burnBranding(ctx, width, height, branding, trueScale) {

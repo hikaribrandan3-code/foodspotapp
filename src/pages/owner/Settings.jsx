@@ -1014,11 +1014,11 @@ const Settings = () => {
                     </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                         {[
-                            { id: 'classic', label: 'Classic', bg: 'rgba(255,255,255,0.22)', border: 'rgba(255,255,255,0.4)' },
-                            { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)',   border: 'rgba(130,90,60,0.8)' },
-                            { id: 'vegan',   label: 'Vegan',   bg: 'rgba(40,160,80,0.55)',   border: 'rgba(40,160,80,0.8)' },
-                            { id: 'burger',  label: 'Burger',  bg: 'rgba(200,160,0,0.55)',   border: 'rgba(200,160,0,0.8)' },
-                        ].map(({ id, label, bg, border }) => {
+                            { id: 'classic', label: 'Classic', bg: 'rgba(255,255,255,0.22)' },
+                            { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)' },
+                            { id: 'vegan',   label: 'Vegan',   bg: 'rgba(145,170,100,0.55)' },
+                            { id: 'burger',  label: 'Burger',  bg: 'rgba(255,193,7,0.60)' },
+                        ].map(({ id, label, bg }) => {
                             const isActive = (draft.app_config?.cameraPinStyle || 'classic') === id
                             return (
                                 <button
@@ -1047,10 +1047,9 @@ const Settings = () => {
                                         gap: 4,
                                         padding: '5px 10px',
                                         background: bg,
-                                        border: `1px solid ${border}`,
                                         borderRadius: 20,
-                                        backdropFilter: 'blur(4px)',
-                                        backgroundColor: id === 'classic' ? '#444' : undefined,
+                                        backdropFilter: 'blur(8px)',
+                                        WebkitBackdropFilter: 'blur(8px)',
                                     }}>
                                         <svg width="8" height="8" viewBox="0 0 24 24" fill="white">
                                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />

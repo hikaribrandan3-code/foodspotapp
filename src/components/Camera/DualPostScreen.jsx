@@ -14,6 +14,16 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
+    // Camera pin style colors
+    const PIN_STYLE_COLORS = {
+        classic: 'rgba(255, 255, 255, 0.22)',
+        cafe:    'rgba(130, 90, 60, 0.55)',
+        vegan:   'rgba(145, 170, 100, 0.55)',
+        burger:  'rgba(255, 193, 7, 0.60)',
+    }
+    const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
+    const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
+
     return (
         <div style={styles.container}>
 
@@ -36,7 +46,7 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
             </button>
 
             {/* ── Location Pill (bottom-left, above action bar) ── */}
-            <div style={styles.locationPill}>
+            <div style={{...styles.locationPill, background: pinBg}}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style={{ flexShrink: 0 }}>
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                 </svg>

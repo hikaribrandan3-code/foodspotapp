@@ -68,8 +68,8 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
     const PIN_STYLE_COLORS = {
         classic: 'rgba(255, 255, 255, 0.22)',
         cafe:    'rgba(130, 90, 60, 0.55)',
-        vegan:   'rgba(40, 160, 80, 0.55)',
-        burger:  'rgba(200, 160, 0, 0.55)',
+        vegan:   'rgba(145, 170, 100, 0.55)',
+        burger:  'rgba(255, 193, 7, 0.60)',
     }
     const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
     const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
