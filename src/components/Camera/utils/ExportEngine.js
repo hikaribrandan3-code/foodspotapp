@@ -240,6 +240,8 @@ function drawText(ctx, element, exportWidth, exportHeight, scale = 1) {
 
     const lineHeight = fontSize * 1.2
     const totalHeight = lines.length * lineHeight
+    const startY = -totalHeight / 2 + lineHeight / 2
+
     let maxLW = 0
     lines.forEach(l => maxLW = Math.max(maxLW, ctx.measureText(l).width))
 
@@ -266,8 +268,6 @@ function drawText(ctx, element, exportWidth, exportHeight, scale = 1) {
             ctx.fill()
         })
     }
-
-    const startY = -totalHeight / 2 + lineHeight / 2
     lines.forEach((line, i) => {
         const ly = startY + i * lineHeight
         if (style.styleMode === 'stroke') {
