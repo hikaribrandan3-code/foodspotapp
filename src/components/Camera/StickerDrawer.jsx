@@ -5,7 +5,46 @@ import './StickerDrawer.css'
  * StickerDrawer Component - Hikari CamTech Engine v3.1
  * Right-side slide-out drawer per Gemini mock (Image A)
  * Lazy image loading via Intersection Observer (non-blocking)
+ * Organized into 3 categories: Food (1-117), Argentina (118-224), Anime (225+)
  */
+
+// Helper function to assign category based on index
+const getCategory = (index) => {
+  if (index < 117) return 'food'
+  if (index < 224) return 'argentina'
+  return 'anime'
+}
+
+// SVG Icons for categories
+const FoodIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L4 8V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L12 2Z" fill="currentColor"/>
+    <circle cx="12" cy="14" r="3" fill="white" opacity="0.3"/>
+  </svg>
+)
+
+const ArgentinaIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="10" fill="currentColor"/>
+    <path d="M12 8L14.5 14.5H21.5L16 18.5L18.5 25L12 21L5.5 25L8 18.5L2.5 14.5H9.5L12 8Z" fill="white" opacity="0.8"/>
+  </svg>
+)
+
+const AnimeIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="8" cy="10" r="2.5" fill="currentColor"/>
+    <circle cx="16" cy="10" r="2.5" fill="currentColor"/>
+    <path d="M8 10C8 10 10 16 12 16C14 16 16 10 16 10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+    <path d="M5 5C5 8 6 11 8 13" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+    <path d="M19 5C19 8 18 11 16 13" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+  </svg>
+)
+
+const CATEGORY_TABS = [
+  { id: 'food', label: 'Food', icon: FoodIcon },
+  { id: 'argentina', label: 'Argentina', icon: ArgentinaIcon },
+  { id: 'anime', label: 'Anime', icon: AnimeIcon },
+]
 
 const LazyImage = ({ src, alt }) => {
   const [imageSrc, setImageSrc] = useState(null)
@@ -53,7 +92,7 @@ const LazyImage = ({ src, alt }) => {
 
 const STICKERS = [
     // === FOOD SECTION (1-117) ===
-    { id: 'aaastickerfolder_01', type: 'image', src: '/assets/images/aaastickerfolder/1212.png' },
+    { id: 'aaastickerfolder_01', type: 'image', src: '/assets/images/aaastickerfolder/1212.png', category: 'food' },
     { id: 'aaastickerfolder_02', type: 'image', src: '/assets/images/aaastickerfolder/122.png' },
     { id: 'aaastickerfolder_03', type: 'image', src: '/assets/images/aaastickerfolder/1231231212.png' },
     { id: 'aaastickerfolder_04', type: 'image', src: '/assets/images/aaastickerfolder/12323.png' },
@@ -406,6 +445,15 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
     const [isDragging, setIsDragging] = useState(false)
     const [dragStartX, setDragStartX] = useState(0)
     const [dragOffsetX, setDragOffsetX] = useState(0)
+    const [activeCategory, setActiveCategory] = useState('food')
+
+    // Filter stickers based on active category
+    const filteredStickers = STICKERS.filter((_, index) => getCategory(index) === activeCategory)
+
+    // Debug: log when category changes
+    useEffect(() => {
+        console.log(`Category changed to: ${activeCategory}, showing ${filteredStickers.length} stickers`)
+    }, [activeCategory, filteredStickers.length])
 
     // Handle swipe to close
     const handleTouchStart = useCallback((e) => {
@@ -477,8 +525,27 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
                     <span className="drawer-title">Stickers</span>
                 </div>
 
+                {/* Category Tabs */}
+                <div className="sticker-category-tabs">
+                    {CATEGORY_TABS.map((tab) => {
+                        const IconComponent = tab.icon
+                        return (
+                            <button
+                                key={tab.id}
+                                className={`category-tab ${activeCategory === tab.id ? 'active' : ''}`}
+                                onClick={() => setActiveCategory(tab.id)}
+                                title={tab.label}
+                            >
+                                <IconComponent />
+                            </button>
+                        )
+                    })}
+                </div>
+
                 <div className="sticker-grid scrollable">
-                    {STICKERS.map((sticker, index) => (
+                    {filteredStickers.map((sticker) => {
+                        const originalIndex = STICKERS.indexOf(sticker)
+                        return (
                         <button
                             key={sticker.id}
                             className="sticker-item"
@@ -506,10 +573,11 @@ export default function StickerDrawer({ isOpen, onClose, onSelect }) {
                                 fontSize: '10px',
                                 fontWeight: 'bold',
                             }}>
-                                {index + 1}
+                                {originalIndex + 1}
                             </div>
                         </button>
-                    ))}
+                        )
+                    })}
                 </div>
             </div>
         </div>
