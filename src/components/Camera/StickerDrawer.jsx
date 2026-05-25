@@ -1,5 +1,8 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import './StickerDrawer.css'
+import foodIconSvg from './icons/food.svg'
+import argentinaIconSvg from './icons/argentina.svg'
+import animeIconSvg from './icons/anime.svg'
 
 /**
  * StickerDrawer Component - Hikari CamTech Engine v3.1
@@ -15,40 +18,17 @@ const getCategory = (index) => {
   return 'anime'
 }
 
-// SVG Icons for categories
+// SVG Icon components that use imported SVG files
 const FoodIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Plate */}
-    <circle cx="12" cy="14" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-    {/* Fork */}
-    <path d="M7 8L6 16M9 8L8 16M11 8L10 16M6 8C5 8 4 8.5 4 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-  </svg>
+  <img src={foodIconSvg} alt="Food" className="category-icon" />
 )
 
 const ArgentinaIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Soccer ball */}
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-    {/* Pentagon pattern */}
-    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.7"/>
-    <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
-    <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="0.8" opacity="0.5"/>
-  </svg>
+  <img src={argentinaIconSvg} alt="Argentina" className="category-icon" />
 )
 
 const AnimeIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Anime character eyes */}
-    <ellipse cx="9" cy="10" rx="1.5" ry="3" fill="currentColor"/>
-    <ellipse cx="15" cy="10" rx="1.5" ry="3" fill="currentColor"/>
-    {/* Shine in eyes */}
-    <circle cx="9.5" cy="9" r="0.6" fill="white"/>
-    <circle cx="15.5" cy="9" r="0.6" fill="white"/>
-    {/* Mouth */}
-    <path d="M9 15C10 16 14 16 15 15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-    {/* Hair/top */}
-    <path d="M7 6C7 6 8 4 12 4C16 4 17 6 17 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-  </svg>
+  <img src={animeIconSvg} alt="Anime" className="category-icon" />
 )
 
 const CATEGORY_TABS = [
