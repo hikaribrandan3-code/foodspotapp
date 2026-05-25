@@ -13,7 +13,7 @@ import PreviewActions from './PreviewActions.jsx'
  *   onComplete     - Exit entire camera flow
  */
 export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinStyle, onClose, onComplete }) {
-    const { tenantData } = useTenant()
+    const { tenantData, businessId } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
     // Camera pin style colors
@@ -23,11 +23,16 @@ export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinS
         vegan:   'rgba(145, 170, 100, 0.55)',
         burger:  'rgba(255, 193, 7, 0.60)',
     }
-    const pinStyle = cameraPinStyle || tenantData?.app_config?.cameraPinStyle || 'classic'
+    // CRITICAL: Use prop first, then tenantData, then localStorage fallback, then default
+    const pinStyle = cameraPinStyle || tenantData?.app_config?.cameraPinStyle ||
+        (typeof window !== 'undefined' && businessId ? localStorage.getItem(`cameraPinStyle_permanent_${businessId}`) : null) ||
+        (typeof window !== 'undefined' && businessId ? sessionStorage.getItem(`cameraPinStyle_${businessId}`) : null) ||
+        'classic'
     const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
 
-    // DEBUG: Log what DualPostScreen receives
-    console.log('[DualPostScreen] 🎬 cameraPinStyle prop:', cameraPinStyle, 'tenantData.app_config:', tenantData?.app_config, 'final pinStyle:', pinStyle, 'pinBg:', pinBg)
+    // DEBUG: Log what DualPostScreen receives and uses
+    console.log('[DualPostScreen] 🎬 cameraPinStyle prop:', cameraPinStyle);
+    console.log('[DualPostScreen] 🎬 final pinStyle:', pinStyle, 'pinBg:', pinBg);
 
     return (
         <div style={styles.container}>

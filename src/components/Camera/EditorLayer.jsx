@@ -19,19 +19,25 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const { tenantData, businessId } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
-    // CRITICAL: Read cameraPinStyle from tenantData, with fallback to sessionStorage
-    // sessionStorage is set by Settings.jsx and survives navigation
-    const cameraPinStyleFromTenant = tenantData?.app_config?.cameraPinStyle;
-    const cameraPinStyleFromSession = typeof window !== 'undefined' ? sessionStorage.getItem(`cameraPinStyle_${businessId}`) : null;
-    const cameraPinStyleToUse = cameraPinStyleFromTenant || cameraPinStyleFromSession || 'classic';
+    // CRITICAL: cameraPinStyle lookup in order of preference:
+    // 1. tenantData.app_config.cameraPinStyle (realtime from context)
+    // 2. localStorage (persistent across tabs/reloads)
+    // 3. sessionStorage (set by Settings.jsx during this session)
+    // 4. 'classic' (fallback)
+    const cameraPinStyleToUse = useMemo(() => {
+        const fromTenant = tenantData?.app_config?.cameraPinStyle;
+        const fromLocalStorage = typeof window !== 'undefined' && businessId ? localStorage.getItem(`cameraPinStyle_permanent_${businessId}`) : null;
+        const fromSessionStorage = typeof window !== 'undefined' && businessId ? sessionStorage.getItem(`cameraPinStyle_${businessId}`) : null;
 
-    // DEBUG: Log tenantData.app_config.cameraPinStyle whenever it changes
-    useEffect(() => {
-        console.log('[EditorLayer] 📊 Reading cameraPinStyle:');
-        console.log('  From tenantData:', cameraPinStyleFromTenant);
-        console.log('  From sessionStorage:', cameraPinStyleFromSession);
-        console.log('  Using:', cameraPinStyleToUse);
-    }, [cameraPinStyleFromTenant, cameraPinStyleFromSession, cameraPinStyleToUse]);
+        const result = fromTenant || fromLocalStorage || fromSessionStorage || 'classic';
+
+        // CRITICAL: If we got a value from local/session storage, also store in localStorage for persistence
+        if ((fromLocalStorage || fromSessionStorage) && !fromTenant && businessId) {
+            localStorage.setItem(`cameraPinStyle_permanent_${businessId}`, fromLocalStorage || fromSessionStorage);
+        }
+
+        return result;
+    }, [tenantData?.app_config?.cameraPinStyle, businessId]);
 
     // Canvas refs for layer architecture
     const containerRef = useRef(null)

@@ -578,9 +578,14 @@ const Settings = () => {
             };
 
             console.log('[Settings] 📡 DISPATCHING frontendSync with full payload:', frontendSyncData);
-            // CRITICAL: Store cameraPinStyle in sessionStorage so it survives navigation to camera
-            // EditorLayer will read this if tenantData.app_config.cameraPinStyle is not yet updated
-            sessionStorage.setItem(`cameraPinStyle_${businessId}`, payload.app_config?.cameraPinStyle || 'classic');
+            // CRITICAL: Store cameraPinStyle in both sessionStorage AND localStorage for maximum persistence
+            // - sessionStorage: survives navigation during this session
+            // - localStorage: survives page reloads and browser restarts
+            // EditorLayer will read from both as fallback if tenantData.app_config.cameraPinStyle is not yet updated
+            const pinStyleValue = payload.app_config?.cameraPinStyle || 'classic';
+            sessionStorage.setItem(`cameraPinStyle_${businessId}`, pinStyleValue);
+            localStorage.setItem(`cameraPinStyle_permanent_${businessId}`, pinStyleValue);
+            console.log('[Settings] 💾 Persisted cameraPinStyle to both storages:', pinStyleValue, 'for businessId:', businessId);
 
             window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
 
