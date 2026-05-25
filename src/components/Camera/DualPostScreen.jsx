@@ -7,10 +7,12 @@ import PreviewActions from './PreviewActions.jsx'
  *
  * Props:
  *   previewDataURL - The flattened JPEG data URL
+ *   previewBlob    - The blob object for the preview
+ *   cameraPinStyle - Camera pin style (classic, cafe, vegan, burger)
  *   onClose        - Go back to editor
  *   onComplete     - Exit entire camera flow
  */
-export default function DualPostScreen({ previewDataURL, previewBlob, onClose, onComplete }) {
+export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinStyle, onClose, onComplete }) {
     const { tenantData } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
@@ -21,7 +23,7 @@ export default function DualPostScreen({ previewDataURL, previewBlob, onClose, o
         vegan:   'rgba(145, 170, 100, 0.55)',
         burger:  'rgba(255, 193, 7, 0.60)',
     }
-    const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
+    const pinStyle = cameraPinStyle || tenantData?.app_config?.cameraPinStyle || 'classic'
     const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
 
     return (

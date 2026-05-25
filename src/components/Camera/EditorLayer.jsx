@@ -720,6 +720,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 <DualPostScreen
                     previewDataURL={preview.objectURL}
                     previewBlob={preview.blob}
+                    cameraPinStyle={tenantData?.app_config?.cameraPinStyle || 'classic'}
                     onClose={() => {
                         URL.revokeObjectURL(preview.objectURL)
                         setPreview(null)

@@ -583,6 +583,11 @@ const Settings = () => {
             setTimeout(() => setSaveStatus(null), 3000);
             setTimeout(() => { justSavedRef.current = false; }, 2000);
 
+            // Force refresh TenantContext to sync cameraPinStyle and other updates
+            setTimeout(() => {
+                refreshTenantData();
+            }, 500);
+
         } catch (error) {
             console.error('Save failed:', error);
             justSavedRef.current = false;
