@@ -16,16 +16,16 @@
 }
 
 /* Text Input Container — Instagram approach
-   Fixed position + fixed width = immune to canvas reflows.
-   Transform centering is stable because width never changes.
-   Width: 304px = 280px (text max-width) + 12px left padding + 12px right padding */
+   Fixed position, auto width = shrinks to content like the placed element.
+   Transform centering keeps it stable.
+   Max-width: 304px allows space for padding without forcing extra width */
 .text-input-container {
     position: fixed;
     left: 50%;
     /* top is set inline via style={{ top: position.y }} */
     transform: translateX(-50%);
-    width: 304px;
-    max-width: 90vw;
+    width: auto;
+    max-width: 304px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
