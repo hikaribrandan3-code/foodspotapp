@@ -545,6 +545,9 @@ const Settings = () => {
                 throw saveError || new Error('Save returned no data');
             }
 
+            // DEBUG: Log what was actually saved
+            console.log('[Settings] ✅ Save successful. savedData.app_config:', savedData?.app_config, 'cameraPinStyle:', savedData?.app_config?.cameraPinStyle)
+
             // Apply confirmed data to context + cache
             Object.assign(tenant, savedData);
 

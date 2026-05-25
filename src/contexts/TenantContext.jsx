@@ -244,6 +244,7 @@ export function TenantProvider({ children }) {
                 },
                 (payload) => {
                     console.log('[TenantLock] 🔄 Branding Update Received:', payload.new);
+                    console.log('[TenantLock] 🔄 cameraPinStyle in realtime:', payload.new.app_config?.cameraPinStyle, 'full app_config:', payload.new.app_config);
                     setTenantData(prev => ({
                         ...prev,
                         app_config: payload.new.app_config || prev.app_config,
