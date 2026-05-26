@@ -139,13 +139,12 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
           justifyContent: 'space-between',
         }}
       >
-        {/* Category pill — big, prominent, centered text */}
+        {/* Category pill — centered text, no dot */}
         <div
           style={{
-            display: 'inline-flex',
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
             padding: '7px 14px',
             borderRadius: '999px',
             background: isExpired
@@ -157,10 +156,10 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             fontWeight: '900',
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
-            alignSelf: 'flex-start',
+            alignSelf: 'center',
           }}
         >
-          {isExpired ? '✕ Event Ended' : `● ${event.category || 'Exclusive'}`}
+          {isExpired ? 'Event Ended' : event.category || 'Exclusive'}
         </div>
 
         {/* Title — LARGE, bold, dominant */}
@@ -401,21 +400,11 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-end',
-            gap: '4px',
+            gap: '2px',
             borderTop: `1px dashed rgba(16, 185, 129, 0.3)`,
             paddingTop: '10px',
           }}
         >
-          <span
-            style={{
-              fontSize: '13px',
-              fontWeight: '900',
-              color: '#ffffff',
-              letterSpacing: '-0.01em',
-            }}
-          >
-            {displayBusiness}
-          </span>
           <span
             style={{
               fontSize: '8px',
@@ -425,7 +414,17 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
               textTransform: 'uppercase',
             }}
           >
-            ✓ by FoodSpot
+            Powered by
+          </span>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: '900',
+              color: '#ffffff',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {displayBusiness}
           </span>
         </div>
       </div>
