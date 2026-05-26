@@ -87,7 +87,7 @@ export default function EventDetail({ event, onBook, onBack }) {
               {event.category}
             </div>
           </div>
-          <h1 className="text-4xl font-black tracking-tight !text-white leading-tight">
+          <h1 className="text-4xl font-black tracking-tight !text-white leading-tight" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
             {event.name}
           </h1>
         </div>
