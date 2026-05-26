@@ -61,8 +61,6 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
         display: 'flex',
         flexDirection: 'column',
         zIndex: -1,
-        borderLeft: `12px solid ${ACCENT_COLOR}`,
-        boxSizing: 'border-box',
       }}
     >
       {/* ═══════════════════════════════════════════════════════════
@@ -89,14 +87,14 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             filter: isExpired ? 'grayscale(0.6) brightness(0.7)' : 'brightness(0.95)',
           }}
         />
-        {/* Radial gradient overlay (top-right to center) + emerald tint */}
+        {/* Subtle radial gradient overlay */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: `
-              radial-gradient(ellipse at 70% 20%, transparent 0%, rgba(15, 23, 42, 0.4) 60%, rgba(15, 23, 42, 0.8) 100%),
-              linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%)
+              radial-gradient(ellipse at 70% 20%, transparent 0%, rgba(15, 23, 42, 0.2) 60%, rgba(15, 23, 42, 0.4) 100%),
+              linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, transparent 100%)
             `,
           }}
         />
@@ -133,7 +131,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
       <div
         style={{
           flex: 1,
-          background: `linear-gradient(135deg, #0f172a 0%, rgba(16, 185, 129, 0.05) 100%)`,
+          background: `linear-gradient(135deg, #0f172a 0%, rgba(16, 185, 129, 0.02) 100%)`,
           padding: '16px 18px',
           display: 'flex',
           flexDirection: 'column',
@@ -141,13 +139,14 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
           justifyContent: 'space-between',
         }}
       >
-        {/* Category pill — big, prominent */}
+        {/* Category pill — big, prominent, centered text */}
         <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '8px',
-            padding: '7px 12px',
+            padding: '7px 14px',
             borderRadius: '999px',
             background: isExpired
               ? 'rgba(239, 68, 68, 0.15)'
@@ -315,7 +314,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
                 style={{
                   fontSize: '9px',
                   fontWeight: '700',
-                  color: 'rgba(255,255,255,0.5)',
+                  color: '#ffffff',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                 }}
@@ -356,7 +355,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
                 style={{
                   fontSize: '9px',
                   fontWeight: '700',
-                  color: 'rgba(255,255,255,0.5)',
+                  color: '#ffffff',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                 }}
