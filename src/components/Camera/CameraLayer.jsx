@@ -85,11 +85,15 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
     const PIN_STYLE_COLORS = {
         classic: 'rgba(255, 255, 255, 0.22)',
         cafe:    'rgba(130, 90, 60, 0.55)',
-        vegan:   'rgba(145, 170, 100, 0.55)',
-        burger:  'rgba(255, 193, 7, 0.60)',
+        vegan:   'rgba(145, 170, 100, 0.55)',  // kept for backward compat
+        natural: 'rgba(145, 170, 100, 0.55)',  // new name
+        burger:  'rgba(255, 193, 7, 0.60)',    // kept for backward compat
     }
-    const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
-    const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
+    const pinStyle    = tenantData?.app_config?.cameraPinStyle || 'classic'
+    const customBg    = tenantData?.app_config?.cameraPinCustomBg   || 'rgba(80,80,80,0.55)'
+    const customText  = tenantData?.app_config?.cameraPinCustomText  || '#ffffff'
+    const pinBg   = pinStyle === 'custom' ? customBg   : (PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic)
+    const pinText = pinStyle === 'custom' ? customText : '#ffffff'
 
     const [showFilterToast, setShowFilterToast] = useState(false)
     const [filterToastName, setFilterToastName] = useState('')
@@ -273,10 +277,9 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 borderRadius: '20px',
-                color: '#fff',
                 zIndex: 10,
             }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                 </svg>
                 <span style={{
@@ -284,6 +287,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                     fontWeight: '700',
                     letterSpacing: '0.08em',
                     lineHeight: 1,
+                    color: pinText,
                 }}>
                     {businessName.toUpperCase()}
                 </span>
