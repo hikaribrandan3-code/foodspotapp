@@ -23,16 +23,14 @@ export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinS
         vegan:   'rgba(145, 170, 100, 0.55)',
         burger:  'rgba(255, 193, 7, 0.60)',
     }
-    // CRITICAL: Use prop first, then tenantData, then localStorage fallback, then default
-    const pinStyle = cameraPinStyle || tenantData?.app_config?.cameraPinStyle ||
-        (typeof window !== 'undefined' && businessId ? localStorage.getItem(`cameraPinStyle_permanent_${businessId}`) : null) ||
-        (typeof window !== 'undefined' && businessId ? sessionStorage.getItem(`cameraPinStyle_${businessId}`) : null) ||
-        'classic'
+    // CRITICAL: Use the cameraPinStyle prop passed from EditorLayer.
+    // EditorLayer already calculated it correctly using multi-source fallback (tenantData → localStorage → sessionStorage).
+    // DualPostScreen doesn't need to re-calculate — just trust the prop.
+    const pinStyle = cameraPinStyle || 'classic'
     const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
 
     // DEBUG: Log what DualPostScreen receives and uses
-    console.log('[DualPostScreen] 🎬 cameraPinStyle prop:', cameraPinStyle);
-    console.log('[DualPostScreen] 🎬 final pinStyle:', pinStyle, 'pinBg:', pinBg);
+    console.log('[DualPostScreen] 🎬 cameraPinStyle prop:', cameraPinStyle, '→ pinStyle:', pinStyle);
 
     return (
         <div style={styles.container}>
