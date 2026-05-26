@@ -162,22 +162,24 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
           {isExpired ? 'Event Ended' : event.category || 'Exclusive'}
         </div>
 
-        {/* Title — LARGE, bold, dominant, pure white */}
-        <div>
-          <h1
-            style={{
-              margin: '0',
-              fontSize: '36px',
-              fontWeight: '900',
-              color: 'rgb(255, 255, 255)',
-              lineHeight: 1.1,
-              letterSpacing: '-0.03em',
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-            }}
-          >
-            {event.name}
-          </h1>
-        </div>
+        {/* Title — LARGE, bold, dominant, PURE WHITE (iOS fix) */}
+        <h1
+          style={{
+            margin: '0',
+            fontSize: '36px',
+            fontWeight: '900',
+            color: '#FFFFFF',
+            WebkitTextFillColor: '#FFFFFF',
+            lineHeight: 1.1,
+            letterSpacing: '-0.03em',
+            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+            WebkitFontSmoothing: 'antialiased',
+            MozOsxFontSmoothing: 'grayscale',
+            textStroke: '0.5px #FFFFFF',
+          }}
+        >
+          {event.name}
+        </h1>
 
         {/* Info rows — generous spacing, elevated icons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
