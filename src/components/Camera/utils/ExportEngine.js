@@ -98,14 +98,15 @@ export function applyNanoBanana(ctx, width, height, context) {
 const PIN_STYLE_COLORS = {
     classic: 'rgba(255, 255, 255, 0.22)',
     cafe:    'rgba(130, 90, 60, 0.55)',
-    vegan:   'rgba(145, 170, 100, 0.55)',
-    burger:  'rgba(255, 193, 7, 0.60)',
+    vegan:   'rgba(145, 170, 100, 0.55)',  // kept for backward compat
+    natural: 'rgba(145, 170, 100, 0.55)',  // new name
+    burger:  'rgba(255, 193, 7, 0.60)',    // kept for backward compat
 }
 
 function burnBranding(ctx, width, height, branding, trueScale) {
     if (!branding?.businessName) return
 
-    const { businessName, cameraPinStyle } = branding
+    const { businessName, cameraPinStyle, cameraPinCustomBg, cameraPinCustomText } = branding
     const scale = trueScale || (width / 1080)
 
     // Detect orientation: landscape if width > height
@@ -140,7 +141,14 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     }
 
     // Glassmorphism pill background — color driven by cameraPinStyle
-    const pillColor = PIN_STYLE_COLORS[cameraPinStyle] || PIN_STYLE_COLORS.classic
+    const pillColor = cameraPinStyle === 'custom'
+        ? (cameraPinCustomBg || 'rgba(80,80,80,0.55)')
+        : (PIN_STYLE_COLORS[cameraPinStyle] || PIN_STYLE_COLORS.classic)
+
+    const pinTextColor = cameraPinStyle === 'custom'
+        ? (cameraPinCustomText || '#ffffff')
+        : '#ffffff'
+
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
     ctx.shadowBlur = 8 * scale
     ctx.shadowOffsetY = 2 * scale
@@ -153,23 +161,23 @@ function burnBranding(ctx, width, height, branding, trueScale) {
 
     ctx.shadowColor = 'transparent'
 
-    // Map pin icon (white)
+    // Map pin icon (respects custom text color)
     const pinX = pillX + pillPaddingH
     const pinCenterY = pillY + pillH / 2
     const pinR = pinSize * 0.35
 
-    ctx.fillStyle = '#FFFFFF'
+    ctx.fillStyle = pinTextColor
     ctx.beginPath()
     ctx.arc(pinX + pinSize / 2, pinCenterY - pinR * 0.3, pinR, Math.PI, 0, false)
     ctx.lineTo(pinX + pinSize / 2, pinCenterY + pinR * 1.4)
     ctx.closePath()
     ctx.fill()
 
-    // Text
+    // Text (respects custom text color)
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
-    ctx.fillStyle = '#FFFFFF'
+    ctx.fillStyle = pinTextColor
     ctx.fillText(businessName.toUpperCase(), pinX + pinSize + pinTextGap, pinCenterY)
 
     ctx.restore()

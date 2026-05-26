@@ -457,7 +457,13 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                     height: containerRect.height
                 },
                 neonContext,
-                branding: { ...branding, businessName, cameraPinStyle: cameraPinStyleToUse }
+                branding: {
+                    ...branding,
+                    businessName,
+                    cameraPinStyle: cameraPinStyleToUse,
+                    cameraPinCustomBg: tenantData?.app_config?.cameraPinCustomBg,
+                    cameraPinCustomText: tenantData?.app_config?.cameraPinCustomText
+                }
             })
 
             setPreview({ objectURL, blob })
