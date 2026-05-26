@@ -103,6 +103,7 @@ const Settings = () => {
     const [hasChanges, setHasChanges] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);
     const [showCoverEditor, setShowCoverEditor] = useState(false);
+    const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
 
     // Track the last businessId we've initialized for to prevent re-initialization
     const initializedForBusinessRef = useRef(null);
@@ -352,6 +353,13 @@ const Settings = () => {
     const updateDraftField = useCallback((field, value) => {
         setDraft(prev => ({ ...prev, [field]: value }));
         setHasChanges(true);
+    }, []);
+
+    // Handle window resize for responsive grid layout (camera pin styles)
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const updateHeroIconColor = useCallback((iconId, color) => {
@@ -1032,7 +1040,11 @@ const Settings = () => {
                     <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '16px' }}>
                         Color del pin de ubicación en la cámara y fotos exportadas
                     </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: windowWidth < 600 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+                        gap: 10
+                    }}>
                         {[
                             { id: 'classic', label: 'Classic', bg: '#4B5563', note: '(UI preview only - camera uses white)' },
                             { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)' },
@@ -1052,7 +1064,7 @@ const Settings = () => {
                                         flexDirection: 'column',
                                         alignItems: 'center',
                                         gap: 8,
-                                        padding: '12px 8px',
+                                        padding: windowWidth < 600 ? '16px 12px' : '12px 8px',
                                         borderRadius: 12,
                                         border: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
                                         background: isActive ? 'rgba(139,115,85,0.08)' : 'transparent',
@@ -1078,7 +1090,7 @@ const Settings = () => {
                                             {label.toUpperCase()}
                                         </span>
                                     </div>
-                                    <span style={{ fontSize: 11, fontWeight: isActive ? 700 : 400, color: isActive ? 'var(--color-primary)' : '#64748B' }}>
+                                    <span style={{ fontSize: windowWidth < 600 ? 12 : 11, fontWeight: isActive ? 700 : 400, color: isActive ? 'var(--color-primary)' : '#64748B' }}>
                                         {label}
                                     </span>
                                 </button>
