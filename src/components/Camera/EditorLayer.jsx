@@ -60,6 +60,18 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
         const result = fromTenant || fromLocalStorage || fromSessionStorage || 'classic';
 
+        console.log('[EditorLayer] cameraPinStyle resolved:', result, '| fromTenant:', fromTenant, '| fromLS:', fromLocalStorage);
+        // DEBUG: Log what EditorLayer is actually reading
+        console.log('[EditorLayer] 🎨 cameraPinStyle DEBUG:', {
+            fromTenant: fromTenant,
+            fromLocalStorage: fromLocalStorage,
+            fromSessionStorage: fromSessionStorage,
+            businessId: businessId,
+            result: result,
+            localStorage_keys: Object.keys(localStorage).filter(k => k.includes('cameraPinStyle')),
+            sessionStorage_keys: Object.keys(sessionStorage).filter(k => k.includes('cameraPinStyle'))
+        });
+
         // CRITICAL: If we got a value from local/session storage, also store in localStorage for persistence
         if ((fromLocalStorage || fromSessionStorage) && !fromTenant && businessId) {
             localStorage.setItem(`cameraPinStyle_permanent_${businessId}`, fromLocalStorage || fromSessionStorage);
@@ -67,6 +79,15 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
         return result;
     }, [tenantData?.app_config?.cameraPinStyle, businessId]);
+
+    // Pin style → background color (same map as CameraLayer + DualPostScreen)
+    const PIN_STYLE_COLORS = {
+        classic: 'rgba(255, 255, 255, 0.22)',
+        cafe:    'rgba(130, 90, 60, 0.55)',
+        vegan:   'rgba(145, 170, 100, 0.55)',
+        burger:  'rgba(255, 193, 7, 0.60)',
+    }
+    const pinBg = PIN_STYLE_COLORS[cameraPinStyleToUse] || PIN_STYLE_COLORS.classic
 
     // Canvas refs for layer architecture
     const containerRef = useRef(null)
@@ -496,7 +517,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                     alignItems: 'center',
                     gap: '5px',
                     padding: '6px 12px',
-                    background: 'rgba(255, 255, 255, 0.22)',
+                    background: pinBg,
                     backdropFilter: 'blur(8px)',
                     WebkitBackdropFilter: 'blur(8px)',
                     borderRadius: '20px',
