@@ -174,3 +174,16 @@
         transform: rotate(360deg);
     }
 }
+
+/* Right Action Bar - Responsive positioning */
+.editor-right-action-bar {
+    /* Default position for large screens (iPhone 17 Pro Max, tablets, etc.) */
+    transition: top 0.2s ease;
+}
+
+/* Small phones (< 600px width): push action bar down to avoid sticker drawer overlap */
+@media (max-width: 599px) {
+    .editor-right-action-bar {
+        top: 320px !important;  /* Move down below sticker drawer on small screens */
+    }
+}

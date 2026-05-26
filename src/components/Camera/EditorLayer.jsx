@@ -605,7 +605,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             {/* Layer 4: UI Layer - Right Action Bar (hidden in draw mode AND preview) */}
             {!isDrawMode && !preview && (
-                <div style={{
+                <div className="editor-right-action-bar" style={{
                     position: 'absolute',
                     top: '100px',
                     right: '16px',
