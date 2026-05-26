@@ -232,16 +232,46 @@ export function useCamera() {
 
         if (flashMode === 'on' || flashMode === 'auto') await applyFlash('on')
 
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
+        // Capture at DEVICE VIEWPORT dimensions, not video stream's intrinsic dimensions
+        // Video stream may be portrait (1080x1920) even when device is landscape
+        // Use window dimensions to capture the actual landscape orientation
+        const dpr = window.devicePixelRatio || 1
+        const viewportWidth = Math.round(window.innerWidth * dpr)
+        const viewportHeight = Math.round(window.innerHeight * dpr)
+
+        // Calculate scaling to maintain video aspect ratio within viewport
+        const videoAspect = video.videoWidth / video.videoHeight
+        const viewportAspect = viewportWidth / viewportHeight
+
+        let drawWidth, drawHeight, offsetX = 0, offsetY = 0
+
+        if (videoAspect > viewportAspect) {
+            // Video is wider than viewport (landscape-ish)
+            drawWidth = viewportWidth
+            drawHeight = Math.round(viewportWidth / videoAspect)
+            offsetY = (viewportHeight - drawHeight) / 2
+        } else {
+            // Video is taller than viewport (portrait-ish)
+            drawHeight = viewportHeight
+            drawWidth = Math.round(viewportHeight * videoAspect)
+            offsetX = (viewportWidth - drawWidth) / 2
+        }
+
+        canvas.width = viewportWidth
+        canvas.height = viewportHeight
         const ctx = canvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
+
+        // Fill background with black (safe area outside video)
+        ctx.fillStyle = '#000000'
+        ctx.fillRect(0, 0, viewportWidth, viewportHeight)
 
         ctx.save()
         if (facingMode === 'user') {
             ctx.translate(canvas.width, 0)
             ctx.scale(-1, 1)
         }
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+        // Draw video centered at calculated scale
+        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight)
         ctx.restore()
 
         if (selectedFilter !== 'original') {
@@ -262,9 +292,9 @@ export function useCamera() {
                     resolve({
                         blob,
                         objectURL: URL.createObjectURL(blob),
-                        width: canvas.width,
-                        height: canvas.height,
-                        aspectRatio: canvas.width / canvas.height
+                        width: viewportWidth,
+                        height: viewportHeight,
+                        aspectRatio: viewportWidth / viewportHeight
                     })
                 } else {
                     reject(new Error('Failed to create image blob'))
