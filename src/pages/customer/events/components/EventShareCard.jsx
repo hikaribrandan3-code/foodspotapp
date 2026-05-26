@@ -163,7 +163,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
         </div>
 
         {/* Title — LARGE, bold, dominant, PURE WHITE */}
-        <h1
+        <div
           style={{
             margin: '0',
             fontSize: '36px',
@@ -173,10 +173,12 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             lineHeight: 1.1,
             letterSpacing: '-0.03em',
             textShadow: '0 4px 8px #000000, 0 0 0 1px #ffffff',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
           }}
         >
           {event.name}
-        </h1>
+        </div>
 
         {/* Info rows — generous spacing, elevated icons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
