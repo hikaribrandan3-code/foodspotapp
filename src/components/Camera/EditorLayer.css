@@ -175,16 +175,14 @@
     }
 }
 
-/* Right Action Bar - Responsive positioning */
-.editor-right-action-bar {
-    /* Default position for all screens */
-    transition: top 0.2s ease;
+/* Top Center Action Bar - Instagram 2026 style */
+.editor-top-action-bar {
+    /* Centered at top, horizontal layout */
+    /* Works perfectly on all screen sizes - no responsive adjustments needed */
+    transition: all 0.15s ease;
 }
 
-/* Small phones ONLY (max-width: 430px): push action bar down to avoid sticker drawer overlap */
-/* This targets devices like Samsung A15 (360px), NOT iPhone 17 Pro Max or other large phones */
-@media (max-width: 430px) {
-    .editor-right-action-bar {
-        top: 260px !important;  /* Move down just enough to clear sticker tabs, but not too far */
-    }
+/* Smooth animations on button interactions */
+.editor-top-action-bar button {
+    transition: all 0.15s ease;
 }

@@ -603,22 +603,24 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 />
             )}
 
-            {/* Layer 4: UI Layer - Right Action Bar (hidden in draw mode AND preview) */}
+            {/* Layer 4: UI Layer - Top Center Action Bar (Instagram 2026 style, hidden in draw mode AND preview) */}
             {!isDrawMode && !preview && (
-                <div className="editor-right-action-bar" style={{
+                <div className="editor-top-action-bar" style={{
                     position: 'absolute',
-                    top: '100px',
-                    right: '16px',
+                    top: '16px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
                     display: 'flex',
-                    flexDirection: 'column',
+                    flexDirection: 'row',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '8px',
-                    padding: '12px 8px',
+                    padding: '8px 12px',
                     background: 'rgba(0, 0, 0, 0.3)',
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
                     borderRadius: '24px',
-                    zIndex: 700  // Above TextEditor overlay (600) so Done is always tappable
+                    zIndex: 700  // Above TextEditor overlay (600) so buttons are always tappable
                 }}>
                     {/* Text */}
                     <button
