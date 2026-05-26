@@ -476,7 +476,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
     return (
         <div className="editor-layer" ref={containerRef}>
-            {/* Close (X) button - top left, always above keyboard */}
+            {/* Close (X) button - top left, always clickable even during drawing */}
             {!preview && (
                 <button
                     onClick={onRetake}
@@ -497,8 +497,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: '#fff',
-                        zIndex: 1000,
-                        touchAction: 'manipulation'
+                        zIndex: 10000,
+                        touchAction: 'manipulation',
+                        pointerEvents: 'auto'
                     }}
                 >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
