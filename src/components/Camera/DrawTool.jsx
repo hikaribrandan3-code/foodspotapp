@@ -32,6 +32,7 @@ export default function DrawTool({
     const [currentStroke, setCurrentStroke] = useState(null)
     const [strokeColor, setStrokeColor] = useState('#FFFFFF')
     const [brushSize, setBrushSize] = useState('small')
+    const [isEraser, setIsEraser] = useState(false)
     const lastPointRef = useRef(null)
 
     // Get canvas context with DPR scaling
@@ -63,32 +64,50 @@ export default function DrawTool({
         strokes.forEach(stroke => {
             if (stroke.points.length < 2) return
 
-            ctx.beginPath()
-            ctx.strokeStyle = stroke.color
-            ctx.lineWidth = BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
+            if (stroke.isEraser) {
+                // Eraser mode - use clearRect instead of stroke
+                const radius = (BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small) / 2
+                stroke.points.forEach((point, i) => {
+                    ctx.clearRect(point.x - radius, point.y - radius, radius * 2, radius * 2)
+                })
+            } else {
+                // Normal drawing
+                ctx.beginPath()
+                ctx.strokeStyle = stroke.color
+                ctx.lineWidth = BRUSH_SIZES[stroke.size] || BRUSH_SIZES.small
+                ctx.lineCap = 'round'
+                ctx.lineJoin = 'round'
 
-            ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
-            for (let i = 1; i < stroke.points.length; i++) {
-                ctx.lineTo(stroke.points[i].x, stroke.points[i].y)
+                ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
+                for (let i = 1; i < stroke.points.length; i++) {
+                    ctx.lineTo(stroke.points[i].x, stroke.points[i].y)
+                }
+                ctx.stroke()
             }
-            ctx.stroke()
         })
 
         // Draw current stroke if drawing
         if (currentStroke && currentStroke.points.length >= 2) {
-            ctx.beginPath()
-            ctx.strokeStyle = currentStroke.color
-            ctx.lineWidth = BRUSH_SIZES[currentStroke.size] || BRUSH_SIZES.small
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
+            if (currentStroke.isEraser) {
+                // Eraser mode - use clearRect instead of stroke
+                const radius = (BRUSH_SIZES[currentStroke.size] || BRUSH_SIZES.small) / 2
+                currentStroke.points.forEach((point) => {
+                    ctx.clearRect(point.x - radius, point.y - radius, radius * 2, radius * 2)
+                })
+            } else {
+                // Normal drawing
+                ctx.beginPath()
+                ctx.strokeStyle = currentStroke.color
+                ctx.lineWidth = BRUSH_SIZES[currentStroke.size] || BRUSH_SIZES.small
+                ctx.lineCap = 'round'
+                ctx.lineJoin = 'round'
 
-            ctx.moveTo(currentStroke.points[0].x, currentStroke.points[0].y)
-            for (let i = 1; i < currentStroke.points.length; i++) {
-                ctx.lineTo(currentStroke.points[i].x, currentStroke.points[i].y)
+                ctx.moveTo(currentStroke.points[0].x, currentStroke.points[0].y)
+                for (let i = 1; i < currentStroke.points.length; i++) {
+                    ctx.lineTo(currentStroke.points[i].x, currentStroke.points[i].y)
+                }
+                ctx.stroke()
             }
-            ctx.stroke()
         }
 
         ctx.restore()
@@ -146,12 +165,13 @@ export default function DrawTool({
         // Immediately push first point to prevent stroke gap on fast swipes
         const newStroke = {
             id: `stroke-${Date.now()}`,
-            color: strokeColor,
+            color: isEraser ? 'eraser' : strokeColor,
             size: brushSize,
-            points: [pos]
+            points: [pos],
+            isEraser: isEraser
         }
         setCurrentStroke(newStroke)
-    }, [isActive, getPosition, strokeColor, brushSize])
+    }, [isActive, getPosition, strokeColor, brushSize, isEraser])
 
     // Continue drawing - PATCH 13: Stop if multi-touch detected
     const handleDrawMove = useCallback((e) => {
@@ -313,9 +333,21 @@ export default function DrawTool({
                                 style={{
                                     width: BRUSH_SIZES[brushSize] * 2,
                                     height: BRUSH_SIZES[brushSize] * 2,
-                                    backgroundColor: strokeColor
+                                    backgroundColor: isEraser ? 'rgba(255, 255, 255, 0.5)' : strokeColor
                                 }}
                             />
+                        </button>
+
+                        {/* Eraser */}
+                        <button
+                            className={`draw-action-button ${isEraser ? 'draw-eraser-active' : ''}`}
+                            onClick={() => setIsEraser(!isEraser)}
+                            aria-label={isEraser ? 'Drawing mode' : 'Eraser mode'}
+                            title={isEraser ? 'Drawing mode' : 'Eraser mode'}
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 19L19 3m0 0l2-2a2.828 2.828 0 1 1 4 4L7 23H3v-4z" />
+                            </svg>
                         </button>
 
                         {/* Undo */}
