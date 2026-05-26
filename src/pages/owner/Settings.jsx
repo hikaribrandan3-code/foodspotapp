@@ -167,6 +167,12 @@ const Settings = () => {
     const rafRef = useRef(null);
     const justSavedRef = useRef(false); // Guard: Blocks Data Pump from overwriting after save
 
+    // ── Camera Pin Preview ──
+    const pinVideoRef  = useRef(null);
+    const pinStreamRef = useRef(null);
+    const [pinCameraReady, setPinCameraReady] = useState(false);
+    const [pinCameraError, setPinCameraError] = useState(false);
+
     // ============================================================
     // AUTO-SAVE: Service Modes (1.2s debounce, direct to flat columns)
     // ============================================================
@@ -540,7 +546,9 @@ const Settings = () => {
                         service_modes: draft.service_modes,
                         payment_methods: draft.payment_methods,
                         munchboy: draft.app_config?.munchboy,
-                        cameraPinStyle: draft.app_config?.cameraPinStyle || 'classic'
+                        cameraPinStyle:      draft.app_config?.cameraPinStyle      || 'classic',
+                        cameraPinCustomBg:   draft.app_config?.cameraPinCustomBg   || null,
+                        cameraPinCustomText: draft.app_config?.cameraPinCustomText || null
                     }
                 ),
                 menu_data: draft.menu_data,
@@ -682,6 +690,46 @@ const Settings = () => {
             </div>
         );
     };
+
+    // ── Pin Style Presets ──
+    const PIN_PRESETS = [
+        { id: 'classic', label: 'Classic', bg: 'rgba(255,255,255,0.22)', text: '#ffffff' },
+        { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)',   text: '#ffffff' },
+        { id: 'natural', label: 'Natural', bg: 'rgba(145,170,100,0.55)', text: '#ffffff' },
+        { id: 'custom',  label: 'Custom',  bg: null,                     text: null      },
+    ];
+    const currentPinStyle  = draft.app_config?.cameraPinStyle  || 'classic';
+    const customPinBg      = draft.app_config?.cameraPinCustomBg   || '#505050';
+    const customPinText    = draft.app_config?.cameraPinCustomText  || '#ffffff';
+    const activePinPreset  = PIN_PRESETS.find(p => p.id === currentPinStyle) || PIN_PRESETS[0];
+    const computedPinBg    = currentPinStyle === 'custom' ? customPinBg  : (activePinPreset.bg   || 'rgba(255,255,255,0.22)');
+    const computedPinText  = currentPinStyle === 'custom' ? customPinText : '#ffffff';
+
+    // ── Camera stream lifecycle ──
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+        let stream = null;
+        const start = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+                pinStreamRef.current = stream;
+                if (pinVideoRef.current) {
+                    pinVideoRef.current.srcObject = stream;
+                    pinVideoRef.current.onloadedmetadata = () => setPinCameraReady(true);
+                }
+            } catch {
+                setPinCameraError(true);
+            }
+        };
+        start();
+        return () => {
+            stream?.getTracks().forEach(t => t.stop());
+            pinStreamRef.current?.getTracks().forEach(t => t.stop());
+            setPinCameraReady(false);
+        };
+    }, []); // runs once on mount, cleaned up on unmount
 
     if (loading || !tenant || !isDraftReady) return <BurgerLoader />;
 
@@ -1037,66 +1085,120 @@ const Settings = () => {
                 {/* ========== 6. CAMERA PIN STYLE ========== */}
                 <section className="branding-card">
                     <h3>6. Camera Pin Style</h3>
-                    <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '16px' }}>
-                        Color del pin de ubicación en la cámara y fotos exportadas
+                    <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '14px' }}>
+                        Preview how your location pin looks on photos
                     </p>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: windowWidth < 600 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
-                        gap: 10
-                    }}>
-                        {[
-                            { id: 'classic', label: 'Classic', bg: '#4B5563', note: '(UI preview only - camera uses white)' },
-                            { id: 'cafe',    label: 'Café',    bg: 'rgba(130,90,60,0.55)' },
-                            { id: 'vegan',   label: 'Vegan',   bg: 'rgba(145,170,100,0.55)' },
-                            { id: 'burger',  label: 'Burger',  bg: 'rgba(255,193,7,0.60)' },
-                        ].map(({ id, label, bg, note }) => {
-                            const isActive = (draft.app_config?.cameraPinStyle || 'classic') === id
+
+                    {/* ── Live camera frame (or warm fallback) ── */}
+                    <div className="pin-cam-frame">
+                        {!pinCameraError ? (
+                            <video
+                                ref={pinVideoRef}
+                                autoPlay
+                                muted
+                                playsInline
+                                className={`pin-cam-video${pinCameraReady ? ' pin-cam-ready' : ''}`}
+                            />
+                        ) : (
+                            <div className="pin-cam-fallback" />
+                        )}
+
+                        {/* Pill overlay — updates live as you switch styles */}
+                        <div className="pin-cam-pill" style={{ background: computedPinBg }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill={computedPinText} style={{ flexShrink: 0 }}>
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                            </svg>
+                            <span className="pin-cam-pill-text" style={{ color: computedPinText }}>
+                                {(draft.business_name || 'YOUR SPOT').toUpperCase()}
+                            </span>
+                        </div>
+
+                        {/* Live dot — only when camera is streaming */}
+                        {pinCameraReady && (
+                            <div className="pin-cam-live-badge">
+                                <span className="pin-cam-live-dot" />
+                                LIVE
+                            </div>
+                        )}
+
+                        {/* Fallback label */}
+                        {pinCameraError && (
+                            <div className="pin-cam-no-access">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                                <span>Enable camera for live preview</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Style Chips ── */}
+                    <div className="pin-style-row">
+                        {PIN_PRESETS.map(({ id, label, bg }) => {
+                            const isActive = currentPinStyle === id;
+                            const chipBg = id === 'custom'
+                                ? (customPinBg || '#505050')
+                                : bg;
                             return (
                                 <button
                                     key={id}
+                                    className={`pin-chip${isActive ? ' pin-chip-active' : ''}`}
                                     onClick={() => {
-                                        setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, cameraPinStyle: id } }))
-                                        setHasChanges(true)
-                                    }}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: 8,
-                                        padding: windowWidth < 600 ? '16px 12px' : '12px 8px',
-                                        borderRadius: 12,
-                                        border: isActive ? '2px solid var(--color-primary)' : '2px solid transparent',
-                                        background: isActive ? 'rgba(139,115,85,0.08)' : 'transparent',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s ease',
+                                        setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, cameraPinStyle: id } }));
+                                        setHasChanges(true);
                                     }}
                                 >
-                                    {/* Mini pill preview */}
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                        padding: '5px 10px',
-                                        background: bg,
-                                        borderRadius: 20,
-                                        backdropFilter: 'blur(8px)',
-                                        WebkitBackdropFilter: 'blur(8px)',
-                                    }}>
-                                        <svg width="8" height="8" viewBox="0 0 24 24" fill="white">
+                                    {/* Swatch */}
+                                    <div className="pin-chip-swatch" style={{ background: chipBg }}>
+                                        <svg width="7" height="7" viewBox="0 0 24 24" fill="white">
                                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                                         </svg>
-                                        <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>
-                                            {label.toUpperCase()}
-                                        </span>
                                     </div>
-                                    <span style={{ fontSize: windowWidth < 600 ? 12 : 11, fontWeight: isActive ? 700 : 400, color: isActive ? 'var(--color-primary)' : '#64748B' }}>
-                                        {label}
-                                    </span>
+                                    <span className="pin-chip-label">{label}</span>
                                 </button>
-                            )
+                            );
                         })}
                     </div>
+
+                    {/* ── Custom Color Pickers (slides open when Custom is active) ── */}
+                    {currentPinStyle === 'custom' && (
+                        <div className="pin-custom-expand">
+                            <div className="pin-custom-row">
+                                <div className="pin-custom-picker">
+                                    <span className="pin-custom-label">Background</span>
+                                    <label className="pin-color-wrap">
+                                        <div className="pin-color-swatch" style={{ background: customPinBg }} />
+                                        <input
+                                            type="color"
+                                            className="pin-color-input"
+                                            value={customPinBg}
+                                            onChange={e => {
+                                                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, cameraPinCustomBg: e.target.value } }));
+                                                setHasChanges(true);
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                                <div className="pin-custom-divider" />
+                                <div className="pin-custom-picker">
+                                    <span className="pin-custom-label">Text & Icon</span>
+                                    <label className="pin-color-wrap">
+                                        <div className="pin-color-swatch" style={{ background: customPinText }} />
+                                        <input
+                                            type="color"
+                                            className="pin-color-input"
+                                            value={customPinText}
+                                            onChange={e => {
+                                                setDraft(prev => ({ ...prev, app_config: { ...prev.app_config, cameraPinCustomText: e.target.value } }));
+                                                setHasChanges(true);
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </section>
 
                 {/* ========== 7. MUNCHBOY BRANDING ========== */}

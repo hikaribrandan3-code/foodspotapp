@@ -20,14 +20,18 @@ export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinS
     const PIN_STYLE_COLORS = {
         classic: 'rgba(255, 255, 255, 0.22)',
         cafe:    'rgba(130, 90, 60, 0.55)',
-        vegan:   'rgba(145, 170, 100, 0.55)',
-        burger:  'rgba(255, 193, 7, 0.60)',
+        vegan:   'rgba(145, 170, 100, 0.55)',  // kept for backward compat
+        natural: 'rgba(145, 170, 100, 0.55)',  // new name
+        burger:  'rgba(255, 193, 7, 0.60)',    // kept for backward compat
     }
     // CRITICAL: Use the cameraPinStyle prop passed from EditorLayer.
     // EditorLayer already calculated it correctly using multi-source fallback (tenantData → localStorage → sessionStorage).
     // DualPostScreen doesn't need to re-calculate — just trust the prop.
-    const pinStyle = cameraPinStyle || 'classic'
-    const pinBg = PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic
+    const pinStyle  = cameraPinStyle || 'classic'
+    const customBg   = tenantData?.app_config?.cameraPinCustomBg   || 'rgba(80,80,80,0.55)'
+    const customText = tenantData?.app_config?.cameraPinCustomText || '#ffffff'
+    const pinBg   = pinStyle === 'custom' ? customBg   : (PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic)
+    const pinText = pinStyle === 'custom' ? customText : '#ffffff'
 
     // DEBUG: Log what DualPostScreen receives and uses
     console.log('[DualPostScreen] 🎬 cameraPinStyle prop:', cameraPinStyle, '→ pinStyle:', pinStyle);
@@ -55,10 +59,10 @@ export default function DualPostScreen({ previewDataURL, previewBlob, cameraPinS
 
             {/* ── Location Pill (bottom-left, above action bar) ── */}
             <div style={{...styles.locationPill, background: pinBg}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white" style={{ flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                 </svg>
-                <span style={styles.locationText}>
+                <span style={{...styles.locationText, color: pinText}}>
                     {businessName.toUpperCase()}
                 </span>
             </div>
