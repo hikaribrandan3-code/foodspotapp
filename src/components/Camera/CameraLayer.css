@@ -6,6 +6,7 @@
     height: 100%;
     min-height: 100%;
     background: #000;
+    contain: layout paint;
 }
 
 /* Hidden capture canvas */
@@ -22,6 +23,7 @@
     height: 100%;
     object-fit: cover;
     background: #000;
+    will-change: transform;
 }
 
 /* Error state overlay */
@@ -217,4 +219,18 @@
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Landscape orientation - instant responsive */
+@media (orientation: landscape) {
+    .cinema-mask-overlay {
+        will-change: contents;
+    }
+}
+
+/* Portrait orientation - instant responsive */
+@media (orientation: portrait) {
+    .cinema-mask-overlay {
+        will-change: contents;
+    }
 }

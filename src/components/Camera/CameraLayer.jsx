@@ -50,6 +50,26 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         console.log('[CameraLayer] 🎥 cameraPinStyle:', pinStyle, 'tenantData:', tenantData?.app_config)
     }, [tenantData?.app_config?.cameraPinStyle])
 
+    // Optimize orientation transition — detect changes early via Screen Orientation API
+    useEffect(() => {
+        if (!window.screen?.orientation) return
+
+        const handleOrientationChange = () => {
+            // Browser will auto-update dimensions, but we force a quick repaint
+            // by temporarily adjusting the will-change hint
+            const video = document.querySelector('.camera-preview')
+            if (video) {
+                video.style.willChange = 'auto'
+                requestAnimationFrame(() => {
+                    video.style.willChange = 'transform'
+                })
+            }
+        }
+
+        window.screen.orientation.addEventListener('change', handleOrientationChange)
+        return () => window.screen.orientation.removeEventListener('change', handleOrientationChange)
+    }, [])
+
     const {
         videoRef,
         canvasRef,
