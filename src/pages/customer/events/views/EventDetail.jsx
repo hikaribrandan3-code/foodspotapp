@@ -69,7 +69,7 @@ export default function EventDetail({ event, onBook, onBack }) {
           alt={event.name} 
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-950 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
         
         <button 
           onClick={onBack}
