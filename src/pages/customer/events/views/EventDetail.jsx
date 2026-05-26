@@ -64,12 +64,11 @@ export default function EventDetail({ event, onBook, onBack }) {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
       <div className="relative h-[420px] shrink-0">
-        <img 
-          src={event.image} 
-          alt={event.name} 
+        <img
+          src={event.image}
+          alt={event.name}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
         
         <button 
           onClick={onBack}
