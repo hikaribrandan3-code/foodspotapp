@@ -124,27 +124,22 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             let renderWidth, renderHeight
             let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height
 
-            // MASTER NEGATIVE: Enforce 9:16 Viewport Math
-            // Regardless of source aspect (3:4 or 4:3), we center-crop to 9:16
-            const targetAspect = 9 / 16
+            // COVER-FIT: Canvas fills the full container — no forced 9:16 constraint.
+            // The export engine handles 9:16 cropping independently.
+            // This eliminates black bars in landscape and fills edge-to-edge in portrait.
             renderWidth = containerWidth
-            renderHeight = containerWidth / targetAspect
+            renderHeight = containerHeight
 
-            if (renderHeight > containerHeight) {
-                renderHeight = containerHeight
-                renderWidth = containerHeight * targetAspect
-            }
-
-            // Calculate source crop (center-crop from master image to 9:16)
-            if (imgAspect > targetAspect) {
-                // Image is wider than 9:16 - crop sides
+            // Cover-fit source crop: center-crop the image to match the container aspect
+            if (imgAspect > containerAspect) {
+                // Image is wider than container - crop sides
                 sHeight = img.height
-                sWidth = img.height * targetAspect
+                sWidth = img.height * containerAspect
                 sx = (img.width - sWidth) / 2
             } else {
-                // Image is taller than 9:16 - crop top/bottom
+                // Image is taller than container - crop top/bottom
                 sWidth = img.width
-                sHeight = img.width / targetAspect
+                sHeight = img.width / containerAspect
                 sy = (img.height - sHeight) / 2
             }
 
@@ -158,16 +153,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 drawCanvasRef.current.height = renderHeight
             }
 
-            // Store dimensions and calculate offset for element positioning
+            // Store dimensions — canvas fills the container exactly, offset is always 0
             setCanvasDimensions({ width: renderWidth, height: renderHeight })
-
-            // Calculate canvas position offset
-            if (canvasContainerRef.current) {
-                setCanvasOffset({
-                    x: (containerWidth - renderWidth) / 2,
-                    y: (containerHeight - renderHeight) / 2
-                })
-            }
+            setCanvasOffset({ x: 0, y: 0 })
 
             // Draw image using cover logic (cropped to fill)
             ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, renderWidth, renderHeight)
@@ -491,13 +479,12 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 onClick={handleCanvasTap}
                 style={{
                     ...(!!preview ? { pointerEvents: 'none' } : {}),
-                    aspectRatio: '9/16',
-                    width: '100%',
-                    maxWidth: '100vw',
-                    maxHeight: 'calc(100vw * 16/9)',
-                    margin: 'auto',
+                    // Fill the full screen — no forced aspect ratio.
+                    // The canvas JS sizes itself to cover the container.
+                    // The export engine re-crops to 9:16 for the output image.
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
                     overflow: 'hidden',
-                    position: 'relative'
                 }}
             >
                 {/* Layer 1: Base Canvas - Frozen Frame */}
