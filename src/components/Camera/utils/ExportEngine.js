@@ -108,12 +108,17 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const { businessName, cameraPinStyle } = branding
     const scale = trueScale || (width / 1080)
 
-    // EXACT MATCH to CameraLayer.jsx styling
-    const fontSize = Math.round(11 * scale) // 11px base
-    const pinSize = Math.round(12 * scale)  // 12px svg
-    const pillPaddingH = Math.round(12 * scale) // 6px * 2
-    const pillPaddingV = Math.round(6 * scale)  // matches padding
-    const pinTextGap = Math.round(5 * scale)    // 5px gap
+    // Detect orientation: landscape if width > height
+    const isLandscape = width > height
+    const aspectRatio = width / height
+
+    // BIGGER pill on landscape + scale-aware sizing
+    const fontSizeBase = isLandscape ? 14 : 11 // Bigger on landscape
+    const fontSize = Math.round(fontSizeBase * scale)
+    const pinSize = Math.round(14 * scale)  // Slightly bigger
+    const pillPaddingH = Math.round(14 * scale)
+    const pillPaddingV = Math.round(8 * scale)
+    const pinTextGap = Math.round(6 * scale)
 
     ctx.save()
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
@@ -122,12 +127,17 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
-    // EXACT position match: top-left under close button
-    const leftOffset = Math.round(20 * scale)
-    const topOffset = Math.round(72 * scale) // 16px + 44px button + 12px gap
-
-    const pillX = leftOffset
-    const pillY = topOffset
+    // Smart positioning: landscape uses bottom-left, portrait uses top-left
+    let pillX, pillY
+    if (isLandscape) {
+        // Bottom-left for landscape (less likely to be cropped)
+        pillX = Math.round(24 * scale)
+        pillY = Math.round(height - pillH - 24 * scale)
+    } else {
+        // Top-left for portrait (standard position)
+        pillX = Math.round(20 * scale)
+        pillY = Math.round(72 * scale) // 16px + 44px button + 12px gap
+    }
 
     // Glassmorphism pill background — color driven by cameraPinStyle
     const pillColor = PIN_STYLE_COLORS[cameraPinStyle] || PIN_STYLE_COLORS.classic
