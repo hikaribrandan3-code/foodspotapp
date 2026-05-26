@@ -87,14 +87,13 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             filter: isExpired ? 'grayscale(0.6) brightness(0.7)' : 'brightness(0.95)',
           }}
         />
-        {/* Subtle radial gradient overlay */}
+        {/* Minimal overlay — no green tint */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: `
-              radial-gradient(ellipse at 70% 20%, transparent 0%, rgba(15, 23, 42, 0.2) 60%, rgba(15, 23, 42, 0.4) 100%),
-              linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, transparent 100%)
+              radial-gradient(ellipse at 70% 20%, transparent 0%, rgba(15, 23, 42, 0.15) 60%, rgba(15, 23, 42, 0.3) 100%)
             `,
           }}
         />
@@ -139,7 +138,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
           justifyContent: 'space-between',
         }}
       >
-        {/* Category pill — centered text, no dot */}
+        {/* Category pill — left-aligned, centered text inside */}
         <div
           style={{
             display: 'flex',
@@ -156,22 +155,24 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             fontWeight: '900',
             letterSpacing: '0.25em',
             textTransform: 'uppercase',
-            alignSelf: 'center',
+            alignSelf: 'flex-start',
+            width: 'auto',
           }}
         >
           {isExpired ? 'Event Ended' : event.category || 'Exclusive'}
         </div>
 
-        {/* Title — LARGE, bold, dominant */}
+        {/* Title — LARGE, bold, dominant, pure white */}
         <div>
           <h1
             style={{
               margin: '0',
               fontSize: '36px',
               fontWeight: '900',
-              color: '#ffffff',
+              color: 'rgb(255, 255, 255)',
               lineHeight: 1.1,
               letterSpacing: '-0.03em',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
             }}
           >
             {event.name}
