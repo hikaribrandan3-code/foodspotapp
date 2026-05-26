@@ -1,20 +1,34 @@
 /**
  * AppHeader.jsx - UNIFIED HEADER COMPONENT
- * 
+ *
  * PATCH 3.7: Logo-first, no variants, binary theme only.
  * PATCH 3.8: Dual logo support (logoLight/logoDark auto-switch)
  * PATCH 4.0: Header Branding mode (text OR logo, never both)
  * PATCH 4.5: Cover mode (Facebook-style header image) — V1 default
  * PATCH 5.0: Cover viewport clamp (internal, mobile only)
  * PATCH 5.1: Config via prop (single source of truth invariant)
- * 
+ * PATCH 5.2: Image optimization for logo & cover (fast load)
+ *
  * Rules:
  * - Header height determined by mode (64px for logo/text, 220/280px for cover)
  * - Cover viewport clamps internally on mobile (60px)
  * - Header stays in normal document flow
  * - Config MUST be passed as prop, DO NOT call getConfig()
+ * - All image URLs optimized for size (width, quality params)
  */
 import { useLanguage } from '../contexts/LanguageContext'
+
+// 🚀 IMAGE OPTIMIZATION: Reduce logo/cover load time
+const getOptimizedImageUrl = (url, options = {}) => {
+    if (!url || url.startsWith('blob:')) return url
+    if (url.includes('unsplash.com')) {
+        return url.includes('?') ? url : `${url}?w=600&q=80&fit=crop`
+    }
+    if (url.includes('width=') || url.includes('quality=')) return url
+    const { width = 200, quality = 80, format = 'webp' } = options
+    const separator = url.includes('?') ? '&' : '?'
+    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
+}
 
 function getBreakpoint() {
     if (typeof window === 'undefined') return 'mobile'
@@ -62,7 +76,7 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                 <div className="cover-content menu-header-bg" style={{
                     width: '100%',
                     height: '100%',
-                    backgroundImage: `url(${config.headerCover.image})`,
+                    backgroundImage: `url(${getOptimizedImageUrl(config.headerCover.image, { width: 600, quality: 75 })})`,
                     backgroundSize: 'cover',
                     backgroundPosition: `${posX}% ${posY}%`,
                     backgroundRepeat: 'no-repeat'
@@ -130,7 +144,7 @@ function AppHeader({ config: configProp, isHomePage = false }) {
             }}>
                 {logo ? (
                     <img
-                        src={logo}
+                        src={getOptimizedImageUrl(logo, { width: 200, quality: 80 })}
                         alt={businessName}
                         style={{
                             height: 48,
@@ -139,6 +153,7 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                             objectFit: 'contain',
                             pointerEvents: 'none'
                         }}
+                        loading="eager"
                     />
                 ) : (
                     <span style={{ color: 'var(--canvas-text)', opacity: 0.5, fontSize: 12 }}>
