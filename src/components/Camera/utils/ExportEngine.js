@@ -127,12 +127,12 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
-    // Smart positioning: landscape uses bottom-left, portrait uses top-left
+    // Top-left for both orientations — landscape has more inset to avoid UI chrome
     let pillX, pillY
     if (isLandscape) {
-        // Bottom-left for landscape (less likely to be cropped)
+        // Top-left with generous inset on landscape (24px from edges)
         pillX = Math.round(24 * scale)
-        pillY = Math.round(height - pillH - 24 * scale)
+        pillY = Math.round(72 * scale) // Below close button (16 + 44 button + 12 gap)
     } else {
         // Top-left for portrait (standard position)
         pillX = Math.round(20 * scale)

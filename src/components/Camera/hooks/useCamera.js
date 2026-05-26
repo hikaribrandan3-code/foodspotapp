@@ -232,47 +232,42 @@ export function useCamera() {
 
         if (flashMode === 'on' || flashMode === 'auto') await applyFlash('on')
 
-        // Capture at DEVICE VIEWPORT dimensions, not video stream's intrinsic dimensions
-        // Video stream may be portrait (1080x1920) even when device is landscape
-        // Use window dimensions to capture the actual landscape orientation
+        // Capture at DEVICE VIEWPORT dimensions (landscape or portrait, 1:1 with what user sees)
         const dpr = window.devicePixelRatio || 1
         const viewportWidth = Math.round(window.innerWidth * dpr)
         const viewportHeight = Math.round(window.innerHeight * dpr)
 
-        // Calculate scaling to maintain video aspect ratio within viewport
+        // COVER logic: crop the video source so it fills the viewport with NO black bars.
+        // This matches object-fit: cover — what the user actually sees on screen.
         const videoAspect = video.videoWidth / video.videoHeight
         const viewportAspect = viewportWidth / viewportHeight
 
-        let drawWidth, drawHeight, offsetX = 0, offsetY = 0
+        let srcX = 0, srcY = 0, srcW = video.videoWidth, srcH = video.videoHeight
 
         if (videoAspect > viewportAspect) {
-            // Video is wider than viewport (landscape-ish)
-            drawWidth = viewportWidth
-            drawHeight = Math.round(viewportWidth / videoAspect)
-            offsetY = (viewportHeight - drawHeight) / 2
+            // Video is wider than viewport — crop left/right sides, fill height
+            srcH = video.videoHeight
+            srcW = Math.round(video.videoHeight * viewportAspect)
+            srcX = Math.round((video.videoWidth - srcW) / 2)
         } else {
-            // Video is taller than viewport (portrait-ish)
-            drawHeight = viewportHeight
-            drawWidth = Math.round(viewportHeight * videoAspect)
-            offsetX = (viewportWidth - drawWidth) / 2
+            // Video is taller than viewport — crop top/bottom, fill width
+            srcW = video.videoWidth
+            srcH = Math.round(video.videoWidth / viewportAspect)
+            srcY = Math.round((video.videoHeight - srcH) / 2)
         }
 
         canvas.width = viewportWidth
         canvas.height = viewportHeight
         const ctx = canvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
 
-        // Fill background with black (safe area outside video)
-        ctx.fillStyle = '#000000'
-        ctx.fillRect(0, 0, viewportWidth, viewportHeight)
-
         ctx.save()
         if (facingMode === 'user') {
             ctx.translate(canvas.width, 0)
             ctx.scale(-1, 1)
         }
-        // Draw ENTIRE video source, scaled and centered at destination
+        // Draw CROPPED video source to fill the FULL canvas — no black bars, no letterboxing
         // Signature: drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, offsetX, offsetY, drawWidth, drawHeight)
+        ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, viewportWidth, viewportHeight)
         ctx.restore()
 
         if (selectedFilter !== 'original') {
