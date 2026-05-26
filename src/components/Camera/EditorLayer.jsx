@@ -26,8 +26,37 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     // 4. 'classic' (fallback)
     const cameraPinStyleToUse = useMemo(() => {
         const fromTenant = tenantData?.app_config?.cameraPinStyle;
-        const fromLocalStorage = typeof window !== 'undefined' && businessId ? localStorage.getItem(`cameraPinStyle_permanent_${businessId}`) : null;
-        const fromSessionStorage = typeof window !== 'undefined' && businessId ? sessionStorage.getItem(`cameraPinStyle_${businessId}`) : null;
+        let fromLocalStorage = null;
+        let fromSessionStorage = null;
+
+        if (typeof window !== 'undefined') {
+            // Try with businessId if available
+            if (businessId) {
+                fromLocalStorage = localStorage.getItem(`cameraPinStyle_permanent_${businessId}`);
+                fromSessionStorage = sessionStorage.getItem(`cameraPinStyle_${businessId}`);
+            }
+
+            // If not found with businessId, search any cameraPinStyle keys in storage
+            // (fallback for cases where businessId is temporarily undefined)
+            if (!fromLocalStorage) {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key?.startsWith('cameraPinStyle_permanent_')) {
+                        fromLocalStorage = localStorage.getItem(key);
+                        break;
+                    }
+                }
+            }
+            if (!fromSessionStorage) {
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    if (key?.startsWith('cameraPinStyle_') && !key.includes('permanent')) {
+                        fromSessionStorage = sessionStorage.getItem(key);
+                        break;
+                    }
+                }
+            }
+        }
 
         const result = fromTenant || fromLocalStorage || fromSessionStorage || 'classic';
 
