@@ -140,16 +140,17 @@
     word-break: break-all;
 }
 
-/* Category Tabs */
+/* Category Tabs - Responsive for small screens */
 .sticker-category-tabs {
     display: flex;
-    gap: 12px;
-    padding: 16px;
+    gap: 8px;
+    padding: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     justify-content: space-around;
     background: rgba(0, 0, 0, 0.15);
-    min-height: 90px;
+    min-height: auto;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .category-tab {
@@ -158,8 +159,8 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    width: 75px;
-    height: 75px;
+    width: 65px;
+    height: 65px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.15);
     border-radius: 16px;
@@ -167,8 +168,28 @@
     color: rgba(255, 255, 255, 0.6);
     transition: all 0.2s ease;
     -webkit-tap-highlight-color: transparent;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
+    flex: 1;
+    max-width: 80px;
+    min-width: 60px;
+}
+
+/* Larger screens - bigger tabs */
+@media (min-width: 600px) {
+    .sticker-category-tabs {
+        gap: 12px;
+        padding: 16px;
+        min-height: 90px;
+    }
+
+    .category-tab {
+        width: 75px;
+        height: 75px;
+        font-size: 12px;
+        flex: none;
+        max-width: none;
+    }
 }
 
 .category-tab:hover {
