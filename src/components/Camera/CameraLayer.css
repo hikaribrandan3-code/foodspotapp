@@ -24,6 +24,7 @@
     object-fit: cover;
     background: #000;
     will-change: transform;
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 /* Error state overlay */
@@ -67,6 +68,7 @@
     z-index: 50;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     -webkit-tap-highlight-color: transparent;
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .settings-button:active {
@@ -89,6 +91,7 @@
     border-radius: 22px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
     z-index: 50;
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .toolbar-left-side {
@@ -132,6 +135,7 @@
     right: 0;
     z-index: 50;
     padding: 0 16px;
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .filter-scroll {
@@ -201,6 +205,7 @@
     cursor: pointer;
     z-index: 100;
     -webkit-tap-highlight-color: transparent;
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
 .shutter-button:disabled {
@@ -221,14 +226,23 @@
   to { transform: rotate(360deg); }
 }
 
-/* Landscape orientation - instant responsive */
+/* Smooth orientation transition - Apple-style blended animation */
+.cinema-mask-overlay {
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.cinema-mask-overlay > div {
+    transition: all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Landscape orientation */
 @media (orientation: landscape) {
     .cinema-mask-overlay {
         will-change: contents;
     }
 }
 
-/* Portrait orientation - instant responsive */
+/* Portrait orientation */
 @media (orientation: portrait) {
     .cinema-mask-overlay {
         will-change: contents;
