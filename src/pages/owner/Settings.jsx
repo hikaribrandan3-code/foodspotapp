@@ -321,7 +321,9 @@ const Settings = () => {
                     b_color: tenant.munchboy_b_color || '#D1D5DB'
                 },
                 // Camera Pin Style
-                cameraPinStyle: tenant.app_config?.cameraPinStyle || 'classic'
+                cameraPinStyle:      tenant.app_config?.cameraPinStyle      || 'classic',
+                cameraPinCustomBg:   tenant.app_config?.cameraPinCustomBg   || null,
+                cameraPinCustomText: tenant.app_config?.cameraPinCustomText || null
             },
             menu_data: tenant.menu_data || { categories: [] }
         });

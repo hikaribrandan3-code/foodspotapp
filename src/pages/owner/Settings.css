@@ -481,7 +481,7 @@
 /* Location pill overlaid on the frame */
 .pin-cam-pill {
     position: absolute;
-    bottom: 14px;
+    top: 14px;
     left: 14px;
     display: flex;
     align-items: center;
