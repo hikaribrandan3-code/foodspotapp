@@ -1,8 +1,43 @@
 # FOODSPOT DATABASE FIXES TRACKER
 
-**Last Updated:** 2026-05-12  
+**Last Updated:** 2026-05-26  
 **Database Version:** v2.2.1  
 **Status:** 5/7 Quick Wins Applied
+
+---
+
+## ⚠️ FRONTEND RENDERING GOTCHAS
+
+### H1 Tags in html2canvas (RECURRING BUG)
+
+**Pattern:** Any `<h1>` element rendered via html2canvas (canvas capture on mobile) renders with wrong color on iOS. Text appears blue-grey instead of white, even when `color: white` is explicitly set.
+
+**Root Cause:** h1 has default browser styles that interfere with canvas rendering. The color property works on all other elements (`<span>`, `<div>`) but not on `<h1>` during canvas capture.
+
+**Fix:** Replace `<h1>` with `<div>` and apply same styles explicitly. No h1 semantics = no rendering interference.
+
+```jsx
+// ❌ BROKEN (renders blue-grey on iPhone canvas capture)
+<h1 style={{ color: 'white', fontSize: '36px', fontWeight: '900' }}>
+  Event Title
+</h1>
+
+// ✅ FIXED (renders white)
+<div style={{ color: 'white', fontSize: '36px', fontWeight: '900' }}>
+  Event Title
+</div>
+```
+
+**Affected Code:**
+- `src/pages/customer/events/components/EventShareCard.jsx` (line 166) — FIXED 2026-05-26
+
+**When You Hit This:**
+- Text color mysteriously wrong on iOS only, not Android
+- Color works fine for badges, other text, but h1 is broken
+- Adding WebkitTextFillColor, textStroke, etc. doesn't help
+- It's the h1 tag, not your CSS
+
+**Prevention:** Avoid h1 in html2canvas components. Use div + explicit styling instead.
 
 ---
 
