@@ -1,6 +1,6 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
-import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Tickets } from 'lucide-react';
+import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Tickets, Ban } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { VenueMap } from '../../../../components/VenueMap';
 
@@ -52,6 +52,11 @@ export default function EventDetail({ event, onBook, onBack }) {
 
   if (!event) return null;
 
+  // Check if event has passed
+  const eventDate = new Date(event.date);
+  const now = new Date();
+  const isExpired = eventDate < now;
+
   const handleZoneSelect = (zoneId) => {
     setSelectedZone(zoneId);
     // Find the tier that matches this zone and scroll to it or highlight it
@@ -78,11 +83,18 @@ export default function EventDetail({ event, onBook, onBack }) {
         </button>
 
         <div className="absolute bottom-10 left-6 right-6">
-          <div className="flex gap-2 mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20">
-              <Sparkles size={10} />
-              {t('exclusive')}
-            </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {isExpired ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/30">
+                <Ban size={10} />
+                Event Ended
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-primary)] text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--color-primary)]/20">
+                <Sparkles size={10} />
+                {t('exclusive')}
+              </div>
+            )}
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
               {event.category}
             </div>
@@ -93,12 +105,24 @@ export default function EventDetail({ event, onBook, onBack }) {
         </div>
       </div>
 
-      <main className="px-6 py-6 flex flex-col gap-6 pb-24">
+      <main className={`px-6 py-6 flex flex-col gap-6 pb-24 ${isExpired ? 'opacity-70' : ''}`}>
         <div className="bg-[var(--canvas-bg)] p-4 rounded-[28px] border border-[var(--border-color)] shadow-sm">
-           <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 mb-3 text-center">Event Starts In</h3>
-           <div className="flex justify-center">
-             <EventCountdown startDate={event.date} />
-           </div>
+          {isExpired ? (
+            <div className="flex flex-col items-center gap-2 py-2">
+              <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-500">
+                <Ban size={20} />
+              </div>
+              <p className="text-sm font-black text-red-500 uppercase tracking-widest">This event has ended</p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50">No tickets are available for this event</p>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50 mb-3 text-center">Event Starts In</h3>
+              <div className="flex justify-center">
+                <EventCountdown startDate={event.date} />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center justify-between bg-[var(--canvas-bg)] p-5 rounded-[28px] border border-[var(--border-color)]">
@@ -227,14 +251,15 @@ export default function EventDetail({ event, onBook, onBack }) {
               );
               const remaining = (tier.qty || tier.capacity || 0) - (tier.sold || 0);
               const isSoldOut = tier.forced_sold_out || remaining <= 0;
+              const isUnavailable = isExpired || isSoldOut;
 
               return (
               <button
                 key={tier.id}
-                onClick={() => !isSoldOut && onBook(tier)}
-                disabled={isSoldOut}
+                onClick={() => !isUnavailable && onBook(tier)}
+                disabled={isUnavailable}
                 className={`group relative flex items-center justify-between p-6 rounded-[32px] bg-white dark:bg-slate-900 border transition-all text-left shadow-sm overflow-hidden ${
-                  isSoldOut
+                  isUnavailable
                     ? 'border-[var(--border-color)] opacity-50 cursor-not-allowed'
                     : isSelected
                       ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 ring-4 ring-[var(--color-primary)]/10 scale-[1.02]'
@@ -262,8 +287,8 @@ export default function EventDetail({ event, onBook, onBack }) {
                 </div>
                 <div className="relative z-10 text-right">
                   <p className="text-xl font-black text-[var(--color-primary)]">${tier.price}</p>
-                  <p className={`text-[9px] font-black uppercase tracking-tight ${isSoldOut ? 'text-red-500 opacity-100' : 'text-[var(--text-secondary)] opacity-50'}`}>
-                    {isSoldOut ? 'Sold Out' : 'Available'}
+                  <p className={`text-[9px] font-black uppercase tracking-tight ${isExpired ? 'text-red-500 opacity-100' : isSoldOut ? 'text-red-500 opacity-100' : 'text-[var(--text-secondary)] opacity-50'}`}>
+                    {isExpired ? 'Event Ended' : isSoldOut ? 'Sold Out' : 'Available'}
                   </p>
                 </div>
               </button>

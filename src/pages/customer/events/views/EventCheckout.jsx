@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, CreditCard, MessageCircle, Ticket } from 'lucide-react';
+import { ChevronLeft, CreditCard, MessageCircle, Ticket, Ban } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 import { supabase } from '../../../../lib/supabaseClient';
@@ -16,6 +16,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
   if (!event || !tier) return null;
 
+  const isExpired = new Date(event.date) < new Date();
   const total = tier.price * qty;
   const isFreeTicket = tier.price === 0;
 
@@ -147,6 +148,58 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       setIsProcessing(false);
     }
   };
+
+  if (isExpired) {
+    return (
+      <div className="flex flex-col h-full bg-[var(--canvas-bg)]">
+        <header className="px-6 pt-12 pb-6 flex items-center gap-4 bg-white dark:bg-slate-950 border-b border-[var(--border-color)]">
+          <button
+            onClick={onBack}
+            className="w-10 h-10 flex items-center justify-center rounded-2xl bg-[var(--canvas-bg)] text-[var(--text-primary)] active:scale-90 transition-all border border-[var(--border-color)]"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <h1 className="text-xl font-black tracking-tight text-[var(--text-primary)]">
+            {t('confirm_payment')}
+          </h1>
+        </header>
+        <main className="flex-1 flex flex-col items-center justify-center px-6 gap-6">
+          {/* Greyed out event card */}
+          <div className="w-full bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm opacity-50">
+            <div className="relative h-32 w-full">
+              <img src={event.image} alt={event.name} className="w-full h-full object-cover grayscale" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-4 left-6">
+                <h3 className="font-black text-lg text-white leading-tight">{event.name}</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mt-0.5">{tier.name}</p>
+              </div>
+            </div>
+          </div>
+          {/* Event ended message */}
+          <div className="flex flex-col items-center gap-4 text-center px-4">
+            <div className="w-16 h-16 rounded-3xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-500">
+              <Ban size={28} />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500 text-white text-[10px] font-black uppercase tracking-widest mb-3">
+                Event Ended
+              </div>
+              <h2 className="text-xl font-black text-[var(--text-primary)] mb-2">This event has ended</h2>
+              <p className="text-sm font-bold text-[var(--text-secondary)] opacity-60 leading-relaxed">
+                No tickets are available for this event anymore. Check out upcoming events.
+              </p>
+            </div>
+            <button
+              onClick={onBack}
+              className="mt-2 px-8 py-3 rounded-2xl bg-[var(--canvas-bg)] border border-[var(--border-color)] text-[var(--text-primary)] font-black text-xs uppercase tracking-widest active:scale-95 transition-all"
+            >
+              Back to Events
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-[var(--canvas-bg)]">
