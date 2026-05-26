@@ -170,8 +170,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/40 dark:via-slate-900/40 to-transparent"></div>
             <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
               <div>
-                <h3 className="font-black text-lg text-white leading-tight drop-shadow-lg" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3)' }}>{event.name}</h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/80 mt-0.5 drop-shadow" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>{tier.name}</p>
+                <h3 className="font-black text-lg text-white leading-tight">{event.name}</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/80 mt-0.5">{tier.name}</p>
               </div>
               <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
                 <span className="text-[10px] font-black text-[var(--text-primary)]">${tier.price} <span className="opacity-40">ea</span></span>
