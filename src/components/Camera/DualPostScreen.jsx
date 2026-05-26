@@ -119,7 +119,7 @@ const styles = {
     locationPill: {
         position: 'absolute',
         bottom: 'calc(92px + env(safe-area-inset-bottom, 0px))',
-        left: '20px',
+        left: '16px',
         display: 'flex',
         alignItems: 'center',
         gap: '5px',
@@ -134,7 +134,7 @@ const styles = {
     },
     locationText: {
         fontSize: '12px',
-        fontWeight: 700,
+        fontWeight: '700',
         letterSpacing: '0.08em',
         lineHeight: 1,
     },
