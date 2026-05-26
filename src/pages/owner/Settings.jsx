@@ -607,6 +607,9 @@ const Settings = () => {
 
             window.dispatchEvent(new CustomEvent('frontendSync', { detail: frontendSyncData }));
 
+            // Refresh tenantData in context so camera components pick up custom colors immediately
+            await refreshTenantData();
+
             if (tenant.slug) {
                 const cacheKey = `tenant_lock_${tenant.slug}`;
                 const cached = localStorage.getItem(cacheKey);
