@@ -270,8 +270,9 @@ export function useCamera() {
             ctx.translate(canvas.width, 0)
             ctx.scale(-1, 1)
         }
-        // Draw video centered at calculated scale
-        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight)
+        // Draw ENTIRE video source, scaled and centered at destination
+        // Signature: drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+        ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, offsetX, offsetY, drawWidth, drawHeight)
         ctx.restore()
 
         if (selectedFilter !== 'original') {
