@@ -44,31 +44,21 @@ const FLASH_ICONS = {
 export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }) {
     const { tenantData } = useTenant()
 
+    // Track landscape vs portrait — pure CSS media query via matchMedia, zero JS overhead
+    const [isLandscape, setIsLandscape] = useState(() => window.innerWidth > window.innerHeight)
+    useEffect(() => {
+        const mq = window.matchMedia('(orientation: landscape)')
+        const handler = (e) => setIsLandscape(e.matches)
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+    }, [])
+
     // DEBUG: Log camera pin style on mount and when it changes
     useEffect(() => {
         const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
         console.log('[CameraLayer] 🎥 cameraPinStyle:', pinStyle, 'tenantData:', tenantData?.app_config)
     }, [tenantData?.app_config?.cameraPinStyle])
 
-    // Optimize orientation transition — detect changes early via Screen Orientation API
-    useEffect(() => {
-        if (!window.screen?.orientation) return
-
-        const handleOrientationChange = () => {
-            // Browser will auto-update dimensions, but we force a quick repaint
-            // by temporarily adjusting the will-change hint
-            const video = document.querySelector('.camera-preview')
-            if (video) {
-                video.style.willChange = 'auto'
-                requestAnimationFrame(() => {
-                    video.style.willChange = 'transform'
-                })
-            }
-        }
-
-        window.screen.orientation.addEventListener('change', handleOrientationChange)
-        return () => window.screen.orientation.removeEventListener('change', handleOrientationChange)
-    }, [])
 
     const {
         videoRef,
@@ -233,48 +223,6 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 </div>
             )}
 
-            {/* ── CINEMA MASK: 9:16 Safe Zone Guides ── */}
-            <div className="cinema-mask-overlay" style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                pointerEvents: 'none',
-                zIndex: 5,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center'
-            }}>
-                <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    width: '100%',
-                    height: 'calc((100% - (100vw * 16/9)) / 2)',
-                    background: 'rgba(0,0,0,0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: facingMode === 'environment' ? 'block' : 'none' // Only show if height > width
-                }} />
-                <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    width: '100%',
-                    height: 'calc((100% - (100vw * 16/9)) / 2)',
-                    background: 'rgba(0,0,0,0.4)',
-                    backdropFilter: 'blur(4px)',
-                    display: facingMode === 'environment' ? 'block' : 'none'
-                }} />
-
-                {/* 9:16 Frame Border (Subtle) */}
-                <div style={{
-                    width: '100vw',
-                    height: 'calc(100vw * 16/9)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    boxSizing: 'border-box'
-                }} />
-            </div>
-
             {/* Error state */}
             {error && (
                 <div className="camera-error">
@@ -375,21 +323,35 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                 </button>
             </div>
 
-            {/* Bottom Control Bar */}
+            {/* Shutter + Controls — bottom center in portrait, right edge in landscape */}
             <div style={{
                 position: 'absolute',
-                bottom: '60px',
-                left: 0,
-                right: 0,
+                // Landscape: right strip. Portrait: bottom strip.
+                ...(isLandscape ? {
+                    right: 'env(safe-area-inset-right, 24px)',
+                    top: 0,
+                    bottom: 0,
+                    width: '100px',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                } : {
+                    bottom: '48px',
+                    left: 0,
+                    right: 0,
+                    height: 'auto',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                }),
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '40px',
+                gap: isLandscape ? '28px' : '40px',
                 zIndex: 100,
-                padding: '0 24px'
+                padding: isLandscape ? '0 8px' : '0 24px',
             }}>
-                <div style={{ width: '48px' }} />
+                {/* Spacer / Flip in landscape */}
+                {!isLandscape && <div style={{ width: '48px' }} />}
 
+                {/* Shutter */}
                 <button
                     onClick={handleShutter}
                     disabled={!isReady}
@@ -403,6 +365,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                         padding: '4px',
                         cursor: 'pointer',
                         opacity: isReady ? 1 : 0.5,
+                        flexShrink: 0,
                         boxShadow: '0 4px 20px rgba(255, 255, 255, 0.25)'
                     }}
                 >
@@ -414,6 +377,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                     }} />
                 </button>
 
+                {/* Filter toggle */}
                 <button
                     onClick={() => {
                         const currentIndex = FILTERS.findIndex(f => f.id === selectedFilter)
@@ -437,6 +401,7 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        flexShrink: 0,
                         color: '#fff'
                     }}
                 >
@@ -451,9 +416,10 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
             {showFilterToast && (
                 <div style={{
                     position: 'absolute',
-                    bottom: '150px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
+                    bottom: isLandscape ? '50%' : '150px',
+                    right: isLandscape ? '120px' : 'auto',
+                    left: isLandscape ? 'auto' : '50%',
+                    transform: isLandscape ? 'translateY(50%)' : 'translateX(-50%)',
                     background: 'rgba(0, 0, 0, 0.7)',
                     backdropFilter: 'blur(10px)',
                     color: '#fff',

@@ -174,28 +174,18 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
             let renderWidth, renderHeight
             let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height
 
-            // MASTER NEGATIVE: Enforce 9:16 Viewport Math
-            // Regardless of source aspect (3:4 or 4:3), we center-crop to 9:16
-            const targetAspect = 9 / 16
-            renderWidth = containerWidth
-            renderHeight = containerWidth / targetAspect
+            // Use the actual image aspect ratio — portrait stays portrait, landscape stays landscape
+            const targetAspect = img.width / img.height
 
-            if (renderHeight > containerHeight) {
+            // Fit image to container, preserving its true aspect ratio (no cropping)
+            if (containerAspect > targetAspect) {
+                // Container is wider than image — fit by height
                 renderHeight = containerHeight
                 renderWidth = containerHeight * targetAspect
-            }
-
-            // Calculate source crop (center-crop from master image to 9:16)
-            if (imgAspect > targetAspect) {
-                // Image is wider than 9:16 - crop sides
-                sHeight = img.height
-                sWidth = img.height * targetAspect
-                sx = (img.width - sWidth) / 2
             } else {
-                // Image is taller than 9:16 - crop top/bottom
-                sWidth = img.width
-                sHeight = img.width / targetAspect
-                sy = (img.height - sHeight) / 2
+                // Container is taller than image — fit by width
+                renderWidth = containerWidth
+                renderHeight = containerWidth / targetAspect
             }
 
             // Set canvas to calculated dimensions (matches screen exactly)
