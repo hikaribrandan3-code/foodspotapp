@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { normalizeTenantConfig } from '../../utils/configNormalizer'
 import { defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
@@ -9,7 +9,8 @@ import { getSession } from '../../utils/auth.js'
 const isInDemoMode = () => false; // STUB: Demo mode disabled for now
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon, EventsIcon } from '../../components/HeroIcons.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
-import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
+// 🚀 LAZY LOAD: HikariBoy only when arcade is opened
+const HikariBoy = lazy(() => import('../../components/HikariBoy/HikariBoy').then(mod => ({ default: mod.HikariBoy })))
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -139,13 +140,23 @@ function Home({ config: configProp }) {
     const [activeOrder, setActiveOrder] = useState(null)
     const [authUser, setAuthUser] = useState(null)
 
-    // 🛡️ OWNER DETECTION: Check if current user owns this restaurant
+    // 🛡️ OWNER DETECTION: Deferred (lazy load after initial paint)
+    // Moved to requestIdleCallback to avoid blocking initial render
     useEffect(() => {
-        const checkOwner = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            setAuthUser(user)
+        const checkOwnerDeferred = () => {
+            const checkOwner = async () => {
+                const { data: { user } } = await supabase.auth.getUser()
+                setAuthUser(user)
+            }
+            checkOwner()
         }
-        checkOwner()
+
+        // Use requestIdleCallback if available, fallback to setTimeout
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(checkOwnerDeferred)
+        } else {
+            setTimeout(checkOwnerDeferred, 100)
+        }
     }, [])
 
     const isOwner = authUser && (authUser.id === tenantData?.user_id || authUser.id === tenantData?.owner_id)
@@ -154,36 +165,47 @@ function Home({ config: configProp }) {
         // console.log('🕹️ ARCADE STATE:', { showArcade, isEditMode, isOwnerMode })
     }, [showArcade, isEditMode, isOwnerMode])
 
-    // 🔄 Check for active order from previous session
+    // 🔄 Check for active order from previous session (lazy load)
+    // Deferred to avoid blocking initial render
     useEffect(() => {
         if (!tenantSlug || !businessId) return
-        const lastOrderId = localStorage.getItem(`fs_${tenantSlug}_last_order_id`)
-        if (!lastOrderId) return
 
-        const fetchActiveOrder = async () => {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('id, order_number, status, created_at')
-                .eq('id', lastOrderId)
-                .eq('business_id', businessId)
-                .single()
+        const fetchActiveOrderDeferred = () => {
+            const lastOrderId = localStorage.getItem(`fs_${tenantSlug}_last_order_id`)
+            if (!lastOrderId) return
 
-            if (error || !data) {
-                localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
-                return
+            const fetchActiveOrder = async () => {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('id, order_number, status, created_at')
+                    .eq('id', lastOrderId)
+                    .eq('business_id', businessId)
+                    .single()
+
+                if (error || !data) {
+                    localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
+                    return
+                }
+
+                // Only show banner if order is still active
+                const terminalStatuses = ['delivered', 'cancelled', 'refunded']
+                if (terminalStatuses.includes(data.status)) {
+                    localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
+                    return
+                }
+
+                setActiveOrder(data)
             }
 
-            // Only show banner if order is still active
-            const terminalStatuses = ['delivered', 'cancelled', 'refunded']
-            if (terminalStatuses.includes(data.status)) {
-                localStorage.removeItem(`fs_${tenantSlug}_last_order_id`)
-                return
-            }
-
-            setActiveOrder(data)
+            fetchActiveOrder()
         }
 
-        fetchActiveOrder()
+        // Defer to requestIdleCallback to avoid blocking render
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(fetchActiveOrderDeferred)
+        } else {
+            setTimeout(fetchActiveOrderDeferred, 200)
+        }
     }, [tenantSlug, businessId])
 
 
@@ -1159,16 +1181,18 @@ function Home({ config: configProp }) {
                     `}</style>
                 </div>
             )}
-            {/* 🕹️ ARCADE OVERLAY */}
+            {/* 🕹️ ARCADE OVERLAY — Lazy loaded on demand */}
             {showArcade && (
-                <HikariBoy
-                    onClose={() => setShowArcade(false)}
-                    controllerColor={tenantData?.confirmation_color || '#8B5CF6'}
-                    userId={tenantData?.business_name || 'guest'}
-                    munchboyShellColor={tenantData?.app_config?.munchboy?.shell_color || tenantData?.munchboy_shell_color}
-                    munchboyAColor={tenantData?.app_config?.munchboy?.a_color || tenantData?.munchboy_a_color}
-                    munchboyBColor={tenantData?.app_config?.munchboy?.b_color || tenantData?.munchboy_b_color}
-                />
+                <Suspense fallback={<div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: '#000', zIndex: 9999 }} />}>
+                    <HikariBoy
+                        onClose={() => setShowArcade(false)}
+                        controllerColor={tenantData?.confirmation_color || '#8B5CF6'}
+                        userId={tenantData?.business_name || 'guest'}
+                        munchboyShellColor={tenantData?.app_config?.munchboy?.shell_color || tenantData?.munchboy_shell_color}
+                        munchboyAColor={tenantData?.app_config?.munchboy?.a_color || tenantData?.munchboy_a_color}
+                        munchboyBColor={tenantData?.app_config?.munchboy?.b_color || tenantData?.munchboy_b_color}
+                    />
+                </Suspense>
             )}
         </div>
         </>
