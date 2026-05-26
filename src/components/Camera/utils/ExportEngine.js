@@ -307,16 +307,23 @@ export async function exportImage({
     neonContext = null,
     branding = null
 }) {
-    // MASTER NEGATIVE: Enforce strict 9:16 export aspect
-    const targetAspect = 9 / 16
+    // Use ACTUAL captured image aspect ratio (landscape or portrait), don't force 9:16
+    const imgAspect = baseCanvas.width / baseCanvas.height
 
+    // Export at full source dimensions, respecting whatever orientation was captured
     let exportWidth = baseCanvas.width
-    let exportHeight = Math.round(exportWidth / targetAspect)
+    let exportHeight = baseCanvas.height
 
-    // Clip to MAX limits (8MP/4K strategy)
-    if (exportHeight > MAX_EXPORT_HEIGHT) {
+    // Clip to MAX limits if necessary (prevent huge exports)
+    const maxAspect = MAX_EXPORT_WIDTH / MAX_EXPORT_HEIGHT
+    if (imgAspect > maxAspect) {
+        // Landscape: constrain by width
+        exportWidth = MAX_EXPORT_WIDTH
+        exportHeight = Math.round(MAX_EXPORT_WIDTH / imgAspect)
+    } else {
+        // Portrait or square: constrain by height
         exportHeight = MAX_EXPORT_HEIGHT
-        exportWidth = Math.round(exportHeight * targetAspect)
+        exportWidth = Math.round(MAX_EXPORT_HEIGHT * imgAspect)
     }
 
     // EVEN DIMENSIONS (Hardware encoder safety)
@@ -332,22 +339,9 @@ export async function exportImage({
         willReadFrequently: true
     })
 
-    // SYNCED 9:16 CENTER-CROP (Matches Editor Viewport Parity)
-    const imgAspect = baseCanvas.width / baseCanvas.height
-    let sx = 0, sy = 0, sWidth = baseCanvas.width, sHeight = baseCanvas.height
-
-    if (imgAspect > targetAspect) {
-        // Master is wider than 9:16 (usual 4:3) - crop sides
-        sWidth = baseCanvas.height * targetAspect
-        sx = (baseCanvas.width - sWidth) / 2
-    } else {
-        // Master is taller than 9:16 - crop top/bottom
-        sHeight = baseCanvas.width / targetAspect
-        sy = (baseCanvas.height - sHeight) / 2
-    }
-
-    // Draw center-cropped frame
-    ctx.drawImage(baseCanvas, sx, sy, sWidth, sHeight, 0, 0, exportWidth, exportHeight)
+    // Draw FULL frame without cropping - preserve captured aspect ratio
+    // Don't crop sides or top/bottom - export what the user captured
+    ctx.drawImage(baseCanvas, 0, 0, baseCanvas.width, baseCanvas.height, 0, 0, exportWidth, exportHeight)
 
     // Apply filter
     if (neonContext) applyNanoBanana(ctx, exportWidth, exportHeight, neonContext)
