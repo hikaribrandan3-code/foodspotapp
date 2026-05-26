@@ -1,8 +1,10 @@
 import * as React from 'react';
 const { useState, useEffect } = React;
-import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Tickets, Ban } from 'lucide-react';
+import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Tickets, Ban, Share2, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { VenueMap } from '../../../../components/VenueMap';
+import EventShareCard from '../components/EventShareCard';
+import { useEventShare } from '../hooks/useEventShare';
 
 const EventCountdown = ({ startDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -49,6 +51,7 @@ const EventCountdown = ({ startDate }) => {
 export default function EventDetail({ event, onBook, onBack }) {
   const { t } = useLanguage();
   const [selectedZone, setSelectedZone] = useState(null);
+  const { shareCardRef, shareEvent, isSharing } = useEventShare(event);
 
   if (!event) return null;
 
@@ -68,18 +71,34 @@ export default function EventDetail({ event, onBook, onBack }) {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
+      {/* Hidden share card — captured off-screen by html2canvas */}
+      <EventShareCard ref={shareCardRef} event={event} />
+
       <div className="relative h-[420px] shrink-0">
         <img
           src={event.image}
           alt={event.name}
           className="w-full h-full object-cover"
         />
-        
-        <button 
+
+        <button
           onClick={onBack}
           className="absolute top-12 left-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[var(--text-primary)] shadow-xl active:scale-90 transition-all border border-white/20"
         >
           <ChevronLeft size={24} />
+        </button>
+
+        {/* Share to Stories button */}
+        <button
+          onClick={shareEvent}
+          disabled={isSharing}
+          className="absolute top-12 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-[var(--text-primary)] shadow-xl active:scale-90 transition-all border border-white/20 disabled:opacity-60"
+          aria-label="Share to Instagram Stories"
+        >
+          {isSharing
+            ? <Loader2 size={20} className="animate-spin" />
+            : <Share2 size={20} />
+          }
         </button>
 
         <div className="absolute bottom-10 left-6 right-6">
