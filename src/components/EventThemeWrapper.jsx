@@ -63,6 +63,7 @@ export default function EventThemeWrapper() {
   const navigate = useNavigate();
   const { tenantSlug } = useParams();
   const [view, setView] = useState('events'); // 'events' | 'my-tickets'
+  const [eventsStage, setEventsStage] = useState('discovery'); // track sub-stage to hide HOME on detail/checkout
   const [theme, setTheme] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('event-theme');
@@ -114,19 +115,21 @@ export default function EventThemeWrapper() {
         ...style,
       }}
     >
-      {/* Green Home Button */}
-      <div className="fixed top-4 right-4 z-[160]">
-        <button
-          onClick={() => navigate(`/${tenantSlug || ''}`)}
-          className="flex flex-col items-center gap-0.5 active:scale-95 transition-all"
-          aria-label="Home"
-        >
-          <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/20">
-            <Home size={20} className="text-white" />
-          </div>
-          <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Home</span>
-        </button>
-      </div>
+      {/* Home Button — only on discovery/list, not on detail/checkout/ticket */}
+      {eventsStage === 'discovery' && (
+        <div className="fixed top-4 right-4 z-[160]">
+          <button
+            onClick={() => navigate(`/${tenantSlug || ''}`)}
+            className="flex flex-col items-center gap-0.5 active:scale-95 transition-all"
+            aria-label="Home"
+          >
+            <div className="w-10 h-10 flex items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/20">
+              <Home size={20} className="text-white" />
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-widest text-emerald-600">Home</span>
+          </button>
+        </div>
+      )}
 
       {/* Floating Theme Toggle */}
       <div className="fixed bottom-24 left-6 z-[160] flex flex-col gap-3">
@@ -149,7 +152,10 @@ export default function EventThemeWrapper() {
         style={{ height: `calc(100dvh - ${NAV_HEIGHT})` }}
       >
         {view === 'events' && (
-          <EventsView onViewTickets={() => setView('my-tickets')} />
+          <EventsView
+            onViewTickets={() => setView('my-tickets')}
+            onStageChange={setEventsStage}
+          />
         )}
         {view === 'my-tickets' && <MyTickets />}
       </div>

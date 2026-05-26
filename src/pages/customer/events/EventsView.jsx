@@ -258,7 +258,7 @@ async function seedDemoEvents(businessId) {
   }
 }
 
-export default function EventsView({ onViewTickets }) {
+export default function EventsView({ onViewTickets, onStageChange }) {
   const { tenantSlug } = useParams();
   const { businessId } = useTenant();
   const [searchParams] = useSearchParams();
@@ -337,31 +337,36 @@ export default function EventsView({ onViewTickets }) {
     }
   }, [searchParams]);
 
+  const goToStage = (s) => {
+    setStage(s);
+    onStageChange?.(s);
+  };
+
   const handleSelectEvent = (event) => {
     setSelectedEvent(event);
-    setStage('detail');
+    goToStage('detail');
   };
 
   const handleBook = (tier) => {
     setSelectedTier(tier);
-    setStage('checkout');
+    goToStage('checkout');
   };
 
   const handleConfirm = (booking) => {
     setBookingData(booking);
     setAllBookings(prev => [booking, ...prev]);
-    setStage('ticket');
+    goToStage('ticket');
   };
 
   const handleBack = () => {
-    if (stage === 'detail') setStage('discovery');
-    if (stage === 'checkout') setStage('detail');
-    if (stage === 'my-tickets') setStage('discovery');
+    if (stage === 'detail') goToStage('discovery');
+    if (stage === 'checkout') goToStage('detail');
+    if (stage === 'my-tickets') goToStage('discovery');
     if (stage === 'ticket') {
-      setStage('discovery');
       setBookingData(null);
       setSelectedEvent(null);
       setSelectedTier(null);
+      goToStage('discovery');
     }
   };
 

@@ -2,6 +2,7 @@ import * as React from 'react';
 const { useState, useEffect } = React;
 import { ChevronLeft, MapPin, Calendar, Clock, Sparkles, Info, Tickets, Ban, Share2, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
+import { useTenant } from '../../../../contexts/TenantContext';
 import { VenueMap } from '../../../../components/VenueMap';
 import EventShareCard from '../components/EventShareCard';
 import { useEventShare } from '../hooks/useEventShare';
@@ -50,6 +51,8 @@ const EventCountdown = ({ startDate }) => {
 
 export default function EventDetail({ event, onBook, onBack }) {
   const { t } = useLanguage();
+  const { tenantData } = useTenant();
+  const businessName = tenantData?.businessName || tenantData?.venue_name || 'FoodSpot';
   const [selectedZone, setSelectedZone] = useState(null);
   const { shareCardRef, shareEvent, isSharing } = useEventShare(event);
 
@@ -72,7 +75,7 @@ export default function EventDetail({ event, onBook, onBack }) {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-950 overflow-y-auto hide-scrollbar">
       {/* Hidden share card — captured off-screen by html2canvas */}
-      <EventShareCard ref={shareCardRef} event={event} />
+      <EventShareCard ref={shareCardRef} event={event} businessName={businessName} />
 
       <div className="relative h-[420px] shrink-0">
         <img
