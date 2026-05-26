@@ -107,8 +107,10 @@ export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPo
         if (e.touches && e.touches.length === 2 && zoomSupported && initialPinchDistanceRef.current > 0) {
             e.preventDefault()
             const currentDistance = getTouchDistance(e.touches)
-            const scaleFactor = currentDistance / initialPinchDistanceRef.current
-            const newZoom = Math.max(1, Math.min(3, initialZoomRef.current * scaleFactor))
+            const rawFactor = currentDistance / initialPinchDistanceRef.current
+            // 2.5x amplification — makes pinch to zoom work with just thumb + pointer finger
+            const amplifiedFactor = 1 + (rawFactor - 1) * 2.5
+            const newZoom = Math.max(1, Math.min(3, initialZoomRef.current * amplifiedFactor))
             setZoom(newZoom)
         }
     }

@@ -71,10 +71,10 @@ function DraggableElement({ element, canvasWidth, canvasHeight, onUpdate, onRemo
         if (isScaling && e.touches && e.touches.length === 2) {
             e.preventDefault()
 
-            // Scale — 1.3x amplification for more responsive pinch on all devices
+            // Scale — 2x amplification for more responsive pinch on all devices (thumb + pointer finger)
             const currentDistance = getTouchDistance(e.touches)
             const rawFactor = currentDistance / initialPinchDistanceRef.current
-            const amplifiedFactor = 1 + (rawFactor - 1) * 1.3
+            const amplifiedFactor = 1 + (rawFactor - 1) * 2
             const newScale = Math.max(0.3, Math.min(3, initialScaleRef.current * amplifiedFactor))
 
             // Rotation
