@@ -129,9 +129,9 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
     // Top-left positioning (match DOM pill in EditorLayer)
-    // Adjust Y to match visual position in editor
+    // Position below close button and text tools (approximately 70-80px from top)
     const pillX = Math.round(16 * scale)
-    const pillY = Math.round(18 * scale)  // Slightly lower to center pill vertically with icon
+    const pillY = Math.round(75 * scale)  // Below close button and toolbar
 
     // Glassmorphism pill background — color driven by cameraPinStyle
     const pillColor = cameraPinStyle === 'custom'
