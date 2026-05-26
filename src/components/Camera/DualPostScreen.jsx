@@ -124,7 +124,7 @@ const styles = {
         alignItems: 'center',
         gap: '5px',
         padding: '6px 12px',
-        background: 'rgba(255, 255, 255, 0.22)',
+        // background is set dynamically via pinBg prop in JSX
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         borderRadius: '20px',
