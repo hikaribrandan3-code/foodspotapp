@@ -367,8 +367,9 @@ export async function exportImage({
     // Draw elements with TRUE scale
     const scale = exportWidth / containerRect.width
 
-    // Burn branding with TRUE UI scale
-    if (branding) burnBranding(ctx, exportWidth, exportHeight, branding, scale)
+    // NOTE: Location pill is rendered as a DOM element in DualPostScreen/EditorLayer
+    // We don't bake it into the canvas to avoid sizing mismatches between canvas and DOM
+    // if (branding) burnBranding(ctx, exportWidth, exportHeight, branding, scale)
 
     if (strokes.length > 0) drawStrokes(ctx, strokes, scale)
 
