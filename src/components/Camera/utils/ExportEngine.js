@@ -113,13 +113,13 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const isLandscape = width > height
     const aspectRatio = width / height
 
-    // BIGGER pill on landscape + scale-aware sizing
-    const fontSizeBase = isLandscape ? 14 : 11 // Bigger on landscape
-    const fontSize = Math.round(fontSizeBase * scale)
-    const pinSize = Math.round(14 * scale)  // Slightly bigger
-    const pillPaddingH = Math.round(14 * scale)
-    const pillPaddingV = Math.round(8 * scale)
-    const pinTextGap = Math.round(6 * scale)
+    // Match DOM pill sizing exactly (12px font, 14px SVG icon, 8px padding)
+    // Use fixed sizing that matches EditorLayer and DualPostScreen DOM pills
+    const fontSize = Math.round(12 * scale)  // Match DOM pill (12px)
+    const pinSize = Math.round(14 * scale)   // Match SVG size (14px)
+    const pillPaddingH = Math.round(14 * scale) // Match DOM padding
+    const pillPaddingV = Math.round(8 * scale)  // Match DOM padding
+    const pinTextGap = Math.round(5 * scale)    // Match DOM gap
 
     ctx.save()
     ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`
@@ -128,17 +128,10 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
-    // Top-left for both orientations — landscape has more inset to avoid UI chrome
-    let pillX, pillY
-    if (isLandscape) {
-        // Top-left with generous inset on landscape (24px from edges)
-        pillX = Math.round(24 * scale)
-        pillY = Math.round(72 * scale) // Below close button (16 + 44 button + 12 gap)
-    } else {
-        // Top-left for portrait (standard position)
-        pillX = Math.round(20 * scale)
-        pillY = Math.round(72 * scale) // 16px + 44px button + 12px gap
-    }
+    // Top-left positioning (match DOM pill in EditorLayer)
+    // 16px from top and left edges
+    const pillX = Math.round(16 * scale)
+    const pillY = Math.round(16 * scale)
 
     // Glassmorphism pill background — color driven by cameraPinStyle
     const pillColor = cameraPinStyle === 'custom'
@@ -367,9 +360,8 @@ export async function exportImage({
     // Draw elements with TRUE scale
     const scale = exportWidth / containerRect.width
 
-    // NOTE: Location pill is rendered as a DOM element in DualPostScreen/EditorLayer
-    // We don't bake it into the canvas to avoid sizing mismatches between canvas and DOM
-    // if (branding) burnBranding(ctx, exportWidth, exportHeight, branding, scale)
+    // Burn branding with TRUE UI scale
+    if (branding) burnBranding(ctx, exportWidth, exportHeight, branding, scale)
 
     if (strokes.length > 0) drawStrokes(ctx, strokes, scale)
 
