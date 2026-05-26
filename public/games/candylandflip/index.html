@@ -183,26 +183,10 @@ const FEVER_BPM=210,FEVER_SPB=60/FEVER_BPM/2;
 const Nf={C3:130.81,D3:146.83,E3:164.81,F3:174.61,G3:196,A3:220,B3:246.94,C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,C5:523.25,D5:587.33,E5:659.26,F5:698.46,G5:783.99,A5:880,B5:987.77,C6:1046.5};
 const SEQ=[[Nf.G5,0,Nf.E5,0,Nf.C5,Nf.E5,Nf.G5,0,Nf.A5,0,Nf.G5,0,Nf.E5,0,Nf.C5,0,Nf.D5,0,Nf.B4,0,Nf.G4,Nf.B4,Nf.D5,0,Nf.E5,0,Nf.C5,0,Nf.G5,0,Nf.E5,Nf.C5],[Nf.E4,0,Nf.G4,0,Nf.C4,Nf.E4,Nf.G4,0,Nf.F4,0,Nf.A4,0,Nf.C5,0,Nf.F4,0,Nf.G4,0,Nf.B4,0,Nf.D5,0,Nf.G4,0,Nf.C4,0,Nf.E4,0,Nf.C5,0,Nf.G4,0],[Nf.C3,0,0,0,Nf.C3,0,0,0,Nf.F3,0,0,0,Nf.F3,0,0,0,Nf.G3,0,0,0,Nf.G3,0,0,0,Nf.C3,0,0,0,Nf.G3,0,Nf.C3,0],[1,2,2,2,3,2,2,2,1,2,2,2,3,2,2,2,1,2,2,2,3,2,2,2,1,2,2,2,3,2,1,2]];
 const FEVER_SEQ=[[Nf.C6,Nf.B5,Nf.A5,Nf.G5,Nf.C6,Nf.B5,Nf.A5,Nf.G5,Nf.A5,Nf.B5,Nf.C6,Nf.B5,Nf.A5,Nf.G5,Nf.F5,Nf.E5,Nf.G5,Nf.A5,Nf.B5,Nf.C6,Nf.B5,Nf.A5,Nf.G5,Nf.F5,Nf.E5,Nf.D5,Nf.E5,Nf.F5,Nf.G5,Nf.A5,Nf.B5,Nf.C6],[Nf.E5,0,Nf.C5,0,Nf.E5,0,Nf.G5,0,Nf.F5,0,Nf.A5,0,Nf.C5,0,Nf.E5,0,Nf.D5,0,Nf.F5,0,Nf.A5,0,Nf.C5,0,Nf.G5,0,Nf.B5,0,Nf.D5,0,Nf.G5,0],[Nf.C3,0,Nf.G3,0,Nf.C3,0,Nf.G3,0,Nf.F3,0,Nf.C3,0,Nf.F3,0,Nf.C3,0,Nf.G3,0,Nf.D3,0,Nf.G3,0,Nf.D3,0,Nf.C3,0,Nf.G3,0,Nf.C3,0,Nf.E3,0],[1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3]];
-let musicPlaying=false,musicStep=0,musicNextTime=0,musicTimer=null;
-function schedNote(f,type,g,t,d){if(!aCtx||!f)return;const o=aCtx.createOscillator(),gn=aCtx.createGain();o.connect(gn);gn.connect(aCtx.destination);o.type=type;o.frequency.value=f;gn.gain.setValueAtTime(g,t);gn.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.01);}
-function schedKick(t){if(!aCtx)return;const o=aCtx.createOscillator(),g=aCtx.createGain();o.connect(g);g.connect(aCtx.destination);o.type='sine';o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(30,t+0.12);g.gain.setValueAtTime(0.25,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);o.start(t);o.stop(t+0.15);}
-function schedSnare(t){if(!aCtx)return;const buf=aCtx.createBuffer(1,Math.floor(aCtx.sampleRate*0.1),aCtx.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=aCtx.createBufferSource(),g=aCtx.createGain();s.buffer=buf;s.connect(g);g.connect(aCtx.destination);g.gain.setValueAtTime(0.12,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.1);s.start(t);s.stop(t+0.11);}
-function schedHat(t){if(!aCtx)return;const buf=aCtx.createBuffer(1,Math.floor(aCtx.sampleRate*0.04),aCtx.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=aCtx.createBufferSource(),g=aCtx.createGain(),f=aCtx.createBiquadFilter();s.buffer=buf;s.connect(f);f.connect(g);g.connect(aCtx.destination);f.type='highpass';f.frequency.value=7000;g.gain.setValueAtTime(0.05,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);s.start(t);s.stop(t+0.05);}
-function scheduleBatch(){
-  if(!aCtx||!musicPlaying||muted)return;
-  const seq=feverActive?FEVER_SEQ:SEQ;
-  const stepLen=slowmoActive?SPB*1.4:feverActive?FEVER_SPB:SPB;
-  while(musicNextTime<aCtx.currentTime+0.12){
-    const s=musicStep%SL,t=musicNextTime;
-    const l=seq[0][s];if(l)schedNote(l,feverActive?'sawtooth':'square',feverActive?0.06:0.07,t,stepLen*0.72);
-    const h=seq[1][s];if(h)schedNote(h,'square',feverActive?0.04:0.035,t,stepLen*0.65);
-    const b=seq[2][s];if(b)schedNote(b,'triangle',feverActive?0.09:0.11,t,stepLen*0.85);
-    const dr=seq[3][s];if(dr===1)schedKick(t);else if(dr===2)schedHat(t);else if(dr===3)schedSnare(t);
-    musicNextTime+=stepLen;musicStep++;
-  }
-}
-function startMusic(){if(!aCtx||musicPlaying)return;musicPlaying=true;musicStep=0;musicNextTime=aCtx.currentTime+0.05;musicTimer=setInterval(scheduleBatch,25);}
-function stopMusic(){musicPlaying=false;if(musicTimer){clearInterval(musicTimer);musicTimer=null;}}
+const bgMusic=new Audio('music.mp3');bgMusic.loop=true;bgMusic.volume=0.4;
+function initAudio(){if(!aCtx)aCtx=new(window.AudioContext||window.webkitAudioContext)();}
+function startMusic(){if(bgMusic.paused){bgMusic.currentTime=0;bgMusic.play().catch(function(){});}}
+function stopMusic(){bgMusic.pause();}
 
 // ── PARTICLES ──
 function spawnParticles(x,y,n,cols,spd=3,life=30){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=spd*(0.5+Math.random());particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,col:cols[Math.floor(Math.random()*cols.length)],r:2+Math.random()*3,life,maxLife:life});}}
