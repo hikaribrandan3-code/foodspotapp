@@ -180,6 +180,14 @@
 }
 
 /* HERO STAGE + CROSSHAIR FIX */
+.hero-studio-trigger {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    cursor: pointer;
+    overflow: hidden;
+}
+
 .hero-stage {
     position: relative;
     width: 100%;
