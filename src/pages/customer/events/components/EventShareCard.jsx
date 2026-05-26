@@ -1,17 +1,19 @@
 import * as React from 'react';
 
 /**
- * EventShareCard — redesigned story card for Instagram sharing
+ * EventShareCard — premium Instagram story card
  *
- * Layout inspired by EventDetail countdown timer style:
- * - Image: top 50%
- * - Content: bottom 50%, spread out cleanly (not bunched)
- * - Category pill: prominent, above title
- * - Info rows: readable, with good spacing
- * - Price/capacity: clear, white text for stand-out
+ * Design system:
+ * - Left border accent (emerald, 12px) — brand presence
+ * - Large typography hierarchy (title 36px)
+ * - Ticket-stub design language (dashed dividers, corner fold)
+ * - Color-blocking with brand accent (emerald 5% bg on bottom section)
+ * - Icons elevated (20px) with subtle backgrounds
+ * - Badges for price/availability (emerald backgrounds)
+ * - Generous spacing, breathing room
+ * - Professional, share-worthy appearance
  *
  * Rendered off-screen at 400×711px, captured at scale 2.7 → ~1080×1920px
- * inline styles only — html2canvas does not run Tailwind JIT.
  */
 const EventShareCard = React.forwardRef(function EventShareCard({ event, businessName }, ref) {
   if (!event) return null;
@@ -29,6 +31,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
     : 0;
 
   const availableSpots = Math.max(0, totalCapacity - totalSold);
+  const spotsPercentage = totalCapacity > 0 ? Math.round((availableSpots / totalCapacity) * 100) : 0;
 
   const formattedDate = new Date(event.date).toLocaleDateString('en-US', {
     weekday: 'short',
@@ -38,7 +41,10 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
 
   const isExpired = new Date(event.date) < new Date();
   const isFree = lowestPrice === 0 || lowestPrice == null;
+  const isLimited = availableSpots > 0 && spotsPercentage <= 25;
   const displayBusiness = businessName || 'FoodSpot';
+
+  const ACCENT_COLOR = '#10b981'; // emerald brand color
 
   return (
     <div
@@ -55,16 +61,18 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
         display: 'flex',
         flexDirection: 'column',
         zIndex: -1,
+        borderLeft: `12px solid ${ACCENT_COLOR}`,
+        boxSizing: 'border-box',
       }}
     >
       {/* ═══════════════════════════════════════════════════════════
-          TOP HALF: Image (full bleed)
+          TOP HALF: Image with overlay
           ═══════════════════════════════════════════════════════════ */}
       <div
         style={{
           position: 'relative',
           width: '100%',
-          height: '355px',
+          height: '320px',
           flexShrink: 0,
           overflow: 'hidden',
         }}
@@ -78,7 +86,18 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             height: '100%',
             objectFit: 'cover',
             display: 'block',
-            filter: isExpired ? 'grayscale(0.5) brightness(0.7)' : 'brightness(0.95)',
+            filter: isExpired ? 'grayscale(0.6) brightness(0.7)' : 'brightness(0.95)',
+          }}
+        />
+        {/* Radial gradient overlay (top-right to center) + emerald tint */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: `
+              radial-gradient(ellipse at 70% 20%, transparent 0%, rgba(15, 23, 42, 0.4) 60%, rgba(15, 23, 42, 0.8) 100%),
+              linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%)
+            `,
           }}
         />
         {/* Fade to solid at bottom */}
@@ -88,82 +107,106 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             bottom: 0,
             left: 0,
             right: 0,
-            height: '80px',
-            background: 'linear-gradient(to bottom, transparent 0%, #0f172a 100%)',
+            height: '100px',
+            background: `linear-gradient(to bottom, transparent 0%, rgba(15, 23, 42, 0.95) 100%)`,
+          }}
+        />
+        {/* Ticket stub fold effect (top-right corner) */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            borderStyle: 'solid',
+            borderWidth: `0 20px 20px 0`,
+            borderColor: `transparent ${ACCENT_COLOR} transparent transparent`,
+            opacity: 0.8,
           }}
         />
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          BOTTOM HALF: Content (timer/countdown style — spread out)
+          BOTTOM HALF: Content with color-blocking
           ═══════════════════════════════════════════════════════════ */}
       <div
         style={{
           flex: 1,
-          background: '#0f172a',
-          padding: '18px 20px',
+          background: `linear-gradient(135deg, #0f172a 0%, rgba(16, 185, 129, 0.05) 100%)`,
+          padding: '16px 18px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '12px',
+          gap: '10px',
           justifyContent: 'space-between',
         }}
       >
-        {/* Category pill — big, prominent, overlays image slightly */}
+        {/* Category pill — big, prominent */}
         <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
-            padding: '6px 14px',
+            gap: '8px',
+            padding: '7px 12px',
             borderRadius: '999px',
-            background: isExpired ? 'rgba(239, 68, 68, 0.9)' : 'rgba(16, 185, 129, 0.9)',
-            backdropFilter: 'blur(8px)',
-            color: '#fff',
-            fontSize: '10px',
+            background: isExpired
+              ? 'rgba(239, 68, 68, 0.15)'
+              : 'rgba(16, 185, 129, 0.15)',
+            border: `1.5px solid ${isExpired ? 'rgba(239, 68, 68, 0.5)' : ACCENT_COLOR}`,
+            color: isExpired ? '#fca5a5' : ACCENT_COLOR,
+            fontSize: '11px',
             fontWeight: '900',
-            letterSpacing: '0.2em',
+            letterSpacing: '0.25em',
             textTransform: 'uppercase',
             alignSelf: 'flex-start',
-            marginTop: '-8px',
           }}
         >
-          ●{' '}
-          {isExpired
-            ? 'Event Ended'
-            : event.category
-              ? `${event.category} Exclusive`
-              : 'Exclusive'}
+          {isExpired ? '✕ Event Ended' : `● ${event.category || 'Exclusive'}`}
         </div>
 
-        {/* Title */}
+        {/* Title — LARGE, bold, dominant */}
         <div>
           <h1
             style={{
               margin: '0',
-              fontSize: '22px',
+              fontSize: '36px',
               fontWeight: '900',
               color: '#ffffff',
-              lineHeight: 1.25,
-              letterSpacing: '-0.02em',
+              lineHeight: 1.1,
+              letterSpacing: '-0.03em',
             }}
           >
             {event.name}
           </h1>
         </div>
 
-        {/* Info rows — clean, readable, like timer blocks */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Info rows — generous spacing, elevated icons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Date */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.65)',
+              gap: '12px',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.75)',
             }}
           >
-            <span style={{ fontSize: '13px' }}>📅</span>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                flexShrink: 0,
+              }}
+            >
+              📅
+            </div>
             <span style={{ fontWeight: '700' }}>{formattedDate}</span>
           </div>
 
@@ -172,27 +215,55 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.65)',
+              gap: '12px',
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.75)',
             }}
           >
-            <span style={{ fontSize: '13px' }}>🕐</span>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                flexShrink: 0,
+              }}
+            >
+              🕐
+            </div>
             <span style={{ fontWeight: '700' }}>{event.time}</span>
           </div>
 
-          {/* Location — with padding to prevent cut-off */}
+          {/* Location — prominent, 14px */}
           <div
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '10px',
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.65)',
+              gap: '12px',
+              fontSize: '14px',
+              color: 'rgba(255,255,255,0.75)',
               paddingRight: '8px',
             }}
           >
-            <span style={{ fontSize: '13px', flexShrink: 0 }}>📍</span>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px',
+                flexShrink: 0,
+              }}
+            >
+              📍
+            </div>
             <span
               style={{
                 fontWeight: '700',
@@ -205,37 +276,92 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
           </div>
         </div>
 
-        {/* Divider */}
+        {/* Dashed divider (ticket stub style) */}
         <div
           style={{
             width: '100%',
             height: '1px',
-            background: 'rgba(255,255,255,0.1)',
+            background: 'transparent',
+            borderTop: '2px dashed rgba(16, 185, 129, 0.3)',
+            margin: '4px 0',
           }}
         />
 
-        {/* Bottom row: Price + Capacity */}
+        {/* Bottom row: Price badge + Availability badge */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'space-between',
             gap: '10px',
           }}
         >
-          {/* Price / Free indicator */}
+          {/* Price badge */}
           {!isExpired ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                flexDirection: 'column',
+                gap: '4px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: isFree
+                  ? 'rgba(34, 197, 94, 0.2)'
+                  : 'rgba(16, 185, 129, 0.2)',
+                border: `1.5px solid ${isFree ? '#22c55e' : ACCENT_COLOR}`,
+              }}
+            >
               <span
                 style={{
                   fontSize: '9px',
                   fontWeight: '700',
-                  color: 'rgba(255,255,255,0.4)',
+                  color: 'rgba(255,255,255,0.5)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
                 }}
               >
-                🎟 Tickets
+                🎟 {isFree ? 'Free Entry' : 'Tickets From'}
+              </span>
+              <span
+                style={{
+                  fontSize: isFree ? '22px' : '20px',
+                  fontWeight: '900',
+                  color: '#ffffff',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                {isFree ? 'FREE' : `$${lowestPrice}`}
+              </span>
+            </div>
+          ) : (
+            <div />
+          )}
+
+          {/* Availability badge */}
+          {availableSpots > 0 && !isExpired ? (
+            <div
+              style={{
+                display: 'inline-flex',
+                flexDirection: 'column',
+                gap: '4px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: isLimited
+                  ? 'rgba(239, 68, 68, 0.2)'
+                  : 'rgba(34, 197, 94, 0.2)',
+                border: `1.5px solid ${isLimited ? '#ef4444' : '#22c55e'}`,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: '700',
+                  color: 'rgba(255,255,255,0.5)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                {isLimited ? '⚡ Limited' : '✓ Available'}
               </span>
               <div
                 style={{
@@ -244,90 +370,46 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
                   gap: '4px',
                 }}
               >
-                {isFree ? (
-                  <span
-                    style={{
-                      fontSize: '18px',
-                      fontWeight: '900',
-                      color: '#ffffff',
-                      letterSpacing: '-0.02em',
-                    }}
-                  >
-                    FREE
-                  </span>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        color: 'rgba(255,255,255,0.5)',
-                      }}
-                    >
-                      from
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '20px',
-                        fontWeight: '900',
-                        color: '#ffffff',
-                        letterSpacing: '-0.02em',
-                      }}
-                    >
-                      ${lowestPrice}
-                    </span>
-                  </>
-                )}
+                <span
+                  style={{
+                    fontSize: '20px',
+                    fontWeight: '900',
+                    color: '#ffffff',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  {availableSpots}
+                </span>
+                <span
+                  style={{
+                    fontSize: '9px',
+                    color: 'rgba(255,255,255,0.4)',
+                    fontWeight: '700',
+                  }}
+                >
+                  spots
+                </span>
               </div>
-            </div>
-          ) : (
-            <div />
-          )}
-
-          {/* Available spots */}
-          {availableSpots > 0 && !isExpired ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-end' }}>
-              <span
-                style={{
-                  fontSize: '9px',
-                  fontWeight: '700',
-                  color: 'rgba(255,255,255,0.4)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                }}
-              >
-                Available
-              </span>
-              <span
-                style={{
-                  fontSize: '16px',
-                  fontWeight: '900',
-                  color: '#ffffff',
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {availableSpots}
-              </span>
             </div>
           ) : (
             <div />
           )}
         </div>
 
-        {/* Business name — bottom right */}
+        {/* Business name — premium footer with separator */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-end',
-            gap: '1px',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            paddingTop: '8px',
+            gap: '4px',
+            borderTop: `1px dashed rgba(16, 185, 129, 0.3)`,
+            paddingTop: '10px',
           }}
         >
           <span
             style={{
-              fontSize: '11px',
+              fontSize: '13px',
               fontWeight: '900',
               color: '#ffffff',
               letterSpacing: '-0.01em',
@@ -338,13 +420,13 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
           <span
             style={{
               fontSize: '8px',
-              fontWeight: '600',
-              color: 'rgba(255,255,255,0.3)',
-              letterSpacing: '0.08em',
+              fontWeight: '700',
+              color: 'rgba(16, 185, 129, 0.6)',
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
             }}
           >
-            by FoodSpot
+            ✓ by FoodSpot
           </span>
         </div>
       </div>
