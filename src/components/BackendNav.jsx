@@ -29,6 +29,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useTenant } from '../contexts/TenantContext'
 
 // ============================================
 // TAB CONFIGURATIONS BY ROLE
@@ -194,10 +195,17 @@ function BackendNav({
 }) {
     const navigate = useNavigate()
     const { t } = useLanguage()
+    const { tenantData } = useTenant()
     const location = useLocation()
     const params = useParams()
     const lastTapRef = useRef(0)
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+    const [isDesktop, setIsDesktop] = useState(
+        () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+    )
+    const [isDark, setIsDark] = useState(
+        () => typeof window !== 'undefined' && document.documentElement.classList.contains('dark')
+    )
 
     // 🏢 SILO-AWARE: Extract tenant from URL
     // Fallback: extract from pathname if useParams doesn't return it
@@ -223,6 +231,23 @@ function BackendNav({
         return () => mediaQuery.removeEventListener('change', handler)
     }, [])
 
+    // Detect desktop breakpoint
+    useEffect(() => {
+        const mq = window.matchMedia('(min-width: 768px)')
+        const handler = (e) => setIsDesktop(e.matches)
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+    }, [])
+
+    // Track dark mode changes reactively
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.classList.contains('dark'))
+        })
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+        return () => observer.disconnect()
+    }, [])
+
     // ============================================
     // RULE 3: URL-BASED TAB SELECTION (Silo-Aware)
     // Check the current URL, NOT the user's rank
@@ -238,6 +263,17 @@ function BackendNav({
         return { tabs: OWNER_TABS, area: 'owner' } // Fallback
     }
     const { tabs, area: urlArea } = getTabsFromUrl()
+    const isSidebarMode = isDesktop && urlArea === 'owner'
+
+    // Apply/remove body padding-left when sidebar is active
+    useEffect(() => {
+        if (isSidebarMode) {
+            document.body.style.paddingLeft = '220px'
+        } else {
+            document.body.style.paddingLeft = ''
+        }
+        return () => { document.body.style.paddingLeft = '' }
+    }, [isSidebarMode])
 
     // Derive active tab from route if using routes
     const getActiveFromRoute = () => {
@@ -390,6 +426,149 @@ function BackendNav({
         label: t(tab.id) || tab.label
     })), [tabs, t])
 
+    const storeName = tenantData?.venue_name || tenantData?.business_name || 'FoodSpot'
+    const storeUrl = tenantSlug ? `/${tenantSlug}` : '/'
+
+    // ── DESKTOP SIDEBAR ──────────────────────────────────────────
+    if (isSidebarMode) {
+        return (
+            <aside
+                style={{
+                    position: 'fixed',
+                    left: 0,
+                    top: 0,
+                    width: 220,
+                    height: '100vh',
+                    background: isDark ? '#0f172a' : '#ffffff',
+                    borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#e5e7eb'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    zIndex: 100,
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                }}
+                role="navigation"
+                aria-label="Owner navigation"
+            >
+                {/* Brand */}
+                <div style={{
+                    padding: '20px 20px 16px',
+                    borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}`,
+                }}>
+                    <p style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        letterSpacing: '0.18em',
+                        textTransform: 'uppercase',
+                        color: '#10b981',
+                        marginBottom: 2,
+                    }}>FoodSpot</p>
+                    <p style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: isDark ? '#f1f5f9' : '#111827',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    }}>{storeName}</p>
+                </div>
+
+                {/* Nav items */}
+                <nav style={{ flex: 1, padding: '12px 10px' }}>
+                    {localizedTabs.map(tab => {
+                        const isActive = currentTab === tab.id
+                        const badgeCount = tab.hasBadge && badges[tab.id]
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => handleTabClick(tab.id)}
+                                aria-current={isActive ? 'page' : undefined}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    marginBottom: 2,
+                                    borderRadius: 10,
+                                    border: 'none',
+                                    background: isActive
+                                        ? (isDark ? 'rgba(16,185,129,0.12)' : '#ecfdf5')
+                                        : 'transparent',
+                                    borderLeft: isActive ? '3px solid #10b981' : '3px solid transparent',
+                                    cursor: 'pointer',
+                                    textAlign: 'left',
+                                    position: 'relative',
+                                    transition: 'background 0.15s ease',
+                                    WebkitTapHighlightColor: 'transparent',
+                                }}
+                            >
+                                <TabIcon id={tab.id} active={isActive} />
+                                <span style={{
+                                    fontSize: 13,
+                                    fontWeight: isActive ? 700 : 500,
+                                    color: isActive ? '#10b981' : (isDark ? '#94a3b8' : '#6b7280'),
+                                    flex: 1,
+                                }}>
+                                    {tab.label}
+                                </span>
+                                {badgeCount > 0 && (
+                                    <span style={{
+                                        minWidth: 18,
+                                        height: 18,
+                                        padding: '0 5px',
+                                        borderRadius: 9,
+                                        background: '#10b981',
+                                        color: '#fff',
+                                        fontSize: 10,
+                                        fontWeight: 700,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}>
+                                        {badgeCount > 99 ? '99+' : badgeCount}
+                                    </span>
+                                )}
+                            </button>
+                        )
+                    })}
+                </nav>
+
+                {/* Bottom: Ver Tienda */}
+                <div style={{
+                    padding: '12px 10px 20px',
+                    borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}`,
+                }}>
+                    <button
+                        onClick={() => window.open(storeUrl, '_blank')}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: 10,
+                            border: 'none',
+                            background: isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4',
+                            cursor: 'pointer',
+                            WebkitTapHighlightColor: 'transparent',
+                        }}
+                    >
+                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                            Ver Tienda
+                        </span>
+                    </button>
+                </div>
+            </aside>
+        )
+    }
+
+    // ── MOBILE BOTTOM NAV ────────────────────────────────────────
     return (
         <nav style={navContainerStyle} role="navigation" aria-label="Backend navigation">
             {localizedTabs.map(tab => {
