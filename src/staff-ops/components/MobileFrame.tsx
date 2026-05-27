@@ -39,7 +39,7 @@ function DesktopSidebar() {
     >
       <div className="px-5 py-6 border-b" style={{ borderColor: 'var(--nav-border)' }}>
         <p className="text-xs font-bold tracking-widest mb-2" style={{ color: 'var(--text-primary)' }}>FOODSPOT</p>
-        <p className="text-[10px] font-medium" style={{ color: 'var(--text-tertiary)' }}>{t('staff_ops')}</p>
+        <p className="text-lg font-black" style={{ color: 'var(--text-primary)' }}>{t('staff_ops')}</p>
       </div>
       <nav className="flex-1 py-4 space-y-1 px-3">
         {sidebarTabs.map((tab) => {
