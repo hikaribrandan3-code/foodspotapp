@@ -111,13 +111,13 @@ export default function DeliverySettingsTab({
         </div>
 
         {/* Fee Settings Accordion */}
-        <div className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-stone-200 rounded-2xl shadow-sm">
           <button
             onClick={() => setShowFees(!showFees)}
-            className="w-full px-4 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors"
+            className="w-full px-4 py-3 flex items-center justify-between hover:bg-stone-50 transition-colors rounded-2xl"
           >
             <h3 className="text-base font-['Outfit',sans-serif] font-black text-stone-950 uppercase tracking-tight italic">
-              {t('fee_settings') || 'Fee Settings'}
+              Fee Settings
             </h3>
             <motion.div
               animate={{ rotate: showFees ? 180 : 0 }}
@@ -134,7 +134,7 @@ export default function DeliverySettingsTab({
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="border-t border-stone-100 overflow-hidden"
+                className="overflow-hidden"
               >
                 <div className="flex flex-col gap-3 p-3">
                   <div className="bg-white rounded-xl border border-stone-200 p-3 flex flex-col shadow-sm transition-all hover:shadow-md">

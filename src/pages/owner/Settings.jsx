@@ -1088,7 +1088,7 @@ const Settings = () => {
                 </section>
 
                 {/* ========== 6. CAMERA PIN STYLE ========== */}
-                <section className="branding-card">
+                <section className="branding-card camera-pin-section">
                     <h3>6. Camera Pin Style</h3>
                     <p style={{ fontSize: '11px', color: '#64748B', marginBottom: '14px' }}>
                         Preview how your location pin looks on photos
@@ -1207,7 +1207,7 @@ const Settings = () => {
                 </section>
 
                 {/* ========== 7. MUNCHBOY BRANDING ========== */}
-                <section className="branding-card">
+                <section className="branding-card munchboy-section">
                     <div className="section-header">
                         <h3>7. Munchboy Arcade</h3>
                     </div>
