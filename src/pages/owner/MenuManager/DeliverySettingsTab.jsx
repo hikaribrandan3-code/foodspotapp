@@ -19,18 +19,18 @@ export default function DeliverySettingsTab({
   const { t } = useLanguage();
 
   return (
-    <section className="border-t border-stone-200 pt-8 md:pt-24 mb-16 md:mb-32">
-      <div className="bg-white border-2 border-stone-100 rounded-[2.5rem] p-6 md:p-12 mb-6 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-          <Leaf className="w-48 h-48 text-amber-500 -rotate-12" />
+    <section className="border-t border-stone-200 pt-5 md:pt-8 mb-8 md:mb-12">
+      <div className="bg-white border border-stone-100 rounded-2xl p-4 md:p-6 mb-5 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-3 opacity-5">
+          <Leaf className="w-24 h-24 text-amber-500 -rotate-12" />
         </div>
 
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 md:gap-12 relative z-10">
-          <div className="max-w-2xl">
-            <h2 className="font-['Outfit',sans-serif] text-2xl md:text-6xl text-stone-950 mb-3 font-black tracking-tight leading-none italic">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
+          <div>
+            <h2 className="font-['Outfit',sans-serif] text-xl md:text-3xl text-stone-950 mb-1 font-black tracking-tight leading-none italic">
               {t('delivery_system_title') || 'Delivery System'}
             </h2>
-            <p className="text-sm md:text-lg text-stone-500 leading-relaxed font-medium">
+            <p className="text-xs md:text-sm text-stone-500 leading-relaxed font-medium">
               {t('delivery_system_subtitle') || 'Define your radius, set fees, control thresholds. Full control, no complexity.'}
             </p>
           </div>

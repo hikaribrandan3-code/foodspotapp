@@ -53,11 +53,11 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={`group/card relative flex flex-col overflow-hidden rounded-[2rem] bg-white border border-stone-200 transition-all duration-500 hover:shadow-[0_40px_80px_rgba(28,25,23,0.06)] hover:-translate-y-1.5 ${
+      className={`group/card relative flex flex-col overflow-hidden rounded-2xl bg-white border border-stone-200 transition-all duration-500 hover:shadow-[0_20px_40px_rgba(28,25,23,0.06)] hover:-translate-y-1 ${
         !inStock ? 'opacity-60 saturate-[0.2]' : ''
       }`}
     >
-      <div className="relative h-48 w-full overflow-hidden">
+      <div className="relative h-32 md:h-36 w-full overflow-hidden">
         <input
           ref={fileInputRef}
           type="file"
@@ -116,8 +116,8 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
           </div>
         </button>
 
-        <div className="absolute top-6 right-6 flex flex-col gap-2 pointer-events-none z-10">
-          <div className="flex items-center gap-2 rounded-full bg-white/95 backdrop-blur-md px-4 py-2 text-stone-900 shadow-xl border border-white/50 pointer-events-auto">
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 pointer-events-none z-10">
+          <div className="flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-md px-3 py-1.5 text-stone-900 shadow-xl border border-white/50 pointer-events-auto">
             <Flame className="h-3.5 w-3.5 text-emerald-600 fill-current" />
             <input
               type="text"
@@ -129,7 +129,7 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
           </div>
         </div>
 
-        <div className="absolute top-6 left-6 flex flex-col gap-2 items-start pointer-events-none z-10">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start pointer-events-none z-10">
           {isFeatured && (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -175,13 +175,13 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 p-6">
-        <div className="flex justify-between items-start gap-4">
-          <h4 className="flex-grow font-['Outfit',sans-serif] text-2xl md:text-3xl font-bold text-stone-950 leading-[1.1] italic">
+      <div className="flex flex-col gap-2 p-4">
+        <div className="flex justify-between items-start gap-3">
+          <h4 className="flex-grow font-['Outfit',sans-serif] text-base md:text-lg font-bold text-stone-950 leading-[1.2] italic">
             {item.name}
           </h4>
           <div className="flex-shrink-0">
-            <span className="text-2xl md:text-3xl font-bold text-emerald-600 font-['Outfit',sans-serif]">
+            <span className="text-base md:text-lg font-bold text-emerald-600 font-['Outfit',sans-serif]">
               ${priceDisplay}
             </span>
           </div>
@@ -191,10 +191,10 @@ export default function MenuItemCard({ item, onUpdate, onDelete }) {
           value={description}
           onChange={handleDescriptionChange}
           placeholder="Briefly describe the flavor profile..."
-          className="w-full bg-stone-50 rounded-xl border border-stone-100 px-4 py-3 text-base md:text-lg font-medium leading-relaxed text-stone-500 italic resize-none outline-none focus:text-stone-900 focus:bg-white focus:border-emerald-200 transition-colors" rows={1} style={{ minHeight: '48px' }}
+          className="w-full bg-stone-50 rounded-lg border border-stone-100 px-3 py-2 text-xs font-medium leading-relaxed text-stone-500 italic resize-none outline-none focus:text-stone-900 focus:bg-white focus:border-emerald-200 transition-colors" rows={1} style={{ minHeight: '36px' }}
         />
 
-        <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+        <div className="flex items-center justify-between pt-2 border-t border-stone-100">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleToggle('is_vegan', !isVegan, setIsVegan)}

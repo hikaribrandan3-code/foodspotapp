@@ -2,11 +2,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;600;800&family=Lora:wght@400;600;700&display=swap');
 
 .settings-vault {
-    padding: 20px;
+    padding: 16px;
     background: #F8FAFC;
     min-height: 100vh;
     padding-bottom: 100px;
-    /* Space for BottomNav */
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .settings-vault {
+        padding: 20px 24px;
+    }
 }
 
 /* Card Styling — Neomorphic Soft */
@@ -183,7 +190,7 @@
 .hero-studio-trigger {
     position: relative;
     width: 100%;
-    aspect-ratio: 16/9;
+    aspect-ratio: 21/9;
     cursor: pointer;
     overflow: hidden;
 }
@@ -191,7 +198,7 @@
 .hero-stage {
     position: relative;
     width: 100%;
-    aspect-ratio: 16/9;
+    aspect-ratio: 21/9;
     background: #E2E8F0;
     border-radius: 8px;
     overflow: hidden;
@@ -447,7 +454,7 @@
 .pin-cam-frame {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 21 / 9;
     border-radius: 14px;
     overflow: hidden;
     background: #0a0704;

@@ -524,23 +524,23 @@ function OwnerSummary() {
             />
 
             {/* Main Content */}
-            <main className="px-4 md:px-12 pt-8 md:pt-16 pb-36 space-y-8 md:space-y-12 max-w-7xl mx-auto w-full">
+            <main className="px-4 md:px-8 pt-5 md:pt-8 pb-28 space-y-5 md:space-y-6 max-w-3xl mx-auto w-full">
 
                 {/* Profile Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="rounded-[2.5rem] p-6 md:p-8 flex items-center gap-4 bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]"
+                    className="rounded-2xl p-4 md:p-5 flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]"
                 >
-                    <div className="w-14 h-14 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 shrink-0">
-                        <User size={28} className="text-emerald-600 dark:text-emerald-400" />
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10 shrink-0">
+                        <User size={20} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="font-['Outfit',sans-serif] font-black text-xl text-stone-950 dark:text-white truncate">
+                        <h2 className="font-['Outfit',sans-serif] font-black text-base text-stone-950 dark:text-white truncate">
                             {tenantData?.venue_name || tenantData?.business_name || 'Owner'}
                         </h2>
-                        <p className="text-sm capitalize text-stone-500 dark:text-white">Owner</p>
+                        <p className="text-xs capitalize text-stone-500 dark:text-white">Owner</p>
                         <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                                 Active
@@ -559,7 +559,7 @@ function OwnerSummary() {
                         title="Preferences"
                         isOpen={true}
                     />
-                    <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                    <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                         <button
                             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                             className="w-full flex items-center gap-3 px-4 py-3.5"
@@ -592,7 +592,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <MenuRow
                                         icon={<CreditCard size={18} />}
                                         label="Mercado Pago"
@@ -624,14 +624,14 @@ function OwnerSummary() {
                         title={t('sessions') || 'Sessions'}
                         isOpen={true}
                     />
-                    <div className="grid grid-cols-2 gap-4 md:gap-6">
-                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                            <p className="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.weekCount}</p>
-                            <p className="text-xs text-stone-400 dark:text-white mt-2 font-bold uppercase tracking-widest">{t('this_week') || 'This Week'}</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-2xl p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                            <p className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.weekCount}</p>
+                            <p className="text-[10px] text-stone-400 dark:text-white mt-1 font-bold uppercase tracking-widest">{t('this_week') || 'This Week'}</p>
                         </div>
-                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-[2.5rem] p-6 md:p-8 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                            <p className="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.monthCount}</p>
-                            <p className="text-xs text-stone-400 dark:text-white mt-2 font-bold uppercase tracking-widest">{t('this_month') || 'This Month'}</p>
+                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-2xl p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                            <p className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.monthCount}</p>
+                            <p className="text-[10px] text-stone-400 dark:text-white mt-1 font-bold uppercase tracking-widest">{t('this_month') || 'This Month'}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -652,7 +652,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
                                             {t('whatsapp_contact') || 'WhatsApp'}
@@ -664,7 +664,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
                                             onBlur={() => { isTypingRef.current = false; flushBusinessInfoSave(); showVenueSavedPill() }}
                                             placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -720,13 +720,13 @@ function OwnerSummary() {
                                                         placeholder="APP_USR_..."
                                                         value={mpTokenInput}
                                                         onChange={(e) => setMpTokenInput(e.target.value)}
-                                                        className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                                     />
                                                 </div>
                                                 <button
                                                     onClick={saveMpToken}
                                                     disabled={mpTokenSaving || !mpTokenInput.trim()}
-                                                    className={`px-8 py-4 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
+                                                    className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
                                                         mpTokenSaved
                                                             ? 'bg-green-500 dark:bg-green-600 text-white'
                                                             : mpTokenSaving
@@ -779,13 +779,13 @@ function OwnerSummary() {
                                                             placeholder="123456789"
                                                             value={mpUserIdInput}
                                                             onChange={(e) => setMpUserIdInput(e.target.value)}
-                                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                                         />
                                                     </div>
                                                     <button
                                                         onClick={saveMpUserId}
                                                         disabled={mpUserIdSaving || !mpUserIdInput.trim()}
-                                                        className={`px-8 py-4 rounded-2xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
+                                                        className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
                                                             mpUserIdSaved
                                                                 ? 'bg-green-500 dark:bg-green-600 text-white'
                                                                 : mpUserIdSaving
@@ -820,7 +820,7 @@ function OwnerSummary() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-6 md:p-8 space-y-4 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-4 space-y-3 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <div>
                                             <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
@@ -833,7 +833,7 @@ function OwnerSummary() {
                                                 onChange={(e) => updateBusinessInfo('address', e.target.value)}
                                                 onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                                 placeholder={t('address_placeholder') || '123 Main St'}
-                                                className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                             />
                                         </div>
 
@@ -849,7 +849,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('hours', e.target.value)}
                                             onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                             placeholder={t('hours_placeholder') || 'Mon-Fri 9:00-21:00, Sat-Sun 10:00-18:00'}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -874,7 +874,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Instagram</label>
                                         <input
@@ -886,7 +886,7 @@ function OwnerSummary() {
                                                 saveExternalLink('instagramUrl', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -901,7 +901,7 @@ function OwnerSummary() {
                                                 saveExternalLink('tiktokUrl', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -916,7 +916,7 @@ function OwnerSummary() {
                                                 saveExternalLink('mapsLink', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -931,7 +931,7 @@ function OwnerSummary() {
                                                 saveExternalLink('googleReviewUrl', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -957,7 +957,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     {/* MP Alias only (access token nerfed for MVP) */}
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
@@ -1003,8 +1003,8 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <div className="grid grid-cols-3 md:grid-cols-3 gap-2.5">
+                                <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                                         {[
                                             { code: 'ARS', flag: '🇦🇷' },
                                             { code: 'USD', flag: '💵' },
@@ -1054,7 +1054,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-6 md:p-8 space-y-6 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-[2.5rem] bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Tu Link de Pedidos</label>
                                         <div className="flex gap-2">
@@ -1201,12 +1201,12 @@ function SectionHeader({ icon, title, isOpen, onToggle }) {
     return (
         <button
             onClick={onToggle}
-            className="w-full flex items-center justify-between px-1 mb-8 md:mb-12"
+            className="w-full flex items-center justify-between px-1 mb-3 md:mb-4"
             disabled={!onToggle}
         >
-            <div className="flex items-center gap-3">
-                <div className="h-6 w-1 bg-emerald-600 rounded-full" />
-                <h3 className="font-['Outfit',sans-serif] font-black text-xl md:text-2xl italic tracking-tight text-stone-950 dark:!text-white">
+            <div className="flex items-center gap-2.5">
+                <div className="h-5 w-1 bg-emerald-600 rounded-full" />
+                <h3 className="font-['Outfit',sans-serif] font-black text-base md:text-lg italic tracking-tight text-stone-950 dark:!text-white">
                     {title}
                 </h3>
             </div>
@@ -1250,7 +1250,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text' }) {
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
             />
         </div>
     )
@@ -1380,7 +1380,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                        <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                             {!showAddForm ? (
                                 <button
                                     onClick={() => setShowAddForm(true)}
@@ -1414,7 +1414,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         <select
                                             value={newStaff.role}
                                             onChange={(e) => setNewStaff(p => ({ ...p, role: e.target.value }))}
-                                            className="w-full px-6 py-4 rounded-2xl text-base font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         >
                                             {roles.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                                         </select>

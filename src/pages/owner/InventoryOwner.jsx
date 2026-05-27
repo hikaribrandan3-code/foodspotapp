@@ -10,7 +10,7 @@ export default function InventoryOwner() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F9FAFB' }}>
       <BackendHeader />
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '16px 20px' }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8, color: '#111827' }}>
             Inventory Management
           </h1>

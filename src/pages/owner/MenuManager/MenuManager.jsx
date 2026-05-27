@@ -405,9 +405,9 @@ export default function MenuManager() {
         </div>
       )}
 
-      <main className="flex-grow px-4 md:px-12 py-10 md:py-16 max-w-7xl mx-auto w-full">
+      <main className="flex-grow px-4 md:px-8 py-6 md:py-10 max-w-7xl mx-auto w-full">
         {activeTab === 'menu' ? (
-          <div className="space-y-24 md:space-y-40">
+          <div className="space-y-10 md:space-y-16">
             <MenuTab
               menuItems={menuItems}
               categories={categories}
