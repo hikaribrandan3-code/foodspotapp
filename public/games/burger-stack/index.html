@@ -648,6 +648,7 @@ function drawCRT(){
 }
 
 function drawGO(){
+  goTimer++;
   if(gameOverImage){
     ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
     var imgW=400,imgH=256,scale=Math.min(W/imgW,H/imgH);
@@ -657,14 +658,13 @@ function drawGO(){
     if(goTimer===1&&!goCoinsSpawned){goCoinsSpawned=true;sndCashier();for(var i=0;i<12;i++)coins.push(new Coin(rnd(W*.2,W*.8),H*.3));}
     var scoreProgress=Math.min(1,goTimer/35);
     var displayScore=Math.round(scoreProgress*score);
-    ctx.save();ctx.translate(W/2,H/2-20);ctx.font='900 48px Arial Black';ctx.textAlign='center';
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.roundRect(W/2-110,H-120,220,80,12);ctx.fill();ctx.translate(W/2,H-70);ctx.font='900 48px Arial Black';ctx.textAlign='center';
     ctx.strokeStyle='#000';ctx.lineWidth=12;ctx.strokeText(''+displayScore,0,0);
     var sg=ctx.createLinearGradient(-100,-50,100,50);
     sg.addColorStop(0,'#FFD700');sg.addColorStop(0.5,'#FF9A3C');sg.addColorStop(1,'#FF3860');
     ctx.fillStyle=sg;ctx.fillText(''+displayScore,0,0);ctx.restore();
     for(var i=0;i<coins.length;i++)coins[i].draw();return;
   }
-  goTimer++;
   if(goTimer===1&&!goCoinsSpawned){goCoinsSpawned=true;sndCashier();for(var i=0;i<12;i++)coins.push(new Coin(rnd(W*.2,W*.8),SPLIT_Y*.4));}
   var easeOut=function(t){return 1-Math.pow(1-Math.min(1,t),3);};
   var scoreProgress=easeOut(goTimer/55);
@@ -839,12 +839,12 @@ function drawSlot(){
     var rg=ctx.createLinearGradient(0,ry,0,ry+rH);rg.addColorStop(0,'rgba(0,0,0,.6)');rg.addColorStop(.2,'rgba(0,0,0,0)');rg.addColorStop(.8,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(0,0,0,.6)');
     ctx.fillStyle=rg;ctx.fillRect(rx,ry,rW,rH);
     ctx.translate(rx+rW/2,ry+rH/2+bounceY);
-    var eS=slotDone[i]?1.25:1;ctx.scale(eS,eS);ctx.font='32px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    var eS=slotDone[i]?1.25:1;ctx.scale(eS,eS);ctx.font='32px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';
     if(!slotDone[i]){
       var v=slotVals[i],e1=Math.floor(v)%5,e2=(e1+1)%5,fr=v-Math.floor(v);
       ctx.fillText(SLOT_EMO[e1],0,0-fr*rH);ctx.fillText(SLOT_EMO[e2],0,rH-fr*rH);
     }else{
-      ctx.fillText(SLOT_EMO[Math.floor(slotVals[i])%5],0,2);
+      ctx.fillStyle='#FFD700';ctx.fillText(SLOT_EMO[Math.floor(slotVals[i])%5],0,2);
     }
     ctx.restore();
     ctx.strokeStyle=slotDone[i]?'#FFD700':'#222';ctx.lineWidth=slotDone[i]?4:2;
