@@ -139,8 +139,8 @@ function BackendHeader({ title, onLogout }) {
                 )}
             </div>
 
-            {/* RIGHT: Actions */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            {/* RIGHT: Actions — hidden on desktop (sidebar handles these) */}
+            <div className="flex items-center gap-3 flex-shrink-0 md:hidden">
                 {/* Ver Tienda Button */}
                 {tenantSlug && (
                     <button

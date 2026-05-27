@@ -265,14 +265,22 @@ function BackendNav({
     const { tabs, area: urlArea } = getTabsFromUrl()
     const isSidebarMode = isDesktop && urlArea === 'owner'
 
-    // Apply/remove body padding-left when sidebar is active
+    // Apply/remove body padding-left + CSS var + body class when sidebar is active
     useEffect(() => {
         if (isSidebarMode) {
             document.body.style.paddingLeft = '220px'
+            document.body.classList.add('has-owner-sidebar')
+            document.documentElement.style.setProperty('--sidebar-width', '220px')
         } else {
             document.body.style.paddingLeft = ''
+            document.body.classList.remove('has-owner-sidebar')
+            document.documentElement.style.setProperty('--sidebar-width', '0px')
         }
-        return () => { document.body.style.paddingLeft = '' }
+        return () => {
+            document.body.style.paddingLeft = ''
+            document.body.classList.remove('has-owner-sidebar')
+            document.documentElement.style.setProperty('--sidebar-width', '0px')
+        }
     }, [isSidebarMode])
 
     // Derive active tab from route if using routes
@@ -534,33 +542,80 @@ function BackendNav({
                     })}
                 </nav>
 
-                {/* Bottom: Ver Tienda */}
+                {/* Bottom: Ver Tienda + Staff + Logout */}
                 <div style={{
                     padding: '12px 10px 20px',
                     borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
                 }}>
+                    {/* Ver Tienda */}
                     <button
                         onClick={() => window.open(storeUrl, '_blank')}
                         style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 10,
-                            width: '100%',
-                            padding: '10px 12px',
-                            borderRadius: 10,
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            width: '100%', padding: '9px 12px', borderRadius: 10,
                             border: 'none',
                             background: isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4',
-                            cursor: 'pointer',
-                            WebkitTapHighlightColor: 'transparent',
+                            cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                         }}
                     >
-                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                             <polyline points="15 3 21 3 21 9" />
                             <line x1="10" y1="14" x2="21" y2="3" />
                         </svg>
                         <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Ver Tienda
+                        </span>
+                    </button>
+
+                    {/* Staff View */}
+                    {tenantSlug && (
+                        <button
+                            onClick={() => navigate(`/${tenantSlug}/staff/dashboard`)}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                width: '100%', padding: '9px 12px', borderRadius: 10,
+                                border: 'none', background: 'transparent',
+                                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                            }}
+                        >
+                            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={isDark ? '#64748b' : '#9ca3af'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#64748b' : '#9ca3af' }}>
+                                Vista Staff
+                            </span>
+                        </button>
+                    )}
+
+                    {/* Logout */}
+                    <button
+                        onClick={async () => {
+                            const { supabase: sb } = await import('../lib/supabaseClient.js')
+                            await sb.auth.signOut()
+                            if (tenantSlug) navigate(`/${tenantSlug}`)
+                            else navigate('/')
+                        }}
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            width: '100%', padding: '9px 12px', borderRadius: 10,
+                            border: 'none', background: 'transparent',
+                            cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                        }}
+                    >
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: '#ef4444' }}>
+                            Cerrar sesión
                         </span>
                     </button>
                 </div>

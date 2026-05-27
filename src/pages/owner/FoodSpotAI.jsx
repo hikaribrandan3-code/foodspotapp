@@ -575,7 +575,7 @@ export function FoodSpotAI() {
             <div style={{
                 position: 'fixed',
                 bottom: 100,
-                left: 0,
+                left: 'var(--sidebar-width, 0px)',
                 right: 0,
                 display: 'flex',
                 flexDirection: 'column',
