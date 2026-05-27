@@ -36,7 +36,7 @@ const GAME_W=448,GAME_H=520;
   rs();window.addEventListener('resize',rs);
 })();
 const W=GAME_W,H=GAME_H;
-const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1;
+const canvas=document.getElementById('C'),ctx=canvas.getContext('2d'),dpr=Math.min(window.devicePixelRatio||1,2);
 // HB Audio Unlock
 (function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}canvas.addEventListener('touchstart',unlock,{passive:true,once:true});canvas.addEventListener('mousedown',unlock,{once:true});})();
 canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
@@ -106,6 +106,9 @@ offCRT.width=W;offCRT.height=H;
   const c=offCRT.getContext('2d');
   for(var y=0;y<H;y+=3){c.fillStyle='rgba(0,0,0,.04)';c.fillRect(0,y,W,1);}
 })();
+
+// Pre-cache CRT vignette gradient (created once, not every frame)
+const crtVignette=(function(){var g=offCRT.getContext('2d').createRadialGradient(W/2,H/2,H*.22,W/2,H/2,H*.76);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.3)');return g;})();
 
 // Pre-render halftone pattern once
 function rebuildHalftone(){
@@ -612,10 +615,12 @@ function placeBlock(){
   ticketIngredients.push(d.ii%ING.length);for(var i=0;i<5;i++)parts.push(new FoodBit(d.x+rnd(0,d.width),d.y+camOffset,col));
   if(isPerfect){
     if(ING[d.ii%ING.length].patty){for(var i=0;i<3;i++){(function(ii){setTimeout(function(){smokeRings.push(new SmokeRing(d.x+rnd(d.width*.2,d.width*.8),d.y+camOffset));},ii*120);})(i);}}
-    var drizzleTypes=['ketchup','mustard','mayo'],dt=feverMode?drizzleTypes:drizzleTypes.slice(0,1+(combo>3?1:0)+(combo>6?1:0));
-    dt.forEach(function(t,i){setTimeout(function(){spawnDrizzle(d.x,d.y+BH*.3,ow,t);},i*140);});
+    var drizzleTypes=['ketchup','mustard','mayo'],drizzleT=feverMode?drizzleTypes:drizzleTypes.slice(0,1+(combo>3?1:0)+(combo>6?1:0));
+    drizzleT.forEach(function(t,i){setTimeout(function(){spawnDrizzle(d.x,d.y+BH*.3,ow,t);},i*140);});
     if(combo>=2)triggerSideCombo(combo);streak++;combo++;if(combo>maxCombo)maxCombo=combo;flash=1;flashCol='255,255,100';sndPerfect();shakeAmt=2;
-    confettiBurst(d.x+d.width/2,d.y+camOffset,feverMode?40:25);sparkleBurst(d.x+d.width/2,d.y+camOffset,col,14);coinShower(d.x+d.width/2,d.y+camOffset,feverMode?8:5);
+    // PERF: scale particle count with combo — first drop is light, later drops are full
+    var burstN=Math.min(feverMode?40:25,8+combo*3);
+    confettiBurst(d.x+d.width/2,d.y+camOffset,burstN);sparkleBurst(d.x+d.width/2,d.y+camOffset,col,Math.min(14,4+combo*2));coinShower(d.x+d.width/2,d.y+camOffset,feverMode?8:Math.min(5,2+Math.floor(combo/2)));
     ftxt(d.x+d.width/2,d.y+camOffset-22,'✨ PERFECT!','#FFD700',26);vibe([20,10,50]);burstTimer=18;burstMult=1.35;triggerSpeedLines(14);spawnKanji(d.x+d.width/2,d.y+camOffset-55);spawnAnimeWord(d.x+d.width/2+rnd(-30,30),d.y+camOffset-80);
     if(combo===5&&!feverMode)activateFever();else if(combo===10){comboCallout='💥 x10 COMBO!';comboT=90;screenPunch();triggerImpactFrame(0);triggerSpeedLines(25);triggerFreezeFrame();}else if(combo===20){comboCallout='🌟 x20 INSANE!';comboT=100;screenPunch();triggerImpactFrame(1);triggerFreezeFrame();}else if(combo>1)ftxt(d.x+d.width/2,d.y+camOffset-52,'×'+combo,'#FF6B00',20);
     stack.push({x:d.x,y:d.y,width:d.width,height:BH,ii:d.ii,glow:feverMode?2:1,squash:.9});
@@ -643,7 +648,7 @@ function triggerFail(){
 function drawCRT(){
   // PERFORMANCE: Draw cached CRT scanlines from offscreen canvas
   ctx.drawImage(offCRT,0,0);
-  var vg=ctx.createRadialGradient(W/2,H/2,H*.22,W/2,H/2,H*.76);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.3)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=crtVignette;ctx.fillRect(0,0,W,H);
   if(feverMode){ctx.fillStyle='rgba(255,120,0,'+(0.04+0.02*Math.sin(bgTime*8))+')';ctx.fillRect(0,0,W,H);}
 }
 
@@ -784,6 +789,7 @@ function render(){
   for(var i=0;i<parts.length;i++)parts[i].draw();
   for(var i=0;i<floats.length;i++)floats[i].draw();
   for(var i=0;i<coins.length;i++)coins[i].draw();
+  for(var i=0;i<smokeRings.length;i++)smokeRings[i].draw();
   for(var i=0;i<drizzles.length;i++)drizzles[i].draw();
   updateDrawSideCombo();
   for(var i=0;i<kanjiFloats.length;i++)kanjiFloats[i].draw();
