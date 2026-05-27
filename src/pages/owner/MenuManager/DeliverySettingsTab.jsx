@@ -17,12 +17,6 @@ export default function DeliverySettingsTab({
 }) {
   const { t } = useLanguage();
 
-  const radiusOptions = [
-    { label: t('local') || 'Local', value: 2 },
-    { label: t('regional') || 'Regional', value: 5 },
-    { label: t('wide') || 'Wide', value: 10 }
-  ];
-
   return (
     <section className="border-t border-stone-200 pt-3 md:pt-4 mb-4 md:mb-6">
       {/* Hero: Title + Pause Toggle */}
@@ -61,27 +55,28 @@ export default function DeliverySettingsTab({
       </div>
 
       <div className={`flex flex-col gap-4 transition-opacity duration-500 ${isDeliveryPaused ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-        {/* Radius Selector: Pills */}
-        <div className="flex gap-2 flex-wrap">
-          {radiusOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setDeliveryRadius(option.value)}
-              className={`px-4 py-2 rounded-full font-black text-sm uppercase tracking-tight transition-all ${
-                deliveryRadius === option.value
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+        {/* Delivery Radius: Custom Input */}
+        <div className="bg-stone-50 rounded-2xl p-4 flex flex-col">
+          <div className="text-left">
+            <p className="text-stone-400 font-bold uppercase text-[9px] tracking-[0.2em] mb-0.5">{t('delivery_radius') || 'Delivery Radius'}</p>
+            <h3 className="text-sm text-stone-950 font-['Outfit',sans-serif] font-black italic mb-3">{t('set_radius') || 'Coverage Area'}</h3>
+          </div>
+          <div className="relative">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-lg italic">km</div>
+            <input
+              type="text"
+              value={deliveryRadius}
+              onChange={(e) => setDeliveryRadius(e.target.value)}
+              className="w-full bg-white text-stone-950 font-['Outfit',sans-serif] font-black pr-8 py-2.5 rounded-lg focus:bg-emerald-50 transition-all text-xl outline-none border border-stone-200"
+              placeholder="0"
+            />
+          </div>
         </div>
 
         {/* Fee Settings: 2-Column Grid */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Service Fee Card */}
-          <div className="flex-1 bg-stone-50 rounded-xl p-4 flex flex-col">
+          <div className="flex-1 bg-stone-50 rounded-2xl p-4 flex flex-col">
             <div className="flex justify-between items-center mb-3 text-left">
               <div>
                 <p className="text-stone-400 font-bold uppercase text-[9px] tracking-[0.2em] mb-0.5">{t('service_fee') || 'Service Fee'}</p>
@@ -114,7 +109,7 @@ export default function DeliverySettingsTab({
           </div>
 
           {/* Free Delivery Card */}
-          <div className="flex-1 bg-emerald-600 rounded-xl p-4 flex flex-col shadow-lg shadow-emerald-900/10 relative overflow-hidden">
+          <div className="flex-1 bg-emerald-600 rounded-2xl p-4 flex flex-col shadow-lg shadow-emerald-900/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-10">
               <Gift className="w-12 h-12 text-white -rotate-12" />
             </div>
