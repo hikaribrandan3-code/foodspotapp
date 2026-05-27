@@ -136,8 +136,8 @@ export default function DeliverySettingsTab({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="flex flex-col gap-3 p-3">
-                  <div className="bg-white rounded-xl border border-stone-200 p-3 flex flex-col shadow-sm transition-all hover:shadow-md">
+                <div className="flex flex-col gap-3 p-4">
+                  <div className="bg-stone-50 rounded-xl p-4 flex flex-col transition-all">
                     <div className="flex justify-between items-center mb-2 text-left">
                       <div>
                         <p className="text-stone-400 font-bold uppercase text-[9px] tracking-[0.2em] mb-0.5">{t('service_fee') || 'Service Fee'}</p>
