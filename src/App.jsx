@@ -175,10 +175,19 @@ import CameraGuard from './components/Camera/CameraGuard.jsx'
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
     const { tenantData, businessId, loading: tenantLoading } = useTenant();
-    const slug = tenantData?.slug || window.location.pathname.split('/')[1] || '';
-    const bid = businessId || localStorage.getItem('fs_business_id') || '';
-    window.location.replace(`/staff-ops.html?slug=${slug}&bid=${bid}`);
-    return null;
+
+    useEffect(() => {
+        if (tenantLoading) return; // Wait for tenant to load
+
+        const slug = tenantData?.slug || window.location.pathname.split('/')[1] || '';
+        const bid = businessId || localStorage.getItem('fs_business_id') || '';
+
+        if (slug) {
+            window.location.replace(`/staff-ops.html?slug=${slug}&bid=${bid}`);
+        }
+    }, [tenantLoading, tenantData, businessId]);
+
+    return <BurgerLoader />; // Show loader while tenant data loads
 }
 
 function App() {
