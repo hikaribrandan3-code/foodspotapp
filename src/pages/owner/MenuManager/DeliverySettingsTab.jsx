@@ -81,7 +81,7 @@ export default function DeliverySettingsTab({
               </motion.div>
             </div>
 
-            <div className="p-5 md:p-12 w-full md:w-1/3 flex flex-col justify-center">
+            <div className="p-5 md:p-6 w-full md:w-1/3 flex flex-col justify-center">
               <div className="flex justify-between items-center mb-5">
                 <h3 className="text-lg md:text-xl font-['Outfit',sans-serif] font-black text-stone-950 uppercase tracking-tight italic">{t('radius') || 'Radius'}</h3>
                 <div className="flex items-center gap-2 px-4 py-2 bg-stone-100 rounded-full">
@@ -89,7 +89,7 @@ export default function DeliverySettingsTab({
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-600">{t('active') || 'Active'}</span>
                 </div>
               </div>
-              <div className="space-y-5">
+              <div className="space-y-3">
                 <input
                   type="range"
                   min="1"
@@ -98,10 +98,10 @@ export default function DeliverySettingsTab({
                   onChange={(e) => setDeliveryRadius(parseInt(e.target.value))}
                   className="w-full h-1.5 bg-stone-100 rounded-full appearance-none cursor-pointer accent-emerald-600"
                 />
-                <div className="flex justify-between text-[10px] font-bold text-stone-400 uppercase tracking-[0.2em]">
-                  <span className="px-3 py-1.5 bg-stone-50 rounded-lg">{t('local') || 'Local'}</span>
-                  <span className="text-emerald-600 px-4 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">{t('regional') || 'Regional'}</span>
-                  <span className="px-3 py-1.5 bg-stone-50 rounded-lg">{t('wide') || 'Wide'}</span>
+                <div className="flex justify-between text-[9px] font-bold text-stone-400 uppercase tracking-[0.1em]">
+                  <span className="px-2 py-1 bg-stone-50 rounded-lg">{t('local') || 'Local'}</span>
+                  <span className="text-emerald-600 px-2 py-1 bg-emerald-50 rounded-lg border border-emerald-100">{t('regional') || 'Regional'}</span>
+                  <span className="px-2 py-1 bg-stone-50 rounded-lg">{t('wide') || 'Wide'}</span>
                 </div>
               </div>
             </div>

@@ -680,3 +680,10 @@
     border: none;
     padding: 0;
 }
+
+/* Hide camera preview on desktop — just show style chips */
+@media (min-width: 768px) {
+    .pin-cam-frame {
+        display: none;
+    }
+}

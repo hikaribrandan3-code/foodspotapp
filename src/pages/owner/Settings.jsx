@@ -1213,108 +1213,104 @@ const Settings = () => {
                     </div>
                     <p style={{ fontSize: 12, color: '#64748B', marginBottom: 12 }}>{t('munchboy_subtitle')}</p>
                     
-                    {/* Visual Emulator Preview */}
-                    <div 
+                    {/* Visual Emulator Preview — compact */}
+                    <div
                         className="munchboy-preview"
                         style={{
                             background: draft.app_config?.munchboy?.shell_color || '#6B0FCC',
-                            borderRadius: 20,
-                            padding: '24px 16px 16px',
-                            marginBottom: 20,
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+                            borderRadius: 14,
+                            padding: '10px 12px 10px',
+                            marginBottom: 12,
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
                         }}
                     >
                         {/* Screen area */}
                         <div style={{
                             background: '#000',
-                            borderRadius: 12,
-                            height: 120,
-                            marginBottom: 16,
+                            borderRadius: 8,
+                            height: 70,
+                            marginBottom: 8,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            border: '3px solid #333'
+                            border: '2px solid #333'
                         }}>
-                            <span style={{ color: '#fff', fontSize: 12, opacity: 0.5 }}>GAME SCREEN</span>
+                            <span style={{ color: '#fff', fontSize: 10, opacity: 0.5 }}>GAME SCREEN</span>
                         </div>
-                        
-                        {/* foodspot branding */}
+
+                        {/* Branding */}
                         <div style={{
                             textAlign: 'center',
                             color: '#fff',
-                            fontSize: 14,
+                            fontSize: 10,
                             fontWeight: 600,
                             letterSpacing: 3,
-                            marginBottom: 16,
+                            marginBottom: 8,
                             opacity: 0.9
                         }}>
                             {draft.app_config?.munchboy?.name || 'MUNCHBOY'}
                         </div>
-                        
+
                         {/* Controller preview */}
                         <div style={{
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            padding: '0 8px'
+                            padding: '0 4px'
                         }}>
                             {/* D-Pad */}
-                            <div style={{ width: 70, height: 70, position: 'relative' }}>
+                            <div style={{ width: 48, height: 48, position: 'relative' }}>
                                 <div style={{
                                     position: 'absolute', top: '50%', left: 0,
                                     transform: 'translateY(-50%)',
                                     width: '100%', height: '35%',
                                     background: '#D1D5DB',
-                                    borderRadius: 6,
-                                    border: '2px solid #1a1a1a'
+                                    borderRadius: 4,
+                                    border: '1.5px solid #1a1a1a'
                                 }} />
                                 <div style={{
                                     position: 'absolute', left: '50%', top: 0,
                                     transform: 'translateX(-50%)',
                                     width: '35%', height: '100%',
                                     background: '#D1D5DB',
-                                    borderRadius: 6,
-                                    border: '2px solid #1a1a1a'
+                                    borderRadius: 4,
+                                    border: '1.5px solid #1a1a1a'
                                 }} />
                             </div>
-                            
+
                             {/* A/B Buttons */}
-                            <div style={{ position: 'relative', width: 100, height: 58, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+                            <div style={{ position: 'relative', width: 72, height: 40, display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
                                 <div
                                     onClick={() => openColorPicker(t('munchboy_b_button_color'), 'munchboy_b_color', '', draft.app_config?.munchboy?.b_color || '#D1D5DB')}
                                     style={{
-                                        width: 44, height: 44, borderRadius: '50%',
+                                        width: 30, height: 30, borderRadius: '50%',
                                         background: boostSaturation(draft.app_config?.munchboy?.b_color || '#D1D5DB'),
-                                        border: '2px solid #1a1a1a',
-                                        boxShadow: 'none',
+                                        border: '1.5px solid #1a1a1a',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
-                                        opacity: 1
+                                        cursor: 'pointer', fontSize: 11, fontWeight: 'bold', color: '#000'
                                     }}
                                 >B</div>
                                 <div
                                     onClick={() => openColorPicker(t('munchboy_a_button_color'), 'munchboy_a_color', '', draft.app_config?.munchboy?.a_color || '#D1D5DB')}
                                     style={{
-                                        width: 44, height: 44, borderRadius: '50%',
+                                        width: 30, height: 30, borderRadius: '50%',
                                         background: boostSaturation(draft.app_config?.munchboy?.a_color || '#D1D5DB'),
-                                        border: '2px solid #1a1a1a',
-                                        boxShadow: 'none',
+                                        border: '1.5px solid #1a1a1a',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', fontSize: 14, fontWeight: 'bold', color: '#000',
-                                        opacity: 1
+                                        cursor: 'pointer', fontSize: 11, fontWeight: 'bold', color: '#000'
                                     }}
                                 >A</div>
                             </div>
                         </div>
                     </div>
-                    
-                    {/* Compact Controls Row */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                        <div style={{ display: 'flex', gap: 8, flex: 1 }}>
-                            <div 
+
+                    {/* Color Controls Row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                            <div
                                 onClick={() => openColorPicker(t('munchboy_shell'), 'munchboy_shell_color', '', draft.app_config?.munchboy?.shell_color || '#6B0FCC')}
                                 style={{
-                                    width: 36, height: 36, borderRadius: 8,
+                                    width: 28, height: 28, borderRadius: 6,
                                     background: draft.app_config?.munchboy?.shell_color || '#6B0FCC',
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
@@ -1324,7 +1320,7 @@ const Settings = () => {
                             <div
                                 onClick={() => openColorPicker(t('munchboy_a_button'), 'munchboy_a_color', '', draft.app_config?.munchboy?.a_color || '#D1D5DB')}
                                 style={{
-                                    width: 36, height: 36, borderRadius: '50%',
+                                    width: 28, height: 28, borderRadius: '50%',
                                     background: boostSaturation(draft.app_config?.munchboy?.a_color || '#D1D5DB'),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
@@ -1334,7 +1330,7 @@ const Settings = () => {
                             <div
                                 onClick={() => openColorPicker(t('munchboy_b_button'), 'munchboy_b_color', '', draft.app_config?.munchboy?.b_color || '#D1D5DB')}
                                 style={{
-                                    width: 36, height: 36, borderRadius: '50%',
+                                    width: 28, height: 28, borderRadius: '50%',
                                     background: boostSaturation(draft.app_config?.munchboy?.b_color || '#D1D5DB'),
                                     border: '2px solid rgba(0,0,0,0.1)',
                                     cursor: 'pointer'
@@ -1342,8 +1338,6 @@ const Settings = () => {
                                 title={t('munchboy_b_button')}
                             />
                         </div>
-                        
-                        {/* Enable Toggle — hidden until wired to frontend */}
                     </div>
 
                     {/* Display Name — hidden until frontend sync is fixed */}

@@ -1769,4 +1769,22 @@ div[style*="position: fixed"][style*="inset: 0"]:not(.staff-dashboard):not(.came
 .kds-orders { display: flex; flex-direction: column; gap: 0.75rem; }
 .kds-card { border: 1px solid #e2e8f0; padding: 1rem; border-radius: 6px; transition: all 0.2s; }
 .kds-card--optimistic { opacity: 0.6; border: 2px dashed #94a3b8; pointer-events: none; }
+
+/* Inventory card styles — staff-ops components used in main app via MenuInventoryView */
+.inventory-card {
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.08);
+  transition: all 0.2s;
+}
+.inventory-card:active {
+  transform: scale(0.995);
+}
+.status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
 .kds-card-header { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: bold; margin-bottom: 0.5rem; }

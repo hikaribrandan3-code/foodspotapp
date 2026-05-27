@@ -697,129 +697,6 @@ function OwnerSummary() {
                                         </div>
                                     </div>
 
-                                    {/* Mercado Pago Token Management */}
-                                    <div>
-                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-3">
-                                            {t('mp_connect_mercado_pago') || 'Connect to Mercado Pago'}
-                                        </label>
-                                        <div className="space-y-3">
-                                            <div className="text-[11px] text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 border border-emerald-200 dark:border-emerald-800">
-                                                <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">{t('mp_api_token_how_to_title')}</p>
-                                                <ol className="list-decimal list-inside space-y-0.5 text-emerald-800 dark:text-emerald-200">
-                                                    <li>{t('mp_api_token_step_1')} <span className="font-mono text-[10px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
-                                                    <li>{t('mp_api_token_step_2')}</li>
-                                                    <li>{t('mp_api_token_step_3')}</li>
-                                                    <li>{t('mp_api_token_step_4')} <span className="font-mono text-[10px]">APP_USR</span>)</li>
-                                                    <li>{t('mp_api_token_step_5')}</li>
-                                                </ol>
-                                            </div>
-                                            <div className="flex gap-3 items-end">
-                                                <div className="flex-1">
-                                                    <input
-                                                        type="password"
-                                                        placeholder="APP_USR_..."
-                                                        value={mpTokenInput}
-                                                        onChange={(e) => setMpTokenInput(e.target.value)}
-                                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
-                                                    />
-                                                </div>
-                                                <button
-                                                    onClick={saveMpToken}
-                                                    disabled={mpTokenSaving || !mpTokenInput.trim()}
-                                                    className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
-                                                        mpTokenSaved
-                                                            ? 'bg-green-500 dark:bg-green-600 text-white'
-                                                            : mpTokenSaving
-                                                            ? 'bg-stone-300 dark:bg-[#475569] text-stone-600 dark:text-white cursor-not-allowed'
-                                                            : 'bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 text-white'
-                                                    }`}
-                                                >
-                                                    {mpTokenSaved ? (
-                                                        <>
-                                                            <Check size={16} /> Saved
-                                                        </>
-                                                    ) : mpTokenSaving ? (
-                                                        <>
-                                                            <RefreshCw size={16} className="animate-spin" /> Saving...
-                                                        </>
-                                                    ) : (
-                                                        'Save Token'
-                                                    )}
-                                                </button>
-                                            </div>
-                                            {mpTokenInput && !mpTokenInput.startsWith('APP_USR_') && (
-                                                <p className="text-xs text-amber-600 dark:text-amber-400">
-                                                    {t('mp_api_token_error_prefix')}
-                                                </p>
-                                            )}
-                                            {mpTokenInput && (
-                                                <p className="text-xs text-stone-500 dark:text-stone-400">
-                                                    {t('mp_api_token_set_label')} {mpTokenInput.substring(0, 15)}...
-                                                </p>
-                                            )}
-
-                                            <div className="border-t border-stone-200 dark:border-stone-700 pt-4 mt-4">
-                                                <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
-                                                    {t('mp_user_id_label')}
-                                                </label>
-                                                <div className="text-[11px] text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2.5 border border-blue-200 dark:border-blue-800 mb-3">
-                                                    <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">{t('mp_user_id_how_to_title')}</p>
-                                                    <ol className="list-decimal list-inside space-y-0.5 text-blue-800 dark:text-blue-200">
-                                                        <li>{t('mp_user_id_step_1')} <span className="font-mono text-[10px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
-                                                        <li>{t('mp_user_id_step_2')}</li>
-                                                        <li>{t('mp_user_id_step_3')}</li>
-                                                        <li>{t('mp_user_id_step_4')} <span className="font-mono text-[10px]">123456789</span>)</li>
-                                                        <li>{t('mp_user_id_step_5')}</li>
-                                                    </ol>
-                                                </div>
-                                                <div className="flex gap-3 items-end">
-                                                    <div className="flex-1">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="123456789"
-                                                            value={mpUserIdInput}
-                                                            onChange={(e) => setMpUserIdInput(e.target.value)}
-                                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        onClick={saveMpUserId}
-                                                        disabled={mpUserIdSaving || !mpUserIdInput.trim()}
-                                                        className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${
-                                                            mpUserIdSaved
-                                                                ? 'bg-green-500 dark:bg-green-600 text-white'
-                                                                : mpUserIdSaving
-                                                                ? 'bg-stone-300 dark:bg-[#475569] text-stone-600 dark:text-white cursor-not-allowed'
-                                                                : 'bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-600 dark:hover:bg-emerald-700 text-white'
-                                                        }`}
-                                                    >
-                                                        {mpUserIdSaved ? (
-                                                            <>
-                                                                <Check size={16} /> Saved
-                                                            </>
-                                                        ) : mpUserIdSaving ? (
-                                                            <>
-                                                                <RefreshCw size={16} className="animate-spin" /> Saving...
-                                                            </>
-                                                        ) : (
-                                                            'Save User ID'
-                                                        )}
-                                                    </button>
-                                                </div>
-                                                {mpUserIdInput && !/^\d+$/.test(mpUserIdInput) && (
-                                                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-                                                        {t('mp_user_id_error_message')}
-                                                    </p>
-                                                )}
-                                                {mpUserIdInput && (
-                                                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-2">
-                                                        {t('mp_user_id_set_label')} {mpUserIdInput}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <div className="bg-white dark:bg-[#0f172a] rounded-2xl p-4 space-y-3 border border-stone-200 dark:border-white/5 shadow-sm hover:shadow-md transition-shadow">
                                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400">{t('location_label') || 'Location'}</p>
                                         <div>
@@ -958,7 +835,7 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    {/* MP Alias only (access token nerfed for MVP) */}
+                                    {/* MP Alias */}
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('mp_alias_optional') || 'MP Alias (Optional)'}</label>
                                         <div className="flex gap-2">
@@ -967,19 +844,95 @@ function OwnerSummary() {
                                                 placeholder="yourstore.mp"
                                                 value={mpAliasInput}
                                                 onChange={(e) => setMpAliasInput(e.target.value)}
-                                                className="flex-1 px-4 py-3 rounded-2xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
+                                                className="flex-1 px-4 py-2.5 rounded-xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:border-emerald-500/50 transition-colors"
                                             />
                                             <motion.button
                                                 whileTap={{ scale: 0.97 }}
                                                 onClick={saveMpAlias}
                                                 disabled={mpAliasSaving}
-                                                className="px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                                className="px-5 py-2.5 rounded-xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                                             >
                                                 {mpAliasSaved ? <Check size={16} /> : (mpAliasSaving ? '...' : 'Save')}
                                             </motion.button>
                                         </div>
                                         {mpAliasSaved && <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1"><Check size={12} /> Alias saved</p>}
                                         {!mpAliasSaved && <p className="text-xs text-stone-400 dark:text-white mt-1">{t('mp_alias_info') || 'Your custom Mercado Pago alias'}</p>}
+                                    </div>
+
+                                    {/* MP Access Token */}
+                                    <div className="border-t border-stone-100 dark:border-stone-700 pt-4">
+                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                            {t('mp_connect_mercado_pago') || 'Access Token'}
+                                        </label>
+                                        <div className="space-y-2">
+                                            <div className="text-[11px] text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 border border-emerald-200 dark:border-emerald-800">
+                                                <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">{t('mp_api_token_how_to_title')}</p>
+                                                <ol className="list-decimal list-inside space-y-0.5 text-emerald-800 dark:text-emerald-200">
+                                                    <li>{t('mp_api_token_step_1')} <span className="font-mono text-[10px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                    <li>{t('mp_api_token_step_2')}</li>
+                                                    <li>{t('mp_api_token_step_3')}</li>
+                                                    <li>{t('mp_api_token_step_4')} <span className="font-mono text-[10px]">APP_USR</span>)</li>
+                                                    <li>{t('mp_api_token_step_5')}</li>
+                                                </ol>
+                                            </div>
+                                            <div className="flex gap-2 items-end">
+                                                <input
+                                                    type="password"
+                                                    placeholder="APP_USR_..."
+                                                    value={mpTokenInput}
+                                                    onChange={(e) => setMpTokenInput(e.target.value)}
+                                                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                />
+                                                <button
+                                                    onClick={saveMpToken}
+                                                    disabled={mpTokenSaving || !mpTokenInput.trim()}
+                                                    className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${mpTokenSaved ? 'bg-green-500 text-white' : mpTokenSaving ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
+                                                >
+                                                    {mpTokenSaved ? <><Check size={14} /> Saved</> : mpTokenSaving ? <><RefreshCw size={14} className="animate-spin" /> ...</> : 'Save'}
+                                                </button>
+                                            </div>
+                                            {mpTokenInput && !mpTokenInput.startsWith('APP_USR_') && (
+                                                <p className="text-xs text-amber-600 dark:text-amber-400">{t('mp_api_token_error_prefix')}</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* MP User ID */}
+                                    <div className="border-t border-stone-100 dark:border-stone-700 pt-4">
+                                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
+                                            {t('mp_user_id_label')}
+                                        </label>
+                                        <div className="space-y-2">
+                                            <div className="text-[11px] text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2.5 border border-blue-200 dark:border-blue-800">
+                                                <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">{t('mp_user_id_how_to_title')}</p>
+                                                <ol className="list-decimal list-inside space-y-0.5 text-blue-800 dark:text-blue-200">
+                                                    <li>{t('mp_user_id_step_1')} <span className="font-mono text-[10px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                    <li>{t('mp_user_id_step_2')}</li>
+                                                    <li>{t('mp_user_id_step_3')}</li>
+                                                    <li>{t('mp_user_id_step_4')} <span className="font-mono text-[10px]">123456789</span>)</li>
+                                                    <li>{t('mp_user_id_step_5')}</li>
+                                                </ol>
+                                            </div>
+                                            <div className="flex gap-2 items-end">
+                                                <input
+                                                    type="text"
+                                                    placeholder="123456789"
+                                                    value={mpUserIdInput}
+                                                    onChange={(e) => setMpUserIdInput(e.target.value)}
+                                                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                />
+                                                <button
+                                                    onClick={saveMpUserId}
+                                                    disabled={mpUserIdSaving || !mpUserIdInput.trim()}
+                                                    className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${mpUserIdSaved ? 'bg-green-500 text-white' : mpUserIdSaving ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
+                                                >
+                                                    {mpUserIdSaved ? <><Check size={14} /> Saved</> : mpUserIdSaving ? <><RefreshCw size={14} className="animate-spin" /> ...</> : 'Save'}
+                                                </button>
+                                            </div>
+                                            {mpUserIdInput && !/^\d+$/.test(mpUserIdInput) && (
+                                                <p className="text-xs text-amber-600 dark:text-amber-400">{t('mp_user_id_error_message')}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -1004,31 +957,19 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                                        {[
-                                            { code: 'ARS', flag: '🇦🇷' },
-                                            { code: 'USD', flag: '💵' },
-                                            { code: 'COP', flag: '🇨🇴' },
-                                            { code: 'CLP', flag: '🇨🇱' },
-                                            { code: 'PEN', flag: '🇵🇪' },
-                                            { code: 'UYU', flag: '🇺🇾' }
-                                        ].map((currency) => (
-                                            <motion.button
-                                                key={currency.code}
-                                                whileTap={{ scale: 0.95 }}
-                                                onClick={() => handleCurrencyChange(currency.code)}
-                                                disabled={currencySaving}
-                                                className={`py-3 px-2 rounded-xl font-black text-sm transition-all border-2 flex flex-col items-center gap-1 ${
-                                                    businessCurrency === currency.code
-                                                        ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400'
-                                                        : 'bg-stone-50 dark:bg-[#334155] border-stone-200 dark:border-white/5 text-stone-600 dark:text-white hover:border-emerald-300 dark:hover:border-emerald-500/30'
-                                                }`}
-                                            >
-                                                <span className="text-base">{currency.flag}</span>
-                                                <span>{currency.code}</span>
-                                            </motion.button>
-                                        ))}
-                                    </div>
+                                    <select
+                                        value={businessCurrency}
+                                        onChange={(e) => handleCurrencyChange(e.target.value)}
+                                        disabled={currencySaving}
+                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="ARS">ARS — Argentine Peso</option>
+                                        <option value="USD">USD — US Dollar</option>
+                                        <option value="COP">COP — Colombian Peso</option>
+                                        <option value="CLP">CLP — Chilean Peso</option>
+                                        <option value="PEN">PEN — Peruvian Sol</option>
+                                        <option value="UYU">UYU — Uruguayan Peso</option>
+                                    </select>
                                 </div>
                             </motion.div>
                         )}
