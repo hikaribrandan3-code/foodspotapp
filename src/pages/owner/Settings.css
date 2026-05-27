@@ -20,8 +20,8 @@
 .branding-card {
     background: #FFF;
     border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
     box-shadow:
         0 4px 6px -1px rgba(0, 0, 0, 0.04),
         0 2px 4px -2px rgba(0, 0, 0, 0.02),
@@ -39,8 +39,8 @@
 
 .branding-card h3 {
     margin-top: 0;
-    margin-bottom: 16px;
-    font-size: 13px;
+    margin-bottom: 12px;
+    font-size: 12px;
     font-weight: 700;
     color: #10B981;
     text-transform: uppercase;
@@ -76,8 +76,8 @@
 .typo-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .typo-grid select {
@@ -241,7 +241,7 @@
     /* Use CSS variables if available, otherwise direct application */
     font-family: var(--font-main, 'Inter'), sans-serif;
     border-radius: 8px;
-    padding: 20px;
+    padding: 16px;
     text-align: center;
 }
 
@@ -259,13 +259,13 @@
 .color-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 10px;
 }
 
 .color-pillar {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .pillar-label {
@@ -310,7 +310,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .section-header h3 {
@@ -684,6 +684,9 @@
 /* Hide camera preview on desktop — just show style chips */
 @media (min-width: 768px) {
     .pin-cam-frame {
+        display: none;
+    }
+    .munchboy-preview {
         display: none;
     }
 }

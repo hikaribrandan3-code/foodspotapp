@@ -899,17 +899,20 @@ class Game{
   }
 
   spawnWave(){
+    console.log(`[spawnWave] CALLED at wave=${this.wave}, frame=${this.frame}`);
     for(let i=0;i<this.enemies.length;i++)this.enemies[i].alive=false;
     this.enemies=[];this.boss=null;this.bullets=[];this.eBullets=[];this.missiles=[];
     this.missileTimer=60;this.waveIntro=null;this.meteors=[];
     this.midWaveTimer=0;this.diveTimer=300;this.pincerTimer=500;
     this.maxComboThisWave=0;this.waveStartFrame=this.frame;this.waveDamageTaken=0;
     const boss=isBossWave(this.wave);
+    console.log(`[spawnWave] isBossWave=${boss}, wave=${this.wave}`);
     const modifiers=['normal','fast','tanky','swarm'];
     this.modifier=this.wave>=7?modifiers[Math.floor((this.wave-1)/3)%4]:'normal';
     this.waveIntro=new WaveIntro(this.wave,boss);this.breather=120;
     if(boss){
       this.boss=new Boss(getBossType(this.wave),this.wave);this.audio.bossWarn();
+      console.log(`[spawnWave] Spawned BOSS`);
     }else{
       const types=['pepper','jalapeno','onion','carrot','broccoli','mushroom','tomato'];
       const w=this.wave;
@@ -920,6 +923,7 @@ class Game{
       else{rows=Math.min(6,2+Math.floor((w-1)/2));cols=Math.min(9,4+Math.floor((w-1)*0.7));fireChance=Math.min(0.25,0.10+(w-1)*0.015);fireSpeed=Math.min(4.8,3.2+(w-1)*0.15);enemyHpMult=Math.min(2.5,0.85+(w-1)*0.12);startY=HUD_H+28;}
       if(this.modifier==='swarm'){rows=Math.min(7,rows+1);cols=Math.min(10,cols+2);}
       const sx=Math.min(34,(BW-24)/cols);
+      console.log(`[spawnWave] Normal wave: rows=${rows}, cols=${cols}, total=${rows*cols}`);
       for(let r=0;r<rows;r++){
         for(let c=0;c<cols;c++){
           const isElite=w>=9&&Math.random()<0.15;
@@ -933,6 +937,7 @@ class Game{
       }
     }
     this.waveStartEnemyCount=this.enemies.length;
+    console.log(`[spawnWave] COMPLETED: enemies spawned=${this.enemies.length}, waveStartEnemyCount=${this.waveStartEnemyCount}`);
     for(let i=0;i<1+Math.floor(Math.random()*2);i++){
       setTimeout(()=>{
         if(this.state!=='playing')return;
@@ -1160,18 +1165,22 @@ class Game{
     if(this.frame%90===0)this.player.spice=Math.max(0,this.player.spice-0.5);
     if(this.player.spice<=0){if(this.score>this.highScore){this.highScore=this.score;localStorage.setItem('si_hs',this.highScore);}this.state='gameover';this.audio.gameOver();Haptics.fire(Haptics.gameOver,true);}
     if(!this.enemies.length&&!this.boss&&!this.waveClearing){
+      console.log(`[WAVE CLEAR] Wave ${this.wave} cleared! enemies=${this.enemies.length}, boss=${this.boss}, frame=${this.frame}`);
       this.waveClearing=true;this.waveStartClear=this.frame;Haptics.fire(Haptics.waveClear,true);
       const g=calcWaveGrade(this.frame-this.waveStartFrame,this.maxComboThisWave,this.waveDamageTaken,this.wave);
       this.lastGrade=g;this.gradeTimer=140;
       const clearedWave=this.wave;
       setTimeout(()=>{
-        if(this.state!=='playing')return;
-        if(this.wave!==clearedWave)return;
+        console.log(`[TIMEOUT FIRED] clearedWave=${clearedWave}, currentWave=${this.wave}, state=${this.state}, waveClearing=${this.waveClearing}`);
+        if(this.state!=='playing'){console.log(`[TIMEOUT SKIP] state not playing`);return;}
+        if(this.wave!==clearedWave){console.log(`[TIMEOUT SKIP] wave already advanced`);return;}
+        console.log(`[TIMEOUT ADVANCE] incrementing from wave ${this.wave} to ${this.wave+1}`);
         this.wave++;this.spawnWave();this.player.heal(30);this.popups.push(new Popup(this.player.x,this.player.y-30,30,'#00ff66'));this.waveClearing=false;
         this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);
       },800);
     }
     if(this.waveClearing&&this.waveStartClear&&(this.frame-this.waveStartClear)>300){
+      console.log(`[SAFETY NET] Wave clearing took >300 frames, advancing from ${this.wave} to ${this.wave+1}`);
       this.wave++;this.spawnWave();this.player.heal(30);this.popups.push(new Popup(this.player.x,this.player.y-30,30,'#00ff66'));this.waveClearing=false;
       this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);
     }

@@ -37,7 +37,7 @@ export default function InventoryTab() {
           <div className="flex gap-3 w-full sm:w-auto">
             <button
               onClick={scrollToInventory}
-              className="flex-grow sm:flex-none flex items-center justify-center gap-2 px-6 h-10 bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl hover:bg-emerald-500 transition-all shadow-lg active:scale-95"
+              className="flex-grow sm:flex-none flex items-center justify-center gap-2 px-6 h-10 bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-500 transition-all shadow-lg active:scale-95"
             >
               <Plus className="h-4 w-4" />
               {t('add_inventory_item') || 'Add Item'}

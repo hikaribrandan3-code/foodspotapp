@@ -964,10 +964,12 @@ function OwnerSummary() {
                                         className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all appearance-none cursor-pointer"
                                     >
                                         <option value="ARS">ARS — Argentine Peso</option>
-                                        <option value="USD">USD — US Dollar</option>
-                                        <option value="COP">COP — Colombian Peso</option>
+                                        <option value="BRL">BRL — Brazilian Real</option>
                                         <option value="CLP">CLP — Chilean Peso</option>
+                                        <option value="COP">COP — Colombian Peso</option>
+                                        <option value="MXN">MXN — Mexican Peso</option>
                                         <option value="PEN">PEN — Peruvian Sol</option>
+                                        <option value="USD">USD — US Dollar</option>
                                         <option value="UYU">UYU — Uruguayan Peso</option>
                                     </select>
                                 </div>
