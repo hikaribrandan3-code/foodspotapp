@@ -407,7 +407,7 @@ function updateEnemy(e,ox,px,py,dt,wave){
       const a=Math.atan2(py-e.y,px-e.x);e.bx=Math.cos(a)*2.5;e.by=Math.sin(a)*2.5;e.bt=0;e.flash=8;
     }
   }else{
-    if(e.warnTimer>0){e.warnTimer--;e.flash=4;return null;}
+    if(e.warnTimer>0){e.warnTimer-=dt;e.flash=4;return null;}
     e.kamikazeActive=true;
     e.x+=e.bx;e.y+=e.by;e.bt+=dt;
     if(e.type==='carrot')e.by+=0.08;
@@ -515,6 +515,7 @@ class Boss{
   }
   update(px,py,dt){
     if(this.flash>0)this.flash-=dt;
+    for(let i=0;i<this.orbs.length;i++){if(this.orbs[i].flash>0)this.orbs[i].flash-=dt;}
     this.mt+=dt;if(this.mt>100){this.mt=0;this.targetX=70+Math.random()*(BW-140);}
     this.x+=(this.targetX-this.x)*0.025;
     if(!this.coreExposed&&this.orbs.every(o=>!o.alive)){this.coreExposed=true;this.flash=20;}
@@ -545,7 +546,7 @@ class Boss{
     if(!this.coreExposed){
       for(let i=0;i<this.orbs.length;i++){
         const o=this.orbs[i];
-        if(o.alive){cx.fillStyle=o.flash>0?'#fff':'#ff00ff';if(o.flash>0)o.flash--;cx.beginPath();cx.arc(this.x+o.x,this.y+o.y,10,0,Math.PI*2);cx.fill();cx.fillStyle='#fff';cx.beginPath();cx.arc(this.x+o.x-3,this.y+o.y-3,3,0,Math.PI*2);cx.fill();}
+        if(o.alive){cx.fillStyle=o.flash>0?'#fff':'#ff00ff';cx.beginPath();cx.arc(this.x+o.x,this.y+o.y,10,0,Math.PI*2);cx.fill();cx.fillStyle='#fff';cx.beginPath();cx.arc(this.x+o.x-3,this.y+o.y-3,3,0,Math.PI*2);cx.fill();}
       }
     }
   }
@@ -1031,17 +1032,17 @@ class Game{
     }
     const act=this.player.update(this.inp,dt,this.frame);
     if(act&&act.type==='bullets'&&act.bullets.length>0){this.bullets.push(...act.bullets);this.audio.shoot();}
-    if(this.comboTimer>0){this.comboTimer--;if(this.comboTimer<=0)this.comboKills=0;}
-    if(this.maxComboFlash>0)this.maxComboFlash--;
+    if(this.comboTimer>0){this.comboTimer-=dt;if(this.comboTimer<=0)this.comboKills=0;}
+    if(this.maxComboFlash>0)this.maxComboFlash-=dt;
     this.fmtX+=1.15*this.fmtDir;if(Math.abs(this.fmtX)>28)this.fmtDir*=-1;
-    if(this.breather>0){this.breather--;}
+    if(this.breather>0){this.breather-=dt;}
     if(!this.boss&&this.enemies.length>0&&this.breather<=0){
       this.midWaveTimer++;
       if(this.midWaveTimer>this.midWaveInterval){this.midWaveTimer=0;this.midWaveInterval=360+Math.random()*240;this.triggerMidWaveEvent();}
-      this.diveTimer--;if(this.diveTimer<=0){this.diveTimer=320+Math.random()*200;this.triggerDive();}
-      this.pincerTimer--;if(this.pincerTimer<=0){this.pincerTimer=400+Math.random()*300;this.triggerPincer();}
+      this.diveTimer-=dt;if(this.diveTimer<=0){this.diveTimer=320+Math.random()*200;this.triggerDive();}
+      this.pincerTimer-=dt;if(this.pincerTimer<=0){this.pincerTimer=400+Math.random()*300;this.triggerPincer();}
     }
-    if(this.eventBannerT>0)this.eventBannerT--;
+    if(this.eventBannerT>0)this.eventBannerT-=dt;
     this.meteors=this.meteors.filter(m=>{
       m.update();
       const dx=m.x-this.player.x,dy=m.y-this.player.y;
@@ -1082,7 +1083,7 @@ class Game{
       }
     }
     if(this.boss&&this.breather<=0){const bs=this.boss.update(this.player.x,this.player.y,dt);if(bs)this.eBullets.push(...bs.map(b=>({x:b.x,y:b.y,vx:b.vx*1.5,vy:b.vy*1.5})));}
-    if(this.wave>=2&&this.breather<=0){this.missileTimer--;if(this.missileTimer<=0){this.missileTimer=Math.max(180,420-this.wave*18)+Math.random()*80;this._spawnMissile();}}
+    if(this.wave>=2&&this.breather<=0){this.missileTimer-=dt;if(this.missileTimer<=0){this.missileTimer=Math.max(180,420-this.wave*18)+Math.random()*80;this._spawnMissile();}}
     if(this.beamSweep){
       const sw=this.beamSweep;
       if(sw.charging){sw.chargeT++;if(sw.chargeT>30){sw.charging=false;sw.active=true;sw.y=HUD_H;}}
@@ -1116,7 +1117,7 @@ class Game{
     this.popups=this.popups.filter(p=>p.update());
     this.killTexts=this.killTexts.filter(k=>k.update());
     if(this.bombFx){this.bombFx.p+=0.03;if(this.bombFx.p>=1)this.bombFx=null;}
-    if(this.gradeTimer>0)this.gradeTimer--;
+    if(this.gradeTimer>0)this.gradeTimer-=dt;
     if(this.frame%90===0)this.player.spice=Math.max(0,this.player.spice-0.5);
     if(this.player.spice<=0){if(this.score>this.highScore){this.highScore=this.score;localStorage.setItem('si_hs',this.highScore);}this.state='gameover';this.audio.gameOver();Haptics.fire(Haptics.gameOver,true);}
     if(!this.enemies.length&&!this.boss&&!this.waveClearing){
