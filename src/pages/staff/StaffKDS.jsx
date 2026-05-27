@@ -77,9 +77,9 @@ export const StaffKDS = () => {
 
     return (
         <div className="kds-container">
-            <div style={{ padding: '12px 16px', borderBottom: '2px solid #10b981', background: '#fff' }}>
-                <h1 style={{ margin: 0, fontFamily: 'Outfit, sans-serif', fontSize: '24px', fontWeight: 'black', letterSpacing: '0.05em', textAlign: 'center' }}>
-                    FoodSpot KDS
+            <div className="hidden md:block bg-white border-b border-stone-200 px-6 md:px-8 py-4">
+                <h1 className="font-['Outfit',sans-serif] text-2xl font-black text-stone-950 italic tracking-tight leading-none">
+                    Staff
                 </h1>
             </div>
             {currentShift && (
