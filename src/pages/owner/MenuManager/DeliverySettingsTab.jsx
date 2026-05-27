@@ -55,9 +55,9 @@ export default function DeliverySettingsTab({
         </div>
       </div>
 
-      <div className={`grid grid-cols-12 gap-4 transition-opacity duration-500 ${isDeliveryPaused ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-        {/* Map & Radius */}
-        <div className="col-span-12 group">
+      <div className={`flex flex-col md:grid md:grid-cols-5 gap-6 transition-opacity duration-500 ${isDeliveryPaused ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+        {/* Map & Radius — Left Column (40%) */}
+        <div className="md:col-span-2 group">
           <div className="bg-white rounded-[2.5rem] border border-stone-200 overflow-hidden flex flex-col md:flex-row shadow-sm transition-all hover:shadow-md h-auto md:h-[14rem]">
             <div className="h-48 md:h-full w-full md:w-2/3 relative bg-stone-50 flex items-center justify-center overflow-hidden border-b md:border-b-0 md:border-r border-stone-100">
               <div className="absolute inset-0 opacity-[0.03]"
@@ -108,8 +108,8 @@ export default function DeliverySettingsTab({
           </div>
         </div>
 
-        {/* Fees Grid */}
-        <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+        {/* Fees Grid — Right Column (60%), stacked vertically */}
+        <div className="md:col-span-3 flex flex-col gap-3">
           <div className="bg-white rounded-2xl border border-stone-200 p-3 md:p-4 flex flex-col shadow-sm transition-all hover:shadow-md">
             <div className="flex justify-between items-center mb-2 text-left">
               <div>
