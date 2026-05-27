@@ -809,7 +809,7 @@ class Game{
     this.eventBanner='';this.eventBannerT=0;
     this.diveTimer=0;this.pincerTimer=0;
     this.titleFmt=new TitleFormation();
-    this.setupInput();requestAnimationFrame(ts=>this.loop(ts));
+    this.setupInput();this.loop();
   }
 
   setupInput(){
@@ -1308,7 +1308,7 @@ class Game{
     if(Math.floor(this.frame/28)%2===0){ctx.fillStyle='#00ff44';ctx.font='13px Courier New';ctx.fillText('PRESS START',BW/2,BH/2+110);}
   }
 
-  loop(ts){if(!this._lt)this._lt=ts;var elapsed=ts-this._lt;if(elapsed<14){requestAnimationFrame(ts=>this.loop(ts));return;}this._lt=ts;this.update();this.draw();requestAnimationFrame(ts=>this.loop(ts));}
+  loop(){this.update();this.draw();requestAnimationFrame(()=>this.loop());}
 }
 
 const isHikariBoy=window.parent!==window;
