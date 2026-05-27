@@ -1018,7 +1018,7 @@ class Game{
     }else if(this.state==='playing'){
       this.updatePlay();
     }else if(this.state==='paused'){
-      if(this.inp.START===1){this.state='playing';this.audio.resume();this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);}
+      if(this.inp.START===1){this.state='playing';if(this.waveClearing&&!this.enemies.length&&!this.boss){this.waveClearing=false;}this.audio.resume();this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);}
     }else if(this.state==='gameover'||this.state==='victory'){
       if(this.inp.A===1||this.inp.START===1)this.state='title';
     }
