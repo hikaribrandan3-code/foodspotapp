@@ -703,13 +703,13 @@ function OwnerSummary() {
                                             {t('mp_connect_mercado_pago') || 'Connect to Mercado Pago'}
                                         </label>
                                         <div className="space-y-3">
-                                            <div className="text-xs text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 border border-emerald-200 dark:border-emerald-800">
+                                            <div className="text-[11px] text-stone-600 dark:text-stone-300 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-2.5 border border-emerald-200 dark:border-emerald-800">
                                                 <p className="font-semibold text-emerald-900 dark:text-emerald-300 mb-1">{t('mp_api_token_how_to_title')}</p>
-                                                <ol className="list-decimal list-inside space-y-1 text-emerald-800 dark:text-emerald-200">
-                                                    <li>{t('mp_api_token_step_1')} <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                <ol className="list-decimal list-inside space-y-0.5 text-emerald-800 dark:text-emerald-200">
+                                                    <li>{t('mp_api_token_step_1')} <span className="font-mono text-[10px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
                                                     <li>{t('mp_api_token_step_2')}</li>
                                                     <li>{t('mp_api_token_step_3')}</li>
-                                                    <li>{t('mp_api_token_step_4')} <span className="font-mono text-[11px]">APP_USR</span>)</li>
+                                                    <li>{t('mp_api_token_step_4')} <span className="font-mono text-[10px]">APP_USR</span>)</li>
                                                     <li>{t('mp_api_token_step_5')}</li>
                                                 </ol>
                                             </div>
@@ -762,13 +762,13 @@ function OwnerSummary() {
                                                 <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
                                                     {t('mp_user_id_label')}
                                                 </label>
-                                                <div className="text-xs text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-200 dark:border-blue-800 mb-3">
+                                                <div className="text-[11px] text-stone-600 dark:text-stone-300 bg-blue-50 dark:bg-blue-900/20 rounded-xl p-2.5 border border-blue-200 dark:border-blue-800 mb-3">
                                                     <p className="font-semibold text-blue-900 dark:text-blue-300 mb-1">{t('mp_user_id_how_to_title')}</p>
-                                                    <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200">
-                                                        <li>{t('mp_user_id_step_1')} <span className="font-mono text-[11px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
+                                                    <ol className="list-decimal list-inside space-y-0.5 text-blue-800 dark:text-blue-200">
+                                                        <li>{t('mp_user_id_step_1')} <span className="font-mono text-[10px] bg-white dark:bg-black/30 px-1 rounded">mercadopago.com</span></li>
                                                         <li>{t('mp_user_id_step_2')}</li>
                                                         <li>{t('mp_user_id_step_3')}</li>
-                                                        <li>{t('mp_user_id_step_4')} <span className="font-mono text-[11px]">123456789</span>)</li>
+                                                        <li>{t('mp_user_id_step_4')} <span className="font-mono text-[10px]">123456789</span>)</li>
                                                         <li>{t('mp_user_id_step_5')}</li>
                                                     </ol>
                                                 </div>
@@ -1042,7 +1042,7 @@ function OwnerSummary() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
                     <SectionHeader
                         icon={<QrCode size={14} />}
-                        title="Promover tu Tienda"
+                        title="Tu Código QR"
                         isOpen={openSections.qr}
                         onToggle={() => toggleSection('qr')}
                     />
@@ -1054,7 +1054,7 @@ function OwnerSummary() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="overflow-hidden"
                             >
-                                <div className="rounded-[2.5rem] bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Tu Link de Pedidos</label>
                                         <div className="flex gap-2">
@@ -1075,11 +1075,11 @@ function OwnerSummary() {
                                     </div>
 
                                     <div className="flex flex-col items-center gap-4">
-                                        <div className="p-5 bg-white rounded-2xl border border-stone-200 dark:border-white/10">
+                                        <div className="p-4 bg-white rounded-2xl border border-stone-200 dark:border-white/10">
                                             <QRCodeCanvas
                                                 ref={qrCanvasRef}
                                                 value={storeUrl}
-                                                size={200}
+                                                size={160}
                                                 bgColor="#ffffff"
                                                 fgColor="#000000"
                                                 level="H"
@@ -1088,7 +1088,7 @@ function OwnerSummary() {
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
                                             onClick={downloadQR}
-                                            className="w-full py-4 rounded-2xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2"
+                                            className="w-full py-2.5 rounded-xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2"
                                         >
                                             <Download size={16} />
                                             Descargar QR (PNG)

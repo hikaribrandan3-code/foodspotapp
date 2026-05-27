@@ -191,6 +191,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: 21/9;
+    max-height: 200px;
     cursor: pointer;
     overflow: hidden;
 }
@@ -455,6 +456,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: 21 / 9;
+    max-height: 170px;
     border-radius: 14px;
     overflow: hidden;
     background: #0a0704;

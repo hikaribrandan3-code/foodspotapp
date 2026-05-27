@@ -109,12 +109,12 @@ export default function DeliverySettingsTab({
         </div>
 
         {/* Fees Grid */}
-        <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-5 mt-3">
-          <div className="bg-white rounded-[2.5rem] border border-stone-200 p-6 md:p-10 flex flex-col shadow-sm transition-all hover:shadow-md">
-            <div className="flex justify-between items-start mb-5 text-left">
+        <div className="col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+          <div className="bg-white rounded-2xl border border-stone-200 p-4 md:p-5 flex flex-col shadow-sm transition-all hover:shadow-md">
+            <div className="flex justify-between items-center mb-3 text-left">
               <div>
-                <p className="text-stone-400 font-bold uppercase text-[10px] tracking-[0.4em] mb-2">{t('service_fee') || 'Service Fee'}</p>
-                <h3 className="text-xl md:text-2xl text-stone-950 font-['Outfit',sans-serif] font-black italic">{t('base_fee') || 'Base Fee'}</h3>
+                <p className="text-stone-400 font-bold uppercase text-[10px] tracking-[0.3em] mb-1">{t('service_fee') || 'Service Fee'}</p>
+                <h3 className="text-base md:text-lg text-stone-950 font-['Outfit',sans-serif] font-black italic">{t('base_fee') || 'Base Fee'}</h3>
               </div>
               <label className="relative flex cursor-pointer items-center">
                 <input
@@ -123,34 +123,34 @@ export default function DeliverySettingsTab({
                   onChange={(e) => setIsDeliveryFeeEnabled(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="h-8 w-14 rounded-full bg-stone-100 transition-all peer-checked:bg-emerald-600">
-                  <div className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-all duration-300 ${isDeliveryFeeEnabled ? 'translate-x-6' : ''}`} />
+                <div className="h-7 w-12 rounded-full bg-stone-100 transition-all peer-checked:bg-emerald-600">
+                  <div className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-all duration-300 ${isDeliveryFeeEnabled ? 'translate-x-5' : ''}`} />
                 </div>
               </label>
             </div>
 
             <div className={`relative transition-all duration-500 ${isDeliveryFeeEnabled ? 'opacity-100' : 'opacity-20 scale-95'}`}>
-              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-3xl md:text-4xl italic">$</div>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-xl italic">$</div>
               <input
                 type="text"
                 value={deliveryFee}
                 disabled={!isDeliveryFeeEnabled}
                 onChange={(e) => setDeliveryFee(e.target.value)}
-                className="w-full bg-stone-50 text-stone-950 font-['Outfit',sans-serif] font-black pl-14 py-5 md:py-8 rounded-3xl focus:bg-white transition-all text-4xl md:text-5xl outline-none"
+                className="w-full bg-stone-50 text-stone-950 font-['Outfit',sans-serif] font-black pl-9 py-3 rounded-xl focus:bg-white transition-all text-2xl md:text-3xl outline-none"
                 placeholder="0.00"
               />
             </div>
           </div>
 
-          <div className="bg-emerald-600 rounded-[2.5rem] p-6 md:p-10 flex flex-col shadow-xl shadow-emerald-900/10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 opacity-10 drop-shadow-2xl">
-              <Gift className="w-32 h-32 text-white -rotate-12" />
+          <div className="bg-emerald-600 rounded-2xl p-4 md:p-5 flex flex-col shadow-lg shadow-emerald-900/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-3 opacity-10 drop-shadow-2xl">
+              <Gift className="w-16 h-16 text-white -rotate-12" />
             </div>
 
-            <div className="flex justify-between items-start mb-5 relative z-10 text-left">
+            <div className="flex justify-between items-center mb-3 relative z-10 text-left">
               <div>
-                <p className="text-white/60 font-bold uppercase text-[10px] tracking-[0.4em] mb-2">{t('complimentary') || 'Complimentary'}</p>
-                <h3 className="text-xl md:text-2xl text-white font-['Outfit',sans-serif] font-black italic">{t('free_delivery_above') || 'Free Delivery Above'}</h3>
+                <p className="text-white/60 font-bold uppercase text-[10px] tracking-[0.3em] mb-1">{t('complimentary') || 'Complimentary'}</p>
+                <h3 className="text-base md:text-lg text-white font-['Outfit',sans-serif] font-black italic">{t('free_delivery_above') || 'Free Delivery Above'}</h3>
               </div>
               <label className="relative flex cursor-pointer items-center">
                 <input
@@ -159,20 +159,20 @@ export default function DeliverySettingsTab({
                   onChange={(e) => setIsFreeDeliveryEnabled(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="h-8 w-14 rounded-full bg-emerald-700 transition-all peer-checked:bg-white">
-                  <div className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white peer-checked:bg-stone-950 shadow-md transition-all duration-300 ${isFreeDeliveryEnabled ? 'translate-x-6' : ''}`} />
+                <div className="h-7 w-12 rounded-full bg-emerald-700 transition-all peer-checked:bg-white">
+                  <div className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white peer-checked:bg-stone-950 shadow-md transition-all duration-300 ${isFreeDeliveryEnabled ? 'translate-x-5' : ''}`} />
                 </div>
               </label>
             </div>
 
             <div className={`relative z-10 transition-all duration-500 ${isFreeDeliveryEnabled ? 'opacity-100' : 'opacity-20 scale-95'}`}>
-              <div className="absolute left-8 top-1/2 -translate-y-1/2 text-emerald-400 font-['Outfit',sans-serif] font-black text-3xl md:text-4xl italic">$</div>
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 font-['Outfit',sans-serif] font-black text-xl italic">$</div>
               <input
                 type="text"
                 value={freeDeliveryThreshold}
                 disabled={!isFreeDeliveryEnabled}
                 onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
-                className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-14 py-5 md:py-8 rounded-3xl focus:bg-white/20 transition-all text-4xl md:text-5xl outline-none placeholder-white/20"
+                className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-9 py-3 rounded-xl focus:bg-white/20 transition-all text-2xl md:text-3xl outline-none placeholder-white/20"
                 placeholder="--.--"
               />
             </div>

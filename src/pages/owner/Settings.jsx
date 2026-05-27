@@ -966,8 +966,8 @@ const Settings = () => {
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr',
-                        gap: 12,
-                        maxWidth: 280,
+                        gap: 8,
+                        maxWidth: 220,
                         margin: '0 auto'
                     }}>
                         {HERO_ICON_DEFS(t).map(({ id, label, Icon }) => {
@@ -980,14 +980,14 @@ const Settings = () => {
                                     onClick={() => openHeroIconColorPicker(id, label)}
                                     style={{
                                         background: bgColor,
-                                        borderRadius: 20,
-                                        padding: 16,
+                                        borderRadius: 14,
+                                        padding: 10,
                                         aspectRatio: '1 / 0.85',
                                         display: 'flex',
                                         flexDirection: 'column',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        gap: 8,
+                                        gap: 5,
                                         cursor: 'pointer',
                                         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                                         border: '2px solid transparent',
@@ -995,9 +995,9 @@ const Settings = () => {
                                         position: 'relative'
                                     }}
                                 >
-                                    <div style={{ color: iconColor, fontSize: '28px' }}><Icon /></div>
+                                    <div style={{ color: iconColor, fontSize: '22px' }}><Icon /></div>
                                     <span style={{
-                                        fontSize: 13,
+                                        fontSize: 11,
                                         fontWeight: 600,
                                         color: iconColor,
                                         opacity: 0.95
@@ -1005,10 +1005,10 @@ const Settings = () => {
                                     {/* Color dot indicator */}
                                     <div style={{
                                         position: 'absolute',
-                                        bottom: 8,
-                                        right: 8,
-                                        width: 12,
-                                        height: 12,
+                                        bottom: 5,
+                                        right: 5,
+                                        width: 10,
+                                        height: 10,
                                         borderRadius: '50%',
                                         background: bgColor,
                                         border: '2px solid white',
