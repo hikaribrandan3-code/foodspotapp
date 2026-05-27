@@ -175,19 +175,25 @@ import CameraGuard from './components/Camera/CameraGuard.jsx'
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
     const { tenantData, businessId, loading: tenantLoading } = useTenant();
+    const location = useLocation();
 
     useEffect(() => {
-        if (tenantLoading) return; // Wait for tenant to load
+        // Extract tenant from URL pathname directly (more reliable)
+        const pathParts = location.pathname.split('/').filter(Boolean);
+        const slugFromPath = pathParts[0]; // e.g., 'foodspot' from /foodspot/staff/dashboard
 
-        const slug = tenantData?.slug || window.location.pathname.split('/')[1] || '';
+        const slug = tenantData?.slug || slugFromPath || '';
         const bid = businessId || localStorage.getItem('fs_business_id') || '';
 
+        // Only redirect when we have a valid slug and either:
+        // 1. Tenant is loaded, OR
+        // 2. We got slug from pathname (which we can trust immediately)
         if (slug) {
             window.location.replace(`/staff-ops.html?slug=${slug}&bid=${bid}`);
         }
-    }, [tenantLoading, tenantData, businessId]);
+    }, [tenantLoading, tenantData, businessId, location.pathname]);
 
-    return <BurgerLoader />; // Show loader while tenant data loads
+    return <BurgerLoader />; // Show loader while redirecting
 }
 
 function App() {
