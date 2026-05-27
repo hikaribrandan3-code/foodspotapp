@@ -19,8 +19,25 @@ export const StaffKDS = () => {
     const { businessId } = useTenant();
     const { t } = useLanguage();
     const [isPaused, setIsPaused] = React.useState(false);
+    const [lastOrderCount, setLastOrderCount] = React.useState(0);
     const { orders, loading, transitionOrderState, fetchOrders } = useKDSSync(businessId);
     const { currentShift, clockOut, clearStaff } = useStaff();
+
+    // Audio alert for new orders
+    React.useEffect(() => {
+        if (orders.length > lastOrderCount && !isPaused) {
+            const beep = new AudioContext().createOscillator();
+            const gainNode = new AudioContext().createGain();
+            beep.connect(gainNode);
+            gainNode.connect(new AudioContext().destination);
+            beep.frequency.value = 800;
+            gainNode.gain.setValueAtTime(0.3, new AudioContext().currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, new AudioContext().currentTime + 0.1);
+            beep.start(new AudioContext().currentTime);
+            beep.stop(new AudioContext().currentTime + 0.1);
+        }
+        setLastOrderCount(orders.length);
+    }, [orders.length, isPaused]);
 
     const handleEndShift = async () => {
         if (!window.confirm('End your shift?')) return;
@@ -60,6 +77,11 @@ export const StaffKDS = () => {
 
     return (
         <div className="kds-container">
+            <div style={{ padding: '12px 16px', borderBottom: '2px solid #10b981', background: '#fff' }}>
+                <h1 style={{ margin: 0, fontFamily: 'Outfit, sans-serif', fontSize: '24px', fontWeight: 'black', letterSpacing: '0.05em', textAlign: 'center' }}>
+                    FoodSpot KDS
+                </h1>
+            </div>
             {currentShift && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px' }}>
                     <button
