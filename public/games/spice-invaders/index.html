@@ -1125,7 +1125,7 @@ class Game{
     if(this.frame%90===0)this.player.spice=Math.max(0,this.player.spice-0.5);
     if(this.player.spice<=0){if(this.score>this.highScore){this.highScore=this.score;localStorage.setItem('si_hs',this.highScore);}this.state='gameover';this.audio.gameOver();Haptics.fire(Haptics.gameOver,true);}
     if(!this.enemies.length&&!this.boss&&!this.waveClearing){
-      this.waveClearing=true;Haptics.fire(Haptics.waveClear,true);
+      this.waveClearing=true;this.waveStartClear=this.frame;Haptics.fire(Haptics.waveClear,true);
       const g=calcWaveGrade(this.frame-this.waveStartFrame,this.maxComboThisWave,this.waveDamageTaken,this.wave);
       this.lastGrade=g;this.gradeTimer=140;
       setTimeout(()=>{
@@ -1133,6 +1133,10 @@ class Game{
         this.wave++;this.spawnWave();this.player.heal(30);this.popups.push(new Popup(this.player.x,this.player.y-30,30,'#00ff66'));this.waveClearing=false;
         this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);
       },800);
+    }
+    if(this.waveClearing&&this.waveStartClear&&(this.frame-this.waveStartClear)>300){
+      this.wave++;this.spawnWave();this.player.heal(30);this.popups.push(new Popup(this.player.x,this.player.y-30,30,'#00ff66'));this.waveClearing=false;
+      this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);
     }
   }
 
