@@ -67,7 +67,7 @@ export default function DeliverySettingsTab({
               type="text"
               value={deliveryRadius}
               onChange={(e) => setDeliveryRadius(e.target.value)}
-              className="w-full bg-white text-stone-950 font-['Outfit',sans-serif] font-black pr-8 py-2.5 rounded-lg focus:bg-emerald-50 transition-all text-xl outline-none border border-stone-200"
+              className="w-full bg-white text-stone-950 font-['Outfit',sans-serif] font-black pr-8 py-2.5 rounded-2xl focus:bg-emerald-50 transition-all text-xl outline-none border border-stone-200"
               placeholder="0"
             />
           </div>
@@ -102,7 +102,7 @@ export default function DeliverySettingsTab({
                 value={deliveryFee}
                 disabled={!isDeliveryFeeEnabled}
                 onChange={(e) => setDeliveryFee(e.target.value)}
-                className="w-full bg-white text-stone-950 font-['Outfit',sans-serif] font-black pl-8 py-2.5 rounded-lg focus:bg-emerald-50 transition-all text-xl outline-none border border-stone-200"
+                className="w-full bg-white text-stone-950 font-['Outfit',sans-serif] font-black pl-8 py-2.5 rounded-2xl focus:bg-emerald-50 transition-all text-xl outline-none border border-stone-200"
                 placeholder="0.00"
               />
             </div>
@@ -139,7 +139,7 @@ export default function DeliverySettingsTab({
                 value={freeDeliveryThreshold}
                 disabled={!isFreeDeliveryEnabled}
                 onChange={(e) => setFreeDeliveryThreshold(e.target.value)}
-                className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-8 py-2.5 rounded-lg focus:bg-white/20 transition-all text-xl outline-none placeholder-white/20 border border-white/20"
+                className="w-full bg-white/10 text-white font-['Outfit',sans-serif] font-black pl-8 py-2.5 rounded-2xl focus:bg-white/20 transition-all text-xl outline-none placeholder-white/20 border border-white/20"
                 placeholder="--.--"
               />
             </div>
