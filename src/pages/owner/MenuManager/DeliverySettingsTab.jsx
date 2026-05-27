@@ -20,7 +20,7 @@ export default function DeliverySettingsTab({
   return (
     <section className="border-t border-stone-200 pt-3 md:pt-4 mb-4 md:mb-6">
       {/* Hero: Title + Pause Toggle */}
-      <div className="bg-white border border-stone-100 rounded-2xl p-3 md:p-4 mb-3 shadow-sm relative overflow-hidden">
+      <div className="bg-white border border-stone-100 rounded-3xl p-3 md:p-4 mb-3 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 p-2 opacity-5">
           <Leaf className="w-20 h-20 text-amber-500 -rotate-12" />
         </div>
@@ -56,10 +56,10 @@ export default function DeliverySettingsTab({
 
       <div className={`flex flex-col gap-4 transition-opacity duration-500 ${isDeliveryPaused ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
         {/* Delivery Radius: Custom Input */}
-        <div className="bg-stone-50 rounded-2xl p-4 flex flex-col">
+        <div className="bg-stone-50 rounded-3xl p-4 flex flex-col">
           <div className="text-left">
             <p className="text-stone-400 font-bold uppercase text-[9px] tracking-[0.2em] mb-0.5">{t('delivery_radius') || 'Delivery Radius'}</p>
-            <h3 className="text-sm text-stone-950 font-['Outfit',sans-serif] font-black italic mb-3">{t('set_radius') || 'Coverage Area'}</h3>
+            <h3 className="text-sm text-stone-950 font-['Outfit',sans-serif] font-black italic mb-3">Coverage Area</h3>
           </div>
           <div className="relative">
             <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-lg italic">km</div>
@@ -76,7 +76,7 @@ export default function DeliverySettingsTab({
         {/* Fee Settings: 2-Column Grid */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Service Fee Card */}
-          <div className="flex-1 bg-stone-50 rounded-2xl p-4 flex flex-col">
+          <div className="flex-1 bg-stone-50 rounded-3xl p-4 flex flex-col">
             <div className="flex justify-between items-center mb-3 text-left">
               <div>
                 <p className="text-stone-400 font-bold uppercase text-[9px] tracking-[0.2em] mb-0.5">{t('service_fee') || 'Service Fee'}</p>
@@ -109,7 +109,7 @@ export default function DeliverySettingsTab({
           </div>
 
           {/* Free Delivery Card */}
-          <div className="flex-1 bg-emerald-600 rounded-2xl p-4 flex flex-col shadow-lg shadow-emerald-900/10 relative overflow-hidden">
+          <div className="flex-1 bg-emerald-600 rounded-3xl p-4 flex flex-col shadow-lg shadow-emerald-900/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-2 opacity-10">
               <Gift className="w-12 h-12 text-white -rotate-12" />
             </div>
