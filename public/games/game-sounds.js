@@ -76,6 +76,68 @@ document.addEventListener('keydown', function initAudio() {
   document.removeEventListener('keydown', initAudio);
 }, { once: true });
 
+// Sprite drawing system for games
+const Spr = {
+  enemy: function(cx, x, y, type, frame, flash, small, elite) {
+    if(!cx) return;
+    cx.save();
+    if(flash) cx.globalAlpha = 0.5;
+    cx.translate(x, y);
+    cx.fillStyle = flash ? '#ffcccc' : '#fff';
+
+    // Draw enemy UFO base
+    const sz = small ? 8 : 12;
+    cx.beginPath();
+    cx.ellipse(0, 0, sz, sz*0.6, 0, 0, Math.PI*2);
+    cx.fill();
+
+    // Color based on type
+    const colors = {'pepper':'#ff4444','jalapeno':'#ffaa00','onion':'#9944ff','carrot':'#ffaa44','broccoli':'#44ff44','mushroom':'#aaaaaa','tomato':'#ff6644'};
+    cx.fillStyle = colors[type] || '#ffff44';
+    cx.beginPath();
+    cx.arc(0, -sz*0.4, sz*0.7, 0, Math.PI*2);
+    cx.fill();
+
+    if(elite) {
+      cx.strokeStyle = '#ffff00';
+      cx.lineWidth = 2;
+      cx.beginPath();
+      cx.arc(0, 0, sz+4, 0, Math.PI*2);
+      cx.stroke();
+    }
+
+    cx.restore();
+  },
+
+  boss: function(cx, x, y, type, hp, maxHp, frame) {
+    if(!cx) return;
+    cx.save();
+    cx.translate(x, y);
+
+    // Boss body
+    cx.fillStyle = type==='chili'?'#ff3333':'#3333ff';
+    cx.beginPath();
+    cx.arc(0, 0, 30, 0, Math.PI*2);
+    cx.fill();
+
+    // Boss glow
+    cx.strokeStyle = type==='chili'?'rgba(255,100,100,0.5)':'rgba(100,100,255,0.5)';
+    cx.lineWidth = 3;
+    cx.beginPath();
+    cx.arc(0, 0, 35 + Math.sin(frame*0.1)*3, 0, Math.PI*2);
+    cx.stroke();
+
+    // Health bar
+    const hpPercent = Math.max(0, hp/maxHp);
+    cx.fillStyle = '#333';
+    cx.fillRect(-25, 35, 50, 6);
+    cx.fillStyle = hpPercent>0.3?'#00ff00':hpPercent>0.15?'#ffff00':'#ff0000';
+    cx.fillRect(-25, 35, 50*hpPercent, 6);
+
+    cx.restore();
+  }
+};
+
 // Hook into start buttons
 window.addEventListener('load', function() {
   const startBtn = document.querySelector('.start-button, .start-btn, #start, #start-btn, button[onclick*="start"]');
