@@ -354,6 +354,17 @@ class SpiceSpr{
   static bullet(cx,x,y){cx.fillStyle='#ff4400';cx.beginPath();cx.ellipse(x,y,3,6,0,0,Math.PI*2);cx.fill();cx.fillStyle='#ffaa00';cx.fillRect(x-2,y-2,4,4);}
   static eBullet(cx,x,y){cx.fillStyle='#ff44ff';cx.beginPath();cx.arc(x,y,4,0,Math.PI*2);cx.fill();cx.fillStyle='rgba(255,0,255,0.35)';cx.beginPath();cx.arc(x,y,8,0,Math.PI*2);cx.fill();}
 
+  static blastOrb(cx,x,y,size,power,frame){
+    const pulsePhase=Math.sin(frame*0.15)*0.3+0.7;cx.save();cx.translate(x,y);
+    const outerGlow=size*1.8*pulsePhase;cx.globalAlpha=0.35;cx.fillStyle='#ff6600';cx.beginPath();cx.arc(0,0,outerGlow,0,Math.PI*2);cx.fill();
+    const midGlow=size*1.3*pulsePhase;cx.globalAlpha=0.55;cx.fillStyle='#ff8800';cx.beginPath();cx.arc(0,0,midGlow,0,Math.PI*2);cx.fill();
+    cx.globalAlpha=1;cx.fillStyle='#ffaa00';cx.beginPath();cx.arc(0,0,size,0,Math.PI*2);cx.fill();
+    cx.fillStyle='#ffdd44';cx.beginPath();cx.arc(-size*0.3,-size*0.3,size*0.5,0,Math.PI*2);cx.fill();
+    const pixelCount=Math.max(3,Math.floor(power*8));
+    for(let i=0;i<pixelCount;i++){const angle=Math.random()*Math.PI*2;const dist=size+Math.sin(frame*0.2+i)*4;const px=Math.cos(angle)*dist;const py=Math.sin(angle)*dist;const psize=2+Math.random()*3;cx.globalAlpha=Math.random()*0.8;cx.fillStyle=Math.random()<0.5?'#ffff00':'#ff8800';cx.fillRect(px-psize/2,py-psize/2,psize,psize);}
+    cx.globalAlpha=1;cx.restore();
+  }
+
   static missile(cx,x,y,vx,vy,trail){
     cx.save();
     for(let i=0;i<trail.length;i++){const t=trail[i];if(t.life<=0)continue;cx.globalAlpha=t.life*0.25;cx.fillStyle='#aaa';cx.beginPath();cx.arc(t.x,t.y,Math.max(0.1,2*t.life),0,Math.PI*2);cx.fill();}
@@ -456,6 +467,7 @@ class Player{
     this.weapon='chili';this.weaponTimer=0;this._beamFired=false;
     this.cooldown=0;this.invuln=0;this.shielded=false;this.trail=[];this.vx=0;
     this.beamActive=false;this.beamTimer=0;this.beamCharge=0;this.sparks=[];
+    this.chargeHoldTime=0;this.isChargingBlast=false;
   }
   update(inp,dt,frame){
     const targetSpeed=inp.LEFT===1?-PLAYER_SPEED:inp.RIGHT===1?PLAYER_SPEED:0;
@@ -470,6 +482,15 @@ class Player{
     if(this.invuln>0)this.invuln-=dt;
     if(frame%4===0){[[-28,11],[28,11]].forEach(function(pos){if(Math.random()<0.6)this.sparks.push({x:pos[0],y:pos[1],vx:(Math.random()-0.5)*1.8,vy:-Math.random()*1.2-0.3,life:1,col:Math.random()<0.5?'#ff8800':'#ffff00'});},this);}
     this.sparks=this.sparks.filter(function(s){s.x+=s.vx;s.y+=s.vy;s.vy+=0.06;s.life-=0.08;return s.life>0;});
+
+    // Handle charge blast
+    if(inp.A_DOWN){this.chargeHoldTime+=dt;this.isChargingBlast=true;}else if(this.isChargingBlast){
+      if(this.cooldown<=0&&this.chargeHoldTime>=1000){
+        const result=this.fireChargeBlast();this.chargeHoldTime=0;this.isChargingBlast=false;return result;
+      }
+      this.chargeHoldTime=0;this.isChargingBlast=false;
+    }
+
     if(inp.A===1){inp.A=0;if(this.cooldown<=0)return this.shoot();}
     return null;
   }
@@ -483,6 +504,15 @@ class Player{
       if(!this.beamActive&&!this._beamFired){this._beamFired=true;this.beamActive=true;this.beamCharge=30;this.beamTimer=120;}
       result.bullets.push({x:this.x,y:this.y-18,vx:0,vy:-BULLET_SPEED,dmg:bulletDmg});
     }
+    return result;
+  }
+
+  fireChargeBlast(){
+    const result={type:'blastorbs',orbs:[]};
+    const power=Math.min(this.chargeHoldTime/1700,1);
+    const size=8+power*12;const dmg=1+Math.floor(power*3);const speed=-BULLET_SPEED*0.8-power*8;
+    result.orbs.push({x:this.x,y:this.y-18,vx:0,vy:speed,dmg:dmg,size:size,power:power});
+    this.cooldown=12+power*8;
     return result;
   }
   drawTrail(cx){
@@ -506,6 +536,14 @@ class Player{
       cx.save();cx.fillStyle='rgba(0,0,0,'+(cp*0.4)+')';cx.fillRect(0,0,BW,BH);
       for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2+frame*0.2,r=80*(1-cp)+5;cx.fillStyle='rgba(0,255,255,'+(cp*0.9)+')';cx.beginPath();cx.arc(this.x+Math.cos(a)*r,this.y+Math.sin(a)*r,3+cp*4,0,Math.PI*2);cx.fill();}
       cx.fillStyle='rgba(255,255,255,'+cp+')';cx.beginPath();cx.arc(this.x,this.y-18,cp*12,0,Math.PI*2);cx.fill();cx.restore();
+    }
+    if(this.isChargingBlast&&this.chargeHoldTime>=1000){
+      const chargeRatio=Math.min(this.chargeHoldTime/1700,1);
+      const chargeSize=6+chargeRatio*18;
+      cx.save();cx.globalAlpha=0.2+chargeRatio*0.5;cx.fillStyle='rgba(255,170,0,0.6)';cx.beginPath();cx.arc(this.x,this.y-18,chargeSize*1.5,0,Math.PI*2);cx.fill();
+      cx.globalAlpha=0.4+chargeRatio*0.6;cx.fillStyle='rgba(255,200,0,0.8)';cx.beginPath();cx.arc(this.x,this.y-18,chargeSize,0,Math.PI*2);cx.fill();
+      for(let i=0;i<Math.floor(chargeRatio*12);i++){const angle=frame*0.2+i*Math.PI/6;const dist=chargeSize+8;const px=this.x+Math.cos(angle)*dist;const py=this.y-18+Math.sin(angle)*dist;const ps=1+Math.random()*2;cx.globalAlpha=Math.random()*0.7;cx.fillStyle=Math.random()<0.5?'#ffff00':'#ff8800';cx.fillRect(px-ps/2,py-ps/2,ps,ps);}
+      cx.restore();
     }
     SpiceSpr.player(cx,this.x,this.y,frame,this.shielded,this.bombs);
     cx.save();cx.translate(this.x,this.y);
@@ -843,7 +881,7 @@ class Game{
     this.state='title';this.score=0;this.wave=1;this.frame=0;
     this.highScore=parseInt(localStorage.getItem('si_hs')||'0');
     this.player=null;this.enemies=[];this.boss=null;
-    this.bullets=[];this.eBullets=[];this.missiles=[];this.explosions=[];
+    this.bullets=[];this.blastOrbs=[];this.eBullets=[];this.missiles=[];this.explosions=[];
     this.drops=[];this.powerups=[];this.popups=[];this.killTexts=[];this.bombFx=null;
     this.beamSweep=null;this.bombUsed=false;
     this.fmtX=12;this.fmtDir=1;this.waveIntro=null;
@@ -946,7 +984,7 @@ class Game{
     this.waveClearing=false;this.waveStartClear=0;this.waveStartEnemyCount=0;this.lastStartFrame=0;this.maxComboFlash=0;
     this.midWaveTimer=0;this.meteors=[];this.eventBanner='';this.eventBannerT=0;
     this.diveTimer=0;this.pincerTimer=0;this.killTexts=[];
-    this.bullets=[];this.eBullets=[];this.missiles=[];this.explosions=[];
+    this.bullets=[];this.blastOrbs=[];this.eBullets=[];this.missiles=[];this.explosions=[];
     this.drops=[];this.powerups=[];this.popups=[];
     for(let i=0;i<enemyPool.length;i++)enemyPool[i].alive=false;
     this.enemies=[];
@@ -1129,6 +1167,7 @@ class Game{
     }
     const act=this.player.update(this.inp,1,this.frame);
     if(act&&act.type==='bullets'&&act.bullets.length>0){this.bullets.push(...act.bullets);this.audio.shoot();}
+    if(act&&act.type==='blastorbs'&&act.orbs.length>0){this.blastOrbs.push(...act.orbs);this.audio.shoot();}
     if(this.comboTimer>0){this.comboTimer--;if(this.comboTimer<=0)this.comboKills=0;}
     if(this.maxComboFlash>0)this.maxComboFlash--;
     const enemyRatio=(!this.boss&&this.waveStartEnemyCount>0)?this.enemies.length/this.waveStartEnemyCount:1;
@@ -1200,7 +1239,7 @@ class Game{
         if(sw.y>BH+20){this.beamSweep=null;this.bombUsed=false;}
       }
     }
-    this.updateBullets();this.updateMissiles();
+    this.updateBullets();this.updateBlastOrbs();this.updateMissiles();
     this.powerups=this.powerups.filter(p=>{
       p.y+=p.vy;const dx=p.x-this.player.x,dy=p.y-this.player.y;
       if(dx*dx+dy*dy<900){this.player.applyPU(p.type);this.audio.powerup();Haptics.fire(Haptics.powerup,true);return false;}
@@ -1319,6 +1358,42 @@ class Game{
     });
   }
 
+  updateBlastOrbs(){
+    this.blastOrbs=this.blastOrbs.filter(orb=>{
+      orb.x+=orb.vx;orb.y+=orb.vy;let hit=false;
+      if(this.boss){
+        const dx=orb.x-this.boss.x,dy=orb.y-this.boss.y,dist=Math.hypot(dx,dy);
+        if(dist<orb.size+40){
+          const dmgMult=1+orb.power*2;
+          if(this.boss.hit(orb.dmg*dmgMult,orb.x,orb.y)){this.boom(this.boss.x,this.boss.y,60);this.score+=1000;this.boss=null;this.shake.trigger(12,22,3);this.audio.explode();Haptics.fire(Haptics.bossDeath,true);this.player.heal(25);this.player.addBomb();this.popups.push(new Popup(this.player.x,this.player.y-30,25,'#00ff66'));this.powerups.push({x:this.player.x,y:this.player.y-40,type:PU_TYPES[Math.floor(Math.random()*PU_TYPES.length)],vy:0});this.missiles=[];this.missileTimer=300;}
+          else{this.shake.trigger(4,8,1);Haptics.fire(Haptics.orbBreak,true);}hit=true;
+        }
+      }
+      if(!hit){
+        for(let i=this.enemies.length-1;i>=0;i--){
+          const e=this.enemies[i];const dx=orb.x-e.x,dy=orb.y-e.y;
+          if(dx*dx+dy*dy<(orb.size+20)*(orb.size+20)){
+            const dmgMult=1+orb.power*2;
+            if(hitEnemy(e,orb.dmg*dmgMult)){
+              this.boom(e.x,e.y,orb.size*1.2);this.registerKill(e.x,e.y,enemyScore(e));
+              if(Math.random()<0.08)this.drops.push({x:e.x,y:e.y});
+              if(enemySplittable(e))[-18,18].forEach(ox=>this.enemies.push(acquireEnemy(e.x+ox,e.y,e.type,this.wave,true)));
+              e.alive=false;this.enemies.splice(i,1);this.audio.explode();this.shake.trigger(3,6,0);
+            }
+            hit=true;break;
+          }
+        }
+      }
+      if(!hit){
+        for(let mi=this.missiles.length-1;mi>=0;mi--){
+          const m=this.missiles[mi];const dx=orb.x-m.x,dy=orb.y-m.y;
+          if(dx*dx+dy*dy<(orb.size+20)*(orb.size+20)){this.boom(m.x,m.y,orb.size);this.audio.explode();this.missiles.splice(mi,1);hit=true;break;}
+        }
+      }
+      return orb.y>-40&&!hit;
+    });
+  }
+
   boom(x,y,size){this.explosions.push({x,y,size,p:0});}
 
   draw(){
@@ -1349,6 +1424,7 @@ class Game{
     if(this.boss)this.boss.draw(ctx,this.frame);
     this.meteors.forEach(m=>m.draw(ctx,this.frame));
     this.bullets.forEach(b=>SpiceSpr.bullet(ctx,b.x,b.y));
+    this.blastOrbs.forEach(orb=>SpiceSpr.blastOrb(ctx,orb.x,orb.y,orb.size,orb.power,this.frame));
     this.eBullets.forEach(b=>SpiceSpr.eBullet(ctx,b.x,b.y));
     this.missiles.forEach(m=>SpiceSpr.missile(ctx,m.x,m.y,m.vx,m.vy,m.trail));
     this.explosions.forEach(e=>SpiceSpr.explosion(ctx,e.x,e.y,e.size,e.p));
