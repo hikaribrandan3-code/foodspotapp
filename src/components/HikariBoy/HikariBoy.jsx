@@ -57,6 +57,7 @@ export function HikariBoy({
   const gameStartedRef = useRef(false);
   const dpadCrossRef = useRef(null);
   const dpadDir = useRef({ up: false, down: false, left: false, right: false });
+  const currentDpadBtnRef = useRef(null);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -216,11 +217,76 @@ export function HikariBoy({
     handleButtonRelease(button);
   };
 
+  const handleDpadTouch = (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const dpadEl = e.currentTarget;
+    const rect = dpadEl.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = touch.clientX - cx;
+    const dy = touch.clientY - cy;
+    const dist = Math.hypot(dx, dy);
+
+    // Deadzone: if touch is too close to center, treat it as no direction
+    const deadzone = rect.width * 0.15; // 15% of width
+    let newBtn = null;
+
+    if (dist >= deadzone) {
+      // Calculate angle in degrees [0, 360)
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      if (angle < 0) angle += 360;
+
+      if (angle >= 337.5 || angle < 22.5) {
+        newBtn = BUTTONS.DPAD_RIGHT;
+      } else if (angle >= 22.5 && angle < 67.5) {
+        newBtn = BUTTONS.DPAD_DOWN_RIGHT;
+      } else if (angle >= 67.5 && angle < 112.5) {
+        newBtn = BUTTONS.DPAD_DOWN;
+      } else if (angle >= 112.5 && angle < 157.5) {
+        newBtn = BUTTONS.DPAD_DOWN_LEFT;
+      } else if (angle >= 157.5 && angle < 202.5) {
+        newBtn = BUTTONS.DPAD_LEFT;
+      } else if (angle >= 202.5 && angle < 247.5) {
+        newBtn = BUTTONS.DPAD_UP_LEFT;
+      } else if (angle >= 247.5 && angle < 292.5) {
+        newBtn = BUTTONS.DPAD_UP;
+      } else if (angle >= 292.5 && angle < 337.5) {
+        newBtn = BUTTONS.DPAD_UP_RIGHT;
+      }
+    }
+
+    if (newBtn !== currentDpadBtnRef.current) {
+      if (currentDpadBtnRef.current) {
+        releaseDpad(currentDpadBtnRef.current);
+      }
+      if (newBtn) {
+        pressDpad(newBtn);
+      }
+      currentDpadBtnRef.current = newBtn;
+    }
+  };
+
+  const handleDpadTouchEnd = (e) => {
+    e.preventDefault();
+    if (currentDpadBtnRef.current) {
+      releaseDpad(currentDpadBtnRef.current);
+      currentDpadBtnRef.current = null;
+    }
+  };
+
   const handleButtonPress = (button) => {
     // ⚡ HEAVY HAPTICS: 50-80ms bursts for retro tactile feel
     if (navigator.vibrate) {
       const isAction = button === BUTTONS.A || button === BUTTONS.B;
       navigator.vibrate(isAction ? 65 : 50); // Heavy profile
+    }
+
+    // Restore focus to game iframe to ensure keyboard works
+    if (currentGame && gameFrameRef.current) {
+      gameFrameRef.current.focus();
     }
     
     if (isPaused && button === BUTTONS.START) {
@@ -271,6 +337,11 @@ export function HikariBoy({
   };
 
   const handleButtonRelease = (button) => {
+    // Restore focus to game iframe to ensure keyboard works
+    if (currentGame && gameFrameRef.current) {
+      gameFrameRef.current.focus();
+    }
+
     if (currentGame) {
       gameFrameRef.current?.contentWindow?.postMessage({
         type: 'BUTTON_RELEASE',
@@ -359,64 +430,54 @@ export function HikariBoy({
         {/* Main Controls: D-Pad (left) + A/B (right) */}
         <div className="hb-controls-main">
           {/* D-Pad — Cross-Shaped with black outline and center circle */}
-          <div className="hb-dpad">
+          <div 
+            className="hb-dpad"
+            onTouchStart={handleDpadTouch}
+            onTouchMove={handleDpadTouch}
+            onTouchEnd={handleDpadTouchEnd}
+            onTouchCancel={handleDpadTouchEnd}
+          >
             <div className="dpad-cross" ref={dpadCrossRef}>
               {/* Center circle */}
               <div className="dpad-center"></div>
               <button 
                 className="dpad-area dpad-up"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP); }}
                 onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP); }}
                 onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP); }}
                 onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP); }}
               ></button>
               <button 
                 className="dpad-area dpad-left"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_LEFT); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_LEFT); }}
                 onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_LEFT); }}
                 onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_LEFT); }}
                 onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_LEFT); }}
               ></button>
               <button 
                 className="dpad-area dpad-right"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_RIGHT); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_RIGHT); }}
                 onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_RIGHT); }}
                 onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_RIGHT); }}
                 onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_RIGHT); }}
               ></button>
               <button 
                 className="dpad-area dpad-down"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN); }}
                 onMouseDown={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN); }}
                 onMouseUp={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN); }}
                 onMouseLeave={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN); }}
               ></button>
               <button 
                 className="dpad-diagonal dpad-up-left"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP_LEFT); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP_LEFT); }}
                 aria-label="up-left"
               />
               <button 
                 className="dpad-diagonal dpad-up-right"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_UP_RIGHT); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_UP_RIGHT); }}
                 aria-label="up-right"
               />
               <button 
                 className="dpad-diagonal dpad-down-left"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN_LEFT); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN_LEFT); }}
                 aria-label="down-left"
               />
               <button 
                 className="dpad-diagonal dpad-down-right"
-                onTouchStart={(e) => { e.preventDefault(); pressDpad(BUTTONS.DPAD_DOWN_RIGHT); }}
-                onTouchEnd={(e) => { e.preventDefault(); releaseDpad(BUTTONS.DPAD_DOWN_RIGHT); }}
                 aria-label="down-right"
               />
             </div>

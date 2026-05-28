@@ -244,7 +244,7 @@ class Meteor{
   offScreen(){return this.y>BH+20||this.x<-40||this.x>BW+40;}
 }
 
-class Spr{
+class SpiceSpr{
   static player(cx,x,y,frame,shielded,bombs){
     bombs=bombs||0;cx.save();cx.translate(x,y);cx.scale(0.82,0.82);
     const ba=0.12+Math.sin(frame*0.18)*0.06;
@@ -425,7 +425,7 @@ function updateEnemy(e,ox,px,py,dt,wave){
   return null;
 }
 function hitEnemy(e,d){e.hp-=d;e.flash=8;return e.hp<=0;}
-function drawEnemy(cx,e,frame){Spr.enemy(cx,e.x,e.y,e.type,frame,e.flash>0,e.small,e.elite);}
+function drawEnemy(cx,e,frame){SpiceSpr.enemy(cx,e.x,e.y,e.type,frame,e.flash>0,e.small,e.elite);}
 
 class Player{
   constructor(){
@@ -484,7 +484,7 @@ class Player{
       for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2+frame*0.2,r=80*(1-cp)+5;cx.fillStyle='rgba(0,255,255,'+(cp*0.9)+')';cx.beginPath();cx.arc(this.x+Math.cos(a)*r,this.y+Math.sin(a)*r,3+cp*4,0,Math.PI*2);cx.fill();}
       cx.fillStyle='rgba(255,255,255,'+cp+')';cx.beginPath();cx.arc(this.x,this.y-18,cp*12,0,Math.PI*2);cx.fill();cx.restore();
     }
-    Spr.player(cx,this.x,this.y,frame,this.shielded,this.bombs);
+    SpiceSpr.player(cx,this.x,this.y,frame,this.shielded,this.bombs);
     cx.save();cx.translate(this.x,this.y);
     for(let i=0;i<this.sparks.length;i++){const s=this.sparks[i];cx.globalAlpha=s.life*0.9;cx.fillStyle=s.col;cx.beginPath();cx.arc(s.x,s.y,Math.max(0.1,1.5*s.life),0,Math.PI*2);cx.fill();}
     cx.restore();
@@ -541,7 +541,7 @@ class Boss{
     this.hp-=d;this.flash=8;return this.hp<=0;
   }
   draw(cx,frame){
-    Spr.boss(cx,this.x,this.y,this.type,this.hp,this.maxHp,frame);
+    SpiceSpr.boss(cx,this.x,this.y,this.type,this.hp,this.maxHp,frame);
     if(!this.coreExposed){
       const aliveCount=this.orbs.filter(o=>o.alive).length;
       for(let i=0;i<this.orbs.length;i++){
@@ -791,7 +791,7 @@ class TitleFormation{
       else{e.t+=0.03;e.y=e.ty+Math.sin(e.t+e.phase)*6;e.x=e.tx+Math.sin(e.t*0.7+e.phase)*4;}
     });
   }
-  draw(cx){this.enemies.forEach(e=>Spr.enemy(cx,e.x,e.y,e.type,this.frame,false,false,false));}
+  draw(cx){this.enemies.forEach(e=>SpiceSpr.enemy(cx,e.x,e.y,e.type,this.frame,false,false,false));}
 }
 
 const Haptics={
@@ -1293,11 +1293,11 @@ class Game{
     this.enemies.forEach(e=>drawEnemy(ctx,e,this.frame));
     if(this.boss)this.boss.draw(ctx,this.frame);
     this.meteors.forEach(m=>m.draw(ctx,this.frame));
-    this.bullets.forEach(b=>Spr.bullet(ctx,b.x,b.y));
-    this.eBullets.forEach(b=>Spr.eBullet(ctx,b.x,b.y));
-    this.missiles.forEach(m=>Spr.missile(ctx,m.x,m.y,m.vx,m.vy,m.trail));
-    this.explosions.forEach(e=>Spr.explosion(ctx,e.x,e.y,e.size,e.p));
-    this.drops.forEach(d=>Spr.drop(ctx,d.x,d.y,this.frame));
+    this.bullets.forEach(b=>SpiceSpr.bullet(ctx,b.x,b.y));
+    this.eBullets.forEach(b=>SpiceSpr.eBullet(ctx,b.x,b.y));
+    this.missiles.forEach(m=>SpiceSpr.missile(ctx,m.x,m.y,m.vx,m.vy,m.trail));
+    this.explosions.forEach(e=>SpiceSpr.explosion(ctx,e.x,e.y,e.size,e.p));
+    this.drops.forEach(d=>SpiceSpr.drop(ctx,d.x,d.y,this.frame));
     this.powerups.forEach(p=>drawPU(ctx,p.x,p.y,p.type,this.frame));
     if(this.beamSweep){
       const sw=this.beamSweep;

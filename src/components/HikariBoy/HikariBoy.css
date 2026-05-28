@@ -825,13 +825,6 @@ body.hikariboy-active .modal-overlay {
 }
 
 /* ========== ACTIVE / PRESSED STATES ========== */
-.action-btn:active {
-  transform: scale(0.93);
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.3),
-    inset 0 3px 8px rgba(0,0,0,0.2);
-}
-
 .sys-circle:active {
   transform: scale(0.88);
   box-shadow:
@@ -870,9 +863,5 @@ body.hikariboy-active .modal-overlay {
     bottom: 10px;
     right: 12px;
     font-size: 22px;
-  }
-  
-  .hb-midbar {
-    height: 28px;
   }
 }
