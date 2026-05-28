@@ -6,8 +6,19 @@
 <title>SPICE INVADERS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none;}
-html,body{position:fixed;overflow:hidden;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;font-family:'Courier New',monospace;}
-canvas{display:block;}
+html,body{
+  position:fixed;overflow:hidden;
+  width:100%;height:100%;
+  background:#000;
+  display:flex;justify-content:center;align-items:center;
+  font-family:'Courier New',monospace;
+  /* iOS safe area — respects notch + home indicator */
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+}
+canvas{display:block;touch-action:none;}
 </style>
 </head>
 <body>
@@ -25,9 +36,21 @@ const canvas=document.getElementById('c');
 (function(){var u=false;function unlock(){if(u)return;u=true;if(typeof initAudio==='function')initAudio();if(typeof initAC==='function')initAC();if(typeof audioCtx!=='undefined'&&audioCtx&&audioCtx.resume)audioCtx.resume();if(typeof AC!=='undefined'&&AC&&AC.resume)AC.resume();if(typeof aCtx!=='undefined'&&aCtx&&aCtx.resume)aCtx.resume();if(typeof game!=='undefined'&&game&&game.audio){if(game.audio.initAudio)game.audio.initAudio();if(game.audio.resume)game.audio.resume();}}canvas.addEventListener('touchstart',unlock,{passive:true,once:true});canvas.addEventListener('mousedown',unlock,{once:true});canvas.addEventListener('click',unlock,{once:true});})();
 const ctx=canvas.getContext('2d');
 let W,H;
-function resize(){W=window.innerWidth;H=window.innerHeight;canvas.width=W;canvas.height=H;}
+function resize(){
+  // Use visualViewport on iOS — handles address bar hide/show correctly
+  const vp=window.visualViewport;
+  W=vp?vp.width:window.innerWidth;
+  H=vp?vp.height:window.innerHeight;
+  canvas.width=W;
+  canvas.height=H;
+}
 resize();
 window.addEventListener('resize',resize);
+// visualViewport fires when iOS address bar shows/hides
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',resize);
+  window.visualViewport.addEventListener('scroll',resize);
+}
 
 const BW=320,BH=480,HUD_H=72;
 const PLAYER_SPEED=5.5,BULLET_SPEED=19.5,MAX_SPICE=100,GARLIC_BOMBS_MAX=3,BOSS_EVERY=3;
@@ -846,6 +869,38 @@ class Game{
         else{this.audio.resume();if(this.state==='playing')this.audio.playMusic(isBossWave(this.wave)?this.audio.bossSeq:this.audio.gameSeq);else if(this.state==='title')this.audio.playMusic(this.audio.titleSeq);}
       }
     });
+
+    // D-pad touch controls — recalculates W/H live so iOS address bar never breaks coords
+    const getTouch=(e)=>{
+      // Get canvas bounding rect for accurate offset on iOS
+      const rect=canvas.getBoundingClientRect();
+      const scaleX=BW/rect.width;
+      return(e.touches[0].clientX - rect.left)*scaleX;
+    };
+
+    canvas.addEventListener('touchstart',(e)=>{
+      if(e.touches.length!==1)return;
+      const tx=getTouch(e);
+      const threshold=BW*0.3;
+      if(tx<threshold){this.inp.LEFT=1;this.inp.RIGHT=0;}
+      else if(tx>BW-threshold){this.inp.RIGHT=1;this.inp.LEFT=0;}
+    },{passive:true});
+
+    canvas.addEventListener('touchmove',(e)=>{
+      if(e.touches.length===0)return;
+      const tx=getTouch(e);
+      const threshold=BW*0.3;
+      if(tx<threshold){this.inp.RIGHT=0;this.inp.LEFT=1;}
+      else if(tx>BW-threshold){this.inp.LEFT=0;this.inp.RIGHT=1;}
+      else{this.inp.LEFT=0;this.inp.RIGHT=0;}
+      e.preventDefault();
+    },{passive:false});
+
+    canvas.addEventListener('touchend',(e)=>{
+      this.inp.LEFT=0;
+      this.inp.RIGHT=0;
+    },{passive:true});
+
     window.addEventListener('message',e=>{
       if(e.data.type==='AUDIO_UNLOCK'){if(game&&game.audio)game.audio.initAudio();return;}
       if(e.data.type==='AUDIO_RESUME'){if(game&&game.audio)game.audio.resume();return;}
