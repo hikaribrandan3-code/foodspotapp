@@ -932,6 +932,22 @@ export const translations = {
     search_placeholder: { en: 'Search for burgers, fries...', es: 'Busca hamburguesas, papas...', pt: 'Procure por hambúrgueres, batatas...' },
     browse_categories: { en: 'Browse Categories', es: 'Explorar Categorías', pt: 'Explorar Categorias' },
     recommended_for_you: { en: 'Recommended for you', es: 'Recomendado para ti', pt: 'Recomendado para você' },
-    see_more: { en: 'See More', es: 'Ver Más', pt: 'Ver Mais' }
+    see_more: { en: 'See More', es: 'Ver Más', pt: 'Ver Mais' },
+
+    // Customer Contacts / CRM
+    customers_title: { es: "Clientes", en: "Customers", pt: "Clientes" },
+    search_by_name_phone: { es: "Buscar por nombre o teléfono...", en: "Search by name or phone...", pt: "Buscar por nome ou telefone..." },
+    export_csv: { es: "Exportar CSV", en: "Export CSV", pt: "Exportar CSV" },
+    add_customer: { es: "Agregar Cliente", en: "Add Customer", pt: "Adicionar Cliente" },
+    customer_count_one: { es: "cliente", en: "customer", pt: "cliente" },
+    customer_count_many: { es: "clientes", en: "customers", pt: "clientes" },
+    no_customers_yet: { es: "Sin clientes aún", en: "No customers yet", pt: "Sem clientes ainda" },
+    customers_appear_orders: { es: "Los clientes aparecerán aquí cuando realicen pedidos", en: "Customers will appear here as they place orders", pt: "Os clientes aparecerão aqui quando fizerem pedidos" },
+    no_customers_match: { es: "Sin clientes que coincidan con tu búsqueda", en: "No customers match your search", pt: "Nenhum cliente corresponde à sua busca" },
+    try_different_search: { es: "Intenta con otro nombre o número de teléfono", en: "Try a different name or phone number", pt: "Tente outro nome ou número de telefone" },
+    phone_required: { es: "El teléfono debe tener al menos 8 dígitos", en: "Phone must be at least 8 digits", pt: "O telefone deve ter pelo menos 8 dígitos" },
+    name_required: { es: "El nombre es obligatorio", en: "Name is required", pt: "O nome é obrigatório" },
+    saving_ellipsis: { es: "Guardando…", en: "Saving…", pt: "Salvando…" },
+    delete: { es: "Eliminar", en: "Delete", pt: "Excluir" }
 };
 

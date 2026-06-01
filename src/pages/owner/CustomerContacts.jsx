@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useTenant } from '../../contexts/TenantContext.jsx'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useCustomerContacts } from '../../hooks/useCustomerContacts.js'
 import { exportContactsToCSV } from '../../services/contactsService.js'
+import { translations } from '../../utils/translations.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import BurgerLoader from '../../components/BurgerLoader.jsx'
@@ -24,17 +26,20 @@ const T = {
 
 // ── Add Contact Modal ────────────────────────────────────────────
 function AddContactModal({ onClose, onAdd }) {
+  const { language } = useLanguage()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const t = (key) => translations[key]?.[language] || translations[key]?.en || key
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     const digits = phone.replace(/\D/g, '')
-    if (digits.length < 8) { setError('Phone must be at least 8 digits'); return }
-    if (!name.trim()) { setError('Name is required'); return }
+    if (digits.length < 8) { setError(t('phone_required')); return }
+    if (!name.trim()) { setError(t('name_required')); return }
     setLoading(true)
     const { error: err } = await onAdd(phone, name)
     if (err) setError(err.message)
@@ -54,7 +59,7 @@ function AddContactModal({ onClose, onAdd }) {
         boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: T.ink }}>Add Customer</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: T.ink }}>{t('add_customer')}</span>
           <button onClick={onClose} style={{
             background: T.line2, border: 'none', borderRadius: '50%',
             width: 32, height: 32, cursor: 'pointer', fontSize: 16,
@@ -64,11 +69,11 @@ function AddContactModal({ onClose, onAdd }) {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Name</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>{t('name')}</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Customer name"
+              placeholder={t('name')}
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: 12,
                 border: `1.5px solid ${T.line}`, fontSize: 15, color: T.ink,
@@ -79,11 +84,11 @@ function AddContactModal({ onClose, onAdd }) {
           </div>
 
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>Phone</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 6 }}>{t('phone_placeholder')}</label>
             <input
               value={phone}
               onChange={e => setPhone(e.target.value)}
-              placeholder="+54 9 351 000 0000"
+              placeholder={t('phone_placeholder')}
               type="tel"
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: 12,
@@ -110,7 +115,7 @@ function AddContactModal({ onClose, onAdd }) {
               opacity: loading ? 0.7 : 1, marginTop: 4, fontFamily: 'inherit'
             }}
           >
-            {loading ? 'Saving…' : 'Add Customer'}
+            {loading ? t('saving_ellipsis') : t('add_customer')}
           </button>
         </form>
       </div>
@@ -121,10 +126,13 @@ function AddContactModal({ onClose, onAdd }) {
 // ── Main Page ────────────────────────────────────────────────────
 export default function CustomerContacts() {
   const { businessId } = useTenant()
+  const { language } = useLanguage()
   const { contacts, loading, addContact, deleteContact } = useCustomerContacts(businessId)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
+
+  const t = (key) => translations[key]?.[language] || translations[key]?.en || key
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -138,7 +146,7 @@ export default function CustomerContacts() {
 
   return (
     <div style={{ width: '100%', height: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <BackendHeader title="Customers" />
+      <BackendHeader title={t('customers_title')} />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
 
@@ -157,7 +165,7 @@ export default function CustomerContacts() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name or phone…"
+              placeholder={t('search_by_name_phone')}
               style={{
                 border: 'none', outline: 'none', fontSize: 14,
                 color: T.ink, background: 'transparent', width: '100%',
@@ -186,7 +194,7 @@ export default function CustomerContacts() {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            Export CSV
+            {t('export_csv')}
           </button>
 
           {/* Add pill */}
@@ -203,7 +211,7 @@ export default function CustomerContacts() {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
-            Add Customer
+            {t('add_customer')}
           </button>
         </div>
 
@@ -217,7 +225,7 @@ export default function CustomerContacts() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
             </svg>
-            {filtered.length} {filtered.length === 1 ? 'customer' : 'customers'}
+            {filtered.length} {filtered.length === 1 ? t('customer_count_one') : t('customer_count_many')}
           </span>
         </div>
 
@@ -227,12 +235,11 @@ export default function CustomerContacts() {
             background: T.card, borderRadius: 20, padding: '60px 24px',
             textAlign: 'center', border: `1.5px dashed ${T.line}`
           }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
             <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, marginBottom: 6 }}>
-              {search ? 'No customers match your search' : 'No customers yet'}
+              {search ? t('no_customers_match') : t('no_customers_yet')}
             </div>
             <div style={{ fontSize: 14, color: T.muted }}>
-              {search ? 'Try a different name or phone number' : 'Customers will appear here as they place orders'}
+              {search ? t('try_different_search') : t('customers_appear_orders')}
             </div>
           </div>
         )}
@@ -297,7 +304,7 @@ export default function CustomerContacts() {
                       borderRadius: 50, padding: '6px 14px', fontSize: 12,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
                     }}
-                  >Delete</button>
+                  >{t('delete')}</button>
                   <button
                     onClick={() => setConfirmDelete(null)}
                     style={{
@@ -305,7 +312,7 @@ export default function CustomerContacts() {
                       borderRadius: 50, padding: '6px 14px', fontSize: 12,
                       fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
                     }}
-                  >Cancel</button>
+                  >{t('cancel')}</button>
                 </div>
               ) : (
                 <button
