@@ -183,7 +183,7 @@ export default function CustomerContacts() {
 
   return (
     <div style={{ width: '100%', height: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <BackendHeader title={t('customers_title')} />
+      <BackendHeader title="CRM" />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
 
