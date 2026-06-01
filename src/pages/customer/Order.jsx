@@ -363,14 +363,17 @@ function Order({ config: configProp }) {
 
             // ─── STEP 3.5: AUTO-IMPORT CUSTOMER INTO CRM ──────
             if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                supabase
-                    .from('customer_contacts')
-                    .upsert({
-                        business_id: savedOrder.business_id,
-                        phone: savedOrder.customer_phone.trim(),
-                        name: savedOrder.customer_name.trim()
-                    }, { onConflict: 'business_id,phone' })
-                    .catch(err => console.warn('[Order] CRM import failed:', err))
+                try {
+                    await supabase
+                        .from('customer_contacts')
+                        .upsert({
+                            business_id: savedOrder.business_id,
+                            phone: savedOrder.customer_phone.trim(),
+                            name: savedOrder.customer_name.trim()
+                        }, { onConflict: 'business_id,phone' })
+                } catch (crmErr) {
+                    console.warn('[Order] CRM import failed:', crmErr)
+                }
             }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
@@ -511,14 +514,17 @@ function Order({ config: configProp }) {
 
             // Auto-import customer into CRM
             if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                supabase
-                    .from('customer_contacts')
-                    .upsert({
-                        business_id: savedOrder.business_id,
-                        phone: savedOrder.customer_phone.trim(),
-                        name: savedOrder.customer_name.trim()
-                    }, { onConflict: 'business_id,phone' })
-                    .catch(err => console.warn('[Order] CRM import failed:', err))
+                try {
+                    await supabase
+                        .from('customer_contacts')
+                        .upsert({
+                            business_id: savedOrder.business_id,
+                            phone: savedOrder.customer_phone.trim(),
+                            name: savedOrder.customer_name.trim()
+                        }, { onConflict: 'business_id,phone' })
+                } catch (crmErr) {
+                    console.warn('[Order] CRM import failed:', crmErr)
+                }
             }
 
             // 🔒 MVP: Auto-open WhatsApp (Pedix style) — customer confirms order in chat
