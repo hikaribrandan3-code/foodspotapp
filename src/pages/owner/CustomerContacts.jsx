@@ -132,6 +132,7 @@ export default function CustomerContacts() {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [deleteError, setDeleteError] = useState('')
   const [recentOrders, setRecentOrders] = useState([])
 
   // Fetch recent orders with phone numbers directly from orders table
@@ -334,7 +335,15 @@ export default function CustomerContacts() {
               {confirmDelete === contact.id ? (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
-                    onClick={() => { deleteContact(contact.id); setConfirmDelete(null) }}
+                    onClick={async () => {
+                      const { error } = await deleteContact(contact.id)
+                      if (error) {
+                        setDeleteError(error.message || 'Delete failed')
+                      } else {
+                        setConfirmDelete(null)
+                        setDeleteError('')
+                      }
+                    }}
                     style={{
                       background: T.redBg, color: T.redInk, border: 'none',
                       borderRadius: 50, padding: '6px 14px', fontSize: 12,
@@ -342,7 +351,7 @@ export default function CustomerContacts() {
                     }}
                   >{t('delete')}</button>
                   <button
-                    onClick={() => setConfirmDelete(null)}
+                    onClick={() => { setConfirmDelete(null); setDeleteError('') }}
                     style={{
                       background: T.line2, color: T.muted, border: 'none',
                       borderRadius: 50, padding: '6px 14px', fontSize: 12,

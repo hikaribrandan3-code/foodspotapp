@@ -146,20 +146,19 @@ import Wall from './pages/customer/Wall.jsx'
 import Arcade from './pages/customer/Arcade.jsx'
 import Session from './pages/customer/Session.jsx'
 
-// Staff Pages
-import StaffKDS from './pages/staff/StaffKDS.jsx'
+// Staff Pages (lazy — staff users only)
+const StaffKDS = lazy(() => import('./pages/staff/StaffKDS.jsx'))
 
-// Owner Pages
-import OwnerLogin from './pages/owner/OwnerLogin.jsx'
-import OwnerSummary from './pages/owner/OwnerSummary.jsx'
-import MenuManager from './pages/owner/MenuManager/index.js'
-import RewardsManager from './pages/owner/RewardsManager.jsx'
-import Settings from './pages/owner/Settings.jsx'
-import Analytics from './pages/owner/Analytics.jsx'
-import FoodSpotAI from './pages/owner/FoodSpotAI.jsx'
-import CustomerContacts from './pages/owner/CustomerContacts.jsx'
-import DeliveryManager from './pages/owner/DeliveryManager.jsx'
-import Dashboard from './pages/owner/Dashboard.jsx'
+// Owner Pages (lazy — never loaded on customer routes)
+const OwnerLogin = lazy(() => import('./pages/owner/OwnerLogin.jsx'))
+const OwnerSummary = lazy(() => import('./pages/owner/OwnerSummary.jsx'))
+const MenuManager = lazy(() => import('./pages/owner/MenuManager/index.js'))
+const RewardsManager = lazy(() => import('./pages/owner/RewardsManager.jsx'))
+const Settings = lazy(() => import('./pages/owner/Settings.jsx'))
+const Analytics = lazy(() => import('./pages/owner/Analytics.jsx'))
+const FoodSpotAI = lazy(() => import('./pages/owner/FoodSpotAI.jsx'))
+const CustomerContacts = lazy(() => import('./pages/owner/CustomerContacts.jsx'))
+const Dashboard = lazy(() => import('./pages/owner/Dashboard.jsx'))
 
 // Admin Pages (Lazy-loaded)
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
@@ -619,8 +618,8 @@ function App() {
                                             {/* GLOBAL ROUTES */}
                                             <Route path="/" element={<TrialSignup />} />
                                             <Route path="/start-trial" element={<TrialSignup />} />
-                                            <Route path="/login" element={<OwnerLogin />} />
-                                            <Route path="/login/owner" element={<OwnerLogin />} />
+                                            <Route path="/login" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
+                                            <Route path="/login/owner" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
@@ -647,23 +646,23 @@ function App() {
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
 
-                                            <Route path="/:tenantSlug/staff" element={<OwnerLogin />} />
+                                            <Route path="/:tenantSlug/staff" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/dashboard/:tab" element={<StaffOpsRedirect />} />
-                                            <Route path="/:tenantSlug/staff/kds" element={<StaffKDS config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/staff/kds" element={<Suspense fallback={<LazyFallback />}><StaffKDS config={safeConfig} /></Suspense>} />
                                             <Route path="/:tenantSlug/staff/ops" element={<StaffOpsRedirect />} />
 
-                                            <Route path="/:tenantSlug/owner" element={<OwnerLogin />} />
-                                            <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><OwnerSummary config={safeConfig} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><MenuManager config={safeConfig} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><Dashboard /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><RewardsManager /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Analytics orders={orders} /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/contacts" element={<ProtectedRoute requiredRole="owner"><CustomerContacts /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><FoodSpotAI /></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Settings config={safeConfig} /></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
+                                            <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerSummary config={safeConfig} /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/menu" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><MenuManager config={safeConfig} /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/orders" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Dashboard /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Dashboard /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><RewardsManager /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Analytics orders={orders} /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/contacts" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
 
                                             <Route path="*" element={<Navigate to="/" replace />} />
                                         </Routes>

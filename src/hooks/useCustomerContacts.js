@@ -48,8 +48,23 @@ export function useCustomerContacts(businessId) {
   }
 
   const deleteContact = async (id) => {
-    await supabase.from('customer_contacts').delete().eq('id', id)
-    await fetchContacts()
+    try {
+      const { error } = await supabase
+        .from('customer_contacts')
+        .delete()
+        .eq('id', id)
+        .eq('business_id', businessId)
+      if (error) {
+        console.error('[useCustomerContacts] Delete error:', error)
+        return { error }
+      }
+      console.log('[useCustomerContacts] Deleted contact', id)
+      await fetchContacts()
+      return { error: null }
+    } catch (err) {
+      console.error('[useCustomerContacts] Delete exception:', err)
+      return { error: err }
+    }
   }
 
   return { contacts, loading, refreshContacts: fetchContacts, addContact, deleteContact }
