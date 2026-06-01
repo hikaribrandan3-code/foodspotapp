@@ -71,6 +71,18 @@ export function useOrderFlow() {
 
             if (dbError) throw dbError;
 
+            // Auto-import customer into CRM if they have a phone number
+            if (data?.customer_phone && data?.business_id && data?.customer_name) {
+                await supabase
+                    .from('customer_contacts')
+                    .upsert({
+                        business_id: data.business_id,
+                        phone: data.customer_phone.trim(),
+                        name: data.customer_name.trim()
+                    }, { onConflict: 'business_id,phone' })
+                    .catch(err => console.warn('[useOrderFlow] CRM import failed:', err));
+            }
+
             return { success: true, order: data };
         } catch (e) {
             const message = e?.message ?? String(e);

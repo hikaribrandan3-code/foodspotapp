@@ -133,51 +133,17 @@ export default function CustomerContacts() {
   const [showModal, setShowModal] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [deleteError, setDeleteError] = useState('')
-  const [recentOrders, setRecentOrders] = useState([])
 
-  // Fetch recent orders with phone numbers directly from orders table
-  useEffect(() => {
-    if (!businessId) return
-    const fetchOrders = async () => {
-      const { data } = await supabase
-        .from('orders')
-        .select('id, customer_name, customer_phone, created_at')
-        .eq('business_id', businessId)
-        .not('customer_phone', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(100)
-      setRecentOrders(data || [])
-    }
-    fetchOrders()
-  }, [businessId])
 
   const t = (key) => translations[key]?.[language] || translations[key]?.en || key
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    // Combine manual contacts + recent orders, deduplicate by phone
-    const combined = [...contacts]
-    const phones = new Set(contacts.map(c => c.phone))
-
-    recentOrders.forEach(order => {
-      if (order.customer_phone && !phones.has(order.customer_phone)) {
-        combined.push({
-          id: order.id,
-          phone: order.customer_phone,
-          name: order.customer_name || 'Unknown',
-          created_at: order.created_at,
-          updated_at: order.created_at,
-          _from_order: true
-        })
-        phones.add(order.customer_phone)
-      }
-    })
-
-    return combined.filter(c =>
+    return contacts.filter(c =>
       (c.name || '').toLowerCase().includes(q) ||
       (c.phone || '').includes(q)
     )
-  }, [contacts, recentOrders, search])
+  }, [contacts, search])
 
   if (loading) return <BurgerLoader />
 
