@@ -41,7 +41,7 @@ const OWNER_TABS = [
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'analytics', label: 'Analytics', route: null },
-    { id: 'contacts', label: 'Customers', route: null, desktopOnly: true },
+    { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
     { id: 'ai', label: 'AI', route: null }
 ]
 
