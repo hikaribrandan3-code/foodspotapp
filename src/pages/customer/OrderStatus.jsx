@@ -232,24 +232,24 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         if (s === ORDER_STATUS.DELIVERED) {
             if (type === 'dine_in') {
                 return paid
-                    ? { heading: 'Served', subtext: 'Enjoy your meal!' }
-                    : { heading: 'Served', subtext: 'Payment due at table' }
+                    ? { heading: t('served_dine_in'), subtext: t('enjoy_meal') }
+                    : { heading: t('served_dine_in'), subtext: t('payment_due_at_table') }
             }
             if (type === 'delivery') {
-                return { heading: t('heading_order_delivered'), subtext: 'Enjoy your meal!' }
+                return { heading: t('heading_order_delivered'), subtext: t('enjoy_meal') }
             }
-            return { heading: 'Picked Up', subtext: 'Enjoy your meal!' }
+            return { heading: 'Picked Up', subtext: t('enjoy_meal') }
         }
 
         // Dispatched (delivery only)
         if (s === ORDER_STATUS.DISPATCHED) {
-            return { heading: t('status_on_the_way'), subtext: 'Your driver is en route' }
+            return { heading: t('status_on_the_way'), subtext: t('your_driver_en_route') }
         }
 
         // Ready
         if (s === ORDER_STATUS.READY) {
-            if (type === 'dine_in') return { heading: 'Ready to Serve', subtext: 'Your server will bring it shortly' }
-            if (type === 'delivery') return { heading: 'Ready for Delivery', subtext: 'A driver will be assigned soon' }
+            if (type === 'dine_in') return { heading: t('ready_to_serve'), subtext: t('server_will_bring') }
+            if (type === 'delivery') return { heading: t('ready_for_delivery'), subtext: t('driver_will_assigned') }
             return { heading: t('status_ready_pickup'), subtext: 'Come pick up your order' }
         }
 
@@ -260,17 +260,17 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
         // Released to kitchen (staff/owner confirmed, cooking hasn't started)
         if (s === ORDER_STATUS.RELEASED_TO_KITCHEN) {
-            return { heading: 'Order Received', subtext: 'The kitchen will start preparing soon' }
+            return { heading: t('order_received_label'), subtext: t('kitchen_will_start') }
         }
 
         // Paid but not released (pickup cash — owner hasn't confirmed yet)
         if (s === ORDER_STATUS.PAID_UNRELEASED) {
-            return { heading: 'Order Confirmed', subtext: 'Waiting for restaurant to start' }
+            return { heading: t('order_confirmed'), subtext: t('awaiting_start') }
         }
 
         // Pending payment (MP or pickup cash awaiting confirmation)
         if (s === ORDER_STATUS.PENDING_PAYMENT) {
-            return { heading: 'Awaiting Payment', subtext: 'Complete your payment to confirm' }
+            return { heading: t('awaiting_payment'), subtext: t('complete_payment_confirm') }
         }
 
         // Fallback

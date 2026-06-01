@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
+import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { translations } from '../../utils/translations.js'
 import { CheckCircle, Truck, Clock, Home, MapPin, CreditCard, Banknote, AlertCircle, Loader2, Package } from 'lucide-react'
 import CameraTrigger from '../../components/Camera/CameraTrigger'
 
@@ -8,9 +10,12 @@ export default function Receipt() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { tenantSlug } = useParams()
+  const { language } = useLanguage()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const t = (key) => translations[key]?.[language] || translations[key]?.en || key
 
   // A/B test variant assignment for camera activation delay (45s, 60s, or 90s for delivery, 2s for dine-in)
   const delayVariant = useMemo(() => {
@@ -87,7 +92,7 @@ export default function Receipt() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
       <div style={{ textAlign: 'center', color: '#6B7280' }}>
         <Loader2 size={32} style={{ animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
-        <p style={{ fontSize: 14 }}>Loading receipt...</p>
+        <p style={{ fontSize: 14 }}>{t('loading_receipt')}</p>
       </div>
     </div>
   )
@@ -96,11 +101,11 @@ export default function Receipt() {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', padding: 16 }}>
       <div style={{ background: '#fff', borderRadius: 16, padding: 32, maxWidth: 380, width: '100%', textAlign: 'center' }}>
         <AlertCircle size={48} style={{ color: '#EF4444', margin: '0 auto 16px' }} />
-        <h2 style={{ fontWeight: 700, marginBottom: 8 }}>Receipt Error</h2>
-        <p style={{ color: '#6B7280', marginBottom: 24 }}>{error || 'Order not found'}</p>
+        <h2 style={{ fontWeight: 700, marginBottom: 8 }}>{t('receipt_error')}</h2>
+        <p style={{ color: '#6B7280', marginBottom: 24 }}>{error || t('order_not_found')}</p>
         <button onClick={() => navigate(`/${tenantSlug}`)}
           style={{ width: '100%', padding: '12px', background: '#111827', color: '#fff', borderRadius: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-          Back to Home
+          {t('back_to_home')}
         </button>
       </div>
     </div>
@@ -117,7 +122,7 @@ export default function Receipt() {
               {paymentFailed ? <AlertCircle size={32} style={{ color: '#EF4444' }} /> : isPaid ? <CheckCircle size={32} style={{ color: '#10B981' }} /> : <Clock size={32} style={{ color: '#F97316' }} />}
             </div>
             <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-              {isDelivered ? 'Pedido entregado ✓' : paymentFailed ? 'Pago fallido' : isPaid ? 'Order Confirmed!' : 'Confirmando pago...'}
+              {isDelivered ? t('order_delivered') : paymentFailed ? t('payment_failed') : isPaid ? t('order_confirmed') : t('confirming_payment')}
             </h1>
             <p style={{ color: '#6B7280', fontSize: 14 }}>
               #{order.order_number ? String(order.order_number).padStart(3, '0') : order.id.slice(0, 8).toUpperCase()}
@@ -129,10 +134,10 @@ export default function Receipt() {
             {isDeliveredCash ? <CheckCircle size={20} style={{ color: '#10B981', marginTop: 2, flexShrink: 0 }} /> : isCash ? <Banknote size={20} style={{ color: '#D97706', marginTop: 2, flexShrink: 0 }} /> : paymentFailed ? <AlertCircle size={20} style={{ color: '#DC2626', marginTop: 2, flexShrink: 0 }} /> : isPaid ? <CreditCard size={20} style={{ color: '#2563EB', marginTop: 2, flexShrink: 0 }} /> : <Clock size={20} style={{ color: '#F97316', marginTop: 2, flexShrink: 0 }} />}
             <div>
               <p style={{ fontWeight: 600, fontSize: 14, color: isDeliveredCash ? '#10B981' : isCash ? '#D97706' : paymentFailed ? '#DC2626' : isPaid ? '#2563EB' : '#F97316' }}>
-                {isDeliveredCash ? 'Pagado ✓' : isCash ? 'Efectivo en la puerta' : paymentFailed ? 'Pago fallido — Mercado Pago' : isPaid ? 'Pago confirmado — Mercado Pago' : 'Pago pendiente — Confirmando...'}
+                {isDeliveredCash ? t('paid_confirmed') : isCash ? t('cash_at_door') : paymentFailed ? t('payment_failed_mercado') : isPaid ? t('payment_confirmed_mercado') : t('payment_pending_confirming')}
               </p>
               <p style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>
-                {isDeliveredCash ? 'Pago en efectivo confirmado' : isCash ? 'Tendrás que pagar cuando llegue tu pedido' : paymentFailed ? 'Tu pago no se procesó. Intenta con otro método.' : isPaid ? 'Tu pago fue procesado correctamente' : 'Estamos confirmando tu pago con Mercado Pago. Esto puede tomar unos segundos.'}
+                {isDeliveredCash ? t('cash_payment_confirmed') : isCash ? t('pay_on_arrival') : paymentFailed ? t('payment_not_processed') : isPaid ? t('payment_processed_ok') : t('confirming_with_mp')}
               </p>
             </div>
           </div>
@@ -142,7 +147,7 @@ export default function Receipt() {
             <div style={{ background: '#fff', borderRadius: 16, padding: 16, display: 'flex', gap: 12, alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <MapPin size={20} style={{ color: '#9CA3AF', marginTop: 2, flexShrink: 0 }} />
               <div>
-                <p style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>Dirección de entrega</p>
+                <p style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>{t('delivery_address_label')}</p>
                 <p style={{ fontSize: 14, color: '#6B7280' }}>
                   {typeof order.delivery_address === 'string'
                     ? order.delivery_address
@@ -156,7 +161,7 @@ export default function Receipt() {
           <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
               <Package size={18} style={{ color: '#9CA3AF' }} />
-              <h2 style={{ fontWeight: 600, fontSize: 15, color: '#111827' }}>Tu pedido</h2>
+              <h2 style={{ fontWeight: 600, fontSize: 15, color: '#111827' }}>{t('your_order')}</h2>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {order.items?.map((item, i) => (
@@ -174,7 +179,7 @@ export default function Receipt() {
               ))}
             </div>
             <div style={{ borderTop: '1px solid #F3F4F6', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontWeight: 600, color: '#111827' }}>Total</span>
+              <span style={{ fontWeight: 600, color: '#111827' }}>{t('total_label')}</span>
               <span style={{ fontSize: 18, fontWeight: 700 }}>${(Number(order.total) / 100).toFixed(2)}</span>
             </div>
           </div>
@@ -186,14 +191,14 @@ export default function Receipt() {
               style={{ width: '100%', padding: '14px', background: '#10B981', color: '#fff', borderRadius: 14, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 15 }}
             >
               <Truck size={18} />
-              Seguir mi pedido
+              {t('track_order')}
             </button>
             <button
               onClick={() => navigate(`/${tenantSlug}`)}
               style={{ width: '100%', padding: '12px', background: '#F3F4F6', color: '#374151', borderRadius: 14, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
               <Home size={18} />
-              Volver al inicio
+              {t('back_to_home')}
             </button>
           </div>
 
