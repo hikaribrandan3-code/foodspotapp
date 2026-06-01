@@ -363,14 +363,17 @@ function Order({ config: configProp }) {
 
             // ─── STEP 3.5: AUTO-IMPORT CUSTOMER INTO CRM ──────
             if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                const { error: crmErr } = await supabase
+                console.log('[Order] CRM import:', { business_id: savedOrder.business_id, phone: savedOrder.customer_phone, name: savedOrder.customer_name })
+                const { data: crmData, error: crmErr } = await supabase
                     .from('customer_contacts')
                     .upsert({
                         business_id: savedOrder.business_id,
                         phone: savedOrder.customer_phone.trim(),
                         name: savedOrder.customer_name.trim()
                     }, { onConflict: 'business_id,phone' })
-                if (crmErr) console.warn('[Order] CRM import error:', crmErr)
+                    .select()
+                if (crmErr) console.error('[Order] CRM error:', crmErr)
+                else console.log('[Order] CRM success:', crmData)
             }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
@@ -511,14 +514,17 @@ function Order({ config: configProp }) {
 
             // Auto-import customer into CRM
             if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                const { error: crmErr } = await supabase
+                console.log('[Order] CRM import:', { business_id: savedOrder.business_id, phone: savedOrder.customer_phone, name: savedOrder.customer_name })
+                const { data: crmData, error: crmErr } = await supabase
                     .from('customer_contacts')
                     .upsert({
                         business_id: savedOrder.business_id,
                         phone: savedOrder.customer_phone.trim(),
                         name: savedOrder.customer_name.trim()
                     }, { onConflict: 'business_id,phone' })
-                if (crmErr) console.warn('[Order] CRM import error:', crmErr)
+                    .select()
+                if (crmErr) console.error('[Order] CRM error:', crmErr)
+                else console.log('[Order] CRM success:', crmData)
             }
 
             // 🔒 MVP: Auto-open WhatsApp (Pedix style) — customer confirms order in chat
