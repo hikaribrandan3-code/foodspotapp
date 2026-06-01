@@ -238,7 +238,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             if (type === 'delivery') {
                 return { heading: t('heading_order_delivered'), subtext: t('enjoy_meal') }
             }
-            return { heading: 'Picked Up', subtext: t('enjoy_meal') }
+            return { heading: t('heading_picked_up'), subtext: t('enjoy_meal') }
         }
 
         // Dispatched (delivery only)
@@ -250,12 +250,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         if (s === ORDER_STATUS.READY) {
             if (type === 'dine_in') return { heading: t('ready_to_serve'), subtext: t('server_will_bring') }
             if (type === 'delivery') return { heading: t('ready_for_delivery'), subtext: t('driver_will_assigned') }
-            return { heading: t('status_ready_pickup'), subtext: 'Come pick up your order' }
+            return { heading: t('status_ready_pickup'), subtext: t('come_pick_up_order') }
         }
 
         // Preparing
         if (s === ORDER_STATUS.PREPARING) {
-            return { heading: t('status_preparing'), subtext: 'Your order is being prepared' }
+            return { heading: t('status_preparing'), subtext: t('order_being_prepared') }
         }
 
         // Released to kitchen (staff/owner confirmed, cooking hasn't started)
