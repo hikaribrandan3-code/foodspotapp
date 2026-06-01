@@ -51,18 +51,18 @@ export function useCustomerContacts(businessId) {
     try {
       const { error } = await supabase
         .from('customer_contacts')
-        .delete()
+        .update({ archived_at: new Date().toISOString() })
         .eq('id', id)
         .eq('business_id', businessId)
       if (error) {
-        console.error('[useCustomerContacts] Delete error:', error)
+        console.error('[useCustomerContacts] Archive error:', error)
         return { error }
       }
-      console.log('[useCustomerContacts] Deleted contact', id)
+      console.log('[useCustomerContacts] Archived contact', id)
       await fetchContacts()
       return { error: null }
     } catch (err) {
-      console.error('[useCustomerContacts] Delete exception:', err)
+      console.error('[useCustomerContacts] Archive exception:', err)
       return { error: err }
     }
   }

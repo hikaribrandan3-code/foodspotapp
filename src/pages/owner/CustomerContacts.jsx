@@ -140,8 +140,9 @@ export default function CustomerContacts() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return contacts.filter(c =>
-      (c.name || '').toLowerCase().includes(q) ||
-      (c.phone || '').includes(q)
+      !c.archived_at &&
+      ((c.name || '').toLowerCase().includes(q) ||
+      (c.phone || '').includes(q))
     )
   }, [contacts, search])
 
@@ -297,8 +298,8 @@ export default function CustomerContacts() {
                 {new Date(contact.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
 
-              {/* Delete button (only for manually-added contacts, not order-derived) */}
-              {!contact._from_order && confirmDelete === contact.id ? (
+              {/* Archive button */}
+              {confirmDelete === contact.id ? (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
                     onClick={async () => {
@@ -331,7 +332,7 @@ export default function CustomerContacts() {
                     }}
                   >{t('cancel')}</button>
                 </div>
-              ) : !contact._from_order && (
+              ) : (
                 <button
                   onClick={() => setConfirmDelete(contact.id)}
                   style={{
