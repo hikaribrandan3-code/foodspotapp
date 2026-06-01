@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useCustomerContacts } from '../../hooks/useCustomerContacts.js'
+import { supabase } from '../../lib/supabaseClient.js'
 import { exportContactsToCSV } from '../../services/contactsService.js'
 import { translations } from '../../utils/translations.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -131,16 +132,51 @@ export default function CustomerContacts() {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [recentOrders, setRecentOrders] = useState([])
+
+  // Fetch recent orders with phone numbers directly from orders table
+  useEffect(() => {
+    if (!businessId) return
+    const fetchOrders = async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('id, customer_name, customer_phone, created_at')
+        .eq('business_id', businessId)
+        .not('customer_phone', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(100)
+      setRecentOrders(data || [])
+    }
+    fetchOrders()
+  }, [businessId])
 
   const t = (key) => translations[key]?.[language] || translations[key]?.en || key
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
-    return contacts.filter(c =>
+    // Combine manual contacts + recent orders, deduplicate by phone
+    const combined = [...contacts]
+    const phones = new Set(contacts.map(c => c.phone))
+
+    recentOrders.forEach(order => {
+      if (order.customer_phone && !phones.has(order.customer_phone)) {
+        combined.push({
+          id: order.id,
+          phone: order.customer_phone,
+          name: order.customer_name || 'Unknown',
+          created_at: order.created_at,
+          updated_at: order.created_at,
+          _from_order: true
+        })
+        phones.add(order.customer_phone)
+      }
+    })
+
+    return combined.filter(c =>
       (c.name || '').toLowerCase().includes(q) ||
       (c.phone || '').includes(q)
     )
-  }, [contacts, search])
+  }, [contacts, recentOrders, search])
 
   if (loading) return <BurgerLoader />
 
