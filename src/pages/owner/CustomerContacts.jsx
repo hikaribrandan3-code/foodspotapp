@@ -126,7 +126,7 @@ function AddContactModal({ onClose, onAdd }) {
 
 // ── Main Page ────────────────────────────────────────────────────
 export default function CustomerContacts() {
-  const { businessId } = useTenant()
+  const { businessId, tenantData } = useTenant()
   const { language } = useLanguage()
   const { contacts, loading, addContact, deleteContact } = useCustomerContacts(businessId)
   const [search, setSearch] = useState('')
@@ -183,7 +183,7 @@ export default function CustomerContacts() {
 
   return (
     <div style={{ width: '100%', height: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <BackendHeader title="CRM" />
+      <BackendHeader title={`${tenantData?.business_name || 'FoodSpot'} CRM`} />
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
 
