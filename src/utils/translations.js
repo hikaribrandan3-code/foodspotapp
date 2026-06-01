@@ -29,6 +29,7 @@ export const translations = {
     history: { es: "Historial", en: "History", pt: "Histórico" },
     confirm: { es: "Confirmar", en: "Confirm", pt: "Confirmar" },
     cancel: { es: "Cancelar", en: "Cancel", pt: "Cancelar" },
+    delete_failed: { es: "Error al eliminar", en: "Delete failed", pt: "Falha ao deletar" },
     logout: { es: "Cerrar Sesión", en: "Logout", pt: "Sair" },
     view_store: { es: "Ver Tienda", en: "View Store", pt: "Ver Loja" },
     change_view: { es: "Cambiar Vista", en: "Change View", pt: "Alterar Vista" },

@@ -331,17 +331,23 @@ export default function CustomerContacts() {
                 {new Date(contact.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
 
-              {/* Delete button */}
-              {confirmDelete === contact.id ? (
+              {/* Delete button (only for manually-added contacts, not order-derived) */}
+              {!contact._from_order && confirmDelete === contact.id ? (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
                     onClick={async () => {
-                      const { error } = await deleteContact(contact.id)
-                      if (error) {
-                        setDeleteError(error.message || 'Delete failed')
-                      } else {
-                        setConfirmDelete(null)
-                        setDeleteError('')
+                      try {
+                        const { error } = await deleteContact(contact.id)
+                        if (error) {
+                          alert(`${t('delete_failed')}: ${error.message || error}`)
+                          console.error('Delete error:', error)
+                        } else {
+                          setConfirmDelete(null)
+                          setDeleteError('')
+                        }
+                      } catch (err) {
+                        alert(`${t('delete_failed')}: ${err.message}`)
+                        console.error('Delete exception:', err)
                       }
                     }}
                     style={{
@@ -359,7 +365,7 @@ export default function CustomerContacts() {
                     }}
                   >{t('cancel')}</button>
                 </div>
-              ) : (
+              ) : !contact._from_order && (
                 <button
                   onClick={() => setConfirmDelete(contact.id)}
                   style={{
