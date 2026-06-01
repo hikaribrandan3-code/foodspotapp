@@ -9,6 +9,7 @@ export const translations = {
     settings: { es: "Ajustes", en: "Settings", pt: "Ajustes" },
     settings_title: { es: "Configuración", en: "Settings", pt: "Configurações" },
     ai: { es: "AI", en: "AI", pt: "IA" },
+    contacts: { es: "CRM", en: "CRM", pt: "CRM" },
     branding: { es: "Ajustes", en: "Branding", pt: "Ajustes" },
     ai_header: { es: "Asistente AI", en: "AI Assistant", pt: "Assistente de IA" },
     ai_error_reply: { es: "Ups, se quemó la cocina. ¿Intentamos de nuevo?", en: "Oops, the kitchen burned down. Shall we try again?", pt: "Ops, a cozinha queimou. Vamos tentar de novo?" },
