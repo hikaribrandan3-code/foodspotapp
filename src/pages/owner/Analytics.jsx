@@ -63,6 +63,7 @@ const Analytics = () => {
     // STATE
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(true)
+    const [fetchError, setFetchError] = useState(null)
     const [dateRange, setDateRange] = useState('today')
     const [activeTab, setActiveTab] = useState('analytics')
 
@@ -85,10 +86,15 @@ const Analytics = () => {
 
             const { data, error } = await query
 
-            if (!cancelled && !error && data) {
-                setOrders(data)
+            if (!cancelled) {
+                if (error) {
+                    setFetchError(error.message)
+                } else {
+                    setFetchError(null)
+                    setOrders(data || [])
+                }
+                setLoading(false)
             }
-            if (!cancelled) setLoading(false)
         }
 
         fetchOrders()
@@ -129,12 +135,16 @@ const Analytics = () => {
                 itemMap[key].revenue += (item.price || 0) * (item.quantity || 1)
             })
         })
-        const topItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty).slice(0, 5)
+        const topItems = Object.values(itemMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+
+        const mpRevenue = completed.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO).reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+        const cashRevenue = completed.filter(o => o.payment_method === PAYMENT_METHOD.CASH).reduce((sum, o) => sum + (Number(o.total) || 0), 0)
 
         return {
             totalRevenue, orderCount: completed.length, deliveredCount: delivered.length,
             deliveryCount, pickupCount, dineInCount, avgTicket,
-            mpCount, cashCount, topItems
+            mpCount, cashCount, mpRevenue, cashRevenue, topItems,
+            isAtLimit: orders.length >= 500
         }
     }, [orders])
 
@@ -169,9 +179,9 @@ const Analytics = () => {
                 {/* MAIN TABS */}
                 <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
                     {[
-                        { id: 'analytics', label: 'Analytics' },
-                        { id: 'financials', label: 'Expenses' },
-                        { id: 'events', label: 'Create Events' },
+                        { id: 'analytics', label: t('analytics') },
+                        { id: 'financials', label: t('expenses') },
+                        { id: 'events', label: t('create_events') },
                     ].map((tab) => (
                         <button
                             key={tab.id}
@@ -220,6 +230,10 @@ const Analytics = () => {
                         <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
                         <p>{t('loading')}</p>
                     </div>
+                ) : fetchError ? (
+                    <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: 16, color: '#DC2626', fontSize: 14 }}>
+                        {t('error_loading_data') || 'Error loading analytics data. Please refresh.'}
+                    </div>
                 ) : (
                     <>
                         {/* KPI GRID */}
@@ -267,18 +281,24 @@ const Analytics = () => {
                                     <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>MP</div>
                                     <div>
                                         <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{t(PAYMENT_METHOD.MERCADO_PAGO)}</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.mpRevenue)}</div>
                                     </div>
                                 </div>
                                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
                                     <div style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>$</div>
                                     <div>
                                         <div style={{ fontSize: 18, fontWeight: 800, color: '#16A34A' }}>{stats.cashCount}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{t(PAYMENT_METHOD.CASH)}</div>
+                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.cashRevenue)}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {stats.isAtLimit && (
+                            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#92400E' }}>
+                                ⚠️ Showing first 500 orders. Switch to a shorter date range for full accuracy.
+                            </div>
+                        )}
 
                         {/* TOP ITEMS */}
                         <div style={cardStyle}>

@@ -995,6 +995,9 @@ export const translations = {
     kitchen_will_start: { es: "La cocina comenzará pronto", en: "The kitchen will start preparing soon", pt: "A cozinha começará em breve" },
     awaiting_start: { es: "Esperando que comience el restaurante", en: "Waiting for restaurant to start", pt: "Aguardando que o restaurante comece" },
     awaiting_payment: { es: "Esperando Pago", en: "Awaiting Payment", pt: "Aguardando Pagamento" },
-    complete_payment_confirm: { es: "Completa tu pago para confirmar", en: "Complete your payment to confirm", pt: "Complete seu pagamento para confirmar", }
+    complete_payment_confirm: { es: "Completa tu pago para confirmar", en: "Complete your payment to confirm", pt: "Complete seu pagamento para confirmar" },
+    expenses: { en: 'Expenses', es: 'Gastos', pt: 'Despesas' },
+    create_events: { en: 'Create Events', es: 'Crear Eventos', pt: 'Criar Eventos' },
+    error_loading_data: { en: 'Error loading analytics data. Please refresh.', es: 'Error al cargar los datos. Por favor recarga.', pt: 'Erro ao carregar dados. Por favor atualize.' }
 };
 
