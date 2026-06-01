@@ -52,13 +52,13 @@ function AddContactModal({ onClose, onAdd }) {
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: 24
-    }}>
+      zIndex: 9999, padding: 24, pointerEvents: 'auto'
+    }} onClick={onClose}>
       <div style={{
         background: T.card, borderRadius: 20, padding: 32,
         width: '100%', maxWidth: 420,
-        boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
-      }}>
+        boxShadow: '0 20px 60px rgba(0,0,0,0.15)', pointerEvents: 'auto'
+      }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <span style={{ fontSize: 18, fontWeight: 700, color: T.ink }}>{t('add_customer')}</span>
           <button onClick={onClose} style={{
