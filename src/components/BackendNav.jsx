@@ -41,6 +41,7 @@ const OWNER_TABS = [
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'analytics', label: 'Analytics', route: null },
+    { id: 'contacts', label: 'Customers', route: null, desktopOnly: true },
     { id: 'ai', label: 'AI', route: null }
 ]
 
@@ -72,6 +73,7 @@ const getRouteMaps = (tenantSlug) => ({
         branding: `/${tenantSlug}/owner/branding`,
         orders: `/${tenantSlug}/owner/delivery`,
         analytics: `/${tenantSlug}/owner/analytics`,
+        contacts: `/${tenantSlug}/owner/contacts`,
         ai: `/${tenantSlug}/owner/ai`
     },
     staff: {
@@ -149,6 +151,15 @@ function TabIcon({ id, active }) {
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3" />
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+        ),
+        // Contacts (People icon)
+        contacts: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
         ),
         // Staff tabs
@@ -429,10 +440,12 @@ function BackendNav({
         justifyContent: 'center',
         lineHeight: 1
     }
-    const localizedTabs = useMemo(() => tabs.map(tab => ({
-        ...tab,
-        label: t(tab.id) || tab.label
-    })), [tabs, t])
+    const localizedTabs = useMemo(() => tabs
+        .filter(tab => !tab.desktopOnly || isDesktop)
+        .map(tab => ({
+            ...tab,
+            label: t(tab.id) || tab.label
+        })), [tabs, t, isDesktop])
 
     const storeName = tenantData?.venue_name || tenantData?.business_name || 'FoodSpot'
     const storeUrl = tenantSlug ? `/${tenantSlug}` : '/'
