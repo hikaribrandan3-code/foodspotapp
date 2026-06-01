@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 
 export function useCustomerContacts(businessId) {
-  console.log('[useCustomerContacts] Hook called with businessId:', businessId)
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -18,8 +17,6 @@ export function useCustomerContacts(businessId) {
       .order('updated_at', { ascending: false })
     if (error) {
       console.error('[useCustomerContacts] Fetch error:', error)
-    } else {
-      console.log('[useCustomerContacts] Fetched', data?.length || 0, 'contacts for business', businessId)
     }
     setContacts(data || [])
     setLoading(false)
@@ -27,27 +24,6 @@ export function useCustomerContacts(businessId) {
 
   useEffect(() => {
     fetchContacts()
-    if (!businessId) return
-
-    const sub = supabase
-      .channel(`contacts-${businessId}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'customer_contacts',
-        filter: `business_id=eq.${businessId}`
-      }, (payload) => {
-        console.log('[useCustomerContacts] Realtime event:', payload)
-        fetchContacts()
-      })
-      .subscribe((status) => {
-        console.log('[useCustomerContacts] Subscription status:', status)
-      })
-
-    return () => {
-      console.log('[useCustomerContacts] Unsubscribing')
-      supabase.removeChannel(sub)
-    }
   }, [businessId, fetchContacts])
 
   const addContact = async (phone, name) => {
