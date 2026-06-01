@@ -26,6 +26,8 @@ export function useCustomerContacts(businessId) {
 
   useEffect(() => {
     fetchContacts()
+    if (!businessId) return
+
     const sub = supabase
       .channel(`contacts-${businessId}`)
       .on('postgres_changes', {
@@ -33,9 +35,18 @@ export function useCustomerContacts(businessId) {
         schema: 'public',
         table: 'customer_contacts',
         filter: `business_id=eq.${businessId}`
-      }, () => fetchContacts())
-      .subscribe()
-    return () => supabase.removeChannel(sub)
+      }, (payload) => {
+        console.log('[useCustomerContacts] Realtime event:', payload)
+        fetchContacts()
+      })
+      .subscribe((status) => {
+        console.log('[useCustomerContacts] Subscription status:', status)
+      })
+
+    return () => {
+      console.log('[useCustomerContacts] Unsubscribing')
+      supabase.removeChannel(sub)
+    }
   }, [businessId, fetchContacts])
 
   const addContact = async (phone, name) => {
