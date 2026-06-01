@@ -6,12 +6,20 @@ export function useCustomerContacts(businessId) {
   const [loading, setLoading] = useState(true)
 
   const fetchContacts = useCallback(async () => {
-    if (!businessId) return
-    const { data } = await supabase
+    if (!businessId) {
+      setLoading(false)
+      return
+    }
+    const { data, error } = await supabase
       .from('customer_contacts')
       .select('*')
       .eq('business_id', businessId)
       .order('updated_at', { ascending: false })
+    if (error) {
+      console.error('[useCustomerContacts] Fetch error:', error)
+    } else {
+      console.log('[useCustomerContacts] Fetched', data?.length || 0, 'contacts for business', businessId)
+    }
     setContacts(data || [])
     setLoading(false)
   }, [businessId])
