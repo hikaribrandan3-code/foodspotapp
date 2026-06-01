@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 
 export function useCustomerContacts(businessId) {
+  console.log('[useCustomerContacts] Hook called with businessId:', businessId)
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
 
