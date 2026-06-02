@@ -696,42 +696,46 @@ export default function Dashboard() {
     <div style={{
       width: '100%', height: '100vh', background: T.bg, color: T.ink,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      display: 'grid', gridTemplateRows: 'auto auto 1fr auto', overflow: 'hidden',
+      display: 'grid', gridTemplateRows: 'auto 1fr auto', overflow: 'hidden',
     }}>
       <style>{kdsGridStyles}</style>
-      {/* Unlock banner */}
-      {!isUnlocked && (
+
+      {/* Top bar: alerts banner + header + status */}
+      <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Unlock banner */}
+        {!isUnlocked && (
+          <div style={{
+            background: '#FEF3C7', color: '#92400E', padding: '10px 16px',
+            fontSize: 13, fontWeight: 600, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            borderBottom: '1px solid #FDE68A', cursor: 'pointer', minHeight: '40px', flexShrink: 0,
+          }}>
+            <BellIcon muted={false} size={16} color="#92400E" />
+            {t('tap_to_enable_alerts')}
+          </div>
+        )}
+
+        <BackendHeader title={t('orders')} />
+
+        {/* Live order count header */}
         <div style={{
-          background: '#FEF3C7', color: '#92400E', padding: '10px 16px',
-          fontSize: 13, fontWeight: 600, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          borderBottom: '1px solid #FDE68A', cursor: 'pointer'
+          padding: '10px 16px', background: T.card, borderBottom: `1px solid ${T.line}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24,
+          fontSize: 14, fontWeight: 600, color: T.body, minHeight: '40px', flexShrink: 0,
         }}>
-          <BellIcon muted={false} size={16} color="#92400E" />
-          {t('tap_to_enable_alerts')}
-        </div>
-      )}
-
-      <BackendHeader title={t('orders')} />
-
-      {/* Live order count header */}
-      <div style={{
-        padding: '12px 16px', background: T.card, borderBottom: `1px solid ${T.line}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24,
-        fontSize: 14, fontWeight: 600, color: T.body,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: T.statPrep, fontWeight: 700 }}>Prep</span>
-          <span style={{ color: T.muted }}>{counts.prep || 0}</span>
-        </div>
-        <span style={{ color: T.line2 }}>·</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: T.statReady, fontWeight: 700 }}>Ready</span>
-          <span style={{ color: T.muted }}>{counts.ready || 0}</span>
-        </div>
-        <span style={{ color: T.line2 }}>·</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ color: T.statOut, fontWeight: 700 }}>Out</span>
-          <span style={{ color: T.muted }}>{counts.out || 0}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: T.statPrep, fontWeight: 700 }}>{t('kds_prep')}</span>
+            <span style={{ color: T.muted }}>{counts.prep || 0}</span>
+          </div>
+          <span style={{ color: T.line2 }}>·</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: T.statReady, fontWeight: 700 }}>{t('kds_ready')}</span>
+            <span style={{ color: T.muted }}>{counts.ready || 0}</span>
+          </div>
+          <span style={{ color: T.line2 }}>·</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: T.statOut, fontWeight: 700 }}>{t('kds_out')}</span>
+            <span style={{ color: T.muted }}>{counts.out || 0}</span>
+          </div>
         </div>
       </div>
 

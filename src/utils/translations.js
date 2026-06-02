@@ -553,6 +553,11 @@ export const translations = {
     confirm_and_start: { es: "Confirmar & Empezar", en: "Confirm & Start", pt: "Confirmar & Começar" },
     mark_served: { es: "Servido", en: "Mark Served", pt: "Marcar Servido" },
 
+    // KDS Status Header Labels
+    kds_prep: { es: "En Prep", en: "Prep", pt: "Em Prep" },
+    kds_ready: { es: "Listo", en: "Ready", pt: "Pronto" },
+    kds_out: { es: "En Camino", en: "Out", pt: "A Caminho" },
+
     // Order Types
     order_type_delivery: { es: "ENTREGA", en: "DELIVERY", pt: "ENTREGA" },
     order_type_dine_in: { es: "COMER EN LOCAL", en: "DINE IN", pt: "COMER NO LOCAL" },
