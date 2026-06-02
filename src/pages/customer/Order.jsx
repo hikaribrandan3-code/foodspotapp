@@ -354,6 +354,8 @@ function Order({ config: configProp }) {
 
             if (error) throw error
 
+            console.log('[Order] Saved order:', { customer_phone: savedOrder?.customer_phone, customer_name: savedOrder?.customer_name, business_id: savedOrder?.business_id })
+
             // Store phone for recovery
             if (customerInfo?.phone) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
@@ -505,6 +507,8 @@ function Order({ config: configProp }) {
                 .single()
 
             if (error) throw error
+
+            console.log('[Order] Saved order (WhatsApp):', { customer_phone: savedOrder?.customer_phone, customer_name: savedOrder?.customer_name, business_id: savedOrder?.business_id })
 
             if (customerInfo?.phone) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
