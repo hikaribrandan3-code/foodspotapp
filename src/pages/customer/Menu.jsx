@@ -811,8 +811,8 @@ export default function Menu({ config: configProp }) {
                         {enabledCategories.map(cat => (
                             <button key={cat.id} onClick={() => scrollToCategory(cat.id)} style={{
                                 padding: '8px 16px', borderRadius: 20,
-                                border: activeCategory === cat.id ? '1.5px solid #111827' : '1px solid #E5E7EB',
-                                background: activeCategory === cat.id ? '#111827' : 'white',
+                                border: activeCategory === cat.id ? '1.5px solid #000000' : '1px solid #E5E7EB',
+                                background: activeCategory === cat.id ? '#000000' : 'white',
                                 color: activeCategory === cat.id ? 'white' : '#374151',
                                 fontWeight: 600, fontSize: 13, flexShrink: 0,
                                 boxShadow: activeCategory === cat.id ? '0 2px 8px rgba(0,0,0,0.15)' : '0 1px 2px rgba(0,0,0,0.04)',

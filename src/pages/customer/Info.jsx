@@ -121,9 +121,7 @@ const Info = ({ config }) => {
                             {/* Address Row */}
                             {address && (
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    </div>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                                     <div>
                                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Address</p>
                                         <p style={{ fontSize: 15, color: '#0F0F0F', margin: 0, fontWeight: 600, lineHeight: 1.35 }}>{address}</p>
@@ -134,9 +132,7 @@ const Info = ({ config }) => {
                             {/* Business Hours Row */}
                             {businessHours && (
                                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6B00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                    </div>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                     <div>
                                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Hours</p>
                                         <p style={{ fontSize: 14, color: '#374151', margin: 0, fontWeight: 500, lineHeight: 1.4, whiteSpace: 'pre-line' }}>{businessHours}</p>
@@ -150,11 +146,9 @@ const Info = ({ config }) => {
                                     href={tenantData.app_config.externalOrdering.mapsLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, textDecoration: 'none' }}
+                                    style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12, textDecoration: 'none' }}
                                 >
-                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                    </div>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                                     <div>
                                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Directions</p>
                                         <p style={{ fontSize: 15, color: '#0F0F0F', margin: 0, fontWeight: 600 }}>Open in Google Maps</p>
@@ -168,11 +162,9 @@ const Info = ({ config }) => {
                                     href={tenantData.app_config.externalOrdering.googleReviewUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, textDecoration: 'none' }}
+                                    style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12, textDecoration: 'none' }}
                                 >
-                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#1F2937" stroke="none"><polygon points="12 2 15.09 10.26 23.77 11.25 17.77 17.25 19.09 25.95 12 21.77 4.91 25.95 6.23 17.25 0.23 11.25 8.91 10.26 12 2"/></svg>
-                                    </div>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#000000" stroke="none" style={{ flexShrink: 0, marginTop: 2 }}><polygon points="12 2 15.09 10.26 23.77 11.25 17.77 17.25 19.09 25.95 12 21.77 4.91 25.95 6.23 17.25 0.23 11.25 8.91 10.26 12 2"/></svg>
                                     <div>
                                         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reviews</p>
                                         <p style={{ fontSize: 15, color: '#0F0F0F', margin: 0, fontWeight: 600 }}>Leave a Review</p>
@@ -197,19 +189,19 @@ const Info = ({ config }) => {
 
                 {/* 3. SOCIAL ICONS */}
                 {(tenantData?.app_config?.externalOrdering?.instagramUrl || tenantData?.app_config?.externalOrdering?.tiktokUrl) && (
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '24px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '24px', marginBottom: '8px' }}>
                         {tenantData?.app_config?.externalOrdering?.instagramUrl && (
                             <a href={tenantData.app_config.externalOrdering.instagramUrl} target="_blank" rel="noopener noreferrer"
-                                style={{ width: 57, height: 57, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="#1F2937">
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000">
                                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                                 </svg>
                             </a>
                         )}
                         {tenantData?.app_config?.externalOrdering?.tiktokUrl && (
                             <a href={tenantData.app_config.externalOrdering.tiktokUrl} target="_blank" rel="noopener noreferrer"
-                                style={{ width: 57, height: 57, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="#1F2937">
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000000">
                                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.27 8.27 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/>
                                 </svg>
                             </a>
