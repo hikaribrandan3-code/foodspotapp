@@ -542,6 +542,48 @@ export const translations = {
     required_fields: { es: "⚠️ Completa los datos requeridos", en: "⚠️ Complete required fields", pt: "⚠️ Preencha os campos obrigatórios" },
     payment_settings: { es: "Pago & Entrega", en: "Payment & Fulfillment", pt: "Pagamento e Entrega" },
     service_modes: { es: "Modos de Servicio", en: "Service Modes", pt: "Modos de Serviço" },
+
+    // KDS Order Actions (Owner Dashboard)
+    start_prep: { es: "Empezar Prep", en: "Start Prep", pt: "Começar Prep" },
+    mark_ready: { es: "Listo", en: "Mark Ready", pt: "Marcar Pronto" },
+    dispatch_order: { es: "Despachar", en: "Dispatch", pt: "Despachar" },
+    mark_delivered: { es: "Entregado", en: "Mark Delivered", pt: "Marcar Entregue" },
+    hand_over: { es: "Entregar", en: "Hand Over", pt: "Entregar" },
+    release_to_kitchen: { es: "Soltar a Cocina", en: "Release to Kitchen", pt: "Liberar para Cozinha" },
+    confirm_and_start: { es: "Confirmar & Empezar", en: "Confirm & Start", pt: "Confirmar & Começar" },
+    mark_served: { es: "Servido", en: "Mark Served", pt: "Marcar Servido" },
+
+    // Order Types
+    order_type_delivery: { es: "ENTREGA", en: "DELIVERY", pt: "ENTREGA" },
+    order_type_dine_in: { es: "COMER EN LOCAL", en: "DINE IN", pt: "COMER NO LOCAL" },
+    order_type_takeout: { es: "PARA LLEVAR", en: "TAKE OUT", pt: "PARA LEVAR" },
+
+    // Payment Status Labels
+    payment_pending: { es: "Pago Pendiente", en: "Payment Pending", pt: "Pagamento Pendente" },
+    pay_on_delivery: { es: "Pagar al Recibir", en: "Pay on Delivery", pt: "Pagar na Entrega" },
+    whatsapp_payment: { es: "Pago WhatsApp", en: "WhatsApp Payment", pt: "Pagamento WhatsApp" },
+    mp_alias_short: { es: "Alias MP", en: "MP Alias", pt: "Alias MP" },
+
+    // KDS UI Labels
+    nothing_here: { es: "Nada aquí.", en: "Nothing here.", pt: "Nada aqui." },
+    new_orders_appear: { es: "Los nuevos pedidos aparecerán aquí.", en: "New orders will appear here.", pt: "Novos pedidos aparecerão aqui." },
+    send_to_driver: { es: "Enviar a Repartidor", en: "Send to Driver", pt: "Enviar ao Entregador" },
+    cancel_order: { es: "Cancelar Pedido", en: "Cancel Order", pt: "Cancelar Pedido" },
+    how_did_they_pay: { es: "¿Cómo pagaron?", en: "How did they pay?", pt: "Como eles pagaram?" },
+    tap_to_enable_alerts: { es: "Toca para habilitar alertas de pedidos", en: "Tap anywhere to enable order sound alerts", pt: "Toque para ativar alertas de pedidos" },
+    just_now: { es: "justo ahora", en: "just now", pt: "agora mesmo" },
+    items_short: { es: "items", en: "items", pt: "items" },
+    item_short: { es: "item", en: "item", pt: "item" },
+    less: { es: "Menos", en: "Less", pt: "Menos" },
+    details: { es: "Detalles", en: "Details", pt: "Detalhes" },
+    active: { es: "Activos", en: "Active", pt: "Ativos" },
+    completed: { es: "Completados", en: "Completed", pt: "Concluídos" },
+    delete_label: { es: "Eliminar Todo", en: "Delete All", pt: "Excluir Tudo" },
+    recent_orders: { es: "PEDIDOS RECIENTES", en: "RECENT ORDERS", pt: "PEDIDOS RECENTES" },
+    verified_payment: { es: "Verificado", en: "Verified", pt: "Verificado" },
+    processing: { es: "Procesando...", en: "Processing...", pt: "Processando..." },
+    customer_scans_to_pay: { es: "El cliente escanea para pagar", en: "Customer scans to pay", pt: "O cliente escaneia para pagar" },
+    back_label: { es: "Volver", en: "Back", pt: "Voltar" },
     dine_in_payment: { es: "Pago en Mesa", en: "Dine-In Payment", pt: "Pagamento na Mesa" },
     pay_before_upfront: { es: "Pagar Antes (Adelante)", en: "Pay Before (Upfront)", pt: "Pagar Antes (Adiantado)" },
     pay_after_table: { es: "Pagar Después (Al Final)", en: "Pay After (At End)", pt: "Pagar Depois (No Final)" },

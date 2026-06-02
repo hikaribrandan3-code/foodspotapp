@@ -70,30 +70,30 @@ const OWNER_STATS = (t) => [
   { key: 'out', label: t('on_way_status').toUpperCase(), color: T.statOut, matches: [ORDER_STATUS.DISPATCHED] },
 ]
 
-const FLOW_MAP = {
+const FLOW_MAP = (t) => ({
   delivery: [
-    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
-    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
-    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
-    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: 'Mark Ready', intent: 'blue' },
-    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DISPATCHED, label: 'Dispatch',   intent: 'blue' },
-    { from: ORDER_STATUS.DISPATCHED,       to: ORDER_STATUS.DELIVERED,  label: 'Mark Delivered', intent: 'green' },
+    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('confirm_payment'), intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('confirm_payment'), intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: t('start_prep'), intent: 'blue' },
+    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: t('mark_ready'), intent: 'blue' },
+    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DISPATCHED, label: t('dispatch_order'),   intent: 'blue' },
+    { from: ORDER_STATUS.DISPATCHED,       to: ORDER_STATUS.DELIVERED,  label: t('mark_delivered'), intent: 'green' },
   ],
   pickup: [
-    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
-    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm Payment', intent: 'orange', isPaymentConfirm: true },
-    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
-    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: 'Mark Ready', intent: 'blue' },
-    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DELIVERED,  label: 'Hand Over',  intent: 'green' },
+    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('confirm_payment'), intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('confirm_payment'), intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: t('start_prep'), intent: 'blue' },
+    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: t('mark_ready'), intent: 'blue' },
+    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DELIVERED,  label: t('hand_over'),  intent: 'green' },
   ],
   dine_in: [
-    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Confirm & Start', intent: 'orange', isPaymentConfirm: true },
-    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: 'Release to Kitchen', intent: 'blue' },
-    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: 'Start Prep', intent: 'blue' },
-    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: 'Mark Ready', intent: 'blue' },
-    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DELIVERED,  label: 'Mark Served', intent: 'green' },
+    { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('confirm_and_start'), intent: 'orange', isPaymentConfirm: true },
+    { from: ORDER_STATUS.PAID_UNRELEASED,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('release_to_kitchen'), intent: 'blue' },
+    { from: ORDER_STATUS.RELEASED_TO_KITCHEN, to: ORDER_STATUS.PREPARING, label: t('start_prep'), intent: 'blue' },
+    { from: ORDER_STATUS.PREPARING,        to: ORDER_STATUS.READY,      label: t('mark_ready'), intent: 'blue' },
+    { from: ORDER_STATUS.READY,            to: ORDER_STATUS.DELIVERED,  label: t('mark_served'), intent: 'green' },
   ],
-}
+})
 
 function statusToBucket(status, t) {
   for (const s of OWNER_STATS(t)) {
@@ -102,14 +102,14 @@ function statusToBucket(status, t) {
   return null
 }
 
-function nextActionFor(status, orderType, paymentStatus) {
+function nextActionFor(status, orderType, paymentStatus, t) {
   // 🛡️ DINE-IN PAY-AFTER: Delivered + unpaid = show payment button
   if (status === ORDER_STATUS.DELIVERED && orderType === 'dine_in' && paymentStatus === 'unpaid') {
-    return { label: '💳 Confirm Payment', intent: 'orange', isPaymentConfirm: true }
+    return { label: '💳 ' + t('confirm_payment'), intent: 'orange', isPaymentConfirm: true }
   }
 
   const typeKey = orderType === 'takeout' ? 'pickup' : orderType || 'pickup'
-  const flow = FLOW_MAP[typeKey]
+  const flow = FLOW_MAP(t)[typeKey]
   if (!flow) return null
 
   const step = flow.find(f => f.from === status)
@@ -199,11 +199,11 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
 function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
-  const next = nextActionFor(order.status, order.order_type, order.payment_status)
-  const typeLabel = isDelivery ? 'DELIVERY' : isDineIn ? 'DINE IN' : 'TAKE OUT'
+  const next = nextActionFor(order.status, order.order_type, order.payment_status, t)
+  const typeLabel = isDelivery ? t('order_type_delivery') : isDineIn ? t('order_type_dine_in') : t('order_type_takeout')
   const bucket = statusToBucket(order.status, t)
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
-  const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
+  const timeStr = minsAgo < 1 ? t('just_now') : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
   // KDS stripe color based on order type
   const stripeColor = isDelivery ? '#3B82F6' : isDineIn ? '#10B981' : '#F97316'
@@ -237,14 +237,14 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ color: T.muted, fontSize: 14 }}>
-            {(order.items || []).length} {(order.items || []).length === 1 ? 'item' : 'items'}
+            {(order.items || []).length} {(order.items || []).length === 1 ? t('item_short') : t('items_short')}
             <span style={{ margin: '0 6px', color: T.muted2 }}>·</span>
             <span style={{ fontWeight: 700, color: T.ink2, fontVariantNumeric: 'tabular-nums' }}>
               {formatPrice(order.total)}
             </span>
           </div>
           <span style={{ fontSize: 11, color: T.statPrep, fontWeight: 600 }}>
-            {expanded ? '▲ Less' : '▼ Details'}
+            {expanded ? '▲ ' + t('less') : '▼ ' + t('details')}
           </span>
         </div>
       </button>
@@ -278,24 +278,24 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
             const isAlias = order.payment_method === PAYMENT_METHOD.ALIAS
             const isAwaitingPayment = !isPaid && (isCash || isWhatsApp || isAlias) && order.status === ORDER_STATUS.PENDING_PAYMENT
 
-            let text = 'Payment Pending'
+            let text = t('payment_pending')
             let bg = T.blueBg
             let color = T.blueInk
 
             if (isPaid) {
-              text = 'Paid'
+              text = t('paid_label')
               bg = T.greenBg
               color = T.greenInk
             } else if (isAwaitingPayment) {
-              text = '⏳ Awaiting Payment'
+              text = '⏳ ' + t('status_awaiting_payment')
               bg = '#FEF3C7'
               color = '#92400E'
             } else if (isCash) {
-              text = order.order_type === 'delivery' ? 'Pay on Delivery' : order.order_type === 'dine_in' ? 'Pay at Table' : 'Pay at Takeout'
+              text = order.order_type === 'delivery' ? t('pay_on_delivery') : order.order_type === 'dine_in' ? t('pay_at_table') : t('cash_delivery')
             } else if (isWhatsApp) {
-              text = 'WhatsApp Payment'
+              text = t('whatsapp_payment')
             } else if (isAlias) {
-              text = 'MP Alias'
+              text = t('mp_alias_short')
             }
 
             return (
@@ -306,7 +306,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
           })()}
           {isDineIn && order.table_number && (
             <div style={{ fontSize: 13, color: T.body, marginBottom: 6 }}>
-              Table {order.table_number}
+              {t('table')} {order.table_number}
             </div>
           )}
           {order.notes && (
@@ -333,7 +333,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.008-.57-.008-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" /></svg>
-              Send to Driver
+              {t('send_to_driver')}
             </button>
           )}
 
@@ -346,19 +346,19 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
               </ActionButton>
               {!(order.status === ORDER_STATUS.DELIVERED && isDineIn) && (
                 <ActionButton intent="red" icon={<Icon type="x" color={T.redInk} size={14} />} onClick={() => onCancel(order)}>
-                  Cancel Order
+                  {t('cancel_order')}
                 </ActionButton>
               )}
             </div>
           )}
           {order.status === ORDER_STATUS.DELIVERED && (
             <div style={{ textAlign: 'center', color: T.greenInk, fontWeight: 600, padding: '10px 0', background: T.greenBg, borderRadius: 10, fontSize: 14 }}>
-              ✓ Delivered
+              ✓ {t('delivered_status')}
             </div>
           )}
           {order.status === ORDER_STATUS.CANCELLED && (
             <div style={{ textAlign: 'center', color: T.redInk, fontWeight: 600, padding: '10px 0', background: T.redBg, borderRadius: 10, fontSize: 14 }}>
-              Cancelled
+              {t('status_cancelled')}
             </div>
           )}
         </div>
@@ -449,7 +449,7 @@ export default function Dashboard() {
     }
 
     const typeKey = order.order_type === 'takeout' ? 'pickup' : order.order_type || 'pickup'
-    const flow = FLOW_MAP[typeKey]
+    const flow = FLOW_MAP(t)[typeKey]
     if (!flow) {
       console.error('Unknown order type:', typeKey)
       return
@@ -687,88 +687,42 @@ export default function Dashboard() {
           borderBottom: '1px solid #FDE68A', cursor: 'pointer'
         }}>
           <BellIcon muted={false} size={16} color="#92400E" />
-          Tap anywhere to enable order sound alerts
+          {t('tap_to_enable_alerts')}
         </div>
       )}
 
       <BackendHeader title={t('orders')} />
 
       <div style={{ overflowY: 'auto' }}>
-        <div style={{ padding: '16px 16px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.statPrep }}>
-              <Icon type="grid" color={T.statPrep} size={22} />
-              <h1 style={{ margin: 0, color: T.ink, fontSize: 28, fontWeight: 800, letterSpacing: '-0.025em' }}>
-                Owner HQ
-              </h1>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Audio controls */}
-              <button
-                onClick={cycleVolume}
-                title={`Volume: ${volume}`}
-                style={{
-                  background: '#F3F4F6', border: 'none', borderRadius: 8,
-                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-                  opacity: isMuted ? 0.4 : 1, color: '#0F1B2D'
-                }}
-              ><VolumeIcon level={volume} size={18} /></button>
-              <button
-                onClick={toggleMute}
-                title={isMuted ? 'Unmute' : 'Mute'}
-                style={{
-                  background: isMuted ? '#FEE2E2' : '#F3F4F6',
-                  border: 'none', borderRadius: 8,
-                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-                  color: isMuted ? '#B33A3A' : '#0F1B2D'
-                }}
-              ><BellIcon muted={isMuted} size={18} /></button>
-              {/* New Order button */}
-              <button
-                onClick={() => setShowCreateOrder(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                {t('new_order')}
-              </button>
-            </div>
-          </div>
-          <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
-            {counts.active} {t('active_orders').toLowerCase()} · {counts.cash} {t('cash').toLowerCase()} {t('pendent_status').toLowerCase()} · {counts.delivered} {t('delivered_status').toLowerCase()} {t('analytics_today').toLowerCase()}
-          </div>
-
-          <div style={{
-            marginTop: 14, background: T.card, borderRadius: 14, border: `1px solid ${T.line}`,
-            padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          }}>
-            <div>
-              <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 4 }}>
-                {t('recent_orders')?.toUpperCase()}
-              </div>
-              <div style={{
-                fontSize: 26, fontWeight: 800, color: T.ink, letterSpacing: '-0.025em', lineHeight: 1,
-                fontVariantNumeric: 'tabular-nums',
-              }}>
-                {formatPrice(todayRev)}
-              </div>
-              <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
-                {t('across') || 'across'} {displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} {t('orders_count')}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8 }}>
-          {OWNER_STATS(t).map(s => (
-            <button key={s.key}
-              onClick={() => setFilterBucket(filterBucket === s.key ? null : s.key)}
-              style={{
-                flex: 1, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer',
-                opacity: !filterBucket || filterBucket === s.key ? 1 : 0.45, transition: 'opacity 160ms',
-              }}>
-              <StatTile statKey={s.key} label={s.label} count={counts[s.key] || 0} accent={s.color} />
-            </button>
-          ))}
+        <div style={{ padding: '16px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+          {/* Audio controls */}
+          <button
+            onClick={cycleVolume}
+            title={`Volume: ${volume}`}
+            style={{
+              background: '#F3F4F6', border: 'none', borderRadius: 8,
+              padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+              opacity: isMuted ? 0.4 : 1, color: '#0F1B2D'
+            }}
+          ><VolumeIcon level={volume} size={18} /></button>
+          <button
+            onClick={toggleMute}
+            title={isMuted ? 'Unmute' : 'Mute'}
+            style={{
+              background: isMuted ? '#FEE2E2' : '#F3F4F6',
+              border: 'none', borderRadius: 8,
+              padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+              color: isMuted ? '#B33A3A' : '#0F1B2D'
+            }}
+          ><BellIcon muted={isMuted} size={18} /></button>
+          {/* New Order button */}
+          <button
+            onClick={() => setShowCreateOrder(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {t('new_order')}
+          </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 16px 12px', gap: 8, flexWrap: 'wrap' }}>
@@ -811,9 +765,9 @@ export default function Dashboard() {
               padding: '40px 20px', textAlign: 'center', color: T.muted,
             }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: T.ink2, marginBottom: 4 }}>
-                Nothing here.
+                {t('nothing_here')}
               </div>
-              <div style={{ fontSize: 13 }}>New {tab} orders will appear here.</div>
+              <div style={{ fontSize: 13 }}>Los nuevos pedidos {tab === 'active' ? 'activos' : 'completados'} aparecerán aquí.</div>
             </div>
           ) : (
             <div className="kds-order-grid">
@@ -839,8 +793,8 @@ export default function Dashboard() {
           <div style={{ backgroundColor: T.card, borderRadius: 16, padding: 32, maxWidth: 380, boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: `1px solid ${T.line2}`, pointerEvents: 'auto' }} onClick={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
             {!showingMpAlias ? (
               <>
-                <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>How did they pay?</h2>
-                <p style={{ margin: '0 0 24px 0', color: T.muted, fontSize: 14 }}>Order #{paymentModalOrder.order_number}</p>
+                <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>{t('how_did_they_pay')}</h2>
+                <p style={{ margin: '0 0 24px 0', color: T.muted, fontSize: 14 }}>Pedido #{paymentModalOrder.order_number}</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <button
                     onClick={() => handlePaymentMethodSelect('cash')}
@@ -864,7 +818,7 @@ export default function Dashboard() {
                     onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                   >
-                    {paymentModalProcessing ? 'Processing...' : 'Cash'}
+                    {paymentModalProcessing ? t('processing') : t('cash')}
                   </button>
                   <button
                     onClick={() => setShowingMpAlias(true)}
@@ -888,15 +842,15 @@ export default function Dashboard() {
                     onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                     onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                   >
-                    MP Alias
+                    {t('mp_alias_short')}
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>Customer scans to pay</h2>
+                <h2 style={{ margin: '0 0 12px 0', color: T.ink, fontSize: 18, fontWeight: 700 }}>{t('customer_scans_to_pay')}</h2>
                 <div style={{ margin: '0 0 24px 0', padding: 20, backgroundColor: '#fed7aa', borderRadius: 12, textAlign: 'center', border: '2px solid #f97316' }}>
-                  <p style={{ fontSize: 11, fontWeight: 700, color: '#92400e', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>MP Alias</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: '#92400e', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('mp_alias_short')}</p>
                   <p style={{ fontSize: 28, fontWeight: 800, color: '#b45309', margin: 0, fontFamily: 'monospace' }}>{tenantData?.app_config?.payments?.mercadoPagoAlias || 'N/A'}</p>
                 </div>
                 <button
@@ -923,7 +877,7 @@ export default function Dashboard() {
                   onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                 >
-                  {paymentModalProcessing ? 'Verified...' : 'Verified'}
+                  {paymentModalProcessing ? t('processing') : t('verified_payment')}
                 </button>
                 <button
                   onClick={() => setShowingMpAlias(false)}
@@ -947,7 +901,7 @@ export default function Dashboard() {
                   onMouseEnter={(e) => !paymentModalProcessing && (e.target.style.backgroundColor = '#e5e7eb')}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = '#f3f4f6')}
                 >
-                  Back
+                  {t('back_label')}
                 </button>
               </>
             )}
