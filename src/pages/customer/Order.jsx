@@ -354,8 +354,6 @@ function Order({ config: configProp }) {
 
             if (error) throw error
 
-            console.log('[Order] Saved order:', { customer_phone: savedOrder?.customer_phone, customer_name: savedOrder?.customer_name, business_id: savedOrder?.business_id })
-
             // Store phone for recovery
             if (customerInfo?.phone) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
@@ -365,17 +363,14 @@ function Order({ config: configProp }) {
 
             // ─── STEP 3.5: AUTO-IMPORT CUSTOMER INTO CRM ──────
             if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                console.log('[Order] CRM import:', { business_id: savedOrder.business_id, phone: savedOrder.customer_phone, name: savedOrder.customer_name })
-                const { data: crmData, error: crmErr } = await supabase
+                await supabase
                     .from('customer_contacts')
-                    .upsert({
+                    .insert({
                         business_id: savedOrder.business_id,
                         phone: savedOrder.customer_phone.trim(),
                         name: savedOrder.customer_name.trim()
-                    }, { onConflict: 'business_id,phone' })
-                    .select()
-                if (crmErr) console.error('[Order] CRM error:', crmErr)
-                else console.log('[Order] CRM success:', crmData)
+                    })
+                    .catch(() => {})
             }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
@@ -508,8 +503,6 @@ function Order({ config: configProp }) {
 
             if (error) throw error
 
-            console.log('[Order] Saved order (WhatsApp):', { customer_phone: savedOrder?.customer_phone, customer_name: savedOrder?.customer_name, business_id: savedOrder?.business_id })
-
             if (customerInfo?.phone) {
                 localStorage.setItem('fs_customer_phone', customerInfo.phone)
             }
@@ -518,17 +511,14 @@ function Order({ config: configProp }) {
 
             // Auto-import customer into CRM
             if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                console.log('[Order] CRM import:', { business_id: savedOrder.business_id, phone: savedOrder.customer_phone, name: savedOrder.customer_name })
-                const { data: crmData, error: crmErr } = await supabase
+                await supabase
                     .from('customer_contacts')
-                    .upsert({
+                    .insert({
                         business_id: savedOrder.business_id,
                         phone: savedOrder.customer_phone.trim(),
                         name: savedOrder.customer_name.trim()
-                    }, { onConflict: 'business_id,phone' })
-                    .select()
-                if (crmErr) console.error('[Order] CRM error:', crmErr)
-                else console.log('[Order] CRM success:', crmData)
+                    })
+                    .catch(() => {})
             }
 
             // 🔒 MVP: Auto-open WhatsApp (Pedix style) — customer confirms order in chat
