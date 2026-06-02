@@ -15,6 +15,26 @@ import { PAYMENT_METHOD } from '../../constants/database.js';
 import { canAdvanceOrder } from '../../utils/orderStateGuard'
 import CreateOrderModal from './CreateOrderModal.jsx'
 
+// KDS Grid layout: Desktop/Tablet only. Mobile uses original single-column layout.
+const kdsGridStyles = `
+  @media (min-width: 768px) {
+    .kds-order-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    .kds-order-card {
+      margin-bottom: 0 !important;
+    }
+  }
+  @media (max-width: 767px) {
+    .kds-order-grid {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+`
+
 
 
 const T = {
@@ -185,10 +205,13 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
+  // KDS stripe color based on order type
+  const stripeColor = isDelivery ? '#3B82F6' : isDineIn ? '#10B981' : '#F97316'
+
   return (
-    <div style={{
+    <div className="kds-order-card" style={{
       background: T.card, borderRadius: 14, boxShadow: '0 1px 2px rgba(15,27,45,0.04), 0 4px 12px rgba(15,27,45,0.04)',
-      marginBottom: 14, overflow: 'hidden',
+      marginBottom: 14, overflow: 'hidden', borderLeft: `5px solid ${stripeColor}`,
     }}>
       {/* Tappable header */}
       <button onClick={onToggle} style={{
@@ -196,7 +219,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
         padding: 16, textAlign: 'left', fontFamily: 'inherit',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em', lineHeight: 1 }}>
             #{String(order.order_number).padStart(3, '0')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.muted, fontSize: 13, fontWeight: 500 }}>
@@ -655,6 +678,7 @@ export default function Dashboard() {
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       display: 'grid', gridTemplateRows: 'auto auto 1fr auto', overflow: 'hidden',
     }}>
+      <style>{kdsGridStyles}</style>
       {/* Unlock banner */}
       {!isUnlocked && (
         <div style={{
@@ -792,17 +816,19 @@ export default function Dashboard() {
               <div style={{ fontSize: 13 }}>New {tab} orders will appear here.</div>
             </div>
           ) : (
-            filtered.map(o => (
-              <OrderCard
-                key={o.id}
-                order={o}
-                onAdvance={() => advance(o)}
-                onCancel={() => cancel(o)}
-                expanded={expandedOrderId === o.id}
-                onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
-                t={t}
-              />
-            ))
+            <div className="kds-order-grid">
+              {filtered.map(o => (
+                <OrderCard
+                  key={o.id}
+                  order={o}
+                  onAdvance={() => advance(o)}
+                  onCancel={() => cancel(o)}
+                  expanded={expandedOrderId === o.id}
+                  onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
+                  t={t}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
