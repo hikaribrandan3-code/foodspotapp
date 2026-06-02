@@ -464,7 +464,7 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 inputMode="none"
                 data-form-type="other"
                 style={{
-                    position: 'fixed', inset: 0, background: '#F9FAFB', zIndex: 99999,
+                    position: 'fixed', inset: 0, background: '#FFFFFF', zIndex: 99999,
                     touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none'
                 }}
             >
@@ -662,8 +662,12 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                 )}
 
                 {!image && (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap 📷</span>
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', gap: 8 }}>
+                        <span style={{ color: '#9CA3AF', fontSize: 14 }}>Tap</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
                     </div>
                 )}
             </div>
@@ -694,7 +698,10 @@ function CoverImageEditor({ isOpen, onClose, onSave, initialData, demoMode = fal
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}
                 >
-                    📷
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
                 </div>
                 <div
                     onClick={image ? handleNext : undefined}
