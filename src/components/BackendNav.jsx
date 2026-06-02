@@ -590,7 +590,19 @@ function BackendNav({
                             onClick={async () => {
                                 const { supabase: sb } = await import('../lib/supabaseClient.js')
                                 const { data: { session } } = await sb.auth.getSession()
-                                const businessId = contextBusinessId || localStorage.getItem('fs_business_id') || ''
+                                // Use contextBusinessId if available, otherwise try to fetch from Supabase
+                                let businessId = contextBusinessId || localStorage.getItem('fs_business_id')
+
+                                if (!businessId && session?.user?.id) {
+                                    // Query Supabase to get business_id for this user
+                                    const { data: userBiz } = await sb
+                                        .from('user_businesses')
+                                        .select('business_id')
+                                        .eq('user_id', session.user.id)
+                                        .single()
+                                    businessId = userBiz?.business_id || ''
+                                }
+
                                 const ownerEntry = {
                                     id: session?.user?.id || 'owner',
                                     business_id: businessId,
@@ -598,6 +610,7 @@ function BackendNav({
                                     role: 'owner',
                                     email: session?.user?.email || ''
                                 }
+                                console.log('[Staff View] Setting up staff preview:', { tenantSlug, businessId })
                                 localStorage.setItem('fs_staff_member', JSON.stringify(ownerEntry))
                                 localStorage.setItem('fs_business_id', businessId)
                                 localStorage.setItem('fs_current_shift', JSON.stringify({
