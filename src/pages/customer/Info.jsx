@@ -204,9 +204,16 @@ const Info = ({ config }) => {
                         {t('powered_by')}
                     </p>
                     <a href="https://www.instagram.com/foodspotmobile?igsh=MXgxcDlvcGFtbW93Yw==" target="_blank" rel="noopener noreferrer"
-                        style={{ color: config?.colors?.powered || '#C4856A', fontSize: '1.1rem', fontWeight: '800', letterSpacing: '-0.05em', textDecoration: 'none', cursor: 'pointer', marginBottom: '12px' }}>
+                        style={{ color: config?.colors?.powered || '#C4856A', fontSize: '1.21rem', fontWeight: '800', letterSpacing: '-0.05em', textDecoration: 'none', cursor: 'pointer', marginBottom: '16px' }}>
                         FoodSpot OS
                     </a>
+                    {logoUrl && (
+                        <img
+                            src={logoUrl}
+                            alt="Logo"
+                            style={{ width: '120px', height: 'auto', marginBottom: '12px', maxHeight: '120px' }}
+                        />
+                    )}
                     {isPillEnabled('adminAccess') && (
                         <button
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}
