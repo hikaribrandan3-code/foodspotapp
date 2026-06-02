@@ -5,6 +5,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useKDSSync } from '../../hooks/useKDSSync';
 import { useCamTechListener } from '../../hooks/useCamTech';
 import { useStaff } from '../../contexts/StaffContext';
+import { useKDSAudio } from '../../hooks/useKDSAudio.js';
 import BurgerLoader from '../../components/BurgerLoader';
 import { ORDER_STATUS } from '../../constants/database.js';
 
@@ -20,24 +21,21 @@ export const StaffKDS = () => {
     const { t } = useLanguage();
     const [isPaused, setIsPaused] = React.useState(false);
     const [lastOrderCount, setLastOrderCount] = React.useState(0);
+    const [newOrderFlash, setNewOrderFlash] = React.useState(false);
     const { orders, loading, transitionOrderState, fetchOrders } = useKDSSync(businessId);
     const { currentShift, clockOut, clearStaff } = useStaff();
+    const { isMuted, volume, isUnlocked, toggleMute, cycleVolume, playChime } = useKDSAudio();
 
-    // Audio alert for new orders
+    // Audio + visual alert for new orders
     React.useEffect(() => {
         if (orders.length > lastOrderCount && !isPaused) {
-            const beep = new AudioContext().createOscillator();
-            const gainNode = new AudioContext().createGain();
-            beep.connect(gainNode);
-            gainNode.connect(new AudioContext().destination);
-            beep.frequency.value = 800;
-            gainNode.gain.setValueAtTime(0.3, new AudioContext().currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, new AudioContext().currentTime + 0.1);
-            beep.start(new AudioContext().currentTime);
-            beep.stop(new AudioContext().currentTime + 0.1);
+            playChime();
+            // Visual flash backup (works even on silent)
+            setNewOrderFlash(true);
+            setTimeout(() => setNewOrderFlash(false), 600);
         }
         setLastOrderCount(orders.length);
-    }, [orders.length, isPaused]);
+    }, [orders.length, isPaused, playChime]);
 
     const handleEndShift = async () => {
         if (!window.confirm('End your shift?')) return;
@@ -75,23 +73,58 @@ export const StaffKDS = () => {
 
     if (!businessId) return <div className="kds-error">No business ID found. Please login.</div>;
 
+    const volumeIcon = volume === 'low' ? '🔈' : volume === 'med' ? '🔉' : '🔊'
+
     return (
-        <div className="kds-container">
-            <div className="hidden md:block bg-white border-b border-stone-200 px-6 md:px-8 py-4">
+        <div className="kds-container" style={{ outline: newOrderFlash ? '3px solid #F59E0B' : '3px solid transparent', transition: 'outline 0.1s' }}>
+
+            {/* Unlock banner — shows until user taps */}
+            {!isUnlocked && (
+                <div style={{
+                    background: '#FEF3C7', color: '#92400E', padding: '10px 16px',
+                    fontSize: 13, fontWeight: 600, textAlign: 'center',
+                    borderBottom: '1px solid #FDE68A', cursor: 'pointer'
+                }}>
+                    🔔 Tap anywhere to enable order sound alerts
+                </div>
+            )}
+
+            <div className="bg-white border-b border-stone-200 px-4 md:px-8 py-3" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h1 className="font-['Outfit',sans-serif] text-2xl font-black text-stone-950 italic tracking-tight leading-none">
                     Staff
                 </h1>
-            </div>
-            {currentShift && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 16px' }}>
+
+                {/* Audio controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button
-                        onClick={handleEndShift}
-                        style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: 8, padding: '8px 16px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
-                    >
-                        End Shift
-                    </button>
+                        onClick={cycleVolume}
+                        title={`Volume: ${volume}`}
+                        style={{
+                            background: '#F3F4F6', border: 'none', borderRadius: 8,
+                            padding: '6px 10px', fontSize: 16, cursor: 'pointer',
+                            opacity: isMuted ? 0.4 : 1
+                        }}
+                    >{volumeIcon}</button>
+                    <button
+                        onClick={toggleMute}
+                        title={isMuted ? 'Unmute' : 'Mute'}
+                        style={{
+                            background: isMuted ? '#FEE2E2' : '#F3F4F6',
+                            border: 'none', borderRadius: 8,
+                            padding: '6px 10px', fontSize: 16, cursor: 'pointer'
+                        }}
+                    >{isMuted ? '🔕' : '🔔'}</button>
+
+                    {currentShift && (
+                        <button
+                            onClick={handleEndShift}
+                            style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+                        >
+                            End Shift
+                        </button>
+                    )}
                 </div>
-            )}
+            </div>
             <div className="kds-columns">
                 {KDS_COLUMNS.map(col => (
                     <div key={col.id} className={`kds-column kds-column--${col.color}`}>
