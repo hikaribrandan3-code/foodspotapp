@@ -19,12 +19,10 @@ export function StrategyDraftProvider({ children }) {
     }, [activeDraft])
 
     const ingestAIDraft = (payload) => {
-        console.log('🧠 [StrategyDraft] Ingesting AI Draft:', payload)
         setActiveDraft(payload)
     }
 
     const launchStudio = () => {
-        console.log('🚀 [StrategyDraft] Launching Studio with Draft:', activeDraft)
         setStudioMode(true)
     }
 

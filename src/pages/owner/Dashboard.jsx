@@ -4,6 +4,7 @@ import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useOrdersPolling } from '../../hooks/useOrdersPolling'
 import { useKDSAudio } from '../../hooks/useKDSAudio'
+import { VolumeIcon, BellIcon } from '../../components/AudioIcons'
 import { formatPrice } from '../../config/menuData'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -648,8 +649,6 @@ export default function Dashboard() {
 
   if (loading) return <BurgerLoader />
 
-  const volumeIcon = volume === 'low' ? '🔈' : volume === 'med' ? '🔉' : '🔊'
-
   return (
     <div style={{
       width: '100%', height: '100vh', background: T.bg, color: T.ink,
@@ -660,10 +659,11 @@ export default function Dashboard() {
       {!isUnlocked && (
         <div style={{
           background: '#FEF3C7', color: '#92400E', padding: '10px 16px',
-          fontSize: 13, fontWeight: 600, textAlign: 'center',
+          fontSize: 13, fontWeight: 600, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           borderBottom: '1px solid #FDE68A', cursor: 'pointer'
         }}>
-          🔔 Tap anywhere to enable order sound alerts
+          <BellIcon muted={false} size={16} color="#92400E" />
+          Tap anywhere to enable order sound alerts
         </div>
       )}
 
@@ -685,19 +685,20 @@ export default function Dashboard() {
                 title={`Volume: ${volume}`}
                 style={{
                   background: '#F3F4F6', border: 'none', borderRadius: 8,
-                  padding: '6px 10px', fontSize: 16, cursor: 'pointer',
-                  opacity: isMuted ? 0.4 : 1
+                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  opacity: isMuted ? 0.4 : 1, color: '#0F1B2D'
                 }}
-              >{volumeIcon}</button>
+              ><VolumeIcon level={volume} size={18} /></button>
               <button
                 onClick={toggleMute}
                 title={isMuted ? 'Unmute' : 'Mute'}
                 style={{
                   background: isMuted ? '#FEE2E2' : '#F3F4F6',
                   border: 'none', borderRadius: 8,
-                  padding: '6px 10px', fontSize: 16, cursor: 'pointer'
+                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  color: isMuted ? '#B33A3A' : '#0F1B2D'
                 }}
-              >{isMuted ? '🔕' : '🔔'}</button>
+              ><BellIcon muted={isMuted} size={18} /></button>
               {/* New Order button */}
               <button
                 onClick={() => setShowCreateOrder(true)}

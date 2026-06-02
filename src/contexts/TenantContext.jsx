@@ -80,7 +80,6 @@ export function TenantProvider({ children }) {
         if (!possibleSlug || SYSTEM_ROUTES.includes(possibleSlug)) {
             const lastActive = localStorage.getItem('fs_last_active_slug')
             if (lastActive) {
-                console.log(`[TenantLock] 🔌 Recovered identity for system route '/${possibleSlug}': ${lastActive}`)
                 return lastActive
             }
             return null
@@ -97,18 +96,12 @@ export function TenantProvider({ children }) {
                 const targetSlug = getTargetSlug()
 
                 if (!targetSlug) {
-                    console.warn('[TenantLock] ⚠️ No Identity Found. Waiting for injection or manual slug.')
                     setLoading(false)
                     return
                 }
 
-                console.log(`[TenantLock] 🔐 Locking Tenant: ${targetSlug}`)
-
-                console.log(`[TenantLock] 🔐 Locking Tenant: ${targetSlug}`)
-
                 // ⚡ MISSION PROTOCOL: DIRECT "UNIVERSAL TRUTH" URL RESOLUTION
                 // We bypass volatile local state / polling to prevent Identity collisions
-                console.log('[TenantLock] 📡 Fetching Identity directly from Supabase via URL Slug...')
                 await revalidate(targetSlug)
 
             } catch (err) {
@@ -127,12 +120,10 @@ export function TenantProvider({ children }) {
                 .maybeSingle()
 
             if (brandingError) {
-                console.error('[TenantLock] Branding fetch error:', brandingError.message, brandingError.details);
                 throw brandingError;
             }
 
             if (!brandingData) {
-                console.error(`[TenantLock] No branding row found for slug: ${slug}`);
                 // Clear stale slug so broken tenants don't poison future loads
                 localStorage.removeItem('fs_last_active_slug');
                 localStorage.removeItem('fs_business_id');
@@ -150,7 +141,6 @@ export function TenantProvider({ children }) {
 
                 // 🆘 ULTIMATE FAILSAFE: If venue_name fails, fetch by authenticated owner ID
                 if ((langError || !tenantRow) && mounted) {
-                    console.log(`[TenantLock] 🆘 Venue Lookup Failed (${slug}). Trying Owner Failsafe...`);
                     const { data: { user } } = await supabase.auth.getUser();
                     if (user) {
                         const { data: ownerRow, error: ownerError } = await supabase
@@ -160,15 +150,10 @@ export function TenantProvider({ children }) {
                             .maybeSingle();
 
                         if (!ownerError && ownerRow) {
-                            console.log(`[TenantLock] ✅ Failsafe Success: Identity secured via owner_id.`);
                             tenantRow = ownerRow;
                             langError = null;
                         }
                     }
-                }
-
-                if (langError) {
-                    console.error("SUPABASE ERROR (Tenants Fetch):", langError.message, langError.details);
                 }
 
                 // MERGE: Ensure we keep the actual tenant PK (id) and venue_name
@@ -184,7 +169,6 @@ export function TenantProvider({ children }) {
                     // 🚀 VAULT-SEAL: Pre-fetch critical images in background
                     const prefetchUrls = extractPrefetchUrls(data)
                     if (prefetchUrls.length > 0) {
-                        console.log(`[TenantLock] 🚀 Pre-fetching ${prefetchUrls.length} images...`)
                         prefetchImages(prefetchUrls)
                     }
                 }
@@ -214,7 +198,6 @@ export function TenantProvider({ children }) {
                         filter: businessId ? `business_id=eq.${businessId}` : undefined
                     },
                     (payload) => {
-                        console.log('[TenantLock] 🔄 Real-time Update Received:', payload.new);
                         setTenantData(prev => ({
                             ...prev,
                             ...payload.new,
@@ -243,8 +226,6 @@ export function TenantProvider({ children }) {
                     filter: businessId ? `business_id=eq.${businessId}` : undefined
                 },
                 (payload) => {
-                    console.log('[TenantLock] 🔄 Branding Update Received:', payload.new);
-                    console.log('[TenantLock] 🔄 cameraPinStyle in realtime:', payload.new.app_config?.cameraPinStyle, 'full app_config:', payload.new.app_config);
                     setTenantData(prev => ({
                         ...prev,
                         app_config: payload.new.app_config || prev.app_config,
@@ -274,9 +255,6 @@ export function TenantProvider({ children }) {
         // This ensures cameraPinStyle and other app_config changes update tenantData immediately
         const handleFrontendSync = (e) => {
             const syncData = e.detail;
-            console.log('[TenantLock] 🎯 frontendSync event received (full detail):', syncData);
-            console.log('[TenantLock] 🎯 app_config:', syncData?.app_config, 'cameraPinStyle:', syncData?.app_config?.cameraPinStyle);
-
             if (syncData) {
                 // CRITICAL: Merge app_config first, then other branding/colors fields
                 const updatedData = {
@@ -287,10 +265,9 @@ export function TenantProvider({ children }) {
                 if (syncData.app_config) {
                     updatedData.app_config = {
                         ...(tenantData?.app_config || {}),
-                        ...syncData.app_config  // cameraPinStyle will be here
+                        ...syncData.app_config
                     };
                 }
-                console.log('[TenantLock] 🎯 Setting tenantData with app_config:', updatedData.app_config);
                 setTenantData(updatedData);
             }
         };
@@ -311,7 +288,6 @@ export function TenantProvider({ children }) {
     // 🔄 GLOBAL REFRESH Action
     const refreshTenantData = async () => {
         if (!businessId) return
-        console.log('🔄 FORCING GLOBAL REFRESH...')
 
         try {
             const { data: brandingData, error: brandingError } = await supabase
@@ -363,10 +339,6 @@ export function TenantProvider({ children }) {
                     }
                 }
 
-                if (langError) {
-                    console.error("SUPABASE ERROR (Tenants Refresh):", langError.message, langError.details);
-                }
-
                 // 🛡️ PRESERVE EXISTING LANGUAGE: Only fall back to 'en' if we truly have no data
                 const data = {
                     ...brandingData,
@@ -376,9 +348,6 @@ export function TenantProvider({ children }) {
                 }
                 setTenantData(data)
                 localStorage.setItem('fs_business_id', data.business_id)
-                console.log('✅ GLOBAL REFRESH COMPLETE')
-            } else {
-                console.error('[TenantLock] Refresh failed: no branding row found for business_id:', businessId);
             }
         } catch (err) {
             console.error('Refresh Failed', err)

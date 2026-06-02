@@ -16,9 +16,7 @@ export const LanguageProvider = ({ children }) => {
     };
 
     // No-op — language is locked to Spanish
-    const changeLanguage = async () => {
-        console.log('[LanguageContext] Language is hardwired to Spanish (es)');
-    };
+    const changeLanguage = async () => {};
 
     return (
         <LanguageContext.Provider value={{ lang, t, changeLanguage, language: lang, setLanguage: changeLanguage }}>
