@@ -921,7 +921,7 @@ export default function Menu({ config: configProp }) {
                     <button
                         onClick={() => navigate(`/${tenantData?.slug || 'demo'}/order`)}
                         style={{
-                            width: '100%', padding: '14px 24px', background: config.colors?.confirmation || '#22C55E',
+                            width: '100%', padding: '14px 24px', background: tenantData?.confirmation_color || '#22C55E',
                             color: 'white', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', letterSpacing: '-0.01em'
                         }}
                     >
