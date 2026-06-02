@@ -206,7 +206,7 @@ function BackendNav({
 }) {
     const navigate = useNavigate()
     const { t } = useLanguage()
-    const { tenantData } = useTenant()
+    const { tenantData, businessId: contextBusinessId } = useTenant()
     const location = useLocation()
     const params = useParams()
     const lastTapRef = useRef(0)
@@ -587,7 +587,28 @@ function BackendNav({
                     {/* Staff View */}
                     {tenantSlug && (
                         <button
-                            onClick={() => navigate(`/${tenantSlug}/staff/dashboard`)}
+                            onClick={async () => {
+                                const { supabase: sb } = await import('../lib/supabaseClient.js')
+                                const { data: { session } } = await sb.auth.getSession()
+                                const businessId = contextBusinessId || localStorage.getItem('fs_business_id') || ''
+                                const ownerEntry = {
+                                    id: session?.user?.id || 'owner',
+                                    business_id: businessId,
+                                    name: tenantData?.venue_name || session?.user?.email || 'Owner',
+                                    role: 'owner',
+                                    email: session?.user?.email || ''
+                                }
+                                localStorage.setItem('fs_staff_member', JSON.stringify(ownerEntry))
+                                localStorage.setItem('fs_business_id', businessId)
+                                localStorage.setItem('fs_current_shift', JSON.stringify({
+                                    id: `owner-preview-${Date.now()}`,
+                                    staff_id: ownerEntry.id,
+                                    business_id: businessId,
+                                    clock_in_at: new Date().toISOString(),
+                                    status: 'active'
+                                }))
+                                navigate(`/${tenantSlug}/staff/dashboard`)
+                            }}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: 10,
                                 width: '100%', padding: '9px 12px', borderRadius: 10,
