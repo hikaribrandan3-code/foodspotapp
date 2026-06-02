@@ -206,13 +206,22 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? t('just_now') : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
+  // SLA check - is order overdue?
+  const slaMinutes = isDelivery ? 20 : isDineIn ? 25 : 15
+  const isOverdue = minsAgo > slaMinutes && ![ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED, ORDER_STATUS.DELIVERED].includes(order.status)
+
   // KDS stripe color based on order type
   const stripeColor = isDelivery ? '#3B82F6' : isDineIn ? '#10B981' : '#F97316'
 
   return (
     <div className="kds-order-card" style={{
-      background: T.card, borderRadius: 14, boxShadow: '0 1px 2px rgba(15,27,45,0.04), 0 4px 12px rgba(15,27,45,0.04)',
-      marginBottom: 14, overflow: 'hidden', borderLeft: `5px solid ${stripeColor}`,
+      background: isOverdue ? '#FEF2F2' : T.card,
+      borderRadius: 14,
+      boxShadow: isOverdue
+        ? '0 1px 2px rgba(239,68,68,0.1), 0 4px 12px rgba(239,68,68,0.06)'
+        : '0 1px 2px rgba(15,27,45,0.04), 0 4px 12px rgba(15,27,45,0.04)',
+      marginBottom: 14, overflow: 'hidden',
+      borderLeft: `5px solid ${isOverdue ? '#DC2626' : stripeColor}`,
     }}>
       {/* Tappable header */}
       <button onClick={onToggle} style={{
@@ -223,9 +232,19 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
           <div style={{ fontSize: 28, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em', lineHeight: 1 }}>
             #{String(order.order_number).padStart(3, '0')}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.muted, fontSize: 13, fontWeight: 500 }}>
-            <Icon type="clock" color={T.muted} size={14} />
-            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: isOverdue ? '#DC2626' : T.muted, fontSize: 13, fontWeight: 500 }}>
+              <Icon type="clock" color={isOverdue ? '#DC2626' : T.muted} size={14} />
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{timeStr}</span>
+            </div>
+            {isOverdue && (
+              <div style={{
+                padding: '2px 6px', borderRadius: 4, background: '#DC2626', color: 'white',
+                fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em'
+              }}>
+                Late
+              </div>
+            )}
           </div>
         </div>
 
@@ -693,6 +712,28 @@ export default function Dashboard() {
       )}
 
       <BackendHeader title={t('orders')} />
+
+      {/* Live order count header */}
+      <div style={{
+        padding: '12px 16px', background: T.card, borderBottom: `1px solid ${T.line}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24,
+        fontSize: 14, fontWeight: 600, color: T.body,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: T.statPrep, fontWeight: 700 }}>Prep</span>
+          <span style={{ color: T.muted }}>{counts.prep || 0}</span>
+        </div>
+        <span style={{ color: T.line2 }}>·</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: T.statReady, fontWeight: 700 }}>Ready</span>
+          <span style={{ color: T.muted }}>{counts.ready || 0}</span>
+        </div>
+        <span style={{ color: T.line2 }}>·</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ color: T.statOut, fontWeight: 700 }}>Out</span>
+          <span style={{ color: T.muted }}>{counts.out || 0}</span>
+        </div>
+      </div>
 
       <div style={{ overflowY: 'auto' }}>
         <div style={{ padding: '16px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
