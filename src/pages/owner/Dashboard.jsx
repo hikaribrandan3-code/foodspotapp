@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useOrdersPolling } from '../../hooks/useOrdersPolling'
+import { useKDSAudio } from '../../hooks/useKDSAudio'
 import { formatPrice } from '../../config/menuData'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import BurgerLoader from '../../components/BurgerLoader'
@@ -372,6 +373,7 @@ export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
   const { orders: fetchedOrders, loading, refreshOrders } = useOrdersPolling(businessId)
   const { t } = useLanguage()
+  const { isMuted, volume, isUnlocked, toggleMute, cycleVolume, playChime } = useKDSAudio()
   const [tab, setTab] = useState('active')
   const [filterBucket, setFilterBucket] = useState(null)
   const [processingOrderId, setProcessingOrderId] = useState(null)
@@ -380,6 +382,7 @@ export default function Dashboard() {
   const [paymentModalProcessing, setPaymentModalProcessing] = useState(false)
   const [showingMpAlias, setShowingMpAlias] = useState(false)
   const [showCreateOrder, setShowCreateOrder] = useState(false)
+  const [lastOrderCount, setLastOrderCount] = useState(0)
 
   // 🚀 OPTIMISTIC STATE: Mirrors fetched orders but allows instant local updates
   const [displayOrders, setDisplayOrders] = useState([])
@@ -622,30 +625,12 @@ export default function Dashboard() {
     }
   }, [])
 
-  // 🔔 Notification sound + push for new orders
-  const prevOrderCountRef = useRef(displayOrders.length)
+  // 🔔 Audio alert + browser notification for new orders
   useEffect(() => {
-    if (displayOrders.length > prevOrderCountRef.current && prevOrderCountRef.current > 0) {
-      const latestOrder = displayOrders[0]
-      // Audio ping (sharp double-chime like a service bell)
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
-        const playTone = (freq, delay, dur, vol) => {
-          const osc = audioCtx.createOscillator()
-          const gain = audioCtx.createGain()
-          osc.type = 'sine'
-          osc.frequency.value = freq
-          gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay)
-          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur)
-          osc.connect(gain)
-          gain.connect(audioCtx.destination)
-          osc.start(audioCtx.currentTime + delay)
-          osc.stop(audioCtx.currentTime + delay + dur)
-        }
-        playTone(880, 0, 0.15, 0.25)
-        playTone(1100, 0.15, 0.2, 0.25)
-      } catch (e) { /* ignore audio errors */ }
+    if (displayOrders.length > lastOrderCount && lastOrderCount > 0) {
+      playChime()
 
+      const latestOrder = displayOrders[0]
       // Browser push notification (works even when tab is backgrounded)
       if ('Notification' in window && Notification.permission === 'granted' && latestOrder) {
         try {
@@ -658,17 +643,30 @@ export default function Dashboard() {
         } catch { /* noop */ }
       }
     }
-    prevOrderCountRef.current = displayOrders.length
-  }, [displayOrders.length])
+    setLastOrderCount(displayOrders.length)
+  }, [displayOrders.length, lastOrderCount, playChime])
 
   if (loading) return <BurgerLoader />
+
+  const volumeIcon = volume === 'low' ? '🔈' : volume === 'med' ? '🔉' : '🔊'
 
   return (
     <div style={{
       width: '100%', height: '100vh', background: T.bg, color: T.ink,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      display: 'grid', gridTemplateRows: 'auto 1fr auto', overflow: 'hidden',
+      display: 'grid', gridTemplateRows: 'auto auto 1fr auto', overflow: 'hidden',
     }}>
+      {/* Unlock banner */}
+      {!isUnlocked && (
+        <div style={{
+          background: '#FEF3C7', color: '#92400E', padding: '10px 16px',
+          fontSize: 13, fontWeight: 600, textAlign: 'center',
+          borderBottom: '1px solid #FDE68A', cursor: 'pointer'
+        }}>
+          🔔 Tap anywhere to enable order sound alerts
+        </div>
+      )}
+
       <BackendHeader title={t('orders')} />
 
       <div style={{ overflowY: 'auto' }}>
@@ -680,13 +678,35 @@ export default function Dashboard() {
                 Owner HQ
               </h1>
             </div>
-            <button
-              onClick={() => setShowCreateOrder(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              {t('new_order')}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Audio controls */}
+              <button
+                onClick={cycleVolume}
+                title={`Volume: ${volume}`}
+                style={{
+                  background: '#F3F4F6', border: 'none', borderRadius: 8,
+                  padding: '6px 10px', fontSize: 16, cursor: 'pointer',
+                  opacity: isMuted ? 0.4 : 1
+                }}
+              >{volumeIcon}</button>
+              <button
+                onClick={toggleMute}
+                title={isMuted ? 'Unmute' : 'Mute'}
+                style={{
+                  background: isMuted ? '#FEE2E2' : '#F3F4F6',
+                  border: 'none', borderRadius: 8,
+                  padding: '6px 10px', fontSize: 16, cursor: 'pointer'
+                }}
+              >{isMuted ? '🔕' : '🔔'}</button>
+              {/* New Order button */}
+              <button
+                onClick={() => setShowCreateOrder(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                {t('new_order')}
+              </button>
+            </div>
           </div>
           <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
             {counts.active} {t('active_orders').toLowerCase()} · {counts.cash} {t('cash').toLowerCase()} {t('pendent_status').toLowerCase()} · {counts.delivered} {t('delivered_status').toLowerCase()} {t('analytics_today').toLowerCase()}
