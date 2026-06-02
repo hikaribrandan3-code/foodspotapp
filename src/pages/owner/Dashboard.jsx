@@ -185,21 +185,18 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
   const minsAgo = Math.max(0, Math.round((Date.now() - new Date(order.created_at)) / 60000))
   const timeStr = minsAgo < 1 ? 'just now' : minsAgo < 60 ? `${minsAgo}m` : `${Math.floor(minsAgo / 60)}h`
 
-  // Color stripe based on order type
-  const stripeColor = isDelivery ? '#3B82F6' : isDineIn ? '#10B981' : '#F97316'
-
   return (
     <div style={{
-      background: T.card, borderRadius: 12, boxShadow: '0 1px 3px rgba(15,27,45,0.08)',
-      overflow: 'hidden', borderLeft: `5px solid ${stripeColor}`,
+      background: T.card, borderRadius: 14, boxShadow: '0 1px 2px rgba(15,27,45,0.04), 0 4px 12px rgba(15,27,45,0.04)',
+      marginBottom: 14, overflow: 'hidden',
     }}>
       {/* Tappable header */}
       <button onClick={onToggle} style={{
         width: '100%', background: 'none', border: 'none', cursor: 'pointer',
-        padding: '12px 14px', textAlign: 'left', fontFamily: 'inherit',
+        padding: 16, textAlign: 'left', fontFamily: 'inherit',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em', lineHeight: 1 }}>
+          <div style={{ fontSize: 24, fontWeight: 800, color: T.ink, letterSpacing: '-0.02em' }}>
             #{String(order.order_number).padStart(3, '0')}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.muted, fontSize: 13, fontWeight: 500 }}>
@@ -231,7 +228,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
 
       {/* Expanded detail panel */}
       {expanded && (
-        <div style={{ padding: '0 14px 14px' }}>
+        <div style={{ padding: '0 16px 16px' }}>
           <div style={{ borderTop: `1px solid ${T.line2}`, marginBottom: 12 }} />
 
           {/* Items list */}
@@ -672,67 +669,105 @@ export default function Dashboard() {
 
       <BackendHeader title={t('orders')} />
 
-      {/* KDS Header: Audio controls + New Order button */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px', background: T.card, borderBottom: `1px solid ${T.line}`
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Audio controls */}
-          <button
-            onClick={cycleVolume}
-            title={`Volume: ${volume}`}
-            style={{
-              background: '#F3F4F6', border: 'none', borderRadius: 8,
-              padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-              opacity: isMuted ? 0.4 : 1, color: '#0F1B2D'
-            }}
-          ><VolumeIcon level={volume} size={18} /></button>
-          <button
-            onClick={toggleMute}
-            title={isMuted ? 'Unmute' : 'Mute'}
-            style={{
-              background: isMuted ? '#FEE2E2' : '#F3F4F6',
-              border: 'none', borderRadius: 8,
-              padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-              color: isMuted ? '#B33A3A' : '#0F1B2D'
-            }}
-          ><BellIcon muted={isMuted} size={18} /></button>
-        </div>
-        {/* New Order button */}
-        <button
-          onClick={() => setShowCreateOrder(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {t('new_order')}
-        </button>
-      </div>
-
       <div style={{ overflowY: 'auto' }}>
-        {/* Optional filter pills (kept for now, can be hidden) */}
-
-        <div style={{ padding: '12px 16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
-            <button onClick={nukeAllOrders} style={{
-              padding: '8px 12px',
-              fontSize: 11,
-              fontWeight: 600,
-              background: '#EF4444',
-              color: '#FFF',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              letterSpacing: '0.02em',
-            }}>
-              {t('delete_label')}
-            </button>
+        <div style={{ padding: '16px 16px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.statPrep }}>
+              <Icon type="grid" color={T.statPrep} size={22} />
+              <h1 style={{ margin: 0, color: T.ink, fontSize: 28, fontWeight: 800, letterSpacing: '-0.025em' }}>
+                Owner HQ
+              </h1>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Audio controls */}
+              <button
+                onClick={cycleVolume}
+                title={`Volume: ${volume}`}
+                style={{
+                  background: '#F3F4F6', border: 'none', borderRadius: 8,
+                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  opacity: isMuted ? 0.4 : 1, color: '#0F1B2D'
+                }}
+              ><VolumeIcon level={volume} size={18} /></button>
+              <button
+                onClick={toggleMute}
+                title={isMuted ? 'Unmute' : 'Mute'}
+                style={{
+                  background: isMuted ? '#FEE2E2' : '#F3F4F6',
+                  border: 'none', borderRadius: 8,
+                  padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                  color: isMuted ? '#B33A3A' : '#0F1B2D'
+                }}
+              ><BellIcon muted={isMuted} size={18} /></button>
+              {/* New Order button */}
+              <button
+                onClick={() => setShowCreateOrder(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: 'none', backgroundColor: T.blueBg, color: T.blueInk, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                {t('new_order')}
+              </button>
+            </div>
+          </div>
+          <div style={{ color: T.muted, fontSize: 14, marginTop: 4 }}>
+            {counts.active} {t('active_orders').toLowerCase()} · {counts.cash} {t('cash').toLowerCase()} {t('pendent_status').toLowerCase()} · {counts.delivered} {t('delivered_status').toLowerCase()} {t('analytics_today').toLowerCase()}
           </div>
 
+          <div style={{
+            marginTop: 14, background: T.card, borderRadius: 14, border: `1px solid ${T.line}`,
+            padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <div style={{ fontSize: 11, color: T.muted, fontWeight: 600, letterSpacing: '0.08em', marginBottom: 4 }}>
+                {t('recent_orders')?.toUpperCase()}
+              </div>
+              <div style={{
+                fontSize: 26, fontWeight: 800, color: T.ink, letterSpacing: '-0.025em', lineHeight: 1,
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {formatPrice(todayRev)}
+              </div>
+              <div style={{ color: T.muted, fontSize: 12.5, marginTop: 4 }}>
+                {t('across') || 'across'} {displayOrders.filter(o => o.status !== ORDER_STATUS.CANCELLED).length} {t('orders_count')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '0 16px 16px', display: 'flex', gap: 8 }}>
+          {OWNER_STATS(t).map(s => (
+            <button key={s.key}
+              onClick={() => setFilterBucket(filterBucket === s.key ? null : s.key)}
+              style={{
+                flex: 1, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer',
+                opacity: !filterBucket || filterBucket === s.key ? 1 : 0.45, transition: 'opacity 160ms',
+              }}>
+              <StatTile statKey={s.key} label={s.label} count={counts[s.key] || 0} accent={s.color} />
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '0 16px 12px', gap: 8, flexWrap: 'wrap' }}>
+          <ActiveTabPills tab={tab} setTab={setTab} counts={counts} />
+          <button onClick={nukeAllOrders} style={{
+            padding: '11px 14px',
+            fontSize: 12,
+            fontWeight: 600,
+            background: '#EF4444',
+            color: '#FFF',
+            border: 'none',
+            borderRadius: 10,
+            cursor: 'pointer',
+            letterSpacing: '0.02em',
+          }}>
+            {t('delete_label')}
+          </button>
+        </div>
+
+        <div style={{ padding: '0 16px 24px' }}>
           {filterBucket && (
             <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0 12px 0', marginBottom: 12, borderBottom: `1px solid ${T.line}`
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px 12px',
             }}>
               <div style={{ fontSize: 12, color: T.muted, fontWeight: 600, letterSpacing: '0.06em' }}>
                 FILTERED · {OWNER_STATS(t).find(s => s.key === filterBucket).label}
@@ -757,26 +792,17 @@ export default function Dashboard() {
               <div style={{ fontSize: 13 }}>New {tab} orders will appear here.</div>
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: 12,
-              '@media (max-width: 768px)': {
-                gridTemplateColumns: '1fr'
-              }
-            }}>
-              {filtered.map(o => (
-                <OrderCard
-                  key={o.id}
-                  order={o}
-                  onAdvance={() => advance(o)}
-                  onCancel={() => cancel(o)}
-                  expanded={expandedOrderId === o.id}
-                  onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
-                  t={t}
-                />
-              ))}
-            </div>
+            filtered.map(o => (
+              <OrderCard
+                key={o.id}
+                order={o}
+                onAdvance={() => advance(o)}
+                onCancel={() => cancel(o)}
+                expanded={expandedOrderId === o.id}
+                onToggle={() => setExpandedOrderId(expandedOrderId === o.id ? null : o.id)}
+                t={t}
+              />
+            ))
           )}
         </div>
       </div>
