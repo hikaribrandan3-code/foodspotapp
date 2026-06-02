@@ -70,6 +70,7 @@ const OWNER_STATS = (t) => [
   { key: 'out', label: t('on_way_status').toUpperCase(), color: T.statOut, matches: [ORDER_STATUS.DISPATCHED] },
 ]
 
+// Simplified KDS flow for orders
 const FLOW_MAP = (t) => ({
   delivery: [
     { from: ORDER_STATUS.PENDING_PAYMENT,  to: ORDER_STATUS.RELEASED_TO_KITCHEN, label: t('confirm_payment'), intent: 'orange', isPaymentConfirm: true },
