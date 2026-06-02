@@ -128,11 +128,9 @@ function AddContactModal({ onClose, onAdd }) {
 export default function CustomerContacts() {
   const { businessId, tenantData } = useTenant()
   const { language } = useLanguage()
-  const { contacts, loading, addContact, deleteContact } = useCustomerContacts(businessId)
+  const { contacts, loading, addContact } = useCustomerContacts(businessId)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(null)
-  const [deleteError, setDeleteError] = useState('')
 
 
   const t = (key) => translations[key]?.[language] || translations[key]?.en || key
@@ -140,9 +138,8 @@ export default function CustomerContacts() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return contacts.filter(c =>
-      !c.archived_at &&
-      ((c.name || '').toLowerCase().includes(q) ||
-      (c.phone || '').includes(q))
+      (c.name || '').toLowerCase().includes(q) ||
+      (c.phone || '').includes(q)
     )
   }, [contacts, search])
 
@@ -298,58 +295,6 @@ export default function CustomerContacts() {
                 {new Date(contact.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
               </div>
 
-              {/* Archive button */}
-              {confirmDelete === contact.id ? (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const { error } = await deleteContact(contact.id)
-                        if (error) {
-                          alert(`${t('delete_failed')}: ${error.message || error}`)
-                          console.error('Delete error:', error)
-                        } else {
-                          setConfirmDelete(null)
-                          setDeleteError('')
-                        }
-                      } catch (err) {
-                        alert(`${t('delete_failed')}: ${err.message}`)
-                        console.error('Delete exception:', err)
-                      }
-                    }}
-                    style={{
-                      background: T.redBg, color: T.redInk, border: 'none',
-                      borderRadius: 50, padding: '6px 14px', fontSize: 12,
-                      fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit'
-                    }}
-                  >{t('delete')}</button>
-                  <button
-                    onClick={() => { setConfirmDelete(null); setDeleteError('') }}
-                    style={{
-                      background: T.line2, color: T.muted, border: 'none',
-                      borderRadius: 50, padding: '6px 14px', fontSize: 12,
-                      fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit'
-                    }}
-                  >{t('cancel')}</button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmDelete(contact.id)}
-                  style={{
-                    background: 'none', border: `1.5px solid ${T.line}`,
-                    borderRadius: 50, width: 36, height: 36,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: T.muted, flexShrink: 0,
-                    transition: 'all 0.15s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = T.redInk; e.currentTarget.style.color = T.redInk }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = T.line; e.currentTarget.style.color = T.muted }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                  </svg>
-                </button>
-              )}
             </div>
           ))}
         </div>

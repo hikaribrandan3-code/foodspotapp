@@ -361,18 +361,6 @@ function Order({ config: configProp }) {
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
 
-            // ─── STEP 3.5: AUTO-IMPORT CUSTOMER INTO CRM ──────
-            if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                try {
-                    await supabase.from('customer_contacts').upsert({
-                        business_id: savedOrder.business_id,
-                        phone: savedOrder.customer_phone.trim(),
-                        name: savedOrder.customer_name.trim(),
-                        archived_at: null
-                    }, { onConflict: 'business_id,phone' })
-                } catch (_) {}
-            }
-
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
             if (effectivePaymentMethod === 'mercado_pago') {
                 try {
@@ -508,18 +496,6 @@ function Order({ config: configProp }) {
             }
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
-
-            // Auto-import customer into CRM
-            if (savedOrder?.customer_phone && savedOrder?.business_id && savedOrder?.customer_name) {
-                try {
-                    await supabase.from('customer_contacts').upsert({
-                        business_id: savedOrder.business_id,
-                        phone: savedOrder.customer_phone.trim(),
-                        name: savedOrder.customer_name.trim(),
-                        archived_at: null
-                    }, { onConflict: 'business_id,phone' })
-                } catch (_) {}
-            }
 
             // 🔒 MVP: Auto-open WhatsApp (Pedix style) — customer confirms order in chat
             const whatsappUrl = buildWhatsAppUrl(newOrder)

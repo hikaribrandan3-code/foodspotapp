@@ -11,14 +11,31 @@ export function useCustomerContacts(businessId) {
       return
     }
     const { data, error } = await supabase
-      .from('customer_contacts')
-      .select('*')
+      .from('orders')
+      .select('customer_phone, customer_name, created_at')
       .eq('business_id', businessId)
-      .order('updated_at', { ascending: false })
+      .not('customer_phone', 'is', null)
+      .order('created_at', { ascending: false })
+
     if (error) {
       console.error('[useCustomerContacts] Fetch error:', error)
+      setContacts([])
+    } else {
+      // Deduplicate by phone — keep most recent order per customer
+      const seen = new Set()
+      const unique = (data || []).filter(row => {
+        const phone = row.customer_phone?.trim()
+        if (!phone || seen.has(phone)) return false
+        seen.add(phone)
+        return true
+      }).map(row => ({
+        id: row.customer_phone,
+        phone: row.customer_phone,
+        name: row.customer_name || row.customer_phone,
+        updated_at: row.created_at
+      }))
+      setContacts(unique)
     }
-    setContacts(data || [])
     setLoading(false)
   }, [businessId])
 
@@ -35,25 +52,5 @@ export function useCustomerContacts(businessId) {
     return { error }
   }
 
-  const deleteContact = async (id) => {
-    try {
-      const { error } = await supabase
-        .from('customer_contacts')
-        .update({ archived_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('business_id', businessId)
-      if (error) {
-        console.error('[useCustomerContacts] Archive error:', error)
-        return { error }
-      }
-      console.log('[useCustomerContacts] Archived contact', id)
-      await fetchContacts()
-      return { error: null }
-    } catch (err) {
-      console.error('[useCustomerContacts] Archive exception:', err)
-      return { error: err }
-    }
-  }
-
-  return { contacts, loading, refreshContacts: fetchContacts, addContact, deleteContact }
+  return { contacts, loading, refreshContacts: fetchContacts, addContact }
 }
