@@ -3,10 +3,13 @@ import { ThemeProvider } from '@/hooks/useTheme'
 import { ToastProvider } from '@/components/ToastContainer'
 import MobileFrame from '@/components/MobileFrame'
 import { LanguageProvider } from './contexts/LanguageContext'
+import { useBusiness } from './contexts/BusinessContext'
 
-export default function App() {
+function AppContent() {
+  const { businessId } = useBusiness();
+
   return (
-    <LanguageProvider>
+    <LanguageProvider businessId={businessId}>
       <ThemeProvider>
         <ToastProvider>
           <OrderProvider>
@@ -16,4 +19,8 @@ export default function App() {
       </ThemeProvider>
     </LanguageProvider>
   )
+}
+
+export default function App() {
+  return <AppContent />
 }

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { t as translate } from '../lib/translations';
+// @ts-ignore
+import { supabase } from '../../lib/supabaseClient.js';
 
 interface LanguageContextType {
   language: string;
@@ -9,10 +11,26 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
+export function LanguageProvider({ businessId, children }: { businessId?: string; children: React.ReactNode }) {
   const [language, setLanguageState] = useState(() => {
     return localStorage.getItem('fs_staff_language') || 'en';
   });
+
+  // Fetch tenant's language from app_config on mount
+  useEffect(() => {
+    if (!businessId) return;
+    supabase
+      .from('branding')
+      .select('app_config')
+      .eq('business_id', businessId)
+      .single()
+      .then(({ data }: { data: any }) => {
+        const tenantLang = data?.app_config?.language || 'en';
+        setLanguageState(tenantLang);
+        localStorage.setItem('fs_staff_language', tenantLang);
+      })
+      .catch(() => {}); // silent fail, use localStorage default
+  }, [businessId]);
 
   const setLanguage = (lang: string) => {
     setLanguageState(lang);

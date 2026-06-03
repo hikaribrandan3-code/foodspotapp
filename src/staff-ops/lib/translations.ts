@@ -286,6 +286,11 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     es: 'Confirmar Pago',
     pt: 'Confirmar Pagamento',
   },
+  'cancel_order': {
+    en: 'Cancel Order',
+    es: 'Cancelar Pedido',
+    pt: 'Cancelar Pedido',
+  },
   'payment_verify_required': {
     en: 'Payment must be verified before kitchen sees this order.',
     es: 'El pago debe verificarse antes de que la cocina vea este pedido.',
