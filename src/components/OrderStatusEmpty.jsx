@@ -420,26 +420,6 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                     </section>
                 )}
 
-            {/* Categories */}
-            <section className="ose-categories">
-                <h3 className="ose-section-title">{categoriesText}</h3>
-                <div className="ose-categories-scroll">
-                    {displayCategories.map((cat, idx) => (
-                        <button
-                            key={cat.id}
-                            className="ose-category"
-                            onClick={() => handleCategoryClick(cat.slug || cat.name)}
-                        >
-                            <div className="ose-category-icon">
-                                <span style={{ fontSize: 24, paddingBottom: 2 }}>
-                                    {getCategoryEmoji(cat.name, idx)}
-                                </span>
-                            </div>
-                            <span className="ose-category-name">{cat.name}</span>
-                        </button>
-                    ))}
-                </div>
-            </section>
 
                 {/* MunchBoy Arcade Card */}
                 <section className="ose-arcade" onClick={() => setShowArcade(true)}>
