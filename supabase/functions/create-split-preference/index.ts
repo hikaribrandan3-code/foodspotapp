@@ -74,7 +74,7 @@ serve(async (req: Request) => {
         // Get business branding
         const { data: branding, error: brandingError } = await supabase
             .from("branding")
-            .select("mp_access_token, business_name, slug, currency")
+            .select("mp_access_token, business_name, slug, app_config")
             .eq("business_id", business_id)
             .single();
 
@@ -99,7 +99,7 @@ serve(async (req: Request) => {
                 title: `Pedido Mesa ${ledger.table_number || '—'} - ${participant_name || 'Comensal'}`,
                 quantity: 1,
                 unit_price: Math.round(amount * 100) / 100,
-                currency_id: branding.currency || "ARS"
+                currency_id: (branding.app_config as any)?.businessCurrency || "ARS"
             }],
             back_urls: {
                 success: `${statusBase}?split_id=${split_id}&payment=success`,

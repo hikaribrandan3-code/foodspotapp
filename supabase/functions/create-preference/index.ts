@@ -45,7 +45,7 @@ serve(async (req: Request) => {
 
         const { data: branding, error: brandingError } = await supabase
             .from('branding')
-            .select("mp_access_token, business_name, slug")
+            .select("mp_access_token, business_name, slug, app_config")
             .eq("business_id", order.business_id)
             .single();
 
@@ -64,7 +64,7 @@ serve(async (req: Request) => {
                 title: `Pedido #${order.order_number} - ${businessName}`,
                 quantity: 1,
                 unit_price: order.total / 100,
-                currency_id: "ARS"
+                currency_id: (branding.app_config as any)?.businessCurrency || "ARS"
             }],
             payer: {
                 name: order.customer_name || "Guest",

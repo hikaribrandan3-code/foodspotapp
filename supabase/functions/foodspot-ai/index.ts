@@ -38,10 +38,22 @@ function isPlanMode(message: string): boolean {
     return PLAN_TRIGGERS.some((r) => r.test(message));
 }
 
+// ─── CURRENCY CONFIG (mirrors src/utils/currency.js) ─────────────────────
+const CURRENCY_CONFIG: Record<string, { locale: string; symbol: string }> = {
+    ARS: { locale: "es-AR", symbol: "$"  },
+    USD: { locale: "en-US", symbol: "$"  },
+    BRL: { locale: "pt-BR", symbol: "R$" },
+    CLP: { locale: "es-CL", symbol: "$"  },
+    COP: { locale: "es-CO", symbol: "$"  },
+    MXN: { locale: "es-MX", symbol: "$"  },
+    PEN: { locale: "es-PE", symbol: "S/" },
+    UYU: { locale: "es-UY", symbol: "$"  },
+};
+
 // ─── CONTEXT FETCHER ─────────────────────────────────────────────────────
-async function fetchBusinessContext(businessId: string, supabase: any): Promise<string> {
+async function fetchBusinessContext(businessId: string, supabase: any): Promise<{ context: string; currency: string }> {
     try {
-        const [{ data: orders }, { data: menu }, { data: inventory }] = await Promise.all([
+        const [{ data: orders }, { data: menu }, { data: inventory }, { data: branding }] = await Promise.all([
             supabase.rpc("get_ai_business_context", {
                 p_business_id: businessId,
                 p_days: 7,
@@ -52,14 +64,23 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
             supabase.rpc("get_ai_inventory_context", {
                 p_business_id: businessId,
             }),
+            supabase
+                .from("branding")
+                .select("app_config")
+                .eq("business_id", businessId)
+                .single(),
         ]);
 
+        const currency: string = branding?.app_config?.businessCurrency || "ARS";
+
         if (!orders?.has_data) {
-            return ""; // New restaurant — no data yet
+            return { context: "", currency };
         }
 
         const lines: string[] = [];
-        const fmt = (n: number) => `$${Math.round(n).toLocaleString("es-AR")} ARS`;
+        const cfg = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.ARS;
+        const fmt = (n: number) =>
+            `${cfg.symbol}${Math.round(n / 100).toLocaleString(cfg.locale)} ${currency}`;
 
         // Revenue block
         lines.push(`📊 ÚLTIMOS ${orders.period_days} DÍAS:`);
@@ -100,12 +121,13 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
         if (menu?.categories?.length) {
             lines.push(`\n🍽️ MENÚ: ${menu.total_active} activos en ${menu.categories.length} categorías`);
 
-            // Menu stats
+            // Menu stats — avg_price already in pesos from SQL (AVG/100), others are counts
             if (menu.stats) {
                 const s = menu.stats;
+                const avgFormatted = `${cfg.symbol}${Math.round(s.avg_price).toLocaleString(cfg.locale)} ${currency}`;
                 const stats_line = [
                     `${s.active_items} items`,
-                    `Precio promedio: $${s.avg_price} ARS`,
+                    `Precio promedio: ${avgFormatted}`,
                     `${s.spicy_items} picantes`,
                     `${s.vegan_items} veganos`,
                     `${s.gluten_free_items} sin TACC`,
@@ -119,8 +141,8 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
                 if (cat.items?.length) {
                     for (const item of cat.items.slice(0, 6)) {
                         const tags = item.active_tags?.length ? ` [${item.active_tags.join(", ")}]` : "";
-                        const cal = item.calories ? ` • ${item.calories} cal` : "";
-                        lines.push(`    • ${item.name}: $${(item.price / 100).toFixed(2)} ARS${cal}${tags}`);
+                        const cal = item.calories ? ` • ${Math.round(item.calories)} cal` : "";
+                        lines.push(`    • ${item.name}: ${fmt(item.price)}${cal}${tags}`);
                     }
                 }
             }
@@ -151,10 +173,10 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
             }
         }
 
-        return lines.join("\n");
+        return { context: lines.join("\n"), currency };
     } catch (err) {
         console.error("[context] fetch failed:", err);
-        return "";
+        return { context: "", currency: "ARS" };
     }
 }
 
@@ -163,6 +185,7 @@ function buildSystemPrompt(
     language: string,
     businessName: string,
     contextBlock: string,
+    currency: string,
     planMode: boolean
 ): string {
     const hasData = contextBlock.length > 0;
@@ -191,6 +214,10 @@ Fecha actual: ${new Date().toISOString().split("T")[0]}`;
     if (!hasData) return noDataPrompt;
 
     const baseRules = `
+━━━ MONEDA ━━━
+La moneda de este negocio es ${currency}. Todos los precios en el contexto ya están convertidos a ${currency}.
+Muéstralos tal como aparecen — sin decimales, sin dividir. Ej: "$1.500 ${currency}" no "$15.00".
+
 ━━━ CÓMO RESPONDER ━━━
 1. SIEMPRE empieza mencionando sus datos reales. "Vi que..." o "Basándome en tus últimos ${7} días..."
 2. Cita los números exactos del contexto. Ej: "tus hamburguesas hicieron 23 pedidos a las 8pm"
@@ -362,15 +389,18 @@ serve(async (req: Request) => {
 
         // ── FETCH BUSINESS CONTEXT ─────────────────────────────────────
         let contextBlock = "";
+        let businessCurrency = "ARS";
         if (resolvedBusinessId) {
             const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-            contextBlock = await fetchBusinessContext(resolvedBusinessId, supabase);
+            const { context, currency } = await fetchBusinessContext(resolvedBusinessId, supabase);
+            contextBlock = context;
+            businessCurrency = currency;
         }
 
         const businessName = bodyName || "tu restaurante";
 
         // ── BUILD SYSTEM PROMPT ────────────────────────────────────────
-        const builtPrompt = buildSystemPrompt(language, businessName, contextBlock, planMode);
+        const builtPrompt = buildSystemPrompt(language, businessName, contextBlock, businessCurrency, planMode);
 
         // ── ROUTE TO LLM (GROQ ONLY) ───────────────────────────────────
         if (!GROQ_API_KEY) {

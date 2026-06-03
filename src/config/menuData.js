@@ -1,6 +1,8 @@
 // Default Menu Data - Argentine Style Café
-// All prices in ARS (Argentine Pesos)
+// All prices stored as integer cents (minor units) — currency set per business
 // This seeded data allows instant demos and avoids empty states
+
+import { formatCurrency } from '../utils/currency.js';
 
 export const defaultMenuData = {
     categories: [
@@ -261,10 +263,9 @@ export function getFeaturedItem() {
     return null;
 }
 
-// Format price in Argentine Pesos (prices stored in cents)
-export function formatPrice(price) {
-    const pesos = (price ?? 0) / 100;
-    return `$${pesos.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+// Format price from cents — currency-aware (prices stored as integer cents)
+export function formatPrice(price, currency = 'ARS') {
+    return formatCurrency(price ?? 0, currency);
 }
 
 // Reset menu to defaults
