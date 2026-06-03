@@ -41,12 +41,15 @@ function isPlanMode(message: string): boolean {
 // ─── CONTEXT FETCHER ─────────────────────────────────────────────────────
 async function fetchBusinessContext(businessId: string, supabase: any): Promise<string> {
     try {
-        const [{ data: orders }, { data: menu }] = await Promise.all([
+        const [{ data: orders }, { data: menu }, { data: inventory }] = await Promise.all([
             supabase.rpc("get_ai_business_context", {
                 p_business_id: businessId,
                 p_days: 7,
             }),
             supabase.rpc("get_ai_menu_context", {
+                p_business_id: businessId,
+            }),
+            supabase.rpc("get_ai_inventory_context", {
                 p_business_id: businessId,
             }),
         ]);
@@ -93,12 +96,58 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
             lines.push(`\nTipos de pedido: ${types}`);
         }
 
-        // Menu
+        // Menu with full item details
         if (menu?.categories?.length) {
-            lines.push(`\n🍽️ MENÚ: ${menu.total_active} productos activos en ${menu.categories.length} categorías`);
-            for (const cat of menu.categories.slice(0, 4)) {
-                const samples = cat.sample_items?.map((i: any) => i.name).join(", ") || "";
-                lines.push(`  • ${cat.name}: ${cat.item_count} items${samples ? ` (${samples}...)` : ""}`);
+            lines.push(`\n🍽️ MENÚ: ${menu.total_active} activos en ${menu.categories.length} categorías`);
+
+            // Menu stats
+            if (menu.stats) {
+                const s = menu.stats;
+                const stats_line = [
+                    `${s.active_items} items`,
+                    `Precio promedio: $${s.avg_price} ARS`,
+                    `${s.spicy_items} picantes`,
+                    `${s.vegan_items} veganos`,
+                    `${s.gluten_free_items} sin TACC`,
+                    `${s.featured_items} especiales`
+                ].filter(x => x).join(" | ");
+                lines.push(`  ${stats_line}`);
+            }
+
+            for (const cat of menu.categories.slice(0, 5)) {
+                lines.push(`  📌 ${cat.name} (${cat.item_count} items):`);
+                if (cat.items?.length) {
+                    for (const item of cat.items.slice(0, 6)) {
+                        const tags = item.active_tags?.length ? ` [${item.active_tags.join(", ")}]` : "";
+                        const cal = item.calories ? ` • ${item.calories} cal` : "";
+                        lines.push(`    • ${item.name}: $${(item.price / 100).toFixed(2)} ARS${cal}${tags}`);
+                    }
+                }
+            }
+        }
+
+        // Inventory
+        if (inventory?.has_data) {
+            lines.push(`\n📦 INVENTARIO (${inventory.total_tracked_items} items rastreados):`);
+
+            if (inventory.out_of_stock?.length) {
+                const names = inventory.out_of_stock.map((i: any) => i.name).join(", ");
+                lines.push(`  🔴 SIN STOCK: ${names}`);
+            }
+
+            if (inventory.low_stock?.length) {
+                lines.push(`  🟡 STOCK BAJO (reabastecer pronto):`);
+                for (const item of inventory.low_stock.slice(0, 5)) {
+                    lines.push(`    • ${item.name}: ${item.qty} ${item.unit || "unidades"} (mín. ${item.reorder_at})`);
+                }
+            }
+
+            if (!inventory.out_of_stock?.length && !inventory.low_stock?.length) {
+                lines.push(`  ✅ Todo el inventario en niveles saludables`);
+            }
+
+            if (inventory.total_cogs_value > 0) {
+                lines.push(`  Valor total en stock: ${fmt(inventory.total_cogs_value)}`);
             }
         }
 
