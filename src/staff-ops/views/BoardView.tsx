@@ -103,8 +103,8 @@ export default function BoardView() {
       {/* Active / Completed tabs */}
       <div className="px-4 pb-3">
         <div className="flex gap-2">
-          <TabButton active={tab === 'active'} onClick={() => setTab('active')} label="Active" count={activeOrders.length} />
-          <TabButton active={tab === 'completed'} onClick={() => setTab('completed')} label="Completed" count={completedOrders.length} />
+          <TabButton active={tab === 'active'} onClick={() => setTab('active')} label={t('active')} count={activeOrders.length} />
+          <TabButton active={tab === 'completed'} onClick={() => setTab('completed')} label={t('completed')} count={completedOrders.length} />
         </div>
       </div>
 

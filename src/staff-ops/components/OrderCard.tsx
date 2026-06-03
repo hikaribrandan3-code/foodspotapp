@@ -383,7 +383,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--status-icon-dispatch)', color: '#fff' }}
             >
               <Bike size={15} />
-              I'll Take This
+              {t('ill_take_this')}
             </button>
           </div>
         )}

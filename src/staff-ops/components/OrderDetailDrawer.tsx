@@ -5,6 +5,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { getWaitMinutes, getUrgencyLevel, STATUS_LABELS } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function openWhatsApp(phone: string, customerName: string) {
   const clean = phone.replace(/\D/g, '');
@@ -19,6 +20,7 @@ function callPhone(phone: string) {
 export default function OrderDetailDrawer() {
   const { state, selectOrder, verifyCash, confirmDelivery, advanceOrderStatus, confirmPayment } = useOrders();
   const { mpAlias } = useBusiness();
+  const { t } = useLanguage();
   const order = state.orders.find(o => o.id === state.selectedOrderId);
   const [showingAlias, setShowingAlias] = useState(false);
 
@@ -35,14 +37,14 @@ export default function OrderDetailDrawer() {
   const isDelivering = order.status === 'DISPATCH' || order.status === 'DELIVERING';
   const isDone = order.status === 'DONE';
 
-  // Next status label for the advance button — type-aware per FLOW_MAP
+  // Next status label for the advance button — type-aware per FLOW_MAP (TRANSLATED)
   const nextLabels: Record<string, string> = {
-    TODO: '▶ Start Prep',
-    PREP: '✓ Mark Ready',
-    READY: order.deliveryType === 'dine_in' ? '🍽️ Mark Served' :
-           order.deliveryType === 'delivery' ? '🚴 Assign Delivery' :
-           '✋ Hand Over',
-    DISPATCH: '📍 Mark Delivered',
+    TODO: `▶ ${t('start_prep')}`,
+    PREP: `✓ ${t('mark_ready')}`,
+    READY: order.deliveryType === 'dine_in' ? `🍽️ ${t('mark_served')}` :
+           order.deliveryType === 'delivery' ? `🚴 ${t('assign_delivery')}` :
+           `✋ ${t('hand_over')}`,
+    DISPATCH: `📍 ${t('mark_delivered')}`,
     DONE: '',
   };
   const nextLabel = nextLabels[order.status];

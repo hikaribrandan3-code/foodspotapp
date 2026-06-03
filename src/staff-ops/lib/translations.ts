@@ -400,6 +400,7 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'dine_in': { en: 'Dine-In', es: 'Comer Aquí', pt: 'Comer no Local' },
   'take_out': { en: 'Takeout', es: 'Retirar', pt: 'Retirada' },
   'cancel_confirm': { en: 'Are you sure you want to cancel this order?', es: '¿Está seguro de que desea cancelar este pedido?', pt: 'Tem certeza de que deseja cancelar este pedido?' },
+  'ill_take_this': { en: "I'll Take This", es: 'Yo lo Entrego', pt: 'Vou Entregar' },
 };
 
 export function t(key: string, lang: string = 'en'): string {
