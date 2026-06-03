@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { TierGuard } from '../../components/TierGuard.jsx'
 import { useTenant } from '../../contexts/TenantContext'
 import { useStrategyDraft } from '../../contexts/StrategyDraftContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -719,4 +720,12 @@ export function FoodSpotAI() {
     )
 }
 
-export default FoodSpotAI;
+function FoodSpotAIGated(props) {
+  return (
+    <TierGuard feature="ai">
+      <FoodSpotAI {...props} />
+    </TierGuard>
+  )
+}
+
+export default FoodSpotAIGated;

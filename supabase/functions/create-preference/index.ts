@@ -56,6 +56,25 @@ serve(async (req: Request) => {
             );
         }
 
+        // ── Free tier: enforce 30 MP orders/month limit ──────────────────
+        const { data: limits, error: limitsError } = await supabase
+            .rpc('check_tier_limits', { p_business_id: order.business_id });
+
+        if (!limitsError && limits && !limits.can_pay) {
+            console.warn(`🚫 [create-preference] Free tier limit reached for ${order.business_id}: ${limits.mp_used}/${limits.mp_limit}`);
+            return new Response(
+                JSON.stringify({
+                    error: "mp_limit_reached",
+                    message: `Límite mensual de pagos digitales alcanzado (${limits.mp_used}/${limits.mp_limit}). Actualiza a Pro para órdenes ilimitadas.`,
+                    mp_used: limits.mp_used,
+                    mp_limit: limits.mp_limit,
+                    upgrade_required: true,
+                }),
+                { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         const accessToken = branding.mp_access_token;
         const businessName = branding.business_name || "FoodSpot";
 

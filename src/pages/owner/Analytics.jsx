@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
+import { TierGuard } from '../../components/TierGuard.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { formatPrice } from '../../config/menuData.js'
 import { logout } from '../../utils/auth.js'
@@ -364,4 +365,12 @@ const Analytics = () => {
     )
 }
 
-export default Analytics
+function AnalyticsGated(props) {
+  return (
+    <TierGuard feature="analytics">
+      <Analytics {...props} />
+    </TierGuard>
+  )
+}
+
+export default AnalyticsGated

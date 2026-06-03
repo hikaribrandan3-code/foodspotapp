@@ -31,17 +31,21 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 5 games
+// Curated game library - 6 games
+// proOnly: true = locked for free tier users
 const GAMES = [
-  { id: 'burger-stack', name: 'Burger Stack', cover: '/games/burger-stack/cover.webp', url: '/games/burger-stack/index.html' },
-  { id: 'spice-invaders', name: 'Spice Invaders', cover: '/games/spice-invaders/cover.webp', url: '/games/spice-invaders/index.html' },
-  { id: 'bubble-tea', name: 'Bubble Tea', cover: '/games/bubble-tea/cover.webp', url: '/games/bubble-tea/index.html' },
-  { id: 'candylandflip', name: 'Candyland Flip', cover: '/games/candylandflip/cover.webp', url: '/games/candylandflip/index.html' },
-  { id: 'pool', name: 'Munchboy Billiards', cover: '/games/pool/cover.png', url: '/games/pool/index.html', shellPause: false },
+  { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
+  { id: 'spice-invaders', name: 'Spice Invaders',      cover: '/games/spice-invaders/cover.webp',   url: '/games/spice-invaders/index.html',   proOnly: false },
+  { id: 'bubble-tea',     name: 'Bubble Tea',          cover: '/games/bubble-tea/cover.webp',       url: '/games/bubble-tea/index.html',       proOnly: true  },
+  { id: 'candylandflip',  name: 'Candyland Flip',      cover: '/games/candylandflip/cover.webp',    url: '/games/candylandflip/index.html',    proOnly: true  },
+  { id: 'pool',           name: 'Munchboy Billiards',  cover: '/games/pool/cover.png',              url: '/games/pool/index.html',             proOnly: true, shellPause: false },
+  { id: 'beyblade',       name: 'Cyber Blade',         cover: '/games/beyblade/cover.webp',         url: '/games/beyblade/index.html',         proOnly: true  },
 ];
 
-export function HikariBoy({ 
-  onClose, 
+export function HikariBoy({
+  onClose,
+  onUpgradeClick,
+  isPro = false,
   foodReady = false,
   munchboyShellColor,
   munchboyAColor,
@@ -137,6 +141,12 @@ export function HikariBoy({
 
   // Launch game with instant loader overlay
   const launchGame = (game) => {
+    // Guard: locked game for free tier
+    if (game.proOnly && !isPro) {
+      onUpgradeClick?.();
+      return;
+    }
+
     // INSTANT: Show loader overlay on this frame
     setShowLoader(true);
     loaderStartRef.current = Date.now();
@@ -361,9 +371,11 @@ export function HikariBoy({
         {isBooting ? (
           <MunchboyBoot onComplete={handleBootComplete} />
         ) : !currentGame ? (
-          <GameSelector 
-            games={GAMES} 
+          <GameSelector
+            games={GAMES}
             selectedIndex={selectedIndex}
+            isPro={isPro}
+            onUpgradeClick={onUpgradeClick}
           />
         ) : (
           <>
@@ -537,39 +549,38 @@ export function HikariBoy({
 }
 
 // Game Selector - Shows ONE large cover image at a time
-function GameSelector({ games, selectedIndex }) {
+function GameSelector({ games, selectedIndex, isPro = false, onUpgradeClick }) {
   const selectedGame = games[selectedIndex];
   const [imgSrc, setImgSrc] = useState(selectedGame.cover);
   const [hasError, setHasError] = useState(false);
-  
+
+  const isLocked = selectedGame.proOnly && !isPro;
+
   // Reset image when game changes
   useEffect(() => {
     setImgSrc(selectedGame.cover);
     setHasError(false);
   }, [selectedIndex, selectedGame]);
-  
+
   // Preload adjacent game covers for smoother navigation
   useEffect(() => {
     const nextIdx = (selectedIndex + 1) % games.length;
     const prevIdx = (selectedIndex - 1 + games.length) % games.length;
-    
     [nextIdx, prevIdx].forEach(idx => {
       const img = new Image();
       img.src = games[idx].cover;
     });
   }, [selectedIndex, games]);
-  
+
   const handleError = () => {
     if (!hasError && selectedGame.fallback) {
-      // Try fallback SVG
       setImgSrc(selectedGame.fallback);
       setHasError(true);
     } else {
-      // No fallback, show text
       setHasError(true);
     }
   };
-  
+
   return (
     <div className="hb-selector">
       {/* Arrow indicators at top */}
@@ -578,22 +589,97 @@ function GameSelector({ games, selectedIndex }) {
         <span className="game-counter">{selectedIndex + 1} / {games.length}</span>
         {selectedIndex < games.length - 1 && <span className="arrow-right">▶</span>}
       </div>
-      
+
       {/* Large Cover Image - FULL SIZE */}
       <div className="game-showcase">
-        <div className="cover-container-full">
+        <div className="cover-container-full" style={{ position: 'relative' }}>
+
+          {/* Cover image (always rendered — visible under lock overlay) */}
           {!hasError ? (
-            <img 
-              src={imgSrc} 
+            <img
+              src={imgSrc}
               alt={selectedGame.name}
               className="game-cover-full"
               onError={handleError}
+              style={isLocked ? { filter: 'brightness(0.35) blur(1px)', userSelect: 'none' } : {}}
             />
           ) : (
-            <div className="cover-fallback-full">
+            <div
+              className="cover-fallback-full"
+              style={isLocked ? { filter: 'brightness(0.35)', userSelect: 'none' } : {}}
+            >
               {selectedGame.name}
             </div>
           )}
+
+          {/* Locked overlay — darkened + ? SVG + Pro pill */}
+          {isLocked && (
+            <div
+              onClick={onUpgradeClick}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                cursor: 'pointer',
+                zIndex: 10,
+              }}
+            >
+              {/* ? circle */}
+              <svg
+                width="52"
+                height="52"
+                viewBox="0 0 52 52"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.7))' }}
+              >
+                <circle cx="26" cy="26" r="24" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" />
+                <text
+                  x="26"
+                  y="35"
+                  textAnchor="middle"
+                  fontSize="26"
+                  fontWeight="bold"
+                  fontFamily="system-ui, sans-serif"
+                  fill="rgba(255,255,255,0.95)"
+                >
+                  ?
+                </text>
+              </svg>
+
+              {/* Game name */}
+              <span style={{
+                color: 'rgba(255,255,255,0.85)',
+                fontSize: '11px',
+                fontWeight: '700',
+                letterSpacing: '0.05em',
+                textShadow: '0 1px 6px rgba(0,0,0,0.9)',
+                textTransform: 'uppercase',
+              }}>
+                {selectedGame.name}
+              </span>
+
+              {/* Pro badge */}
+              <span style={{
+                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                color: '#fff',
+                fontSize: '10px',
+                fontWeight: '800',
+                padding: '3px 10px',
+                borderRadius: '999px',
+                letterSpacing: '0.08em',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                marginTop: '2px',
+              }}>
+                PRO ONLY
+              </span>
+            </div>
+          )}
+
         </div>
       </div>
     </div>

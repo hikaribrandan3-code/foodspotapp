@@ -83,6 +83,8 @@ export async function POST(req: Request) {
         business_id: businessId,
         slug: businessSlug,
         app_config: defaultConfig,
+        subscription_tier: "free",   // Mobile Lite — upgrade via Pro
+        mp_monthly_limit: 30,        // 30 MP orders/month on free tier
       });
 
     if (brandingError) {

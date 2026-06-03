@@ -30,6 +30,9 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTenant } from '../contexts/TenantContext'
+import { useTier } from '../hooks/useTier'
+
+const PRO_ONLY_TABS = ['analytics', 'ai']
 
 // ============================================
 // TAB CONFIGURATIONS BY ROLE
@@ -210,6 +213,7 @@ function BackendNav({
     const location = useLocation()
     const params = useParams()
     const lastTapRef = useRef(0)
+    const { isPro } = useTier()
     const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
     const [isDesktop, setIsDesktop] = useState(
         () => typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
@@ -333,6 +337,15 @@ function BackendNav({
 
         // Skip if already on this tab
         if (tabId === currentTab) return
+
+        // Free tier: block Pro-only tabs, navigate to upgrade screen
+        if (!isPro && PRO_ONLY_TABS.includes(tabId) && useRoutes && ROUTE_MAPS) {
+            const routes = ROUTE_MAPS[urlArea]
+            if (routes && routes[tabId]) {
+                navigate(routes[tabId]) // TierGuard inside the page handles the lock
+            }
+            return
+        }
 
         // Optional: Haptic feedback for PWA
         if (window.matchMedia('(display-mode: standalone)').matches && navigator.vibrate) {
@@ -533,6 +546,13 @@ function BackendNav({
                                 }}>
                                     {tab.label}
                                 </span>
+                                {/* 🔒 Pro-only lock badge */}
+                                {!isPro && PRO_ONLY_TABS.includes(tab.id) && (
+                                    <span style={{
+                                        fontSize: 11, lineHeight: 1,
+                                        opacity: 0.55,
+                                    }}>🔒</span>
+                                )}
                                 {badgeCount > 0 && (
                                     <span style={{
                                         minWidth: 18,
@@ -697,6 +717,9 @@ function BackendNav({
 
                         <span style={labelStyle(isActive)}>
                             {tab.label}
+                            {!isPro && PRO_ONLY_TABS.includes(tab.id) && (
+                                <span style={{ marginLeft: 2, fontSize: 9, opacity: 0.6 }}>🔒</span>
+                            )}
                         </span>
 
                         {/* Active indicator bar (reference image) */}

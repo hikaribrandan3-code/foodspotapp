@@ -35,18 +35,26 @@ function playPing(frequency: number, duration: number, type: OscillatorType = 's
 }
 
 /**
- * Alert: New order arrived (urgent / high priority)
- * Sharp double-chime like a service bell
+ * Alert: New order arrived — CHA CHINGGG! 💰
+ * Money/cash register sound for every new order
  */
 export function alertNewOrder(priority: 'normal' | 'high' = 'normal') {
+  // CHA! - Initial cash register "cha" (bright, energetic)
+  playPing(1320, 0.12, 'square');
+
+  // CHING! - First coin drop (high)
+  setTimeout(() => playPing(1100, 0.15, 'sine'), 130);
+
+  // CHING! - Second coin drop (medium-high)
+  setTimeout(() => playPing(880, 0.15, 'sine'), 280);
+
+  // CHINGGG! - Final coin cascade (descending tones)
+  setTimeout(() => playPing(740, 0.2, 'triangle'), 420);
+  setTimeout(() => playPing(587, 0.2, 'sine'), 520);
+
   if (priority === 'high') {
-    // Aggressive triple ping for high-priority
-    playPing(880, 0.15, 'square');
-    setTimeout(() => playPing(1100, 0.15, 'square'), 120);
-    setTimeout(() => playPing(1320, 0.25, 'square'), 240);
-  } else {
-    // Gentle single ping for normal
-    playPing(660, 0.2, 'sine');
+    // Extra CHA! for high-priority orders (bigger sale!)
+    setTimeout(() => playPing(1320, 0.15, 'square'), 680);
   }
 }
 

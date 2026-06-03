@@ -320,6 +320,18 @@ serve(async (req: Request) => {
                 // Log for manual reconciliation
             }
 
+            // ── Increment free tier usage counter (fire-and-forget) ──────
+            const targetBusinessId = businessId || existingOrder.business_id;
+            supabase.rpc('increment_mp_usage', { p_business_id: targetBusinessId })
+                .then(({ data: usageData, error: usageError }) => {
+                    if (usageError) {
+                        console.error(`[mp-webhook] Usage increment failed (non-fatal):`, usageError);
+                    } else {
+                        console.log(`📊 Usage updated: ${usageData?.mp_used}/${usageData?.mp_limit} MP orders this month`);
+                    }
+                });
+            // ─────────────────────────────────────────────────────────────
+
             console.log(`🎉 Order #${updatedOrder.order_number} PAID → KITCHEN! Ledger: ${ledgerResult.ledgerId || 'FAILED'}`);
             
             return new Response(

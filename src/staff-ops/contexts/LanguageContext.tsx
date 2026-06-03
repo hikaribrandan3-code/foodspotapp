@@ -19,9 +19,7 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
   useEffect(() => {
     const fetchLanguage = async () => {
       if (!businessId) {
-        // No businessId — use localStorage fallback
-        const stored = localStorage.getItem('fs_staff_language');
-        setLanguageState(stored || 'en');
+        setLanguageState('en');
         return;
       }
 
@@ -41,20 +39,20 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
             .eq('business_id', businessId)
             .single();
 
-          const tenantLang = brandingData?.app_config?.language || localStorage.getItem('fs_staff_language') || 'en';
+          const tenantLang = brandingData?.app_config?.language || 'en';
           setLanguageState(tenantLang);
           localStorage.setItem('fs_staff_language', tenantLang);
           return;
         }
 
-        // Priority: tenants.language > localStorage > 'en'
-        const tenantLang = data?.language || localStorage.getItem('fs_staff_language') || 'en';
+        // Use tenants.language (ignore localStorage)
+        const tenantLang = data?.language || 'en';
         setLanguageState(tenantLang);
+        // Update localStorage for persistence, but Supabase is source of truth
         localStorage.setItem('fs_staff_language', tenantLang);
       } catch (err) {
-        console.error('Failed to fetch language from app_config:', err);
-        const stored = localStorage.getItem('fs_staff_language');
-        setLanguageState(stored || 'en');
+        console.error('Failed to fetch language:', err);
+        setLanguageState('en');
       }
     };
 
