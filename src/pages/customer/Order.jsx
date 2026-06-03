@@ -735,16 +735,17 @@ function Order({ config: configProp }) {
                     <div style={{ marginBottom: 24 }}>
                         {orderType === 'dine_in' ? (
                             <div style={{
-                                background: '#1F2937', color: 'white',
+                                background: '#FFFFFF', color: '#1F2937',
                                 padding: '16px 20px', borderRadius: 16,
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                border: '1px solid #E5E7EB'
                             }}>
                                 <div>
-                                    <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.8 }}>{t('location_label')}</span>
-                                    <div style={{ fontSize: 20, fontWeight: 700 }}>{t('dine_in_table')}</div>
+                                    <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6, color: '#6B7280' }}>{t('location_label')}</span>
+                                    <div style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>{t('dine_in_table')}</div>
                                 </div>
-                                <div style={{ background: 'rgba(255,255,255,0.1)', padding: 8, borderRadius: 12 }}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><line x1="6" y1="6" x2="6" y2="6" /><line x1="6" y1="30" x2="6" y2="30" /></svg>
+                                <div style={{ background: '#F3F4F6', padding: 8, borderRadius: 12 }}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><line x1="6" y1="6" x2="6" y2="6" /><line x1="6" y1="30" x2="6" y2="30" /></svg>
                                 </div>
                             </div>
                         ) : (
