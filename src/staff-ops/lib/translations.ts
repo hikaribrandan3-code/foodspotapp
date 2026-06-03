@@ -375,6 +375,22 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'new_orders_appear': { en: 'New orders appear here automatically.', es: 'Los nuevos pedidos aparecen aquí automáticamente.', pt: 'Novos pedidos aparecem aqui automaticamente.' },
   'active': { en: 'Active', es: 'Activo', pt: 'Ativo' },
   'completed': { en: 'Completed', es: 'Completado', pt: 'Concluído' },
+  // Kitchen action labels (interchangeable with owner dashboard)
+  'kitchen': { en: 'Kitchen', es: 'Cocina', pt: 'Cozinha' },
+  'to_do': { en: 'To-Do', es: 'Por Hacer', pt: 'A Fazer' },
+  'in_progress': { en: 'In Progress', es: 'En Progreso', pt: 'Em Progresso' },
+  'nothing_in_progress': { en: 'Nothing in progress', es: 'Nada en progreso', pt: 'Nada em progresso' },
+  'swipe_to_start_prep': { en: 'Swipe right on To-Do orders to start prepping', es: 'Desliza a la derecha en pedidos Por Hacer para empezar a preparar', pt: 'Deslize para a direita em pedidos A Fazer para começar a preparar' },
+  'start_prep': { en: 'Start Prep', es: 'Empezar Prep', pt: 'Começar Prep' },
+  'mark_ready': { en: 'Mark Ready', es: 'Listo', pt: 'Marcar Pronto' },
+  'mark_served': { en: 'Mark Served', es: 'Servido', pt: 'Marcar Servido' },
+  'mark_delivered': { en: 'Mark Delivered', es: 'Entregado', pt: 'Marcar Entregue' },
+  'hand_over': { en: 'Hand Over', es: 'Entregar', pt: 'Entregar' },
+  'assign_delivery': { en: 'Assign Delivery', es: 'Asignar Entrega', pt: 'Atribuir Entrega' },
+  'complete_delivery': { en: 'Complete Delivery', es: 'Entregar Completo', pt: 'Completar Entrega' },
+  'complete_order': { en: 'Complete Order', es: 'Completar Pedido', pt: 'Completar Pedido' },
+  'dispatch_order': { en: 'Dispatch Order', es: 'Despachar', pt: 'Despachar' },
+  'confirm_payment': { en: 'Confirm Payment', es: 'Confirmar Pago', pt: 'Confirmar Pagamento' },
 };
 
 export function t(key: string, lang: string = 'en'): string {

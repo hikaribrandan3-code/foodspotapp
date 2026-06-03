@@ -323,19 +323,19 @@ export default function OrderCard({
         {/* ── Verify Cash button (PENDING_VERIFICATION only) ───── */}
         {isCashPending && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
-            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>Payment must be verified before kitchen sees this order.</p>
+            <p className="text-xs mb-2" style={{ color: 'var(--text-tertiary)' }}>{t('payment_verify_required')}</p>
             <button
               onClick={handleVerifyCash}
               className="w-full min-h-[52px] py-2.5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               style={{ backgroundColor: 'var(--status-icon-ready)', color: '#1a1a1a' }}
             >
               <DollarSign size={16} strokeWidth={2.5} />
-              Verify Cash Payment
+              {t('confirm_payment')}
             </button>
           </div>
         )}
 
-        {/* ── Kitchen action button — context-aware label ────── */}
+        {/* ── Kitchen action button — context-aware label (translated) ────── */}
         {showAdvanceButton && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <button
@@ -344,7 +344,7 @@ export default function OrderCard({
               style={{ backgroundColor: 'var(--filter-active-bg)', color: 'var(--filter-active-text)' }}
             >
               <ChevronRight size={16} />
-              {order.status === 'TODO' ? 'Start Prep' : order.status === 'PREP' ? 'Mark Ready' : order.status === 'READY' && order.deliveryType === 'dine_in' ? 'Mark Served' : order.status === 'READY' && order.deliveryType === 'delivery' ? 'Assign Delivery' : order.status === 'READY' ? 'Hand Over' : order.status === 'DELIVERING' ? 'Complete Delivery' : order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified ? 'Confirm Payment' : 'Complete Order'}
+              {order.status === 'TODO' ? t('start_prep') : order.status === 'PREP' ? t('mark_ready') : order.status === 'READY' && order.deliveryType === 'dine_in' ? t('mark_served') : order.status === 'READY' && order.deliveryType === 'delivery' ? t('assign_delivery') : order.status === 'READY' ? t('hand_over') : order.status === 'DELIVERING' ? t('complete_delivery') : order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified ? t('confirm_payment') : t('complete_order')}
             </button>
           </div>
         )}
@@ -353,7 +353,7 @@ export default function OrderCard({
         {order.status === 'DONE' && order.deliveryType === 'dine_in' && !order.cashVerified && (
           <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--card-border)' }}>
             <p className="text-xs font-semibold mb-2 text-center" style={{ color: 'var(--text-tertiary)' }}>
-              Confirm Payment
+              {t('confirm_payment')}
             </p>
             <div className="flex gap-2">
               <button

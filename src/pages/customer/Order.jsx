@@ -384,30 +384,8 @@ function Order({ config: configProp }) {
                 }
             }
 
-            // ─── STEP 5: CASH/OFFLINE PAYMENT HANDLING ────────
-            // If cash payment, create ledger entry (with offline resilience)
-            // 🛡️ DINE-IN PAY-AFTER: Skip cash ledger — payment happens after the meal
-            if (isCashPath && savedOrder && !isDineInPayAfter) {
-                try {
-                    const cashResult = await handleCashPayment({
-                        orderId: savedOrder.id,
-                        amountCents: Math.round(savedOrder.total * 100),
-                        businessId: businessId,
-                        currency: 'ARS'
-                    })
-                    
-                    if (cashResult.method === 'offline') {
-                        showToast('💾 ' + t('cash_offline'))
-                    } else {
-                        console.log('[Order] Cash payment logged:', cashResult.data?.ledgerId)
-                    }
-                } catch (cashError) {
-                    console.warn('[Order] Cash payment logging failed:', cashError)
-                    // Don't block order - payment can be reconciled later
-                }
-            }
-
-            // ─── STEP 6: FINALIZE ─────────────────────────────
+            // ─── STEP 5: FINALIZE IMMEDIATELY ────────────────
+            // Order is saved — navigate now (ledger is non-blocking)
             clearCart()
             incrementOrderCount()
             if (isDelivery) clearDeliveryMode()
@@ -420,6 +398,22 @@ function Order({ config: configProp }) {
                     navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
                 }
             }, 1500)
+
+            // ─── STEP 6: FIRE-AND-FORGET CASH LEDGER ─────────
+            // Non-blocking: ledger creation happens in background (or queued offline)
+            // 🛡️ DINE-IN PAY-AFTER: Skip cash ledger — payment happens after the meal
+            if (isCashPath && savedOrder && !isDineInPayAfter) {
+                handleCashPayment({
+                    orderId: savedOrder.id,
+                    amountCents: Math.round(savedOrder.total * 100),
+                    businessId: businessId,
+                    currency: 'ARS'
+                }).catch((cashError) => {
+                    console.warn('[Order] Cash ledger write queued offline:', cashError.message)
+                    // Ledger failed online, will sync when connection returns
+                })
+                // Don't await — payment safeguarded by offline queue fallback
+            }
 
         } catch (err) {
             console.error('[Order] Submission Error:', err)

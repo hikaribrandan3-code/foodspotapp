@@ -14,6 +14,48 @@ import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import { canAdvanceOrder } from '../../utils/orderStateGuard'
 import CreateOrderModal from './CreateOrderModal.jsx'
+import { useTier } from '../../hooks/useTier'
+
+function MpLimitBanner({ mpUsed, mpLimit, isPro, onUpgrade, upgrading }) {
+  if (isPro) return null
+  if (!mpLimit) return null
+  const pct = mpUsed / mpLimit
+  if (pct < 0.75) return null // only show at 75%+
+
+  const isAtLimit = mpUsed >= mpLimit
+  const remaining = Math.max(0, mpLimit - mpUsed)
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 16px', flexShrink: 0,
+      background: isAtLimit ? '#FEF2F2' : '#FFFBEB',
+      borderBottom: `1px solid ${isAtLimit ? '#FECACA' : '#FDE68A'}`,
+      gap: 8,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: isAtLimit ? '#DC2626' : '#92400E' }}>
+          {isAtLimit
+            ? `Monthly MP order limit reached (${mpUsed}/${mpLimit})`
+            : `${remaining} MP order${remaining !== 1 ? 's' : ''} remaining this month (${mpUsed}/${mpLimit})`
+          }
+        </span>
+      </div>
+      <button
+        onClick={onUpgrade}
+        disabled={upgrading}
+        style={{
+          fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
+          background: upgrading ? '#9ca3af' : (isAtLimit ? '#DC2626' : '#10b981'),
+          padding: '5px 10px', borderRadius: 20, border: 'none',
+          cursor: upgrading ? 'wait' : 'pointer', fontFamily: 'inherit',
+        }}
+      >
+        {upgrading ? 'Loading...' : 'Upgrade to Pro'}
+      </button>
+    </div>
+  )
+}
 
 // KDS Grid layout: Desktop/Tablet only. Mobile uses original single-column layout.
 const kdsGridStyles = `
@@ -417,8 +459,34 @@ export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
   const { orders: fetchedOrders, loading, refreshOrders } = useOrdersPolling(businessId)
   const { t } = useLanguage()
+  const { isPro, mpUsed, mpLimit } = useTier()
   const { isMuted, volume, isUnlocked, toggleMute, cycleVolume, playChime } = useKDSAudio()
   const [tab, setTab] = useState('active')
+
+  // ── Upgrade to Pro flow ──────────────────────────────────
+  const [upgrading, setUpgrading] = useState(false)
+  const [upgradeSuccess] = useState(
+    () => new URLSearchParams(window.location.search).get('upgrade') === 'success'
+  )
+
+  const handleUpgrade = async () => {
+    setUpgrading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.email) throw new Error('Could not get user email')
+      const { data, error } = await supabase.functions.invoke('create-subscription-preference', {
+        body: { business_id: businessId, email: user.email, slug: tenantData?.slug },
+      })
+      if (error) throw new Error(error.message)
+      if (data?.already_pro) { window.location.reload(); return }
+      if (!data?.init_point) throw new Error('No checkout URL')
+      window.location.href = data.init_point
+    } catch (err) {
+      console.error('Upgrade error:', err)
+      setUpgrading(false)
+    }
+  }
+  // ─────────────────────────────────────────────────────────
   const [filterBucket, setFilterBucket] = useState(null)
   const [processingOrderId, setProcessingOrderId] = useState(null)
   const [expandedOrderId, setExpandedOrderId] = useState(null)
@@ -715,6 +783,25 @@ export default function Dashboard() {
         )}
 
         <BackendHeader title={t('orders')} />
+
+        {/* Pro upgrade success banner */}
+        {upgradeSuccess && (
+          <div style={{
+            background: '#f0fdf4', borderBottom: '1px solid #bbf7d0',
+            padding: '10px 16px', display: 'flex', alignItems: 'center',
+            gap: 8, fontSize: 13, fontWeight: 600, color: '#065f46',
+          }}>
+            Welcome to FoodSpot Pro. Your plan is activating — unlimited orders are on the way.
+          </div>
+        )}
+
+        <MpLimitBanner
+          mpUsed={mpUsed}
+          mpLimit={mpLimit}
+          isPro={isPro}
+          onUpgrade={handleUpgrade}
+          upgrading={upgrading}
+        />
 
         {/* Live order count header */}
         <div style={{

@@ -39,7 +39,7 @@ export default function PrepView() {
       <div className="px-4 pt-5 pb-3">
         <div className="flex items-center gap-2 mb-3">
           <ChefHat size={20} style={{ color: 'var(--status-icon-prep)' }} />
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>Kitchen</h1>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>{staffT('kitchen', language)}</h1>
         </div>
 
         <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
@@ -48,8 +48,8 @@ export default function PrepView() {
 
         {/* Filter tabs */}
         <div className="flex gap-2">
-          <FilterTab active={filter === 'TODO'} onClick={() => setFilter('TODO')} label="To-Do" count={todoCount} icon={<Clock size={14} />} activeBorder="var(--status-icon-prep)" activeBg="var(--filter-active-bg)" activeText="var(--status-icon-prep)" />
-          <FilterTab active={filter === 'PREP'} onClick={() => setFilter('PREP')} label="In Progress" count={prepCount} icon={<ChefHat size={14} />} activeBorder="var(--status-icon-ready)" activeBg="var(--urgency-warning-bg)" activeText="var(--status-icon-ready)" />
+          <FilterTab active={filter === 'TODO'} onClick={() => setFilter('TODO')} label={staffT('to_do', language)} count={todoCount} icon={<Clock size={14} />} activeBorder="var(--status-icon-prep)" activeBg="var(--filter-active-bg)" activeText="var(--status-icon-prep)" />
+          <FilterTab active={filter === 'PREP'} onClick={() => setFilter('PREP')} label={staffT('in_progress', language)} count={prepCount} icon={<ChefHat size={14} />} activeBorder="var(--status-icon-ready)" activeBg="var(--urgency-warning-bg)" activeText="var(--status-icon-ready)" />
         </div>
       </div>
 
@@ -83,8 +83,8 @@ export default function PrepView() {
             ) : (
               <>
                 <PackageCheck size={48} className="mb-3" style={{ color: 'var(--empty-icon)' }} />
-                <p className="text-sm">Nothing in progress</p>
-                <p className="text-xs mt-1 opacity-60">Swipe right on To-Do orders to start prepping</p>
+                <p className="text-sm">{staffT('nothing_in_progress', language)}</p>
+                <p className="text-xs mt-1 opacity-60">{staffT('swipe_to_start_prep', language)}</p>
               </>
             )}
           </motion.div>
