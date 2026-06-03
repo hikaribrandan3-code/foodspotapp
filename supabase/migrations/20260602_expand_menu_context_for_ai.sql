@@ -60,7 +60,7 @@ BEGIN
           )
         ), '[]'::JSONB)
         FROM categories c
-        WHERE c.business_id = p_business_id AND c.enabled IS NOT FALSE
+        WHERE c.business_id = p_business_id AND c.is_enabled IS NOT FALSE
       ),
       'stats', (
         SELECT jsonb_build_object(
