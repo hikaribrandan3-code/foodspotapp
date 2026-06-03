@@ -26,21 +26,29 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
       }
 
       try {
+        // Query tenants table for language (same source as main app owner dashboard)
         const { data, error } = await supabase
-          .from('branding')
-          .select('app_config')
-          .eq('business_id', businessId)
+          .from('tenants')
+          .select('language')
+          .eq('id', businessId)
           .single();
 
         if (error || !data) {
-          // Supabase query failed — use localStorage
-          const stored = localStorage.getItem('fs_staff_language');
-          setLanguageState(stored || 'en');
+          // Fallback to branding.app_config if tenants query fails
+          const { data: brandingData } = await supabase
+            .from('branding')
+            .select('app_config')
+            .eq('business_id', businessId)
+            .single();
+
+          const tenantLang = brandingData?.app_config?.language || localStorage.getItem('fs_staff_language') || 'en';
+          setLanguageState(tenantLang);
+          localStorage.setItem('fs_staff_language', tenantLang);
           return;
         }
 
-        // Priority: app_config.language > localStorage > 'en'
-        const tenantLang = data?.app_config?.language || localStorage.getItem('fs_staff_language') || 'en';
+        // Priority: tenants.language > localStorage > 'en'
+        const tenantLang = data?.language || localStorage.getItem('fs_staff_language') || 'en';
         setLanguageState(tenantLang);
         localStorage.setItem('fs_staff_language', tenantLang);
       } catch (err) {
