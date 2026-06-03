@@ -396,6 +396,10 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'complete_order': { en: 'Complete Order', es: 'Completar Pedido', pt: 'Completar Pedido' },
   'dispatch_order': { en: 'Dispatch Order', es: 'Despachar', pt: 'Despachar' },
   'confirm_payment': { en: 'Confirm Payment', es: 'Confirmar Pago', pt: 'Confirmar Pagamento' },
+  'delivery': { en: 'Delivery', es: 'Envío', pt: 'Entrega' },
+  'dine_in': { en: 'Dine-In', es: 'Comer Aquí', pt: 'Comer no Local' },
+  'take_out': { en: 'Takeout', es: 'Retirar', pt: 'Retirada' },
+  'cancel_confirm': { en: 'Are you sure you want to cancel this order?', es: '¿Está seguro de que desea cancelar este pedido?', pt: 'Tem certeza de que deseja cancelar este pedido?' },
 };
 
 export function t(key: string, lang: string = 'en'): string {
