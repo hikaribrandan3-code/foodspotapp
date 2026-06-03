@@ -18,7 +18,10 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
   // Fetch tenant's language from app_config on mount (highest priority)
   useEffect(() => {
     const fetchLanguage = async () => {
+      console.log('[LanguageContext] businessId:', businessId);
+
       if (!businessId) {
+        console.log('[LanguageContext] No businessId, defaulting to en');
         setLanguageState('en');
         return;
       }
@@ -30,6 +33,8 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
           .select('language')
           .eq('id', businessId)
           .single();
+
+        console.log('[LanguageContext] Query result:', { data, error, businessId });
 
         if (error || !data) {
           // Fallback to branding.app_config if tenants query fails
