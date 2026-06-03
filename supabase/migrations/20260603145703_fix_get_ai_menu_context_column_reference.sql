@@ -27,7 +27,7 @@ BEGIN
                 jsonb_build_object(
                   'name', mi.name,
                   'price', mi.price,
-                  'price_display', (mi.price::NUMERIC / 100)::TEXT || ' ARS',
+                  'price_display', ROUND(mi.price::NUMERIC / 100, 2)::TEXT || ' ARS',
                   'calories', mi.calories,
                   'available', mi.available,
                   'tags', jsonb_build_object(
