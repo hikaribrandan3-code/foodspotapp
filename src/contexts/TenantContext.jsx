@@ -113,24 +113,42 @@ export function TenantProvider({ children }) {
         }
 
         const revalidate = async (slug) => {
-            // 🎯 SINGLE QUERY: tenant_config view has everything (businesses + branding + language in one shot)
-            const { data: configData, error: configError } = await supabase
-                .from('tenant_config')
+            // 🎯 FETCH BRANDING: Get all tenant configuration from branding table
+            // We also fetch the language from businesses table for the complete picture
+            const { data: brandingData, error: brandingError } = await supabase
+                .from('branding')
                 .select('*')
                 .eq('slug', slug)
                 .maybeSingle()
 
-            if (configError) {
-                throw configError;
+            if (brandingError) {
+                throw brandingError;
             }
 
-            if (!configData) {
+            if (!brandingData) {
                 localStorage.removeItem('fs_last_active_slug');
                 localStorage.removeItem('fs_business_id');
-                throw new Error(`No tenant config found for '${slug}'`);
+                throw new Error(`No branding data found for '${slug}'`);
+            }
+
+            // 🔗 FETCH LANGUAGE: Get language from businesses table
+            let language = 'en'; // default
+            try {
+                const { data: businessData } = await supabase
+                    .from('businesses')
+                    .select('language')
+                    .eq('id', brandingData.business_id)
+                    .maybeSingle();
+
+                if (businessData?.language) {
+                    language = businessData.language;
+                }
+            } catch (err) {
+                console.warn('[TenantLock] Could not fetch language:', err?.message);
             }
 
             if (mounted) {
+                const configData = { ...brandingData, language };
                 setTenantData(configData)
                 setBusinessId(configData.business_id)
                 setTenantStoragePrefix(configData.business_id)
@@ -145,7 +163,7 @@ export function TenantProvider({ children }) {
 
             // UPDATE PERSISTENCE
             localStorage.setItem('fs_last_active_slug', slug)
-            localStorage.setItem('fs_business_id', configData.business_id)
+            localStorage.setItem('fs_business_id', brandingData.business_id)
         }
 
         resolveIdentity()
@@ -248,23 +266,40 @@ export function TenantProvider({ children }) {
         }
     }, [forceRefresh, businessId])
 
-    // 🔄 GLOBAL REFRESH: Fetch fresh config from tenant_config view
+    // 🔄 GLOBAL REFRESH: Fetch fresh config from branding table
     const refreshTenantData = async () => {
         if (!businessId) return
 
         try {
-            const { data: configData, error: configError } = await supabase
-                .from('tenant_config')
+            const { data: brandingData, error: brandingError } = await supabase
+                .from('branding')
                 .select('*')
                 .eq('business_id', businessId)
                 .maybeSingle()
 
-            if (configError) {
-                console.error('[TenantLock] Refresh error:', configError.message, configError.details);
+            if (brandingError) {
+                console.error('[TenantLock] Refresh error:', brandingError.message, brandingError.details);
                 return;
             }
 
-            if (configData) {
+            if (brandingData) {
+                // 🔗 FETCH LANGUAGE: Get latest language from businesses table
+                let language = tenantData?.language || 'en';
+                try {
+                    const { data: businessData } = await supabase
+                        .from('businesses')
+                        .select('language')
+                        .eq('id', businessId)
+                        .maybeSingle();
+
+                    if (businessData?.language) {
+                        language = businessData.language;
+                    }
+                } catch (err) {
+                    console.warn('[TenantLock] Could not fetch language on refresh:', err?.message);
+                }
+
+                const configData = { ...brandingData, language };
                 setTenantData(configData)
                 localStorage.setItem('fs_business_id', configData.business_id)
             }
