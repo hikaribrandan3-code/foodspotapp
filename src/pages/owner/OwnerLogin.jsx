@@ -103,7 +103,7 @@ function OwnerLogin() {
                     setLoading(true);
                     const { data, error } = await supabase.auth.signInWithPassword({
                         email: 'hikaribrandan3@gmail.com',
-                        password: process.env.REACT_APP_DEMO_PASSWORD || 'DemoPass123!FoodSpot'
+                        password: process.env.REACT_APP_DEMO_PASSWORD || 'Aa39897828!'
                     });
 
                     if (error) {
