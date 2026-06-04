@@ -475,28 +475,30 @@ export async function getMenuCloud(businessId) {
     }
 
     try {
-        // 1. Fetch categories ordered by display_order (scoped to business)
+        // 1. Fetch categories with UUID column (scoped to business)
         const { data: categories, error: catError } = await supabase
             .from('categories')
-            .select('*')
+            .select('id, id_uuid, name, icon, enabled, sort_order, business_id')
             .eq('business_id', businessId)
             .order('sort_order', { ascending: true })
 
         if (catError) throw catError
 
-        // 2. Fetch all menu items ordered by display_order (scoped to business)
+        // 2. Fetch all menu items with UUID column (scoped to business)
         const { data: items, error: itemError } = await supabase
             .from('menu_items')
-            .select('*')
+            .select('id, id_uuid, name, price, price_cents, available, featured, image_url, image, description, category_id')
             .eq('business_id', businessId)
             .order('sort_order', { ascending: true })
 
         if (itemError) throw itemError
 
         // 3. Transform to frontend format (nest items under categories)
+        // Note: Using id (TEXT) for now as FK is still TEXT-based, but id_uuid available for future migrations
         const menuData = {
             categories: categories.map(cat => ({
                 id: cat.id,
+                id_uuid: cat.id_uuid,
                 name: cat.name,
                 icon: cat.icon,
                 enabled: cat.enabled,
@@ -504,6 +506,7 @@ export async function getMenuCloud(businessId) {
                     .filter(item => item.category_id === cat.id)
                     .map(item => ({
                         id: item.id,
+                        id_uuid: item.id_uuid,
                         name: item.name,
                         price: item.price,
                         available: item.available,
