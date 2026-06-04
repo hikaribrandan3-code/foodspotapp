@@ -95,6 +95,39 @@ function OwnerLogin() {
         };
     }, [tenantData?.language]);
 
+    // 🔓 DEMO AUTO-LOGIN: Auto-authenticate demo tenant
+    useEffect(() => {
+        if (tenantSlug === 'foodspot') {
+            const autoDemoLogin = async () => {
+                try {
+                    setLoading(true);
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: 'hikaribrandan3@gmail.com',
+                        password: process.env.REACT_APP_DEMO_PASSWORD || 'DemoPass123!FoodSpot'
+                    });
+
+                    if (error) {
+                        console.error('Demo login failed:', error.message);
+                        setError('Demo account unavailable');
+                        setLoading(false);
+                        return;
+                    }
+
+                    if (data?.session) {
+                        // Session set by onAuthStateChange below
+                        console.log('Demo auto-login successful');
+                    }
+                } catch (err) {
+                    console.error('Demo login error:', err);
+                    setError('Demo account unavailable');
+                    setLoading(false);
+                }
+            };
+
+            autoDemoLogin();
+        }
+    }, [tenantSlug]);
+
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session?.user) {
