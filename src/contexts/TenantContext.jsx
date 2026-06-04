@@ -208,22 +208,54 @@ export function TenantProvider({ children }) {
                     filter: businessId ? `business_id=eq.${businessId}` : undefined
                 },
                 (payload) => {
+                    // 🔄 MERGE: Update tenantData with all fields from the branding UPDATE payload
+                    // Use ternary for optional fields, spread for complete fields like app_config
                     setTenantData(prev => ({
                         ...prev,
-                        app_config: payload.new.app_config || prev.app_config,
+                        // Identity & Typography
+                        business_name: payload.new.business_name !== undefined ? payload.new.business_name : prev.business_name,
+                        font_family: payload.new.font_family !== undefined ? payload.new.font_family : prev.font_family,
+                        font_weight: payload.new.font_weight !== undefined ? payload.new.font_weight : prev.font_weight,
+
+                        // Theme Colors
+                        navbar_color: payload.new.navbar_color !== undefined ? payload.new.navbar_color : prev.navbar_color,
+                        confirmation_color: payload.new.confirmation_color !== undefined ? payload.new.confirmation_color : prev.confirmation_color,
+                        powered_by_color: payload.new.powered_by_color !== undefined ? payload.new.powered_by_color : prev.powered_by_color,
+
+                        // Hero Configuration
+                        hero_mode: payload.new.hero_mode !== undefined ? payload.new.hero_mode : prev.hero_mode,
+                        hero_url: payload.new.hero_url !== undefined ? payload.new.hero_url : prev.hero_url,
+                        hero_cover_image: payload.new.hero_cover_image !== undefined ? payload.new.hero_cover_image : prev.hero_cover_image,
+                        hero_cover_image_uploaded_at: payload.new.hero_cover_image_uploaded_at !== undefined ? payload.new.hero_cover_image_uploaded_at : prev.hero_cover_image_uploaded_at,
+                        nav_icon_mode: payload.new.nav_icon_mode !== undefined ? payload.new.nav_icon_mode : prev.nav_icon_mode,
+                        hero_icon_mode: payload.new.hero_icon_mode !== undefined ? payload.new.hero_icon_mode : prev.hero_icon_mode,
+                        hero_icons: payload.new.hero_icons !== undefined ? payload.new.hero_icons : prev.hero_icons,
+                        info_pills: payload.new.info_pills !== undefined ? payload.new.info_pills : prev.info_pills,
+
+                        // Service Modes (flat columns)
                         pickup_enabled: payload.new.pickup_enabled !== undefined ? payload.new.pickup_enabled : prev.pickup_enabled,
                         delivery_enabled: payload.new.delivery_enabled !== undefined ? payload.new.delivery_enabled : prev.delivery_enabled,
                         dine_in_enabled: payload.new.dine_in_enabled !== undefined ? payload.new.dine_in_enabled : prev.dine_in_enabled,
                         dine_in_payment_timing: payload.new.dine_in_payment_timing !== undefined ? payload.new.dine_in_payment_timing : prev.dine_in_payment_timing,
+
+                        // Delivery Configuration
                         delivery_radius: payload.new.delivery_radius !== undefined ? payload.new.delivery_radius : prev.delivery_radius,
                         delivery_radius_km: payload.new.delivery_radius_km !== undefined ? payload.new.delivery_radius_km : prev.delivery_radius_km,
                         delivery_fee: payload.new.delivery_fee !== undefined ? payload.new.delivery_fee : prev.delivery_fee,
                         free_delivery_threshold: payload.new.free_delivery_threshold !== undefined ? payload.new.free_delivery_threshold : prev.free_delivery_threshold,
                         store_lat: payload.new.store_lat !== undefined ? payload.new.store_lat : prev.store_lat,
                         store_lon: payload.new.store_lon !== undefined ? payload.new.store_lon : prev.store_lon,
+
+                        // Order Control
                         pause_orders: payload.new.pause_orders !== undefined ? payload.new.pause_orders : prev.pause_orders,
                         is_paused: payload.new.is_paused !== undefined ? payload.new.is_paused : prev.is_paused,
                         pause_message: payload.new.pause_message !== undefined ? payload.new.pause_message : prev.pause_message,
+
+                        // App Configuration (JSONB - new features, settings, etc.)
+                        app_config: payload.new.app_config || prev.app_config,
+
+                        // Menu Data (JSONB)
+                        menu_data: payload.new.menu_data !== undefined ? payload.new.menu_data : prev.menu_data,
                     }));
                 }
             )
