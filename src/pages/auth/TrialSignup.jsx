@@ -579,23 +579,12 @@ const TrialSignup = () => {
       }
       console.log('[Onboarding] branding row created')
 
-      // Create language_settings entry
-      console.log('[Onboarding] Inserting language_settings...')
-      const { error: langError } = await supabase.from('language_settings').insert({
-        business_id: businessId,
+      // Update businesses row to set language (consolidated from tenants table)
+      console.log('[Onboarding] Updating businesses language...')
+      const { error: langError } = await supabase.from('businesses').update({
         language: 'es'
-      })
-      if (langError) console.error('[Onboarding] language_settings insert failed:', langError)
-
-      // Create tenants row
-      console.log('[Onboarding] Inserting tenants row...')
-      const { error: tenantsError } = await supabase.from('tenants').insert({
-        id: crypto.randomUUID(),
-        venue_name: slug,
-        owner_id: user.id,
-        language: 'es'
-      })
-      if (tenantsError) console.error('[Onboarding] tenants insert failed:', tenantsError)
+      }).eq('id', businessId)
+      if (langError) console.error('[Onboarding] Failed to set language:', langError)
 
       // Create profiles row
       console.log('[Onboarding] Inserting profiles row...')

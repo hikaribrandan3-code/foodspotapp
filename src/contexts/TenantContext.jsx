@@ -113,107 +113,71 @@ export function TenantProvider({ children }) {
         }
 
         const revalidate = async (slug) => {
-            const { data: brandingData, error: brandingError } = await supabase
-                .from('branding')
+            // 🎯 SINGLE QUERY: tenant_config view has everything (businesses + branding + language in one shot)
+            const { data: configData, error: configError } = await supabase
+                .from('tenant_config')
                 .select('*')
                 .eq('slug', slug)
                 .maybeSingle()
 
-            if (brandingError) {
-                throw brandingError;
+            if (configError) {
+                throw configError;
             }
 
-            if (!brandingData) {
-                // Clear stale slug so broken tenants don't poison future loads
+            if (!configData) {
                 localStorage.removeItem('fs_last_active_slug');
                 localStorage.removeItem('fs_business_id');
-                throw new Error(`No branding data found for '${slug}'`);
+                throw new Error(`No tenant config found for '${slug}'`);
             }
 
-            if (brandingData) {
-                // 📡 DOUBLE-FETCH: Get language from tenants table using venue_name (Official Schema)
-                // 🛡️ UNIVERSAL CASE FIX: Use .ilike() for case-insensitive matching
-                let { data: tenantRow, error: langError } = await supabase
-                    .from('tenants')
-                    .select('id, language, venue_name, owner_id')
-                    .ilike('venue_name', slug)
-                    .maybeSingle()
+            if (mounted) {
+                setTenantData(configData)
+                setBusinessId(configData.business_id)
+                setTenantStoragePrefix(configData.business_id)
+                setTrialExpired(false)
 
-                // 🆘 ULTIMATE FAILSAFE: If venue_name fails, fetch by authenticated owner ID
-                if ((langError || !tenantRow) && mounted) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        const { data: ownerRow, error: ownerError } = await supabase
-                            .from('tenants')
-                            .select('id, language, venue_name, owner_id')
-                            .eq('owner_id', user.id)
-                            .maybeSingle();
-
-                        if (!ownerError && ownerRow) {
-                            tenantRow = ownerRow;
-                            langError = null;
-                        }
-                    }
+                // 🚀 Pre-fetch critical images in background
+                const prefetchUrls = extractPrefetchUrls(configData)
+                if (prefetchUrls.length > 0) {
+                    prefetchImages(prefetchUrls)
                 }
-
-                // MERGE: Ensure we keep the actual tenant PK (id) and venue_name
-                // 🛡️ LANGUAGE GUARD: Don't force Spanish on empty DB fields — preserve existing or default to English
-                const data = { ...brandingData, id: tenantRow?.id, venue_name: tenantRow?.venue_name, language: tenantRow?.language || tenantData?.language || 'en' }
-
-                if (mounted) {
-                    setTenantData(data)
-                    setBusinessId(data.business_id)
-                    setTenantStoragePrefix(data.business_id)
-                    setTrialExpired(false)
-                    
-                    // 🚀 VAULT-SEAL: Pre-fetch critical images in background
-                    const prefetchUrls = extractPrefetchUrls(data)
-                    if (prefetchUrls.length > 0) {
-                        prefetchImages(prefetchUrls)
-                    }
-                }
-
-                // UPDATE PERSISTENCE
-                localStorage.setItem('fs_last_active_slug', slug)
-                localStorage.setItem('fs_business_id', data.business_id)
             }
+
+            // UPDATE PERSISTENCE
+            localStorage.setItem('fs_last_active_slug', slug)
+            localStorage.setItem('fs_business_id', configData.business_id)
         }
 
         resolveIdentity()
 
-        // 📡 REAL-TIME IDENTITY SYNC: Listen for changes to the tenant (language, venue_name, etc.)
-        // This ensures the Customer side reacts immediately when the Owner changes settings.
-        let tenantChannel = null;
+        // 📡 REAL-TIME LANGUAGE SYNC: Listen for language changes (now in businesses table)
+        let businessesChannel = null;
         let brandingChannel = null;
 
         try {
-            tenantChannel = supabase
-                .channel('tenant-sync')
+            businessesChannel = supabase
+                .channel('businesses-sync')
                 .on(
                     'postgres_changes',
                     {
                         event: 'UPDATE',
                         schema: 'public',
-                        table: 'tenants',
-                        filter: businessId ? `business_id=eq.${businessId}` : undefined
+                        table: 'businesses',
+                        filter: businessId ? `id=eq.${businessId}` : undefined
                     },
                     (payload) => {
                         setTenantData(prev => ({
                             ...prev,
-                            ...payload.new,
-                            // Ensure ID and venue_name are preserved if payload is partial
-                            id: payload.new.id || prev.id,
-                            venue_name: payload.new.venue_name || prev.venue_name,
                             language: payload.new.language || prev.language || 'en'
                         }));
                     }
                 )
                 .subscribe();
         } catch (err) {
-            console.warn('[TenantLock] ⚠️ Realtime subscriptions unavailable:', err?.message);
+            console.warn('[TenantLock] ⚠️ Businesses realtime unavailable:', err?.message);
         }
 
-        // 📡 REAL-TIME BRANDING SYNC: Listen for app_config changes (payments, aliases, etc.)
+        // 📡 REAL-TIME BRANDING SYNC: Listen for app_config & service modes changes
         try {
             brandingChannel = supabase
                 .channel('branding-sync')
@@ -233,7 +197,6 @@ export function TenantProvider({ children }) {
                         delivery_enabled: payload.new.delivery_enabled !== undefined ? payload.new.delivery_enabled : prev.delivery_enabled,
                         dine_in_enabled: payload.new.dine_in_enabled !== undefined ? payload.new.dine_in_enabled : prev.dine_in_enabled,
                         dine_in_payment_timing: payload.new.dine_in_payment_timing !== undefined ? payload.new.dine_in_payment_timing : prev.dine_in_payment_timing,
-                        // Delivery operational columns (Fix B)
                         delivery_radius: payload.new.delivery_radius !== undefined ? payload.new.delivery_radius : prev.delivery_radius,
                         delivery_radius_km: payload.new.delivery_radius_km !== undefined ? payload.new.delivery_radius_km : prev.delivery_radius_km,
                         delivery_fee: payload.new.delivery_fee !== undefined ? payload.new.delivery_fee : prev.delivery_fee,
@@ -280,77 +243,33 @@ export function TenantProvider({ children }) {
         return () => {
             mounted = false;
             window.removeEventListener('frontendSync', handleFrontendSync);
-            if (tenantChannel) supabase.removeChannel(tenantChannel);
+            if (businessesChannel) supabase.removeChannel(businessesChannel);
             if (brandingChannel) supabase.removeChannel(brandingChannel);
         }
     }, [forceRefresh, businessId])
 
-    // 🔄 GLOBAL REFRESH Action
+    // 🔄 GLOBAL REFRESH: Fetch fresh config from tenant_config view
     const refreshTenantData = async () => {
         if (!businessId) return
 
         try {
-            const { data: brandingData, error: brandingError } = await supabase
-                .from('branding')
+            const { data: configData, error: configError } = await supabase
+                .from('tenant_config')
                 .select('*')
                 .eq('business_id', businessId)
                 .maybeSingle()
 
-            if (brandingError) {
-                console.error('[TenantLock] Refresh branding error:', brandingError.message, brandingError.details);
+            if (configError) {
+                console.error('[TenantLock] Refresh error:', configError.message, configError.details);
+                return;
             }
 
-            if (brandingData) {
-                // 📡 RELIABLE FETCH: Use known tenant PK first, then fallback to venue_name / owner_id
-                let { data: tenantRow, error: langError } = await supabase
-                    .from('tenants')
-                    .select('id, language, venue_name, owner_id')
-                    .eq('id', tenantData?.id)
-                    .maybeSingle()
-
-                // 🆘 FALLBACK 1: venue_name match (for edge cases where id is missing)
-                if ((langError || !tenantRow) && tenantData?.venue_name) {
-                    const venueFallback = await supabase
-                        .from('tenants')
-                        .select('id, language, venue_name, owner_id')
-                        .ilike('venue_name', tenantData.venue_name)
-                        .maybeSingle();
-
-                    if (!venueFallback.error && venueFallback.data) {
-                        tenantRow = venueFallback.data;
-                        langError = null;
-                    }
-                }
-
-                // 🆘 FALLBACK 2: Authenticated owner lookup
-                if (langError || !tenantRow) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        const { data: ownerRow, error: ownerError } = await supabase
-                            .from('tenants')
-                            .select('id, language, venue_name, owner_id')
-                            .eq('owner_id', user.id)
-                            .maybeSingle();
-
-                        if (!ownerError && ownerRow) {
-                            tenantRow = ownerRow;
-                            langError = null;
-                        }
-                    }
-                }
-
-                // 🛡️ PRESERVE EXISTING LANGUAGE: Only fall back to 'en' if we truly have no data
-                const data = {
-                    ...brandingData,
-                    id: tenantRow?.id ?? tenantData?.id,
-                    venue_name: tenantRow?.venue_name ?? tenantData?.venue_name,
-                    language: tenantRow?.language ?? tenantData?.language ?? 'en'
-                }
-                setTenantData(data)
-                localStorage.setItem('fs_business_id', data.business_id)
+            if (configData) {
+                setTenantData(configData)
+                localStorage.setItem('fs_business_id', configData.business_id)
             }
         } catch (err) {
-            console.error('Refresh Failed', err)
+            console.error('[TenantLock] Refresh failed:', err)
         }
     }
 

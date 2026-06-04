@@ -27,9 +27,9 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
       }
 
       try {
-        // Query tenants table for language (same source as main app owner dashboard)
+        // Query businesses table for language (now the single source of truth)
         const { data, error } = await supabase
-          .from('tenants')
+          .from('businesses')
           .select('language')
           .eq('id', businessId)
           .single();
@@ -37,26 +37,18 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
         console.log('[LanguageContext] Query result:', { data, error, businessId });
 
         if (error || !data) {
-          // Fallback to branding.app_config if tenants query fails
-          const { data: brandingData } = await supabase
-            .from('branding')
-            .select('app_config')
-            .eq('business_id', businessId)
-            .single();
-
-          const tenantLang = brandingData?.app_config?.language || 'en';
-          setLanguageState(tenantLang);
-          localStorage.setItem('fs_staff_language', tenantLang);
+          console.warn('[LanguageContext] Failed to fetch language, defaulting to en');
+          setLanguageState('en');
+          localStorage.setItem('fs_staff_language', 'en');
           return;
         }
 
-        // Use tenants.language (ignore localStorage)
+        // Use businesses.language (single source of truth)
         const tenantLang = data?.language || 'en';
         setLanguageState(tenantLang);
-        // Update localStorage for persistence, but Supabase is source of truth
         localStorage.setItem('fs_staff_language', tenantLang);
       } catch (err) {
-        console.error('Failed to fetch language:', err);
+        console.error('[LanguageContext] Failed to fetch language:', err);
         setLanguageState('en');
       }
     };
