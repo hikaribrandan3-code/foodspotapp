@@ -69,18 +69,25 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                 height: '100%',
                 left: 0,
                 top: 0,
-                transform: `scale(${scale})`,
-                transformOrigin: 'center center',
-                transition: 'transform 0.1s ease-out'
+                overflow: 'hidden'
             }}>
-                <div className="cover-content menu-header-bg" style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundImage: `url(${getOptimizedImageUrl(config.headerCover.image, { width: 600, quality: 75 })})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: `${posX}% ${posY}%`,
-                    backgroundRepeat: 'no-repeat'
-                }} />
+                <img
+                    src={getOptimizedImageUrl(config.headerCover.image, { width: 800, quality: 80, format: 'webp' })}
+                    alt={businessName}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: `${posX}% ${posY}%`,
+                        display: 'block',
+                        transform: `scale(${scale})`,
+                        transformOrigin: 'center center',
+                        transition: 'transform 0.1s ease-out'
+                    }}
+                    fetchPriority="high"
+                    loading="eager"
+                    decoding="async"
+                />
             </div>
         ) : (
             <div style={{
