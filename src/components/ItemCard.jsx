@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
 import { Info, Leaf, Wheat, Flame, Star } from 'lucide-react'
@@ -190,4 +190,4 @@ const ItemCard = ({
     )
 }
 
-export default ItemCard
+export default memo(ItemCard)

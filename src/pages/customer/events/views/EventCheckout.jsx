@@ -167,7 +167,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           {/* Greyed out event card */}
           <div className="w-full bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm opacity-50">
             <div className="relative h-32 w-full">
-              <img src={event.image} alt={event.name} className="w-full h-full object-cover grayscale" />
+              <img src={event.image && !event.image.startsWith('blob:') ? `${event.image}${event.image.includes('?') ? '&' : '?'}w=600&q=75&format=webp` : event.image} alt={event.name} loading="lazy" className="w-full h-full object-cover grayscale" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-4 left-6">
                 <h3 className="font-black text-lg text-white leading-tight">{event.name}</h3>
@@ -219,7 +219,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         {/* Immersive Event Summary Card */}
         <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm flex flex-col shrink-0">
           <div className="relative h-32 w-full">
-            <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
+            <img src={event.image && !event.image.startsWith('blob:') ? `${event.image}${event.image.includes('?') ? '&' : '?'}w=600&q=75&format=webp` : event.image} alt={event.name} fetchPriority="high" loading="eager" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-slate-900 via-white/40 dark:via-slate-900/40 to-transparent"></div>
             <div className="absolute bottom-4 left-6 right-6 flex items-end justify-between">
               <div>

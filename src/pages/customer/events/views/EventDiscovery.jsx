@@ -1,10 +1,10 @@
 import * as React from 'react';
-const { useState, useEffect } = React;
+const { useState, useEffect, useMemo } = React;
 import { MapPin, Calendar, ArrowRight, Cloud, Sun, Droplets, Thermometer, Sparkles, Languages, Ticket } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 
-const EventCountdown = ({ startDate }) => {
+const EventCountdown = React.memo(({ startDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
 
   useEffect(() => {
@@ -19,6 +19,7 @@ const EventCountdown = ({ startDate }) => {
       }
     };
     calculate();
+    // Update every 60 seconds (sufficient for days/hours/minutes display)
     const timer = setInterval(calculate, 60000);
     return () => clearInterval(timer);
   }, [startDate]);
@@ -26,20 +27,20 @@ const EventCountdown = ({ startDate }) => {
   return (
     <div className="flex gap-1.5 items-center">
       <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
-        <span className="text-[10px] font-black text-white">{timeLeft.days}</span>
+        <span className="text-[10px] font-black text-white">{String(timeLeft.days).padStart(2, '0')}</span>
         <span className="text-[6px] font-bold uppercase text-white/60 tracking-tighter">Days</span>
       </div>
       <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
-        <span className="text-[10px] font-black text-white">{timeLeft.hours}</span>
+        <span className="text-[10px] font-black text-white">{String(timeLeft.hours).padStart(2, '0')}</span>
         <span className="text-[6px] font-bold uppercase text-white/60 tracking-tighter">Hrs</span>
       </div>
       <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex flex-col items-center min-w-[34px] shadow-sm">
-        <span className="text-[10px] font-black text-white">{timeLeft.minutes}</span>
+        <span className="text-[10px] font-black text-white">{String(timeLeft.minutes).padStart(2, '0')}</span>
         <span className="text-[6px] font-bold uppercase text-white/60 tracking-tighter">Mins</span>
       </div>
     </div>
   );
-};
+});
 
 const getWeatherLabel = (code) => {
   if (code === 0) return 'Clear';
@@ -184,9 +185,11 @@ export default function EventDiscovery({ events, loading, error, onSelectEvent, 
     { code: 'pt', name: 'PT' }
   ];
 
-  // Category filter
-  const filteredEvents = events
-    .filter(e => selectedCategory === 'All' || e.category.toLowerCase().includes(selectedCategory.toLowerCase()));
+  // Category filter (memoized to prevent recalculation on re-renders)
+  const filteredEvents = useMemo(
+    () => events.filter(e => selectedCategory === 'All' || e.category.toLowerCase().includes(selectedCategory.toLowerCase())),
+    [events, selectedCategory]
+  );
 
   return (
     <div className="w-full">
@@ -229,16 +232,26 @@ export default function EventDiscovery({ events, loading, error, onSelectEvent, 
           </span>
         </div>
 
-        {filteredEvents.map(event => (
-          <div 
+        {filteredEvents.map((event, idx) => {
+          const optimizedImage = event.image && !event.image.startsWith('blob:')
+            ? `${event.image}${event.image.includes('?') ? '&' : '?'}w=600&q=75&format=webp`
+            : event.image;
+          const isFirstEvent = idx === 0;
+
+          return (
+          <div
             key={event.id}
             onClick={() => onSelectEvent(event)}
             className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden shadow-sm active:scale-[0.98] transition-all cursor-pointer group"
           >
-            <div className="relative h-56 overflow-hidden">
-              <img 
-                src={event.image} 
-                alt={event.name} 
+            <div className="relative h-56 overflow-hidden bg-gray-200">
+              <img
+                src={optimizedImage}
+                alt={event.name}
+                width={600}
+                height={224}
+                loading={isFirstEvent ? "eager" : "lazy"}
+                fetchPriority={isFirstEvent ? "high" : "auto"}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
               
@@ -293,7 +306,8 @@ export default function EventDiscovery({ events, loading, error, onSelectEvent, 
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 text-center">

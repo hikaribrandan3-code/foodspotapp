@@ -7,8 +7,8 @@ import { VenueMap } from '../../../../components/VenueMap';
 import EventShareCard from '../components/EventShareCard';
 import { useEventShare } from '../hooks/useEventShare';
 
-const EventCountdown = ({ startDate }) => {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+const EventCountdown = React.memo(({ startDate }) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
 
   useEffect(() => {
     const calculate = () => {
@@ -18,12 +18,11 @@ const EventCountdown = ({ startDate }) => {
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
         });
       }
     };
     calculate();
-    const timer = setInterval(calculate, 1000);
+    const timer = setInterval(calculate, 30000);
     return () => clearInterval(timer);
   }, [startDate]);
 
@@ -41,13 +40,9 @@ const EventCountdown = ({ startDate }) => {
         <span className="text-lg font-bold text-[var(--color-primary)]">{timeLeft.minutes}</span>
         <span className="text-[7px] font-black uppercase tracking-[0.1em] opacity-40">Mins</span>
       </div>
-      <div className="flex flex-col items-center">
-        <span className="text-lg font-bold text-rose-500">{timeLeft.seconds}</span>
-        <span className="text-[7px] font-black uppercase tracking-[0.1em] opacity-40">Secs</span>
-      </div>
     </div>
   );
-};
+});
 
 export default function EventDetail({ event, onBook, onBack }) {
   const { t } = useLanguage();
@@ -77,10 +72,14 @@ export default function EventDetail({ event, onBook, onBack }) {
       {/* Hidden share card — captured off-screen by html2canvas */}
       <EventShareCard ref={shareCardRef} event={event} businessName={businessName} />
 
-      <div className="relative h-[420px] shrink-0">
+      <div className="relative h-[420px] shrink-0 bg-gray-200">
         <img
-          src={event.image}
+          src={event.image && !event.image.startsWith('blob:') ? `${event.image}${event.image.includes('?') ? '&' : '?'}w=800&q=80&format=webp` : event.image}
           alt={event.name}
+          width={800}
+          height={420}
+          fetchPriority="high"
+          loading="eager"
           className="w-full h-full object-cover"
         />
 
