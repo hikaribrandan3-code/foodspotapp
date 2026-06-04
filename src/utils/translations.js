@@ -1052,6 +1052,85 @@ export const translations = {
     create_events: { en: 'Create Events', es: 'Crear Eventos', pt: 'Criar Eventos' },
     error_loading_data: { en: 'Error loading analytics data. Please refresh.', es: 'Error al cargar los datos. Por favor recarga.', pt: 'Erro ao carregar dados. Por favor atualize.' },
     item_deleted: { en: 'Item deleted', es: 'Artículo eliminado', pt: 'Item deletado' },
-    category_deleted: { en: 'Category deleted', es: 'Categoría eliminada', pt: 'Categoria deletada' }
+    category_deleted: { en: 'Category deleted', es: 'Categoría eliminada', pt: 'Categoria deletada' },
+
+    // ── Kitchen / KDS ──────────────────────────────────────────────────────────
+    board_title:        { en: 'Orders Board',         es: 'Tablero de Pedidos',     pt: 'Painel de Pedidos' },
+    kitchen:            { en: 'Kitchen',               es: 'Cocina',                 pt: 'Cozinha' },
+    todo:               { en: 'Incoming',              es: 'Entrantes',              pt: 'Entrantes' },
+    prep:               { en: 'Preparing',             es: 'Preparando',             pt: 'Preparando' },
+    ready:              { en: 'Ready',                 es: 'Listo',                  pt: 'Pronto' },
+    complete_order:     { en: 'Complete Order',        es: 'Completar Pedido',       pt: 'Completar Pedido' },
+    complete_delivery:  { en: 'Complete Delivery',     es: 'Completar Entrega',      pt: 'Completar Entrega' },
+    all_orders_cleared: { en: 'All orders cleared',   es: 'Todos los pedidos listos', pt: 'Todos os pedidos concluídos' },
+    assign_delivery:    { en: 'Assign Delivery',       es: 'Asignar Entrega',        pt: 'Atribuir Entrega' },
+    ill_take_this:      { en: "I'll take this",        es: 'Lo tomo yo',             pt: 'Eu pego esse' },
+    payment_verify_required: { en: 'Verify Payment',  es: 'Verificar Pago',         pt: 'Verificar Pagamento' },
+
+    // ── Staff Profile / Shifts ─────────────────────────────────────────────────
+    profile_title:      { en: 'My Profile',            es: 'Mi Perfil',              pt: 'Meu Perfil' },
+    profile_subtitle:   { en: 'Your account & shift info', es: 'Tu cuenta e info de turno', pt: 'Sua conta e info de turno' },
+    clock_in:           { en: 'Clock In',              es: 'Marcar Entrada',         pt: 'Registrar Entrada' },
+    clock_out:          { en: 'Clock Out',             es: 'Marcar Salida',          pt: 'Registrar Saída' },
+    on_duty:            { en: 'On Duty',               es: 'En Turno',               pt: 'Em Serviço' },
+    off_duty:           { en: 'Off Duty',              es: 'Fuera de Turno',         pt: 'Fora de Serviço' },
+    not_clocked_in:     { en: 'Not clocked in',        es: 'Sin marcar entrada',     pt: 'Sem registro de entrada' },
+    current_shift:      { en: 'Current Shift',         es: 'Turno Actual',           pt: 'Turno Atual' },
+    shift_management:   { en: 'Shift Management',      es: 'Gestión de Turnos',      pt: 'Gestão de Turnos' },
+    total_hours:        { en: 'Total Hours',           es: 'Horas Totales',          pt: 'Horas Totais' },
+    days_worked:        { en: 'Days Worked',           es: 'Días Trabajados',        pt: 'Dias Trabalhados' },
+    since:              { en: 'Since',                 es: 'Desde',                  pt: 'Desde' },
+    sign_out:           { en: 'Sign Out',              es: 'Cerrar Sesión',          pt: 'Sair' },
+    reset_pin:          { en: 'Reset PIN',             es: 'Restablecer PIN',        pt: 'Redefinir PIN' },
+
+    // ── Staff Profile / Settings ───────────────────────────────────────────────
+    preferences:        { en: 'Preferences',           es: 'Preferencias',           pt: 'Preferências' },
+    notifications:      { en: 'Notifications',         es: 'Notificaciones',         pt: 'Notificações' },
+    sound_alerts:       { en: 'Sound Alerts',          es: 'Alertas de Sonido',      pt: 'Alertas de Som' },
+    auto_sync:          { en: 'Auto Sync',             es: 'Sincronización Automática', pt: 'Sincronização Automática' },
+    theme:              { en: 'Theme',                 es: 'Tema',                   pt: 'Tema' },
+    privacy_security:   { en: 'Privacy & Security',    es: 'Privacidad y Seguridad', pt: 'Privacidade e Segurança' },
+    not_set:            { en: 'Not set',               es: 'No configurado',         pt: 'Não configurado' },
+
+    // ── Staff / Driver Info ────────────────────────────────────────────────────
+    driver:             { en: 'Driver',                es: 'Repartidor',             pt: 'Entregador' },
+    driver_info:        { en: 'Driver Info',           es: 'Info del Repartidor',    pt: 'Info do Entregador' },
+    vehicle_contact:    { en: 'Vehicle & Contact',     es: 'Vehículo y Contacto',    pt: 'Veículo e Contato' },
+    logistics_title:    { en: 'Logistics',             es: 'Logística',              pt: 'Logística' },
+    emergency:          { en: 'Emergency',             es: 'Emergencia',             pt: 'Emergência' },
+    emergency_contact:  { en: 'Emergency Contact',     es: 'Contacto de Emergencia', pt: 'Contato de Emergência' },
+
+    // ── Inventory ──────────────────────────────────────────────────────────────
+    inventory_title:    { en: 'Inventory',             es: 'Inventario',             pt: 'Inventário' },
+    search_items:       { en: 'Search items...',       es: 'Buscar artículos...',    pt: 'Buscar itens...' },
+    item_name:          { en: 'Item name',             es: 'Nombre del artículo',    pt: 'Nome do item' },
+    item_not_found:     { en: 'Item not found',        es: 'Artículo no encontrado', pt: 'Item não encontrado' },
+    min_stock:          { en: 'Min Stock',             es: 'Stock Mínimo',           pt: 'Estoque Mínimo' },
+    restock:            { en: 'Restock',               es: 'Reabastecer',            pt: 'Reabastecer' },
+    scanning:           { en: 'Scanning...',           es: 'Escaneando...',          pt: 'Escaneando...' },
+    point_camera:       { en: 'Point camera at barcode', es: 'Apunta la cámara al código de barras', pt: 'Aponte a câmera para o código de barras' },
+    confirm_scan:       { en: 'Confirm Scan',          es: 'Confirmar Escaneo',      pt: 'Confirmar Leitura' },
+    supplier:           { en: 'Supplier',              es: 'Proveedor',              pt: 'Fornecedor' },
+    unit_type:          { en: 'Unit Type',             es: 'Tipo de Unidad',         pt: 'Tipo de Unidade' },
+    no_items:           { en: 'No items found',        es: 'Sin artículos',          pt: 'Sem itens' },
+    edit_category:      { en: 'Edit Category',         es: 'Editar Categoría',       pt: 'Editar Categoria' },
+
+    // ── Menu Management ────────────────────────────────────────────────────────
+    add_to_cart:        { en: 'Add to Cart',           es: 'Agregar al Carrito',     pt: 'Adicionar ao Carrinho' },
+    save_changes:       { en: 'Save Changes',          es: 'Guardar Cambios',        pt: 'Salvar Alterações' },
+    category_add_error: { en: 'Error adding category', es: 'Error al agregar categoría', pt: 'Erro ao adicionar categoria' },
+    category_name_placeholder: { en: 'Category name', es: 'Nombre de categoría',    pt: 'Nome da categoria' },
+    create_category_first_btn: { en: 'Create a category first', es: 'Primero crea una categoría', pt: 'Crie uma categoria primeiro' },
+    dietary_tags:       { en: 'Dietary Tags',          es: 'Etiquetas Dietéticas',   pt: 'Tags Dietéticas' },
+    paused:             { en: 'Paused',                es: 'Pausado',                pt: 'Pausado' },
+    delete_error:       { en: 'Error deleting item',   es: 'Error al eliminar',      pt: 'Erro ao excluir' },
+    generate_description: { en: 'Generate description', es: 'Generar descripción',   pt: 'Gerar descrição' },
+    item_description_placeholder: { en: 'Describe the dish...', es: 'Describe el plato...', pt: 'Descreva o prato...' },
+
+    // ── Owner Dashboard / Other ────────────────────────────────────────────────
+    error_saving:       { en: 'Error saving',          es: 'Error al guardar',       pt: 'Erro ao salvar' },
+    upgrade:            { en: 'Upgrade',               es: 'Mejorar Plan',           pt: 'Atualizar Plano' },
+    staff_ops:          { en: 'Staff Operations',      es: 'Operaciones de Personal', pt: 'Operações de Pessoal' },
+    take_order:         { en: 'Take Order',            es: 'Tomar Pedido',           pt: 'Pegar Pedido' }
 };
 
