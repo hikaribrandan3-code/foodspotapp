@@ -1050,6 +1050,8 @@ export const translations = {
     complete_payment_confirm: { es: "Completa tu pago para confirmar", en: "Complete your payment to confirm", pt: "Complete seu pagamento para confirmar" },
     expenses: { en: 'Expenses', es: 'Gastos', pt: 'Despesas' },
     create_events: { en: 'Create Events', es: 'Crear Eventos', pt: 'Criar Eventos' },
-    error_loading_data: { en: 'Error loading analytics data. Please refresh.', es: 'Error al cargar los datos. Por favor recarga.', pt: 'Erro ao carregar dados. Por favor atualize.' }
+    error_loading_data: { en: 'Error loading analytics data. Please refresh.', es: 'Error al cargar los datos. Por favor recarga.', pt: 'Erro ao carregar dados. Por favor atualize.' },
+    item_deleted: { en: 'Item deleted', es: 'Artículo eliminado', pt: 'Item deletado' },
+    category_deleted: { en: 'Category deleted', es: 'Categoría eliminada', pt: 'Categoria deletada' }
 };
 
