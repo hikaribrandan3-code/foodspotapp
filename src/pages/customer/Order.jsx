@@ -364,9 +364,17 @@ function Order({ config: configProp }) {
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
             if (effectivePaymentMethod === 'mercado_pago') {
                 try {
-                    const { data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
-                        body: { order_id: savedOrder.id }
-                    })
+                    let mpData, mpError
+                    // Retry up to 2 times on network errors (cold start fix)
+                    for (let attempt = 0; attempt < 3; attempt++) {
+                        if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * attempt))
+                        ;({ data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
+                            body: { order_id: savedOrder.id }
+                        }))
+                        const isNetworkError = mpError && (mpError.message?.includes('Load failed') || mpError.message?.includes('Failed to fetch') || mpError.message?.includes('Network'))
+                        if (!isNetworkError) break
+                        console.warn(`[Order] MP attempt ${attempt + 1} failed, retrying...`)
+                    }
                     if (mpError) throw mpError
                     const checkoutUrl = mpData?.init_point
                     if (checkoutUrl) {
