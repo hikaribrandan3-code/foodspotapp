@@ -79,7 +79,7 @@ export default function Receipt() {
   const isMp = order?.payment_method === 'mercado_pago'
   const isDelivered = order?.status === 'delivered'
   const isDeliveredCash = isDelivered && isCash
-  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased' || isDelivered
+  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased' || order?.status === 'released_to_kitchen' || order?.status === 'preparing' || order?.status === 'ready' || order?.status === 'dispatched' || isDelivered
   const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
   const paymentFailed = !isPaid && !isPending && !isCash && !isDelivered
 
