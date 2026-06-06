@@ -220,6 +220,15 @@ function Order({ config: configProp }) {
     const [paymentMethod, setPaymentMethod] = useState('cash')
     const [validationErrors, setValidationErrors] = useState([])
 
+    // Warm up the Edge Function the moment user selects Mercado Pago
+    // so the cold-start penalty is paid before they hit submit
+    const handlePaymentMethodChange = (method) => {
+        setPaymentMethod(method)
+        if (method === 'mercado_pago') {
+            supabase.functions.invoke('create-preference', { body: { order_id: 'warmup' } }).catch(() => {})
+        }
+    }
+
     // 🔄 PAYMENT RETRY STATE (Audit #7)
     const [isRetryMode, setIsRetryMode] = useState(false)
     const [pendingOrderId, setPendingOrderId] = useState(null)
@@ -1217,7 +1226,7 @@ function Order({ config: configProp }) {
                         <PaymentMethodCard
                             id="mercado_pago"
                             selected={paymentMethod === 'mercado_pago'}
-                            onClick={() => setPaymentMethod('mercado_pago')}
+                            onClick={() => handlePaymentMethodChange('mercado_pago')}
                             title="Mercado Pago"
                             subtitle="Tarjeta de crédito/débito o billetera"
                             color="#0066FF"

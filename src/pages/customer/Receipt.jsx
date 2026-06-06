@@ -26,6 +26,8 @@ export default function Receipt() {
   const dineinDelayVariant = 2000 // Show banner immediately when food served (2s)
 
   const orderId = searchParams.get('order_id') || searchParams.get('orderId')
+  // MP redirects back with ?payment=success — trust it optimistically while webhook catches up
+  const mpReturnStatus = searchParams.get('payment')
 
   useEffect(() => {
     if (!orderId) { setError('No order ID'); setLoading(false); return }
@@ -108,9 +110,12 @@ export default function Receipt() {
   const isMp = order?.payment_method === 'mercado_pago'
   const isDelivered = order?.status === 'delivered'
   const isDeliveredCash = isDelivered && isCash
-  const isPaid = order?.status === 'paid' || order?.status === 'paid_unreleased' || order?.status === 'released_to_kitchen' || order?.status === 'preparing' || order?.status === 'ready' || order?.status === 'dispatched' || isDelivered
-  const isPending = order?.status === 'pending' || order?.status === 'pending_payment'
-  const paymentFailed = !isPaid && !isPending && !isCash && !isDelivered
+  // If MP redirected back with ?payment=success, treat as paid immediately
+  // — the webhook may take a few seconds to update the DB
+  const mpReturnSuccess = isMp && mpReturnStatus === 'success'
+  const isPaid = mpReturnSuccess || order?.status === 'paid' || order?.status === 'paid_unreleased' || order?.status === 'released_to_kitchen' || order?.status === 'preparing' || order?.status === 'ready' || order?.status === 'dispatched' || isDelivered
+  const isPending = !mpReturnSuccess && (order?.status === 'pending' || order?.status === 'pending_payment')
+  const paymentFailed = mpReturnStatus === 'failure' || (!isPaid && !isPending && !isCash && !isDelivered)
 
   // Use actual order type from database, fallback to inferring from delivery address
   const orderType = order?.order_type || (!order?.delivery_address ? 'takeout' : 'delivery')
