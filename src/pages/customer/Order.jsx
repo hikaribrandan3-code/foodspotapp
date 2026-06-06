@@ -978,126 +978,91 @@ function Order({ config: configProp }) {
                         </>
                     ) : orderType === 'dine_in' ? (
                         <>
-                            {/* DATE PICKER */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{
-                                    fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
-                                }}>
-                                    📅 Fecha de Reserva
-                                </label>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
+                            {/* ── RESERVATION BLOCK: compact, one card feel ── */}
+
+                            {/* DATE — horizontal scroll strip */}
+                            <div style={{ marginBottom: 20 }}>
+                                <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Fecha</p>
+                                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
                                     {availableDates.map(date => (
                                         <button
                                             key={date.value}
                                             onClick={() => setReservationDate(date.value)}
                                             style={{
-                                                padding: '10px 12px',
-                                                borderRadius: 10,
-                                                border: 'none',
-                                                background: reservationDate === date.value ? '#C4856A' : '#F3F4F6',
-                                                color: reservationDate === date.value ? 'white' : '#4B5563',
-                                                fontWeight: 600,
-                                                fontSize: 12,
-                                                cursor: 'pointer',
-                                                transition: 'all 0.15s',
-                                                textAlign: 'center',
-                                                lineHeight: 1.2
+                                                flexShrink: 0,
+                                                width: 52, padding: '8px 0',
+                                                borderRadius: 12, border: 'none',
+                                                background: reservationDate === date.value ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
+                                                color: reservationDate === date.value ? 'white' : '#6B7280',
+                                                fontWeight: 700, fontSize: 11,
+                                                cursor: 'pointer', textAlign: 'center', lineHeight: 1.3,
+                                                transition: 'all 0.15s'
                                             }}
                                         >
-                                            <div style={{ fontSize: 11 }}>{date.dayName}</div>
-                                            <div>{date.dayNum}</div>
+                                            <div style={{ fontSize: 10, opacity: 0.8 }}>{date.dayName}</div>
+                                            <div style={{ fontSize: 16, fontWeight: 800 }}>{date.dayNum}</div>
                                             <div style={{ fontSize: 10, opacity: 0.7 }}>{date.monthName}</div>
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* TIME PICKER */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{
-                                    fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
-                                }}>
-                                    🕐 Hora
-                                </label>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: 8, maxHeight: 200, overflowY: 'auto' }}>
-                                    {timeSlots.map(slot => (
+                            {/* TIME + PARTY SIZE — side by side */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                                {/* Time — native select, no scroll wall */}
+                                <div>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Hora</p>
+                                    <select
+                                        value={reservationTime}
+                                        onChange={e => setReservationTime(e.target.value)}
+                                        style={{
+                                            width: '100%', padding: '12px 14px',
+                                            borderRadius: 12, border: '1.5px solid #E5E7EB',
+                                            fontSize: 15, fontWeight: 600, color: '#1F2937',
+                                            background: 'white', cursor: 'pointer',
+                                            appearance: 'none', WebkitAppearance: 'none'
+                                        }}
+                                    >
+                                        <option value="">--:--</option>
+                                        {timeSlots.map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* Party size — stepper */}
+                                <div>
+                                    <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Personas</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1.5px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
                                         <button
-                                            key={slot}
-                                            onClick={() => setReservationTime(slot)}
-                                            style={{
-                                                padding: '10px 12px',
-                                                borderRadius: 10,
-                                                border: 'none',
-                                                background: reservationTime === slot ? '#C4856A' : '#F3F4F6',
-                                                color: reservationTime === slot ? 'white' : '#4B5563',
-                                                fontWeight: 600,
-                                                fontSize: 13,
-                                                cursor: 'pointer',
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            {slot}
-                                        </button>
-                                    ))}
+                                            onClick={() => setPartySize(p => Math.max(1, p - 1))}
+                                            style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}
+                                        >−</button>
+                                        <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 800, color: '#1F2937' }}>{partySize}</span>
+                                        <button
+                                            onClick={() => setPartySize(p => Math.min(20, p + 1))}
+                                            style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}
+                                        >+</button>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* PARTY SIZE */}
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{
-                                    fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
-                                }}>
-                                    👥 Cantidad de Personas
-                                </label>
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 10].map(num => (
-                                        <button
-                                            key={num}
-                                            onClick={() => setPartySize(num)}
-                                            style={{
-                                                padding: '10px 14px',
-                                                borderRadius: 10,
-                                                border: 'none',
-                                                background: partySize === num ? '#C4856A' : '#F3F4F6',
-                                                color: partySize === num ? 'white' : '#4B5563',
-                                                fontWeight: 600,
-                                                fontSize: 13,
-                                                cursor: 'pointer',
-                                                transition: 'all 0.15s',
-                                                minWidth: 44
-                                            }}
-                                        >
-                                            {num}
-                                        </button>
-                                    ))}
-                                </div>
+                            {/* NAME + PHONE — side by side on tablet, stacked on mobile */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 12 }}>
+                                <InputGroup
+                                    label={t('name_label')}
+                                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                    value={customerInfo.name}
+                                    onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                    placeholder={t('name_placeholder')}
+                                />
+                                <InputGroup
+                                    label={t('phone_label')}
+                                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                                    value={customerInfo.phone}
+                                    onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
+                                    placeholder="11 2345-6789"
+                                    type="tel"
+                                />
                             </div>
-
-                            {/* NAME */}
-                            <InputGroup
-                                label={t('name_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
-                                value={customerInfo.name}
-                                onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                placeholder={t('name_placeholder')}
-                            />
-
-                            {/* PHONE */}
-                            <InputGroup
-                                label={t('phone_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
-                                value={customerInfo.phone}
-                                onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
-                                placeholder={t('phone_label') + ' (ex: 1123456789)'}
-                                type="tel"
-                            />
-
-                            {/* NOTES */}
-                            <InputGroup
-                                label="Notas (Opcional)" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
-                                value={reservationNotes}
-                                onChange={(e) => setReservationNotes(e.target.value)}
-                                placeholder="Alergias, restricciones, comentarios especiales..."
-                                isTextArea={true}
-                            />
                         </>
                     ) : (
                         /* pickup / takeout */
