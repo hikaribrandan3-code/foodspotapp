@@ -45,6 +45,11 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     es: 'Vehículo y Contacto',
     pt: 'Veículo e Contato',
   },
+  'event_checkin': {
+    en: 'Events',
+    es: 'Eventos',
+    pt: 'Eventos',
+  },
   'preferences': {
     en: 'Preferences',
     es: 'Preferencias',
@@ -172,9 +177,9 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   },
   // Board & Logistics
   'board_title': {
-    en: 'Mission Control',
-    es: 'Control de Misión',
-    pt: 'Controle de Missão',
+    en: 'Control',
+    es: 'Control',
+    pt: 'Controle',
   },
   'logistics_title': {
     en: 'Logistics',
@@ -267,9 +272,9 @@ export const staffTranslations: Record<string, Record<string, string>> = {
     pt: 'Cozinha',
   },
   'take_order': {
-    en: 'Take Order',
-    es: 'Tomar Pedido',
-    pt: 'Novo Pedido',
+    en: 'Order',
+    es: 'Pedido',
+    pt: 'Pedido',
   },
   'live': {
     en: 'LIVE',

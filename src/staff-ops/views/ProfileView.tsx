@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Settings, Bell, BellOff, Shield, Clock, Phone, LogOut,
   ChevronRight, Moon, Sun, Wifi, WifiOff, Volume2, VolumeX,
-  X, Check, Bike, Car, Truck,
+  X, Check, Bike, Car, Truck, Ticket, CheckCircle2,
 } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { useAudioPref } from '@/hooks/useAudioPref';
@@ -119,9 +119,17 @@ export default function ProfileView() {
     })
   );
 
-  const [sheet, setSheet] = useState<null | 'emergency' | 'language' | 'resetPin' | 'driver'>(null);
+  const [sheet, setSheet] = useState<null | 'emergency' | 'language' | 'resetPin' | 'driver' | 'events'>(null);
   const [emergencyInput, setEmergencyInput] = useState(emergencyContact);
   const [driverInput, setDriverInput] = useState(driverProfile);
+
+  // Event check-in state
+  const [liveEvents, setLiveEvents] = useState<any[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [eventCode, setEventCode] = useState('');
+  const [checkinResult, setCheckinResult] = useState<any>(null);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  const [checkinCount, setCheckinCount] = useState(0);
 
   const toggleNotifications = () => {
     const next = !notificationsOn;
@@ -154,6 +162,88 @@ export default function ProfileView() {
     setDriverProfile(driverInput);
     localStorage.setItem('fs_driver_profile', JSON.stringify(driverInput));
     setSheet(null);
+  };
+
+  const openEventsSheet = async () => {
+    setSheet('events');
+    setSelectedEvent(null);
+    setEventCode('');
+    setCheckinResult(null);
+    setCheckinCount(0);
+    const { data } = await supabase
+      .from('events')
+      .select('id, name, start_date')
+      .eq('business_id', businessId)
+      .eq('status', 'live')
+      .eq('is_deleted', false)
+      .order('start_date', { ascending: true });
+    setLiveEvents(data || []);
+  };
+
+  const handleCheckin = async () => {
+    if (!selectedEvent || !eventCode.trim()) return;
+    setCheckinLoading(true);
+    setCheckinResult(null);
+    const cleanCode = eventCode.replace(/\D/g, '');
+    if (cleanCode.length !== 6) {
+      setCheckinResult({ success: false, message: 'Code must be 6 digits' });
+      setCheckinLoading(false);
+      setTimeout(() => setCheckinResult(null), 3000);
+      return;
+    }
+    try {
+      const { data: order } = await supabase
+        .from('event_orders')
+        .select('id, event_id, customer_name, tier_snapshot, payment_status')
+        .eq('ticket_code', cleanCode)
+        .eq('event_id', selectedEvent.id)
+        .maybeSingle();
+
+      if (!order) {
+        setCheckinResult({ success: false, message: 'Code not found' });
+        setCheckinLoading(false);
+        setTimeout(() => setCheckinResult(null), 3000);
+        return;
+      }
+      if (order.payment_status !== 'paid') {
+        setCheckinResult({ success: false, message: 'Ticket not paid' });
+        setCheckinLoading(false);
+        setTimeout(() => setCheckinResult(null), 3000);
+        return;
+      }
+      const { data: existing } = await supabase
+        .from('event_checkins')
+        .select('id')
+        .eq('order_id', order.id)
+        .eq('event_id', selectedEvent.id)
+        .maybeSingle();
+
+      if (existing) {
+        setCheckinResult({ success: false, message: 'Already checked in' });
+        setCheckinLoading(false);
+        setTimeout(() => setCheckinResult(null), 3000);
+        return;
+      }
+
+      await supabase.from('event_checkins').insert({
+        event_id: selectedEvent.id,
+        order_id: order.id,
+        checkin_method: 'manual',
+      });
+
+      setCheckinResult({
+        success: true,
+        name: order.customer_name || 'Guest',
+        tier: order.tier_snapshot?.name || 'General',
+      });
+      setCheckinCount(n => n + 1);
+      setEventCode('');
+      setTimeout(() => setCheckinResult(null), 3000);
+    } catch {
+      setCheckinResult({ success: false, message: 'Check-in failed' });
+      setTimeout(() => setCheckinResult(null), 3000);
+    }
+    setCheckinLoading(false);
   };
 
   const doSignOut = (clearShift = false) => {
@@ -262,6 +352,11 @@ export default function ProfileView() {
             value={driverSummary} onClick={() => { setDriverInput(driverProfile); setSheet('driver'); }} />
         </Section>
 
+        <Section title={t('event_checkin')}>
+          <MenuItem icon={<Ticket size={18} />} label={t('event_checkin')}
+            onClick={openEventsSheet} />
+        </Section>
+
         <Section title={t('preferences')}>
           <ToggleItem icon={theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             label={t('theme')} value={theme === 'dark' ? t('dark') : t('light')} onClick={toggleTheme} />
@@ -336,6 +431,88 @@ export default function ProfileView() {
               style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-secondary)' }}>
               Cancel
             </button>
+          </Sheet>
+        )}
+
+        {sheet === 'events' && (
+          <Sheet title={t('event_checkin')} onClose={() => { setSheet(null); setSelectedEvent(null); setEventCode(''); setCheckinResult(null); }}>
+            {!selectedEvent ? (
+              <div className="space-y-2">
+                {liveEvents.length === 0 ? (
+                  <p className="text-sm text-center py-6" style={{ color: 'var(--text-secondary)' }}>No live events right now</p>
+                ) : liveEvents.map(ev => (
+                  <button key={ev.id} onClick={() => { setSelectedEvent(ev); setCheckinCount(0); }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-left"
+                    style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)' }}>
+                    <Ticket size={16} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                    <span className="flex-1">{ev.name}</span>
+                    <ChevronRight size={14} style={{ color: 'var(--card-border-strong)' }} />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Back to event list */}
+                <button onClick={() => { setSelectedEvent(null); setEventCode(''); setCheckinResult(null); }}
+                  className="flex items-center gap-2 text-xs font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}>
+                  ← {selectedEvent.name}
+                </button>
+
+                {/* Counter */}
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                  style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+                  <CheckCircle2 size={20} color="#16A34A" />
+                  <div>
+                    <div className="text-lg font-black" style={{ color: '#16A34A' }}>{checkinCount}</div>
+                    <div className="text-[11px] font-semibold" style={{ color: '#166534' }}>checked in this session</div>
+                  </div>
+                </div>
+
+                {/* Code input */}
+                <Field label="Ticket Code">
+                  <div className="flex gap-2">
+                    <input
+                      value={eventCode}
+                      onChange={e => setEventCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onKeyDown={e => e.key === 'Enter' && handleCheckin()}
+                      placeholder="123456"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      maxLength={6}
+                      autoFocus
+                      className="flex-1 px-4 py-3 rounded-xl text-lg font-mono tracking-widest outline-none"
+                      style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)', letterSpacing: '0.25em' }}
+                    />
+                    <button
+                      onClick={handleCheckin}
+                      disabled={eventCode.length !== 6 || checkinLoading}
+                      className="px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-1"
+                      style={{ backgroundColor: eventCode.length === 6 ? '#3B82F6' : 'var(--btn-secondary-bg)', color: eventCode.length === 6 ? '#fff' : 'var(--text-tertiary)', opacity: checkinLoading ? 0.6 : 1 }}>
+                      {checkinLoading ? '...' : <Check size={18} />}
+                    </button>
+                  </div>
+                </Field>
+
+                {/* Result */}
+                <AnimatePresence>
+                  {checkinResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      className="px-4 py-3 rounded-xl text-center font-semibold text-sm"
+                      style={{
+                        backgroundColor: checkinResult.success ? '#F0FDF4' : '#FEF2F2',
+                        border: `1px solid ${checkinResult.success ? '#BBF7D0' : '#FECACA'}`,
+                        color: checkinResult.success ? '#16A34A' : '#DC2626',
+                      }}>
+                      {checkinResult.success
+                        ? `✓ ${checkinResult.name} — ${checkinResult.tier}`
+                        : `✕ ${checkinResult.message}`}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </Sheet>
         )}
 
