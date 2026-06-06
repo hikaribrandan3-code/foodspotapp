@@ -1118,7 +1118,7 @@ export const translations = {
     edit_category:      { en: 'Edit Category',         es: 'Editar Categoría',       pt: 'Editar Categoria' },
 
     // ── Menu Management ────────────────────────────────────────────────────────
-    add_to_cart:        { en: 'Add to Cart',           es: 'Agregar al Carrito',     pt: 'Adicionar ao Carrinho' },
+    add_to_cart:        { en: 'Add to Cart',           es: 'Add to Cart',            pt: 'Adicionar ao Carrinho' },
     save_changes:       { en: 'Save Changes',          es: 'Guardar Cambios',        pt: 'Salvar Alterações' },
     category_add_error: { en: 'Error adding category', es: 'Error al agregar categoría', pt: 'Erro ao adicionar categoria' },
     category_name_placeholder: { en: 'Category name', es: 'Nombre de categoría',    pt: 'Nome da categoria' },

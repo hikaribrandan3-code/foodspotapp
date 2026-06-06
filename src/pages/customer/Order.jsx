@@ -180,6 +180,11 @@ function Order({ config: configProp }) {
     // Scroll to payment section ref
     const paymentSectionRef = useRef(null)
 
+    // Auto-scroll to top when order type changes or page loads
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [orderType])
+
     // Auto-scroll to payment when switching from dine_in
     useEffect(() => {
         if (orderType !== 'dine_in' && paymentSectionRef.current) {

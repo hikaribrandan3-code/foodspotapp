@@ -209,7 +209,7 @@ const Info = ({ config }) => {
                     </a>
                     {isPillEnabled('adminAccess') && (
                         <button
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             onClick={() => navigate(`/${tenantSlug}/owner`)}
                             title={t('info_admin_access')}
                         >
