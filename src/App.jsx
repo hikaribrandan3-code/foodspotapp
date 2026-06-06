@@ -136,6 +136,7 @@ import Order from './pages/customer/Order.jsx'
 import OrderStatus from './pages/customer/OrderStatus.jsx'
 import OrderPayment from './pages/customer/OrderPayment.jsx'
 import Receipt from './pages/customer/Receipt.jsx'
+import ReservationPage from './pages/customer/ReservationPage.jsx'
 
 import Rewards from './pages/customer/Rewards.jsx'
 import ShareFood from './pages/customer/ShareFood.jsx'
@@ -159,6 +160,7 @@ const Analytics = lazy(() => import('./pages/owner/Analytics.jsx'))
 const FoodSpotAI = lazy(() => import('./pages/owner/FoodSpotAI.jsx'))
 const CustomerContacts = lazy(() => import('./pages/owner/CustomerContacts.jsx'))
 const Dashboard = lazy(() => import('./pages/owner/Dashboard.jsx'))
+const Reservations = lazy(() => import('./pages/owner/Reservations.jsx'))
 
 // Admin Pages (Lazy-loaded)
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
@@ -642,6 +644,7 @@ function App() {
                                             <Route path="/:tenantSlug/events" element={<EventThemeWrapper />} />
                                             <Route path="/:tenantSlug/events/ticket" element={<EventThemeWrapper />} />
                                             <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} /> {/* Alias for backward compatibility */}
+                                            <Route path="/:tenantSlug/reservation" element={<Suspense fallback={<LazyFallback />}><ReservationPage /></Suspense>} />
                                             <Route path="/:tenantSlug/wall" element={<Wall />} />
                                             <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
                                             <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
@@ -663,6 +666,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/contacts" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/reservations" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Reservations /></Suspense></ProtectedRoute>} />
 
                                             <Route path="*" element={<Navigate to="/" replace />} />
                                         </Routes>

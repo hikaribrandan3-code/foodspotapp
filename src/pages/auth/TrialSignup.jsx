@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient.js'
 import { setTenantStoragePrefix } from '../../utils/storage.js'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal'
+import { trackSignupStart, trackSignupComplete, trackLandingPageView, trackGetStartedClick, trackLoginAttempt } from '../../lib/tracking.js'
 
 // ============================================
 // ICONS
@@ -154,6 +155,10 @@ const LoginModal = ({ onClose, lang, onLangCycle }) => {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    trackLoginAttempt()
+  }, [])
 
   // Close on Escape
   useEffect(() => {
@@ -413,6 +418,11 @@ const TrialSignup = () => {
 
   const l = TRANSLATIONS[lang]
 
+  // Track landing page view on mount
+  useEffect(() => {
+    trackLandingPageView()
+  }, [])
+
   // Auth state listener for redirects
   useEffect(() => {
     const { subscription } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -488,6 +498,9 @@ const TrialSignup = () => {
       if (signupPassword.length < 6) {
         throw new Error('Password must be at least 6 characters')
       }
+
+      // Track signup start
+      trackSignupStart()
 
       // Create auth user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
@@ -605,6 +618,10 @@ const TrialSignup = () => {
       localStorage.setItem('fs_business_id', businessId)
       setTenantStoragePrefix(businessId)
       console.log('[Onboarding] Redirecting to:', `/${slug}/owner/summary`)
+
+      // Track signup completion
+      trackSignupComplete(businessName)
+
       window.location.href = `/${slug}/owner/summary`
 
     } catch (err) {
@@ -694,6 +711,7 @@ const TrialSignup = () => {
               <button
                 type="submit"
                 disabled={loading}
+                onClick={trackGetStartedClick}
                 className="w-full min-h-[48px] bg-emerald-500 text-white rounded-lg flex items-center justify-center gap-2 font-sans text-sm font-semibold tracking-wider transition-all duration-200 hover:bg-emerald-600 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed mt-2"
               >
                 {loading ? l.processing || 'Processing...' : l.createAccount}
@@ -704,7 +722,7 @@ const TrialSignup = () => {
                   {l.haveAccount}{' '}
                   <a
                     href="#"
-                    onClick={(e) => { e.preventDefault(); setShowLoginModal(true); }}
+                    onClick={(e) => { e.preventDefault(); trackLoginAttempt(); setShowLoginModal(true); }}
                     className="text-emerald-700 font-sans text-sm font-semibold tracking-wider hover:underline hover:text-emerald-800 transition-colors"
                   >
                     {l.login}

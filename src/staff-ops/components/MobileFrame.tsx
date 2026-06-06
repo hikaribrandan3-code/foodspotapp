@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, X } from 'lucide-react';
+import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, CalendarDays, X } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import BoardView from '@/views/BoardView';
@@ -9,6 +9,7 @@ import LogisticsView from '@/views/LogisticsView';
 import ProfileView from '@/views/ProfileView';
 import OrderView from '@/views/OrderView';
 import InventoryView from '@/views/InventoryView';
+import ReservationsView from '@/views/ReservationsView';
 import BottomNav from '@/components/BottomNav';
 import OrderDetailDrawer from '@/components/OrderDetailDrawer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -31,6 +32,7 @@ function DesktopSidebar() {
     { id: 'order', icon: <ClipboardList size={20} strokeWidth={2.2} />, label: t('take_order') },
     { id: 'logistics', icon: <Bike size={20} strokeWidth={2.2} />, label: t('logistics_title') },
     { id: 'inventory', icon: <Package size={20} strokeWidth={2.2} />, label: t('inventory_title') },
+    { id: 'reservations', icon: <CalendarDays size={20} strokeWidth={2.2} />, label: t('reservations_title') },
   ];
   return (
     <aside
@@ -75,6 +77,7 @@ export default function MobileFrame() {
       case 'order': return <OrderView />;
       case 'logistics': return <LogisticsView />;
       case 'inventory': return <InventoryView />;
+      case 'reservations': return <ReservationsView />;
       default: return <BoardView />;
     }
   };

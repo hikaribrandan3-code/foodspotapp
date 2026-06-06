@@ -39,7 +39,9 @@ const ACTION_DEFINITIONS = {
     promos: { icon: EventsIcon, label: 'events', path: 'events' }, // Alias for backward compatibility
     rewards: { icon: EventsIcon, label: 'events', path: 'events' }, // Alias for backward compatibility
     game: { icon: GameIcon, label: 'arcade', path: 'arcade' },
-    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' }  // ← Alias for 'game'
+    arcade: { icon: GameIcon, label: 'arcade', path: 'arcade' },  // ← Alias for 'game'
+    reservation: { icon: MenuIcon, label: 'reservation', path: 'reservation' },
+    reservations: { icon: MenuIcon, label: 'reservation', path: 'reservation' }  // ← Alias
 }
 
 // --- MAIN COMPONENT ---

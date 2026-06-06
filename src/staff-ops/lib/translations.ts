@@ -381,7 +381,6 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'active': { en: 'Active', es: 'Activo', pt: 'Ativo' },
   'completed': { en: 'Completed', es: 'Completado', pt: 'Concluído' },
   // Kitchen action labels (interchangeable with owner dashboard)
-  'kitchen': { en: 'Kitchen', es: 'Cocina', pt: 'Cozinha' },
   'to_do': { en: 'To-Do', es: 'Por Hacer', pt: 'A Fazer' },
   'in_progress': { en: 'In Progress', es: 'En Progreso', pt: 'Em Progresso' },
   'nothing_in_progress': { en: 'Nothing in progress', es: 'Nada en progreso', pt: 'Nada em progresso' },
@@ -395,12 +394,23 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'complete_delivery': { en: 'Complete Delivery', es: 'Entregar Completo', pt: 'Completar Entrega' },
   'complete_order': { en: 'Complete Order', es: 'Completar Pedido', pt: 'Completar Pedido' },
   'dispatch_order': { en: 'Dispatch Order', es: 'Despachar', pt: 'Despachar' },
-  'confirm_payment': { en: 'Confirm Payment', es: 'Confirmar Pago', pt: 'Confirmar Pagamento' },
   'delivery': { en: 'Delivery', es: 'Envío', pt: 'Entrega' },
   'dine_in': { en: 'Dine-In', es: 'Comer Aquí', pt: 'Comer no Local' },
   'take_out': { en: 'Takeout', es: 'Retirar', pt: 'Retirada' },
   'cancel_confirm': { en: 'Are you sure you want to cancel this order?', es: '¿Está seguro de que desea cancelar este pedido?', pt: 'Tem certeza de que deseja cancelar este pedido?' },
   'ill_take_this': { en: "I'll Take This", es: 'Yo lo Entrego', pt: 'Vou Entregar' },
+  'reservations_title': { en: 'Reservations', es: 'Reservas', pt: 'Reservas' },
+  'reservations_pending': { en: 'Pending', es: 'Pendientes', pt: 'Pendentes' },
+  'reservations_approved': { en: 'Approved', es: 'Aprobadas', pt: 'Aprovadas' },
+  'reservations_all': { en: 'All', es: 'Todas', pt: 'Todas' },
+  'reservation_approve': { en: 'Approve', es: 'Aprobar', pt: 'Aprovar' },
+  'reservation_reject': { en: 'Reject', es: 'Rechazar', pt: 'Rejeitar' },
+  'reservation_no_show': { en: 'No Show', es: 'No se presentó', pt: 'Não compareceu' },
+  'reservation_people': { en: 'people', es: 'personas', pt: 'pessoas' },
+  'reservation_notes': { en: 'Notes', es: 'Notas', pt: 'Notas' },
+  'reservation_empty': { en: 'No reservations yet', es: 'Sin reservas todavía', pt: 'Sem reservas ainda' },
+  'reservation_today': { en: 'Today', es: 'Hoy', pt: 'Hoje' },
+  'reservation_upcoming': { en: 'Upcoming', es: 'Próximas', pt: 'Próximas' },
 };
 
 export function t(key: string, lang: string = 'en'): string {
