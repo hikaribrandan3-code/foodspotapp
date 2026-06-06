@@ -49,21 +49,25 @@ function formatDateDisplay(dateStr) {
     return d.toLocaleDateString('es-AR', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
-function getAvailableDates() {
-    const dates = []
-    const today = new Date()
-    for (let i = 1; i <= 14; i++) {
-        const d = new Date(today)
-        d.setDate(today.getDate() + i)
-        const yyyy = d.getFullYear()
-        const mm = String(d.getMonth() + 1).padStart(2, '0')
-        const dd = String(d.getDate()).padStart(2, '0')
-        const dayName = d.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')
-        const dayNum = d.getDate()
-        const monthName = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '')
-        dates.push({ value: `${yyyy}-${mm}-${dd}`, dayName, dayNum, monthName })
+function getCalendarMonth(year, month) {
+    // Returns grid of weeks for given month (0-indexed month)
+    const today = new Date(); today.setHours(0,0,0,0)
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    // Start from Monday
+    const startDow = (firstDay.getDay() + 6) % 7 // 0=Mon
+    const weeks = []
+    let week = Array(startDow).fill(null)
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+        const date = new Date(year, month, d)
+        const yyyy = date.getFullYear()
+        const mm = String(month + 1).padStart(2, '0')
+        const dd = String(d).padStart(2, '0')
+        week.push({ value: `${yyyy}-${mm}-${dd}`, day: d, past: date < today })
+        if (week.length === 7) { weeks.push(week); week = [] }
     }
-    return dates
+    if (week.length) { while (week.length < 7) week.push(null); weeks.push(week) }
+    return weeks
 }
 
 // ============================================
@@ -224,12 +228,14 @@ function Order({ config: configProp }) {
 
     // 🍽️ RESERVATION STATE (Dine-In Only)
     const [reservationDate, setReservationDate] = useState('')
-    const [reservationTime, setReservationTime] = useState('')
+    const [reservationHour, setReservationHour] = useState('')
+    const [reservationMin, setReservationMin] = useState('00')
     const [partySize, setPartySize] = useState(2)
     const [reservationNotes, setReservationNotes] = useState('')
     const [showReservation, setShowReservation] = useState(false)
-    const availableDates = useMemo(() => getAvailableDates(), [])
-    const timeSlots = useMemo(() => generateTimeSlots('11:00', '23:00'), [])
+    const [calMonth, setCalMonth] = useState(() => { const n = new Date(); return { year: n.getFullYear(), month: n.getMonth() } })
+    const calWeeks = useMemo(() => getCalendarMonth(calMonth.year, calMonth.month), [calMonth])
+    const reservationTime = reservationHour ? `${reservationHour}:${reservationMin}` : ''
 
     // Recalculate distance when coords change
     useEffect(() => {
@@ -857,7 +863,7 @@ function Order({ config: configProp }) {
                                             onClick={() => setOrderType(mode.id)}
                                             style={{
                                                 flex: 1, padding: '8px 12px', borderRadius: 10, border: 'none',
-                                                background: orderType === mode.id ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
+                                                background: orderType === mode.id ? '#111827' : '#F3F4F6',
                                                 color: orderType === mode.id ? 'white' : '#4B5563',
                                                 fontWeight: 600, fontSize: 13, cursor: 'pointer',
                                                 transition: 'all 0.15s'
@@ -973,89 +979,136 @@ function Order({ config: configProp }) {
                                 placeholder={t('name_placeholder')}
                             />
 
-                            {/* MESA # or RESERVAR — pill toggle */}
-                            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                                <button
-                                    onClick={() => setShowReservation(false)}
-                                    style={{
-                                        flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
-                                        background: !showReservation ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
-                                        color: !showReservation ? 'white' : '#6B7280',
-                                        fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
-                                    }}
-                                >Mesa #</button>
-                                <button
-                                    onClick={() => setShowReservation(true)}
-                                    style={{
-                                        flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
-                                        background: showReservation ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
-                                        color: showReservation ? 'white' : '#6B7280',
-                                        fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
-                                    }}
-                                >Reservar</button>
-                            </div>
+                            {/* MESA # — simple, always visible */}
+                            <InputGroup
+                                label="Mesa"
+                                icon={<span style={{ fontSize: 14, fontWeight: 700, color: '#9CA3AF' }}>#</span>}
+                                value={customerInfo.tableNumber}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
+                                placeholder="Número de mesa"
+                                inputMode="numeric" pattern="[0-9]*"
+                            />
 
-                            {/* MESA: simple number input */}
-                            {!showReservation && (
-                                <InputGroup
-                                    label="Número de Mesa"
-                                    icon={<span style={{ fontSize: 15, fontWeight: 700, color: '#9CA3AF' }}>#</span>}
-                                    value={customerInfo.tableNumber}
-                                    onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
-                                    placeholder="Ej: 5"
-                                    inputMode="numeric" pattern="[0-9]*"
-                                />
-                            )}
+                            {/* RESERVAR — lowkey ghost button */}
+                            <button
+                                onClick={() => setShowReservation(r => !r)}
+                                style={{
+                                    width: '100%', padding: '11px 16px',
+                                    borderRadius: 12, border: '1.5px solid #E5E7EB',
+                                    background: 'transparent',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    cursor: 'pointer', transition: 'all 0.2s', marginBottom: showReservation ? 20 : 0
+                                }}
+                            >
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
+                                    {reservationDate && reservationHour
+                                        ? `📅 ${formatDateDisplay(reservationDate)} · ${reservationTime} · ${partySize} pers.`
+                                        : '📅 Reservar'}
+                                </span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5"
+                                    style={{ transform: showReservation ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </button>
 
-                            {/* RESERVAR: date strip + time + party */}
+                            {/* FULL RESERVATION PANEL */}
                             {showReservation && (
-                                <>
-                                    <div style={{ marginBottom: 16 }}>
-                                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
-                                            {availableDates.map(date => (
-                                                <button
-                                                    key={date.value}
-                                                    onClick={() => setReservationDate(date.value)}
-                                                    style={{
-                                                        flexShrink: 0, width: 52, padding: '8px 0',
-                                                        borderRadius: 12, border: 'none',
-                                                        background: reservationDate === date.value ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
-                                                        color: reservationDate === date.value ? 'white' : '#6B7280',
-                                                        fontWeight: 700, fontSize: 11, cursor: 'pointer',
-                                                        textAlign: 'center', lineHeight: 1.3, transition: 'all 0.15s'
-                                                    }}
-                                                >
-                                                    <div style={{ fontSize: 10, opacity: 0.8 }}>{date.dayName}</div>
-                                                    <div style={{ fontSize: 16, fontWeight: 800 }}>{date.dayNum}</div>
-                                                    <div style={{ fontSize: 10, opacity: 0.7 }}>{date.monthName}</div>
-                                                </button>
+                                <div>
+                                    {/* MONTH CALENDAR */}
+                                    <div style={{ marginBottom: 20 }}>
+                                        {/* Month nav */}
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                                            <button
+                                                onClick={() => setCalMonth(m => {
+                                                    const d = new Date(m.year, m.month - 1)
+                                                    return { year: d.getFullYear(), month: d.getMonth() }
+                                                })}
+                                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: 18, color: '#9CA3AF' }}
+                                            >‹</button>
+                                            <span style={{ fontSize: 14, fontWeight: 700, color: '#1F2937', textTransform: 'capitalize' }}>
+                                                {new Date(calMonth.year, calMonth.month).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
+                                            </span>
+                                            <button
+                                                onClick={() => setCalMonth(m => {
+                                                    const d = new Date(m.year, m.month + 1)
+                                                    return { year: d.getFullYear(), month: d.getMonth() }
+                                                })}
+                                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: 18, color: '#9CA3AF' }}
+                                            >›</button>
+                                        </div>
+                                        {/* Day headers */}
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 4 }}>
+                                            {['Lu','Ma','Mi','Ju','Vi','Sa','Do'].map(d => (
+                                                <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#9CA3AF', paddingBottom: 6 }}>{d}</div>
                                             ))}
                                         </div>
+                                        {/* Day grid */}
+                                        {calWeeks.map((week, wi) => (
+                                            <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3, marginBottom: 3 }}>
+                                                {week.map((cell, di) => cell === null ? (
+                                                    <div key={di} />
+                                                ) : (
+                                                    <button
+                                                        key={di}
+                                                        disabled={cell.past}
+                                                        onClick={() => !cell.past && setReservationDate(cell.value)}
+                                                        style={{
+                                                            padding: '8px 0', border: 'none', borderRadius: 8,
+                                                            background: reservationDate === cell.value ? '#111827' : 'transparent',
+                                                            color: reservationDate === cell.value ? 'white' : cell.past ? '#D1D5DB' : '#1F2937',
+                                                            fontWeight: reservationDate === cell.value ? 700 : 500,
+                                                            fontSize: 13, cursor: cell.past ? 'default' : 'pointer',
+                                                            textAlign: 'center', transition: 'all 0.15s'
+                                                        }}
+                                                    >{cell.day}</button>
+                                                ))}
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                        <select
-                                            value={reservationTime}
-                                            onChange={e => setReservationTime(e.target.value)}
-                                            style={{
-                                                width: '100%', padding: '12px 14px',
-                                                borderRadius: 12, border: '1.5px solid #E5E7EB',
-                                                fontSize: 15, fontWeight: 600, color: reservationTime ? '#1F2937' : '#9CA3AF',
-                                                background: 'white', cursor: 'pointer',
-                                                appearance: 'none', WebkitAppearance: 'none'
-                                            }}
-                                        >
-                                            <option value="">Hora</option>
-                                            {timeSlots.map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-                                            <button onClick={() => setPartySize(p => Math.max(1, p - 1))}
-                                                style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>−</button>
-                                            <span style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: '#1F2937' }}>{partySize} pers.</span>
-                                            <button onClick={() => setPartySize(p => Math.min(20, p + 1))}
-                                                style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>+</button>
+
+                                    {/* HOUR + MIN rolling selects + PARTY SIZE */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+                                        <div>
+                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Hora</p>
+                                            <select value={reservationHour} onChange={e => setReservationHour(e.target.value)}
+                                                style={{ width: '100%', padding: '11px 10px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 15, fontWeight: 700, color: '#1F2937', background: 'white', cursor: 'pointer', appearance: 'none', textAlign: 'center' }}>
+                                                <option value="">--</option>
+                                                {Array.from({length: 13}, (_,i) => i + 11).map(h => (
+                                                    <option key={h} value={String(h).padStart(2,'0')}>{String(h).padStart(2,'0')}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Min</p>
+                                            <select value={reservationMin} onChange={e => setReservationMin(e.target.value)}
+                                                style={{ width: '100%', padding: '11px 10px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 15, fontWeight: 700, color: '#1F2937', background: 'white', cursor: 'pointer', appearance: 'none', textAlign: 'center' }}>
+                                                {['00','15','30','45'].map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Personas</p>
+                                            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', height: 44 }}>
+                                                <button onClick={() => setPartySize(p => Math.max(1, p - 1))}
+                                                    style={{ flex: 1, border: 'none', background: 'white', fontSize: 18, color: '#6B7280', cursor: 'pointer' }}>−</button>
+                                                <span style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: '#1F2937' }}>{partySize}</span>
+                                                <button onClick={() => setPartySize(p => Math.min(30, p + 1))}
+                                                    style={{ flex: 1, border: 'none', background: 'white', fontSize: 18, color: '#6B7280', cursor: 'pointer' }}>+</button>
+                                            </div>
                                         </div>
                                     </div>
-                                </>
+
+                                    {/* SPECIAL REQUESTS */}
+                                    <InputGroup
+                                        label="Notas"
+                                        icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>}
+                                        value={reservationNotes}
+                                        onChange={(e) => setReservationNotes(e.target.value)}
+                                        placeholder="Alergias, ocasión especial, preferencias..."
+                                        isTextArea={true}
+                                    />
+                                </div>
                             )}
                         </>
                     ) : (
