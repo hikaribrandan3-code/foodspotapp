@@ -883,28 +883,13 @@ function Order({ config: configProp }) {
                     background: 'white', borderRadius: 24, padding: 24,
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
                 }}>
-                    <div style={{ marginBottom: 24 }}>
-                        {orderType === 'dine_in' ? (
-                            <div style={{
-                                background: '#FFFFFF', color: '#1F2937',
-                                padding: '16px 20px', borderRadius: 16,
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                border: '1px solid #E5E7EB'
-                            }}>
-                                <div>
-                                    <span style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6, color: '#6B7280' }}>{t('location_label')}</span>
-                                    <div style={{ fontSize: 20, fontWeight: 700, color: '#1F2937' }}>{t('dine_in_table')}</div>
-                                </div>
-                                <div style={{ background: '#F3F4F6', padding: 8, borderRadius: 12 }}>
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><line x1="6" y1="6" x2="6" y2="6" /><line x1="6" y1="30" x2="6" y2="30" /></svg>
-                                </div>
-                            </div>
-                        ) : (
+                    {orderType !== 'dine_in' && (
+                        <div style={{ marginBottom: 24 }}>
                             <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 4 }}>
                                 {t('delivery_details')}
                             </h3>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Validation Errors */}
                     {validationErrors.length > 0 && (
@@ -979,7 +964,7 @@ function Order({ config: configProp }) {
                         </>
                     ) : orderType === 'dine_in' ? (
                         <>
-                            {/* NAME — always visible */}
+                            {/* NAME */}
                             <InputGroup
                                 label={t('name_label')}
                                 icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
@@ -988,38 +973,44 @@ function Order({ config: configProp }) {
                                 placeholder={t('name_placeholder')}
                             />
 
-                            {/* RESERVATION TOGGLE */}
-                            <button
-                                onClick={() => setShowReservation(r => !r)}
-                                style={{
-                                    width: '100%', padding: '13px 16px', marginBottom: showReservation ? 16 : 0,
-                                    borderRadius: 12, border: `1.5px solid ${showReservation ? (tenantData?.confirmation_color || '#C4856A') : '#E5E7EB'}`,
-                                    background: showReservation ? `${tenantData?.confirmation_color || '#C4856A'}12` : 'white',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    cursor: 'pointer', transition: 'all 0.2s'
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <span style={{ fontSize: 18 }}>📅</span>
-                                    <div style={{ textAlign: 'left' }}>
-                                        <div style={{ fontSize: 14, fontWeight: 700, color: '#1F2937' }}>Reservar Mesa</div>
-                                        {reservationDate && reservationTime
-                                            ? <div style={{ fontSize: 12, color: tenantData?.confirmation_color || '#C4856A', fontWeight: 600 }}>
-                                                {formatDateDisplay(reservationDate)} · {reservationTime} · {partySize} pers.
-                                              </div>
-                                            : <div style={{ fontSize: 12, color: '#9CA3AF' }}>Opcional — elegí fecha y hora</div>
-                                        }
-                                    </div>
-                                </div>
-                                <span style={{ fontSize: 18, color: '#9CA3AF', transition: 'transform 0.2s', transform: showReservation ? 'rotate(180deg)' : 'none' }}>⌄</span>
-                            </button>
+                            {/* MESA # or RESERVAR — pill toggle */}
+                            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                                <button
+                                    onClick={() => setShowReservation(false)}
+                                    style={{
+                                        flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
+                                        background: !showReservation ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
+                                        color: !showReservation ? 'white' : '#6B7280',
+                                        fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
+                                    }}
+                                >Mesa #</button>
+                                <button
+                                    onClick={() => setShowReservation(true)}
+                                    style={{
+                                        flex: 1, padding: '10px 0', borderRadius: 10, border: 'none',
+                                        background: showReservation ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
+                                        color: showReservation ? 'white' : '#6B7280',
+                                        fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s'
+                                    }}
+                                >Reservar</button>
+                            </div>
 
-                            {/* COLLAPSIBLE RESERVATION FORM */}
+                            {/* MESA: simple number input */}
+                            {!showReservation && (
+                                <InputGroup
+                                    label="Número de Mesa"
+                                    icon={<span style={{ fontSize: 15, fontWeight: 700, color: '#9CA3AF' }}>#</span>}
+                                    value={customerInfo.tableNumber}
+                                    onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
+                                    placeholder="Ej: 5"
+                                    inputMode="numeric" pattern="[0-9]*"
+                                />
+                            )}
+
+                            {/* RESERVAR: date strip + time + party */}
                             {showReservation && (
-                                <div style={{ marginBottom: 4 }}>
-                                    {/* DATE — horizontal scroll strip */}
+                                <>
                                     <div style={{ marginBottom: 16 }}>
-                                        <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Fecha</p>
                                         <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
                                             {availableDates.map(date => (
                                                 <button
@@ -1041,38 +1032,30 @@ function Order({ config: configProp }) {
                                             ))}
                                         </div>
                                     </div>
-
-                                    {/* TIME + PARTY SIZE */}
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                                        <div>
-                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Hora</p>
-                                            <select
-                                                value={reservationTime}
-                                                onChange={e => setReservationTime(e.target.value)}
-                                                style={{
-                                                    width: '100%', padding: '12px 14px',
-                                                    borderRadius: 12, border: '1.5px solid #E5E7EB',
-                                                    fontSize: 15, fontWeight: 600, color: '#1F2937',
-                                                    background: 'white', cursor: 'pointer',
-                                                    appearance: 'none', WebkitAppearance: 'none'
-                                                }}
-                                            >
-                                                <option value="">--:--</option>
-                                                {timeSlots.map(s => <option key={s} value={s}>{s}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Personas</p>
-                                            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-                                                <button onClick={() => setPartySize(p => Math.max(1, p - 1))}
-                                                    style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>−</button>
-                                                <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 800, color: '#1F2937' }}>{partySize}</span>
-                                                <button onClick={() => setPartySize(p => Math.min(20, p + 1))}
-                                                    style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>+</button>
-                                            </div>
+                                        <select
+                                            value={reservationTime}
+                                            onChange={e => setReservationTime(e.target.value)}
+                                            style={{
+                                                width: '100%', padding: '12px 14px',
+                                                borderRadius: 12, border: '1.5px solid #E5E7EB',
+                                                fontSize: 15, fontWeight: 600, color: reservationTime ? '#1F2937' : '#9CA3AF',
+                                                background: 'white', cursor: 'pointer',
+                                                appearance: 'none', WebkitAppearance: 'none'
+                                            }}
+                                        >
+                                            <option value="">Hora</option>
+                                            {timeSlots.map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+                                            <button onClick={() => setPartySize(p => Math.max(1, p - 1))}
+                                                style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>−</button>
+                                            <span style={{ flex: 1, textAlign: 'center', fontSize: 15, fontWeight: 800, color: '#1F2937' }}>{partySize} pers.</span>
+                                            <button onClick={() => setPartySize(p => Math.min(20, p + 1))}
+                                                style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>+</button>
                                         </div>
                                     </div>
-                                </div>
+                                </>
                             )}
                         </>
                     ) : (
@@ -1095,19 +1078,8 @@ function Order({ config: configProp }) {
                     )}
                 </div>
 
-                {/* 3. PREMIUM PAYMENT SELECTOR */}
-                {orderType === 'dine_in' ? (
-                    /* Dine-in: no payment selector — pay at the end */
-                    <div style={{
-                        background: 'white', borderRadius: 24, padding: 24,
-                        boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24,
-                        display: 'flex', alignItems: 'center', gap: 16,
-                    }}>
-                        <div>
-                            <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>{t('dine_in_pay_at_end_message')}</div>
-                        </div>
-                    </div>
-                ) : (
+                {/* 3. PREMIUM PAYMENT SELECTOR — hidden for dine-in (pay at end, implied) */}
+                {orderType !== 'dine_in' && (
                 <div style={{
                     background: 'white', borderRadius: 24, padding: 24,
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
