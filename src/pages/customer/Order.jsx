@@ -363,33 +363,75 @@ function Order({ config: configProp }) {
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
             if (effectivePaymentMethod === 'mercado_pago') {
-                try {
-                    let mpData, mpError
-                    // Retry up to 2 times on network errors (cold start fix)
-                    for (let attempt = 0; attempt < 3; attempt++) {
-                        if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * attempt))
-                        ;({ data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
-                            body: { order_id: savedOrder.id }
+                const mpKey = `fs_${tenantSlug}_mp_checkout`
+
+                // Signal: preference is being created in background
+                localStorage.setItem(mpKey, JSON.stringify({
+                    orderId: savedOrder.id,
+                    status: 'creating',
+                    ts: Date.now()
+                }))
+
+                // Navigate immediately — same feel as cash order
+                clearCart()
+                incrementOrderCount()
+                if (isDelivery) clearDeliveryMode()
+                setSubmitted(true)
+                setTimeout(() => {
+                    if (isDelivery) {
+                        navigate(`/${tenantSlug}/receipt?order_id=${savedOrder.id}`)
+                    } else {
+                        navigate(`/${tenantSlug}/status?orderId=${savedOrder.id}`)
+                    }
+                }, 1500)
+
+                // Fire create-preference in background (non-blocking)
+                ;(async () => {
+                    try {
+                        let mpData, mpError
+                        for (let attempt = 0; attempt < 3; attempt++) {
+                            if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * attempt))
+                            ;({ data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
+                                body: { order_id: savedOrder.id }
+                            }))
+                            const isNetworkError = mpError && (
+                                mpError.message?.includes('Load failed') ||
+                                mpError.message?.includes('Failed to fetch') ||
+                                mpError.message?.includes('Network')
+                            )
+                            if (!isNetworkError) break
+                            console.warn(`[Order] MP attempt ${attempt + 1} failed, retrying...`)
+                        }
+                        const checkoutUrl = mpData?.init_point
+                        if (checkoutUrl) {
+                            localStorage.setItem(mpKey, JSON.stringify({
+                                orderId: savedOrder.id,
+                                status: 'ready',
+                                checkoutUrl,
+                                ts: Date.now()
+                            }))
+                        } else {
+                            const errMsg = mpData?.error || mpError?.message || 'No checkout URL'
+                            console.error('[Order] MP background error:', errMsg)
+                            localStorage.setItem(mpKey, JSON.stringify({
+                                orderId: savedOrder.id,
+                                status: 'error',
+                                error: errMsg,
+                                ts: Date.now()
+                            }))
+                        }
+                    } catch (err) {
+                        console.error('[Order] MP background exception:', err)
+                        localStorage.setItem(mpKey, JSON.stringify({
+                            orderId: savedOrder.id,
+                            status: 'error',
+                            error: err.message,
+                            ts: Date.now()
                         }))
-                        const isNetworkError = mpError && (mpError.message?.includes('Load failed') || mpError.message?.includes('Failed to fetch') || mpError.message?.includes('Network'))
-                        if (!isNetworkError) break
-                        console.warn(`[Order] MP attempt ${attempt + 1} failed, retrying...`)
                     }
-                    if (mpError) throw mpError
-                    const checkoutUrl = mpData?.init_point
-                    if (checkoutUrl) {
-                        window.location.href = checkoutUrl
-                        return
-                    }
-                    // create-preference returns 200 with error field if MP not configured
-                    if (mpData?.error) throw new Error(mpData.error)
-                    throw new Error('No checkout URL returned')
-                } catch (mpErr) {
-                    console.error('[Order] MP Error:', mpErr)
-                    showToast('❌ Error al procesar pago: ' + mpErr.message)
-                    setIsSubmitting(false)
-                    return
-                }
+                })()
+
+                return
             }
 
             // ─── STEP 5: FINALIZE IMMEDIATELY ────────────────

@@ -111,6 +111,35 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         }
     }, [order?.id])
 
+    // ─── MP OPTIMISTIC: Watch localStorage for checkout URL ───
+    useEffect(() => {
+        if (!tenantSlug || !order?.id) return
+        if (order?.payment_method !== 'mercado_pago') return
+        if (order?.status !== ORDER_STATUS.PENDING_PAYMENT) return
+
+        const mpKey = `fs_${tenantSlug}_mp_checkout`
+
+        const checkMpCheckout = () => {
+            try {
+                const raw = localStorage.getItem(mpKey)
+                if (!raw) return
+                const data = JSON.parse(raw)
+                if (data.orderId !== order.id) return
+                if (Date.now() - data.ts > 300000) return // ignore entries older than 5 min
+                if (data.status === 'ready' && data.checkoutUrl) {
+                    localStorage.removeItem(mpKey)
+                    window.location.href = data.checkoutUrl
+                }
+            } catch (e) { /* corrupt data, ignore */ }
+        }
+
+        checkMpCheckout()
+        const interval = setInterval(checkMpCheckout, 500)
+        const timeout = setTimeout(() => clearInterval(interval), 30000)
+
+        return () => { clearInterval(interval); clearTimeout(timeout) }
+    }, [tenantSlug, order?.id, order?.payment_method, order?.status])
+
     useEffect(() => {
         if (order?.status === ORDER_STATUS.DELIVERED || order?.status === ORDER_STATUS.CANCELLED) {
             // 🧹 Clear remembered order once it's done

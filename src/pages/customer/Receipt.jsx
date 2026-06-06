@@ -75,6 +75,35 @@ export default function Receipt() {
     }
   }, [orderId])
 
+  // ─── MP OPTIMISTIC: Watch localStorage for checkout URL ───
+  useEffect(() => {
+    if (!tenantSlug || !orderId) return
+    if (order?.payment_method !== 'mercado_pago') return
+    if (order?.status !== 'pending_payment') return
+
+    const mpKey = `fs_${tenantSlug}_mp_checkout`
+
+    const checkMpCheckout = () => {
+      try {
+        const raw = localStorage.getItem(mpKey)
+        if (!raw) return
+        const data = JSON.parse(raw)
+        if (data.orderId !== orderId) return
+        if (Date.now() - data.ts > 300000) return // ignore entries older than 5 min
+        if (data.status === 'ready' && data.checkoutUrl) {
+          localStorage.removeItem(mpKey)
+          window.location.href = data.checkoutUrl
+        }
+      } catch (e) { /* corrupt data, ignore */ }
+    }
+
+    checkMpCheckout()
+    const interval = setInterval(checkMpCheckout, 500)
+    const timeout = setTimeout(() => clearInterval(interval), 30000)
+
+    return () => { clearInterval(interval); clearTimeout(timeout) }
+  }, [tenantSlug, orderId, order?.payment_method, order?.status])
+
   const isCash = order?.payment_method === 'cash'
   const isMp = order?.payment_method === 'mercado_pago'
   const isDelivered = order?.status === 'delivered'
