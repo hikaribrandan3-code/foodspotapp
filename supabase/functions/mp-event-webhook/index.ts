@@ -285,6 +285,23 @@ serve(async (req: Request) => {
             }
 
             // ============================================
+            // 7.5. INCREMENT TIER SOLD COUNT
+            // ============================================
+            if (eventOrder.tier_id && eventOrder.quantity) {
+                const { error: tierError } = await supabase.rpc('increment_event_tier_sold', {
+                    p_tier_id: eventOrder.tier_id,
+                    p_quantity: eventOrder.quantity
+                });
+
+                if (tierError) {
+                    console.warn(`[mp-event-webhook] Failed to increment tier sold count:`, tierError.message);
+                    // Don't fail the webhook — order is already marked paid
+                } else {
+                    console.log(`[mp-event-webhook] Tier ${eventOrder.tier_id} sold count incremented by ${eventOrder.quantity}`);
+                }
+            }
+
+            // ============================================
             // 8. CREATE/UPDATE LEDGER ENTRY
             // ============================================
             const ledgerResult = await upsertLedgerEntry(
