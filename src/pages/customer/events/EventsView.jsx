@@ -288,6 +288,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
   useEffect(() => {
     const orderId = searchParams.get('order_id');
     const guestToken = searchParams.get('guest_token');
+    const mpReturnStatus = searchParams.get('payment');
 
     if (orderId && guestToken) {
       localStorage.setItem('event_guest_token', guestToken);
@@ -307,6 +308,16 @@ export default function EventsView({ onViewTickets, onStageChange }) {
             .single();
 
           if (!error && data) {
+            // If MP redirected with ?payment=success, update payment_status to 'paid' now
+            // (webhook may take seconds to process — don't let owner check-in fail due to lag)
+            if (mpReturnStatus === 'success' && data.payment_status !== 'paid') {
+              await supabase
+                .from('event_orders')
+                .update({ payment_status: 'paid' })
+                .eq('id', orderId)
+                .catch(err => console.warn('[EventsView] Payment status update failed:', err));
+            }
+
             const booking = {
               id: data.ticket_code,
               ticket_code: data.ticket_code,
