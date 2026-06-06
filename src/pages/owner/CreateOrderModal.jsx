@@ -283,14 +283,14 @@ export default function CreateOrderModal({ businessId, onClose }) {
 
               {orderType !== 'dine_in' && (
                 <Field label="Customer Name *">
-                  <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name" onTouchStart={(e) => e.stopPropagation()}
+                  <input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Full name" autoComplete="name" onTouchStart={(e) => e.stopPropagation()}
                     style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
                 </Field>
               )}
 
               <Field label="Phone (optional)">
                 <input value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="+1 555 000 0000" onTouchStart={(e) => e.stopPropagation()}
-                  type="tel" style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
+                  type="tel" autoComplete="tel" style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
               </Field>
 
               {/* Order type */}
@@ -314,7 +314,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
 
               {orderType === 'delivery' && (
                 <Field label="Delivery Address">
-                  <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Street, number, floor..." onTouchStart={(e) => e.stopPropagation()}
+                  <input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} placeholder="Street, number, floor..." autoComplete="street-address" onTouchStart={(e) => e.stopPropagation()}
                     style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
                 </Field>
               )}
@@ -324,7 +324,7 @@ export default function CreateOrderModal({ businessId, onClose }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary, #9AA4B5)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8.5" y2="21"/><line x1="14" y1="3" x2="15.5" y2="21"/></svg>
                     <input value={tableNumber} onChange={e => setTableNumber(e.target.value.replace(/\D/g, ''))} onTouchStart={(e) => e.stopPropagation()}
-                      placeholder="e.g. 5" type="text" inputMode="numeric"
+                      placeholder="e.g. 5" type="text" inputMode="numeric" autoComplete="off"
                       style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 14, color: 'var(--text-primary, #0F1B2D)', touchAction: 'manipulation', WebkitTouchCallout: 'none' }} />
                   </div>
                 </Field>

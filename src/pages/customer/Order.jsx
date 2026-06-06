@@ -961,6 +961,7 @@ function Order({ config: configProp }) {
                                     value={customerInfo.address.street}
                                     onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, street: e.target.value } }))}
                                     placeholder={t('street_placeholder')}
+                                    autocomplete="street-address"
                                 />
                                 <InputGroup
                                     label={t('number_label')}
@@ -969,6 +970,7 @@ function Order({ config: configProp }) {
                                     onChange={(e) => setCustomerInfo(p => ({ ...p, address: { ...p.address, number: e.target.value } }))}
                                     placeholder={t('number_placeholder')}
                                     inputMode="numeric"
+                                    autocomplete="address-line2"
                                 />
                             </div>
 

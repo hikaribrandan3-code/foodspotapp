@@ -299,7 +299,7 @@ export default function ProfileView() {
           <Sheet title={t('emergency_contact')} onClose={() => setSheet(null)}>
             <p className="text-xs mb-3" style={{ color: 'var(--text-secondary)' }}>Phone number to call in an emergency.</p>
             <input type="tel" value={emergencyInput} onChange={e => setEmergencyInput(e.target.value)}
-              placeholder="+1 (555) 000-0000" autoFocus
+              placeholder="+1 (555) 000-0000" autoFocus autoComplete="tel"
               className="w-full px-4 py-3 rounded-xl text-sm outline-none mb-4"
               style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)' }} />
             <SaveButton onClick={saveEmergency} />
@@ -345,7 +345,7 @@ export default function ProfileView() {
               <Field label="Contact Number">
                 <input type="tel" value={driverInput.contact}
                   onChange={e => setDriverInput(p => ({ ...p, contact: e.target.value }))}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="+1 (555) 000-0000" autoComplete="tel"
                   className="w-full px-4 py-3 rounded-xl text-sm outline-none"
                   style={{ backgroundColor: 'var(--btn-secondary-bg)', color: 'var(--text-primary)', border: '1px solid var(--card-border)' }} />
               </Field>

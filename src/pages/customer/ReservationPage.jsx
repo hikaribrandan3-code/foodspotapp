@@ -290,6 +290,7 @@ export default function ReservationPage() {
                                     value={customerName}
                                     onChange={e => setCustomerName(e.target.value)}
                                     placeholder="Tu nombre completo"
+                                    autoComplete="name"
                                     style={{ width: '100%', padding: '13px 14px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
                                     onFocus={e => e.target.style.borderColor = primaryColor}
                                     onBlur={e => e.target.style.borderColor = '#E5E7EB'}
@@ -304,6 +305,7 @@ export default function ReservationPage() {
                                     value={customerPhone}
                                     onChange={e => setCustomerPhone(e.target.value)}
                                     placeholder="Ej: 1123456789"
+                                    autoComplete="tel"
                                     style={{ width: '100%', padding: '13px 14px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
                                     onFocus={e => e.target.style.borderColor = primaryColor}
                                     onBlur={e => e.target.style.borderColor = '#E5E7EB'}
