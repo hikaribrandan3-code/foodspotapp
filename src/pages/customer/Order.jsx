@@ -219,9 +219,17 @@ function Order({ config: configProp }) {
     // Payment method
     const [paymentMethod, setPaymentMethod] = useState('cash')
     const [validationErrors, setValidationErrors] = useState([])
+    const [mpStatus, setMpStatus] = useState(null) // null | 'processing' | 'connecting'
 
-    // Warm up the Edge Function the moment user selects Mercado Pago
-    // so the cold-start penalty is paid before they hit submit
+    // Page-load warm-up: second layer safety net (cart-add warm-up in CartContext is first)
+    useEffect(() => {
+        if (paymentMethods.mercado_pago) {
+            supabase.functions.invoke('create-preference', { body: { order_id: 'warmup' } })
+                .catch(() => {})
+        }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Third warm-up: fires when user explicitly selects MP (covers 10+ min form-fill edge case)
     const handlePaymentMethodChange = (method) => {
         setPaymentMethod(method)
         if (method === 'mercado_pago') {
@@ -426,14 +434,33 @@ function Order({ config: configProp }) {
         }
 
         try {
-            // ─── STEP 3: PERSISTENT-FIRST DB INSERT ───────────
-            // The order exists in Supabase BEFORE any external API call.
-            // Even if the user's phone dies here, the owner sees the order.
-            const { data: savedOrder, error } = await supabase
-                .from('orders')
-                .insert(newOrder)
-                .select()
-                .single()
+            // ─── STEP 3: PERSISTENT-FIRST DB INSERT (with 8s timeout + 1 retry) ───
+            const doInsert = async () => {
+                const controller = new AbortController()
+                const timeout = setTimeout(() => controller.abort(), 8000)
+                try {
+                    return await supabase
+                        .from('orders')
+                        .insert(newOrder)
+                        .select()
+                        .abortSignal(controller.signal)
+                        .single()
+                } finally {
+                    clearTimeout(timeout)
+                }
+            }
+
+            let { data: savedOrder, error } = await doInsert()
+
+            if (!savedOrder && !error) {
+                // Aborted (slow WiFi) — show feedback and retry once
+                showToast('Conexión lenta — reintentando...')
+                await new Promise(r => setTimeout(r, 1500))
+                const retry = await doInsert()
+                savedOrder = retry.data
+                error = retry.error
+                if (!savedOrder) throw new Error('Conexión demasiado lenta. Por favor verifica tu señal e intenta de nuevo.')
+            }
 
             if (error) throw error
 
@@ -491,6 +518,10 @@ function Order({ config: configProp }) {
                 }, 1500)
 
                 // Fire create-preference in background (non-blocking, aggressive retry)
+                // Two-stage UI: "Procesando..." → "Conectando con Mercado Pago…" after 3s
+                setMpStatus('processing')
+                const mpStatusTimer = setTimeout(() => setMpStatus('connecting'), 3000)
+
                 ;(async () => {
                     const MAX_RETRIES = 6 // 6 attempts = ~30sec total
                     const INITIAL_DELAY = 500
@@ -511,12 +542,30 @@ function Order({ config: configProp }) {
                                 attempts: attempt + 1
                             }))
 
-                            const { data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
-                                body: { order_id: savedOrder.id }
-                            })
+                            const mpController = new AbortController()
+                            const mpTimeout = setTimeout(() => mpController.abort(), 8000)
+                            let mpData, mpError
+                            try {
+                                const result = await supabase.functions.invoke('create-preference', {
+                                    body: { order_id: savedOrder.id },
+                                    signal: mpController.signal
+                                })
+                                mpData = result.data
+                                mpError = result.error
+                            } catch (invokeErr) {
+                                if (invokeErr?.name === 'AbortError') {
+                                    console.warn(`[Order] MP attempt ${attempt + 1} timed out after 8s`)
+                                    continue // let retry loop handle it
+                                }
+                                throw invokeErr
+                            } finally {
+                                clearTimeout(mpTimeout)
+                            }
 
                             if (mpData?.init_point) {
                                 console.log(`[Order] ✅ MP preference created on attempt ${attempt + 1}`)
+                                clearTimeout(mpStatusTimer)
+                                setMpStatus(null)
                                 localStorage.setItem(mpKey, JSON.stringify({
                                     orderId: savedOrder.id,
                                     status: 'ready',
@@ -562,6 +611,8 @@ function Order({ config: configProp }) {
                     }
 
                     // All retries exhausted
+                    clearTimeout(mpStatusTimer)
+                    setMpStatus(null)
                     console.error('[Order] ❌ MP preference creation failed after all retries')
                     localStorage.setItem(mpKey, JSON.stringify({
                         orderId: savedOrder.id,
@@ -1308,7 +1359,12 @@ function Order({ config: configProp }) {
                         transform: 'translateZ(0)'
                     }}
                 >
-                    <span>{isSubmitting ? t('order_processing') : (isOutOfRadius ? t('out_of_delivery_radius') : (orderType === 'dine_in' && showReservation && reservationDate ? 'Confirmar Reservación' : t('confirm_order')))}</span>
+                    <span>{
+                        mpStatus === 'connecting' ? 'Conectando con Mercado Pago…' :
+                        isSubmitting ? t('order_processing') :
+                        isOutOfRadius ? t('out_of_delivery_radius') :
+                        (orderType === 'dine_in' && showReservation && reservationDate ? 'Confirmar Reservación' : t('confirm_order'))
+                    }</span>
                     {!isSubmitting && !isOutOfRadius && <span>➜</span>}
                 </button>
 

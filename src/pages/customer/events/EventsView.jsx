@@ -316,6 +316,18 @@ export default function EventsView({ onViewTickets, onStageChange }) {
                 .update({ payment_status: 'paid' })
                 .eq('id', orderId)
                 .catch(err => console.warn('[EventsView] Payment status update failed:', err));
+
+              // Fallback: increment tier sold count in case webhook hasn't fired yet.
+              // FOR UPDATE lock in RPC prevents double-count if webhook also runs.
+              if (data.tier_snapshot?.id && data.quantity) {
+                supabase.rpc('increment_event_tier_sold', {
+                  p_event_id: data.event_id,
+                  p_tier_id: data.tier_snapshot.id,
+                  p_quantity: data.quantity
+                }).then(({ error: rpcErr }) => {
+                  if (rpcErr) console.warn('[EventsView] Tier sold fallback failed:', rpcErr.message)
+                })
+              }
             }
 
             const booking = {

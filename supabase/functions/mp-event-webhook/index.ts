@@ -241,7 +241,7 @@ serve(async (req: Request) => {
         // ============================================
         const { data: eventOrder, error: orderError } = await supabase
             .from("event_orders")
-            .select("id, payment_status, mp_payment_id, business_id, event_id, total_cents, promo_code")
+            .select("id, payment_status, mp_payment_id, business_id, event_id, total_cents, promo_code, tier_snapshot, quantity")
             .eq("id", orderId)
             .single();
 
@@ -287,9 +287,10 @@ serve(async (req: Request) => {
             // ============================================
             // 7.5. INCREMENT TIER SOLD COUNT
             // ============================================
-            if (eventOrder.tier_id && eventOrder.quantity) {
+            if (eventOrder.tier_snapshot?.id && eventOrder.quantity) {
                 const { error: tierError } = await supabase.rpc('increment_event_tier_sold', {
-                    p_tier_id: eventOrder.tier_id,
+                    p_event_id: eventOrder.event_id,
+                    p_tier_id: eventOrder.tier_snapshot.id,
                     p_quantity: eventOrder.quantity
                 });
 
@@ -297,7 +298,7 @@ serve(async (req: Request) => {
                     console.warn(`[mp-event-webhook] Failed to increment tier sold count:`, tierError.message);
                     // Don't fail the webhook — order is already marked paid
                 } else {
-                    console.log(`[mp-event-webhook] Tier ${eventOrder.tier_id} sold count incremented by ${eventOrder.quantity}`);
+                    console.log(`[mp-event-webhook] Tier ${eventOrder.tier_snapshot.id} sold count incremented by ${eventOrder.quantity}`);
                 }
             }
 

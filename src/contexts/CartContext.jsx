@@ -1,11 +1,12 @@
-import { createContext, useContext, useState, useCallback } from 'react'
-import { 
-    addToCurrentOrder, 
-    getCurrentOrder, 
-    updateItemQuantity, 
-    removeFromCurrentOrder, 
-    clearCurrentOrder 
+import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import {
+    addToCurrentOrder,
+    getCurrentOrder,
+    updateItemQuantity,
+    removeFromCurrentOrder,
+    clearCurrentOrder
 } from '../utils/storage.js'
+import { supabase } from '../lib/supabaseClient.js'
 
 const CartContext = createContext(null)
 
@@ -13,6 +14,7 @@ export function CartProvider({ children }) {
     const [cart, setCart] = useState(() => getCurrentOrder())
     const [sheetItem, setSheetItem] = useState(null)
     const [sheetQuantity, setSheetQuantity] = useState(1)
+    const mpWarmedUp = useRef(false)
 
     // Refresh cart from storage
     const refreshCart = useCallback(() => {
@@ -42,6 +44,14 @@ export function CartProvider({ children }) {
 
     // DIRECT ADD (Instant Velocity)
     const addToCart = useCallback((item, quantity = 1, extras = [], variants = []) => {
+        // Predictive warm-up: fire once when cart goes from empty → 1 item
+        // Ensures Edge Function is warm well before checkout submit
+        const currentItems = getCurrentOrder()?.items || []
+        if (currentItems.length === 0 && !mpWarmedUp.current) {
+            mpWarmedUp.current = true
+            supabase.functions.invoke('create-preference', { body: { order_id: 'warmup' } })
+                .catch(() => {})
+        }
         addToCurrentOrder(item, quantity, extras, variants)
         refreshCart()
     }, [refreshCart])
