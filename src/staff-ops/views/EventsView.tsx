@@ -1,4 +1,5 @@
 import { useBusiness } from '@/contexts/BusinessContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import OwnerEventsView from '../../components/owner/OwnerEventsView'
 
 function getStaffRole(): string {
@@ -12,6 +13,7 @@ function getStaffRole(): string {
 
 export default function EventsView() {
   const { businessId, tenantSlug } = useBusiness()
+  const { language } = useLanguage()
   const role = getStaffRole()
   const isAllowed = role === 'manager' || role === 'admin'
 
@@ -38,6 +40,8 @@ export default function EventsView() {
       <OwnerEventsView
         businessId={businessId}
         tenantSlug={tenantSlug}
+        lang={language}
+        onBack={() => {}}
       />
     </div>
   )
