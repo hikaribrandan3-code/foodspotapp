@@ -26,7 +26,45 @@ import { handleCashPayment } from '../../services/offlinePayment.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import { ORDER_STATUS } from '../../constants/database.js';
 
+// ============================================
+// 🛒 RESERVATION HELPERS
+// ============================================
+function generateTimeSlots(openTime = '11:00', closeTime = '23:00') {
+    const slots = []
+    const [openH, openM] = openTime.split(':').map(Number)
+    const [closeH, closeM] = closeTime.split(':').map(Number)
+    let h = openH, m = openM
+    while (h < closeH || (h === closeH && m < closeM)) {
+        const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+        slots.push(label)
+        m += 30
+        if (m >= 60) { m = 0; h++ }
+    }
+    return slots
+}
 
+function formatDateDisplay(dateStr) {
+    if (!dateStr) return ''
+    const d = new Date(dateStr + 'T00:00:00')
+    return d.toLocaleDateString('es-AR', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+function getAvailableDates() {
+    const dates = []
+    const today = new Date()
+    for (let i = 1; i <= 14; i++) {
+        const d = new Date(today)
+        d.setDate(today.getDate() + i)
+        const yyyy = d.getFullYear()
+        const mm = String(d.getMonth() + 1).padStart(2, '0')
+        const dd = String(d.getDate()).padStart(2, '0')
+        const dayName = d.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')
+        const dayNum = d.getDate()
+        const monthName = d.toLocaleDateString('es-AR', { month: 'short' }).replace('.', '')
+        dates.push({ value: `${yyyy}-${mm}-${dd}`, dayName, dayNum, monthName })
+    }
+    return dates
+}
 
 // ============================================
 // 🛒 ORDER.JSX - THE UNIVERSAL CHECKOUT ENGINE
@@ -184,6 +222,14 @@ function Order({ config: configProp }) {
     // 📍 DISTANCE STATE (Delivery Only)
     const [distanceResult, setDistanceResult] = useState({ withinRadius: true, distanceKm: null })
 
+    // 🍽️ RESERVATION STATE (Dine-In Only)
+    const [reservationDate, setReservationDate] = useState('')
+    const [reservationTime, setReservationTime] = useState('')
+    const [partySize, setPartySize] = useState(2)
+    const [reservationNotes, setReservationNotes] = useState('')
+    const availableDates = useMemo(() => getAvailableDates(), [])
+    const timeSlots = useMemo(() => generateTimeSlots('11:00', '23:00'), [])
+
     // Recalculate distance when coords change
     useEffect(() => {
         if (orderType === 'delivery' && customerInfo.lat && customerInfo.lon && storeCoords.lat && storeCoords.lon) {
@@ -277,9 +323,11 @@ function Order({ config: configProp }) {
             if (!validation.valid) errors.push(...validation.errors)
         }
 
-        // 🛡️ TABLE NUMBER: Only required for Dine In
-        if (orderType === 'dine_in' && !customerInfo.tableNumber) {
-            errors.push(t('table_number_required'))
+        // 🛡️ RESERVATION: Date/Time/Party required for Dine-In
+        if (orderType === 'dine_in') {
+            if (!reservationDate) errors.push('Por favor selecciona una fecha')
+            if (!reservationTime) errors.push('Por favor selecciona una hora')
+            if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Por favor ingresa tu nombre')
         }
 
         if (errors.length > 0) {
@@ -360,6 +408,27 @@ function Order({ config: configProp }) {
             }
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
+
+            // 🍽️ SAVE RESERVATION (Dine-In Only)
+            if (orderType === 'dine_in') {
+                try {
+                    await supabase
+                        .from('reservations')
+                        .insert({
+                            business_id: businessId,
+                            customer_name: customerInfo.name.trim(),
+                            customer_phone: customerInfo.phone.trim(),
+                            reservation_date: reservationDate,
+                            reservation_time: reservationTime + ':00',
+                            party_size: partySize,
+                            notes: reservationNotes.trim() || null,
+                            status: 'pending',
+                            related_order_id: savedOrder.id
+                        })
+                } catch (resErr) {
+                    console.warn('[Order] Reservation save failed (non-blocking):', resErr)
+                }
+            }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
             if (effectivePaymentMethod === 'mercado_pago') {
@@ -909,24 +978,124 @@ function Order({ config: configProp }) {
                         </>
                     ) : orderType === 'dine_in' ? (
                         <>
-                            <InputGroup
-                                label={t('table_number_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v18H3z" /><path d="M21 9H3" /><path d="M21 15H3" /><path d="M9 3v18" /><path d="M15 3v18" /></svg>}
-                                value={customerInfo.tableNumber}
-                                onChange={(e) => setCustomerInfo(p => ({ ...p, tableNumber: e.target.value }))}
-                                placeholder={t('table_number_placeholder')}
-                                inputMode="numeric" pattern="[0-9]*"
-                            />
+                            {/* DATE PICKER */}
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{
+                                    fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
+                                }}>
+                                    📅 Fecha de Reserva
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
+                                    {availableDates.map(date => (
+                                        <button
+                                            key={date.value}
+                                            onClick={() => setReservationDate(date.value)}
+                                            style={{
+                                                padding: '10px 12px',
+                                                borderRadius: 10,
+                                                border: 'none',
+                                                background: reservationDate === date.value ? '#C4856A' : '#F3F4F6',
+                                                color: reservationDate === date.value ? 'white' : '#4B5563',
+                                                fontWeight: 600,
+                                                fontSize: 12,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s',
+                                                textAlign: 'center',
+                                                lineHeight: 1.2
+                                            }}
+                                        >
+                                            <div style={{ fontSize: 11 }}>{date.dayName}</div>
+                                            <div>{date.dayNum}</div>
+                                            <div style={{ fontSize: 10, opacity: 0.7 }}>{date.monthName}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* TIME PICKER */}
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{
+                                    fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
+                                }}>
+                                    🕐 Hora
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: 8, maxHeight: 200, overflowY: 'auto' }}>
+                                    {timeSlots.map(slot => (
+                                        <button
+                                            key={slot}
+                                            onClick={() => setReservationTime(slot)}
+                                            style={{
+                                                padding: '10px 12px',
+                                                borderRadius: 10,
+                                                border: 'none',
+                                                background: reservationTime === slot ? '#C4856A' : '#F3F4F6',
+                                                color: reservationTime === slot ? 'white' : '#4B5563',
+                                                fontWeight: 600,
+                                                fontSize: 13,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s'
+                                            }}
+                                        >
+                                            {slot}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* PARTY SIZE */}
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{
+                                    fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block', textTransform: 'uppercase', letterSpacing: '0.02em'
+                                }}>
+                                    👥 Cantidad de Personas
+                                </label>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 10].map(num => (
+                                        <button
+                                            key={num}
+                                            onClick={() => setPartySize(num)}
+                                            style={{
+                                                padding: '10px 14px',
+                                                borderRadius: 10,
+                                                border: 'none',
+                                                background: partySize === num ? '#C4856A' : '#F3F4F6',
+                                                color: partySize === num ? 'white' : '#4B5563',
+                                                fontWeight: 600,
+                                                fontSize: 13,
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s',
+                                                minWidth: 44
+                                            }}
+                                        >
+                                            {num}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* NAME */}
                             <InputGroup
                                 label={t('name_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
                                 value={customerInfo.name}
                                 onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
                                 placeholder={t('name_placeholder')}
                             />
+
+                            {/* PHONE */}
                             <InputGroup
-                                label="Special Requests" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
-                                value={customerInfo.specialRequests}
-                                onChange={(e) => setCustomerInfo(p => ({ ...p, specialRequests: e.target.value }))}
-                                placeholder="Allergies, preferences, special requests..."
+                                label={t('phone_label')} icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
+                                value={customerInfo.phone}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
+                                placeholder={t('phone_label') + ' (ex: 1123456789)'}
+                                type="tel"
+                            />
+
+                            {/* NOTES */}
+                            <InputGroup
+                                label="Notas (Opcional)" icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>}
+                                value={reservationNotes}
+                                onChange={(e) => setReservationNotes(e.target.value)}
+                                placeholder="Alergias, restricciones, comentarios especiales..."
                                 isTextArea={true}
                             />
                         </>
