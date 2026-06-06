@@ -93,7 +93,18 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
       if (error || data?.error) {
         console.error('Checkout error:', error || data?.error);
-        const errorMsg = data?.error?.detail || error?.message || 'Payment failed. Please try again.';
+        let errorMsg = 'Payment processing failed. ';
+
+        if (data?.error === 'MP_ERROR') {
+          errorMsg += 'Unable to connect with Mercado Pago. Please try again.';
+        } else if (data?.error === 'SOLD_OUT') {
+          errorMsg += 'This tier is now sold out. Please choose another.';
+        } else if (data?.error === 'INSUFFICIENT_CAPACITY') {
+          errorMsg += `Not enough tickets available. ${data?.detail || ''}`;
+        } else {
+          errorMsg += data?.error?.detail || error?.message || 'Please try again.';
+        }
+
         setPaymentError(errorMsg);
         setIsProcessing(false);
         return;

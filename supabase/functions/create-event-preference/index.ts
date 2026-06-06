@@ -208,7 +208,7 @@ serve(async (req: Request) => {
         const businessName = branding.business_name || "FoodSpot";
         const externalReference = `${event.business_id}:${order.id}`;
 
-        // ── 8. Create MP preference ──
+        // ── 8. Create MP preference (with retry logic for cold-start) ──
         const baseUrl = `${APP_BASE_URL}/${businessSlug}/events`;
         const preferenceBody = {
             items: [{
@@ -231,21 +231,46 @@ serve(async (req: Request) => {
             }
         };
 
-        const mpResponse = await fetch(MERCADO_PAGO_API, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(preferenceBody)
-        });
+        // Retry logic for cold-start delays (6 attempts = ~30 seconds)
+        const MAX_RETRIES = 6;
+        const INITIAL_DELAY = 500;
+        let mpData = null;
+        let mpResponse = null;
 
-        const mpData = await mpResponse.json();
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            if (attempt > 0) {
+                const delayMs = INITIAL_DELAY * Math.pow(2, attempt - 1);
+                console.log(`[create-event-preference] MP attempt ${attempt + 1}/${MAX_RETRIES}, waiting ${delayMs}ms...`);
+                await new Promise(r => setTimeout(r, delayMs));
+            }
 
-        if (!mpResponse.ok || !mpData.init_point) {
-            console.error("💥 Mercado Pago Error:", mpData);
+            try {
+                mpResponse = await fetch(MERCADO_PAGO_API, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${accessToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(preferenceBody)
+                });
+
+                mpData = await mpResponse.json();
+
+                if (mpResponse.ok && mpData.init_point) {
+                    console.log(`[create-event-preference] ✅ MP preference created on attempt ${attempt + 1}`);
+                    break;
+                }
+
+                console.warn(`[create-event-preference] Attempt ${attempt + 1} failed:`, mpData?.error || mpResponse.status);
+            } catch (err) {
+                console.warn(`[create-event-preference] Attempt ${attempt + 1} exception:`, err.message);
+            }
+        }
+
+        if (!mpResponse?.ok || !mpData?.init_point) {
+            console.error("💥 Mercado Pago Error after all retries:", mpData);
             return new Response(
-                JSON.stringify({ error: "MP_ERROR", detail: mpData }),
+                JSON.stringify({ error: "MP_ERROR", detail: mpData, attempts: MAX_RETRIES }),
                 { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
