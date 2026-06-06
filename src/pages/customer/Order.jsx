@@ -179,14 +179,17 @@ function Order({ config: configProp }) {
 
     // Scroll to payment section ref
     const paymentSectionRef = useRef(null)
-    const isInitialMount = useRef(true)
 
-    // Auto-scroll to top when order type changes (not on initial mount)
+    // Always start at top when page loads (disable browser scroll restoration)
     useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false
-            return
+        window.scrollTo(0, 0)
+        if (window.history.scrollRestoration) {
+            window.history.scrollRestoration = 'manual'
         }
+    }, [])
+
+    // Auto-scroll to top when order type changes
+    useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }, [orderType])
 
