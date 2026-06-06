@@ -916,8 +916,8 @@ function Order({ config: configProp }) {
                     {validationErrors.length > 0 && (
                         <div style={{ background: '#FEE2E2', padding: 12, borderRadius: 12, marginBottom: 20 }}>
                             {validationErrors.map((err) => (
-                                <p key={err} style={{ color: '#DC2626', fontSize: 14, margin: '2px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                    <span>⚠️</span> {err}
+                                <p key={err} style={{ color: '#DC2626', fontSize: 14, fontWeight: 700, margin: '2px 0' }}>
+                                    {err}
                                 </p>
                             ))}
                         </div>
