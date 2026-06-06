@@ -112,30 +112,33 @@ const InputGroup = ({ label, icon, value, onChange, placeholder, type = 'text', 
 )
 
 const PaymentMethodCard = ({ id, selected, onClick, title, subtitle, icon, color }) => (
-    <div
+    <button
         onClick={onClick}
         style={{
-            position: 'relative', padding: 16, marginBottom: 12,
-            background: selected ? '#F0FDF4' : '#FFFFFF',
-            border: selected ? `2px solid ${color}` : '1px solid #E5E7EB',
-            borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s ease',
-            display: 'flex', alignItems: 'center', gap: 16,
-            boxShadow: selected ? `0 4px 12px ${color}20` : '0 2px 4px rgba(0,0,0,0.02)'
+            width: '100%', padding: '14px 0', marginBottom: 0,
+            background: 'none', border: 'none', borderBottom: '1px solid #E5E7EB',
+            cursor: 'pointer', transition: 'all 0.2s ease',
+            display: 'flex', alignItems: 'center', gap: 12,
+            ':last-child': { borderBottom: 'none' }
         }}
     >
-        <div style={{ width: 48, height: 48, borderRadius: 12, background: selected ? 'white' : '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: color, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#111827', flexShrink: 0 }}>
             {icon}
         </div>
-        <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: '#1F2937', marginBottom: 2 }}>{title}</div>
-            <div style={{ fontSize: 13, color: '#6B7280' }}>{subtitle}</div>
+        <div style={{ flex: 1, textAlign: 'left' }}>
+            <div style={{ fontSize: 15, fontWeight: selected ? 700 : 500, color: '#111827', marginBottom: 2 }}>{title}</div>
+            <div style={{ fontSize: 12, color: '#9CA3AF' }}>{subtitle}</div>
         </div>
         <div style={{
-            width: 24, height: 24, borderRadius: '50%',
-            border: selected ? `6px solid ${color}` : '2px solid #D1D5DB',
-            background: 'white', transition: 'all 0.2s ease'
-        }} />
-    </div>
+            width: 20, height: 20, borderRadius: '50%',
+            border: selected ? 'none' : '2px solid #D1D5DB',
+            background: selected ? '#111827' : 'white',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0, transition: 'all 0.2s ease'
+        }}>
+            {selected && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'white' }} />}
+        </div>
+    </button>
 )
 
 const placeholderImages = [
