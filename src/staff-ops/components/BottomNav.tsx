@@ -1,19 +1,30 @@
 import { motion } from 'framer-motion';
-import { LayoutDashboard, ChefHat, ClipboardList, Bike, Package } from 'lucide-react';
+import { LayoutDashboard, ChefHat, ClipboardList, Bike, Package, Ticket } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
+function getStaffRole(): string {
+  try {
+    return (JSON.parse(localStorage.getItem('fs_staff_member') || '{}').role || '').toLowerCase()
+  } catch { return '' }
+}
+
 export default function BottomNav() {
   const { state, setTab } = useOrders();
   const { t } = useLanguage();
+  const role = getStaffRole();
+  const isManager = role === 'manager' || role === 'admin';
 
-  const tabs: { id: TabId; icon: React.ReactNode; labelKey: string }[] = [
+  const tabs: { id: TabId; icon: React.ReactNode; labelKey: string; label?: string }[] = [
     { id: 'board', icon: <LayoutDashboard size={22} strokeWidth={2.2} />, labelKey: 'board_title' },
     { id: 'prep', icon: <ChefHat size={22} strokeWidth={2.2} />, labelKey: 'kitchen' },
     { id: 'order', icon: <ClipboardList size={22} strokeWidth={2.2} />, labelKey: 'take_order' },
     { id: 'logistics', icon: <Bike size={22} strokeWidth={2.2} />, labelKey: 'logistics_title' },
-    { id: 'inventory', icon: <Package size={22} strokeWidth={2.2} />, labelKey: 'inventory_title' },
+    ...(isManager
+      ? [{ id: 'events' as TabId, icon: <Ticket size={22} strokeWidth={2.2} />, labelKey: '', label: 'Eventos' }]
+      : [{ id: 'inventory' as TabId, icon: <Package size={22} strokeWidth={2.2} />, labelKey: 'inventory_title' }]
+    ),
   ];
 
   return (
@@ -23,7 +34,7 @@ export default function BottomNav() {
     >
       {tabs.map((tab) => {
         const isActive = state.currentTab === tab.id;
-        const label = t(tab.labelKey);
+        const label = tab.label || t(tab.labelKey);
         return (
           <button
             key={tab.id}

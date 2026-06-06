@@ -1,4 +1,29 @@
 import { useState, useEffect, useRef } from 'react'
+
+// Simple collapsible section — uses CSS vars, no theme dependency
+function Collapsible({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div style={{ marginBottom: 16, border: '1px solid var(--border-color)', borderRadius: 14, overflow: 'hidden' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '14px 16px', background: open ? 'var(--canvas-bg)' : 'transparent',
+          border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14, color: 'var(--text-primary)'
+        }}
+      >
+        {title}
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', transition: 'transform 0.2s', display: 'inline-block', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+      </button>
+      {open && (
+        <div style={{ padding: '12px 16px 16px' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
 import { motion, AnimatePresence } from 'framer-motion'
 import { Html5Qrcode } from 'html5-qrcode'
 import confetti from 'canvas-confetti'
@@ -1058,19 +1083,29 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
       </button>
       <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>Edit Event</h2>
 
-      <Field label="Event Name">
-        <input style={s.input} value={form.name} onChange={e => patch('name', e.target.value)} />
-      </Field>
-      <Field label="Description">
-        <textarea style={{ ...s.input, minHeight: 100, resize: 'none' }} value={form.description} onChange={e => patch('description', e.target.value)} />
-      </Field>
-      <Field label="Venue">
-        <input style={s.input} value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
-      </Field>
+      <Collapsible title="Detalles del Evento" defaultOpen={true}>
+        <Field label="Event Name">
+          <input style={s.input} value={form.name} onChange={e => patch('name', e.target.value)} />
+        </Field>
+        <Field label="Description">
+          <textarea style={{ ...s.input, minHeight: 100, resize: 'none' }} value={form.description} onChange={e => patch('description', e.target.value)} />
+        </Field>
+        <Field label="Venue">
+          <input style={s.input} value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
+        </Field>
+        <Field label="Address">
+          <input style={s.input} value={form.address || ''} onChange={e => patch('address', e.target.value)} />
+        </Field>
+        <Field label="Start Date">
+          <input type="datetime-local" style={s.input} value={form.start_date || ''} onChange={e => patch('start_date', e.target.value)} />
+        </Field>
+        <Field label="End Date">
+          <input type="datetime-local" style={s.input} value={form.end_date || ''} onChange={e => patch('end_date', e.target.value)} />
+        </Field>
+      </Collapsible>
 
       {['Festivals', 'Music'].includes(form.category) && (
-        <>
-          <h3 style={{ margin: '20px 0 12px', fontSize: 15, fontWeight: 700, color: theme.textPrimary }}>Artist Schedule</h3>
+        <Collapsible title="Artist Schedule" defaultOpen={false}>
           {(form.lineup || []).map((artist, idx) => (
             <motion.div key={idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{ ...s.card, marginBottom: 12, background: theme.bgSurface }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
@@ -1110,14 +1145,14 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           ))}
           <button
             onClick={() => patch('lineup', [...(form.lineup || []), { time: '', artist: '', genre: '', stage: '' }])}
-            style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 16, marginTop: 8 }}
+            style={{ ...s.btnSecondary, width: '100%', borderStyle: 'dashed', marginBottom: 8, marginTop: 4 }}
           >
             <Plus size={16} /> Add Artist
           </button>
-        </>
+        </Collapsible>
       )}
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
         <button onClick={onBack} style={{ ...s.btnSecondary, flex: 1 }}>Cancel</button>
         <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving} style={{ ...s.btnPrimary, background: '#3B82F6', flex: 2, opacity: saving ? 0.7 : 1 }}>
           {saving ? 'Saving…' : 'Save Changes'}
