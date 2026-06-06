@@ -237,7 +237,7 @@ function Home({ config: configProp }) {
     // These states are the SOURCE OF TRUTH for UI rendering
     // They update INSTANTLY on drop, before storage is written
     const [localPrimaryActions, setLocalPrimaryActions] = useState(
-        () => homeConfig?.primaryActions || ['menu', 'envios', 'reservation', 'game']
+        () => homeConfig?.primaryActions || ['menu', 'envios', 'rewards', 'game']
     )
 
     // Sync from config prop when it changes (but NOT during drag or edit)
