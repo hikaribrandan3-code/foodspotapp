@@ -227,6 +227,7 @@ function Order({ config: configProp }) {
     const [reservationTime, setReservationTime] = useState('')
     const [partySize, setPartySize] = useState(2)
     const [reservationNotes, setReservationNotes] = useState('')
+    const [showReservation, setShowReservation] = useState(false)
     const availableDates = useMemo(() => getAvailableDates(), [])
     const timeSlots = useMemo(() => generateTimeSlots('11:00', '23:00'), [])
 
@@ -978,91 +979,101 @@ function Order({ config: configProp }) {
                         </>
                     ) : orderType === 'dine_in' ? (
                         <>
-                            {/* ── RESERVATION BLOCK: compact, one card feel ── */}
+                            {/* NAME — always visible */}
+                            <InputGroup
+                                label={t('name_label')}
+                                icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
+                                value={customerInfo.name}
+                                onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
+                                placeholder={t('name_placeholder')}
+                            />
 
-                            {/* DATE — horizontal scroll strip */}
-                            <div style={{ marginBottom: 20 }}>
-                                <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Fecha</p>
-                                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
-                                    {availableDates.map(date => (
-                                        <button
-                                            key={date.value}
-                                            onClick={() => setReservationDate(date.value)}
-                                            style={{
-                                                flexShrink: 0,
-                                                width: 52, padding: '8px 0',
-                                                borderRadius: 12, border: 'none',
-                                                background: reservationDate === date.value ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
-                                                color: reservationDate === date.value ? 'white' : '#6B7280',
-                                                fontWeight: 700, fontSize: 11,
-                                                cursor: 'pointer', textAlign: 'center', lineHeight: 1.3,
-                                                transition: 'all 0.15s'
-                                            }}
-                                        >
-                                            <div style={{ fontSize: 10, opacity: 0.8 }}>{date.dayName}</div>
-                                            <div style={{ fontSize: 16, fontWeight: 800 }}>{date.dayNum}</div>
-                                            <div style={{ fontSize: 10, opacity: 0.7 }}>{date.monthName}</div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* TIME + PARTY SIZE — side by side */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
-                                {/* Time — native select, no scroll wall */}
-                                <div>
-                                    <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Hora</p>
-                                    <select
-                                        value={reservationTime}
-                                        onChange={e => setReservationTime(e.target.value)}
-                                        style={{
-                                            width: '100%', padding: '12px 14px',
-                                            borderRadius: 12, border: '1.5px solid #E5E7EB',
-                                            fontSize: 15, fontWeight: 600, color: '#1F2937',
-                                            background: 'white', cursor: 'pointer',
-                                            appearance: 'none', WebkitAppearance: 'none'
-                                        }}
-                                    >
-                                        <option value="">--:--</option>
-                                        {timeSlots.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
-                                </div>
-
-                                {/* Party size — stepper */}
-                                <div>
-                                    <p style={{ fontSize: 12, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Personas</p>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1.5px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
-                                        <button
-                                            onClick={() => setPartySize(p => Math.max(1, p - 1))}
-                                            style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}
-                                        >−</button>
-                                        <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 800, color: '#1F2937' }}>{partySize}</span>
-                                        <button
-                                            onClick={() => setPartySize(p => Math.min(20, p + 1))}
-                                            style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}
-                                        >+</button>
+                            {/* RESERVATION TOGGLE */}
+                            <button
+                                onClick={() => setShowReservation(r => !r)}
+                                style={{
+                                    width: '100%', padding: '13px 16px', marginBottom: showReservation ? 16 : 0,
+                                    borderRadius: 12, border: `1.5px solid ${showReservation ? (tenantData?.confirmation_color || '#C4856A') : '#E5E7EB'}`,
+                                    background: showReservation ? `${tenantData?.confirmation_color || '#C4856A'}12` : 'white',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                    cursor: 'pointer', transition: 'all 0.2s'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <span style={{ fontSize: 18 }}>📅</span>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <div style={{ fontSize: 14, fontWeight: 700, color: '#1F2937' }}>Reservar Mesa</div>
+                                        {reservationDate && reservationTime
+                                            ? <div style={{ fontSize: 12, color: tenantData?.confirmation_color || '#C4856A', fontWeight: 600 }}>
+                                                {formatDateDisplay(reservationDate)} · {reservationTime} · {partySize} pers.
+                                              </div>
+                                            : <div style={{ fontSize: 12, color: '#9CA3AF' }}>Opcional — elegí fecha y hora</div>
+                                        }
                                     </div>
                                 </div>
-                            </div>
+                                <span style={{ fontSize: 18, color: '#9CA3AF', transition: 'transform 0.2s', transform: showReservation ? 'rotate(180deg)' : 'none' }}>⌄</span>
+                            </button>
 
-                            {/* NAME + PHONE — side by side on tablet, stacked on mobile */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 12 }}>
-                                <InputGroup
-                                    label={t('name_label')}
-                                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>}
-                                    value={customerInfo.name}
-                                    onChange={(e) => setCustomerInfo(p => ({ ...p, name: e.target.value }))}
-                                    placeholder={t('name_placeholder')}
-                                />
-                                <InputGroup
-                                    label={t('phone_label')}
-                                    icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>}
-                                    value={customerInfo.phone}
-                                    onChange={(e) => setCustomerInfo(p => ({ ...p, phone: e.target.value }))}
-                                    placeholder="11 2345-6789"
-                                    type="tel"
-                                />
-                            </div>
+                            {/* COLLAPSIBLE RESERVATION FORM */}
+                            {showReservation && (
+                                <div style={{ marginBottom: 4 }}>
+                                    {/* DATE — horizontal scroll strip */}
+                                    <div style={{ marginBottom: 16 }}>
+                                        <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Fecha</p>
+                                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+                                            {availableDates.map(date => (
+                                                <button
+                                                    key={date.value}
+                                                    onClick={() => setReservationDate(date.value)}
+                                                    style={{
+                                                        flexShrink: 0, width: 52, padding: '8px 0',
+                                                        borderRadius: 12, border: 'none',
+                                                        background: reservationDate === date.value ? (tenantData?.confirmation_color || '#C4856A') : '#F3F4F6',
+                                                        color: reservationDate === date.value ? 'white' : '#6B7280',
+                                                        fontWeight: 700, fontSize: 11, cursor: 'pointer',
+                                                        textAlign: 'center', lineHeight: 1.3, transition: 'all 0.15s'
+                                                    }}
+                                                >
+                                                    <div style={{ fontSize: 10, opacity: 0.8 }}>{date.dayName}</div>
+                                                    <div style={{ fontSize: 16, fontWeight: 800 }}>{date.dayNum}</div>
+                                                    <div style={{ fontSize: 10, opacity: 0.7 }}>{date.monthName}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* TIME + PARTY SIZE */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                        <div>
+                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Hora</p>
+                                            <select
+                                                value={reservationTime}
+                                                onChange={e => setReservationTime(e.target.value)}
+                                                style={{
+                                                    width: '100%', padding: '12px 14px',
+                                                    borderRadius: 12, border: '1.5px solid #E5E7EB',
+                                                    fontSize: 15, fontWeight: 600, color: '#1F2937',
+                                                    background: 'white', cursor: 'pointer',
+                                                    appearance: 'none', WebkitAppearance: 'none'
+                                                }}
+                                            >
+                                                <option value="">--:--</option>
+                                                {timeSlots.map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Personas</p>
+                                            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #E5E7EB', borderRadius: 12, overflow: 'hidden' }}>
+                                                <button onClick={() => setPartySize(p => Math.max(1, p - 1))}
+                                                    style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>−</button>
+                                                <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 800, color: '#1F2937' }}>{partySize}</span>
+                                                <button onClick={() => setPartySize(p => Math.min(20, p + 1))}
+                                                    style={{ flex: 1, padding: '12px 0', border: 'none', background: 'white', fontSize: 20, fontWeight: 300, color: '#6B7280', cursor: 'pointer' }}>+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </>
                     ) : (
                         /* pickup / takeout */
@@ -1092,7 +1103,6 @@ function Order({ config: configProp }) {
                         boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24,
                         display: 'flex', alignItems: 'center', gap: 16,
                     }}>
-                        <span style={{ fontSize: 32 }}>😊</span>
                         <div>
                             <div style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>{t('dine_in_pay_at_end_message')}</div>
                         </div>
