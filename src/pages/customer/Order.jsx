@@ -369,7 +369,8 @@ function Order({ config: configProp }) {
                 localStorage.setItem(mpKey, JSON.stringify({
                     orderId: savedOrder.id,
                     status: 'creating',
-                    ts: Date.now()
+                    ts: Date.now(),
+                    attempts: 0
                 }))
 
                 // Navigate immediately — same feel as cash order
@@ -385,50 +386,86 @@ function Order({ config: configProp }) {
                     }
                 }, 1500)
 
-                // Fire create-preference in background (non-blocking)
+                // Fire create-preference in background (non-blocking, aggressive retry)
                 ;(async () => {
-                    try {
-                        let mpData, mpError
-                        for (let attempt = 0; attempt < 3; attempt++) {
-                            if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * attempt))
-                            ;({ data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
+                    const MAX_RETRIES = 6 // 6 attempts = ~30sec total
+                    const INITIAL_DELAY = 500
+
+                    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+                        try {
+                            if (attempt > 0) {
+                                // Exponential backoff: 500ms, 1s, 2s, 4s, 8s, 16s
+                                const delayMs = INITIAL_DELAY * Math.pow(2, attempt - 1)
+                                console.log(`[Order] MP attempt ${attempt + 1}/${MAX_RETRIES}, waiting ${delayMs}ms...`)
+                                await new Promise(r => setTimeout(r, delayMs))
+                            }
+
+                            // Update attempt counter in localStorage
+                            const current = JSON.parse(localStorage.getItem(mpKey) || '{}')
+                            localStorage.setItem(mpKey, JSON.stringify({
+                                ...current,
+                                attempts: attempt + 1
+                            }))
+
+                            const { data: mpData, error: mpError } = await supabase.functions.invoke('create-preference', {
                                 body: { order_id: savedOrder.id }
-                            }))
-                            const isNetworkError = mpError && (
-                                mpError.message?.includes('Load failed') ||
-                                mpError.message?.includes('Failed to fetch') ||
-                                mpError.message?.includes('Network')
-                            )
-                            if (!isNetworkError) break
-                            console.warn(`[Order] MP attempt ${attempt + 1} failed, retrying...`)
+                            })
+
+                            if (mpData?.init_point) {
+                                console.log(`[Order] ✅ MP preference created on attempt ${attempt + 1}`)
+                                localStorage.setItem(mpKey, JSON.stringify({
+                                    orderId: savedOrder.id,
+                                    status: 'ready',
+                                    checkoutUrl: mpData.init_point,
+                                    ts: Date.now(),
+                                    attempts: attempt + 1
+                                }))
+                                return
+                            }
+
+                            // If error is "not configured", don't retry
+                            if (mpData?.error === 'mp_not_configured') {
+                                console.error('[Order] MP not configured for this tenant')
+                                localStorage.setItem(mpKey, JSON.stringify({
+                                    orderId: savedOrder.id,
+                                    status: 'error',
+                                    error: 'Mercado Pago no configurado. Contacta al restaurante.',
+                                    ts: Date.now(),
+                                    attempts: attempt + 1
+                                }))
+                                return
+                            }
+
+                            // If limit reached, don't retry
+                            if (mpData?.error === 'mp_limit_reached') {
+                                console.error('[Order] MP free tier limit reached')
+                                localStorage.setItem(mpKey, JSON.stringify({
+                                    orderId: savedOrder.id,
+                                    status: 'error',
+                                    error: mpData.message || 'Límite de pagos alcanzado. Contáctanos.',
+                                    ts: Date.now(),
+                                    attempts: attempt + 1
+                                }))
+                                return
+                            }
+
+                            // Retry on any other error (network, timeout, etc)
+                            console.warn(`[Order] MP attempt ${attempt + 1} failed:`, mpError?.message || mpData?.error)
+
+                        } catch (err) {
+                            console.warn(`[Order] MP attempt ${attempt + 1} exception:`, err.message)
                         }
-                        const checkoutUrl = mpData?.init_point
-                        if (checkoutUrl) {
-                            localStorage.setItem(mpKey, JSON.stringify({
-                                orderId: savedOrder.id,
-                                status: 'ready',
-                                checkoutUrl,
-                                ts: Date.now()
-                            }))
-                        } else {
-                            const errMsg = mpData?.error || mpError?.message || 'No checkout URL'
-                            console.error('[Order] MP background error:', errMsg)
-                            localStorage.setItem(mpKey, JSON.stringify({
-                                orderId: savedOrder.id,
-                                status: 'error',
-                                error: errMsg,
-                                ts: Date.now()
-                            }))
-                        }
-                    } catch (err) {
-                        console.error('[Order] MP background exception:', err)
-                        localStorage.setItem(mpKey, JSON.stringify({
-                            orderId: savedOrder.id,
-                            status: 'error',
-                            error: err.message,
-                            ts: Date.now()
-                        }))
                     }
+
+                    // All retries exhausted
+                    console.error('[Order] ❌ MP preference creation failed after all retries')
+                    localStorage.setItem(mpKey, JSON.stringify({
+                        orderId: savedOrder.id,
+                        status: 'error',
+                        error: 'No se pudo conectar con Mercado Pago. Por favor, intenta de nuevo.',
+                        ts: Date.now(),
+                        attempts: MAX_RETRIES
+                    }))
                 })()
 
                 return
