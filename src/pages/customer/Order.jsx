@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { formatPrice } from '../../config/menuData.js'
 import { supabase } from '../../lib/supabaseClient.js'
@@ -173,6 +173,18 @@ function Order({ config: configProp }) {
         if (serviceModes?.dineIn) return 'dine_in'
         return 'pickup'
     })
+
+    // Scroll to payment section ref
+    const paymentSectionRef = useRef(null)
+
+    // Auto-scroll to payment when switching from dine_in
+    useEffect(() => {
+        if (orderType !== 'dine_in' && paymentSectionRef.current) {
+            setTimeout(() => {
+                paymentSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 100)
+        }
+    }, [orderType])
 
     // UI STATE
     const [order, setOrder] = useState(() => getCurrentOrder())
@@ -1148,7 +1160,7 @@ function Order({ config: configProp }) {
 
                 {/* 3. PREMIUM PAYMENT SELECTOR — hidden for dine-in (pay at end, implied) */}
                 {orderType !== 'dine_in' && (
-                <div style={{
+                <div ref={paymentSectionRef} style={{
                     background: 'white', borderRadius: 24, padding: 24,
                     boxShadow: '0 4px 24px rgba(0,0,0,0.04)', marginBottom: 24
                 }}>
