@@ -34,9 +34,11 @@ function BackendHeader({ title, onLogout }) {
     const logoUrl = branding?.logoURL || tenantData?.logo_url || tenantData?.branding?.logoURL
 
     // 🔐 ROLE DETECTION: Check current user role for bidirectional nav
-    const isOwner = userRole === 'owner' || userRole === 'superadmin'
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
     const isInStaffView = currentPath.includes('/staff')
+
+    // isOwner = user_metadata.role OR if logged in to owner dashboard
+    const isOwner = userRole === 'owner' || userRole === 'superadmin' || currentPath.includes('/owner')
 
     // Fetch user role on mount
     useEffect(() => {
