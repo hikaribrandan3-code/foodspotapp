@@ -46,7 +46,41 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
   const shareImageUrl = event.share_image_url || event.image; // Use custom share image if available, else fallback to event image
 
   const ACCENT_COLOR = '#10b981'; // emerald brand color
+  const hasCustomFlyer = event.share_image_url;
 
+  // If custom flyer exists, just show it without the UI card
+  if (hasCustomFlyer) {
+    return (
+      <div
+        ref={ref}
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '-9999px',
+          width: '1080px',
+          height: '1920px',
+          overflow: 'hidden',
+          background: '#000',
+          display: 'flex',
+          zIndex: -1,
+        }}
+      >
+        <img
+          src={event.share_image_url}
+          alt={event.name}
+          crossOrigin="anonymous"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Otherwise render the full card UI
   return (
     <div
       ref={ref}
