@@ -30,13 +30,16 @@ export function useOwnerEvents(businessId) {
                 console.error('[useOwnerEvents] Fetch failed:', fetchError)
                 setError(fetchError)
                 setEvents([])
+                return []
             } else {
                 setEvents(data || [])
+                return data || []
             }
         } catch (err) {
             console.error('[useOwnerEvents] Error:', err?.message)
             setError(err)
             setEvents([])
+            return []
         } finally {
             setLoading(false)
         }

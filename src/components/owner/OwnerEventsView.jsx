@@ -39,7 +39,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 
 // ── Theme tokens ──────────────────────────────────────────────────────────────
 const theme = {
-  primary:       'var(--color-primary, #10B981)',
+  primary:       '#10B981',
   textPrimary:   'var(--text-primary, #111827)',
   textSecondary: 'var(--text-secondary, #64748B)',
   border:        'var(--border-color, #E5E7EB)',
@@ -125,15 +125,19 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     })
   })()
 
-  // Listen for check-in success and refetch event to update attendee counts
+  // Listen for check-in success, refetch events, and sync selectedEvent
   useEffect(() => {
-    const handleCheckinSuccess = () => {
-      fetchEvents()
+    const handleCheckinSuccess = async () => {
+      const updated = await fetchEvents()
+      if (selectedEvent && updated?.length) {
+        const fresh = updated.find(e => e.id === selectedEvent.id)
+        if (fresh) setSelectedEvent(fresh)
+      }
     }
 
     window.addEventListener('event-checkin-success', handleCheckinSuccess)
     return () => window.removeEventListener('event-checkin-success', handleCheckinSuccess)
-  }, [fetchEvents])
+  }, [fetchEvents, selectedEvent])
 
   // When dbEvents updates, refresh selectedEvent if it's in detail view
   useEffect(() => {
