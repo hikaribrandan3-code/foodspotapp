@@ -191,14 +191,12 @@ const mockEvents = [
 // Transform Supabase event shape to frontend mock shape
 function normalizeEvent(event) {
   const startDate = new Date(event.start_date);
-  const date = startDate.toISOString().split('T')[0];
-  const time = startDate.toTimeString().slice(0, 5);
-
   return {
     id: event.id,
     name: event.name,
-    date,
-    time,
+    date: event.start_date,
+    end_date: event.end_date || null,
+    time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     description: event.description || '',
     location: event.address || event.venue_name || '',
     venue_name: event.venue_name || '',

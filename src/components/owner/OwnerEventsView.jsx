@@ -354,7 +354,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         <StatCard label={t('revenue')} value={`$${(events.reduce((a, e) => a + (e.total_revenue_cents || 0), 0) / 100).toFixed(0)}`} color="#10B981" icon={DollarSign} onClick={() => setStatModal('revenue')} />
         <StatCard label={t('tickets_sold')} value={events.reduce((a, e) => a + (e.tickets_sold || 0), 0)} color="#3B82F6" icon={TicketIcon} onClick={() => setStatModal('tickets')} />
         <StatCard label={t('live_events')} value={events.filter(e => e.status === 'live').length} color="#8B5CF6" icon={Calendar} />
-        <StatCard label={t('checkins')} value={events.reduce((a, e) => a + (e.checkins || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
+        <StatCard label={t('checkins')} value={events.reduce((a, e) => a + (e.checkins_count || 0), 0)} color="#F59E0B" icon={Users} onClick={() => setStatModal('checkins')} />
       </div>
 
       {/* List */}
@@ -481,7 +481,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
         <StatCard label={t('revenue')}    value={`$${(event.total_revenue_cents / 100).toFixed(0)}`}                                                        color="#10B981" icon={DollarSign} />
         <StatCard label={t('sold')}       value={`${totalSold} / ${totalCap}`}                                                                        color="#3B82F6" icon={TicketIcon} />
-        <StatCard label={t('checkins')}  value={`${event.checkins || 0} (${totalSold > 0 ? Math.round((event.checkins || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
+        <StatCard label={t('checkins')}  value={`${event.checkins_count || 0} (${totalSold > 0 ? Math.round((event.checkins_count || 0) / totalSold * 100) : 0}%)`} color="#8B5CF6" icon={Users} />
         <StatCard label={t('avg_ticket')} value={`$${totalSold > 0 ? ((event.total_revenue_cents / totalSold) / 100).toFixed(0) : 0}`}                       color="#F59E0B" icon={Tag} />
       </div>
 

@@ -153,7 +153,11 @@ export default function EventDetail({ event, onBook, onBack }) {
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('date')}</p>
-              <p className="text-sm font-black text-[var(--text-primary)]">{new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })}</p>
+              <p className="text-sm font-black text-[var(--text-primary)]">
+                {event.end_date && new Date(event.end_date).toDateString() !== new Date(event.date).toDateString()
+                  ? `${new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(event.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                  : new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })}
+              </p>
             </div>
           </div>
           <div className="h-10 w-px bg-[var(--border-color)]"></div>
