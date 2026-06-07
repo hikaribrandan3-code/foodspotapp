@@ -79,6 +79,14 @@ export default function MyTickets() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const guestToken = localStorage.getItem('event_guest_token');
+
+  useEffect(() => {
+    console.log('MyTickets mounted - guestToken:', guestToken);
+    if (!guestToken) {
+      console.warn('No guestToken in localStorage! Keys:', Object.keys(localStorage));
+    }
+  }, []);
+
   const { orders: dbOrders, loading: ordersLoading, refetch } = useEventOrders(guestToken);
 
   useEffect(() => {
@@ -101,20 +109,29 @@ export default function MyTickets() {
   };
 
   const handleDeleteTicket = async () => {
-    if (!deleteConfirm || !guestToken) {
-      alert('Error: Session data missing. Please refresh and try again.');
+    if (!deleteConfirm) {
+      alert('Error: No ticket selected.');
+      return;
+    }
+
+    // Read guestToken fresh at delete time
+    const freshGuestToken = localStorage.getItem('event_guest_token');
+    if (!freshGuestToken) {
+      console.error('No guestToken found. localStorage keys:', Object.keys(localStorage).filter(k => k.includes('event') || k.includes('guest')));
+      alert('Error: Session data missing. Please refresh the page and try again.');
       setIsDeleting(false);
       return;
     }
+
     setIsDeleting(true);
     try {
       // Soft delete: SET deleted_at = NOW() using the actual row ID
-      console.log('Deleting ticket:', { ticketId: deleteConfirm.ticketId, guestToken });
+      console.log('Deleting ticket:', { ticketId: deleteConfirm.ticketId, guestToken: freshGuestToken });
       const { error } = await supabase
         .from('event_orders')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', deleteConfirm.ticketId)
-        .eq('guest_token', guestToken);
+        .eq('guest_token', freshGuestToken);
 
       if (error) {
         console.error('Delete error details:', error);
