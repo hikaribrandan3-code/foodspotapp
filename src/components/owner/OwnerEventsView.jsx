@@ -924,7 +924,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                     disabled={shareImageUploading}
                     style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16, opacity: shareImageUploading ? 0.6 : 1 }}
                   >
-                    {shareImageUploading ? 'Uploading…' : '📸 Upload Flyer (1080x1920px)'}
+                    {shareImageUploading ? 'Uploading…' : 'Update Flyer (1080x1920px)'}
                   </button>
                 )}
                 <p style={{ fontSize: 11, color: theme.textSecondary, marginTop: 8, fontStyle: 'italic' }}>

@@ -839,6 +839,7 @@ export const translations = {
     publishing: { en: 'Publishing…', es: 'Publicando…', pt: 'Publicando…' },
     date_and_venue: { en: 'Date & Venue', es: 'Fecha y Lugar', pt: 'Data e Local' },
     start_date: { en: 'Start Date', es: 'Fecha de Inicio', pt: 'Data de Início' },
+    end_date: { en: 'End Date', es: 'Fecha de Fin', pt: 'Data de Fim' },
     start_time: { en: 'Start Time', es: 'Hora de Inicio', pt: 'Hora de Início' },
     venue_name: { en: 'Venue Name', es: 'Nombre del Lugar', pt: 'Nome do Local' },
     address_label: { en: 'Address', es: 'Dirección', pt: 'Endereço' },
