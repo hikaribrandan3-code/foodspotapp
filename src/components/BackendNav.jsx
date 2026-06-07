@@ -43,6 +43,7 @@ const OWNER_TABS = [
     { id: 'menu', label: 'Menu', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
+    { id: 'events', label: 'Events', route: null },
     { id: 'analytics', label: 'Analytics', route: null },
     { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
     { id: 'reservations', label: 'Reservas', route: null, desktopOnly: true },
@@ -52,6 +53,7 @@ const OWNER_TABS = [
 const STAFF_TABS = [
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'delivery', label: 'Delivery', route: null, hasBadge: true },
+    { id: 'events', label: 'Events', route: null },
     { id: 'history', label: 'History', route: null }
 ]
 
@@ -76,6 +78,7 @@ const getRouteMaps = (tenantSlug) => ({
         menu: `/${tenantSlug}/owner/menu`,
         branding: `/${tenantSlug}/owner/branding`,
         orders: `/${tenantSlug}/owner/delivery`,
+        events: `/${tenantSlug}/owner/events`,
         analytics: `/${tenantSlug}/owner/analytics`,
         contacts: `/${tenantSlug}/owner/contacts`,
         reservations: `/${tenantSlug}/owner/reservations`,
@@ -84,6 +87,7 @@ const getRouteMaps = (tenantSlug) => ({
     staff: {
         orders: `/${tenantSlug}/staff/ops`,
         delivery: `/${tenantSlug}/staff/ops`,
+        events: `/${tenantSlug}/staff/events`,
         history: `/${tenantSlug}/staff/ops`
     },
     demo: {
@@ -126,6 +130,20 @@ function TabIcon({ id, active }) {
                 <line x1="9" y1="7" x2="15" y2="7" />
                 <line x1="9" y1="11" x2="15" y2="11" />
                 <line x1="9" y1="15" x2="12" y2="15" />
+            </svg>
+        ),
+        // Events (Ticket icon)
+        events: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M2 7.5V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5" />
+                <path d="M2 16.5V19a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2.5" />
+                <line x1="2" y1="7.5" x2="22" y2="7.5" />
+                <line x1="2" y1="16.5" x2="22" y2="16.5" />
+                <line x1="8" y1="3" x2="8" y2="6" />
+                <line x1="16" y1="3" x2="16" y2="6" />
+                <line x1="8" y1="18" x2="8" y2="21" />
+                <line x1="16" y1="18" x2="16" y2="21" />
+                <circle cx="12" cy="12" r="1.5" fill={color} />
             </svg>
         ),
         // Menu (Fork & Knife / Utensils icon from reference)
