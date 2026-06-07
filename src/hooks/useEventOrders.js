@@ -26,11 +26,12 @@ export function useEventOrders(guestToken) {
                 .select(`
                     *,
                     events:event_id (
-                        name, start_date, venue_name, image_url
+                        name, start_date, venue_name, image_url, status
                     )
                 `)
                 .eq('guest_token', guestToken)
                 .eq('payment_status', 'paid')
+                .is('deleted_at', null)
                 .order('created_at', { ascending: false })
 
             if (fetchError) {

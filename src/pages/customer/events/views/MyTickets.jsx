@@ -1,33 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard } from 'lucide-react';
+import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard, X } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useEventOrders } from '../../../../hooks/useEventOrders';
+import { supabase } from '../../../../lib/supabaseClient';
 import EventTicket from './EventTicket';
 
-const TicketCard = ({ ticket, isPast = false, onClick }) => {
+const TicketCard = ({ ticket, isPast = false, onClick, onDelete }) => {
   const { t } = useLanguage();
+  const isCanceled = ticket.status === 'canceled';
+  const isDisabled = isPast || isCanceled;
+
   return (
-    <div 
-      onClick={!isPast ? onClick : undefined}
-      className={`relative overflow-hidden rounded-[32px] border group transition-all cursor-pointer bg-white dark:bg-slate-900 h-28 ${isPast ? 'border-slate-100 dark:border-slate-800 opacity-60 grayscale' : 'border-[var(--border-color)] shadow-sm active:scale-[0.98]'}`}
+    <div
+      onClick={!isDisabled ? onClick : undefined}
+      className={`relative overflow-hidden rounded-[32px] border group transition-all cursor-pointer bg-white dark:bg-slate-900 h-28 ${isDisabled ? 'border-slate-100 dark:border-slate-800 opacity-60 grayscale' : 'border-[var(--border-color)] shadow-sm active:scale-[0.98]'}`}
     >
       {/* Full Background Flyer */}
       <div className="absolute inset-0 z-0">
          <img src={ticket.image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-         <div className={`absolute inset-0 bg-gradient-to-r ${isPast ? 'from-slate-900/90' : 'from-slate-900/95 via-slate-900/60'} to-transparent`} />
+         <div className={`absolute inset-0 bg-gradient-to-r ${isDisabled ? 'from-slate-900/90' : 'from-slate-900/95 via-slate-900/60'} to-transparent`} />
       </div>
+
+      {/* Delete Button (Top-Right) */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete?.(ticket.id, ticket.event_id);
+        }}
+        className="absolute top-2 right-2 z-20 w-7 h-7 rounded-full bg-gray-600/50 hover:bg-red-500/70 text-white flex items-center justify-center transition-colors"
+        title="Delete ticket"
+      >
+        <span className="text-lg leading-none">×</span>
+      </button>
 
       <div className="relative z-10 p-5 flex items-center h-full gap-5">
         <div className="flex-1 min-w-0">
           <h4 className="font-black text-white text-base truncate uppercase tracking-tight mb-1">{ticket.name}</h4>
           <div className="flex items-center gap-3">
              <div className="flex items-center gap-1.5 text-white/70">
-                <Calendar size={10} className="text-[var(--color-primary)]" />
+                <Calendar size={10} className={isCanceled ? 'text-red-400' : 'text-[var(--color-primary)]'} />
                 <span className="text-[10px] font-bold uppercase tracking-tight">
                   {new Date(ticket.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>
              </div>
-             {!isPast && (
+             {!isDisabled && (
                <div className="flex items-center gap-1.5 text-white/70">
                   <MapPin size={10} className="text-[var(--color-primary)]" />
                   <span className="text-[10px] font-bold uppercase tracking-tight truncate max-w-[120px]">{ticket.venue}</span>
@@ -35,9 +51,11 @@ const TicketCard = ({ ticket, isPast = false, onClick }) => {
              )}
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end gap-2">
-           {isPast ? (
+           {isCanceled ? (
+             <span className="text-[8px] font-black text-red-400 uppercase tracking-widest bg-red-500/10 px-2 py-1 rounded-md border border-red-400/20 backdrop-blur-sm">{t('event_canceled')}</span>
+           ) : isPast ? (
              <span className="text-[8px] font-black text-white/40 uppercase tracking-widest bg-white/5 px-2 py-1 rounded-md border border-white/10 backdrop-blur-sm">Past</span>
            ) : (
              <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary)] text-white flex items-center justify-center shadow-lg shadow-black/20 group-hover:translate-x-1 transition-transform border border-white/20">
@@ -57,9 +75,11 @@ export default function MyTickets() {
   const [copied, setCopied] = useState(false);
   const [walletBalance, setWalletBalance] = useState(125.50);
   const [isToppingUp, setIsToppingUp] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { ticketId, ticketCode } or null
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const guestToken = localStorage.getItem('event_guest_token');
-  const { orders: dbOrders, loading: ordersLoading } = useEventOrders(guestToken);
+  const { orders: dbOrders, loading: ordersLoading, refetch } = useEventOrders(guestToken);
 
   useEffect(() => {
     if (showBadges) {
@@ -78,6 +98,39 @@ export default function MyTickets() {
       setWalletBalance(prev => prev + 50);
       setIsToppingUp(false);
     }, 1500);
+  };
+
+  const handleDeleteTicket = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
+    try {
+      // Soft delete: SET deleted_at = NOW()
+      const { error } = await supabase
+        .from('event_orders')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('ticket_code', deleteConfirm.ticketCode)
+        .eq('guest_token', guestToken);
+
+      if (error) throw error;
+
+      // Clear from localStorage immediately
+      const current = JSON.parse(localStorage.getItem('event_bookings') || '[]');
+      localStorage.setItem('event_bookings',
+        JSON.stringify(current.filter(b => b.id !== deleteConfirm.ticketId))
+      );
+
+      // Refetch orders from DB
+      refetch();
+      setDeleteConfirm(null);
+
+      // Show success feedback
+      alert(t('ticket_deleted') || 'Ticket deleted');
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert(t('delete_failed') || 'Could not delete ticket. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   // Transform DB orders to frontend booking shape
@@ -107,7 +160,8 @@ export default function MyTickets() {
           purchase_date: order.created_at,
           email: order.customer_email || '',
           category: 'Events',
-          guest_token: order.guest_token
+          guest_token: order.guest_token,
+          status: event.status || 'live'
         };
       })
     : JSON.parse(localStorage.getItem('event_bookings') || '[]');
@@ -266,10 +320,11 @@ export default function MyTickets() {
              <span className="text-[10px] font-black text-[var(--color-primary)]">{upcomingTickets.length} active</span>
            </div>
            {upcomingTickets.map(ticket => (
-             <TicketCard 
-              key={ticket.id} 
-              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}} 
+             <TicketCard
+              key={ticket.id}
+              ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}}
               onClick={() => setSelectedBooking(ticket)}
+              onDelete={(ticketId, eventId) => setDeleteConfirm({ ticketId, ticketCode: ticketId })}
              />
            ))}
         </div>
@@ -334,6 +389,47 @@ export default function MyTickets() {
                  </button>
               </div>
            </div>
+        </div>
+      )}
+
+      {/* Delete Ticket Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+            onClick={() => !isDeleting && setDeleteConfirm(null)}
+          />
+          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[32px] shadow-2xl p-8 space-y-6">
+            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/20 mx-auto">
+              <X size={24} className="text-red-500" />
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-lg font-black text-[var(--text-primary)] mb-2">
+                {t('delete_ticket_confirm') || 'Delete this ticket?'}
+              </h3>
+              <p className="text-sm font-medium text-[var(--text-secondary)] opacity-70">
+                {t('delete_confirm_warning') || 'This action cannot be undone.'}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => !isDeleting && setDeleteConfirm(null)}
+                disabled={isDeleting}
+                className="flex-1 bg-slate-100 dark:bg-slate-800 text-[var(--text-primary)] py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteTicket}
+                disabled={isDeleting}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
