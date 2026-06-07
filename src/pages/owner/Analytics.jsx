@@ -11,6 +11,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import FinancialTrackerDashboard from '../../components/FinancialTrackerDashboard.jsx'
+import OwnerEventsView from '../../components/owner/OwnerEventsView.jsx'
 // ============================================
 // 📊 ANALYTICS — REAL SUPABASE DATA (P0 #9)
 // ============================================
@@ -189,6 +190,7 @@ const Analytics = () => {
                     {[
                         { id: 'analytics', label: t('analytics') },
                         { id: 'financials', label: t('expenses') },
+                        { id: 'events', label: t('create_events') },
                     ].map((tab) => (
                         <button
                             key={tab.id}
@@ -350,6 +352,16 @@ const Analytics = () => {
                   </div>
                 )}
 
+                {activeTab === 'events' && businessId && (
+                  <div>
+                    <OwnerEventsView
+                      businessId={businessId}
+                      tenantSlug={tenantSlug}
+                      lang={lang}
+                      onBack={() => setActiveTab('analytics')}
+                    />
+                  </div>
+                )}
             </div>
 
             <BackendNav
