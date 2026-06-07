@@ -197,6 +197,9 @@ function normalizeEvent(event) {
     date: event.start_date,
     end_date: event.end_date || null,
     time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    end_time: event.end_date
+      ? new Date(event.end_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : null,
     description: event.description || '',
     location: event.address || event.venue_name || '',
     venue_name: event.venue_name || '',
@@ -211,7 +214,8 @@ function normalizeEvent(event) {
       qty: t.capacity || 0,
       sold: t.sold || 0
     })),
-    lineup: event.lineup || undefined
+    lineup: event.lineup || undefined,
+    daily_schedule: event.daily_schedule || null
   };
 }
 

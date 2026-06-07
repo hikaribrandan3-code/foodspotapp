@@ -58,6 +58,9 @@ export default function EventDetail({ event, onBook, onBack }) {
   const now = new Date();
   const isExpired = eventDate < now;
 
+  const isMultiDay = event.end_date &&
+    new Date(event.end_date).toDateString() !== new Date(event.date).toDateString();
+
   const handleZoneSelect = (zoneId) => {
     setSelectedZone(zoneId);
     // Find the tier that matches this zone and scroll to it or highlight it
@@ -146,7 +149,7 @@ export default function EventDetail({ event, onBook, onBack }) {
           )}
         </div>
 
-        <div className="flex items-center justify-between bg-[var(--canvas-bg)] p-5 rounded-[28px] border border-[var(--border-color)]">
+        <div className={`bg-[var(--canvas-bg)] p-5 rounded-[28px] border border-[var(--border-color)] ${isMultiDay ? 'flex flex-col gap-4' : 'flex items-center justify-between'}`}>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-[var(--color-primary)] shadow-sm border border-[var(--border-color)]">
               <Calendar size={20} />
@@ -154,23 +157,52 @@ export default function EventDetail({ event, onBook, onBack }) {
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('date')}</p>
               <p className="text-sm font-black text-[var(--text-primary)]">
-                {event.end_date && new Date(event.end_date).toDateString() !== new Date(event.date).toDateString()
+                {isMultiDay
                   ? `${new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(event.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
                   : new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })}
               </p>
             </div>
           </div>
-          <div className="h-10 w-px bg-[var(--border-color)]"></div>
+          {!isMultiDay && <div className="h-10 w-px bg-[var(--border-color)]"></div>}
+          {isMultiDay && <div className="h-px w-full bg-[var(--border-color)]"></div>}
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-[var(--color-primary)] shadow-sm border border-[var(--border-color)]">
               <Clock size={20} />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50">{t('time')}</p>
-              <p className="text-sm font-black text-[var(--text-primary)]">{event.time}</p>
+              <p className="text-sm font-black text-[var(--text-primary)]">
+                {event.time}{event.end_time ? ` – ${event.end_time}` : ''}
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Per-day schedule card for multi-day events */}
+        {isMultiDay && event.daily_schedule?.length > 0 && (
+          <div className="bg-[var(--canvas-bg)] p-5 rounded-[28px] border border-[var(--border-color)]">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-3">Schedule</p>
+            <div className="flex flex-col gap-2">
+              {event.daily_schedule.map((day) => {
+                const fmt = (t) => {
+                  const [h, m] = t.split(':').map(Number);
+                  const d = new Date(); d.setHours(h, m, 0, 0);
+                  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                };
+                return (
+                  <div key={day.date} className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-[var(--text-secondary)]">
+                      {new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                    <span className="text-sm font-black text-[var(--text-primary)]">
+                      {fmt(day.start_time)} – {fmt(day.end_time)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-3">
           <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('location')}</h3>

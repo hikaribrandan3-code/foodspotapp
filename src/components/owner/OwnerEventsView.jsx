@@ -469,7 +469,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.45) 45%, transparent 80%)', borderRadius: 20 }} />
         <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
-          <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#fff' }}>{event.name}</h2>
+          <h2 className="event-hero-title" style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800 }}>{event.name}</h2>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', display: 'flex', gap: 12 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} /> {new Date(event.start_date).toLocaleDateString()}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={12} /> {event.venue_name}</span>
@@ -572,6 +572,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
     venue_name: '', address: '', is_free: false,
     ticket_tiers: [{ id: '1', name: 'General Admission', price: 25, capacity: 100 }],
     lineup: [],
+    daily_schedule: [],
   })
   const [imageUploading, setImageUploading] = useState(false)
 
@@ -630,7 +631,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           tickets_sold: 0,
           total_revenue_cents: 0,
           checkins_count: 0,
-          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
+          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined,
+          daily_schedule: form.daily_schedule?.length > 0 ? form.daily_schedule : null
       };
       const { error } = await supabase.from('events').insert([eventPayload]);
 
@@ -898,12 +900,77 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
               <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('date_and_venue')}</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                 <Field label={t('start_date')}>
-                  <input type="datetime-local" style={s.input} value={form.start_date ? toDatetimeLocal(form.start_date) : ''} onChange={e => patch('start_date', e.target.value)} />
+                  <input type="datetime-local" style={s.input} value={form.start_date ? toDatetimeLocal(form.start_date) : ''} onChange={e => {
+                    patch('start_date', e.target.value);
+                    if (!form.end_date) patch('end_date', e.target.value);
+                  }} />
                 </Field>
                 <Field label={t('end_date')}>
                   <input type="datetime-local" style={s.input} value={form.end_date ? toDatetimeLocal(form.end_date) : ''} onChange={e => patch('end_date', e.target.value)} />
+                  {!form.end_date && (
+                    <p style={{ fontSize: 11, color: '#F59E0B', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      ⚠ No end date — event will display as single-day
+                    </p>
+                  )}
                 </Field>
               </div>
+              {/* Per-day schedule for multi-day events */}
+              {(() => {
+                if (!form.start_date || !form.end_date) return null;
+                const start = new Date(form.start_date);
+                const end = new Date(form.end_date);
+                if (start.toDateString() === end.toDateString()) return null;
+
+                // Build date list between start and end (inclusive)
+                const days = [];
+                const cursor = new Date(start);
+                cursor.setHours(0, 0, 0, 0);
+                const endDay = new Date(end);
+                endDay.setHours(0, 0, 0, 0);
+                while (cursor <= endDay) {
+                  days.push(cursor.toISOString().slice(0, 10));
+                  cursor.setDate(cursor.getDate() + 1);
+                }
+
+                // Sync daily_schedule if day count changed
+                const currentSchedule = form.daily_schedule || [];
+                const defaultStartTime = start.toTimeString().slice(0, 5);
+                const defaultEndTime = end.toTimeString().slice(0, 5);
+                const syncedSchedule = days.map(date => {
+                  const existing = currentSchedule.find(d => d.date === date);
+                  return existing || { date, start_time: defaultStartTime, end_time: defaultEndTime };
+                });
+                if (JSON.stringify(syncedSchedule.map(d => d.date)) !== JSON.stringify(currentSchedule.map(d => d.date))) {
+                  setTimeout(() => patch('daily_schedule', syncedSchedule), 0);
+                }
+
+                return (
+                  <div style={{ marginBottom: 16 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+                      Daily Schedule
+                    </p>
+                    {syncedSchedule.map((day, idx) => (
+                      <div key={day.date} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: theme.textPrimary, minWidth: 90 }}>
+                          {new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <input type="time" style={{ ...s.input, flex: 1, padding: '7px 10px' }} value={day.start_time}
+                          onChange={e => {
+                            const updated = [...syncedSchedule]; updated[idx] = { ...updated[idx], start_time: e.target.value };
+                            patch('daily_schedule', updated);
+                          }} />
+                        <span style={{ fontSize: 12, color: theme.textSecondary }}>–</span>
+                        <input type="time" style={{ ...s.input, flex: 1, padding: '7px 10px' }} value={day.end_time}
+                          onChange={e => {
+                            const updated = [...syncedSchedule]; updated[idx] = { ...updated[idx], end_time: e.target.value };
+                            patch('daily_schedule', updated);
+                          }} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               <Field label={t('venue_name')}>
                 <input style={s.input} placeholder="The Grand Plaza" value={form.venue_name} onChange={e => patch('venue_name', e.target.value)} />
               </Field>
@@ -1079,7 +1146,8 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           start_date: toISO(form.start_date),
           end_date: form.end_date ? toISO(form.end_date) : null,
           updated_at: new Date().toISOString(),
-          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
+          lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined,
+          daily_schedule: form.daily_schedule?.length > 0 ? form.daily_schedule : null
         })
         .eq('id', event.id);
 
@@ -1118,11 +1186,72 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           <input style={s.input} value={form.address || ''} onChange={e => patch('address', e.target.value)} />
         </Field>
         <Field label="Start Date">
-          <input type="datetime-local" style={s.input} value={toDatetimeLocal(form.start_date)} onChange={e => patch('start_date', e.target.value)} />
+          <input type="datetime-local" style={s.input} value={toDatetimeLocal(form.start_date)} onChange={e => {
+            patch('start_date', e.target.value);
+            if (!form.end_date) patch('end_date', e.target.value);
+          }} />
         </Field>
         <Field label="End Date">
           <input type="datetime-local" style={s.input} value={toDatetimeLocal(form.end_date)} onChange={e => patch('end_date', e.target.value)} />
+          {!form.end_date && (
+            <p style={{ fontSize: 11, color: '#F59E0B', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+              ⚠ No end date — event will display as single-day
+            </p>
+          )}
         </Field>
+        {(() => {
+          if (!form.start_date || !form.end_date) return null;
+          const start = new Date(form.start_date);
+          const end = new Date(form.end_date);
+          if (start.toDateString() === end.toDateString()) return null;
+
+          const days = [];
+          const cursor = new Date(start);
+          cursor.setHours(0, 0, 0, 0);
+          const endDay = new Date(end);
+          endDay.setHours(0, 0, 0, 0);
+          while (cursor <= endDay) {
+            days.push(cursor.toISOString().slice(0, 10));
+            cursor.setDate(cursor.getDate() + 1);
+          }
+
+          const currentSchedule = form.daily_schedule || [];
+          const defaultStartTime = start.toTimeString().slice(0, 5);
+          const defaultEndTime = end.toTimeString().slice(0, 5);
+          const syncedSchedule = days.map(date => {
+            const existing = currentSchedule.find(d => d.date === date);
+            return existing || { date, start_time: defaultStartTime, end_time: defaultEndTime };
+          });
+          if (JSON.stringify(syncedSchedule.map(d => d.date)) !== JSON.stringify(currentSchedule.map(d => d.date))) {
+            setTimeout(() => patch('daily_schedule', syncedSchedule), 0);
+          }
+
+          return (
+            <div style={{ marginTop: 16 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
+                Daily Schedule
+              </p>
+              {syncedSchedule.map((day, idx) => (
+                <div key={day.date} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: theme.textPrimary, minWidth: 90 }}>
+                    {new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                  <input type="time" style={{ ...s.input, flex: 1, padding: '7px 10px' }} value={day.start_time}
+                    onChange={e => {
+                      const updated = [...syncedSchedule]; updated[idx] = { ...updated[idx], start_time: e.target.value };
+                      patch('daily_schedule', updated);
+                    }} />
+                  <span style={{ fontSize: 12, color: theme.textSecondary }}>–</span>
+                  <input type="time" style={{ ...s.input, flex: 1, padding: '7px 10px' }} value={day.end_time}
+                    onChange={e => {
+                      const updated = [...syncedSchedule]; updated[idx] = { ...updated[idx], end_time: e.target.value };
+                      patch('daily_schedule', updated);
+                    }} />
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </Collapsible>
 
       {['Festivals', 'Music'].includes(form.category) && (

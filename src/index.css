@@ -442,6 +442,12 @@ h3 {
   color: var(--canvas-text) !important;
 }
 
+/* Event hero overlay titles must stay white regardless of theme */
+.event-hero-title {
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+}
+
 .page-header {
   text-align: center;
   padding: var(--space-3) 0;
