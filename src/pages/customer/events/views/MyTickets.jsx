@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Ticket, Calendar, MapPin, ChevronRight, Sparkles, Award, Users, Copy, CheckCircle2, Wallet, Zap, Fingerprint, CreditCard, X } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useEventOrders } from '../../../../hooks/useEventOrders';
@@ -70,22 +71,21 @@ const TicketCard = ({ ticket, isPast = false, onClick, onDelete }) => {
 
 export default function MyTickets() {
   const { t } = useLanguage();
+  const { tenantSlug } = useParams();
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showBadges, setShowBadges] = useState(false);
   const [copied, setCopied] = useState(false);
   const [walletBalance, setWalletBalance] = useState(125.50);
   const [isToppingUp, setIsToppingUp] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // { ticketId, ticketCode } or null
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const guestToken = localStorage.getItem('event_guest_token');
+  // Get guest token using correct key format: fs_guest_token_${tenantSlug}
+  const getGuestToken = () => {
+    return localStorage.getItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token');
+  };
 
-  useEffect(() => {
-    console.log('MyTickets mounted - guestToken:', guestToken);
-    if (!guestToken) {
-      console.warn('No guestToken in localStorage! Keys:', Object.keys(localStorage));
-    }
-  }, []);
+  const guestToken = getGuestToken();
 
   const { orders: dbOrders, loading: ordersLoading, refetch } = useEventOrders(guestToken);
 
@@ -114,10 +114,9 @@ export default function MyTickets() {
       return;
     }
 
-    // Read guestToken fresh at delete time
-    const freshGuestToken = localStorage.getItem('event_guest_token');
+    // Read guestToken fresh at delete time using correct key format
+    const freshGuestToken = localStorage.getItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token');
     if (!freshGuestToken) {
-      console.error('No guestToken found. localStorage keys:', Object.keys(localStorage).filter(k => k.includes('event') || k.includes('guest')));
       alert('Error: Session data missing. Please refresh the page and try again.');
       setIsDeleting(false);
       return;
@@ -125,8 +124,6 @@ export default function MyTickets() {
 
     setIsDeleting(true);
     try {
-      // Soft delete: SET deleted_at = NOW() using the actual row ID
-      console.log('Deleting ticket:', { ticketId: deleteConfirm.ticketId, guestToken: freshGuestToken });
       const { error } = await supabase
         .from('event_orders')
         .update({ deleted_at: new Date().toISOString() })

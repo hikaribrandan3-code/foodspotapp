@@ -295,7 +295,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
     const mpReturnStatus = searchParams.get('payment');
 
     if (orderId && guestToken) {
-      localStorage.setItem('event_guest_token', guestToken);
+      localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', guestToken);
 
       const fetchOrder = async () => {
         try {

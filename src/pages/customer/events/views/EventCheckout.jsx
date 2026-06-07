@@ -7,6 +7,7 @@ import { supabase } from '../../../../lib/supabaseClient';
 export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const { t } = useLanguage();
   const { tenantData } = useTenant();
+  const tenantSlug = tenantData?.slug;
   const [qty, setQty] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
@@ -124,7 +125,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
       // Store guest token and order ID for reference
       if (data.guest_token) {
-        localStorage.setItem('event_guest_token', data.guest_token);
+        localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', data.guest_token);
       }
       if (data.order_id) {
         localStorage.setItem('event_pending_order_id', data.order_id);
