@@ -66,7 +66,15 @@ const Analytics = () => {
     const [loading, setLoading] = useState(true)
     const [fetchError, setFetchError] = useState(null)
     const [dateRange, setDateRange] = useState('today')
-    const [activeTab, setActiveTab] = useState('analytics')
+    const [activeTab, setActiveTab] = useState(() => {
+        const saved = localStorage.getItem('owner_analytics_tab')
+        return saved || 'analytics'
+    })
+
+    // Save active tab to localStorage when it changes
+    useEffect(() => {
+        localStorage.setItem('owner_analytics_tab', activeTab)
+    }, [activeTab])
 
     // FETCH ORDERS + real-time subscription
     useEffect(() => {
