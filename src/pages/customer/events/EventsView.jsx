@@ -204,7 +204,7 @@ function normalizeEvent(event) {
     location: event.address || event.venue_name || '',
     venue_name: event.venue_name || '',
     image: event.image_url || '',
-    share_image: event.share_image_url || null,
+    share_image_url: event.share_image_url || null,
     category: event.category || 'All',
     business_id: event.business_id,
     referrable: true,
@@ -304,7 +304,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
             .select(`
               *,
               events:event_id (
-                name, image_url, venue_name, start_date, description
+                name, image_url, share_image_url, venue_name, start_date, description
               )
             `)
             .eq('id', orderId)
