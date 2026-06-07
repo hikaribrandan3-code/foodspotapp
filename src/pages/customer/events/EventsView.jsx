@@ -46,23 +46,6 @@ const mockEvents = [
     business_id: 'foodspot_hq_001'
   },
   {
-    id: 'evt_012',
-    name: 'Anime Expo & Cosplay Cup BA',
-    date: '2026-08-20',
-    time: '12:00',
-    description: 'The biggest celebration of Japanese culture in South America. Massive cosplay contest, international guests, and the legendary Artist Alley.',
-    location: 'La Rural',
-    venue_name: 'Ocre Pavilion',
-    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop',
-    tiers: [
-      { id: 'tier_day', name: 'Day Pass', price: 20.00, qty: 5000, sold: 0 },
-      { id: 'tier_vip', name: 'VIP Meet & Greet', price: 85.00, qty: 200, sold: 0 }
-    ],
-    category: 'Exclusives',
-    business_id: 'foodspot_hq_001',
-    referrable: true
-  },
-  {
     id: 'evt_001',
     name: 'Neon Tech Summit 2026',
     date: '2026-06-15',
