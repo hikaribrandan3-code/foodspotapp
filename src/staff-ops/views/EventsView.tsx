@@ -1,5 +1,8 @@
 import { useBusiness } from '@/contexts/BusinessContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useEffect, useState } from 'react'
+// @ts-ignore
+import { supabase } from '../../lib/supabaseClient.js'
 import OwnerEventsView from '../../components/owner/OwnerEventsView'
 
 function getStaffRole(): string {
@@ -14,8 +17,31 @@ function getStaffRole(): string {
 export default function EventsView() {
   const { businessId, tenantSlug } = useBusiness()
   const { language } = useLanguage()
+  const [isOwner, setIsOwner] = useState(false)
   const role = getStaffRole()
-  const isAllowed = role === 'manager' || role === 'admin'
+  const isStaffAllowed = role === 'manager' || role === 'admin'
+
+  // Check if current user is the business owner — allow owner to manage events on staff side
+  useEffect(() => {
+    const checkOwner = async () => {
+      const { data: session } = await supabase.auth.getSession()
+      if (!session?.user?.id || !businessId) return
+
+      const { data: owner } = await supabase
+        .from('businesses')
+        .select('owner_id')
+        .eq('id', businessId)
+        .single()
+
+      if (owner?.owner_id === session.user.id) {
+        setIsOwner(true)
+      }
+    }
+
+    checkOwner()
+  }, [businessId])
+
+  const isAllowed = isStaffAllowed || isOwner
 
   if (!isAllowed) {
     return (
@@ -29,7 +55,7 @@ export default function EventsView() {
           Acceso restringido
         </p>
         <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
-          Solo los managers pueden gestionar eventos.
+          Solo el propietario o managers pueden gestionar eventos.
         </p>
       </div>
     )
