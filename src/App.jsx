@@ -157,9 +157,9 @@ const MenuManager = lazy(() => import('./pages/owner/MenuManager/index.js'))
 const RewardsManager = lazy(() => import('./pages/owner/RewardsManager.jsx'))
 const Settings = lazy(() => import('./pages/owner/Settings.jsx'))
 const Analytics = lazy(() => import('./pages/owner/Analytics.jsx'))
+const Events = lazy(() => import('./pages/owner/Events.jsx'))
 const FoodSpotAI = lazy(() => import('./pages/owner/FoodSpotAI.jsx'))
 const CustomerContacts = lazy(() => import('./pages/owner/CustomerContacts.jsx'))
-const OwnerEventsView = lazy(() => import('./components/owner/OwnerEventsView.jsx'))
 const Dashboard = lazy(() => import('./pages/owner/Dashboard.jsx'))
 const Reservations = lazy(() => import('./pages/owner/Reservations.jsx'))
 
@@ -664,7 +664,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/delivery" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Dashboard /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><RewardsManager /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/events" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerEventsView /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/events" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Events /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Analytics orders={orders} /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/contacts" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
