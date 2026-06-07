@@ -24,6 +24,7 @@ export function useOwnerEvents(businessId) {
                 .from('events')
                 .select('*')
                 .eq('business_id', businessId)
+                .is('deleted_at', null)
                 .order('start_date', { ascending: false })
 
             if (fetchError) {

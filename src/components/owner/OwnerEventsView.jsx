@@ -167,29 +167,25 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   const handleDelete = async () => {
     if (!window.confirm(t('delete_confirm_event'))) return
     try {
-      console.log('🔍 [DELETE] Starting delete. Event:', selectedEvent?.id, 'Business:', businessId)
+      console.log('🔍 [SOFT DELETE] Starting archive. Event:', selectedEvent?.id)
 
-      // Production-grade delete via RPC (bypasses RLS / trigger conflicts)
-      const { data: deleted, error } = await supabase.rpc('delete_event', {
-        p_event_id: selectedEvent.id,
-        p_business_id: businessId
-      })
-
-      if (error) {
-        console.error('🚨 [DELETE] RPC error:', error.code, error.message, error.details)
-        alert(`Delete failed: ${error.message || JSON.stringify(error)}`)
-        return
-      }
+      // Soft delete: set deleted_at timestamp instead of hard-deleting
+      // Tickets remain in database with "Event Deleted" status for audit trail
+      const { error } = await supabase
+        .from('events')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', selectedEvent.id)
+        .eq('business_id', businessId)
 
       if (error) {
-        console.error('🚨 [DELETE] RPC error:', error)
+        console.error('🚨 [SOFT DELETE] Error:', error)
         alert('Delete failed: ' + (error.message || 'Unknown error'))
         return
       }
 
-      console.log('✅ [DELETE] Success! Deleted event:', selectedEvent.id)
+      console.log('✅ [SOFT DELETE] Success! Archived event:', selectedEvent.id)
 
-      // Wipe from local state immediately so it vanishes from the list
+      // Remove from local state so it vanishes from the list
       removeEvent(selectedEvent.id)
       setSelectedEvent(null)
       setView('list')
