@@ -43,7 +43,7 @@ const OWNER_TABS = [
     { id: 'menu', label: 'Menu', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
-    { id: 'events', label: 'Events', route: null },
+    { id: 'events', label: 'Events', route: null, desktopOnly: true },
     { id: 'analytics', label: 'Analytics', route: null },
     { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
     { id: 'reservations', label: 'Reservas', route: null, desktopOnly: true },
@@ -53,7 +53,7 @@ const OWNER_TABS = [
 const STAFF_TABS = [
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'delivery', label: 'Delivery', route: null, hasBadge: true },
-    { id: 'events', label: 'Events', route: null },
+    { id: 'events', label: 'Events', route: null, desktopOnly: true },
     { id: 'history', label: 'History', route: null }
 ]
 
