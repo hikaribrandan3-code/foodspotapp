@@ -1269,7 +1269,7 @@ function CheckinView({ event, businessId, onBack }) {
       // Query by ticket code directly — RLS handles business isolation
       const { data: order, error } = await supabase
         .from('event_orders')
-        .select('id, event_id, customer_name, tier_snapshot, payment_status')
+        .select('id, event_id, customer_name, tier_snapshot, payment_status, total_cents')
         .eq('ticket_code', cleanCode)
         .eq('event_id', event.id)
         .maybeSingle()
@@ -1281,7 +1281,9 @@ function CheckinView({ event, businessId, onBack }) {
         return
       }
 
-      if (order.payment_status !== 'paid') {
+      // Free tickets are valid regardless of payment_status
+      const isFreeTicket = order.total_cents === 0 || order.tier_snapshot?.price_cents === 0
+      if (order.payment_status !== 'paid' && !isFreeTicket) {
         setResult({ success: false, code, message: 'Payment pending' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
@@ -1307,7 +1309,6 @@ function CheckinView({ event, businessId, onBack }) {
       const { error: insertError } = await supabase
         .from('event_checkins')
         .insert({
-          business_id: businessId,
           event_id: event.id,
           order_id: order.id,
           checkin_method: 'manual'
