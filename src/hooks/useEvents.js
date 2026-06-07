@@ -42,6 +42,7 @@ export function useEvents(tenantSlug) {
                 .select('*')
                 .eq('business_id', branding.business_id)
                 .eq('status', 'live')
+                .is('deleted_at', null)
                 .order('start_date', { ascending: true })
 
             if (fetchError) {
