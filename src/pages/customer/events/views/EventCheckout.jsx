@@ -52,6 +52,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
       }
 
       if (data.free_order) {
+        // Save server-issued guest token so RLS headers match the DB record
+        if (data.guest_token) {
+          localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', data.guest_token);
+        }
         const booking = {
           id: data.ticket_code,
           ticket_code: data.ticket_code,
