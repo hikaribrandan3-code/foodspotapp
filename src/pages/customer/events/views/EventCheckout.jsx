@@ -10,6 +10,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const [qty, setQty] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState(null);
 
   // Calculate max available quantity
   const maxQty = Math.max(1, (tier.qty || 0) - (tier.sold || 0));
@@ -32,11 +34,16 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           tier_id: tier.id,
           quantity: qty,
           customer: { name: '', email: '', phone: '' },
-          promo_code: null
+          promo_code: promoCode.trim() || null
         }
       });
 
       if (error || data?.error) {
+        if (data?.error === 'INVALID_PROMO') {
+          setPromoError(t('invalid_promo'));
+          setIsProcessing(false);
+          return;
+        }
         console.error('Claim error:', error || data?.error);
         setPaymentError('Failed to claim ticket. Please try again.');
         setIsProcessing(false);
@@ -87,11 +94,16 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           tier_id: tier.id,
           quantity: qty,
           customer: { name: '', email: '', phone: '' },
-          promo_code: null
+          promo_code: promoCode.trim() || null
         }
       });
 
       if (error || data?.error) {
+        if (data?.error === 'INVALID_PROMO') {
+          setPromoError(t('invalid_promo'));
+          setIsProcessing(false);
+          return;
+        }
         console.error('Checkout error:', error || data?.error);
         let errorMsg = 'Payment processing failed. ';
 
@@ -265,6 +277,27 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
                 </div>
              </div>
 
+             {/* Promo Code */}
+             <div className="flex items-center gap-2">
+               <input
+                 type="text"
+                 value={promoCode}
+                 onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoError(null); }}
+                 placeholder={t('enter_promo')}
+                 maxLength={20}
+                 className="flex-1 bg-[var(--canvas-bg)] border border-[var(--border-color)] rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-widest text-[var(--text-primary)] placeholder:opacity-30 placeholder:normal-case placeholder:tracking-normal outline-none focus:border-[var(--color-primary)] transition-colors"
+               />
+               {promoCode && (
+                 <button
+                   onClick={() => { setPromoCode(''); setPromoError(null); }}
+                   className="text-[var(--text-secondary)] opacity-40 hover:opacity-70 text-xs font-black transition-opacity px-1"
+                 >✕</button>
+               )}
+             </div>
+             {promoError && (
+               <p className="text-xs font-bold text-red-500 -mt-1">{promoError}</p>
+             )}
+
              <div className="h-px bg-[var(--border-color)] my-4 border-dashed opacity-50"></div>
 
              <div className="flex items-center justify-between">
@@ -322,7 +355,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
               onClick={() => {
                 const whatsappNumber = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.phone || '';
                 if (!whatsappNumber) { setPaymentError('WhatsApp number not configured'); return; }
-                const msg = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${applied ? ` (Promo: ${promoCode})` : ''}`;
+                const msg = `I want to confirm ${qty} ticket${qty > 1 ? 's' : ''} for ${event.name} - ${tier.name}. Total: $${total.toFixed(2)}${promoCode.trim() ? ` (Promo: ${promoCode.trim()})` : ''}`;
                 window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
               }}
               className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white rounded-[24px] py-4 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-green-500/20"

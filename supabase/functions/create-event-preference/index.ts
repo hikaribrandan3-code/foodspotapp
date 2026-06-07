@@ -185,6 +185,18 @@ serve(async (req: Request) => {
                 .update({ payment_status: 'paid', payment_method: 'free' })
                 .eq('id', order.id);
 
+            // Increment tier sold count atomically — same as webhook does for paid orders.
+            // No webhook fires for free tickets so we do it here.
+            if (tier.id && qty) {
+                await supabase.rpc('increment_event_tier_sold', {
+                    p_event_id: event.id,
+                    p_tier_id: tier.id,
+                    p_quantity: qty
+                }).then(({ error: rpcErr }) => {
+                    if (rpcErr) console.warn('[free-order] Tier sold increment failed:', rpcErr.message);
+                });
+            }
+
             return new Response(
                 JSON.stringify({
                     free_order: true,

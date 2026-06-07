@@ -362,6 +362,8 @@ export const translations = {
     // Customer Side
     view_menu: { es: "Ver Menú", en: "View Menu", pt: "Ver Cardápio" },
     claim_promo: { es: "Canjear Promo", en: "Claim Promo", pt: "Resgatar Promo" },
+    enter_promo: { en: 'Promo code (optional)', es: 'Código promo (opcional)', pt: 'Código promo (opcional)' },
+    invalid_promo: { en: 'Invalid or expired promo code', es: 'Código promo inválido o vencido', pt: 'Código promo inválido ou expirado' },
     my_rewards: { es: "Mis Recompensas", en: "My Rewards", pt: "Minhas Recompensas" },
     total_order: { es: "Confirmar Pedido", en: "Confirm Order", pt: "Confirmar Pedido" },
     checkout: { es: "Finalizar Compra", en: "Checkout", pt: "Finalizar Compra" },

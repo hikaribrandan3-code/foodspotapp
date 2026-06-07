@@ -364,6 +364,8 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 // ── Event List Card ───────────────────────────────────────────────────────────
 function EventListCard({ event, onClick, delay = 0 }) {
   const date = new Date(event.start_date)
+  const isExpired = date < new Date()
+  const displayStatus = isExpired && event.status === 'live' ? 'expired' : event.status
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -394,9 +396,9 @@ function EventListCard({ event, onClick, delay = 0 }) {
       <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 6 }}>
         <span style={{
           fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 20, textTransform: 'uppercase',
-          background: event.status === 'live' ? '#DCFCE7' : '#F3F4F6',
-          color: event.status === 'live' ? '#16A34A' : theme.textSecondary,
-        }}>{event.status}</span>
+          background: displayStatus === 'live' ? '#DCFCE7' : displayStatus === 'expired' ? '#FEF2F2' : '#F3F4F6',
+          color: displayStatus === 'live' ? '#16A34A' : displayStatus === 'expired' ? '#DC2626' : theme.textSecondary,
+        }}>{displayStatus}</span>
         <span style={{ fontWeight: 800, fontSize: 15, color: theme.textPrimary }}>${(event.total_revenue_cents / 100).toFixed(0)}</span>
         <ChevronRight size={16} color={theme.textSecondary} />
       </div>
@@ -446,7 +448,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
         background: event.image_url ? `url(${event.image_url}) center/cover` : theme.bgSurface,
         position: 'relative', marginBottom: 20,
       }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)', borderRadius: 20 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.45) 45%, transparent 80%)', borderRadius: 20 }} />
         <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
           <h2 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#fff' }}>{event.name}</h2>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', display: 'flex', gap: 12 }}>
@@ -1238,6 +1240,18 @@ function CheckinView({ event, businessId, onBack }) {
   const [codeInput, setCodeInput] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Fix 4: Load real check-in count from DB on mount — local state resets on navigate
+  useEffect(() => {
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('event_checkins')
+        .select('id', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+      if (count !== null) setCheckedIn(count)
+    }
+    fetchCount()
+  }, [event.id])
+
   const handleCheckin = async (code) => {
     if (!code.trim()) return
     setLoading(true)
@@ -1274,12 +1288,14 @@ function CheckinView({ event, businessId, onBack }) {
         return
       }
 
+      // Fix 5: use maybeSingle() — .single() throws PGRST116 on 0 rows which
+      // is indistinguishable from an RLS block, causing duplicate check-ins.
       const { data: existingCheckin } = await supabase
         .from('event_checkins')
         .select('id')
         .eq('order_id', order.id)
         .eq('event_id', event.id)
-        .single()
+        .maybeSingle()
 
       if (existingCheckin) {
         setResult({ success: false, code, message: 'Already checked in' })
@@ -1288,13 +1304,23 @@ function CheckinView({ event, businessId, onBack }) {
         return
       }
 
-      await supabase
+      const { error: insertError } = await supabase
         .from('event_checkins')
         .insert({
+          business_id: businessId,
           event_id: event.id,
           order_id: order.id,
           checkin_method: 'manual_code'
         })
+
+      // Duplicate key (23505) means RLS blocked the SELECT but the record exists
+      if (insertError) {
+        const alreadyDone = insertError.code === '23505'
+        setResult({ success: false, code, message: alreadyDone ? 'Already checked in' : 'Check-in failed' })
+        setLoading(false)
+        setTimeout(() => setResult(null), 3000)
+        return
+      }
 
       setResult({
         success: true,
