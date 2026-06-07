@@ -162,9 +162,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
         return
       }
 
-      if (deleted !== true) {
-        console.error('🚨 [DELETE] RPC returned false — not owner or event not found.')
-        alert('Delete failed: you do not own this event or it was already deleted.')
+      if (error) {
+        console.error('🚨 [DELETE] RPC error:', error)
+        alert('Delete failed: ' + (error.message || 'Unknown error'))
         return
       }
 
@@ -1310,7 +1310,7 @@ function CheckinView({ event, businessId, onBack }) {
           business_id: businessId,
           event_id: event.id,
           order_id: order.id,
-          checkin_method: 'manual_code'
+          checkin_method: 'manual'
         })
 
       // Duplicate key (23505) means RLS blocked the SELECT but the record exists

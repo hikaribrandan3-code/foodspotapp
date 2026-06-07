@@ -1221,7 +1221,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
     const [staffList, setStaffList] = useState([])
     const [loading, setLoading] = useState(false)
     const [showAddForm, setShowAddForm] = useState(false)
-    const [newStaff, setNewStaff] = useState({ name: '', username: '', pin: '', role: 'cook' })
+    const [newStaff, setNewStaff] = useState({ name: '', username: '', pin: '', role: 'kitchen' })
     const [saving, setSaving] = useState(false)
 
     const fetchStaff = async () => {
@@ -1232,7 +1232,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             .from('staff')
             .select('*')
             .eq('business_id', businessId)
-            .eq('status', 'active')
+            .eq('is_active', true)
             .order('name')
 
         if (!error && data) setStaffList(data)
@@ -1276,7 +1276,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             })
 
         if (!error) {
-            setNewStaff({ name: '', username: '', pin: '', role: 'cook' })
+            setNewStaff({ name: '', username: '', pin: '', role: 'kitchen' })
             setShowAddForm(false)
             fetchStaff()
             onSaved?.()
@@ -1301,9 +1301,9 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
 
     const roles = [
         { id: 'manager', label: t('role_manager') || 'Manager' },
-        { id: 'cook', label: t('role_cook') || 'Cocinero' },
+        { id: 'kitchen', label: t('role_cook') || 'Cocinero' },
         { id: 'cashier', label: t('role_cashier') || 'Cajero' },
-        { id: 'runner', label: t('role_runner') || 'Runner' }
+        { id: 'driver', label: t('role_runner') || 'Entregador' }
     ]
 
     return (
@@ -1372,7 +1372,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         </motion.button>
                                         <motion.button
                                             whileTap={{ scale: 0.97 }}
-                                            onClick={() => { setShowAddForm(false); setNewStaff({ name: '', username: '', pin: '', role: 'cook' }); }}
+                                            onClick={() => { setShowAddForm(false); setNewStaff({ name: '', username: '', pin: '', role: 'kitchen' }); }}
                                             className="flex-1 py-3 rounded-2xl text-sm font-bold bg-stone-100 dark:bg-[#334155] text-stone-600 dark:text-white hover:bg-stone-200 dark:hover:bg-[#475569] transition-colors"
                                         >
                                             {t('cancel') || 'Cancel'}
@@ -1393,7 +1393,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         <div key={staff.id} className="flex items-center justify-between px-4 py-3">
                                             <div>
                                                 <div className="text-sm font-medium text-stone-950 dark:text-white">{staff.name}</div>
-                                                <div className="text-xs text-stone-400 dark:text-white">@{staff.email} • {staff.role}</div>
+                                                <div className="text-xs text-stone-400 dark:text-white">@{staff.username} • {staff.role}</div>
                                             </div>
                                             <motion.button
                                                 whileTap={{ scale: 0.9 }}
