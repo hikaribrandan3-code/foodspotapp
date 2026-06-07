@@ -1,6 +1,6 @@
 import * as React from 'react';
 const { useState, useEffect, useMemo } = React;
-import { MapPin, Calendar, ArrowRight, Cloud, Sun, Droplets, Thermometer, Sparkles, Languages, Ticket } from 'lucide-react';
+import { MapPin, Calendar, ArrowRight, Cloud, Sun, Droplets, Thermometer, Sparkles, Languages, Ticket, Ban } from 'lucide-react';
 import { useLanguage } from '../../../../contexts/LanguageContext';
 import { useTenant } from '../../../../contexts/TenantContext';
 
@@ -256,7 +256,13 @@ export default function EventDiscovery({ events, loading, error, onSelectEvent, 
               />
               
               <div className="absolute top-4 left-4 flex gap-1.5 flex-col items-start">
-                 <EventCountdown startDate={event.date} />
+                 {event.status === 'canceled' ? (
+                   <span className="bg-red-500/90 backdrop-blur-md px-2 py-1 rounded-lg text-[7px] font-black text-white uppercase tracking-widest border border-white/20 shadow-lg flex items-center gap-1">
+                     <Ban size={8} /> {t('event_canceled')}
+                   </span>
+                 ) : (
+                   <EventCountdown startDate={event.date} />
+                 )}
                  {event.referrable && (
                    <span className="bg-amber-500/90 backdrop-blur-md px-2 py-1 rounded-lg text-[7px] font-black text-white uppercase tracking-widest border border-white/20 shadow-lg flex items-center gap-1">
                      <Sparkles size={8} /> Refer & Earn $10

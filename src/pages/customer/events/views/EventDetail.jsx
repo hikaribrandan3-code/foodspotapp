@@ -57,6 +57,7 @@ export default function EventDetail({ event, onBook, onBack }) {
   const eventDate = new Date(event.date);
   const now = new Date();
   const isExpired = eventDate < now;
+  const isCanceled = event.status === 'canceled';
 
   const isMultiDay = event.end_date &&
     new Date(event.end_date).toDateString() !== new Date(event.date).toDateString();
@@ -129,9 +130,19 @@ export default function EventDetail({ event, onBook, onBack }) {
         </div>
       </div>
 
-      <main className={`px-6 py-6 flex flex-col gap-6 pb-24 ${isExpired ? 'opacity-70' : ''}`}>
+      <main className={`px-6 py-6 flex flex-col gap-6 pb-24 ${isExpired || isCanceled ? 'opacity-70' : ''}`}>
         <div className="bg-[var(--canvas-bg)] p-4 rounded-[28px] border border-[var(--border-color)] shadow-sm">
-          {isExpired ? (
+          {isCanceled ? (
+            <div className="flex flex-col items-center gap-2 py-2">
+              <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-500">
+                <Ban size={20} />
+              </div>
+              <p className="text-sm font-black text-red-500 uppercase tracking-widest">{t('event_canceled')}</p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] opacity-50">
+                {t('event_canceled_msg')?.replace('{businessName}', businessName)}
+              </p>
+            </div>
+          ) : isExpired ? (
             <div className="flex flex-col items-center gap-2 py-2">
               <div className="w-10 h-10 rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-500">
                 <Ban size={20} />
@@ -308,7 +319,7 @@ export default function EventDetail({ event, onBook, onBack }) {
               );
               const remaining = (tier.qty || tier.capacity || 0) - (tier.sold || 0);
               const isSoldOut = tier.forced_sold_out || remaining <= 0;
-              const isUnavailable = isExpired || isSoldOut;
+              const isUnavailable = isExpired || isSoldOut || isCanceled;
 
               return (
               <button
@@ -344,8 +355,8 @@ export default function EventDetail({ event, onBook, onBack }) {
                 </div>
                 <div className="relative z-10 text-right">
                   <p className="text-xl font-black text-[var(--color-primary)]">${tier.price}</p>
-                  <p className={`text-[9px] font-black uppercase tracking-tight ${isExpired ? 'text-red-500 opacity-100' : isSoldOut ? 'text-red-500 opacity-100' : 'text-[var(--text-secondary)] opacity-50'}`}>
-                    {isExpired ? 'Event Ended' : isSoldOut ? 'Sold Out' : 'Available'}
+                  <p className={`text-[9px] font-black uppercase tracking-tight ${isCanceled || isExpired ? 'text-red-500 opacity-100' : isSoldOut ? 'text-red-500 opacity-100' : 'text-[var(--text-secondary)] opacity-50'}`}>
+                    {isCanceled ? t('event_canceled') : isExpired ? 'Event Ended' : isSoldOut ? 'Sold Out' : 'Available'}
                   </p>
                 </div>
               </button>

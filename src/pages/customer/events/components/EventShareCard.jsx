@@ -43,6 +43,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
   const isFree = lowestPrice === 0 || lowestPrice == null;
   const isLimited = availableSpots > 0 && spotsPercentage <= 25;
   const displayBusiness = businessName || 'FoodSpot';
+  const shareImageUrl = event.share_image || event.image; // Use custom share image if available, else fallback to event image
 
   const ACCENT_COLOR = '#10b981'; // emerald brand color
 
@@ -76,7 +77,7 @@ const EventShareCard = React.forwardRef(function EventShareCard({ event, busines
         }}
       >
         <img
-          src={event.image}
+          src={shareImageUrl}
           alt={event.name}
           crossOrigin="anonymous"
           style={{

@@ -204,6 +204,7 @@ function normalizeEvent(event) {
     location: event.address || event.venue_name || '',
     venue_name: event.venue_name || '',
     image: event.image_url || '',
+    share_image: event.share_image_url || null,
     category: event.category || 'All',
     business_id: event.business_id,
     referrable: true,
@@ -215,7 +216,8 @@ function normalizeEvent(event) {
       sold: t.sold || 0
     })),
     lineup: event.lineup || undefined,
-    daily_schedule: event.daily_schedule || null
+    daily_schedule: event.daily_schedule || null,
+    status: event.status || 'live'
   };
 }
 

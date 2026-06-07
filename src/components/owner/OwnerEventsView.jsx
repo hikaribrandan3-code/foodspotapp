@@ -566,15 +566,17 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
   const [saving, setSaving] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const fileInputRef = useRef(null)
+  const shareFileInputRef = useRef(null)
   const [form, setForm] = useState({
     name: '', description: '', category: 'Food',
-    image_url: '', start_date: '', end_date: '',
+    image_url: '', share_image_url: '', start_date: '', end_date: '',
     venue_name: '', address: '', is_free: false,
     ticket_tiers: [{ id: '1', name: 'General Admission', price: 25, capacity: 100 }],
     lineup: [],
     daily_schedule: [],
   })
   const [imageUploading, setImageUploading] = useState(false)
+  const [shareImageUploading, setShareImageUploading] = useState(false)
 
   const handleSelectTemplate = (template) => {
     setForm({
@@ -582,6 +584,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
       description: template.description,
       category: template.category,
       image_url: template.image_url,
+      share_image_url: '',
       start_date: template.start_date,
       end_date: '',
       venue_name: template.venue_name,
@@ -593,6 +596,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
         price: t.price,
         capacity: t.capacity
       })),
+      lineup: [],
+      daily_schedule: [],
     })
     setStep(1)
   }
@@ -624,6 +629,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           venue_name: form.venue_name,
           address: form.address,
           image_url: form.image_url,
+          share_image_url: form.share_image_url || null,
           is_free: form.is_free,
           status: 'live',
           ticket_tiers: ticketTiers,
@@ -882,6 +888,49 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
                   </button>
                 )}
               </Field>
+              <Field label="Event Flyer / Share Photo (Optional)">
+                <input
+                  ref={shareFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    setShareImageUploading(true)
+                    try {
+                      const { url, error } = await uploadAsset(file, businessId, 'assets')
+                      if (error) throw error
+                      patch('share_image_url', url)
+                    } catch (err) {
+                      console.error('Share image upload failed:', err)
+                      alert('Share image upload failed: ' + (err.message || 'Unknown error'))
+                    } finally {
+                      setShareImageUploading(false)
+                    }
+                  }}
+                />
+                {form.share_image_url ? (
+                  <motion.div
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => !shareImageUploading && shareFileInputRef.current?.click()}
+                    style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140, cursor: shareImageUploading ? 'wait' : 'pointer', border: `2px solid ${theme.primary}`, opacity: shareImageUploading ? 0.6 : 1 }}
+                  >
+                    <img src={form.share_image_url} alt="share preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </motion.div>
+                ) : (
+                  <button
+                    onClick={() => shareFileInputRef.current?.click()}
+                    disabled={shareImageUploading}
+                    style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16, opacity: shareImageUploading ? 0.6 : 1 }}
+                  >
+                    {shareImageUploading ? 'Uploading…' : '📸 Upload Flyer (1080x1920px)'}
+                  </button>
+                )}
+                <p style={{ fontSize: 11, color: theme.textSecondary, marginTop: 8, fontStyle: 'italic' }}>
+                  Used when sharing to social media (Instagram Stories)
+                </p>
+              </Field>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: theme.bgSurface, borderRadius: 12, marginTop: 4 }}>
                 <input type="checkbox" id="free" checked={form.is_free} onChange={e => {
                   patch('is_free', e.target.checked);
@@ -1128,7 +1177,10 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
 
 // ── Edit Event ────────────────────────────────────────────────────────────────
 function EditEventView({ event, businessId, onBack, onSuccess }) {
+  const { t } = useLanguage()
   const [saving, setSaving] = useState(false)
+  const shareFileInputRef = useRef(null)
+  const [shareImageUploading, setShareImageUploading] = useState(false)
   const [form, setForm] = useState({ ...event })
   const patch = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -1143,6 +1195,7 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           venue_name: form.venue_name,
           address: form.address,
           image_url: form.image_url,
+          share_image_url: form.share_image_url || null,
           start_date: toISO(form.start_date),
           end_date: form.end_date ? toISO(form.end_date) : null,
           updated_at: new Date().toISOString(),
@@ -1198,6 +1251,49 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
               ⚠ No end date — event will display as single-day
             </p>
           )}
+        </Field>
+        <Field label="Event Flyer / Share Photo (Optional)">
+          <input
+            ref={shareFileInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              setShareImageUploading(true)
+              try {
+                const { url, error } = await uploadAsset(file, businessId, 'assets')
+                if (error) throw error
+                patch('share_image_url', url)
+              } catch (err) {
+                console.error('Share image upload failed:', err)
+                alert('Share image upload failed: ' + (err.message || 'Unknown error'))
+              } finally {
+                setShareImageUploading(false)
+              }
+            }}
+          />
+          {form.share_image_url ? (
+            <motion.div
+              whileTap={{ scale: 0.97 }}
+              onClick={() => !shareImageUploading && shareFileInputRef.current?.click()}
+              style={{ marginTop: 10, borderRadius: 12, overflow: 'hidden', height: 140, cursor: shareImageUploading ? 'wait' : 'pointer', border: `2px solid ${theme.primary}`, opacity: shareImageUploading ? 0.6 : 1 }}
+            >
+              <img src={form.share_image_url} alt="share preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </motion.div>
+          ) : (
+            <button
+              onClick={() => shareFileInputRef.current?.click()}
+              disabled={shareImageUploading}
+              style={{ ...s.btnSecondary, width: '100%', justifyContent: 'center', padding: 16, opacity: shareImageUploading ? 0.6 : 1 }}
+            >
+              {shareImageUploading ? 'Uploading…' : '📸 Upload Flyer (1080x1920px)'}
+            </button>
+          )}
+          <p style={{ fontSize: 11, color: theme.textSecondary, marginTop: 8, fontStyle: 'italic' }}>
+            Used when sharing to social media (Instagram Stories)
+          </p>
         </Field>
         {(() => {
           if (!form.start_date || !form.end_date) return null;
