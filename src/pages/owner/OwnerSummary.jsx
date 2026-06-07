@@ -1300,7 +1300,6 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
     }
 
     const roles = [
-        { id: 'admin', label: t('role_admin') || 'Admin' },
         { id: 'manager', label: t('role_manager') || 'Manager' },
         { id: 'cook', label: t('role_cook') || 'Cocinero' },
         { id: 'cashier', label: t('role_cashier') || 'Cajero' },
