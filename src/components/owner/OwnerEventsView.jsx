@@ -48,6 +48,21 @@ const theme = {
   danger:        'var(--color-danger, #EF4444)',
 }
 
+// Convert ISO string from DB → datetime-local input value (local timezone)
+function toDatetimeLocal(isoString) {
+  if (!isoString) return ''
+  const d = new Date(isoString)
+  if (isNaN(d)) return ''
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Convert datetime-local input value → ISO string (respects local timezone)
+function toISO(localDt) {
+  if (!localDt) return null
+  return new Date(localDt).toISOString()
+}
+
 const s = {
   card: {
     background: theme.bgWhite,
@@ -603,8 +618,8 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           name: form.name.trim(),
           description: form.description,
           category: form.category,
-          start_date: form.start_date,
-          end_date: form.end_date || null,
+          start_date: toISO(form.start_date),
+          end_date: form.end_date ? toISO(form.end_date) : null,
           venue_name: form.venue_name,
           address: form.address,
           image_url: form.image_url,
@@ -883,10 +898,10 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
               <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('date_and_venue')}</h2>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
                 <Field label={t('start_date')}>
-                  <input type="date" style={s.input} value={form.start_date.split('T')[0] || ''} onChange={e => patch('start_date', e.target.value)} />
+                  <input type="datetime-local" style={s.input} value={form.start_date ? toDatetimeLocal(form.start_date) : ''} onChange={e => patch('start_date', e.target.value)} />
                 </Field>
-                <Field label={t('start_time')}>
-                  <input type="time" style={s.input} value={form.start_date.includes('T') ? form.start_date.split('T')[1] : ''} onChange={e => patch('start_date', (form.start_date.split('T')[0] || '') + 'T' + e.target.value)} />
+                <Field label={t('end_date')}>
+                  <input type="datetime-local" style={s.input} value={form.end_date ? toDatetimeLocal(form.end_date) : ''} onChange={e => patch('end_date', e.target.value)} />
                 </Field>
               </div>
               <Field label={t('venue_name')}>
@@ -1061,8 +1076,8 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           venue_name: form.venue_name,
           address: form.address,
           image_url: form.image_url,
-          start_date: form.start_date,
-          end_date: form.end_date,
+          start_date: toISO(form.start_date),
+          end_date: form.end_date ? toISO(form.end_date) : null,
           updated_at: new Date().toISOString(),
           lineup: ['Festivals', 'Music'].includes(form.category) ? form.lineup : undefined
         })
@@ -1103,10 +1118,10 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
           <input style={s.input} value={form.address || ''} onChange={e => patch('address', e.target.value)} />
         </Field>
         <Field label="Start Date">
-          <input type="datetime-local" style={s.input} value={form.start_date || ''} onChange={e => patch('start_date', e.target.value)} />
+          <input type="datetime-local" style={s.input} value={toDatetimeLocal(form.start_date)} onChange={e => patch('start_date', e.target.value)} />
         </Field>
         <Field label="End Date">
-          <input type="datetime-local" style={s.input} value={form.end_date || ''} onChange={e => patch('end_date', e.target.value)} />
+          <input type="datetime-local" style={s.input} value={toDatetimeLocal(form.end_date)} onChange={e => patch('end_date', e.target.value)} />
         </Field>
       </Collapsible>
 
