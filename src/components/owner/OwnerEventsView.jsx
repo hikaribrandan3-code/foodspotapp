@@ -947,7 +947,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <h2 style={{ margin: '0 0 20px', fontSize: 20, fontWeight: 800, color: theme.textPrimary }}>{t('date_and_venue')}</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
                 <Field label={t('start_date')}>
                   <input type="datetime-local" style={s.input} value={form.start_date ? toDatetimeLocal(form.start_date) : ''} onChange={e => {
                     patch('start_date', e.target.value);

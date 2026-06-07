@@ -101,17 +101,25 @@ export default function MyTickets() {
   };
 
   const handleDeleteTicket = async () => {
-    if (!deleteConfirm) return;
+    if (!deleteConfirm || !guestToken) {
+      alert('Error: Session data missing. Please refresh and try again.');
+      setIsDeleting(false);
+      return;
+    }
     setIsDeleting(true);
     try {
       // Soft delete: SET deleted_at = NOW() using the actual row ID
+      console.log('Deleting ticket:', { ticketId: deleteConfirm.ticketId, guestToken });
       const { error } = await supabase
         .from('event_orders')
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', deleteConfirm.ticketId)
         .eq('guest_token', guestToken);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error details:', error);
+        throw error;
+      }
 
       // Clear from localStorage immediately
       const current = JSON.parse(localStorage.getItem('event_bookings') || '[]');
