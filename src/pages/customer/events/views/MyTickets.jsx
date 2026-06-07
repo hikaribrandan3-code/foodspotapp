@@ -104,11 +104,11 @@ export default function MyTickets() {
     if (!deleteConfirm) return;
     setIsDeleting(true);
     try {
-      // Soft delete: SET deleted_at = NOW()
+      // Soft delete: SET deleted_at = NOW() using the actual row ID
       const { error } = await supabase
         .from('event_orders')
         .update({ deleted_at: new Date().toISOString() })
-        .eq('ticket_code', deleteConfirm.ticketCode)
+        .eq('id', deleteConfirm.ticketId)
         .eq('guest_token', guestToken);
 
       if (error) throw error;
@@ -140,7 +140,8 @@ export default function MyTickets() {
         const tier = order.tier_snapshot || {};
         const startDate = event.start_date ? new Date(event.start_date) : new Date();
         return {
-          id: order.ticket_code,
+          id: order.id,
+          ticket_code: order.ticket_code,
           event_id: order.event_id,
           event_name: event.name || 'Unknown Event',
           date: startDate.toISOString().split('T')[0],
@@ -324,7 +325,7 @@ export default function MyTickets() {
               key={ticket.id}
               ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}}
               onClick={() => setSelectedBooking(ticket)}
-              onDelete={(ticketId, eventId) => setDeleteConfirm({ ticketId, ticketCode: ticketId })}
+              onDelete={(ticketId, eventId) => setDeleteConfirm({ ticketId })}
              />
            ))}
         </div>
