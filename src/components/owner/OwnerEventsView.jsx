@@ -185,8 +185,9 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
       console.log('✅ [SOFT DELETE] Success! Archived event:', selectedEvent.id)
 
-      // Remove from local state so it vanishes from the list
-      removeEvent(selectedEvent.id)
+      // Refetch the full event list to ensure UI stays in sync with DB
+      // (avoids race condition with real-time subscription)
+      await fetchEvents()
       setSelectedEvent(null)
       setView('list')
     } catch (err) {
