@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
+import { normalizeTenantConfig } from '../../utils/configNormalizer'
 
 // Generate 30-min slots between open/close times
 function generateTimeSlots(openTime = '11:00', closeTime = '23:00') {
@@ -50,7 +51,7 @@ export default function ReservationPage() {
     const navigate = useNavigate()
     const { tenantData, businessId } = useTenant()
     const { t } = useLanguage()
-    const config = tenantData?.app_config || {}
+    const config = useMemo(() => normalizeTenantConfig(tenantData?.app_config, tenantData), [tenantData])
 
     const [step, setStep] = useState(1) // 1=date, 2=time+party, 3=info, 4=success
     const [selectedDate, setSelectedDate] = useState('')
