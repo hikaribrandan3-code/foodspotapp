@@ -172,6 +172,20 @@ const Info = ({ config }) => {
                                 </a>
                             )}
 
+                            {/* Reservation Row */}
+                            {tenantData?.app_config?.serviceModes?.dineIn && (
+                                <button
+                                    onClick={() => navigate(`/${tenantSlug}/reservation`)}
+                                    style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 0, width: '100%' }}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><path d="M6 9c0-1 1-2 2-2h8c1 0 2 1 2 2M9 5h6M9 5V3M15 5V3M3 9h18M3 9v8c0 1 1 2 2 2h14c1 0 2-1 2-2V9M7 13h10M7 17h10"/></svg>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dining</p>
+                                        <p style={{ fontSize: 15, color: '#0F0F0F', margin: 0, fontWeight: 600 }}>Make a Reservation</p>
+                                    </div>
+                                </button>
+                            )}
+
                         </div>
                     )}
                 </div>
