@@ -262,16 +262,6 @@ function Order({ config: configProp }) {
     // 📍 DISTANCE STATE (Delivery Only)
     const [distanceResult, setDistanceResult] = useState({ withinRadius: true, distanceKm: null })
 
-    // 🍽️ RESERVATION STATE (Dine-In Only)
-    const [reservationDate, setReservationDate] = useState('')
-    const [reservationHour, setReservationHour] = useState('')
-    const [reservationMin, setReservationMin] = useState('00')
-    const [partySize, setPartySize] = useState(2)
-    const [reservationNotes, setReservationNotes] = useState('')
-    const [showReservation, setShowReservation] = useState(false)
-    const [calMonth, setCalMonth] = useState(() => { const n = new Date(); return { year: n.getFullYear(), month: n.getMonth() } })
-    const calWeeks = useMemo(() => getCalendarMonth(calMonth.year, calMonth.month), [calMonth])
-    const reservationTime = reservationHour ? `${reservationHour}:${reservationMin}` : ''
 
     // Recalculate distance when coords change
     useEffect(() => {
@@ -366,10 +356,7 @@ function Order({ config: configProp }) {
             if (!validation.valid) errors.push(...validation.errors)
         }
 
-        // 🛡️ RESERVATION: Date/Time/Party required for Dine-In
         if (orderType === 'dine_in') {
-            if (!reservationDate) errors.push('Por favor selecciona una fecha')
-            if (!reservationTime) errors.push('Por favor selecciona una hora')
             if (!customerInfo.name || customerInfo.name.length < 2) errors.push('Por favor ingresa tu nombre')
         }
 
@@ -471,26 +458,6 @@ function Order({ config: configProp }) {
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
 
-            // 🍽️ SAVE RESERVATION (Dine-In Only)
-            if (orderType === 'dine_in') {
-                try {
-                    await supabase
-                        .from('reservations')
-                        .insert({
-                            business_id: businessId,
-                            customer_name: customerInfo.name.trim(),
-                            customer_phone: customerInfo.phone.trim(),
-                            reservation_date: reservationDate,
-                            reservation_time: reservationTime + ':00',
-                            party_size: partySize,
-                            notes: reservationNotes.trim() || null,
-                            status: 'pending',
-                            related_order_id: savedOrder.id
-                        })
-                } catch (resErr) {
-                    console.warn('[Order] Reservation save failed (non-blocking):', resErr)
-                }
-            }
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
             if (effectivePaymentMethod === 'mercado_pago') {
@@ -1089,125 +1056,6 @@ function Order({ config: configProp }) {
                                 </div>
                             </div>
 
-                            {/* RESERVAR — lowkey ghost button */}
-                            <button
-                                onClick={() => setShowReservation(r => !r)}
-                                style={{
-                                    width: '100%', padding: '11px 16px',
-                                    borderRadius: 12, border: '1.5px solid #E5E7EB',
-                                    background: 'transparent',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    cursor: 'pointer', transition: 'all 0.2s', marginBottom: showReservation ? 20 : 0
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M2 12C2 8.22876 2 6.34315 3.17157 5.17157C4.34315 4 6.22876 4 10 4H14C17.7712 4 19.6569 4 20.8284 5.17157C22 6.34315 22 8.22876 22 12V14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14V12Z" stroke="#374151" strokeWidth="1.5"/>
-                                        <path d="M7 4V2.5" stroke="#374151" strokeWidth="1.5" strokeLinecap="round"/>
-                                        <path d="M17 4V2.5" stroke="#374151" strokeWidth="1.5" strokeLinecap="round"/>
-                                        <path d="M9 14.5L10.5 13V17" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                        <path d="M13 16V14C13 13.4477 13.4477 13 14 13C14.5523 13 15 13.4477 15 14V16C15 16.5523 14.5523 17 14 17C13.4477 17 13 16.5523 13 16Z" stroke="#374151" strokeWidth="1.5" strokeLinecap="round"/>
-                                        <path d="M2.5 9H21.5" stroke="#374151" strokeWidth="1.5" strokeLinecap="round"/>
-                                    </svg>
-                                    <span style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
-                                        {reservationDate && reservationHour
-                                            ? `${formatDateDisplay(reservationDate)} · ${reservationTime} · ${partySize} pers.`
-                                            : 'Reservar'}
-                                    </span>
-                                </div>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.5"
-                                    style={{ transform: showReservation ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                                    <polyline points="6 9 12 15 18 9"/>
-                                </svg>
-                            </button>
-
-                            {/* PROGRESSIVE RESERVATION PANEL */}
-                            {showReservation && (
-                                <div style={{ marginTop: 4 }}>
-                                    {/* STEP 1 — always show: MONTH CALENDAR */}
-                                    <div style={{ marginBottom: 20 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                                            <button onClick={() => setCalMonth(m => { const d = new Date(m.year, m.month - 1); return { year: d.getFullYear(), month: d.getMonth() } })}
-                                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: 20, color: '#9CA3AF', lineHeight: 1 }}>‹</button>
-                                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1F2937', textTransform: 'capitalize' }}>
-                                                {new Date(calMonth.year, calMonth.month).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
-                                            </span>
-                                            <button onClick={() => setCalMonth(m => { const d = new Date(m.year, m.month + 1); return { year: d.getFullYear(), month: d.getMonth() } })}
-                                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: 20, color: '#9CA3AF', lineHeight: 1 }}>›</button>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: 4 }}>
-                                            {['Lu','Ma','Mi','Ju','Vi','Sa','Do'].map(d => (
-                                                <div key={d} style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#9CA3AF', paddingBottom: 6 }}>{d}</div>
-                                            ))}
-                                        </div>
-                                        {calWeeks.map((week, wi) => (
-                                            <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, marginBottom: 2 }}>
-                                                {week.map((cell, di) => cell === null ? <div key={di} /> : (
-                                                    <button key={di} disabled={cell.past} onClick={() => !cell.past && setReservationDate(cell.value)}
-                                                        style={{
-                                                            padding: '8px 0', border: 'none', borderRadius: 8,
-                                                            background: reservationDate === cell.value ? '#111827' : 'transparent',
-                                                            color: reservationDate === cell.value ? 'white' : cell.past ? '#D1D5DB' : '#111827',
-                                                            fontWeight: reservationDate === cell.value ? 700 : 400,
-                                                            fontSize: 13, cursor: cell.past ? 'default' : 'pointer',
-                                                            textAlign: 'center', transition: 'all 0.15s'
-                                                        }}
-                                                    >{cell.day}</button>
-                                                ))}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* STEP 2 — appears after date picked */}
-                                    {reservationDate && (
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                                            <div>
-                                                <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Hora</p>
-                                                <select value={reservationHour} onChange={e => setReservationHour(e.target.value)}
-                                                    style={{ width: '100%', padding: '11px 10px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 15, fontWeight: 700, color: '#1F2937', background: 'white', cursor: 'pointer', appearance: 'none', textAlign: 'center' }}>
-                                                    <option value="">--</option>
-                                                    {Array.from({length: 13}, (_,i) => i + 11).map(h => (
-                                                        <option key={h} value={String(h).padStart(2,'0')}>{String(h).padStart(2,'0')}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Min</p>
-                                                <select value={reservationMin} onChange={e => setReservationMin(e.target.value)}
-                                                    style={{ width: '100%', padding: '11px 10px', borderRadius: 10, border: '1.5px solid #E5E7EB', fontSize: 15, fontWeight: 700, color: '#1F2937', background: 'white', cursor: 'pointer', appearance: 'none', textAlign: 'center' }}>
-                                                    {['00','15','30','45'].map(m => <option key={m} value={m}>{m}</option>)}
-                                                </select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* STEP 3 — appears after time picked */}
-                                    {reservationDate && reservationHour && (
-                                        <div style={{ marginBottom: 16 }}>
-                                            <p style={{ fontSize: 11, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Personas</p>
-                                            <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', height: 46 }}>
-                                                <button onClick={() => setPartySize(p => Math.max(1, p - 1))}
-                                                    style={{ flex: 1, border: 'none', background: 'white', fontSize: 20, color: '#6B7280', cursor: 'pointer' }}>−</button>
-                                                <span style={{ flex: 1, textAlign: 'center', fontSize: 16, fontWeight: 800, color: '#111827' }}>{partySize}</span>
-                                                <button onClick={() => setPartySize(p => Math.min(30, p + 1))}
-                                                    style={{ flex: 1, border: 'none', background: 'white', fontSize: 20, color: '#6B7280', cursor: 'pointer' }}>+</button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* STEP 4 — appears after party size interacted */}
-                                    {reservationDate && reservationHour && (
-                                        <InputGroup
-                                            label="Notas"
-                                            icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>}
-                                            value={reservationNotes}
-                                            onChange={(e) => setReservationNotes(e.target.value)}
-                                            placeholder="Ocasión especial, alergias, preferencias..."
-                                            isTextArea={true}
-                                        />
-                                    )}
-                                </div>
-                            )}
                         </>
                     ) : (
                         /* pickup / takeout */
@@ -1363,7 +1211,7 @@ function Order({ config: configProp }) {
                         mpStatus === 'connecting' ? 'Conectando con Mercado Pago…' :
                         isSubmitting ? t('order_processing') :
                         isOutOfRadius ? t('out_of_delivery_radius') :
-                        (orderType === 'dine_in' && showReservation && reservationDate ? 'Confirmar Reservación' : t('confirm_order'))
+                        t('confirm_order')
                     }</span>
                     {!isSubmitting && !isOutOfRadius && <span>➜</span>}
                 </button>
