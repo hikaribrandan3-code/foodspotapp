@@ -123,13 +123,13 @@ async function callOpenAI(prompt, config) {
         quality: 'low' // $0.005 per image
       })
     });
-    
+
     const data = await response.json();
-    
+
     if (data.error) {
       return { error: 'OPENAI_ERROR', message: data.error.message };
     }
-    
+
     return { url: data.data[0].url };
   } catch (err) {
     return { error: 'NETWORK_ERROR', message: err.message };
