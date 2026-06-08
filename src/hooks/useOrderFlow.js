@@ -46,9 +46,9 @@ export function useOrderFlow() {
                 if (orderData.order_type === 'delivery') {
                     status = ORDER_STATUS.RELEASED_TO_KITCHEN;
                 }
-                // Dine-in: pay after service (kitchen starts immediately)
+                // Dine-in: pay after service (stays in reservations, not KDS)
                 else if (orderData.order_type === 'dine_in') {
-                    status = ORDER_STATUS.RELEASED_TO_KITCHEN;
+                    status = ORDER_STATUS.PAID_UNRELEASED;
                 }
                 // Take-out/pickup: unchanged (owner controls timing)
                 else {

@@ -384,7 +384,7 @@ function Order({ config: configProp }) {
 
         const orderNumber = generateOrderNumber()
         const guestToken = getScopedGuestToken()
-        // Dine-in always pays at the end — force cash so order goes straight to kitchen
+        // Dine-in always pays at the end — force cash so order stays in reservations (not KDS)
         const effectivePaymentMethod = orderType === 'dine_in' ? 'cash' : paymentMethod
         const isCashPath = effectivePaymentMethod === 'cash' || effectivePaymentMethod === 'card_on_delivery' || effectivePaymentMethod === 'whatsapp'
         const isWhatsApp = effectivePaymentMethod === 'whatsapp'
@@ -395,7 +395,7 @@ function Order({ config: configProp }) {
         const orderStatus = effectivePaymentMethod === 'mercado_pago'
             ? ORDER_STATUS.PENDING_PAYMENT
             : isDineInPayAfter
-                ? ORDER_STATUS.RELEASED_TO_KITCHEN
+                ? ORDER_STATUS.PAID_UNRELEASED
                 : isDeliveryCash
                     ? ORDER_STATUS.RELEASED_TO_KITCHEN
                     : isCash
