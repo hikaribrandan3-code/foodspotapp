@@ -43,7 +43,7 @@ const OWNER_TABS = [
     { id: 'menu', label: 'Menu', route: null },
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
-    { id: 'events', label: 'Events', route: null, desktopOnly: true },
+    { id: 'events', label: 'Events', route: null, mobileOnly: true },
     { id: 'analytics', label: 'Analytics', route: null },
     { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
     { id: 'reservations', label: 'Reservas', route: null, desktopOnly: true },
@@ -474,7 +474,11 @@ function BackendNav({
         lineHeight: 1
     }
     const localizedTabs = useMemo(() => tabs
-        .filter(tab => !tab.desktopOnly || isDesktop)
+        .filter(tab => {
+            if (tab.desktopOnly && !isDesktop) return false
+            if (tab.mobileOnly && isDesktop) return false
+            return true
+        })
         .map(tab => ({
             ...tab,
             label: t(tab.id) || tab.label
