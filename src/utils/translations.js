@@ -117,6 +117,7 @@ export const translations = {
     dine_in_reservations: { es: "Reservas en Local", en: "Dine-In Reservations", pt: "Reservas no Local" },
     dine_in_reservations_desc: { es: "Mostrar botón de reservas a clientes", en: "Show reservation button to customers", pt: "Mostrar botão de reservas aos clientes" },
     make_reservation: { es: "Hacer una Reserva", en: "Make a Reservation", pt: "Fazer uma Reserva" },
+    dining: { es: "Cena", en: "Dining", pt: "Refeição" },
     payment_moment: { es: "Momento de Pago", en: "Payment Moment", pt: "Momento do Pagamento" },
     pay_before: { es: "Antes de comer", en: "Before eating", pt: "Antes de comer" },
     pay_after: { es: "Después (Mesa)", en: "After (Table)", pt: "Depois (Mesa)" },
