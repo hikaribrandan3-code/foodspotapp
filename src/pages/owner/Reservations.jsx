@@ -24,7 +24,7 @@ function formatDate(dateStr) {
 
 function formatTime(t) { return t?.slice(0, 5) || '' }
 
-export default function Reservations() {
+export function ReservationsContent() {
   const { businessId } = useTenant()
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
@@ -84,7 +84,7 @@ export default function Reservations() {
   const pendingCount = reservations.filter(r => r.status === 'pending').length
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F8F9FA', paddingBottom: 100 }}>
+    <div>
       {/* Header */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', padding: '20px 20px 0', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -237,6 +237,14 @@ export default function Reservations() {
         )}
       </div>
 
+    </div>
+  )
+}
+
+export default function Reservations() {
+  return (
+    <div style={{ minHeight: '100vh', background: '#F8F9FA', paddingBottom: 100 }}>
+      <ReservationsContent />
       <BackendNav useRoutes={true} role="owner" />
     </div>
   )

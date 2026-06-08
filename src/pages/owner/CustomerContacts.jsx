@@ -1,13 +1,13 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useCustomerContacts } from '../../hooks/useCustomerContacts.js'
-import { supabase } from '../../lib/supabaseClient.js'
 import { exportContactsToCSV } from '../../services/contactsService.js'
 import { translations } from '../../utils/translations.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import BurgerLoader from '../../components/BurgerLoader.jsx'
+import { ReservationsContent } from './Reservations.jsx'
 
 const T = {
   bg:    '#F4F6F9',
@@ -125,13 +125,13 @@ function AddContactModal({ onClose, onAdd }) {
 }
 
 // ── Main Page ────────────────────────────────────────────────────
-export default function CustomerContacts() {
+export default function CustomerContacts({ defaultTab = 'clientes' }) {
   const { businessId, tenantData } = useTenant()
   const { language } = useLanguage()
   const { contacts, loading, addContact } = useCustomerContacts(businessId)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-
+  const [activeTab, setActiveTab] = useState(defaultTab)
 
   const t = (key) => translations[key]?.[language] || translations[key]?.en || key
 
@@ -149,7 +149,36 @@ export default function CustomerContacts() {
     <div style={{ width: '100%', height: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <BackendHeader title={`${tenantData?.business_name || 'FoodSpot'} CRM`} />
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 8, padding: '12px 28px 0', background: T.bg, borderBottom: `1px solid ${T.line}` }}>
+        {[
+          { id: 'clientes', label: t('crm') || 'Clientes' },
+          { id: 'reservas', label: t('reservations') || 'Reservas' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '10px 20px', borderRadius: '10px 10px 0 0', border: 'none',
+              background: activeTab === tab.id ? T.card : 'transparent',
+              color: activeTab === tab.id ? T.green : T.muted,
+              fontWeight: 700, fontSize: 14, cursor: 'pointer',
+              borderBottom: activeTab === tab.id ? `2px solid ${T.green}` : '2px solid transparent',
+              fontFamily: 'inherit', transition: 'all 0.15s',
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'reservas' && (
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <ReservationsContent />
+        </div>
+      )}
+
+      {activeTab === 'clientes' && <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
 
         {/* Top bar */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
@@ -298,7 +327,7 @@ export default function CustomerContacts() {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
 
       <BackendNav useRoutes={true} role="owner" />
 

@@ -670,7 +670,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/contacts" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/reservations" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Reservations /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/reservations" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts defaultTab="reservas" /></Suspense></ProtectedRoute>} />
 
                                             <Route path="*" element={<Navigate to="/" replace />} />
                                         </Routes>
