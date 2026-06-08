@@ -390,10 +390,31 @@ serve(async (req: Request) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
     try {
-        const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-        const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+        // 🛡️ AUTH CHECK: Only authenticated owners can access AI
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader) {
+            return new Response(
+                JSON.stringify({ error: "Unauthorized" }),
+                { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
         const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (authError || !user) {
+            return new Response(
+                JSON.stringify({ error: "Unauthorized" }),
+                { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+        const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 
         const { messages, systemPrompt: _legacy, businessId, language = "es", businessName: bodyName } = await req.json();
         const resolvedBusinessId = businessId || req.headers.get("x-business-id");
@@ -405,6 +426,23 @@ serve(async (req: Request) => {
             );
         }
 
+        // Verify user owns this business
+        if (resolvedBusinessId) {
+            const { data: business, error: bizError } = await supabase
+                .from("businesses")
+                .select("id")
+                .eq("id", resolvedBusinessId)
+                .eq("owner_id", user.id)
+                .single();
+
+            if (bizError || !business) {
+                return new Response(
+                    JSON.stringify({ error: "Unauthorized: you do not own this business" }),
+                    { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+        }
+
         // Last user message (used for plan mode detection)
         const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
         const planMode = isPlanMode(lastUserMsg);
@@ -414,7 +452,6 @@ serve(async (req: Request) => {
         let contextBlock = "";
         let businessCurrency = "ARS";
         if (resolvedBusinessId) {
-            const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
             const { context, currency } = await fetchBusinessContext(resolvedBusinessId, supabase);
             contextBlock = context;
             businessCurrency = currency;
