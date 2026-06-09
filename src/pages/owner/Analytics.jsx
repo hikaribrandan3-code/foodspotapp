@@ -66,10 +66,25 @@ const Analytics = () => {
     const [loading, setLoading] = useState(true)
     const [fetchError, setFetchError] = useState(null)
     const [dateRange, setDateRange] = useState('today')
+    const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches)
     const [activeTab, setActiveTab] = useState(() => {
         const saved = localStorage.getItem('owner_analytics_tab')
         return saved || 'analytics'
     })
+
+    // Track mobile/desktop viewport
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 767px)')
+        const handler = (e) => {
+            setIsMobile(e.matches)
+            // If switching to desktop and on events tab, reset to analytics
+            if (!e.matches && activeTab === 'events') {
+                setActiveTab('analytics')
+            }
+        }
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+    }, [activeTab])
 
     // Save active tab to localStorage when it changes
     useEffect(() => {
@@ -190,7 +205,7 @@ const Analytics = () => {
                     {[
                         { id: 'analytics', label: t('analytics') },
                         { id: 'financials', label: t('expenses') },
-                        { id: 'events', label: t('events') },
+                        ...(isMobile ? [{ id: 'events', label: t('events') }] : []),
                     ].map((tab) => (
                         <button
                             key={tab.id}
