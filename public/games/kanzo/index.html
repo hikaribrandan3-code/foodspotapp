@@ -586,7 +586,7 @@ function resizeCanvas() {
   // Use cover scaling for iPad/tablets (fills screen), contain for phones (fits inside)
   const useFullscreen = isIPad && isTabletPortrait;
   
-  const scale = Math.min(window.innerWidth / LOGICAL_WIDTH, window.innerHeight / LOGICAL_HEIGHT);
+  const scale = window.innerWidth / LOGICAL_WIDTH;
   
   canvas.style.transform = `scale(${scale}) translateZ(0)`;
   canvas.style.transformOrigin = "top left";
