@@ -36,7 +36,7 @@ const BUTTONS = {
 const GAMES = [
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
   { id: 'spice-invaders', name: 'Spice Invaders',      cover: '/games/spice-invaders/cover.webp',   url: '/games/spice-invaders/index.html',   proOnly: false },
-  { id: 'kanzo',          name: 'Kanzo',              cover: '/games/kanzo/cover.png',             url: '/games/kanzo/index.html',            proOnly: false, hideShell: true },
+  { id: 'kanzo',          name: 'Kanzo',              cover: '/games/kanzo/cover.png',             url: '/games/kanzo/index.html',            proOnly: false },
   { id: 'bubble-tea',     name: 'Bubble Tea',          cover: '/games/bubble-tea/cover.webp',       url: '/games/bubble-tea/index.html',       proOnly: true  },
   { id: 'candylandflip',  name: 'Candyland Flip',      cover: '/games/candylandflip/cover.webp',    url: '/games/candylandflip/index.html',    proOnly: true  },
   { id: 'pool',           name: 'Munchboy Billiards',  cover: '/games/pool/cover.png',              url: '/games/pool/index.html',             proOnly: true, shellPause: false },
@@ -421,8 +421,8 @@ export function HikariBoy({
         )}
       </div>
 
-      {/* Controller (45%) — SHELL COLOR - Hidden for games with custom controllers */}
-      {!currentGame?.hideShell && <div className="hb-controller">
+      {/* Controller (45%) — SHELL COLOR */}
+      <div className="hb-controller">
         {/* Shoulder Buttons */}
         <div className="hb-shoulders">
           <button 
@@ -544,7 +544,7 @@ export function HikariBoy({
 
         {/* Sparkle decoration */}
         <div className="hb-sparkle">✦</div>
-      </div>}
+      </div>
     </div>
   );
 }
