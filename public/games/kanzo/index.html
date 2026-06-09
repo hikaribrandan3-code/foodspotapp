@@ -589,7 +589,7 @@ function resizeCanvas() {
   const scale = window.innerWidth / LOGICAL_WIDTH;
   
   canvas.style.transform = `scale(${scale}) translateZ(0)`;
-  canvas.style.transformOrigin = "top left";
+  canvas.style.transformOrigin = "top center";
 
   ctx.scale(dpr, dpr);
   ctx.imageSmoothingEnabled = false;
@@ -890,10 +890,10 @@ function updateHUD() {
 function updatePlayerMovement(dt) {
   let dx = 0, dy = 0;
 
-  if (keys["w"] || touchState.up) dy -= 1;
-  if (keys["s"] || touchState.down) dy += 1;
-  if (keys["a"] || touchState.left)  { dx -= 1; player.facingRight = false; }
-  if (keys["d"] || touchState.right) { dx += 1; player.facingRight = true; }
+  if (keys["w"] || touchState.up) { dy -= 1; player.lastDir = "up"; }
+  if (keys["s"] || touchState.down) { dy += 1; player.lastDir = "down"; }
+  if (keys["a"] || touchState.left)  { dx -= 1; player.facingRight = false; player.lastDir = "left"; }
+  if (keys["d"] || touchState.right) { dx += 1; player.facingRight = true; player.lastDir = "right"; }
 
   if (dx !== 0 || dy !== 0) {
     const mag = Math.hypot(dx, dy);
@@ -937,16 +937,21 @@ function performLightAttack() {
   player.animFrame = 0;
   player.animTimer = 0;
 
-  const right = player.facingRight;
+  const dir = player.lastDir || (player.facingRight ? "right" : "left");
+  const isVert = dir === "up" || dir === "down";
 
   lightAttack = {
     id: newID(),
-    x: player.x + (right ? player.width : -50),
-    y: player.y + player.height/2 - 15,
-    width: 50,
-    height: 30,
+    x: dir === "right" ? player.x + player.width :
+       dir === "left"  ? player.x - 50 :
+       player.x + player.width/2 - 15,
+    y: dir === "down"  ? player.y + player.height :
+       dir === "up"    ? player.y - 30 :
+       player.y + player.height/2 - 15,
+    width:  isVert ? 30 : 50,
+    height: isVert ? 30 : 30,
     damage: 8 + player.lightCombo * 2,
-    timeLeft: 0.12,   // seconds
+    timeLeft: 0.12,
     hit: new Set()
   };
 }
@@ -954,19 +959,24 @@ function performLightAttack() {
 function performHeavyAttack() {
   if (player.heavyCooldown > 0) return;
 
-  player.heavyCooldown = 1.0;   // seconds
+  player.heavyCooldown = 1.0;
   player.animState = "heavy";
   player.animFrame = 0;
   player.animTimer = 0;
 
-  const right = player.facingRight;
+  const dir = player.lastDir || (player.facingRight ? "right" : "left");
+  const isVert = dir === "up" || dir === "down";
 
   heavyAttack = {
     id: newID(),
-    x: player.x + (right ? player.width : -80),
-    y: player.y + player.height/2 - 20,
-    width: 80,
-    height: 40,
+    x: dir === "right" ? player.x + player.width :
+       dir === "left"  ? player.x - 80 :
+       player.x + player.width/2 - 20,
+    y: dir === "down"  ? player.y + player.height :
+       dir === "up"    ? player.y - 40 :
+       player.y + player.height/2 - 20,
+    width:  isVert ? 40 : 80,
+    height: isVert ? 40 : 40,
     damage: 18,
     knock: 15,
     timeLeft: 0.22,
@@ -980,16 +990,20 @@ function shootGun() {
   player.ammo--;
   
   if (shotgunMode && shotgunRoundsLeft > 0) {
-    // SHOTGUN MODE: 3-pellet spread
-    const baseVX = player.facingRight ? 400 : -400;
+    // SHOTGUN MODE: 3-pellet spread in last direction
+    const sdir = player.lastDir || (player.facingRight ? "right" : "left");
+    const baseVX = sdir === "right" ? 400 : sdir === "left" ? -400 : 0;
+    const baseVY = sdir === "down"  ? 400 : sdir === "up"   ? -400 : 0;
     const centerX = player.x + player.width / 2;
     const centerY = player.y + player.height / 2;
     
     // Create 3 pellets with spread
+    const baseSpd = Math.max(Math.abs(baseVX), Math.abs(baseVY));
     for (let i = 0; i < 3; i++) {
-      const spreadAngle = (i - 1) * 0.15; // -0.15, 0, +0.15 radians
-      const vx = baseVX * Math.cos(spreadAngle);
-      const vy = baseVX * Math.sin(spreadAngle);
+      const spreadAngle = (i - 1) * 0.15;
+      const angle = Math.atan2(baseVY, baseVX) + spreadAngle;
+      const vx = Math.cos(angle) * baseSpd;
+      const vy = Math.sin(angle) * baseSpd;
       
       bullets.push({
         id: newID(),
@@ -1013,13 +1027,17 @@ function shootGun() {
     triggerMuzzleFlash();
     
   } else {
-    // NORMAL MODE: single bullet
+    // NORMAL MODE: single bullet — fires in last movement direction
+    const dir = player.lastDir || (player.facingRight ? "right" : "left");
+    const spd = 400;
+    const bvx = dir === "right" ? spd : dir === "left" ? -spd : 0;
+    const bvy = dir === "down"  ? spd : dir === "up"   ? -spd : 0;
     bullets.push({
       id: newID(),
       x: player.x + player.width / 2,
       y: player.y + player.height / 2,
-      vx: player.facingRight ? 400 : -400,
-      vy: 0,
+      vx: bvx,
+      vy: bvy,
       size: 6,
       damage: 10
     });
@@ -2520,7 +2538,7 @@ let musicStarted = false;
 
 function initAudio() {
   if (!bgm) {
-    bgm = new Audio("https://files.catbox.moe/2js2el.ogg");
+    bgm = new Audio("audio/bgm.mp3");
     bgm.loop = true;
     bgm.volume = muted ? 0 : 0.35;
   }
