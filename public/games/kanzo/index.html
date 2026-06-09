@@ -40,13 +40,16 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
   touch-action: none;
   background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* DPR-aware pixel-perfect canvas */
@@ -58,6 +61,8 @@ html, body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   touch-action: none;
+  width: 100%;
+  height: auto;
 }
 
 /* START SCREEN */
@@ -637,10 +642,10 @@ document.addEventListener("keyup", e => {
 window.addEventListener("message", e => {
   if (e.data.type === "BUTTON_PRESS") {
     const btn = e.data.button;
-    if (btn === "dpad-up") keys["arrowup"] = true;
-    if (btn === "dpad-down") keys["arrowdown"] = true;
-    if (btn === "dpad-left") keys["arrowleft"] = true;
-    if (btn === "dpad-right") keys["arrowright"] = true;
+    if (btn === "dpad-up") keys["w"] = true;
+    if (btn === "dpad-down") keys["s"] = true;
+    if (btn === "dpad-left") keys["a"] = true;
+    if (btn === "dpad-right") keys["d"] = true;
     if (btn === "a") performLightAttack();
     if (btn === "b") performHeavyAttack();
     if (btn === "l") shootGun();
@@ -648,10 +653,10 @@ window.addEventListener("message", e => {
   }
   if (e.data.type === "BUTTON_RELEASE") {
     const btn = e.data.button;
-    if (btn === "dpad-up") keys["arrowup"] = false;
-    if (btn === "dpad-down") keys["arrowdown"] = false;
-    if (btn === "dpad-left") keys["arrowleft"] = false;
-    if (btn === "dpad-right") keys["arrowright"] = false;
+    if (btn === "dpad-up") keys["w"] = false;
+    if (btn === "dpad-down") keys["s"] = false;
+    if (btn === "dpad-left") keys["a"] = false;
+    if (btn === "dpad-right") keys["d"] = false;
   }
 });
 
