@@ -483,17 +483,21 @@ class Player{
     if(frame%4===0){[[-28,11],[28,11]].forEach(function(pos){if(Math.random()<0.6)this.sparks.push({x:pos[0],y:pos[1],vx:(Math.random()-0.5)*1.8,vy:-Math.random()*1.2-0.3,life:1,col:Math.random()<0.5?'#ff8800':'#ffff00'});},this);}
     this.sparks=this.sparks.filter(function(s){s.x+=s.vx;s.y+=s.vy;s.vy+=0.06;s.life-=0.08;return s.life>0;});
 
-    // Handle charge blast
+    // Handle charge blast - only charge if held for 200ms+
     if(inp.A_DOWN){
-      this.chargeHoldTime+=dt;this.isChargingBlast=true;
+      this.chargeHoldTime+=dt;
+      if(this.chargeHoldTime>=200){this.isChargingBlast=true;}
     }else if(this.isChargingBlast){
       if(this.cooldown<=0&&this.chargeHoldTime>=1000){
         const result=this.fireChargeBlast();this.chargeHoldTime=0;this.isChargingBlast=false;return result;
       }
       this.chargeHoldTime=0;this.isChargingBlast=false;
+    }else if(this.chargeHoldTime>0){
+      // Quick tap - fire normal shot
+      this.chargeHoldTime=0;if(inp.A===1&&this.cooldown<=0){inp.A=0;return this.shoot();}
     }
 
-    if(inp.A===1&&!this.isChargingBlast){inp.A=0;if(this.cooldown<=0)return this.shoot();}
+    if(inp.A===1&&!this.isChargingBlast&&this.chargeHoldTime===0){inp.A=0;if(this.cooldown<=0)return this.shoot();}
     return null;
   }
   shoot(){
