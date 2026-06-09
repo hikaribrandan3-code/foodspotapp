@@ -39,7 +39,13 @@ export default function MenuTab({
   const [actionCategoryId, setActionCategoryId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
+  const [dragPillId, setDragPillId] = useState(null);
+  const [dragOffsetX, setDragOffsetX] = useState(0);
+  const [dragTargetIndex, setDragTargetIndex] = useState(null);
   const longPressTimerRef = useRef(null);
+  const extraHoldTimerRef = useRef(null);
+  const dragStartX = useRef(null);
+  const isDragging = useRef(false);
   const actionModalRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
@@ -70,20 +76,64 @@ export default function MenuTab({
     }
   };
 
-  const handleCategoryPress = (categoryId, categoryName) => {
+  const handleCategoryPress = (categoryId, categoryName, e) => {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    dragStartX.current = clientX;
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    if (extraHoldTimerRef.current) clearTimeout(extraHoldTimerRef.current);
+
     longPressTimerRef.current = setTimeout(() => {
-      setActionCategoryId(categoryId);
-      setEditName(categoryName);
-      setIsEditing(false);
-    }, 1300);
+      // Stage 1 — 1800ms: activate drag mode
+      setDragPillId(categoryId);
+      isDragging.current = true;
+      if (navigator.vibrate) navigator.vibrate(50);
+
+      // Stage 2 — hold 1200ms more: cancel drag, open edit/delete popup
+      extraHoldTimerRef.current = setTimeout(() => {
+        setDragPillId(null);
+        isDragging.current = false;
+        setDragOffsetX(0);
+        setDragTargetIndex(null);
+        setActionCategoryId(categoryId);
+        setEditName(categoryName);
+        setIsEditing(false);
+        if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+      }, 1200);
+    }, 1800);
   };
 
-  const handleCategoryRelease = () => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
+  const handleDragMove = (e) => {
+    if (!isDragging.current || !dragPillId) return;
+    e.preventDefault();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const delta = clientX - dragStartX.current;
+    setDragOffsetX(delta);
+
+    const currentIndex = categories.findIndex(c => c.id === dragPillId);
+    if (delta < -40 && currentIndex > 0) {
+      setDragTargetIndex(currentIndex - 1);
+    } else if (delta > 40 && currentIndex < categories.length - 1) {
+      setDragTargetIndex(currentIndex + 1);
+    } else {
+      setDragTargetIndex(null);
     }
+  };
+
+  const handleDragEnd = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    if (extraHoldTimerRef.current) clearTimeout(extraHoldTimerRef.current);
+
+    if (isDragging.current && dragPillId && dragTargetIndex !== null) {
+      const currentIndex = categories.findIndex(c => c.id === dragPillId);
+      const direction = dragTargetIndex < currentIndex ? 'left' : 'right';
+      onMoveCategory(dragPillId, direction);
+      if (navigator.vibrate) navigator.vibrate(20);
+    }
+
+    setDragPillId(null);
+    setDragOffsetX(0);
+    setDragTargetIndex(null);
+    isDragging.current = false;
   };
 
   const handleEditCategory = () => {
@@ -91,16 +141,6 @@ export default function MenuTab({
     onEditCategory(actionCategoryId, editName.trim());
     setActionCategoryId(null);
     setIsEditing(false);
-  };
-
-  const handleMoveCategory = (direction) => {
-    const currentIndex = categories.findIndex(c => c.id === actionCategoryId);
-    if (currentIndex === -1) return;
-
-    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= categories.length) return;
-
-    onMoveCategory(actionCategoryId, direction);
   };
 
   const handleDeleteCategory = (categoryId, categoryName) => {
@@ -192,10 +232,11 @@ export default function MenuTab({
     };
   }, [actionCategoryId]);
 
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      if (extraHoldTimerRef.current) clearTimeout(extraHoldTimerRef.current);
     };
   }, []);
 
@@ -251,31 +292,46 @@ export default function MenuTab({
         >
           All Categories
         </button>
-        {categoryList && categoryList.map((cat) => (
-          <button
-            key={cat.id}
-            onMouseDown={() => handleCategoryPress(cat.id, cat.name)}
-            onMouseUp={handleCategoryRelease}
-            onMouseLeave={handleCategoryRelease}
-            onTouchStart={() => handleCategoryPress(cat.id, cat.name)}
-            onTouchEnd={handleCategoryRelease}
-            onContextMenu={(e) => e.preventDefault()}
-            onClick={() => {
-              if (actionCategoryId !== cat.id) {
-                setActionCategoryId(null);
-                onSelectCategory(cat.id);
-              }
-            }}
-            style={{ touchAction: 'manipulation' }}
-            className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all select-none ${
-              activeCategory === cat.id
-                ? 'bg-emerald-600 text-white shadow-lg'
-                : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
-            }`}
-          >
-            {cat.name} ({cat.count})
-          </button>
-        ))}
+        {categoryList && categoryList.map((cat, idx) => {
+          const isDraggingThis = dragPillId === cat.id;
+          const isSwapTarget = dragTargetIndex === idx;
+          return (
+            <button
+              key={cat.id}
+              onMouseDown={(e) => handleCategoryPress(cat.id, cat.name, e)}
+              onMouseUp={handleDragEnd}
+              onMouseLeave={handleDragEnd}
+              onMouseMove={handleDragMove}
+              onTouchStart={(e) => handleCategoryPress(cat.id, cat.name, e)}
+              onTouchEnd={handleDragEnd}
+              onTouchMove={handleDragMove}
+              onContextMenu={(e) => e.preventDefault()}
+              onClick={() => {
+                if (!isDragging.current && actionCategoryId !== cat.id) {
+                  setActionCategoryId(null);
+                  onSelectCategory(cat.id);
+                }
+              }}
+              style={{
+                touchAction: 'none',
+                transform: isDraggingThis ? `translateX(${dragOffsetX}px) scale(1.08)` : 'none',
+                transition: isDraggingThis ? 'none' : 'transform 0.2s ease',
+                zIndex: isDraggingThis ? 50 : 'auto',
+                boxShadow: isDraggingThis ? '0 4px 16px rgba(0,0,0,0.2)' : undefined,
+                border: isSwapTarget ? '2px dashed #10b981' : undefined,
+                opacity: isSwapTarget ? 0.6 : 1,
+                position: 'relative',
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap select-none ${
+                activeCategory === cat.id
+                  ? 'bg-emerald-600 text-white shadow-lg'
+                  : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
+              }`}
+            >
+              {cat.name} ({cat.count})
+            </button>
+          );
+        })}
         <button
           onClick={() => { setActionCategoryId(null); onAddCategory(); }}
           className="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap bg-white border border-dashed border-stone-300 text-stone-600 hover:bg-stone-50 transition-all"
@@ -319,22 +375,7 @@ export default function MenuTab({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => handleMoveCategory('left')}
-                  disabled={categories.findIndex(c => c.id === actionCategoryId) === 0}
-                  className="px-4 py-3 bg-emerald-50 text-emerald-600 font-black text-lg rounded-2xl border border-emerald-200 hover:bg-emerald-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => handleMoveCategory('right')}
-                  disabled={categories.findIndex(c => c.id === actionCategoryId) === categories.length - 1}
-                  className="px-4 py-3 bg-emerald-50 text-emerald-600 font-black text-lg rounded-2xl border border-emerald-200 hover:bg-emerald-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  →
-                </button>
-              </div>
+              <p className="text-center text-xs text-stone-400 font-medium">Hold &amp; drag pills to reorder</p>
 
               <div className="grid grid-cols-2 gap-3">
                 {isEditing ? (
