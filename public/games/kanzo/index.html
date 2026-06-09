@@ -555,9 +555,9 @@ html, body {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 
-/* Fixed logical resolution (top half of original game) */
+/* Fixed logical resolution */
 const LOGICAL_WIDTH  = 360;
-const LOGICAL_HEIGHT = 320;
+const LOGICAL_HEIGHT = 640;
 
 /* Dynamic physical resolution based on DPR */
 let dpr = window.devicePixelRatio || 1;
@@ -581,8 +581,7 @@ function resizeCanvas() {
   // Use cover scaling for iPad/tablets (fills screen), contain for phones (fits inside)
   const useFullscreen = isIPad && isTabletPortrait;
   
-  const gameH = window.innerHeight * 0.55;
-  const scale = Math.min(window.innerWidth / LOGICAL_WIDTH, gameH / LOGICAL_HEIGHT);
+  const scale = Math.min(window.innerWidth / LOGICAL_WIDTH, window.innerHeight / LOGICAL_HEIGHT);
   
   canvas.style.transform = `scale(${scale}) translateZ(0)`;
   canvas.style.transformOrigin = "top left";
@@ -632,6 +631,28 @@ document.addEventListener("keydown", e => {
 
 document.addEventListener("keyup", e => {
   keys[e.key.toLowerCase()] = false;
+});
+
+/* HikariBoy Arcade Controller Integration */
+window.addEventListener("message", e => {
+  if (e.data.type === "BUTTON_PRESS") {
+    const btn = e.data.button;
+    if (btn === "dpad-up") keys["arrowup"] = true;
+    if (btn === "dpad-down") keys["arrowdown"] = true;
+    if (btn === "dpad-left") keys["arrowleft"] = true;
+    if (btn === "dpad-right") keys["arrowright"] = true;
+    if (btn === "a") performLightAttack();
+    if (btn === "b") performHeavyAttack();
+    if (btn === "l") shootGun();
+    if (btn === "r") performWhirlwind();
+  }
+  if (e.data.type === "BUTTON_RELEASE") {
+    const btn = e.data.button;
+    if (btn === "dpad-up") keys["arrowup"] = false;
+    if (btn === "dpad-down") keys["arrowdown"] = false;
+    if (btn === "dpad-left") keys["arrowleft"] = false;
+    if (btn === "dpad-right") keys["arrowright"] = false;
+  }
 });
 
 /* Mobile touch input – fully upgraded in Base+ */
