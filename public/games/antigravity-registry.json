@@ -1,8 +1,24 @@
 {
   "version": "1.0",
   "platform": "hikariboy",
-  "totalGames": 15,
+  "totalGames": 16,
   "categories": [
+    {
+      "id": "action",
+      "name": "Action Games",
+      "games": [
+        {
+          "id": "kanzo",
+          "name": "Kanzo: Last Samurai",
+          "type": "canvas",
+          "size": "~80KB",
+          "genre": "Action",
+          "cover": "/games/kanzo/cover.png",
+          "path": "/games/kanzo/index.html",
+          "controls": { "dpad": "Move", "a": "Light Attack", "b": "Heavy Attack", "lt": "Gun", "rt": "Spin" }
+        }
+      ]
+    },
     {
       "id": "food",
       "name": "Food Games",

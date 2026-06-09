@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Kanzo – The Last Samurai (Base+)</title>
+
+<style>
+/* ============================================================
+   BASE+ VERSION – ULTRA-STABLE MOBILE-FIRST ENGINE
+   Improvements Included:
+   - DeltaTime timing system
+   - DPR-aware canvas scaling
+   - Fixed 360×640 locked game area
+   - No CSS scaling blur
+   - Optimized draw pipeline
+   - Fixed UI layering
+   - Clean input/controls
+   ============================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #1a1a1a;
+  touch-action: none;
+}
+
+#gameContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 55dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  touch-action: none;
+  background: #000;
+}
+
+/* DPR-aware pixel-perfect canvas */
+#gameCanvas {
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: #2d4a3e;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;
+}
+
+/* START SCREEN */
+#startScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: url("https://files.catbox.moe/hxb454.png") center/cover no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: opacity 0.25s ease-out;
+}
+
+@media (min-width: 769px) {
+  #startScreen {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #000;
+  }
+}
+
+#startScreen h1 {
+  font-size: 32px;
+  margin-bottom: 20px;
+  color: #ff4444;
+  text-shadow: 2px 2px 4px #000;
+}
+
+#startScreen p {
+  font-size: 18px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity:1; }
+  50% { opacity:0.5; }
+}
+
+/* HUD */
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  color: #fff;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-shadow: 1px 1px 2px #000;
+  font-family: 'Courier New', monospace;
+}
+
+.hud-left, .hud-right {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* HUD BUTTONS */
+.hud-buttons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  z-index: 25;
+}
+
+.hud-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+  user-select: none;
+  touch-action: none;
+}
+
+.hud-btn:active {
+  background: rgba(255,255,255,0.3);
+}
+
+/* CONTROLS */
+.controls {
+  position: absolute;
+  z-index: 20;
+  user-select: none;
+  touch-action: none;
+}
+
+/* DPAD - HIDDEN FOR ARCADE WRAPPER */
+#dpad {
+  display: none !important;
+}
+
+.dpad-btn {
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  touch-action: none;
+}
+
+#btnUp    { top: 0; left: 47px; }
+#btnDown  { bottom: 0; left: 47px; }
+#btnLeft  { top: 47px; left: 0; }
+#btnRight { top: 47px; right: 0; }
+
+/* ATTACK BUTTONS */
+#attackBtns {
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attack-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  touch-action: none;
+}
+
+/* MOBILE: Mirror D-Pad layout for attack buttons */
+@media (max-width: 768px) {
+  #attackBtns {
+    bottom: 20px;
+    right: 20px;
+    width: 161px;
+    height: 161px;
+    position: absolute;
+    display: block;
+    gap: 0;
+  }
+
+  .attack-btn {
+    position: absolute;
+    width: 51.75px;
+    height: 51.75px;
+  }
+
+  #btnLight {
+    top: 0;
+    left: 54.625px;
+  }
+
+  #btnHeavy {
+    top: 54.625px;
+    left: 0;
+  }
+
+  #btnGun {
+    top: 54.625px;
+    right: 0;
+  }
+
+  #btnWhirlwind {
+    bottom: 0;
+    left: 54.625px;
+  }
+}
+
+#btnLight     { background: rgba(255,200,100,0.3); }
+#btnHeavy     { background: rgba(255,100,100,0.3); }
+#btnGun       { background: rgba(100,150,255,0.3); }
+#btnWhirlwind { background: rgba(150,100,255,0.3); }
+
+.attack-btn:active { background: rgba(255,255,255,0.4); }
+
+/* Tablet/iPad specific viewport rules */
+@media (min-width: 768px) and (orientation: portrait) {
+  #gameContainer { 
+    width: 100vw;
+    height: 100dvh;
+  }
+  #gameCanvas {
+    max-width: none;
+    max-height: none;
+  }
+}
+
+/* ===== FOODSPOT ARCADE WRAPPER ===== */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0f;
+  margin: 0; padding: 0;
+}
+/* Hide original game controls */
+#dpad,
+#attackBtns,
+.dpad-btn,
+.attack-btn {
+  display: none !important;
+}
+/* Adjust HUD for smaller canvas */
+#hud {
+  font-size: 11px !important;
+}
+.hud-buttons {
+  top: 6px !important;
+  right: 6px !important;
+}
+.hud-btn {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 14px !important;
+}
+/* FoodSpot Arcade Controller */
+#fs-controller {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 45dvh;
+  background: #0d0d1a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  border-top: 2px solid #1a1a3e;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+/* D-PAD */
+#fs-dpad {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+}
+.fs-dpad-cross-v {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 44px;
+  height: 130px;
+  background: #1e1e3a;
+  border-radius: 6px;
+}
+.fs-dpad-cross-h {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 130px;
+  height: 44px;
+  background: #1e1e3a;
+  border-radius: 6px;
+}
+.fs-dpad-btn {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 18px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+.fs-dpad-btn:active, .fs-dpad-btn.pressed {
+  color: rgba(255,255,255,0.95);
+  background: rgba(255,255,255,0.15);
+}
+#fs-up    { top: 0;       left: 50%; transform: translateX(-50%); border-radius: 6px 6px 0 0; }
+#fs-down  { bottom: 0;    left: 50%; transform: translateX(-50%); border-radius: 0 0 6px 6px; }
+#fs-left  { top: 50%;     left: 0;   transform: translateY(-50%); border-radius: 6px 0 0 6px; }
+#fs-right { top: 50%;     right: 0;  transform: translateY(-50%); border-radius: 0 6px 6px 0; }
+/* CENTER LOGO */
+#fs-center-logo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+#fs-center-logo span {
+  color: rgba(255,255,255,0.15);
+  font-size: 9px;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+/* TRIGGERS */
+#fs-triggers {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.fs-trigger {
+  width: 72px;
+  height: 34px;
+  border-radius: 8px;
+  background: #1e1e3a;
+  border: 2px solid #2a2a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.05s;
+}
+.fs-trigger:active, .fs-trigger.pressed {
+  background: #3a3a6a;
+  border-color: #6a6aaa;
+  color: white;
+  transform: translateY(1px);
+}
+/* ACTION BUTTONS */
+#fs-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+#fs-buttons-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.fs-action-btn {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+  font-family: 'Arial Black', Arial, sans-serif;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.4);
+  transition: all 0.05s;
+  color: white;
+  -webkit-tap-highlight-color: transparent;
+}
+.fs-action-btn:active, .fs-action-btn.pressed {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.4);
+}
+#fs-btn-a {
+  background: #dc2626;
+  box-shadow: 0 6px 0 #7f1d1d, 0 8px 20px rgba(220,38,38,0.4);
+}
+#fs-btn-a:active, #fs-btn-a.pressed {
+  box-shadow: 0 2px 0 #7f1d1d, 0 4px 10px rgba(220,38,38,0.3);
+}
+#fs-btn-b {
+  background: #262626;
+  box-shadow: 0 6px 0 #111, 0 8px 16px rgba(0,0,0,0.5);
+  width: 54px;
+  height: 54px;
+  font-size: 18px;
+  margin-bottom: -8px;
+}
+#fs-btn-b:active, #fs-btn-b.pressed {
+  box-shadow: 0 2px 0 #111;
+}
+</style>
+</head>
+<body>
+
+<div id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- START SCREEN -->
+  <div id="startScreen">
+    <p>Tap to Start</p>
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div id="gameOverScreen" style="
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.78);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-family:'Courier New', monospace;
+    text-shadow:2px 2px 4px #000;
+    z-index:200;
+    display:none;
+  ">
+    <div style="font-size:50px; margin-bottom:20px; color:#ff4444;">
+      FALLEN SAMURAI
+    </div>
+    <div id="finalScore" style="
+      margin-bottom:35px;
+      font-size:22px;
+      opacity:0.9;
+    "></div>
+    <!-- The Japanese blessing -->
+    <div style="
+      font-size:28px;
+      margin-bottom:40px;
+      letter-spacing:3px;
+      opacity:0.85;
+    ">
+      神よ、日本を祝福し給え
+    </div>
+    <div id="restartBtn" style="
+      padding:14px 26px;
+      border:2px solid #fff;
+      border-radius:8px;
+      background:rgba(255,255,255,0.1);
+      font-size:20px;
+      cursor:pointer;
+    ">
+      Restart
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" style="display:none;">
+    <div class="hud-left">
+      <div>Wave: <span id="waveDisplay">1</span></div>
+      <div>Score: <span id="scoreDisplay">0</span></div>
+      <div>Ammo: <span id="ammoDisplay">30</span>/30</div>
+      <div>HP: <span id="hpDisplay">100</span></div>
+    </div>
+  </div>
+
+  <!-- HUD BUTTONS -->
+  <div class="hud-buttons" style="display:none;">
+    <div class="hud-btn" id="pauseBtn">⸠</div>
+    <div class="hud-btn" id="muteBtn">🔊</div>
+    <div class="hud-btn" id="resetBtn">↻</div>
+  </div>
+
+  <!-- DPAD -->
+  <div id="dpad" class="controls">
+    <div class="dpad-btn" id="btnUp">↑</div>
+    <div class="dpad-btn" id="btnDown">↓</div>
+    <div class="dpad-btn" id="btnLeft">←</div>
+    <div class="dpad-btn" id="btnRight">→</div>
+  </div>
+
+  <!-- ATTACK BUTTONS -->
+  <div id="attackBtns" class="controls">
+    <div class="attack-btn" id="btnLight">LIGHT</div>
+    <div class="attack-btn" id="btnHeavy">HEAVY</div>
+    <div class="attack-btn" id="btnGun">GUN</div>
+    <div class="attack-btn" id="btnWhirlwind">SPIN</div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   BASE+ ULTRA ENGINE SCRIPT
+   Part 1 – Initialization, Canvas Scaling, Global Systems
+   ============================================================ */
+
+/* ---------- DPR + CANVAS SETUP ---------- */
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d", { alpha: false });
+
+/* Fixed logical resolution (top half of original game) */
+const LOGICAL_WIDTH  = 360;
+const LOGICAL_HEIGHT = 320;
+
+/* Dynamic physical resolution based on DPR */
+let dpr = window.devicePixelRatio || 1;
+
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+
+  canvas.width = LOGICAL_WIDTH * dpr;
+  canvas.height = LOGICAL_HEIGHT * dpr;
+
+  canvas.style.width = LOGICAL_WIDTH + "px";
+  canvas.style.height = LOGICAL_HEIGHT + "px";
+
+  // Detect iPad (Safari reports desktop-class viewport)
+  const isIPad = navigator.userAgent.includes("iPad") || 
+                 (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  
+  // Detect if screen is tablet-sized and in portrait
+  const isTabletPortrait = window.innerWidth >= 768 && window.innerHeight > window.innerWidth;
+  
+  // Use cover scaling for iPad/tablets (fills screen), contain for phones (fits inside)
+  const useFullscreen = isIPad && isTabletPortrait;
+  
+  const gameH = window.innerHeight * 0.55;
+  const scale = Math.min(window.innerWidth / LOGICAL_WIDTH, gameH / LOGICAL_HEIGHT);
+  
+  canvas.style.transform = `scale(${scale}) translateZ(0)`;
+  canvas.style.transformOrigin = "top left";
+
+  ctx.scale(dpr, dpr);
+  ctx.imageSmoothingEnabled = false;
+}
+
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+/* ---------- GLOBAL GAME STATE ---------- */
+let gameState = "start";
+let isPaused = false;
+
+/* DeltaTime system */
+let lastFrameTime = performance.now();
+let delta = 1;  // normalized relative to 60fps (1 = perfect frame)
+
+/* ---------- INPUT SYSTEM (Fixed & Stable) ---------- */
+const keys = Object.create(null);
+const touchState = { up:false, down:false, left:false, right:false };
+
+/* Clean reset for all input */
+function resetInput() {
+  for (let k in keys) keys[k] = false;
+  touchState.up = touchState.down = touchState.left = touchState.right = false;
+}
+
+/* Keyboard */
+window.addEventListener("blur", resetInput);
+window.addEventListener("visibilitychange", () => {
+  if (document.hidden) resetInput();
+});
+
+document.addEventListener("keydown", e => {
+  keys[e.key.toLowerCase()] = true;
+});
+
+document.addEventListener("keyup", e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+/* Mobile touch input – fully upgraded in Base+ */
+function bindTouch(btnId, stateKey) {
+  const el = document.getElementById(btnId);
+
+  el.addEventListener("touchstart", e => {
+    e.preventDefault();
+    touchState[stateKey] = true;
+  }, { passive:false });
+
+  el.addEventListener("touchend", e => {
+    e.preventDefault();
+    touchState[stateKey] = false;
+  }, { passive:false });
+
+  el.addEventListener("touchcancel", () => {
+    touchState[stateKey] = false;
+  });
+}
+
+bindTouch("btnUp",    "up");
+bindTouch("btnDown",  "down");
+bindTouch("btnLeft",  "left");
+bindTouch("btnRight", "right");
+
+/* ---------- PLAYER OBJECT (Base+) ---------- */
+const player = {
+  x: LOGICAL_WIDTH/2 - 25,
+  y: LOGICAL_HEIGHT/2 - 25,
+  width: 50,
+  height: 50,
+  speed: 160,    // pixels per second (converted via delta)
+  hp: 100,
+  maxHp: 100,
+  facingRight: true,
+
+  /* Combat */
+  ammo: 30,
+  maxAmmo: 30,
+  reloadTime: 0,     // seconds, not frames
+  heavyCooldown: 0,
+  whirlCooldown: 0,
+  lightCombo: 0,
+  lastLightTime: 0,
+
+  /* Animation */
+  animState: "idle",
+  animFrame: 0,
+  animTimer: 0
+};
+
+/* ---------- ENEMY / BULLET POOLS (Base+) ---------- */
+const enemies = [];
+const bullets = [];
+
+/* Enemy types (unchanged gameplay stats) */
+const ENEMY_TYPES = {
+  zombie: { hp:21, speed:40, damage:2.5 },
+  ghost:  { hp:14, speed:55, damage:2.0 },
+  gorilla: { hp:425, speed:50, damage:25 }
+};
+
+/* ---------- ATTACK HITBOXES ---------- */
+let lightAttack = null;
+let heavyAttack = null;
+let whirlAttack = null;
+
+/* Unique ID generator for safe hit tracking */
+let UID = 1;
+function newID() { return UID++; }
+
+/* ---------- WAVE MANAGEMENT ---------- */
+let wave = 1;
+let score = 0;
+
+/* Spawn queue system for staggered enemy spawning */
+let spawnQueue = [];
+let spawnTimerGlobal = 0;
+let waveEnemyCount = 0;
+
+/* ---------- CHEST REWARD SYSTEM ---------- */
+let chestActive = false;
+let chest = null;
+
+/* Shotgun mode */
+let shotgunMode = false;
+let shotgunRoundsLeft = 0;
+
+/* Muzzle flash effect */
+let muzzleFlash = {
+  active: false,
+  x: 0,
+  y: 0,
+  timer: 0,
+  duration: 0.08
+};
+
+/* Spirit Slash buff */
+let spiritSlashActive = false;
+let spiritSlashTimer = 0;
+const spiritSlashProjectiles = [];
+
+/* Boss intro flags */
+let bossIntroActive = false;
+let bossIntroTimer = 0;
+
+/* Gorilla spawn counter for scaling */
+let gorillaSpawnCount = 0;
+
+
+
+/* Spawn enemies with ID (fixes splice/hit issues) */
+function spawnWave() {
+  // OPTION A: Legit Hard difficulty curve
+  const count = (() => {
+    if (wave < 5) return 5;                                 // early warm-up
+    if (wave < 10) return 8;                                // wave 5 → ~8 enemies
+    if (wave < 15) return 12;                               // wave 10 → ~12 enemies
+    if (wave < 20) return 16;                               // wave 15 → ~16 enemies
+    return 20;                                              // wave 20+ → ~20 enemies
+  })();
+  
+  spawnQueue = [];
+  
+  // normal enemy spawns
+  for (let i = 0; i < count; i++) {
+    spawnQueue.push("normal");
+  }
+  
+  // gorilla spawn rule remains untouched
+  if (wave % 7 === 0) {
+    spawnQueue.push("gorilla");
+  }
+  
+  waveEnemyCount = spawnQueue.length;
+  spawnTimerGlobal = 0;
+}
+
+/* Spawn individual enemies from queue */
+function spawnEnemy(type) {
+  let x, y;
+  const side = Math.floor(Math.random() * 4);
+  if (side === 0) { x = Math.random() * LOGICAL_WIDTH; y = -30; }
+  if (side === 1) { x = LOGICAL_WIDTH + 30; y = Math.random() * LOGICAL_HEIGHT; }
+  if (side === 2) { x = Math.random() * LOGICAL_WIDTH; y = LOGICAL_HEIGHT + 30; }
+  if (side === 3) { x = -30; y = Math.random() * LOGICAL_HEIGHT; }
+  
+  if (type === "gorilla") {
+    console.log("GORILLA SPAWN - Wave:", wave, "Count:", gorillaSpawnCount);
+    const tmpl = ENEMY_TYPES.gorilla;
+    
+    /* Balance patch: 20% damage nerf */
+    const balancedDamage = tmpl.damage * 0.8;
+    
+    /* Balance patch: 10% HP growth per appearance */
+    const balancedHP = tmpl.hp * (1 + (gorillaSpawnCount * 0.10));
+    
+    // Spawn at further distance for gorilla
+    if (side === 0) y = -70;
+    if (side === 1) x = LOGICAL_WIDTH + 70;
+    if (side === 2) y = LOGICAL_HEIGHT + 70;
+    if (side === 3) x = -70;
+    
+    enemies.push({
+      id: newID(),
+      type,
+      x, y,
+      width: 70,
+      height: 60,
+      hp: balancedHP,
+      maxHp: balancedHP,
+      speed: tmpl.speed,  // Keep speed unchanged
+      damage: balancedDamage,
+      attackCooldown: 0,
+      spawnTimer: 0.4,
+      animFrame: 0,
+      animTimer: 0,
+      gorillaState: 'walk',
+      slamCooldown: 4.0,
+      prepTimer: 0,
+      windedTimer: 0,
+      slamActive: false,
+      slamTimer: 0
+    });
+    
+    /* Increment spawn counter for scaling */
+    gorillaSpawnCount++;
+    
+    bossIntroActive = true;
+    bossIntroTimer = 1.6;
+    isPaused = true;
+    
+    console.log("Gorilla spawned! Total enemies:", enemies.length);
+  } else {
+    const speedMul = 1 + (wave - 1) * 0.05;
+    const tmpl = ENEMY_TYPES[type];
+    
+    enemies.push({
+      id: newID(),
+      type,
+      x, y,
+      width: 35,
+      height: 35,
+      hp: tmpl.hp,
+      maxHp: tmpl.hp,
+      speed: tmpl.speed * speedMul,
+      damage: tmpl.damage,
+      attackCooldown: 0,
+      spawnTimer: 0.4,
+      animFrame: 0,
+      animTimer: 0
+    });
+  }
+}
+
+/* ---------- HUD UPDATE (Base+) ---------- */
+function updateHUD() {
+  document.getElementById("waveDisplay").textContent = wave;
+  document.getElementById("scoreDisplay").textContent = score;
+  document.getElementById("hpDisplay").textContent = Math.max(0, Math.floor(player.hp));
+  document.getElementById("ammoDisplay").textContent = player.ammo;
+}
+
+/* ============================================================
+   PLAYER INPUT → MOVEMENT
+   (deltaTime normalized, diagonal corrected, no jitter)
+   ============================================================ */
+function updatePlayerMovement(dt) {
+  let dx = 0, dy = 0;
+
+  if (keys["w"] || touchState.up) dy -= 1;
+  if (keys["s"] || touchState.down) dy += 1;
+  if (keys["a"] || touchState.left)  { dx -= 1; player.facingRight = false; }
+  if (keys["d"] || touchState.right) { dx += 1; player.facingRight = true; }
+
+  if (dx !== 0 || dy !== 0) {
+    const mag = Math.hypot(dx, dy);
+    dx /= mag; dy /= mag;
+
+    player.x += dx * player.speed * dt;
+    player.y += dy * player.speed * dt;
+  }
+
+  /* Clamp to game area */
+  player.x = Math.max(0, Math.min(LOGICAL_WIDTH - player.width, player.x));
+  player.y = Math.max(0, Math.min(LOGICAL_HEIGHT - player.height, player.y));
+}
+
+/* ============================================================
+   COMBAT LOGIC (Base+ stable hitboxes + cooldowns)
+   ============================================================ */
+
+function performLightAttack() {
+  // Check for Spirit Slash buff
+  if (spiritSlashActive) {
+    fireSpiritSlashProjectile();
+    
+    player.animState = "light";
+    player.animFrame = 0;
+    player.animTimer = 0;
+    return;
+  }
+  
+  const now = performance.now();
+
+  /* reset combo after delay */
+  if (now - player.lastLightTime > 450) player.lightCombo = 0;
+
+  player.lightCombo++;
+  if (player.lightCombo > 3) player.lightCombo = 1;
+
+  player.lastLightTime = now;
+
+  player.animState = "light";
+  player.animFrame = 0;
+  player.animTimer = 0;
+
+  const right = player.facingRight;
+
+  lightAttack = {
+    id: newID(),
+    x: player.x + (right ? player.width : -50),
+    y: player.y + player.height/2 - 15,
+    width: 50,
+    height: 30,
+    damage: 8 + player.lightCombo * 2,
+    timeLeft: 0.12,   // seconds
+    hit: new Set()
+  };
+}
+
+function performHeavyAttack() {
+  if (player.heavyCooldown > 0) return;
+
+  player.heavyCooldown = 1.0;   // seconds
+  player.animState = "heavy";
+  player.animFrame = 0;
+  player.animTimer = 0;
+
+  const right = player.facingRight;
+
+  heavyAttack = {
+    id: newID(),
+    x: player.x + (right ? player.width : -80),
+    y: player.y + player.height/2 - 20,
+    width: 80,
+    height: 40,
+    damage: 18,
+    knock: 15,
+    timeLeft: 0.22,
+    hit: new Set()
+  };
+}
+
+function shootGun() {
+  if (player.ammo <= 0 || player.reloadTime > 0) return;
+  
+  player.ammo--;
+  
+  if (shotgunMode && shotgunRoundsLeft > 0) {
+    // SHOTGUN MODE: 3-pellet spread
+    const baseVX = player.facingRight ? 400 : -400;
+    const centerX = player.x + player.width / 2;
+    const centerY = player.y + player.height / 2;
+    
+    // Create 3 pellets with spread
+    for (let i = 0; i < 3; i++) {
+      const spreadAngle = (i - 1) * 0.15; // -0.15, 0, +0.15 radians
+      const vx = baseVX * Math.cos(spreadAngle);
+      const vy = baseVX * Math.sin(spreadAngle);
+      
+      bullets.push({
+        id: newID(),
+        x: centerX,
+        y: centerY,
+        vx: vx,
+        vy: vy,
+        size: 6,
+        damage: 10
+      });
+    }
+    
+    shotgunRoundsLeft--;
+    
+    // Deactivate shotgun mode when rounds depleted
+    if (shotgunRoundsLeft <= 0) {
+      shotgunMode = false;
+    }
+    
+    // Trigger muzzle flash
+    triggerMuzzleFlash();
+    
+  } else {
+    // NORMAL MODE: single bullet
+    bullets.push({
+      id: newID(),
+      x: player.x + player.width / 2,
+      y: player.y + player.height / 2,
+      vx: player.facingRight ? 400 : -400,
+      vy: 0,
+      size: 6,
+      damage: 10
+    });
+  }
+  
+  if (player.ammo === 0) startReload();
+}
+
+function startReload() {
+  if (player.reloadTime > 0 || player.ammo === player.maxAmmo) return;
+  player.reloadTime = 2.0; // seconds
+}
+
+function performWhirlwind() {
+  if (player.whirlCooldown > 0) return;
+  player.whirlCooldown = 4.5;
+
+  player.animState = "whirl";
+  player.animFrame = 0;
+  player.animTimer = 0;
+
+  whirlAttack = {
+    id: newID(),
+    x: player.x - 50,
+    y: player.y - 50,
+    width: 150,
+    height: 150,
+    timeLeft: 0.30,
+    damage: 30,
+    rotation: 0,
+    hit: new Set()
+  };
+}
+
+/* ============================================================
+   BULLET UPDATES (No tunneling, delta-based)
+   ============================================================ */
+function updateBullets(dt) {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+
+    /* remove offscreen */
+    if (
+      b.x < -30 || b.x > LOGICAL_WIDTH+30 ||
+      b.y < -30 || b.y > LOGICAL_HEIGHT+30
+    ) {
+      bullets.splice(i, 1);
+    }
+  }
+}
+
+/* ============================================================
+   ENEMY LOGIC (Movement + Cooldowns + DeltaTime)
+   ============================================================ */
+function updateEnemies(dt) {
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+
+    /* spawn delay */
+    if (e.spawnTimer > 0) {
+      e.spawnTimer -= dt;
+      continue;
+    }
+
+    /* animate */
+    e.animTimer += dt;
+    if (e.animTimer > 0.17) {
+      e.animTimer = 0;
+      e.animFrame = (e.animFrame + 1) % 2;
+    }
+
+    /* GORILLA BEHAVIOR */
+    if (e.type === 'gorilla') {
+      if (e.gorillaState === 'walk') {
+        /* Walk toward player */
+        const dx = player.x - e.x;
+        const dy = player.y - e.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 0) {
+          e.x += (dx / dist) * e.speed * dt;
+          e.y += (dy / dist) * e.speed * dt;
+        }
+
+        /* Countdown slam cooldown */
+        e.slamCooldown -= dt;
+        if (e.slamCooldown <= 0) {
+          e.gorillaState = 'slamPrep';
+          e.prepTimer = 0.35;
+        }
+
+        /* Normal contact damage */
+        if (e.attackCooldown <= 0 && aabb(e, player)) {
+          e.attackCooldown = 1.0;
+          applyPlayerDamage(e.damage);
+        }
+      } else if (e.gorillaState === 'slamPrep') {
+        /* Stop moving, flash red */
+        e.prepTimer -= dt;
+        if (e.prepTimer <= 0) {
+          e.gorillaState = 'slam';
+          e.slamActive = true;
+          e.slamTimer = 0.15;
+          
+          /* Execute slam damage */
+          const gorillaCenter = {
+            x: e.x + e.width / 2,
+            y: e.y + e.height / 2
+          };
+          const playerCenter = {
+            x: player.x + player.width / 2,
+            y: player.y + player.height / 2
+          };
+          
+          /* Check player distance */
+          const playerDist = Math.hypot(
+            gorillaCenter.x - playerCenter.x,
+            gorillaCenter.y - playerCenter.y
+          );
+          
+          if (playerDist <= 75) {
+            applyPlayerDamage(50);
+          }
+          
+          /* Damage other enemies in radius */
+          for (let j = enemies.length - 1; j >= 0; j--) {
+            const other = enemies[j];
+            if (other.id === e.id) continue;
+            
+            const otherCenter = {
+              x: other.x + other.width / 2,
+              y: other.y + other.height / 2
+            };
+            
+            const otherDist = Math.hypot(
+              gorillaCenter.x - otherCenter.x,
+              gorillaCenter.y - otherCenter.y
+            );
+            
+            if (otherDist <= 75) {
+              other.hp -= 25;
+              if (other.hp <= 0) {
+                enemies.splice(j, 1);
+                score++;
+                if (j < i) i--;
+              }
+            }
+          }
+          
+          e.windedTimer = 0.6;
+        }
+      } else if (e.gorillaState === 'slam') {
+        /* Slam animation */
+        e.slamTimer -= dt;
+        if (e.slamTimer <= 0) {
+          e.slamActive = false;
+        }
+        
+        /* Winded period */
+        e.windedTimer -= dt;
+        if (e.windedTimer <= 0) {
+          e.gorillaState = 'walk';
+          e.slamCooldown = 4.0;
+        }
+      }
+      
+      if (e.attackCooldown > 0) e.attackCooldown -= dt;
+      continue;
+    }
+
+    /* NORMAL ENEMY BEHAVIOR (zombie/ghost) */
+    /* move toward player */
+    const dx = player.x - e.x;
+    const dy = player.y - e.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist > 0) {
+      e.x += (dx / dist) * e.speed * dt;
+      e.y += (dy / dist) * e.speed * dt;
+    }
+
+    /* collisions with player */
+    if (e.attackCooldown <= 0 && aabb(e, player)) {
+      e.attackCooldown = 1.0; // seconds
+      applyPlayerDamage(e.damage);
+    }
+
+    if (e.attackCooldown > 0) e.attackCooldown -= dt;
+  }
+}
+
+/* ============================================================
+   HITBOX COLLISION SYSTEM (Base+)
+   ============================================================ */
+
+function aabb(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  );
+}
+
+/* Attack collision handler */
+function handleAttackHitbox(box, dt) {
+  if (!box) return null;
+
+  box.timeLeft -= dt;
+  if (box.timeLeft <= 0) return null;
+
+  /* track box to player for WHIRLWIND */
+  if (box === whirlAttack) {
+    whirlAttack.x = player.x - 50;
+    whirlAttack.y = player.y - 50;
+    whirlAttack.rotation += 420 * dt; // consistent spinning
+  }
+
+  /* check collision vs enemies */
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+
+    if (box.hit.has(e.id)) continue;
+
+    if (aabb(e, box)) {
+      e.hp -= box.damage;
+      box.hit.add(e.id);
+
+      /* knockback for heavy / whirl */
+      if (box.knock || box === whirlAttack) {
+        const dx = e.x - player.x;
+        const dy = e.y - player.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const force = box.knock || 25;
+
+        e.x += (dx / dist) * force;
+        e.y += (dy / dist) * force;
+      }
+
+      if (e.hp <= 0) {
+        enemies.splice(i, 1);
+        score++;
+      }
+    }
+  }
+
+  return box;
+}
+
+/* ============================================================
+   PART 3 – Bullet → Enemy Collisions, Rendering System,
+   Game Loop, Audio, Game State, Full Reset
+   ============================================================ */
+
+/* ============================================================
+   BULLET COLLISIONS (DeltaTime + Safe ID Tracking)
+   ============================================================ */
+   function handleBulletCollisions() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+
+    /* Check vs enemies */
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+
+      if (
+        b.x > e.x && b.x < e.x + e.width &&
+        b.y > e.y && b.y < e.y + e.height
+      ) {
+        e.hp -= b.damage;
+
+        /* Remove bullet */
+        bullets.splice(i, 1);
+
+        if (e.hp <= 0) {
+          enemies.splice(j, 1);
+          score++;
+        }
+
+        break;
+      }
+    }
+  }
+}
+
+/* ============================================================
+   CHEST REWARD SYSTEM
+   ============================================================ */
+
+function spawnChest() {
+  const margin = 40;
+  const x = margin + Math.random() * (LOGICAL_WIDTH - margin * 2);
+  const y = margin + Math.random() * (LOGICAL_HEIGHT - margin * 2);
+  
+  chest = {
+    x: x,
+    y: y,
+    width: 30,
+    height: 25,
+    timer: 10.0,
+    bobTimer: 0,
+    bobFrame: 0
+  };
+  
+  chestActive = true;
+}
+
+function updateChest(dt) {
+  if (!chest) return;
+  
+  chest.timer -= dt;
+  
+  if (chest.timer <= 0) {
+    chestActive = false;
+    chest = null;
+    return;
+  }
+  
+  chest.bobTimer += dt;
+  if (chest.bobTimer > 0.3) {
+    chest.bobTimer = 0;
+    chest.bobFrame = (chest.bobFrame + 1) % 2;
+  }
+  
+  if (aabb(chest, player)) {
+    giveReward();
+    chestActive = false;
+    chest = null;
+  }
+}
+
+function giveReward() {
+  const rewards = ['heal', 'shotgun', 'spiritSlash'];
+  const reward = rewards[Math.floor(Math.random() * rewards.length)];
+  
+  if (reward === 'heal') {
+    player.hp = Math.min(player.maxHp, player.hp + 25);
+  } else if (reward === 'shotgun') {
+    shotgunMode = true;
+    shotgunRoundsLeft = 5;
+  } else if (reward === 'spiritSlash') {
+    spiritSlashActive = true;
+    spiritSlashTimer = 10.0;
+  }
+  
+  updateHUD();
+}
+
+function drawChest() {
+  if (!chest) return;
+  
+  const x = chest.x;
+  const y = chest.y;
+  const bob = chest.bobFrame === 0 ? 0 : -2;
+  
+  ctx.fillStyle = "#8b6914";
+  ctx.fillRect(x, y + 10 + bob, 30, 15);
+  
+  ctx.fillStyle = "#b8860b";
+  ctx.fillRect(x, y + 5 + bob, 30, 8);
+  
+  ctx.fillStyle = "#ffd700";
+  ctx.fillRect(x + 12, y + 12 + bob, 6, 6);
+  
+  ctx.fillStyle = "#daa520";
+  ctx.fillRect(x + 2, y + 7 + bob, 26, 3);
+  
+  const timePercent = chest.timer / 10.0;
+  const barWidth = 30;
+  const barColor = timePercent > 0.3 ? "#4ecf4e" : "#ff4444";
+  
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x, y - 6, barWidth, 4);
+  ctx.fillStyle = barColor;
+  ctx.fillRect(x, y - 6, barWidth * timePercent, 4);
+  
+  if (timePercent <= 0.3 && Math.floor(chest.timer * 4) % 2 === 0) {
+    ctx.fillStyle = "rgba(255, 68, 68, 0.3)";
+    ctx.fillRect(x - 5, y - 5 + bob, 40, 35);
+  }
+}
+
+/* ============================================================
+   MUZZLE FLASH SYSTEM
+   ============================================================ */
+
+function triggerMuzzleFlash() {
+  const offsetX = player.facingRight ? player.width + 10 : -20;
+  
+  muzzleFlash.active = true;
+  muzzleFlash.x = player.x + offsetX;
+  muzzleFlash.y = player.y + player.height / 2;
+  muzzleFlash.timer = muzzleFlash.duration;
+}
+
+function updateMuzzleFlash(dt) {
+  if (!muzzleFlash.active) return;
+  
+  muzzleFlash.timer -= dt;
+  
+  if (muzzleFlash.timer <= 0) {
+    muzzleFlash.active = false;
+  }
+}
+
+function drawMuzzleFlash() {
+  if (!muzzleFlash.active) return;
+  
+  const x = muzzleFlash.x;
+  const y = muzzleFlash.y;
+  const alpha = muzzleFlash.timer / muzzleFlash.duration;
+  
+  ctx.fillStyle = `rgba(255, 255, 200, ${alpha})`;
+  ctx.fillRect(x - 6, y - 6, 12, 12);
+  
+  ctx.fillStyle = `rgba(255, 200, 100, ${alpha * 0.6})`;
+  ctx.fillRect(x - 10, y - 10, 20, 20);
+  
+  ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+  ctx.fillRect(x + 8, y - 2, 4, 4);
+  ctx.fillRect(x - 12, y + 3, 3, 3);
+  ctx.fillRect(x + 6, y + 6, 3, 3);
+}
+
+/* ============================================================
+   SPIRIT SLASH SYSTEM
+   ============================================================ */
+
+function updateSpiritSlash(dt) {
+  if (!spiritSlashActive) return;
+  
+  spiritSlashTimer -= dt;
+  
+  if (spiritSlashTimer <= 0) {
+    spiritSlashActive = false;
+    spiritSlashTimer = 0;
+  }
+}
+
+function fireSpiritSlashProjectile() {
+  const direction = player.facingRight ? 1 : -1;
+  
+  spiritSlashProjectiles.push({
+    id: newID(),
+    x: player.x + player.width / 2,
+    y: player.y + player.height / 2,
+    vx: direction * 350,
+    vy: 0,
+    size: 40,
+    damage: 45,
+    rotation: 0,
+    hit: new Set()
+  });
+  
+  // Deactivate Spirit Slash after firing
+  spiritSlashActive = false;
+  spiritSlashTimer = 0;
+}
+
+function updateSpiritSlashProjectiles(dt) {
+  for (let i = spiritSlashProjectiles.length - 1; i >= 0; i--) {
+    const proj = spiritSlashProjectiles[i];
+    
+    proj.x += proj.vx * dt;
+    proj.y += proj.vy * dt;
+    proj.rotation += 10 * dt;
+    
+    // Remove offscreen
+    if (
+      proj.x < -50 || proj.x > LOGICAL_WIDTH + 50 ||
+      proj.y < -50 || proj.y > LOGICAL_HEIGHT + 50
+    ) {
+      spiritSlashProjectiles.splice(i, 1);
+      continue;
+    }
+    
+    // Check collision with enemies
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+      
+      if (proj.hit.has(e.id)) continue;
+      
+      const dx = proj.x - (e.x + e.width / 2);
+      const dy = proj.y - (e.y + e.height / 2);
+      const dist = Math.hypot(dx, dy);
+      
+      if (dist < proj.size / 2 + e.width / 2) {
+        e.hp -= proj.damage;
+        proj.hit.add(e.id);
+        
+        if (e.hp <= 0) {
+          enemies.splice(j, 1);
+          score++;
+        }
+      }
+    }
+  }
+}
+
+function drawSpiritSlashProjectiles() {
+  for (const proj of spiritSlashProjectiles) {
+    ctx.save();
+    ctx.translate(proj.x, proj.y);
+    ctx.rotate(proj.rotation);
+    
+    // Outer glow
+    ctx.fillStyle = "rgba(100, 200, 255, 0.4)";
+    ctx.fillRect(-proj.size / 2 - 4, -proj.size / 2 - 4, proj.size + 8, proj.size + 8);
+    
+    // Main energy blade
+    ctx.fillStyle = "rgba(150, 220, 255, 0.9)";
+    ctx.fillRect(-proj.size / 2, -proj.size / 2, proj.size, proj.size);
+    
+    // Core
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillRect(-proj.size / 4, -proj.size / 4, proj.size / 2, proj.size / 2);
+    
+    // Edge highlights
+    ctx.fillStyle = "rgba(200, 240, 255, 0.7)";
+    ctx.fillRect(-proj.size / 2, -proj.size / 2, proj.size, 4);
+    ctx.fillRect(-proj.size / 2, -proj.size / 2, 4, proj.size);
+    
+    ctx.restore();
+  }
+}
+
+/* ============================================================
+   DAMAGE HANDLING
+   ============================================================ */
+
+function applyPlayerDamage(amount) {
+  player.hp -= amount;
+  if (player.hp <= 0) {
+    gameOver();
+  }
+}
+
+/* ============================================================
+   RENDERING – Background, Player, Enemies, Effects
+   ============================================================ */
+
+/* Load background (same image) */
+const gameplayMap = new Image();
+gameplayMap.src = "https://i.imgur.com/scBTuSI.png";
+let bgReady = false;
+gameplayMap.onload = () => bgReady = true;
+
+/* ---------- DRAW PLAYER (same visuals, Base+ safe) ---------- */
+function drawPlayer() {
+  const x = player.x;
+  const y = player.y;
+
+  /* Spirit Slash glow effect */
+  if (spiritSlashActive) {
+    const pulse = Math.sin(Date.now() / 100) * 0.2 + 0.8;
+    ctx.fillStyle = `rgba(100, 200, 255, ${0.3 * pulse})`;
+    ctx.fillRect(x - 4, y - 4, player.width + 8, player.height + 8);
+    
+    ctx.fillStyle = `rgba(150, 220, 255, ${0.5 * pulse})`;
+    ctx.fillRect(x - 2, y - 2, player.width + 4, player.height + 4);
+  }
+
+  // ===========================================================
+  // 1. WIDER, GROUNDED SAMURAI STANCE (safe inside hitbox)
+  // ===========================================================
+  const leftLegX = x + 10;     // moved 2px inward (visual only)
+  const rightLegX = x + 30;    // moved 2px outward (visual only)
+
+  // ===========================================================
+  // 2. BROADER SHOULDERS + SHARPER SAMURAI TORSO
+  // ===========================================================
+  // Shoulder blocks (wider, stronger)
+  ctx.fillStyle = "#8b4513";
+  ctx.fillRect(x + 6, y + 15, 14, 6);   // left shoulder
+  ctx.fillRect(x + 30, y + 15, 14, 6);  // right shoulder
+
+  // Shoulders highlight
+  ctx.fillStyle = "#b67a40";
+  ctx.fillRect(x + 8, y + 15, 10, 2);
+  ctx.fillRect(x + 32, y + 15, 10, 2);
+
+  // ===========================================================
+  // 3. ARMOR: DARKER SHADOW + STRONGER HIGHLIGHTS
+  // ===========================================================
+  // Base chest plate
+  ctx.fillStyle = "#c62828";
+  ctx.fillRect(x + 10, y + 21, 30, 20);
+
+  // Deeper shadows (gives depth)
+  ctx.fillStyle = "#921a1a";
+  ctx.fillRect(x + 10, y + 21, 30, 3);
+  ctx.fillRect(x + 10, y + 36, 30, 3);
+
+  // Highlight strip on armor
+  ctx.fillStyle = "#ff6b6b";
+  ctx.fillRect(x + 12, y + 25, 26, 2);
+
+  // ===========================================================
+  // 4. DEFINED BICEPS (visual thickness + shading)
+  // ===========================================================
+  ctx.fillStyle = "#ffcc99";
+  ctx.fillRect(x + 8, y + 22, 7, 12);       // left arm
+  ctx.fillRect(x + 33, y + 22, 7, 12);      // right arm
+
+  // Arm shadows (shape + muscle definition)
+  ctx.fillStyle = "#e6b88a";
+  ctx.fillRect(x + 9, y + 22, 5, 3);
+  ctx.fillRect(x + 34, y + 22, 5, 3);
+
+  // ==========================================
+  // SAMURAI STRAW HAT (KASA) — VISUAL ONLY
+  // ==========================================
+  // Hat brim (wide, flat)
+  ctx.fillStyle = "#b38b45";   // straw color
+  ctx.fillRect(x + 8, y + 4, 38, 4);   // wide brim
+  // Hat top (dome)
+  ctx.fillStyle = "#a1793a";
+  ctx.fillRect(x + 14, y + 1, 26, 4);
+  // Highlight strip (gives dome shape)
+  ctx.fillStyle = "#d8b76a";
+  ctx.fillRect(x + 16, y + 2, 22, 1);
+  // Shadow under brim (adds depth)
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillRect(x + 8, y + 8, 38, 2);
+
+  // ===========================================================
+  // 5. HEAD + CLEANED JAWLINE
+  // ===========================================================
+  ctx.fillStyle = "#ffcc99";
+  ctx.fillRect(x + 14, y + 9, 26, 12);
+
+  // Eyes
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x + 17, y + 13, 4, 3);
+  ctx.fillRect(x + 29, y + 13, 4, 3);
+
+  // Jawline enhancement
+  ctx.fillStyle = "#e6b88a";
+  ctx.fillRect(x + 14, y + 18, 26, 2);   // slightly darker chin
+
+  // ===========================================================
+  // 6. LOWER BODY (firmer stance shading)
+  // ===========================================================
+  ctx.fillStyle = "#b71c1c";
+  ctx.fillRect(x + 12, y + 41, 12, 9);
+  ctx.fillRect(x + 26, y + 41, 12, 9);
+
+  ctx.fillStyle = "#8a1414";
+  ctx.fillRect(x + 12, y + 41, 12, 3);
+  ctx.fillRect(x + 26, y + 41, 12, 3);
+
+  // ===========================================================
+  // 7. LEGS + BOOTS
+  // ===========================================================
+  ctx.fillStyle = "#5a3a20";
+  ctx.fillRect(leftLegX, y + 47, 10, 4);
+  ctx.fillRect(rightLegX, y + 47, 10, 4);
+
+  ctx.fillStyle = "#3a2412";
+  ctx.fillRect(leftLegX, y + 51, 10, 4);
+  ctx.fillRect(rightLegX, y + 51, 10, 4);
+
+  /* Sword animations */
+  if (player.animState === "light") {
+  if (player.facingRight) {
+      if (player.animFrame === 0) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+42, y+13, 26, 7.5);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+43, y+14, 23, 1.5);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+43, y+18, 23, 1.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+63, y+15, 3, 1.5);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+40, y+12, 3.75, 8.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+35, y+14, 7.5, 3.75);
+      }
+      else if (player.animFrame === 1) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+42, y+23, 42, 8.5);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+43, y+24, 39, 2.5);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+43, y+28, 39, 1.5);
+        ctx.fillStyle = "rgba(255, 255, 100, 0.6)"; ctx.fillRect(x+58, y+22, 20, 11); 
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.fillRect(x+64, y+24, 11, 5.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+45, y+25, 3, 1.5);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+40, y+22, 3.75, 10);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+35, y+24, 7.5, 5);
+      }
+      else { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+42, y+30, 31, 7.5);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+43, y+31, 28, 1.5);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+43, y+35, 28, 1.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+67, y+32, 3, 1.5);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+40, y+29, 3.75, 8.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+35, y+31, 7.5, 3.75);
+      }
+  } else {
+      if (player.animFrame === 0) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x-12, y+13, 26, 7.5);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x-11, y+14, 23, 1.5);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x-11, y+18, 23, 1.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x-10, y+15, 3, 1.5);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+7, y+12, 3.75, 8.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+9, y+14, 7.5, 3.75);
+      }
+      else if (player.animFrame === 1) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x-34, y+23, 42, 8.5);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x-33, y+24, 39, 2.5);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x-33, y+28, 39, 1.5);
+        ctx.fillStyle = "rgba(255, 255, 100, 0.6)"; ctx.fillRect(x-42, y+22, 20, 11);
+        ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.fillRect(x-40, y+24, 11, 5.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x-4, y+25, 3, 1.5);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+7, y+22, 3.75, 10);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+9, y+24, 7.5, 5);
+      }
+      else { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x-17, y+30, 31, 7.5);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x-16, y+31, 28, 1.5);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x-16, y+35, 28, 1.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x-14, y+32, 3, 1.5);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+7, y+29, 3.75, 8.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+9, y+31, 7.5, 3.75);
+      }
+    }
+  } else if (player.animState === "heavy") {
+    if (player.facingRight) {
+      if (player.animFrame === 0) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+43, y+2, 7.5, 31);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+44, y+3, 3, 28);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+47.5, y+3, 1.5, 28);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+44.5, y+5, 2, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+41, y+23, 10, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+43, y+25, 5, 10);
+      }
+      else if (player.animFrame === 1) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+20, y-8, 7.5, 35);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+21, y-7, 3, 32);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+24.5, y-7, 1.5, 32);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+21.5, y-5, 2, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+18, y+16, 10, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+20, y+18, 5, 10);
+      }
+      else if (player.animFrame === 2) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+33, y+8, 7.5, 31);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+34, y+9, 3, 28);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+37.5, y+9, 1.5, 28);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+34.5, y+11, 2, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+31, y+29, 10, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+33, y+31, 5, 8.75);
+      }
+      else { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+43, y+28, 7.5, 28);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+44, y+29, 3, 25);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+47.5, y+29, 1.5, 25);
+        ctx.fillStyle = "#ff8800"; ctx.fillRect(x+40, y+45, 19, 14);
+        ctx.fillStyle = "#ffdd00"; ctx.fillRect(x+42, y+47, 14, 9);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+44, y+49, 9, 4.5);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+44.5, y+31, 2, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+41, y+47, 10, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+43, y+23, 5, 7.5);
+      }
+    } else {
+      if (player.animFrame === 0) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x, y, 12, 39);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+1, y+1, 6, 36);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+7, y+1, 1.5, 36);
+        ctx.fillStyle = "#e8e8e8"; ctx.fillRect(x+2, y, 6, 3);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+2, y+4, 3, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x-1, y+28, 12.5, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+1, y+30, 7.5, 12.5);
+      }
+      else if (player.animFrame === 1) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+23, y-13, 12, 46);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+24, y-12, 6, 43);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+30, y-12, 1.5, 43);
+        ctx.fillStyle = "#e8e8e8"; ctx.fillRect(x+25, y-13, 6, 3);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+25, y-10, 3, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+22, y+20, 12.5, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+24, y+22, 7.5, 12.5);
+      }
+      else if (player.animFrame === 2) { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x+10, y+5, 12, 39);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+11, y+6, 6, 36);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+17, y+6, 1.5, 36);
+        ctx.fillStyle = "#e8e8e8"; ctx.fillRect(x+12, y+5, 6, 3);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+12, y+9, 3, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x+9, y+33, 12.5, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+11, y+35, 7.5, 11.25);
+      }
+      else { 
+        ctx.fillStyle = "#c0c0c0"; ctx.fillRect(x, y+24, 12, 33);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x+1, y+25, 6, 30);
+        ctx.fillStyle = "#606060"; ctx.fillRect(x+7, y+25, 1.5, 30);
+        ctx.fillStyle = "#e8e8e8"; ctx.fillRect(x+2, y+46, 6, 3);
+        ctx.fillStyle = "#ff8800"; ctx.fillRect(x-7, y+44, 25, 17);
+        ctx.fillStyle = "#ffdd00"; ctx.fillRect(x-5, y+46, 20, 11);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(x-3, y+48, 14, 6);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(x+2, y+27, 3, 3);
+        ctx.fillStyle = "#ffd700"; ctx.fillRect(x-1, y+48, 12.5, 3.75);
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(x+1, y+19, 7.5, 10);
+      }
+    }
+  } else if (player.animState === "whirl") {
+    const spinAngle = player.animFrame * 24;
+    for (let i = 0; i < 4; i++) {
+      const angle = (spinAngle + i * 90) * Math.PI / 180;
+      const swordX = x + 25 + Math.cos(angle) * 35;
+      const swordY = y + 25 + Math.sin(angle) * 35;
+      ctx.fillStyle = "#c0c0c0";
+      if (i % 2 === 0) {
+        ctx.fillRect(swordX - 3, swordY - 17, 6, 34);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(swordX - 1.5, swordY - 14, 3, 28);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(swordX - 1, swordY - 12, 2, 3);
+      } else {
+        ctx.fillRect(swordX - 17, swordY - 3, 34, 6);
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(swordX - 14, swordY - 1.5, 28, 3);
+        ctx.fillStyle = "#d3d3d3"; ctx.fillRect(swordX - 12, swordY - 1, 3, 2);
+      }
+      ctx.fillStyle = "#ffd700";
+      ctx.fillRect(swordX - 3.75, swordY - 3.75, 7.5, 7.5);
+    }
+  } else {
+    // ===========================================================
+    // 8. IMPROVED SWORD ANGLE (visual-only, safe)
+    // ===========================================================
+    if (player.facingRight) {
+
+      // Blade (slightly angled upward)
+      ctx.fillStyle = "#c0c0c0";
+      ctx.fillRect(x + 38, y + 20, 44, 9);
+
+      // Shine
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x + 39, y + 21, 41, 2.5);
+
+      // Edge shadow
+      ctx.fillStyle = "#707070";
+      ctx.fillRect(x + 39, y + 26, 41, 1.8);
+
+      // Guard + Handle
+      ctx.fillStyle = "#ffd700";
+      ctx.fillRect(x + 34, y + 20, 4, 9);
+      ctx.fillStyle = "#8b4513";
+      ctx.fillRect(x + 27, y + 22, 9, 5);
+
+    } else {
+
+      // Blade (mirror)
+      ctx.fillStyle = "#c0c0c0";
+      ctx.fillRect(x - 18, y + 20, 44, 9);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - 17, y + 21, 41, 2.5);
+
+      ctx.fillStyle = "#707070";
+      ctx.fillRect(x - 17, y + 26, 41, 1.8);
+
+      // Guard + Handle
+      ctx.fillStyle = "#ffd700";
+      ctx.fillRect(x + 8, y + 20, 4, 9);
+      ctx.fillStyle = "#8b4513";
+      ctx.fillRect(x + 10, y + 22, 9, 5);
+    }
+  }
+}
+
+/* ============================================================
+   REDESIGNED ENEMY SPRITES - REALISTIC PIXEL ART
+   ============================================================ */
+
+/* ---------- DRAW ZOMBIE - REALISTIC UNDEAD ---------- */
+function drawZombie(e) {
+  const x = e.x;
+  const y = e.y;
+  const bob = e.animFrame === 0 ? 0 : 2;
+  
+  /* Shadow */
+  ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+  ctx.fillRect(x + 4, y + 33 + bob, 27, 3);
+  
+  /* === LEGS === */
+  /* Tattered pants - dark blue */
+  ctx.fillStyle = "#1a2a3a";
+  ctx.fillRect(x + 11, y + 24 + bob, 6, 10);
+  ctx.fillRect(x + 19, y + 24 + bob, 6, 10);
+  
+  /* Pants highlights */
+  ctx.fillStyle = "#2a3a4a";
+  ctx.fillRect(x + 11, y + 24 + bob, 5, 2);
+  ctx.fillRect(x + 19, y + 24 + bob, 5, 2);
+  
+  /* Exposed shin bones */
+  ctx.fillStyle = "#d4d0c8";
+  ctx.fillRect(x + 12, y + 28 + bob, 3, 4);
+  ctx.fillRect(x + 21, y + 28 + bob, 3, 4);
+  
+  /* Bone highlights */
+  ctx.fillStyle = "#e8e4dc";
+  ctx.fillRect(x + 12, y + 28 + bob, 2, 1);
+  ctx.fillRect(x + 21, y + 28 + bob, 2, 1);
+  
+  /* Rotted feet */
+  ctx.fillStyle = "#3d5c4a";
+  ctx.fillRect(x + 10, y + 32 + bob, 7, 3);
+  ctx.fillRect(x + 19, y + 32 + bob, 7, 3);
+  
+  /* === TORSO === */
+  /* Torn shirt - dirty gray */
+  ctx.fillStyle = "#4a524a";
+  ctx.fillRect(x + 8, y + 14 + bob, 20, 11);
+  
+  /* Shirt shading */
+  ctx.fillStyle = "#5a625a";
+  ctx.fillRect(x + 9, y + 15 + bob, 18, 2);
+  
+  /* Exposed ribcage area - pale green decay */
+  ctx.fillStyle = "#6b8a6b";
+  ctx.fillRect(x + 13, y + 18 + bob, 10, 5);
+  
+  /* Rib details */
+  ctx.fillStyle = "#4a6a4a";
+  ctx.fillRect(x + 14, y + 19 + bob, 8, 1);
+  ctx.fillRect(x + 14, y + 21 + bob, 8, 1);
+  
+  /* Blood stain */
+  ctx.fillStyle = "#5a1a1a";
+  ctx.fillRect(x + 10, y + 16 + bob, 4, 4);
+  
+  /* === ARMS === */
+  /* Left arm - decayed flesh */
+  ctx.fillStyle = "#5a7a5a";
+  ctx.fillRect(x + 5, y + 15 + bob, 4, 9);
+  
+  /* Arm shading */
+  ctx.fillStyle = "#4a6a4a";
+  ctx.fillRect(x + 6, y + 16 + bob, 2, 7);
+  
+  /* Exposed bone on left arm */
+  ctx.fillStyle = "#d4d0c8";
+  ctx.fillRect(x + 6, y + 20 + bob, 2, 3);
+  
+  /* Right arm */
+  ctx.fillStyle = "#5a7a5a";
+  ctx.fillRect(x + 27, y + 15 + bob, 4, 9);
+  
+  ctx.fillStyle = "#4a6a4a";
+  ctx.fillRect(x + 28, y + 16 + bob, 2, 7);
+  
+  /* Clawed hands - darker */
+  ctx.fillStyle = "#3a5a3a";
+  ctx.fillRect(x + 5, y + 23 + bob, 4, 3);
+  ctx.fillRect(x + 27, y + 23 + bob, 4, 3);
+  
+  /* === HEAD === */
+  /* Skull base - pale greenish */
+  ctx.fillStyle = "#7a9a7a";
+  ctx.fillRect(x + 10, y + 4 + bob, 16, 12);
+  
+  /* Forehead highlight */
+  ctx.fillStyle = "#8aaa8a";
+  ctx.fillRect(x + 11, y + 5 + bob, 14, 3);
+  
+  /* Cheek/jaw shading */
+  ctx.fillStyle = "#6a8a6a";
+  ctx.fillRect(x + 11, y + 11 + bob, 14, 4);
+  
+  /* Exposed skull patch on forehead */
+  ctx.fillStyle = "#d4d0c8";
+  ctx.fillRect(x + 15, y + 5 + bob, 6, 3);
+  
+  /* Skull highlight */
+  ctx.fillStyle = "#e8e4dc";
+  ctx.fillRect(x + 16, y + 5 + bob, 4, 1);
+  
+  /* Eye sockets - deep black */
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x + 13, y + 8 + bob, 3, 3);
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x + 20, y + 8 + bob, 3, 3);
+  
+  /* Glowing red eyes */
+  ctx.fillStyle = "#ff2020";
+  ctx.fillRect(x + 14, y + 9 + bob, 2, 2);
+  ctx.fillStyle = "#ff2020";
+  ctx.fillRect(x + 21, y + 9 + bob, 2, 2);
+  
+  /* Eye highlights */
+  ctx.fillStyle = "#ff6060";
+  ctx.fillRect(x + 14, y + 9 + bob, 1, 1);
+  ctx.fillStyle = "#ff6060";
+  ctx.fillRect(x + 21, y + 9 + bob, 1, 1);
+  
+  /* Nose cavity */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x + 17, y + 11 + bob, 2, 2);
+  
+  /* Exposed teeth/jaw */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x + 13, y + 13 + bob, 10, 2);
+  
+  /* Teeth */
+  ctx.fillStyle = "#d4d0c8";
+  ctx.fillRect(x + 14, y + 13 + bob, 1, 2);
+  ctx.fillRect(x + 16, y + 13 + bob, 1, 2);
+  ctx.fillRect(x + 18, y + 13 + bob, 1, 2);
+  ctx.fillRect(x + 20, y + 13 + bob, 1, 2);
+  
+  /* Matted hair patches */
+  ctx.fillStyle = "#2a2218";
+  ctx.fillRect(x + 10, y + 3 + bob, 4, 2);
+  ctx.fillRect(x + 22, y + 3 + bob, 4, 2);
+  ctx.fillRect(x + 13, y + 2 + bob, 10, 2);
+}
+
+/* ---------- DRAW GHOST - ETHEREAL SPIRIT ---------- */
+function drawGhost(e) {
+  const x = e.x;
+  const y = e.y;
+  const float = e.animFrame === 0 ? -2 : 0;
+  
+  ctx.globalAlpha = 0.85;
+  
+  /* === OUTER GLOW === */
+  ctx.fillStyle = "#8b6fd9";
+  ctx.globalAlpha = 0.3;
+  ctx.fillRect(x + 6, y + 6 + float, 24, 28);
+  
+  ctx.globalAlpha = 0.85;
+  
+  /* === MAIN BODY - ROUNDED TOP === */
+  /* Head/body top - lighter purple */
+  ctx.fillStyle = "#b89fea";
+  ctx.fillRect(x + 12, y + 6 + float, 12, 4);
+  ctx.fillRect(x + 10, y + 8 + float, 16, 4);
+  ctx.fillRect(x + 9, y + 10 + float, 18, 2);
+  
+  /* Main body - mid purple */
+  ctx.fillStyle = "#9d7ee0";
+  ctx.fillRect(x + 9, y + 12 + float, 18, 12);
+  
+  /* Inner glow - pale blue-purple */
+  ctx.fillStyle = "#c7b4f5";
+  ctx.fillRect(x + 12, y + 14 + float, 12, 8);
+  
+  /* Core glow */
+  ctx.fillStyle = "#e0d4ff";
+  ctx.globalAlpha = 0.7;
+  ctx.fillRect(x + 15, y + 16 + float, 6, 4);
+  ctx.globalAlpha = 0.85;
+  
+  /* === FLOWING TAIL === */
+  /* Tail base */
+  ctx.fillStyle = "#9d7ee0";
+  ctx.fillRect(x + 10, y + 24 + float, 16, 4);
+  
+  /* Tail wisps - tapered */
+  const tailWiggle = e.animFrame === 0 ? 0 : 1;
+  
+  ctx.fillStyle = "#8b6fd9";
+  ctx.fillRect(x + 11 + tailWiggle, y + 28 + float, 5, 3);
+  ctx.fillRect(x + 18 - tailWiggle, y + 28 + float, 5, 3);
+  ctx.fillRect(x + 14, y + 30 + float, 8, 2);
+  
+  /* Wisp tips */
+  ctx.fillStyle = "#7a5ec8";
+  ctx.fillRect(x + 12 + tailWiggle, y + 31 + float, 4, 2);
+  ctx.fillRect(x + 19 - tailWiggle, y + 31 + float, 4, 2);
+  
+  /* Fade tips */
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = "#6948b0";
+  ctx.fillRect(x + 13 + tailWiggle, y + 33 + float, 3, 1);
+  ctx.fillRect(x + 20 - tailWiggle, y + 33 + float, 3, 1);
+  
+  ctx.globalAlpha = 0.85;
+  
+  /* === FACE === */
+  /* Eye sockets - darker purple */
+  ctx.fillStyle = "#5a3a8a";
+  ctx.fillRect(x + 13, y + 12 + float, 3, 4);
+  ctx.fillRect(x + 20, y + 12 + float, 3, 4);
+  
+  /* Eyes - glowing cyan */
+  ctx.fillStyle = "#40e8ff";
+  ctx.fillRect(x + 14, y + 13 + float, 2, 3);
+  ctx.fillRect(x + 21, y + 13 + float, 2, 3);
+  
+  /* Eye highlights */
+  ctx.fillStyle = "#c0f8ff";
+  ctx.fillRect(x + 14, y + 13 + float, 1, 1);
+  ctx.fillRect(x + 21, y + 13 + float, 1, 1);
+  
+  /* Mouth - sad/hollow */
+  ctx.fillStyle = "#5a3a8a";
+  ctx.fillRect(x + 16, y + 19 + float, 4, 2);
+  ctx.fillRect(x + 15, y + 20 + float, 6, 2);
+  
+  /* === SPECTRAL PARTICLES === */
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = "#b89fea";
+  ctx.fillRect(x + 7, y + 10 + float + (e.animFrame * 2), 2, 2);
+  ctx.fillRect(x + 27, y + 15 + float - (e.animFrame * 2), 2, 2);
+  ctx.fillRect(x + 8, y + 22 + float + (e.animFrame * 1), 1, 1);
+  ctx.fillRect(x + 28, y + 20 + float - (e.animFrame * 1), 1, 1);
+  
+  ctx.globalAlpha = 1.0;
+}
+
+/* ---------- DRAW GORILLA BOSS - REALISTIC APE ---------- */
+function drawGorilla(e) {
+  const x = e.x;
+  const y = e.y;
+  const bob = e.animFrame === 0 ? 0 : 2;
+  
+  /* Shadow */
+  ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+  ctx.fillRect(x + 5, y + 58 + bob, 60, 6);
+  
+  /* === RAGE MODE GLOW === */
+  if (e.gorillaState === 'slamPrep') {
+    const pulseAlpha = 0.45 + Math.sin(Date.now() / 50) * 0.25;
+    ctx.fillStyle = `rgba(255, 50, 50, ${pulseAlpha})`;
+    ctx.fillRect(x - 5, y - 5, 80, 70);
+    
+    ctx.strokeStyle = `rgba(255, 255, 255, ${pulseAlpha * 0.9})`;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 2, y - 2, 74, 64);
+  }
+  
+  /* === SLAM SHOCKWAVE === */
+  if (e.slamActive) {
+    const centerX = x + e.width / 2;
+    const centerY = y + e.height / 2;
+    const alpha = e.slamTimer / 0.15;
+    
+    ctx.strokeStyle = `rgba(180, 180, 180, ${alpha * 0.4})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 78, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.strokeStyle = `rgba(200, 200, 200, ${alpha * 0.8})`;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 75, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.95})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 65, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  /* === LEGS - POWERFUL === */
+  /* Upper thighs - dark gray */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x + 14, y + 44 + bob, 18, 10);
+  ctx.fillRect(x + 38, y + 44 + bob, 18, 10);
+  
+  /* Thigh muscles - highlights */
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(x + 15, y + 45 + bob, 16, 3);
+  ctx.fillRect(x + 39, y + 45 + bob, 16, 3);
+  
+  /* Mid-thigh shading */
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x + 16, y + 46 + bob, 14, 1);
+  ctx.fillRect(x + 40, y + 46 + bob, 14, 1);
+  
+  /* Lower legs */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x + 15, y + 52 + bob, 16, 6);
+  ctx.fillRect(x + 39, y + 52 + bob, 16, 6);
+  
+  /* Feet - knuckle-walk ready */
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(x + 14, y + 56 + bob, 18, 4);
+  ctx.fillRect(x + 38, y + 56 + bob, 18, 4);
+  
+  /* === MASSIVE ARMS === */
+  /* Left arm - thick and powerful */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x - 10, y + 16 + bob, 16, 28);
+  
+  /* Arm muscle definition */
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(x - 9, y + 17 + bob, 14, 4);
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x - 8, y + 18 + bob, 12, 1);
+  
+  /* Bicep bulge */
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x - 9, y + 22 + bob, 14, 6);
+  ctx.fillStyle = "#5a5a5a";
+  ctx.fillRect(x - 8, y + 24 + bob, 12, 2);
+  
+  /* Forearm shading */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x - 9, y + 36 + bob, 14, 8);
+  
+  /* Right arm */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x + 64, y + 16 + bob, 16, 28);
+  
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(x + 65, y + 17 + bob, 14, 4);
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x + 66, y + 18 + bob, 12, 1);
+  
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x + 65, y + 22 + bob, 14, 6);
+  ctx.fillStyle = "#5a5a5a";
+  ctx.fillRect(x + 66, y + 24 + bob, 12, 2);
+  
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x + 65, y + 36 + bob, 14, 8);
+  
+  /* Knuckles/hands - massive */
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(x - 10, y + 42 + bob, 16, 8);
+  ctx.fillRect(x + 64, y + 42 + bob, 16, 8);
+  
+  /* Knuckle highlights */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x - 9, y + 43 + bob, 4, 3);
+  ctx.fillRect(x - 4, y + 43 + bob, 4, 3);
+  ctx.fillRect(x + 65, y + 43 + bob, 4, 3);
+  ctx.fillRect(x + 71, y + 43 + bob, 4, 3);
+  
+  /* === SHOULDERS - BROAD === */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x - 2, y + 8 + bob, 18, 14);
+  ctx.fillRect(x + 54, y + 8 + bob, 18, 14);
+  
+  /* Shoulder muscles */
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(x - 1, y + 9 + bob, 16, 4);
+  ctx.fillRect(x + 55, y + 9 + bob, 16, 4);
+  
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x, y + 10 + bob, 14, 2);
+  ctx.fillRect(x + 56, y + 10 + bob, 14, 2);
+  
+  /* Shoulder shadows */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x, y + 18 + bob, 14, 4);
+  ctx.fillRect(x + 56, y + 18 + bob, 14, 4);
+  
+  /* === TORSO - POWERFUL CHEST === */
+  /* Main body */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x + 2, y + 10 + bob, 66, 36);
+  
+  /* Chest definition */
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(x + 4, y + 12 + bob, 62, 12);
+  
+  /* Pectoral muscles */
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x + 6, y + 14 + bob, 28, 6);
+  ctx.fillRect(x + 36, y + 14 + bob, 28, 6);
+  
+  /* Chest highlights */
+  ctx.fillStyle = "#5a5a5a";
+  ctx.fillRect(x + 8, y + 15 + bob, 24, 2);
+  ctx.fillRect(x + 38, y + 15 + bob, 24, 2);
+  
+  /* Chest patch - lighter brown */
+  ctx.fillStyle = "#6a5a4a";
+  ctx.fillRect(x + 16, y + 14 + bob, 38, 16);
+  
+  /* Chest patch highlights */
+  ctx.fillStyle = "#7a6a5a";
+  ctx.fillRect(x + 18, y + 16 + bob, 34, 4);
+  
+  /* Chest patch shading */
+  ctx.fillStyle = "#5a4a3a";
+  ctx.fillRect(x + 18, y + 26 + bob, 34, 3);
+  
+  /* Abdominal shading */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x + 4, y + 32 + bob, 62, 12);
+  
+  /* Abs definition */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x + 26, y + 34 + bob, 18, 3);
+  ctx.fillRect(x + 26, y + 38 + bob, 18, 3);
+  
+  /* === HEAD - APE FEATURES === */
+  /* Skull base */
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillRect(x + 16, y + bob, 38, 18);
+  
+  /* Forehead - prominent brow */
+  ctx.fillStyle = "#2a2a2a";
+  ctx.fillRect(x + 18, y + 2 + bob, 34, 6);
+  
+  /* Brow ridge */
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(x + 19, y + 3 + bob, 32, 3);
+  
+  /* Brow highlights */
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x + 20, y + 4 + bob, 30, 1);
+  
+  /* Eye sockets - deep set */
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(x + 22, y + 7 + bob, 8, 6);
+  ctx.fillRect(x + 40, y + 7 + bob, 8, 6);
+  
+  /* Eyes - menacing red or calm yellow */
+  const eyeColor = e.gorillaState === 'slamPrep' ? "#ff2020" : "#ffaa00";
+  ctx.fillStyle = eyeColor;
+  ctx.fillRect(x + 24, y + 9 + bob, 5, 4);
+  ctx.fillRect(x + 42, y + 9 + bob, 5, 4);
+  
+  /* Eye highlights */
+  const eyeHighlight = e.gorillaState === 'slamPrep' ? "#ff6060" : "#ffcc40";
+  ctx.fillStyle = eyeHighlight;
+  ctx.fillRect(x + 24, y + 9 + bob, 2, 2);
+  ctx.fillRect(x + 42, y + 9 + bob, 2, 2);
+  
+  /* Muzzle/snout area */
+  ctx.fillStyle = "#4a4a4a";
+  ctx.fillRect(x + 26, y + 11 + bob, 18, 7);
+  
+  /* Muzzle highlights */
+  ctx.fillStyle = "#5a5a5a";
+  ctx.fillRect(x + 27, y + 12 + bob, 16, 2);
+  
+  /* Nose */
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(x + 32, y + 13 + bob, 3, 2);
+  ctx.fillRect(x + 36, y + 13 + bob, 3, 2);
+  
+  /* Nostrils */
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x + 33, y + 14 + bob, 1, 1);
+  ctx.fillRect(x + 37, y + 14 + bob, 1, 1);
+  
+  /* Mouth area */
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(x + 28, y + 15 + bob, 14, 2);
+  
+  /* Teeth showing */
+  ctx.fillStyle = "#d4d0c8";
+  ctx.fillRect(x + 30, y + 15 + bob, 2, 2);
+  ctx.fillRect(x + 33, y + 15 + bob, 2, 2);
+  ctx.fillRect(x + 36, y + 15 + bob, 2, 2);
+  ctx.fillRect(x + 39, y + 15 + bob, 2, 2);
+  
+  /* === HP BAR - BOSS STYLE === */
+  const hpPerc = e.hp / e.maxHp;
+  
+  /* Border */
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x - 1, y - 9, 72, 7);
+  
+  /* Empty bar */
+  ctx.fillStyle = "#330000";
+  ctx.fillRect(x, y - 8, 70, 5);
+  
+  /* Fill */
+  ctx.fillStyle = "#ff0000";
+  ctx.fillRect(x, y - 8, 70 * hpPerc, 5);
+  
+  /* Highlight */
+  ctx.fillStyle = "#ff6666";
+  ctx.fillRect(x, y - 8, 70 * hpPerc, 1);
+}
+
+/* ---------- UNIFIED DRAW ENEMY ---------- */
+function drawEnemy(e) {
+  if (e.type === "zombie") {
+    drawZombie(e);
+  } else if (e.type === "ghost") {
+    drawGhost(e);
+  } else if (e.type === "gorilla") {
+    drawGorilla(e);
+  }
+  
+  /* HP Bar for normal enemies */
+  if (e.type !== "gorilla") {
+    const hpPerc = e.hp / e.maxHp;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(e.x, e.y - 8, e.width, 4);
+    ctx.fillStyle = "#4ecf4e";
+    ctx.fillRect(e.x, e.y - 8, e.width * hpPerc, 4);
+  }
+}
+
+/* ---------- DRAW EVERYTHING ---------- */
+function render() {
+  /* Background */
+  if (bgReady) ctx.drawImage(gameplayMap, 0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  else {
+    ctx.fillStyle = "#2d4a3e";
+    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  }
+
+  /* Player */
+  drawPlayer();
+
+  /* Attack hitboxes */
+  if (lightAttack)
+    ctx.fillStyle = "rgba(255,200,100,0.3)",
+    ctx.fillRect(lightAttack.x, lightAttack.y, lightAttack.width, lightAttack.height);
+
+  if (heavyAttack)
+    ctx.fillStyle = "rgba(255,100,100,0.4)",
+    ctx.fillRect(heavyAttack.x, heavyAttack.y, heavyAttack.width, heavyAttack.height);
+
+  if (whirlAttack) {
+    const cx = whirlAttack.x + whirlAttack.width/2;
+    const cy = whirlAttack.y + whirlAttack.height/2;
+
+    for (let i = 0; i < 8; i++) {
+      const ang = (whirlAttack.rotation + i * 45) * Math.PI/180;
+      const x1 = cx + Math.cos(ang) * 10;
+      const y1 = cy + Math.sin(ang) * 10;
+      const x2 = cx + Math.cos(ang) * 60;
+      const y2 = cy + Math.sin(ang) * 60;
+
+      ctx.strokeStyle = (i % 2 === 0)
+        ? "rgba(200,200,255,0.7)"
+        : "rgba(255,255,255,0.6)";
+
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "rgba(150,100,255,0.5)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 30, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 15, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  /* Bullets */
+  ctx.fillStyle = "#ffff00";
+  for (const b of bullets) {
+    ctx.fillRect(b.x - b.size/2, b.y - b.size/2, b.size, b.size);
+  }
+
+  /* Enemies */
+  for (const e of enemies) drawEnemy(e);
+
+  /* Chest */
+  if (chestActive) drawChest();
+
+  /* Muzzle flash */
+  if (muzzleFlash.active) drawMuzzleFlash();
+  
+  /* Spirit Slash projectiles */
+  drawSpiritSlashProjectiles();
+
+  if (bossIntroActive) {
+    const t = bossIntroTimer;
+    const alpha = t > 1.2 ? (1.6 - t) * 2.5 : 1;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0, LOGICAL_HEIGHT/2 - 40, LOGICAL_WIDTH, 80);
+    ctx.fillStyle = "#ff4444";
+    ctx.font = "28px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText("STONE GORILLA", LOGICAL_WIDTH/2, LOGICAL_HEIGHT/2 + 10);
+    ctx.globalAlpha = 1;
+  }
+
+  /* Reload bar */
+  if (player.reloadTime > 0) {
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(LOGICAL_WIDTH/2 - 60, LOGICAL_HEIGHT - 40, 120, 20);
+
+    ctx.fillStyle = "#4ecf4e";
+    const p = 1 - (player.reloadTime / 2.0);
+    ctx.fillRect(
+      LOGICAL_WIDTH/2 - 58,
+      LOGICAL_HEIGHT - 38,
+      116 * p,
+      16
+    );
+  }
+}
+
+/* ============================================================
+   REAL MUSIC PLAYER
+   ============================================================ */
+let bgm = null;
+let muted = false;
+let musicStarted = false;
+
+function initAudio() {
+  if (!bgm) {
+    bgm = new Audio("https://files.catbox.moe/2js2el.ogg");
+    bgm.loop = true;
+    bgm.volume = muted ? 0 : 0.35;
+  }
+}
+
+function startMusic() {
+  if (!musicStarted) {
+  initAudio();
+    if (!muted) {
+      bgm.play().catch(()=>{});
+    }
+    musicStarted = true;
+  }
+}
+
+function stopMusic() {
+  if (bgm) {
+    bgm.pause();
+    bgm.currentTime = 0;
+  }
+  musicStarted = false;
+  document.addEventListener("click", handleFirstTap, { once: true });
+  document.addEventListener("touchstart", handleFirstTap, { once: true, passive: false });
+}
+
+/* ============================================================
+   GAME OVER + RESET (Clean Base+ state)
+   ============================================================ */
+function gameOver() {
+  gameState = "gameover";
+  isPaused = true;
+  document.getElementById("hud").style.display = "none";
+  document.querySelector(".hud-buttons").style.display = "none";
+  document.getElementById("finalScore").textContent = "Final Score: " + score;
+  const over = document.getElementById("gameOverScreen");
+  over.style.display = "flex";
+  resetInput();
+}
+
+/* ============================================================
+   FULL CLEAN RESET
+   ============================================================ */
+function initGame() {
+  /* Player */
+  player.x = LOGICAL_WIDTH/2 - 25;
+  player.y = LOGICAL_HEIGHT/2 - 25;
+  player.hp = player.maxHp;
+  player.ammo = player.maxAmmo;
+  player.reloadTime = 0;
+  player.heavyCooldown = 0;
+  player.whirlCooldown = 0;
+
+  /* Animation */
+  player.animState = "idle";
+  player.animFrame = 0;
+  player.animTimer = 0;
+
+  /* World */
+  enemies.length = 0;
+  bullets.length = 0;
+
+  lightAttack = null;
+  heavyAttack = null;
+  whirlAttack = null;
+  
+  /* Reset chest and buffs */
+  chestActive = false;
+  chest = null;
+  shotgunMode = false;
+  shotgunRoundsLeft = 0;
+  spiritSlashActive = false;
+  spiritSlashTimer = 0;
+  spiritSlashProjectiles.length = 0;
+
+  wave = 1;
+  score = 0;
+  gorillaSpawnCount = 0;
+  
+  /* Reset spawn queue */
+  spawnQueue = [];
+  spawnTimerGlobal = 0;
+  waveEnemyCount = 0;
+
+  spawnWave();
+  updateHUD();
+
+  resetInput();
+}
+
+/* ============================================================
+   FULL RESET FUNCTION
+   ============================================================ */
+function fullReset() {
+  wave = 1;
+  score = 0;
+  gorillaSpawnCount = 0;
+  
+  /* Reset spawn queue */
+  spawnQueue = [];
+  spawnTimerGlobal = 0;
+  waveEnemyCount = 0;
+  
+  player.x = LOGICAL_WIDTH/2 - 25;
+  player.y = LOGICAL_HEIGHT/2 - 25;
+  player.hp = player.maxHp;
+  player.ammo = player.maxAmmo;
+  player.reloadTime = 0;
+  enemies.length = 0;
+  bullets.length = 0;
+  lightAttack = null;
+  heavyAttack = null;
+  whirlAttack = null;
+  shotgunMode = false;
+  shotgunRoundsLeft = 0;
+  spiritSlashActive = false;
+  spiritSlashProjectiles.length = 0;
+  chestActive = false;
+  chest = null;
+  isPaused = false;
+  gameState = "playing";
+  document.getElementById("gameOverScreen").style.display = "none";
+  document.getElementById("hud").style.display = "flex";
+  document.querySelector(".hud-buttons").style.display = "flex";
+  updateHUD();
+  spawnWave();
+}
+
+/* ============================================================
+   MAIN UPDATE (DeltaTime engine)
+   ============================================================ */
+function update(dt) {
+  if (bossIntroActive) {
+    bossIntroTimer -= dt;
+    if (bossIntroTimer <= 0) {
+        bossIntroActive = false;
+        isPaused = false;
+    }
+  }
+
+  if (gameState !== "playing" || isPaused) return;
+
+  /* player movement */
+  updatePlayerMovement(dt);
+
+  /* cooldowns */
+  if (player.heavyCooldown > 0) player.heavyCooldown -= dt;
+  if (player.whirlCooldown > 0) player.whirlCooldown -= dt;
+
+  /* animation updates */
+  player.animTimer += dt;
+  if (player.animState === "idle") {
+    if (player.animTimer > 0.33) {
+      player.animTimer = 0;
+      player.animFrame = (player.animFrame + 1) % 3;
+    }
+  } else if (player.animState === "light") {
+    if (player.animTimer > 0.067) {
+      player.animTimer = 0;
+      player.animFrame++;
+      if (player.animFrame >= 3) {
+        player.animState = "idle";
+        player.animFrame = 0;
+      }
+    }
+  } else if (player.animState === "heavy") {
+    if (player.animTimer > 0.1) {
+      player.animTimer = 0;
+      player.animFrame++;
+      if (player.animFrame >= 4) {
+        player.animState = "idle";
+        player.animFrame = 0;
+      }
+    }
+  } else if (player.animState === "whirl") {
+    if (player.animTimer > 0.033) {
+      player.animTimer = 0;
+      player.animFrame++;
+      if (player.animFrame >= 15) {
+        player.animState = "idle";
+        player.animFrame = 0;
+      }
+    }
+  }
+
+  /* reload */
+  if (player.reloadTime > 0) {
+    player.reloadTime -= dt;
+    if (player.reloadTime <= 0) {
+      player.reloadTime = 0;
+      player.ammo = player.maxAmmo;
+    }
+  }
+
+  /* bullets */
+  updateBullets(dt);
+
+  /* enemies */
+  updateEnemies(dt);
+
+  /* attack hitboxes */
+  lightAttack  = handleAttackHitbox(lightAttack,  dt);
+  heavyAttack  = handleAttackHitbox(heavyAttack,  dt);
+  whirlAttack  = handleAttackHitbox(whirlAttack,  dt);
+
+  /* bullet collisions */
+  handleBulletCollisions();
+
+  /* Process spawn queue (staggered enemy spawning) */
+  spawnTimerGlobal -= dt;
+  if (spawnQueue.length > 0 && spawnTimerGlobal <= 0) {
+    const type = spawnQueue.shift();
+    spawnTimerGlobal = 0.25;    // 250ms stagger spawn
+    if (type === "normal") {
+      const t = Math.random() > 0.5 ? "zombie" : "ghost";
+      spawnEnemy(t);
+    } else if (type === "gorilla") {
+      spawnEnemy("gorilla");
+    }
+  }
+
+  /* wave clear */
+  if (enemies.length === 0 && spawnQueue.length === 0) {
+    wave++;
+    
+    /* Spawn chest every 3 waves */
+    if (wave % 3 === 0 && !chestActive) {
+      spawnChest();
+    }
+    
+    spawnWave();
+  }
+
+  /* Update chest and muzzle flash */
+  if (chestActive) updateChest(dt);
+  updateMuzzleFlash(dt);
+  
+  /* Update Spirit Slash */
+  updateSpiritSlash(dt);
+  updateSpiritSlashProjectiles(dt);
+
+  updateHUD();
+}
+
+/* ============================================================
+   GAME LOOP (DeltaTime)
+   ============================================================ */
+function gameLoop(now) {
+  delta = (now - lastFrameTime) / 1000;
+  lastFrameTime = now;
+
+  const dt = Math.min(delta, 0.0333);
+
+  update(dt);
+  render();
+
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+
+/* ============================================================
+   INPUT BINDINGS – ATTACK BUTTONS
+   ============================================================ */
+
+document.addEventListener("keydown", e => {
+  if (gameState === "playing" && !isPaused) {
+    const k = e.key.toLowerCase();
+
+    if (k === "j") performLightAttack();
+    if (k === "k") performHeavyAttack();
+    if (k === "l") shootGun();
+    if (k === "r") startReload();
+    if (e.code === "Space") performWhirlwind();
+  }
+});
+
+document.getElementById("btnLight").addEventListener("touchstart", e => { e.preventDefault(); if(gameState==="playing" && !isPaused) performLightAttack(); });
+document.getElementById("btnHeavy").addEventListener("touchstart", e => { e.preventDefault(); if(gameState==="playing" && !isPaused) performHeavyAttack(); });
+document.getElementById("btnGun").addEventListener("touchstart", e => { e.preventDefault(); if(gameState==="playing" && !isPaused) shootGun(); });
+document.getElementById("btnWhirlwind").addEventListener("touchstart", e => { e.preventDefault(); if(gameState==="playing" && !isPaused) performWhirlwind(); });
+
+/* ============================================================
+   STATE BUTTONS
+   ============================================================ */
+document.getElementById("pauseBtn").addEventListener("click", () => {
+  if (gameState === "playing") {
+    isPaused = !isPaused;
+    document.getElementById("pauseBtn").textContent = isPaused ? "▶" : "⸠";
+  }
+});
+
+document.getElementById("muteBtn").addEventListener("click", () => {
+  muted = !muted;
+  if (bgm) {
+    bgm.muted = muted;
+    bgm.volume = muted ? 0 : 0.35;
+  }
+  document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊";
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (gameState === "playing") {
+    stopMusic();
+    initGame();
+  }
+});
+
+document.getElementById("restartBtn").addEventListener("click", fullReset);
+
+/* ============================================================
+   START GAME
+   ============================================================ */
+function startGame() {
+  if (gameState !== "start") return;
+
+  const startScreen = document.getElementById("startScreen");
+  startScreen.style.opacity = "0";
+  startScreen.style.pointerEvents = "none";
+  setTimeout(() => { startScreen.style.display = "none"; }, 250);
+
+  document.getElementById("hud").style.display = "flex";
+  document.querySelector(".hud-buttons").style.display = "flex";
+
+  gameState = "playing";
+  initGame();
+}
+
+function handleFirstTap() {
+  if (!musicStarted) {
+  startMusic();
+  }
+}
+
+document.addEventListener("click", handleFirstTap, { once: true });
+document.addEventListener("touchstart", handleFirstTap, { once: true, passive: false });
+
+document.getElementById("startScreen").addEventListener("click", () => {
+  startGame();
+});
+
+document.getElementById("startScreen").addEventListener("touchstart", e => {
+  e.preventDefault();
+  startGame();
+});
+
+/* ============================================================
+   MOBILE ZOOM SUPPRESSION
+   ============================================================ */
+
+function preventPinchZoom(e) {
+  if (e.touches.length > 1) {
+    e.preventDefault();
+  }
+}
+
+const gameContainer = document.getElementById("gameContainer");
+const gameCanvas = document.getElementById("gameCanvas");
+
+gameContainer.addEventListener("touchmove", preventPinchZoom, { passive: false });
+gameCanvas.addEventListener("touchmove", preventPinchZoom, { passive: false });
+
+document.addEventListener("touchmove", function(e) {
+  if (e.touches.length > 1 && !e.target.closest('.hud-btn, .attack-btn, .dpad-btn')) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+document.addEventListener("touchend", function(e) {
+  const now = Date.now();
+  if (window.__lastTap && now - window.__lastTap < 300) {
+    e.preventDefault();
+  }
+  window.__lastTap = now;
+}, { passive: false });
+</script>
+
+
+<!-- ===== FOODSPOT ARCADE CONTROLLER ===== -->
+<div id="fs-controller">
+  <!-- D-PAD LEFT SIDE -->
+  <div id="fs-dpad">
+    <div class="fs-dpad-cross-v"></div>
+    <div class="fs-dpad-cross-h"></div>
+    <div class="fs-dpad-btn" id="fs-up">▲</div>
+    <div class="fs-dpad-btn" id="fs-down">▼</div>
+    <div class="fs-dpad-btn" id="fs-left">◀</div>
+    <div class="fs-dpad-btn" id="fs-right">▶</div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="fs-center-logo">
+    <span>KANZO</span>
+    <span>・</span>
+    <span>LAST SAMURAI</span>
+  </div>
+
+  <!-- RIGHT SIDE: TRIGGERS + BUTTONS -->
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+    <!-- Triggers row -->
+    <div style="display:flex;gap:8px;">
+      <div class="fs-trigger" id="fs-lt">LT<br><span style="font-size:8px;opacity:0.6">GUN</span></div>
+      <div class="fs-trigger" id="fs-rt">RT<br><span style="font-size:8px;opacity:0.6">SPIN</span></div>
+    </div>
+    <!-- A / B buttons -->
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div class="fs-action-btn" id="fs-btn-b">B</div>
+      <div class="fs-action-btn" id="fs-btn-a">A</div>
+    </div>
+    <div style="text-align:right;">
+      <span style="color:rgba(255,255,255,0.3);font-size:9px;font-family:monospace;">B=HEAVY  A=LIGHT</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== FOODSPOT ARCADE CONTROLLER WIRING ===== */
+(function() {
+  function wire(id, onDown, onUp) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const down = (e) => { e.preventDefault(); if(onDown) onDown(); el.classList.add('pressed'); };
+    const up   = (e) => { e.preventDefault(); if(onUp) onUp(); el.classList.remove('pressed'); };
+    el.addEventListener('touchstart', down, { passive: false });
+    el.addEventListener('touchend', up, { passive: false });
+    el.addEventListener('touchcancel', up, { passive: false });
+    el.addEventListener('mousedown', down);
+    el.addEventListener('mouseup', up);
+    el.addEventListener('mouseleave', up);
+  }
+
+  // D-PAD → touchState
+  wire('fs-up',    () => { touchState.up = true; },    () => { touchState.up = false; });
+  wire('fs-down',  () => { touchState.down = true; },  () => { touchState.down = false; });
+  wire('fs-left',  () => { touchState.left = true; },  () => { touchState.left = false; });
+  wire('fs-right', () => { touchState.right = true; }, () => { touchState.right = false; });
+
+  // A → LIGHT attack
+  wire('fs-btn-a', () => { if(typeof performLightAttack === 'function') performLightAttack(); }, null);
+
+  // B → HEAVY attack
+  wire('fs-btn-b', () => { if(typeof performHeavyAttack === 'function') performHeavyAttack(); }, null);
+
+  // LT → GUN
+  wire('fs-lt', () => { if(typeof shootGun === 'function') shootGun(); }, null);
+
+  // RT → SPIN/WHIRLWIND
+  wire('fs-rt', () => { if(typeof performWhirlwind === 'function') performWhirlwind(); }, null);
+
+  // Also fire on start screen tap
+  document.getElementById('fs-controller').addEventListener('touchstart', function() {
+    if (typeof startGame === 'function' && typeof gameState !== 'undefined' && gameState === 'start') {
+      startGame();
+    }
+  }, { passive: true });
+})();
+</script>
+</body>
+</html>
