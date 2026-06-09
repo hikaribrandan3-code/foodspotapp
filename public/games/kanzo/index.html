@@ -646,10 +646,11 @@ window.addEventListener("message", e => {
     if (btn === "dpad-down") keys["s"] = true;
     if (btn === "dpad-left") keys["a"] = true;
     if (btn === "dpad-right") keys["d"] = true;
-    if (btn === "a") performLightAttack();
-    if (btn === "b") performHeavyAttack();
-    if (btn === "l") shootGun();
+    if (btn === "a") { performLightAttack(); performHeavyAttack(); }
+    if (btn === "b") shootGun();
+    if (btn === "l") performWhirlwind();
     if (btn === "r") performWhirlwind();
+    if (btn === "start" && gameState === "gameover") fullReset();
   }
   if (e.data.type === "BUTTON_RELEASE") {
     const btn = e.data.button;
@@ -690,7 +691,7 @@ const player = {
   y: LOGICAL_HEIGHT/2 - 25,
   width: 50,
   height: 50,
-  speed: 160,    // pixels per second (converted via delta)
+  speed: 240,    // pixels per second (converted via delta)
   hp: 100,
   maxHp: 100,
   facingRight: true,
