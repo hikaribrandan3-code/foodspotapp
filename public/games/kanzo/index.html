@@ -609,8 +609,16 @@ resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 /* ---------- GLOBAL GAME STATE ---------- */
-let gameState = "start";
+let gameState = "playing";
 let isPaused = false;
+
+/* Boot directly into gameplay (no start screen) */
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("hud").style.display = "flex";
+  document.querySelector(".hud-buttons").style.display = "flex";
+  initGame();
+});
 
 /* DeltaTime system */
 let lastFrameTime = performance.now();

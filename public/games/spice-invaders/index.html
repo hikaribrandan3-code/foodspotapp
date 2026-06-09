@@ -956,6 +956,8 @@ class Game{
         const btn=e.data.button;
         if(btn==='dpad-left'||btn==='left'){this.inp.LEFT=0;}
         if(btn==='dpad-right'||btn==='right'){this.inp.RIGHT=0;}
+        if(btn==='a'||btn==='A'){this.inp.A=0;this.inp.A_DOWN=false;}
+        if(btn==='b'||btn==='B'||btn==='x'||btn==='X'){this.inp.B=0;}
       }
     });
     window.addEventListener('keydown',e=>{
