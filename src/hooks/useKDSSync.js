@@ -99,14 +99,15 @@ export const useKDSSync = (businessId) => {
         
         snapbackTimers.current.set(orderId, timer);
 
-        // 🛡️ 3. DATABASE MUTATION (direct update)
-        const { error } = await supabase
-            .from('orders')
-            .update({ status: newStatus })
-            .eq('id', orderId);
+        // 🛡️ 3. DATABASE MUTATION (FSM-enforced RPC — never direct status write)
+        const { data: rpcResult, error } = await supabase
+            .rpc('advance_order_status', {
+                p_order_id: orderId,
+                p_target_status: newStatus,
+            });
 
-        // If error, rollback immediately
-        if (error) {
+        // If error or FSM rejection, rollback immediately
+        if (error || (rpcResult && !rpcResult.success)) {
             clearTimeout(timer);
             snapbackTimers.current.delete(orderId);
             setOrders(current => current.map(o =>

@@ -165,7 +165,8 @@ serve(async (req: Request) => {
                 console.log("🛡️ HMAC Signature Verified");
             }
         } else if (!MP_WEBHOOK_SECRET) {
-            console.warn("⚠️ MP_WEBHOOK_SECRET not set - skipping HMAC verification");
+            console.error("🚨 MP_WEBHOOK_SECRET not configured — rejecting unsigned webhook");
+            return new Response(JSON.stringify({ error: "Webhook secret not configured" }), { status: 403, headers: corsHeaders });
         }
 
         // ============================================

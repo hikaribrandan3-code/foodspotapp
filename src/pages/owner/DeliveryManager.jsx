@@ -161,7 +161,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                 if (dbOrder) {
                     await handleCashPayment({
                         orderId,
-                        amountCents: Math.round(dbOrder.total * 100),
+                        amountCents: dbOrder.total,
                         businessId: dbOrder.business_id,
                         currency: 'ARS'
                     })
@@ -198,7 +198,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                 if (dbOrder) {
                     await handleCashPayment({
                         orderId: order.id,
-                        amountCents: Math.round(dbOrder.total * 100),
+                        amountCents: dbOrder.total,
                         businessId: dbOrder.business_id,
                         currency: 'ARS'
                     })

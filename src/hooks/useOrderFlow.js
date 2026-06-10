@@ -139,12 +139,14 @@ export function useOrderFlow() {
         setError(null);
 
         try {
-            const { error: dbError } = await supabase
-                .from('orders')
-                .update({ status: ORDER_STATUS.CANCELLED })
-                .eq('id', orderId);
+            const { data: rpcResult, error: dbError } = await supabase
+                .rpc('advance_order_status', {
+                    p_order_id: orderId,
+                    p_target_status: ORDER_STATUS.CANCELLED,
+                });
 
             if (dbError) throw dbError;
+            if (rpcResult && !rpcResult.success) throw new Error(rpcResult.message || 'Cancel rejected by server');
 
             return { success: true };
         } catch (e) {

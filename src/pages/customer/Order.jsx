@@ -179,6 +179,8 @@ function Order({ config: configProp }) {
 
     // Scroll to payment section ref
     const paymentSectionRef = useRef(null)
+    // Synchronous in-flight guard — prevents double-submit on fast double-tap (React state is async)
+    const submittingRef = useRef(false)
 
     // Always start at top when page loads (disable browser scroll restoration)
     useEffect(() => {
@@ -328,9 +330,10 @@ function Order({ config: configProp }) {
     }
 
     const handleSubmit = async () => {
-        if (isSubmitting || submitted || !order?.items?.length) return
+        if (submittingRef.current || isSubmitting || submitted || !order?.items?.length) return
         if (tenantData?.is_paused || tenantData?.pause_orders) return
         if (isOutOfRadius) return
+        submittingRef.current = true
 
         // ─── STEP 1: VALIDATION ───────────────────────────
         const errors = []
@@ -614,7 +617,7 @@ function Order({ config: configProp }) {
             if (isCashPath && savedOrder && !isDineInPayAfter) {
                 handleCashPayment({
                     orderId: savedOrder.id,
-                    amountCents: Math.round(savedOrder.total * 100),
+                    amountCents: savedOrder.total,
                     businessId: businessId,
                     currency: 'ARS'
                 }).catch((cashError) => {
@@ -628,14 +631,17 @@ function Order({ config: configProp }) {
             console.error('[Order] Submission Error:', err)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
+        } finally {
+            submittingRef.current = false
         }
     }
 
     // 📲 WHATSAPP HYBRID: DB insert + open WhatsApp
     const handleWhatsAppSubmit = async () => {
-        if (isSubmitting || submitted || !order?.items?.length) return
+        if (submittingRef.current || isSubmitting || submitted || !order?.items?.length) return
         if (tenantData?.is_paused || tenantData?.pause_orders) return
         if (isOutOfRadius) return
+        submittingRef.current = true
 
         // Validation (same as handleSubmit)
         const errors = []
@@ -722,6 +728,8 @@ function Order({ config: configProp }) {
             console.error('[Order] WhatsApp Submit Error:', err)
             showToast('❌ Error al enviar el pedido: ' + err.message)
             setIsSubmitting(false)
+        } finally {
+            submittingRef.current = false
         }
     }
 

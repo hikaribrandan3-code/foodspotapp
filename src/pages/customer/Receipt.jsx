@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
+import { useTenant } from '../../contexts/TenantContext.jsx'
 import { translations } from '../../utils/translations.js'
 import { CheckCircle, Truck, Clock, Home, MapPin, CreditCard, Banknote, AlertCircle, Loader2, Package } from 'lucide-react'
 import CameraTrigger from '../../components/Camera/CameraTrigger'
@@ -11,6 +12,7 @@ export default function Receipt() {
   const navigate = useNavigate()
   const { tenantSlug } = useParams()
   const { language } = useLanguage()
+  const { businessId } = useTenant()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -34,11 +36,12 @@ export default function Receipt() {
 
     async function fetchOrder() {
       try {
-        const { data, error: e } = await supabase
+        let query = supabase
           .from('orders')
           .select('*')
           .eq('id', orderId)
-          .single()
+        if (businessId) query = query.eq('business_id', businessId)
+        const { data, error: e } = await query.single()
 
         if (e) {
           console.error('[Receipt] Order lookup error:', e)

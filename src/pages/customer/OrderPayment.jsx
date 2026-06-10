@@ -101,11 +101,12 @@ export default function OrderPayment({ config: configProp }) {
       }
 
       try {
-        const { data, error: fetchError } = await supabase
+        let query = supabase
           .from('orders')
           .select('*')
           .eq('id', orderId)
-          .maybeSingle()
+        if (businessId) query = query.eq('business_id', businessId)
+        const { data, error: fetchError } = await query.maybeSingle()
 
         if (fetchError) throw fetchError
         if (!data) throw new Error('Order not found')

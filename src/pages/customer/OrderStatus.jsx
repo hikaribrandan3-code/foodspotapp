@@ -44,11 +44,12 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
             setLoading(true)
             try {
                 if (orderId) {
-                    const { data, error: fetchError } = await supabase
+                    let query = supabase
                         .from('orders')
                         .select('*')
                         .eq('id', orderId)
-                        .single()
+                    if (businessId) query = query.eq('business_id', businessId)
+                    const { data, error: fetchError } = await query.single()
 
                     if (fetchError) throw fetchError
                     setOrder(data)
