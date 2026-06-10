@@ -210,6 +210,36 @@ function Home({ config: configProp }) {
         }
     }, [tenantSlug, businessId])
 
+    // Idle prefetch: warm the menu sessionStorage cache before the customer taps Menu
+    useEffect(() => {
+        if (!businessId) return;
+
+        const prefetchMenu = async () => {
+            const CACHE_KEY = `fs_menu_${businessId}`;
+            try {
+                const raw = sessionStorage.getItem(CACHE_KEY);
+                if (raw) {
+                    const { ts } = JSON.parse(raw);
+                    if (Date.now() - ts < 5 * 60 * 1000) return; // cache is fresh
+                }
+            } catch { /* ignore */ }
+
+            try {
+                const [{ data: items }, { data: categories }] = await Promise.all([
+                    supabase.from('menu_items').select('*').eq('business_id', businessId).order('display_order', { ascending: true }).limit(200),
+                    supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false }),
+                ]);
+                if (items && categories) {
+                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: items, ts: Date.now() }));
+                }
+            } catch { /* silent — Home still works without this */ }
+        };
+
+        const schedule = window.requestIdleCallback ?? ((cb) => setTimeout(cb, 200));
+        const id = schedule(prefetchMenu);
+        return () => window.cancelIdleCallback?.(id);
+    }, [businessId])
+
 
     // CRITICAL: Global drag lock to prevent navigation corruption
     const isDraggingRef = useRef(false)

@@ -22,14 +22,20 @@ export default defineConfig({
       },
       output: {
         manualChunks: {
-          // Keep html5-qrcode separate (large, only needed on inventory pages)
-          'vendor-qrcode': ['html5-qrcode'],
           // Force React into its own chunk so it never gets trapped inside
           // a cross-entry shared chunk like InventoryEntry.
           'vendor-react': ['react', 'react-dom'],
           // Same for framer-motion — prevents TDZ crashes when chunks
           // loaded by multiple entry points initialize out of order.
           'vendor-motion': ['framer-motion'],
+          // Keep html5-qrcode separate (large, only needed on inventory pages)
+          'vendor-qrcode': ['html5-qrcode'],
+          // canvas-confetti is only loaded when a customer reaches the event ticket screen
+          'vendor-confetti': ['canvas-confetti'],
+          // qrcode.react is only needed on the /session route
+          'vendor-qrcode-react': ['qrcode.react'],
+          // html2canvas + jsPDF only needed for event ticket PDF export
+          'vendor-pdf': ['html2canvas', 'jspdf'],
         },
       },
     },

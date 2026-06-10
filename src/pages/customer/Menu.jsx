@@ -9,6 +9,7 @@ import HeaderClamp from '../../components/HeaderClamp'
 import { getDividerPreset } from '../../config/dividerPresets'
 import ItemCard from '../../components/ItemCard'
 import ItemDetailModal from '../../components/ItemDetailModal'
+import { getOptimizedImageUrl } from '../../utils/imageUrl'
 
 // Helper: Parse hero_url transform params (s=scale, x=offsetX, y=offsetY)
 function parseHeroUrl(heroUrl) {
@@ -30,23 +31,22 @@ function parseHeroUrl(heroUrl) {
     }
 }
 
-// 🚀 VAULT-SEAL: Image Optimization Helper
-// Appends Supabase transformation parameters for lighter assets
-const getOptimizedImageUrl = (url, options = {}) => {
-    if (!url || url.startsWith('blob:')) return url
-    // Skip optimization for Unsplash images (they have their own params)
-    if (url.includes('unsplash.com')) {
-        return url.includes('?') ? url : `${url}?w=500&q=80&fit=crop`
-    }
-    // Skip optimization for Supabase storage URLs — they need /render/image/ for transforms
-    if (url.includes('.supabase.co/storage/v1/object/public/')) {
-        return url
-    }
-    // Skip if already has transformation params
-    if (url.includes('width=') || url.includes('quality=')) return url
-    const { width = 500, quality = 80, format = 'webp' } = options
-    const separator = url.includes('?') ? '&' : '?'
-    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
+// ── Menu sessionStorage cache (stale-while-revalidate) ──────────────────────
+const MENU_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function readMenuCache(businessId) {
+    try {
+        const raw = sessionStorage.getItem(`fs_menu_${businessId}`);
+        if (!raw) return null;
+        const { data, ts } = JSON.parse(raw);
+        return Date.now() - ts < MENU_CACHE_TTL ? data : null;
+    } catch { return null; }
+}
+
+function writeMenuCache(businessId, data) {
+    try {
+        sessionStorage.setItem(`fs_menu_${businessId}`, JSON.stringify({ data, ts: Date.now() }));
+    } catch { /* quota exceeded or private mode — silent */ }
 }
 
 // ===== AUTO-SCROLL SAFETY TOGGLE =====
@@ -246,8 +246,14 @@ export default function Menu({ config: configProp }) {
     }
 
     useEffect(() => {
-        console.log('[Menu] 🔍 DEBUG: tenantLoaded=', tenantLoaded, 'businessId=', businessId)
         if (!tenantLoaded || !businessId) return
+
+        // Stale-while-revalidate: render cached data instantly, then refresh in background
+        const cached = readMenuCache(businessId);
+        if (cached) {
+            setMenu({ categories: cached });
+            setIsDataLoaded(true);
+        }
 
         const fetchMenu = async () => {
             try {
@@ -265,20 +271,18 @@ export default function Menu({ config: configProp }) {
                 }
 
                 if (items && items.length > 0) {
-                    console.log('[Menu] ☁️ Fresh DB load:', items.length, 'items', (categories?.length || 0), 'DB categories +', (tenantData?.menu_data?.categories?.length || 0), 'JSONB categories')
                     const grouped = groupItemsByCategory(items, categories || [], tenantData?.menu_data?.categories || [])
                     setMenu({ categories: grouped })
+                    writeMenuCache(businessId, grouped);
                 } else if (tenantData?.menu_data?.categories?.length > 0) {
                     // Fallback to JSONB only if no items in DB
-                    console.log('[Menu] ✅ Fallback to JSONB:', tenantData.menu_data.categories.length, 'categories')
                     setMenu(tenantData.menu_data)
                 } else {
-                    console.log('[Menu] ⚠️ No menu items found for this business')
                     setMenu({ categories: [] })
                 }
             } catch (err) {
                 console.error('[Menu] ❌ Fetch error:', err)
-                setMenu({ categories: [] })
+                if (!cached) setMenu({ categories: [] })
             }
             setIsDataLoaded(true)
         }
@@ -400,7 +404,7 @@ export default function Menu({ config: configProp }) {
     const getItemImage = (item) => {
         const itemImage = item.image || item.image_url
         if (itemImage && !itemImage.startsWith('blob:')) {
-            return getOptimizedImageUrl(itemImage, { width: 400, quality: 75, format: 'webp' })
+            return getOptimizedImageUrl(itemImage, { width: 400, quality: 75, resize: 'cover' })
         }
         return `https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80`
     }

@@ -129,24 +129,27 @@ import BottomNav from './components/BottomNav.jsx'
 import BackendNav from './components/BackendNav.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
-// Customer Pages
+// Customer Pages — Home + Menu stay eager (first two screens every customer sees)
 import Home from './pages/customer/Home.jsx'
 import Menu from './pages/customer/Menu.jsx'
-import Envio from './pages/customer/Envio.jsx'
-import Order from './pages/customer/Order.jsx'
-import OrderStatus from './pages/customer/OrderStatus.jsx'
-import OrderPayment from './pages/customer/OrderPayment.jsx'
-import Receipt from './pages/customer/Receipt.jsx'
-import ReservationPage from './pages/customer/ReservationPage.jsx'
 
-import Rewards from './pages/customer/Rewards.jsx'
-import ShareFood from './pages/customer/ShareFood.jsx'
-import PerfectPour from './pages/customer/PerfectPour.jsx'
-import Info from './pages/customer/Info.jsx'
-import EventThemeWrapper from './components/EventThemeWrapper.jsx'
-import Wall from './pages/customer/Wall.jsx'
-import Arcade from './pages/customer/Arcade.jsx'
-import Session from './pages/customer/Session.jsx'
+// All other customer pages lazy-loaded — defers canvas-confetti (2MB), Camera suite,
+// HikariBoy, html2canvas, jsPDF, qrcode.react out of the initial bundle
+const Envio           = lazy(() => import('./pages/customer/Envio.jsx'))
+const Order           = lazy(() => import('./pages/customer/Order.jsx'))
+const OrderStatus     = lazy(() => import('./pages/customer/OrderStatus.jsx'))
+const OrderPayment    = lazy(() => import('./pages/customer/OrderPayment.jsx'))
+const Receipt         = lazy(() => import('./pages/customer/Receipt.jsx'))
+const ReservationPage = lazy(() => import('./pages/customer/ReservationPage.jsx'))
+const Rewards         = lazy(() => import('./pages/customer/Rewards.jsx'))
+const ShareFood       = lazy(() => import('./pages/customer/ShareFood.jsx'))
+const PerfectPour     = lazy(() => import('./pages/customer/PerfectPour.jsx'))
+const Info            = lazy(() => import('./pages/customer/Info.jsx'))
+const EventThemeWrapper = lazy(() => import('./components/EventThemeWrapper.jsx'))
+const Wall            = lazy(() => import('./pages/customer/Wall.jsx'))
+const Arcade          = lazy(() => import('./pages/customer/Arcade.jsx'))
+const Session         = lazy(() => import('./pages/customer/Session.jsx'))
+const CameraGuard     = lazy(() => import('./components/Camera/CameraGuard.jsx'))
 
 // Staff Pages (lazy — staff users only)
 const StaffKDS = lazy(() => import('./pages/staff/StaffKDS.jsx'))
@@ -172,9 +175,6 @@ import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
 import BurgerLoader from './components/BurgerLoader.jsx'
-
-// Camera Suite
-import CameraGuard from './components/Camera/CameraGuard.jsx'
 
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
@@ -379,14 +379,19 @@ function App() {
         favicon.href = icon;
     }, [tenantData?.business_name, tenantData?.logo_url]);
 
-    // Service worker cleanup
+    // One-time service worker cleanup — runs once per browser, not on every load
     useEffect(() => {
+        const SW_CLEANUP_KEY = 'fs_sw_cleaned_v1';
+        if (localStorage.getItem(SW_CLEANUP_KEY)) return;
+
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+            navigator.serviceWorker.getRegistrations()
+                .then(regs => regs.forEach(r => r.unregister()));
         }
         if ('caches' in window) {
             caches.keys().then(names => names.forEach(n => caches.delete(n)));
         }
+        localStorage.setItem(SW_CLEANUP_KEY, '1');
     }, []);
 
     // Deep repaint: CSS injection
@@ -417,6 +422,17 @@ function App() {
 
         if (config.headerCover?.image && !config.headerCover.image.startsWith('blob:')) {
             root.style.setProperty('--header-image', `url(${config.headerCover.image})`);
+
+            // Hint browser to fetch hero image early — it's the LCP element on Home
+            if (!document.querySelector('link[data-hero-preload]')) {
+                const preload = document.createElement('link');
+                preload.rel = 'preload';
+                preload.as = 'image';
+                preload.href = config.headerCover.image;
+                preload.setAttribute('data-hero-preload', '1');
+                preload.fetchPriority = 'high';
+                document.head.appendChild(preload);
+            }
         } else {
             root.style.removeProperty('--header-image');
         }
@@ -627,29 +643,29 @@ function App() {
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
-                                            {/* TENANT ROUTES */}
+                                            {/* TENANT ROUTES — Home + Menu are eager; all others lazy */}
                                             <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
                                             <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/camera" element={<CameraGuard />} />
                                             <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/envios" element={<Envio config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/order" element={<Order config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/status" element={<OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} />} />
-                                            <Route path="/:tenantSlug/receipt" element={<Receipt />} />
-                                            <Route path="/:tenantSlug/payment" element={<OrderPayment config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/camera" element={<Suspense fallback={<LazyFallback />}><CameraGuard /></Suspense>} />
+                                            <Route path="/:tenantSlug/envios" element={<Suspense fallback={<LazyFallback />}><Envio config={safeConfig} /></Suspense>} />
+                                            <Route path="/:tenantSlug/order" element={<Suspense fallback={<LazyFallback />}><Order config={safeConfig} /></Suspense>} />
+                                            <Route path="/:tenantSlug/status" element={<Suspense fallback={<LazyFallback />}><OrderStatus config={safeConfig} featuredItems={safeConfig.featuredPhotos || []} /></Suspense>} />
+                                            <Route path="/:tenantSlug/receipt" element={<Suspense fallback={<LazyFallback />}><Receipt /></Suspense>} />
+                                            <Route path="/:tenantSlug/payment" element={<Suspense fallback={<LazyFallback />}><OrderPayment config={safeConfig} /></Suspense>} />
 
-                                            <Route path="/:tenantSlug/rewards" element={<Rewards />} />
-                                            <Route path="/:tenantSlug/share" element={<ShareFood config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/game" element={<PerfectPour />} />
-                                            <Route path="/:tenantSlug/arcade" element={<Arcade />} />
-                                            <Route path="/:tenantSlug/info" element={<Info config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/events" element={<EventThemeWrapper />} />
-                                            <Route path="/:tenantSlug/events/ticket" element={<EventThemeWrapper />} />
-                                            <Route path="/:tenantSlug/promos" element={<EventThemeWrapper />} /> {/* Alias for backward compatibility */}
+                                            <Route path="/:tenantSlug/rewards" element={<Suspense fallback={<LazyFallback />}><Rewards /></Suspense>} />
+                                            <Route path="/:tenantSlug/share" element={<Suspense fallback={<LazyFallback />}><ShareFood config={safeConfig} /></Suspense>} />
+                                            <Route path="/:tenantSlug/game" element={<Suspense fallback={<LazyFallback />}><PerfectPour /></Suspense>} />
+                                            <Route path="/:tenantSlug/arcade" element={<Suspense fallback={<LazyFallback />}><Arcade /></Suspense>} />
+                                            <Route path="/:tenantSlug/info" element={<Suspense fallback={<LazyFallback />}><Info config={safeConfig} /></Suspense>} />
+                                            <Route path="/:tenantSlug/events" element={<Suspense fallback={<LazyFallback />}><EventThemeWrapper /></Suspense>} />
+                                            <Route path="/:tenantSlug/events/ticket" element={<Suspense fallback={<LazyFallback />}><EventThemeWrapper /></Suspense>} />
+                                            <Route path="/:tenantSlug/promos" element={<Suspense fallback={<LazyFallback />}><EventThemeWrapper /></Suspense>} />
                                             <Route path="/:tenantSlug/reservation" element={<Suspense fallback={<LazyFallback />}><ReservationPage /></Suspense>} />
-                                            <Route path="/:tenantSlug/wall" element={<Wall />} />
-                                            <Route path="/:tenantSlug/session" element={<Session config={safeConfig} />} />
-                                            <Route path="/:tenantSlug/session/:sessionId" element={<Session config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/wall" element={<Suspense fallback={<LazyFallback />}><Wall /></Suspense>} />
+                                            <Route path="/:tenantSlug/session" element={<Suspense fallback={<LazyFallback />}><Session config={safeConfig} /></Suspense>} />
+                                            <Route path="/:tenantSlug/session/:sessionId" element={<Suspense fallback={<LazyFallback />}><Session config={safeConfig} /></Suspense>} />
 
                                             <Route path="/:tenantSlug/staff" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/:tenantSlug/staff/dashboard" element={<StaffOpsRedirect />} />

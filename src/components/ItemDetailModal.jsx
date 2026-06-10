@@ -2,18 +2,7 @@ import { useState, useEffect } from 'react'
 import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
 import { Flame, Leaf, Wheat, Star, X, ShoppingCart } from 'lucide-react'
-
-const getOptimizedImageUrl = (url, options = {}) => {
-  if (!url || url.startsWith('blob:')) return url
-  if (url.includes('unsplash.com')) {
-    return url.includes('?') ? url : `${url}?w=600&q=80&fit=crop`
-  }
-  if (url.includes('.supabase.co/storage/v1/object/public/')) return url
-  if (url.includes('width=') || url.includes('quality=')) return url
-  const { width = 600, quality = 80, format = 'webp' } = options
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
-}
+import { getOptimizedImageUrl } from '../utils/imageUrl'
 
 export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) {
   const { t } = useLanguage()
@@ -39,7 +28,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
 
   const itemImage = item.image || item.image_url
   const imageSrc = (itemImage && !itemImage.startsWith('blob:') && !imgError)
-    ? getOptimizedImageUrl(itemImage, { width: 600, quality: 80 })
+    ? getOptimizedImageUrl(itemImage, { width: 600, quality: 80, resize: 'contain' })
     : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=338&fit=crop&q=80'
 
   const handleAddToCart = () => {

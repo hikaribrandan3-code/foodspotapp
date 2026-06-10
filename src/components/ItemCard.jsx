@@ -3,24 +3,7 @@ import { useState, memo } from 'react'
 import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
 import { Info, Leaf, Wheat, Flame, Star } from 'lucide-react'
-
-// 🚀 VAULT-SEAL: Image Optimization Helper
-const getOptimizedImageUrl = (url, options = {}) => {
-    if (!url || url.startsWith('blob:')) return url
-    // Skip optimization for Unsplash images (they have their own params)
-    if (url.includes('unsplash.com')) {
-        return url.includes('?') ? url : `${url}?w=400&q=75&fit=crop`
-    }
-    // Skip optimization for Supabase storage URLs — they need /render/image/ for transforms
-    if (url.includes('.supabase.co/storage/v1/object/public/')) {
-        return url
-    }
-    // Skip if already has transformation params
-    if (url.includes('width=') || url.includes('quality=')) return url
-    const { width = 400, quality = 75, format = 'webp' } = options
-    const separator = url.includes('?') ? '&' : '?'
-    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
-}
+import { getOptimizedImageUrl } from '../utils/imageUrl'
 
 const ItemCard = ({
     item,
@@ -46,7 +29,7 @@ const ItemCard = ({
     // Image Source Logic - Optimized
     const itemImage = item.image || item.image_url
     const imageSrc = (itemImage && !itemImage.startsWith('blob:') && !imgError)
-        ? getOptimizedImageUrl(itemImage, { width: 300, quality: 75, format: 'webp' })
+        ? getOptimizedImageUrl(itemImage, { width: 300, quality: 75, resize: 'cover' })
         : 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop&q=80'
 
     const hasAnyTag = item.is_vegan || item.is_gluten_free || item.is_spicy || item.featured
