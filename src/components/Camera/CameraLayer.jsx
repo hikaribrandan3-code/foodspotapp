@@ -1,604 +1,451 @@
+import { useState, useEffect, useRef } from 'react'
+import { useCamera, FILTER_STYLES } from './hooks/useCamera.js'
+import { useTenant } from '../../contexts/TenantContext.jsx'
+import './CameraLayer.css'
+
 /**
- * FoodSpot Camera — CameraLayer.jsx
- * ----------------------------------
- * Full camera UI on top of useCamera.
- *
- * CamTech v1.8 additions per spec:
- *  - "ONE TAKE" label above the shutter
- *  - Scene pills [FOOD] [PET] [PORTRAIT] above the shutter (FOOD default)
- *  - AE/AF toggle in the right toolbar, below flash (yellow on / gray off)
- *  - Zoom 0.5x–10x (quick stops + pinch)
- *  - Macro chip + 5–30 cm distance slider (FOOD scene)
- *  - 9:16 / 4:3 / 1:1 aspect ratios, object-fit: cover (no letterboxing)
- *  - Landscape layout adaptation
- *
- * Props:
- *  - onCapture(result)   result = { blob, width, height, meta }
- *  - onClose()
- *  - locationLabel       string shown in the location pill
- *  - initialScene        'FOOD' | 'PET' | 'PORTRAIT'
+ * CameraLayer Component - CamTech v1.9
+ * Fullscreen camera with "Airy" UI — pill moved to top-left
+ * Synchronized branding with ExportEngine
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import useCamera, { ZOOM_UI_MAX } from './hooks/useCamera';
-import {
-  SCENE_ORDER,
-  SCENE_PRESETS,
-  CAPTURE_FILTERS,
-  MACRO_RANGE_M,
-  composeFilter,
-} from './utils/scenePresets';
+const FILTERS = [
+    { id: 'original', label: 'Original', color: '#888' },
+    { id: 'mono', label: 'Mono', color: '#666' },
+    { id: 'soft', label: 'Soft', color: '#d4c8b8' }
+]
 
-const ZOOM_STOPS = [0.5, 1, 2, 5, 10];
-const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
+const FLASH_ICONS = {
+    off: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17 2l-5 10h5l-5 10" />
+            <path d="M1 1l22 22" strokeLinecap="round" />
+        </svg>
+    ),
+    on: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+        </svg>
+    ),
+    auto: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+            <text x="18" y="22" fontSize="8" fill="currentColor">A</text>
+        </svg>
+    ),
+    torch: (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+            <circle cx="19" cy="5" r="3" fill="#ffcc00" />
+        </svg>
+    )
+}
 
-export default function CameraLayer({
-  onCapture,
-  onClose,
-  locationLabel = 'Ubicación',
-  initialScene = 'FOOD',
-}) {
-  const cam = useCamera({ initialScene });
-  const {
-    videoRef, start, flip, ready, error, facing,
-    sceneMode, selectScene, faces,
-    zoom, zoomFloor, setZoomLevel, previewTransform,
-    onPinchStart, onPinchMove, onPinchEnd,
-    macroOn, macroDistance, setMacro, setMacroFocusDistance,
-    aeafLocked, toggleAeAfLock, focusAt,
-    flashMode, setFlashMode, aspect, setAspect,
-    filterId, setFilterId, captureWithFlash,
-  } = cam;
+export default function CameraLayer({ onCapture, onOpenSettings, onClose, toolPosition }) {
+    const { tenantData } = useTenant()
 
-  const [reticle, setReticle] = useState(null); // {x,y} in px within frame
-  const [screenFlash, setScreenFlash] = useState(false);
-  const [shutterPulse, setShutterPulse] = useState(false);
-  const [lastShot, setLastShot] = useState(null); // object URL thumb
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const frameRef = useRef(null);
-  const lastUrlRef = useRef(null);
+    // Track landscape vs portrait — pure CSS media query via matchMedia, zero JS overhead
+    const [isLandscape, setIsLandscape] = useState(() => window.innerWidth > window.innerHeight)
+    useEffect(() => {
+        const mq = window.matchMedia('(orientation: landscape)')
+        const handler = (e) => setIsLandscape(e.matches)
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+    }, [])
 
-  useEffect(() => {
-    start();
-    return () => {
-      if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // DEBUG: Log camera pin style on mount and when it changes
+    useEffect(() => {
+        const pinStyle = tenantData?.app_config?.cameraPinStyle || 'classic'
+        console.log('[CameraLayer] 🎥 cameraPinStyle:', pinStyle, 'tenantData:', tenantData?.app_config)
+    }, [tenantData?.app_config?.cameraPinStyle])
 
-  // ---- shutter --------------------------------------------------------
-  const handleShutter = useCallback(async () => {
-    setShutterPulse(true);
-    setTimeout(() => setShutterPulse(false), 130);
-    try {
-      const result = await captureWithFlash({
-        onScreenFlash: () => {
-          setScreenFlash(true);
-          setTimeout(() => setScreenFlash(false), 160);
-        },
-      });
-      if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
-      lastUrlRef.current = URL.createObjectURL(result.blob);
-      setLastShot(lastUrlRef.current);
-      if (onCapture) onCapture(result);
-    } catch {
-      /* camera not ready yet — ignore the tap */
+
+    const {
+        videoRef,
+        canvasRef,
+        isReady,
+        error,
+        facingMode,
+        flipCamera,
+        flashMode,
+        flashSupported,
+        cycleFlash,
+        selectedFilter,
+        setFilter,
+        getFilterStyle,
+        captureFrame,
+        zoomLevel,
+        setZoom,
+        zoomSupported
+    } = useCamera()
+
+    const businessName = tenantData?.business_name || 'FoodSpot'
+
+    // Camera pin style — controls the location pill background color
+    const PIN_STYLE_COLORS = {
+        classic: 'rgba(255, 255, 255, 0.22)',
+        cafe:    'rgba(130, 90, 60, 0.55)',
+        vegan:   'rgba(145, 170, 100, 0.55)',  // kept for backward compat
+        natural: 'rgba(145, 170, 100, 0.55)',  // new name
+        burger:  'rgba(255, 193, 7, 0.60)',    // kept for backward compat
     }
-  }, [captureWithFlash, onCapture]);
+    const pinStyle    = tenantData?.app_config?.cameraPinStyle || 'classic'
+    const customBg    = tenantData?.app_config?.cameraPinCustomBg   || 'rgba(80,80,80,0.55)'
+    const customText  = tenantData?.app_config?.cameraPinCustomText  || '#ffffff'
+    const pinBg   = pinStyle === 'custom' ? customBg   : (PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic)
+    const pinText = pinStyle === 'custom' ? customText : '#ffffff'
 
-  // ---- tap to focus ----------------------------------------------------
-  const handleFrameTap = useCallback(
-    (e) => {
-      const el = frameRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-      setReticle({ x: cx, y: cy });
-      setTimeout(() => setReticle(null), 1100);
-      focusAt(cx / rect.width, cy / rect.height);
-    },
-    [focusAt]
-  );
+    const [showFilterToast, setShowFilterToast] = useState(false)
+    const [filterToastName, setFilterToastName] = useState('')
+    const toastTimeoutRef = useRef(null)
+    const [isCapturing, setIsCapturing] = useState(false)
 
-  // ---- aspect cycle ----------------------------------------------------
-  const cycleAspect = useCallback(() => {
-    const i = ASPECT_CYCLE.indexOf(aspect);
-    setAspect(ASPECT_CYCLE[(i + 1) % ASPECT_CYCLE.length]);
-  }, [aspect, setAspect]);
+    const initialPinchDistanceRef = useRef(0)
+    const initialZoomRef = useRef(1)
 
-  const previewFilter = composeFilter(sceneMode, filterId);
-  const halfStopAvailable = zoomFloor < 1;
+    const getTouchDistance = (touches) => {
+        const dx = touches[0].clientX - touches[1].clientX
+        const dy = touches[0].clientY - touches[1].clientY
+        return Math.sqrt(dx * dx + dy * dy)
+    }
 
-  return (
-    <div className="fsc-root" data-aspect={aspect}>
-      <style>{styles}</style>
+    const handlePinchStart = (e) => {
+        if (e.touches && e.touches.length === 2 && zoomSupported) {
+            e.preventDefault()
+            initialPinchDistanceRef.current = getTouchDistance(e.touches)
+            initialZoomRef.current = zoomLevel
+        }
+    }
 
-      {/* ============ VIEWFINDER ============ */}
-      <div
-        className="fsc-frame"
-        ref={frameRef}
-        onClick={handleFrameTap}
-        onTouchStart={onPinchStart}
-        onTouchMove={onPinchMove}
-        onTouchEnd={onPinchEnd}
-      >
-        <video
-          ref={videoRef}
-          className="fsc-video"
-          autoPlay
-          playsInline
-          muted
-          style={{
-            transform: `${facing === 'user' ? 'scaleX(-1) ' : ''}${previewTransform}`,
-            filter: previewFilter === 'none' ? undefined : previewFilter,
-          }}
-        />
+    const handlePinchMove = (e) => {
+        if (e.touches && e.touches.length === 2 && zoomSupported && initialPinchDistanceRef.current > 0) {
+            e.preventDefault()
+            const currentDistance = getTouchDistance(e.touches)
+            const rawFactor = currentDistance / initialPinchDistanceRef.current
+            // 2.5x amplification — makes pinch to zoom work with just thumb + pointer finger
+            const amplifiedFactor = 1 + (rawFactor - 1) * 2.5
+            const newZoom = Math.max(1, Math.min(3, initialZoomRef.current * amplifiedFactor))
+            setZoom(newZoom)
+        }
+    }
 
-        {/* face boxes (PORTRAIT) */}
-        {faces.map((f, i) => (
-          <div
-            key={i}
-            className="fsc-face"
-            style={{
-              left: `${f.x * 100}%`,
-              top: `${f.y * 100}%`,
-              width: `${f.w * 100}%`,
-              height: `${f.h * 100}%`,
-            }}
-          />
-        ))}
+    const handlePinchEnd = () => {
+        initialPinchDistanceRef.current = 0
+    }
 
-        {/* tap-to-focus reticle */}
-        {reticle && (
-          <div
-            className="fsc-reticle"
-            style={{ left: reticle.x, top: reticle.y }}
-          />
-        )}
+    const handleShutter = async () => {
+        if (isCapturing) return
+        setIsCapturing(true)
 
-        {/* AE/AF lock badge */}
-        {aeafLocked && <div className="fsc-lockbadge">AE/AF LOCK</div>}
+        try {
+            const imageData = await captureFrame()
+            if (imageData) {
+                playShutterSound()
+                onCapture(imageData)
+            }
+        } finally {
+            setIsCapturing(false)
+        }
+    }
 
-        {/* screen flash (front camera) */}
-        {screenFlash && <div className="fsc-screenflash" />}
+    const playShutterSound = () => {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+            const oscillator = audioCtx.createOscillator()
+            const gainNode = audioCtx.createGain()
+            oscillator.connect(gainNode)
+            gainNode.connect(audioCtx.destination)
+            oscillator.frequency.value = 1000
+            oscillator.type = 'sine'
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime)
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1)
+            oscillator.start(audioCtx.currentTime)
+            oscillator.stop(audioCtx.currentTime + 0.1)
+        } catch (e) { }
+    }
 
-        {!ready && !error && <div className="fsc-status">Iniciando cámara…</div>}
-        {error && (
-          <div className="fsc-status">
-            {error === 'permiso'
-              ? 'Permití el acceso a la cámara para continuar.'
-              : error === 'sin-camara'
-              ? 'No se encontró ninguna cámara.'
-              : 'No se pudo iniciar la cámara.'}
-            <button className="fsc-retry" onClick={(e) => { e.stopPropagation(); start(); }}>
-              Reintentar
-            </button>
-          </div>
-        )}
-      </div>
+    const handleSettingsClick = () => {
+        if (onOpenSettings) onOpenSettings()
+    }
 
-      {/* ============ TOP BAR ============ */}
-      <div className="fsc-top">
-        <button className="fsc-icon" onClick={onClose} aria-label="Cerrar">✕</button>
-        <div className="fsc-location">
-          <span className="fsc-pin">⌖</span> {locationLabel}
-        </div>
-        <button className="fsc-icon fsc-aspectbtn" onClick={cycleAspect} aria-label="Formato">
-          {aspect}
-        </button>
-      </div>
+    const handleFilterSelect = (filterId) => {
+        setFilter(filterId)
+    }
 
-      {/* ============ RIGHT TOOLBAR ============ */}
-      <div className="fsc-toolbar">
-        <button
-          className={`fsc-tool ${flashMode === 'on' ? 'is-on' : ''}`}
-          onClick={() => setFlashMode(flashMode === 'on' ? 'off' : 'on')}
-          aria-label="Flash"
-        >
-          ⚡
-        </button>
+    const handleFlip = () => flipCamera()
 
-        {/* AE/AF toggle — below flash. Yellow on, gray off. */}
-        <button
-          className={`fsc-tool fsc-aeaf ${aeafLocked ? 'is-locked' : ''}`}
-          onClick={toggleAeAfLock}
-          aria-label="Bloqueo AE/AF"
-        >
-          AE
-          <small>AF</small>
-        </button>
+    const handleFlashCycle = () => cycleFlash()
 
-        <button className="fsc-tool" onClick={flip} aria-label="Girar cámara">⟳</button>
+    return (
+        <div className="camera-layer">
+            {/* Hidden canvas for capture */}
+            <canvas ref={canvasRef} className="capture-canvas" />
 
-        {SCENE_PRESETS[sceneMode].focus.macroAvailable && (
-          <button
-            className={`fsc-tool fsc-macro ${macroOn ? 'is-on' : ''}`}
-            onClick={() => setMacro(!macroOn)}
-            aria-label="Macro"
-          >
-            ❀
-          </button>
-        )}
-      </div>
+            {/* Live camera preview */}
+            <video
+                ref={videoRef}
+                className="camera-preview"
+                style={{
+                    filter: getFilterStyle(),
+                    transform: facingMode === 'user' ? 'scaleX(-1)' : undefined
+                }}
+                autoPlay
+                playsInline
+                muted
+                onTouchStart={handlePinchStart}
+                onTouchMove={handlePinchMove}
+                onTouchEnd={handlePinchEnd}
+            />
 
-      {/* macro distance slider 5–30 cm */}
-      {macroOn && (
-        <div className="fsc-macropanel">
-          <span>{Math.round(macroDistance * 100)} cm</span>
-          <input
-            type="range"
-            min={MACRO_RANGE_M.min * 100}
-            max={MACRO_RANGE_M.max * 100}
-            step="1"
-            value={Math.round(macroDistance * 100)}
-            onChange={(e) => setMacroFocusDistance(Number(e.target.value) / 100)}
-          />
-        </div>
-      )}
+            {/* Loading skeleton while camera initializes */}
+            {!isReady && !error && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#000',
+                    zIndex: 5,
+                    gap: 16
+                }}>
+                    <div style={{
+                        width: 48,
+                        height: 48,
+                        border: '3px solid rgba(255,255,255,0.1)',
+                        borderTopColor: '#fff',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite'
+                    }} />
+                    <span style={{
+                        color: 'rgba(255,255,255,0.6)',
+                        fontSize: 14,
+                        fontWeight: 500,
+                        letterSpacing: 0.5
+                    }}>Loading camera...</span>
+                </div>
+            )}
 
-      {/* ============ BOTTOM STACK ============ */}
-      <div className="fsc-bottom">
-        {/* filter strip */}
-        {filtersOpen && (
-          <div className="fsc-filters">
-            {CAPTURE_FILTERS.map((f) => (
-              <button
-                key={f.id}
-                className={`fsc-filterchip ${filterId === f.id ? 'is-active' : ''}`}
-                onClick={() => setFilterId(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        )}
+            {/* Error state */}
+            {error && (
+                <div className="camera-error">
+                    <p>Camera access required</p>
+                    <p className="camera-error-detail">{error}</p>
+                </div>
+            )}
 
-        {/* zoom stops */}
-        <div className="fsc-zoomrow">
-          {ZOOM_STOPS.map((s) => {
-            const disabled = s < 1 && !halfStopAvailable;
-            const active = Math.abs(zoom - s) < 0.15;
-            return (
-              <button
-                key={s}
-                className={`fsc-zoomstop ${active ? 'is-active' : ''}`}
-                disabled={disabled}
-                onClick={() => setZoomLevel(s)}
-              >
-                {active ? `${zoom.toFixed(zoom < 3 ? 1 : 0)}×` : s === 0.5 ? '.5' : `${s}`}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* scene pills */}
-        <div className="fsc-scenes">
-          {SCENE_ORDER.map((id) => (
+            {/* ── TOP LEFT: Close Button ── */}
             <button
-              key={id}
-              className={`fsc-scenepill ${sceneMode === id ? 'is-active' : ''}`}
-              onClick={() => selectScene(id)}
+                onClick={onClose}
+                aria-label="Close"
+                style={{
+                    position: 'absolute',
+                    top: '16px',
+                    left: '16px',
+                    width: '44px',
+                    height: '44px',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff',
+                    zIndex: 200
+                }}
             >
-              {SCENE_PRESETS[id].label}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
             </button>
-          ))}
+
+            {/* ── TOP LEFT: Location Pill (Below Close) ── */}
+            {/* AIRY UI: 72px from top (16 + 44 + 12 gap), clear of all buttons */}
+            <div style={{
+                position: 'absolute',
+                top: '72px',
+                left: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '8px 14px',
+                background: pinBg,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: '20px',
+                zIndex: 10,
+            }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
+                </svg>
+                <span style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    letterSpacing: '0.08em',
+                    lineHeight: 1,
+                    color: pinText,
+                }}>
+                    {businessName.toUpperCase()}
+                </span>
+            </div>
+
+            {/* Settings gear — hidden */}
+            <button
+                className="settings-button"
+                onClick={handleSettingsClick}
+                aria-label="Settings"
+                style={{ display: 'none' }}
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </button>
+
+            {/* Right toolbar */}
+            <div className={`toolbar toolbar-${toolPosition === 'left' ? 'right' : 'left'}-side`}>
+                <button className="toolbar-button" onClick={handleFlip} aria-label="Flip Camera">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
+                        <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5" />
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="m18 22-3-3 3-3" />
+                        <path d="m6 2 3 3-3 3" />
+                    </svg>
+                </button>
+                <button
+                    className={`toolbar-button ${flashMode !== 'off' ? 'toolbar-button-active' : ''}`}
+                    onClick={handleFlashCycle}
+                    aria-label={`Flash: ${flashMode}`}
+                    title={flashSupported ? `Flash: ${flashMode}` : 'Flash not supported'}
+                >
+                    {FLASH_ICONS[flashMode]}
+                </button>
+            </div>
+
+            {/* Shutter + Controls — bottom center in portrait, right edge in landscape */}
+            <div style={{
+                position: 'absolute',
+                // Landscape: right strip. Portrait: bottom strip.
+                ...(isLandscape ? {
+                    right: 'env(safe-area-inset-right, 24px)',
+                    top: 0,
+                    bottom: 0,
+                    width: '100px',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                } : {
+                    bottom: '48px',
+                    left: 0,
+                    right: 0,
+                    height: 'auto',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                }),
+                display: 'flex',
+                alignItems: 'center',
+                gap: isLandscape ? '28px' : '40px',
+                zIndex: 100,
+                padding: isLandscape ? '0 8px' : '0 24px',
+            }}>
+                {/* Spacer / Flip in landscape */}
+                {!isLandscape && <div style={{ width: '48px' }} />}
+
+                {/* Shutter */}
+                <button
+                    onClick={handleShutter}
+                    disabled={!isReady}
+                    aria-label="Take Photo"
+                    style={{
+                        width: '72px',
+                        height: '72px',
+                        background: 'transparent',
+                        border: '4px solid #fff',
+                        borderRadius: '50%',
+                        padding: '4px',
+                        cursor: 'pointer',
+                        opacity: isReady ? 1 : 0.5,
+                        flexShrink: 0,
+                        boxShadow: '0 4px 20px rgba(255, 255, 255, 0.25)'
+                    }}
+                >
+                    <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: '#fff',
+                        borderRadius: '50%'
+                    }} />
+                </button>
+
+                {/* Filter toggle */}
+                <button
+                    onClick={() => {
+                        const currentIndex = FILTERS.findIndex(f => f.id === selectedFilter)
+                        const nextIndex = (currentIndex + 1) % FILTERS.length
+                        const nextFilter = FILTERS[nextIndex]
+                        handleFilterSelect(nextFilter.id)
+                        setFilterToastName(nextFilter.label)
+                        setShowFilterToast(true)
+                        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+                        toastTimeoutRef.current = setTimeout(() => setShowFilterToast(false), 600)
+                    }}
+                    aria-label="Filters"
+                    style={{
+                        width: '48px',
+                        height: '48px',
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        backdropFilter: 'blur(10px)',
+                        border: 'none',
+                        borderRadius: '50%',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        color: '#fff'
+                    }}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" opacity="0.3" />
+                    </svg>
+                </button>
+            </div>
+
+            {/* Filter toast */}
+            {showFilterToast && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: isLandscape ? '50%' : '150px',
+                    right: isLandscape ? '120px' : 'auto',
+                    left: isLandscape ? 'auto' : '50%',
+                    transform: isLandscape ? 'translateY(50%)' : 'translateX(-50%)',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    backdropFilter: 'blur(10px)',
+                    color: '#fff',
+                    padding: '8px 20px',
+                    borderRadius: '20px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    zIndex: 200,
+                    animation: 'fadeInOut 0.6s ease-out forwards'
+                }}>
+                    {filterToastName}
+                </div>
+            )}
+
+            <style>{`
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+                    20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+                    80% { opacity: 1; }
+                    100% { opacity: 0; }
+                }
+            `}</style>
         </div>
-
-        {/* ONE TAKE label */}
-        <div className="fsc-onetake">ONE TAKE</div>
-
-        {/* shutter row */}
-        <div className="fsc-shutterrow">
-          <button
-            className={`fsc-side fsc-filtersbtn ${filtersOpen ? 'is-on' : ''}`}
-            onClick={() => setFiltersOpen(!filtersOpen)}
-            aria-label="Filtros"
-          >
-            ✦
-          </button>
-
-          <button
-            className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''}`}
-            onClick={handleShutter}
-            aria-label="Capturar"
-          >
-            <span className="fsc-shutter-inner" />
-          </button>
-
-          <div className="fsc-side fsc-thumb">
-            {lastShot ? <img src={lastShot} alt="Última foto" /> : <span />}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    )
 }
-
-/* ======================================================================
-   STYLES — fsc- prefix to avoid collisions. Brand tokens up top.
-   ====================================================================== */
-const styles = `
-.fsc-root {
-  --fsc-bg: #08080A;
-  --fsc-text: #FFFFFF;
-  --fsc-dim: rgba(255,255,255,0.62);
-  --fsc-chip: rgba(20,20,24,0.55);
-  --fsc-stroke: rgba(255,255,255,0.16);
-  --fsc-accent: #FF6B3D;          /* FoodSpot warm accent */
-  --fsc-lock: #FFD60A;            /* AE/AF lock yellow */
-  --fsc-radius: 999px;
-
-  position: fixed; inset: 0;
-  background: var(--fsc-bg);
-  color: var(--fsc-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  -webkit-user-select: none; user-select: none;
-  touch-action: none;
-}
-
-/* ---------- viewfinder: aspect-driven, object-fit cover -------------- */
-.fsc-frame {
-  position: relative;
-  overflow: hidden;
-  background: #000;
-  width: 100vw; height: 100dvh;       /* 9:16 default fills screen */
-}
-.fsc-root[data-aspect="4:3"] .fsc-frame {
-  width: min(100vw, calc(100dvh * 0.75));
-  height: min(100dvh, calc(100vw / 0.75));
-  border-radius: 18px;
-}
-.fsc-root[data-aspect="1:1"] .fsc-frame {
-  width: min(100vw, 100dvh);
-  height: min(100vw, 100dvh);
-  border-radius: 18px;
-}
-.fsc-video {
-  width: 100%; height: 100%;
-  object-fit: cover;                   /* fills the frame, no letterbox */
-  transform-origin: center;
-}
-
-/* ---------- overlays -------------------------------------------------- */
-.fsc-face {
-  position: absolute;
-  border: 1.5px solid var(--fsc-lock);
-  border-radius: 10px;
-  pointer-events: none;
-}
-.fsc-reticle {
-  position: absolute;
-  width: 76px; height: 76px;
-  margin: -38px 0 0 -38px;
-  border: 1.5px solid var(--fsc-lock);
-  border-radius: 14px;
-  pointer-events: none;
-  animation: fsc-reticle-in 0.22s ease-out;
-}
-.fsc-reticle::before, .fsc-reticle::after {
-  content:''; position:absolute; background: var(--fsc-lock);
-}
-.fsc-reticle::before { width: 10px; height: 1.5px; left: -14px; top: 50%; }
-.fsc-reticle::after  { width: 1.5px; height: 10px; top: -14px; left: 50%; }
-@keyframes fsc-reticle-in { from { transform: scale(1.35); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-.fsc-lockbadge {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-  background: var(--fsc-lock); color: #1A1A1A;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-  padding: 4px 10px; border-radius: 6px;
-  pointer-events: none;
-}
-.fsc-screenflash {
-  position: absolute; inset: 0; background: #fff; z-index: 30;
-  animation: fsc-blink 0.16s ease-out;
-}
-@keyframes fsc-blink { from { opacity: 1; } to { opacity: 0.85; } }
-
-.fsc-status {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; gap: 14px;
-  align-items: center; justify-content: center;
-  color: var(--fsc-dim); font-size: 14px; text-align: center; padding: 0 32px;
-}
-.fsc-retry {
-  background: var(--fsc-accent); color: #fff; border: 0;
-  padding: 10px 22px; border-radius: var(--fsc-radius);
-  font-size: 14px; font-weight: 600;
-}
-
-/* ---------- top bar ---------------------------------------------------- */
-.fsc-top {
-  position: absolute; top: 0; left: 0; right: 0;
-  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
-  display: flex; align-items: center; justify-content: space-between;
-  z-index: 10;
-}
-.fsc-icon {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: var(--fsc-chip);
-  border: 1px solid var(--fsc-stroke);
-  color: var(--fsc-text);
-  font-size: 15px;
-  backdrop-filter: blur(12px);
-  display: flex; align-items: center; justify-content: center;
-}
-.fsc-aspectbtn { width: auto; padding: 0 14px; border-radius: var(--fsc-radius); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
-.fsc-location {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--fsc-chip);
-  border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  border-radius: var(--fsc-radius);
-  padding: 8px 16px;
-  font-size: 12.5px; font-weight: 600;
-  max-width: 52vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.fsc-pin { color: var(--fsc-accent); font-size: 14px; }
-
-/* ---------- right toolbar ---------------------------------------------- */
-.fsc-toolbar {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 68px);
-  right: 14px;
-  display: flex; flex-direction: column; gap: 12px;
-  z-index: 10;
-}
-.fsc-tool {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  background: var(--fsc-chip);
-  border: 1px solid var(--fsc-stroke);
-  color: rgba(255,255,255,0.85);
-  font-size: 16px;
-  backdrop-filter: blur(12px);
-  display: flex; align-items: center; justify-content: center;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
-}
-.fsc-tool.is-on { color: var(--fsc-accent); border-color: var(--fsc-accent); }
-
-/* AE/AF — gray off, yellow on */
-.fsc-aeaf { flex-direction: column; font-size: 11px; font-weight: 800; line-height: 1; gap: 1px; color: rgba(255,255,255,0.45); }
-.fsc-aeaf small { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; }
-.fsc-aeaf.is-locked {
-  color: #1A1A1A;
-  background: var(--fsc-lock);
-  border-color: var(--fsc-lock);
-}
-.fsc-macro.is-on { color: var(--fsc-accent); border-color: var(--fsc-accent); }
-
-/* macro slider panel */
-.fsc-macropanel {
-  position: absolute; right: 70px;
-  top: calc(env(safe-area-inset-top, 0px) + 150px);
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  background: var(--fsc-chip); border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  border-radius: 14px; padding: 12px 10px;
-  z-index: 10;
-}
-.fsc-macropanel span { font-size: 11px; font-weight: 700; color: var(--fsc-accent); }
-.fsc-macropanel input {
-  writing-mode: vertical-lr; direction: rtl;
-  width: 24px; height: 110px; accent-color: var(--fsc-accent);
-}
-
-/* ---------- bottom stack ------------------------------------------------ */
-.fsc-bottom {
-  position: absolute; left: 0; right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  z-index: 10;
-}
-.fsc-filters { display: flex; gap: 8px; }
-.fsc-filterchip {
-  background: var(--fsc-chip); border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  color: var(--fsc-dim); font-size: 12px; font-weight: 600;
-  padding: 7px 14px; border-radius: var(--fsc-radius);
-}
-.fsc-filterchip.is-active { color: #fff; border-color: var(--fsc-accent); background: rgba(255,107,61,0.18); }
-
-.fsc-zoomrow {
-  display: flex; gap: 6px; align-items: center;
-  background: var(--fsc-chip); border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  border-radius: var(--fsc-radius); padding: 5px;
-}
-.fsc-zoomstop {
-  min-width: 34px; height: 34px; padding: 0 6px;
-  border-radius: 50%;
-  background: transparent; border: 0;
-  color: var(--fsc-dim); font-size: 11.5px; font-weight: 700;
-}
-.fsc-zoomstop.is-active { background: rgba(255,255,255,0.14); color: var(--fsc-accent); font-size: 12.5px; }
-.fsc-zoomstop:disabled { opacity: 0.28; }
-
-.fsc-scenes { display: flex; gap: 8px; }
-.fsc-scenepill {
-  background: var(--fsc-chip); border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  color: var(--fsc-dim);
-  font-size: 12px; font-weight: 800; letter-spacing: 0.1em;
-  padding: 8px 18px; border-radius: var(--fsc-radius);
-  transition: all 0.18s;
-}
-.fsc-scenepill.is-active {
-  color: #fff;
-  background: var(--fsc-accent);
-  border-color: var(--fsc-accent);
-  box-shadow: 0 0 18px rgba(255,107,61,0.45);
-}
-
-.fsc-onetake {
-  font-size: 10.5px; font-weight: 800;
-  letter-spacing: 0.32em; text-indent: 0.32em;
-  text-transform: uppercase;
-  color: #fff; opacity: 0.92;
-}
-
-.fsc-shutterrow {
-  width: 100%; max-width: 420px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 36px; box-sizing: border-box;
-}
-.fsc-side {
-  width: 46px; height: 46px; border-radius: 14px;
-  background: var(--fsc-chip); border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  color: rgba(255,255,255,0.85); font-size: 17px;
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-}
-.fsc-filtersbtn.is-on { color: var(--fsc-accent); border-color: var(--fsc-accent); }
-.fsc-thumb img { width: 100%; height: 100%; object-fit: cover; }
-
-.fsc-shutter {
-  width: 76px; height: 76px;
-  border-radius: 50%;
-  border: 4px solid #fff;
-  background: transparent;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0;
-}
-.fsc-shutter-inner {
-  width: 60px; height: 60px; border-radius: 50%;
-  background: #fff;
-  transition: transform 0.1s ease-out;
-}
-.fsc-shutter.is-firing .fsc-shutter-inner { transform: scale(0.82); }
-.fsc-shutter:active .fsc-shutter-inner { transform: scale(0.88); }
-
-/* ---------- landscape adaptation ---------------------------------------- */
-@media (orientation: landscape) {
-  .fsc-root[data-aspect="4:3"] .fsc-frame {
-    width: min(100vw, calc(100dvh / 0.75));
-    height: min(100dvh, calc(100vw * 0.75));
-  }
-  .fsc-bottom {
-    left: auto; right: calc(env(safe-area-inset-right, 0px) + 18px);
-    top: 0; bottom: 0;
-    width: auto;
-    flex-direction: column; justify-content: center;
-  }
-  .fsc-shutterrow {
-    width: auto; padding: 0;
-    flex-direction: column-reverse; gap: 16px;
-  }
-  .fsc-zoomrow { transform: scale(0.92); }
-  .fsc-toolbar {
-    right: auto; left: 14px;
-    top: 50%; transform: translateY(-50%);
-  }
-  .fsc-macropanel { right: auto; left: 70px; top: 50%; transform: translateY(-50%); }
-  .fsc-top { padding-left: calc(env(safe-area-inset-left, 0px) + 16px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .fsc-reticle, .fsc-screenflash { animation: none; }
-}
-`;
