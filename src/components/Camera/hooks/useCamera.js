@@ -1,350 +1,647 @@
-import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react'
-
 /**
- * useCamera Hook - CamTech v2.1 (Fast Preview + Background Upgrade)
- * Phase 1: Minimal constraints for instant preview
- * Phase 2: Background high-res upgrade via applyConstraints or re-negotiation
- * Color Science: display-p3 enabled.
+ * FoodSpot Camera — useCamera (capture engine + CamTech v1.8 features)
+ * --------------------------------------------------------------------
+ * Capture engine: getUserMedia → <video> → canvas grab (synchronous
+ * drawImage, so rapid shutter taps each get a real frame — no debounce,
+ * no dropped shots).
+ *
+ * CamTech features layered on top:
+ *  - Scene modes (FOOD / PET / PORTRAIT) via scenePresets.js
+ *  - Macro focus 5–30 cm (manual focusDistance when hardware allows)
+ *  - Zoom 0.5x–10x: hardware zoom where the lens supports it,
+ *    digital zoom (preview transform + capture crop) for the rest
+ *  - AE/AF lock: freezes exposure/focus/WB at current values
+ *  - Tap-to-focus / tap-to-expose (pointsOfInterest + single-shot)
+ *  - Flash: rear torch pulse, front screen-flash (handled by UI flag)
+ *  - Aspect-aware capture crop: 9:16, 4:3, 1:1
  */
 
-export const FILTER_STYLES = {
-    original: 'none',
-    mono: 'grayscale(1) contrast(1.1)',
-    soft: 'brightness(1.08) contrast(0.92) saturate(0.95)'
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  SCENE_PRESETS,
+  DEFAULT_SCENE,
+  MACRO_RANGE_M,
+  composeFilter,
+} from '../utils/scenePresets';
+
+export const ZOOM_UI_MIN = 0.5;
+export const ZOOM_UI_MAX = 10;
+
+const ASPECTS = {
+  '9:16': 9 / 16,
+  '4:3': 3 / 4, // portrait orientation: width/height
+  '1:1': 1,
+};
+
+function clamp(v, min, max) {
+  return Math.min(max, Math.max(min, v));
 }
 
-const FLASH_MODES = ['off', 'on', 'auto', 'torch']
+export function useCamera({ initialScene = DEFAULT_SCENE } = {}) {
+  // ---- public state -------------------------------------------------
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState(null);
+  const [facing, setFacing] = useState('environment');
+  const [sceneMode, setSceneMode] = useState(initialScene);
+  const [zoom, setZoom] = useState(1); // effective UI zoom (0.5–10)
+  const [aeafLocked, setAeafLocked] = useState(false);
+  const [flashMode, setFlashMode] = useState('off'); // 'off' | 'on'
+  const [aspect, setAspect] = useState('9:16');
+  const [filterId, setFilterId] = useState('original');
+  const [macroOn, setMacroOn] = useState(false);
+  const [macroDistance, setMacroDistance] = useState(0.12); // meters
+  const [torchAvailable, setTorchAvailable] = useState(false);
+  const [zoomFloor, setZoomFloor] = useState(1); // 0.5 only if lens supports
+  const [faces, setFaces] = useState([]); // normalized boxes for PORTRAIT
 
-export function useCamera() {
-    const videoRef = useRef(null)
-    const canvasRef = useRef(null)
-    const streamRef = useRef(null)
-    const trackRef = useRef(null)
-    const isInitializingRef = useRef(false)
+  // ---- internals ----------------------------------------------------
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const trackRef = useRef(null);
+  const capsRef = useRef({});
+  const hwZoomRef = useRef({ min: 1, max: 1, supported: false });
+  const digitalZoomRef = useRef(1); // portion of zoom done in software
+  const faceTimerRef = useRef(null);
+  const faceDetectorRef = useRef(null);
+  const pinchRef = useRef({ active: false, startDist: 0, startZoom: 1 });
 
-    const [isReady, setIsReady] = useState(false)
-    const [facingMode, setFacingMode] = useState('environment')
-    const [error, setError] = useState(null)
-    const [flashMode, setFlashMode] = useState('off')
-    const [flashSupported, setFlashSupported] = useState(false)
-    const [selectedFilter, setSelectedFilter] = useState('original')
-    const [zoomLevel, setZoomLevel] = useState(1)
-    const [zoomSupported, setZoomSupported] = useState(false)
-    const zoomRangeRef = useRef({ min: 1, max: 1 })
+  // =====================================================================
+  // STREAM LIFECYCLE
+  // =====================================================================
 
-    const probeCapabilities = useCallback(async (videoTrack) => {
-        if (!videoTrack?.getCapabilities) return
-
-        const capabilities = videoTrack.getCapabilities()
-        const settings = videoTrack.getSettings()
-
-        console.log(`--- HARDWARE VERIFIED: ${settings.width}x${settings.height} @ ${settings.frameRate}fps ---`)
-
-        setFlashSupported(!!capabilities.torch)
-
-        const advanced = {}
-        if (capabilities.videoStabilizationMode?.includes('standard')) {
-            advanced.videoStabilizationMode = 'standard'
-            console.log('--- HARDWARE LOCK: STABILIZATION ACTIVE ---')
-        }
-        if (capabilities.focusMode?.includes('continuous')) {
-            advanced.focusMode = 'continuous'
-            console.log('--- HARDWARE LOCK: CONTINUOUS FOCUS ACTIVE ---')
-        }
-        if (capabilities.exposureMode?.includes('continuous')) {
-            advanced.exposureMode = 'continuous'
-            console.log('--- HARDWARE LOCK: CONTINUOUS EXPOSURE ACTIVE ---')
-        }
-
-        if (Object.keys(advanced).length > 0) {
-            await videoTrack.applyConstraints({ advanced: [advanced] })
-        }
-
-        if (capabilities.zoom) {
-            setZoomSupported(true)
-            zoomRangeRef.current = {
-                min: capabilities.zoom.min || 1,
-                max: Math.min(capabilities.zoom.max || 1, 3)
-            }
-        } else {
-            setZoomSupported(false)
-        }
-    }, [])
-
-    const upgradeResolution = useCallback(async (currentStream) => {
-        const track = currentStream.getVideoTracks()[0]
-        if (!track) return
-
-        // Non-blocking background upgrade: try 4K, fall back to 1080p
-        const upgradeAsync = async () => {
-            try {
-                // Try 4K with soft constraints (no min, just ideal)
-                console.log('--- UPGRADE: attempting 4K ---')
-                await track.applyConstraints({
-                    width: { ideal: 3840 },
-                    height: { ideal: 2160 }
-                })
-                const settings = track.getSettings()
-                console.log(`--- 4K SUCCESS: ${settings.width}x${settings.height} ---`)
-            } catch (err) {
-                // Fallback: try 1080p
-                try {
-                    console.log('--- UPGRADE: 4K failed, trying 1080p ---')
-                    await track.applyConstraints({
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    })
-                    const settings = track.getSettings()
-                    console.log(`--- 1080p SUCCESS: ${settings.width}x${settings.height} ---`)
-                } catch (e2) {
-                    console.warn('--- UPGRADE: Resolution upgrade failed, keeping preview ---')
-                }
-            }
-
-            // Probe capabilities after resolution is set
-            await probeCapabilities(track)
-        }
-
-        // Fire in background (non-blocking)
-        upgradeAsync().catch(() => {})
-    }, [probeCapabilities])
-
-    const initCamera = useCallback(async () => {
-        // Guard: prevent overlapping inits
-        if (isInitializingRef.current) return
-        isInitializingRef.current = true
-
-        try {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                setError('Camera access requires HTTPS.')
-                setIsReady(false)
-                return
-            }
-
-            if (streamRef.current) {
-                streamRef.current.getTracks().forEach(track => track.stop())
-            }
-
-            // === PHASE 1: FAST PREVIEW (instant) ===
-            const fastConstraints = {
-                video: { facingMode: facingMode },
-                audio: false
-            }
-
-            const stream = await navigator.mediaDevices.getUserMedia(fastConstraints)
-            streamRef.current = stream
-            const videoTrack = stream.getVideoTracks()[0]
-            trackRef.current = videoTrack
-
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream
-                setIsReady(true)
-                setError(null)
-                videoRef.current.play().catch(() => {})
-            }
-
-            // === PHASE 2: BACKGROUND HIGH-RES UPGRADE ===
-            upgradeResolution(stream).catch(() => {})
-        } catch (err) {
-            console.error('Camera initialization error:', err)
-            setError(err.message)
-            setIsReady(false)
-        } finally {
-            isInitializingRef.current = false
-        }
-    }, [facingMode, upgradeResolution])
-
-    const flipCamera = useCallback(() => {
-        setFacingMode(prev => prev === 'environment' ? 'user' : 'environment')
-    }, [])
-
-    const cycleFlash = useCallback(() => {
-        setFlashMode(prev => {
-            const currentIndex = FLASH_MODES.indexOf(prev)
-            const nextIndex = (currentIndex + 1) % FLASH_MODES.length
-            return FLASH_MODES[nextIndex]
-        })
-    }, [])
-
-    const setZoom = useCallback((newZoom) => {
-        if (!zoomSupported || !trackRef.current) return
-        const clampedZoom = Math.max(zoomRangeRef.current.min, Math.min(newZoom, zoomRangeRef.current.max))
-        try {
-            trackRef.current.applyConstraints({ advanced: [{ zoom: clampedZoom }] })
-            setZoomLevel(clampedZoom)
-        } catch (e) { }
-    }, [zoomSupported])
-
-    const applyFlash = useCallback(async (mode) => {
-        if (!trackRef.current || !flashSupported) return false
-        try {
-            const constraints = { torch: (mode === 'torch' || mode === 'on') }
-            await trackRef.current.applyConstraints({ advanced: [constraints] })
-            return true
-        } catch (err) {
-            return false
-        }
-    }, [flashSupported])
-
-    useEffect(() => {
-        if (flashMode === 'torch') applyFlash('torch')
-        else if (flashMode === 'off') applyFlash('off')
-    }, [flashMode, applyFlash])
-
-    const setFilter = useCallback((filterId) => {
-        if (FILTER_STYLES[filterId]) setSelectedFilter(filterId)
-    }, [])
-
-    const getFilterStyle = useCallback(() => {
-        return FILTER_STYLES[selectedFilter] || 'none'
-    }, [selectedFilter])
-
-    const applyPixelFilter = useCallback((imageData, filterName) => {
-        const data = imageData.data
-        const len = data.length
-        const clamp = (v) => v < 0 ? 0 : v > 255 ? 255 : v
-
-        switch (filterName) {
-            case 'mono': {
-                for (let i = 0; i < len; i += 4) {
-                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
-                    const final = clamp((gray - 128) * 1.1 + 128)
-                    data[i] = data[i + 1] = data[i + 2] = final
-                }
-                break
-            }
-            case 'soft': {
-                for (let i = 0; i < len; i += 4) {
-                    data[i] = clamp(data[i] * 1.08 + 5)
-                    data[i + 1] = clamp(data[i + 1] * 1.08 + 3)
-                    data[i + 2] = clamp(data[i + 2] * 1.05 + 2)
-                }
-                break
-            }
-        }
-        return imageData
-    }, [])
-
-    const captureFrame = useCallback(async () => {
-        if (!videoRef.current || !canvasRef.current) return null
-        const video = videoRef.current
-        const canvas = canvasRef.current
-
-        if (flashMode === 'on' || flashMode === 'auto') await applyFlash('on')
-
-        // Capture at DEVICE VIEWPORT dimensions (landscape or portrait, 1:1 with what user sees)
-        const dpr = window.devicePixelRatio || 1
-        const viewportWidth = Math.round(window.innerWidth * dpr)
-        const viewportHeight = Math.round(window.innerHeight * dpr)
-
-        // COVER logic: crop the video source so it fills the viewport with NO black bars.
-        // This matches object-fit: cover — what the user actually sees on screen.
-        const videoAspect = video.videoWidth / video.videoHeight
-        const viewportAspect = viewportWidth / viewportHeight
-
-        let srcX = 0, srcY = 0, srcW = video.videoWidth, srcH = video.videoHeight
-
-        if (videoAspect > viewportAspect) {
-            // Video is wider than viewport — crop left/right sides, fill height
-            srcH = video.videoHeight
-            srcW = Math.round(video.videoHeight * viewportAspect)
-            srcX = Math.round((video.videoWidth - srcW) / 2)
-        } else {
-            // Video is taller than viewport — crop top/bottom, fill width
-            srcW = video.videoWidth
-            srcH = Math.round(video.videoWidth / viewportAspect)
-            srcY = Math.round((video.videoHeight - srcH) / 2)
-        }
-
-        canvas.width = viewportWidth
-        canvas.height = viewportHeight
-        const ctx = canvas.getContext('2d', { colorSpace: 'display-p3', willReadFrequently: true })
-
-        ctx.save()
-        if (facingMode === 'user') {
-            ctx.translate(canvas.width, 0)
-            ctx.scale(-1, 1)
-        }
-        // Draw CROPPED video source to fill the FULL canvas — no black bars, no letterboxing
-        // Signature: drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
-        ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, viewportWidth, viewportHeight)
-        ctx.restore()
-
-        if (selectedFilter !== 'original') {
-            try {
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-                applyPixelFilter(imageData, selectedFilter)
-                ctx.putImageData(imageData, 0, 0)
-            } catch (e) {
-                console.warn('Pixel filter failed:', e)
-            }
-        }
-
-        if (flashMode === 'on' || flashMode === 'auto') setTimeout(() => applyFlash('off'), 100)
-
-        return new Promise((resolve, reject) => {
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    resolve({
-                        blob,
-                        objectURL: URL.createObjectURL(blob),
-                        width: viewportWidth,
-                        height: viewportHeight,
-                        aspectRatio: viewportWidth / viewportHeight
-                    })
-                } else {
-                    reject(new Error('Failed to create image blob'))
-                }
-            }, 'image/jpeg', 0.95)
-        })
-    }, [flashMode, applyFlash, facingMode, selectedFilter, applyPixelFilter])
-
-    const stopCamera = useCallback(() => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(track => track.stop())
-            streamRef.current = null
-            trackRef.current = null
-        }
-        if (videoRef.current) videoRef.current.srcObject = null
-        setIsReady(false)
-    }, [])
-
-    const initCameraWithRecovery = useCallback(async () => {
-        await initCamera()
-        // Only retry if video is truly black (videoWidth === 0 = no actual frame)
-        const recoveryTimeout = setTimeout(() => {
-            const video = videoRef.current
-            if (video && video.videoWidth === 0 && !isInitializingRef.current) {
-                console.warn('Camera black screen detected, retrying...')
-                initCamera()
-            }
-        }, 1500)
-        if (videoRef.current) {
-            videoRef.current.addEventListener('playing', () => clearTimeout(recoveryTimeout), { once: true })
-        }
-        return () => clearTimeout(recoveryTimeout)
-    }, [initCamera])
-
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.hidden) stopCamera()
-            else initCameraWithRecovery()
-        }
-        document.addEventListener('visibilitychange', handleVisibilityChange)
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }, [stopCamera, initCameraWithRecovery])
-
-    useEffect(() => {
-        return () => stopCamera()
-    }, [stopCamera])
-
-    useLayoutEffect(() => {
-        if (!document.hidden) initCameraWithRecovery()
-    }, [facingMode])
-
-    return {
-        videoRef, canvasRef, isReady, error, facingMode, flipCamera,
-        flashMode, flashSupported, cycleFlash, selectedFilter, setFilter,
-        getFilterStyle, captureFrame, initCamera, zoomLevel, setZoom, zoomSupported
+  const stop = useCallback(() => {
+    if (faceTimerRef.current) {
+      clearInterval(faceTimerRef.current);
+      faceTimerRef.current = null;
     }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      trackRef.current = null;
+    }
+    setReady(false);
+  }, []);
+
+  const safeApply = useCallback(async (advancedEntries) => {
+    // Apply each constraint entry independently so an unsupported key
+    // never rejects the whole batch.
+    const track = trackRef.current;
+    if (!track || !track.applyConstraints) return;
+    for (const entry of advancedEntries) {
+      try {
+        await track.applyConstraints({ advanced: [entry] });
+      } catch {
+        /* unsupported on this device — fallback look covers it */
+      }
+    }
+  }, []);
+
+  const applyScenePreset = useCallback(
+    async (sceneId, { lock = false } = {}) => {
+      const preset = SCENE_PRESETS[sceneId] || SCENE_PRESETS[DEFAULT_SCENE];
+      const caps = capsRef.current || {};
+      const entries = [];
+
+      // White balance
+      if (caps.whiteBalanceMode) {
+        if (
+          preset.whiteBalance.mode === 'manual' &&
+          caps.whiteBalanceMode.includes('manual') &&
+          caps.colorTemperature
+        ) {
+          const ct = clamp(
+            preset.whiteBalance.colorTemperature,
+            caps.colorTemperature.min,
+            caps.colorTemperature.max
+          );
+          entries.push({ whiteBalanceMode: 'manual', colorTemperature: ct });
+        } else if (caps.whiteBalanceMode.includes('continuous')) {
+          entries.push({ whiteBalanceMode: 'continuous' });
+        }
+      }
+
+      // Exposure compensation (EV)
+      if (caps.exposureCompensation) {
+        const ev = clamp(
+          preset.exposureCompensation,
+          caps.exposureCompensation.min,
+          caps.exposureCompensation.max
+        );
+        entries.push({ exposureCompensation: ev });
+      }
+      if (caps.exposureMode && caps.exposureMode.includes('continuous') && !lock) {
+        entries.push({ exposureMode: 'continuous' });
+      }
+
+      // Focus
+      if (caps.focusMode && caps.focusMode.includes('continuous') && !lock) {
+        entries.push({ focusMode: 'continuous' });
+      }
+
+      await safeApply(entries);
+    },
+    [safeApply]
+  );
+
+  const probeCapabilities = useCallback((track) => {
+    let caps = {};
+    try {
+      caps = track.getCapabilities ? track.getCapabilities() : {};
+    } catch {
+      caps = {};
+    }
+    capsRef.current = caps;
+
+    // Hardware zoom range
+    if (caps.zoom && typeof caps.zoom.min === 'number') {
+      hwZoomRef.current = {
+        min: caps.zoom.min,
+        max: caps.zoom.max,
+        supported: true,
+      };
+      // 0.5x is only reachable if the lens itself goes below 1x
+      setZoomFloor(caps.zoom.min < 1 ? Math.max(ZOOM_UI_MIN, caps.zoom.min) : 1);
+    } else {
+      hwZoomRef.current = { min: 1, max: 1, supported: false };
+      setZoomFloor(1);
+    }
+
+    setTorchAvailable(Boolean(caps.torch));
+  }, []);
+
+  const start = useCallback(
+    async (facingWanted = facing) => {
+      stop();
+      setError(null);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: {
+            facingMode: { ideal: facingWanted },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+        });
+        streamRef.current = stream;
+        const track = stream.getVideoTracks()[0];
+        trackRef.current = track;
+        probeCapabilities(track);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+        }
+
+        digitalZoomRef.current = 1;
+        setZoom(1);
+        setAeafLocked(false);
+        await applyScenePreset(sceneMode);
+        setReady(true);
+      } catch (e) {
+        setError(
+          e && e.name === 'NotAllowedError'
+            ? 'permiso'
+            : e && e.name === 'NotFoundError'
+            ? 'sin-camara'
+            : 'generico'
+        );
+        setReady(false);
+      }
+    },
+    [facing, sceneMode, stop, probeCapabilities, applyScenePreset]
+  );
+
+  const flip = useCallback(async () => {
+    const next = facing === 'environment' ? 'user' : 'environment';
+    setFacing(next);
+    await start(next);
+  }, [facing, start]);
+
+  useEffect(() => () => stop(), [stop]);
+
+  // =====================================================================
+  // SCENE MODES
+  // =====================================================================
+
+  const selectScene = useCallback(
+    async (sceneId) => {
+      setSceneMode(sceneId);
+      setAeafLocked(false);
+      if (sceneId !== 'FOOD') setMacroOn(false);
+      await applyScenePreset(sceneId);
+    },
+    [applyScenePreset]
+  );
+
+  // PORTRAIT face detection (Shape Detection API, graceful no-op elsewhere)
+  useEffect(() => {
+    const preset = SCENE_PRESETS[sceneMode];
+    const wantFaces = Boolean(preset && preset.faceDetect && ready);
+
+    if (faceTimerRef.current) {
+      clearInterval(faceTimerRef.current);
+      faceTimerRef.current = null;
+    }
+    if (!wantFaces) {
+      setFaces([]);
+      return;
+    }
+    if (typeof window.FaceDetector !== 'function') return;
+
+    if (!faceDetectorRef.current) {
+      try {
+        faceDetectorRef.current = new window.FaceDetector({
+          fastMode: true,
+          maxDetectedFaces: 4,
+        });
+      } catch {
+        return;
+      }
+    }
+
+    faceTimerRef.current = setInterval(async () => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) return;
+      try {
+        const found = await faceDetectorRef.current.detect(video);
+        const vw = video.videoWidth || 1;
+        const vh = video.videoHeight || 1;
+        setFaces(
+          found.map((f) => ({
+            x: f.boundingBox.x / vw,
+            y: f.boundingBox.y / vh,
+            w: f.boundingBox.width / vw,
+            h: f.boundingBox.height / vh,
+          }))
+        );
+      } catch {
+        /* detector hiccup — keep last boxes */
+      }
+    }, 350);
+
+    return () => {
+      if (faceTimerRef.current) clearInterval(faceTimerRef.current);
+    };
+  }, [sceneMode, ready]);
+
+  // =====================================================================
+  // ZOOM 0.5x–10x  (hardware first, digital for the remainder)
+  // =====================================================================
+
+  const setZoomLevel = useCallback(
+    async (requested) => {
+      const floor = capsRef.current?.zoom?.min < 1
+        ? Math.max(ZOOM_UI_MIN, capsRef.current.zoom.min)
+        : 1;
+      const z = clamp(requested, floor, ZOOM_UI_MAX);
+      const hw = hwZoomRef.current;
+
+      let hwZoom = 1;
+      let digital = z;
+      if (hw.supported) {
+        hwZoom = clamp(z, hw.min, hw.max);
+        digital = z / hwZoom;
+        await safeApply([{ zoom: hwZoom }]);
+      }
+      digitalZoomRef.current = Math.max(1, digital);
+      setZoom(z);
+    },
+    [safeApply]
+  );
+
+  /** CSS transform for the <video> element (digital zoom portion). */
+  const previewTransform = `scale(${Math.max(1, digitalZoomRef.current)})`;
+
+  // Pinch-to-zoom handlers — attach to the viewfinder element
+  const onPinchStart = useCallback(
+    (e) => {
+      if (e.touches && e.touches.length === 2) {
+        const [a, b] = e.touches;
+        pinchRef.current = {
+          active: true,
+          startDist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+          startZoom: zoom,
+        };
+      }
+    },
+    [zoom]
+  );
+
+  const onPinchMove = useCallback(
+    (e) => {
+      const p = pinchRef.current;
+      if (!p.active || !e.touches || e.touches.length !== 2) return;
+      e.preventDefault();
+      const [a, b] = e.touches;
+      const dist = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      const ratio = dist / (p.startDist || 1);
+      setZoomLevel(p.startZoom * ratio);
+    },
+    [setZoomLevel]
+  );
+
+  const onPinchEnd = useCallback(() => {
+    pinchRef.current.active = false;
+  }, []);
+
+  // =====================================================================
+  // MACRO 5–30 cm (FOOD scene)
+  // =====================================================================
+
+  const setMacro = useCallback(
+    async (on, distanceM = macroDistance) => {
+      setMacroOn(on);
+      const caps = capsRef.current || {};
+      if (on) {
+        const d = clamp(distanceM, MACRO_RANGE_M.min, MACRO_RANGE_M.max);
+        setMacroDistance(d);
+        if (
+          caps.focusMode &&
+          caps.focusMode.includes('manual') &&
+          caps.focusDistance
+        ) {
+          const fd = clamp(d, caps.focusDistance.min, caps.focusDistance.max);
+          await safeApply([{ focusMode: 'manual', focusDistance: fd }]);
+        } else if (caps.focusMode && caps.focusMode.includes('continuous')) {
+          // No manual focus on this device: continuous AF + user proximity
+          await safeApply([{ focusMode: 'continuous' }]);
+        }
+      } else {
+        await applyScenePreset(sceneMode);
+      }
+    },
+    [macroDistance, sceneMode, safeApply, applyScenePreset]
+  );
+
+  const setMacroFocusDistance = useCallback(
+    (d) => setMacro(true, d),
+    [setMacro]
+  );
+
+  // =====================================================================
+  // AE/AF LOCK
+  // =====================================================================
+
+  const toggleAeAfLock = useCallback(async () => {
+    const track = trackRef.current;
+    const caps = capsRef.current || {};
+    const next = !aeafLocked;
+    setAeafLocked(next);
+    if (!track) return;
+
+    if (next) {
+      // Freeze exposure / focus / WB at their current values
+      let settings = {};
+      try {
+        settings = track.getSettings ? track.getSettings() : {};
+      } catch {
+        settings = {};
+      }
+      const entries = [];
+      if (
+        caps.exposureMode &&
+        caps.exposureMode.includes('manual') &&
+        typeof settings.exposureTime === 'number' &&
+        caps.exposureTime
+      ) {
+        entries.push({
+          exposureMode: 'manual',
+          exposureTime: clamp(
+            settings.exposureTime,
+            caps.exposureTime.min,
+            caps.exposureTime.max
+          ),
+        });
+      }
+      if (
+        caps.focusMode &&
+        caps.focusMode.includes('manual') &&
+        typeof settings.focusDistance === 'number' &&
+        caps.focusDistance
+      ) {
+        entries.push({
+          focusMode: 'manual',
+          focusDistance: clamp(
+            settings.focusDistance,
+            caps.focusDistance.min,
+            caps.focusDistance.max
+          ),
+        });
+      }
+      if (
+        caps.whiteBalanceMode &&
+        caps.whiteBalanceMode.includes('manual') &&
+        typeof settings.colorTemperature === 'number' &&
+        caps.colorTemperature
+      ) {
+        entries.push({
+          whiteBalanceMode: 'manual',
+          colorTemperature: clamp(
+            settings.colorTemperature,
+            caps.colorTemperature.min,
+            caps.colorTemperature.max
+          ),
+        });
+      }
+      await safeApply(entries);
+    } else {
+      // Unlock → restore the active scene's behavior (continuous modes)
+      await applyScenePreset(sceneMode);
+      if (macroOn) await setMacro(true);
+    }
+  }, [aeafLocked, sceneMode, macroOn, safeApply, applyScenePreset, setMacro]);
+
+  // =====================================================================
+  // TAP-TO-FOCUS / EXPOSE
+  // =====================================================================
+
+  const focusAt = useCallback(
+    async (nx, ny) => {
+      const caps = capsRef.current || {};
+      const entries = [];
+      if (caps.pointsOfInterest) {
+        entries.push({ pointsOfInterest: [{ x: clamp(nx, 0, 1), y: clamp(ny, 0, 1) }] });
+      }
+      if (caps.focusMode && caps.focusMode.includes('single-shot')) {
+        entries.push({ focusMode: 'single-shot' });
+      }
+      if (caps.exposureMode && caps.exposureMode.includes('single-shot')) {
+        entries.push({ exposureMode: 'single-shot' });
+      }
+      await safeApply(entries);
+      // Return to continuous after the single-shot settles (unless locked)
+      if (!aeafLocked) {
+        setTimeout(() => applyScenePreset(sceneMode), 1200);
+      }
+    },
+    [safeApply, aeafLocked, applyScenePreset, sceneMode]
+  );
+
+  // =====================================================================
+  // TORCH (rear flash)
+  // =====================================================================
+
+  const setTorch = useCallback(
+    async (on) => {
+      if (!torchAvailable) return false;
+      try {
+        await trackRef.current.applyConstraints({ advanced: [{ torch: on }] });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [torchAvailable]
+  );
+
+  // =====================================================================
+  // CAPTURE — synchronous frame grab; rapid taps each get a frame
+  // =====================================================================
+
+  const capture = useCallback(
+    ({ quality = 0.92 } = {}) => {
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) {
+        return Promise.reject(new Error('camera-not-ready'));
+      }
+
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const targetRatio = ASPECTS[aspect] || ASPECTS['9:16']; // width/height
+      const dz = Math.max(1, digitalZoomRef.current);
+
+      // 1) crop to the digital-zoom window (centered)
+      let cw = vw / dz;
+      let ch = vh / dz;
+      // 2) crop that window to the selected aspect ratio (centered)
+      if (cw / ch > targetRatio) {
+        cw = ch * targetRatio;
+      } else {
+        ch = cw / targetRatio;
+      }
+      const sx = (vw - cw) / 2;
+      const sy = (vh - ch) / 2;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(cw);
+      canvas.height = Math.round(ch);
+      const ctx = canvas.getContext('2d');
+
+      // Bake the scene + filter look into the file
+      const filter = composeFilter(sceneMode, filterId);
+      if (filter !== 'none') ctx.filter = filter;
+
+      // Mirror front-camera captures so they match the preview
+      if (facing === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+
+      // The synchronous part — frame is grabbed RIGHT NOW
+      ctx.drawImage(video, sx, sy, cw, ch, 0, 0, canvas.width, canvas.height);
+
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error('encode-failed'));
+            resolve({
+              blob,
+              width: canvas.width,
+              height: canvas.height,
+              meta: {
+                scene: sceneMode,
+                filter: filterId,
+                zoom,
+                aspect,
+                macro: macroOn ? macroDistance : null,
+                aeafLocked,
+                facing,
+                ts: Date.now(),
+              },
+            });
+          },
+          'image/jpeg',
+          quality
+        );
+      });
+    },
+    [aspect, sceneMode, filterId, zoom, macroOn, macroDistance, aeafLocked, facing]
+  );
+
+  /** Capture with flash handling. `onScreenFlash` lets the UI blink white for front cam. */
+  const captureWithFlash = useCallback(
+    async ({ onScreenFlash } = {}) => {
+      let torchUsed = false;
+      if (flashMode === 'on') {
+        if (facing === 'environment' && torchAvailable) {
+          torchUsed = await setTorch(true);
+          if (torchUsed) await new Promise((r) => setTimeout(r, 180)); // let AE settle
+        } else if (onScreenFlash) {
+          onScreenFlash();
+          await new Promise((r) => setTimeout(r, 120));
+        }
+      }
+      try {
+        return await capture();
+      } finally {
+        if (torchUsed) setTorch(false);
+      }
+    },
+    [flashMode, facing, torchAvailable, setTorch, capture]
+  );
+
+  // =====================================================================
+
+  return {
+    // refs & lifecycle
+    videoRef,
+    start,
+    stop,
+    flip,
+    ready,
+    error,
+    facing,
+
+    // scene modes
+    sceneMode,
+    selectScene,
+    faces,
+
+    // zoom
+    zoom,
+    zoomFloor,
+    setZoomLevel,
+    previewTransform,
+    onPinchStart,
+    onPinchMove,
+    onPinchEnd,
+
+    // macro
+    macroOn,
+    macroDistance,
+    setMacro,
+    setMacroFocusDistance,
+
+    // AE/AF
+    aeafLocked,
+    toggleAeAfLock,
+    focusAt,
+
+    // flash
+    flashMode,
+    setFlashMode,
+    torchAvailable,
+
+    // aspect & filters
+    aspect,
+    setAspect,
+    filterId,
+    setFilterId,
+
+    // capture
+    capture,
+    captureWithFlash,
+  };
 }
+
+export default useCamera;
