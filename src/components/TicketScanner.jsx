@@ -48,6 +48,7 @@ function TicketScanner({ onClose }) {
     const [status, setStatus] = useState('loading') // loading | scanning | success | error | already_used
     const [result, setResult] = useState(null)
     const [cameraError, setCameraError] = useState(null)
+    const [currentUserId, setCurrentUserId] = useState(null)
 
     // Start camera
     useEffect(() => {
@@ -82,6 +83,15 @@ function TicketScanner({ onClose }) {
                 streamRef.current.getTracks().forEach(t => t.stop())
             }
         }
+    }, [])
+
+    // Get current user ID for audit trail
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data } = await supabase.auth.getUser()
+            if (data?.user?.id) setCurrentUserId(data.user.id)
+        }
+        fetchUser()
     }, [])
 
     // QR Detection loop
@@ -172,7 +182,8 @@ function TicketScanner({ onClose }) {
                     .insert({
                         event_id: order.event_id,
                         order_id: order.id,
-                        checkin_method: 'qr_scan'
+                        checkin_method: 'qr_scan',
+                        checked_in_by: currentUserId
                     })
 
                 if (insertError) throw insertError

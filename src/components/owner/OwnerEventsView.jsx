@@ -1480,6 +1480,16 @@ function CheckinView({ event, businessId, onBack }) {
   const [checkedIn, setCheckedIn] = useState(0)
   const [codeInput, setCodeInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState(null)
+
+  // Fetch current user ID for audit trail
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser()
+      if (data?.user?.id) setCurrentUserId(data.user.id)
+    }
+    fetchUser()
+  }, [])
 
   // Fix 4: Load real check-in count from DB on mount — local state resets on navigate
   useEffect(() => {
@@ -1510,13 +1520,13 @@ function CheckinView({ event, businessId, onBack }) {
       // Query by ticket code directly — RLS handles business isolation
       const { data: order, error } = await supabase
         .from('event_orders')
-        .select('id, event_id, customer_name, tier_snapshot, payment_status, total_cents')
+        .select('id, event_id, customer_name, tier_snapshot, payment_status, total_cents, business_id')
         .eq('ticket_code', cleanCode)
         .eq('event_id', event.id)
         .maybeSingle()
 
-      if (error || !order) {
-        setResult({ success: false, code, message: 'Code not found' })
+      if (error || !order || order.business_id !== businessId) {
+        setResult({ success: false, code, message: 'Code not found or access denied' })
         setLoading(false)
         setTimeout(() => setResult(null), 3000)
         return
@@ -1552,7 +1562,8 @@ function CheckinView({ event, businessId, onBack }) {
         .insert({
           event_id: event.id,
           order_id: order.id,
-          checkin_method: 'manual'
+          checkin_method: 'manual',
+          checked_in_by: currentUserId
         })
 
       // Duplicate key (23505) means RLS blocked the SELECT but the record exists

@@ -194,13 +194,13 @@ export default function ProfileView() {
     try {
       const { data: order } = await supabase
         .from('event_orders')
-        .select('id, event_id, customer_name, tier_snapshot, payment_status')
+        .select('id, event_id, customer_name, tier_snapshot, payment_status, business_id')
         .eq('ticket_code', cleanCode)
         .eq('event_id', selectedEvent.id)
         .maybeSingle();
 
-      if (!order) {
-        setCheckinResult({ success: false, message: 'Code not found' });
+      if (!order || order.business_id !== businessId) {
+        setCheckinResult({ success: false, message: 'Code not found or access denied' });
         setCheckinLoading(false);
         setTimeout(() => setCheckinResult(null), 3000);
         return;
@@ -229,6 +229,7 @@ export default function ProfileView() {
         event_id: selectedEvent.id,
         order_id: order.id,
         checkin_method: 'manual',
+        checked_in_by: staffMember?.id,
       });
 
       setCheckinResult({
