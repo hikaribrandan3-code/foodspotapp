@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Golden Crust</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    html, body { width: 100%; height: 100%; background: #1a0e08; overflow: hidden; }
+    #game-container {
+      width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #1a0e08; position: relative;
+    }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+    @supports (padding: max(0px)) {
+      #game-container {
+        padding-top: max(0px, env(safe-area-inset-top));
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="game-container"><canvas id="c"></canvas></div>
+<script>
+const TAU = Math.PI * 2;
+const W = 320, H = 240;
+
+const C = {
+  bg: '#FFFDD0', wood: '#C19A6B', woodDk: '#A0784A',
+  choc: '#4B3621', green: '#4ADE80', greenDk: '#22C55E',
+  red: '#F87171', redDk: '#EF4444', tan: '#E8D5B0',
+  white: '#FFFFFF', cream: '#FFF8E7', shadow: 'rgba(75,54,33,0.18)',
+  overlay: 'rgba(26,14,8,0.78)', flash: 'rgba(74,222,128,0.32)',
+  flashR: 'rgba(248,113,113,0.32)',
+};
+
+const LEVEL_BG = ['#FFFDD0','#FFF2B8','#FFE4A0','#FFD488','#FFC070','#FFB060','#FF9850'];
+function getLevelBg(lvl) { return LEVEL_BG[Math.min(lvl-1, LEVEL_BG.length-1)]; }
+
+// Canvas
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let scale = 1;
+
+function resize() {
+  const cont = document.getElementById('game-container');
+  const cw = cont.clientWidth, ch = cont.clientHeight;
+  scale = Math.max(1, Math.min(Math.floor(cw / W), Math.floor(ch / H)));
+  canvas.width = W * scale;
+  canvas.height = H * scale;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+// Music
+let bgMusic = null;
+function loadMusic() {
+  if (!bgMusic) {
+    bgMusic = new Audio('denis-pavlov-music-accordion-flute-waltz-french-music-315010 (1).mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.4;
+  }
+}
+function playMusic() {
+  if (!bgMusic) loadMusic();
+  if (bgMusic.paused) {
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(() => {});
+    bgMusic.playbackRate = 1.0;
+  }
+}
+function stopMusic() {
+  if (bgMusic && !bgMusic.paused) bgMusic.pause();
+}
+function setMusicSpeed(speed) {
+  if (bgMusic) bgMusic.playbackRate = Math.max(0.8, Math.min(2.0, speed));
+}
+
+// Images
+const startImg = new Image();
+startImg.src = 'start.webp';
+const gameoverImg = new Image();
+gameoverImg.src = 'gameover.webp';
+function imgReady(img) { return img.complete && img.naturalWidth > 0; }
+
+// High score
+let highScore = parseInt(localStorage.getItem('gc_hs') || '0');
+
+// Audio FX
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  loadMusic();
+}
+function playTone(f1, f2, type, dur, vol) {
+  if (!audioCtx) return;
+  vol = vol || 0.22; type = type || 'triangle';
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f1, audioCtx.currentTime);
+  if (f2 !== f1) o.frequency.linearRampToValueAtTime(f2, audioCtx.currentTime + dur);
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + dur + 0.01);
+}
+function playHit()     { playTone(880, 1320, 'triangle', 0.15, 0.25); }
+function playMiss()    { playTone(220, 100, 'sawtooth', 0.22, 0.28); }
+function playCombo(n)  { playTone(660+n*120, 900+n*120, 'triangle', 0.12, 0.22); }
+function playLevelUp() { [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,f,'sine',0.12,0.22), i*80)); }
+function playGameOver(){ playTone(180, 70, 'sawtooth', 0.55, 0.32); }
+function playBeep(freq, vol) { playTone(freq, freq, 'sine', 0.07, vol || 0.12); }
+
+// Game
+const Game = {
+  state: 'START_SCREEN',
+  needleAngle: -Math.PI / 2,
+  needleSpeed: 2.0,
+  needleWobble: 0,
+  wobblePhase: 0,
+  sweetSpotAngle: 0,
+  sweetSpotArc: 0.44,
+  sweetSpotRotSpeed: 0,
+  glowPulse: 0,
+  lives: 3,
+  breadBob: [0, 0, 0],
+  breadSpin: [0, 0, 0],
+  breadSpinActive: -1,
+  score: 0,
+  combo: 0,
+  maxCombo: 0,
+  multiplier: 1,
+  comboDisplayTimer: 0,
+  bakeCount: 0,
+  level: 1,
+  bgColor: '#FFFDD0',
+  animTimer: 0,
+  animResult: null,
+  prevState: null,
+  blinkTimer: 0,
+  blinkOn: true,
+  shakeX: 0,
+  shakeY: 0,
+  zoomScale: 1.0,
+  zoomTarget: 1.0,
+  beepFired: [false, false, false],
+  lastTime: 0,
+  time: 0,
+
+  init() {
+    this.randomizeSweetSpot();
+    resize();
+    window.addEventListener('message', e => this.handleMsg(e));
+    window.addEventListener('keydown', e => {
+      if (e.key === 'a' || e.key === 'A') { initAudio(); this.onPress('a'); }
+      if (e.key === 'Enter' || e.key === ' ') { initAudio(); this.onPress('start'); }
+      if (e.key === 'Escape') this.onPress('menu');
+    });
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); initAudio(); this.onPress('a'); }, { passive: false });
+    canvas.addEventListener('mousedown', () => { initAudio(); this.onPress('a'); });
+    this.lastTime = performance.now();
+    requestAnimationFrame(t => this.loop(t));
+  },
+
+  randomizeSweetSpot() {
+    this.sweetSpotAngle = Math.random() * TAU - Math.PI;
+    this.beepFired = [false, false, false];
+  },
+
+  handleMsg(e) {
+    const { type, button } = e.data || {};
+    if (type === 'AUDIO_UNLOCK') initAudio();
+    if (type === 'BUTTON_PRESS') { initAudio(); this.onPress(button); }
+  },
+
+  onPress(btn) {
+    if (btn === 'menu') { window.parent.postMessage({ type: 'GAME_EXIT' }, '*'); return; }
+    if (this.state === 'START_SCREEN') { if (btn === 'a' || btn === 'start') this.startGame(); return; }
+    if (this.state === 'GAME_OVER') { if (btn === 'a' || btn === 'start') this.startGame(); return; }
+    if (this.state === 'PAUSED') { if (btn === 'start') { this.state = this.prevState || 'PLAYING'; playMusic(); } return; }
+    if (this.state === 'PLAYING') {
+      if (btn === 'start') { this.prevState = 'PLAYING'; this.state = 'PAUSED'; stopMusic(); return; }
+      if (btn === 'a') this.attemptBake();
+    }
+  },
+
+  startGame() {
+    this.needleAngle = -Math.PI / 2;
+    this.needleSpeed = 2.0;
+    this.sweetSpotArc = 0.44;
+    this.sweetSpotRotSpeed = 0;
+    this.lives = 3;
+    this.breadBob = [0, 0, 0];
+    this.breadSpin = [0, 0, 0];
+    this.breadSpinActive = -1;
+    this.score = 0;
+    this.combo = 0;
+    this.maxCombo = 0;
+    this.multiplier = 1;
+    this.comboDisplayTimer = 0;
+    this.bakeCount = 0;
+    this.level = 1;
+    this.bgColor = getLevelBg(1);
+    this.shakeX = 0;
+    this.shakeY = 0;
+    this.zoomScale = 1.0;
+    this.zoomTarget = 1.0;
+    this.randomizeSweetSpot();
+    this.state = 'PLAYING';
+    playMusic();
+    setMusicSpeed(1.0);
+  },
+
+  attemptBake() {
+    const needle = ((this.needleAngle % TAU) + TAU) % TAU;
+    const sweet = ((this.sweetSpotAngle % TAU) + TAU) % TAU;
+    const arc = this.sweetSpotArc;
+    let diff = ((needle - sweet) % TAU + TAU) % TAU;
+    const hit = diff < arc / 2 || diff > TAU - arc / 2;
+
+    if (hit) {
+      this.combo++;
+      this.maxCombo = Math.max(this.maxCombo, this.combo);
+      this.multiplier = Math.min(4, 1 + Math.floor(this.combo / 2));
+      const pts = 10 * this.multiplier;
+      this.score += pts;
+      this.comboDisplayTimer = this.combo >= 2 ? 1.2 : 0;
+      this.animResult = 'hit';
+      this.animTimer = 0.5;
+      this.state = 'HIT_ANIM';
+      this.zoomTarget = 1.07;
+      for (let i = 0; i < 3; i++) if (i < this.lives) this.breadBob[i] = 1;
+      if (this.combo >= 2) setTimeout(() => playCombo(this.combo), 60);
+      else playHit();
+
+      this.bakeCount++;
+      // Progression every 3-5 bakes (varies for unpredictability)
+      const progressInterval = 3 + Math.floor(this.level / 3);
+      if (this.bakeCount % progressInterval === 0) {
+        this.level++;
+        this.needleSpeed *= 1.10;
+        this.sweetSpotArc = Math.max(0.175, this.sweetSpotArc - 0.087);
+        // Sweet spot now rotates
+        this.sweetSpotRotSpeed = 0.3 + this.level * 0.15;
+        this.bgColor = getLevelBg(this.level);
+        // Speed up music
+        const newSpeed = 1.0 + (this.level - 1) * 0.12;
+        setMusicSpeed(newSpeed);
+        setTimeout(() => playLevelUp(), 220);
+      }
+    } else {
+      const lostIdx = this.lives - 1;
+      this.lives--;
+      this.combo = 0;
+      this.multiplier = 1;
+      this.animResult = 'miss';
+      this.animTimer = 0.55;
+      this.state = 'MISS_ANIM';
+      const shakeAmt = 4 + this.level * 0.8;
+      this.zoomTarget = 0.94;
+      this.shakeX = shakeAmt;
+      this.shakeY = shakeAmt * 0.75;
+      this.breadSpinActive = lostIdx;
+      this.breadSpin[lostIdx] = 0;
+      playMiss();
+    }
+  },
+
+  checkProximityBeeps() {
+    const needle = ((this.needleAngle % TAU) + TAU) % TAU;
+    const sweet = ((this.sweetSpotAngle % TAU) + TAU) % TAU;
+    const arc = this.sweetSpotArc;
+    const entry1 = ((sweet - arc / 2) % TAU + TAU) % TAU;
+    const dist1 = ((entry1 - needle) % TAU + TAU) % TAU;
+    const approaching = Math.min(dist1, TAU - dist1);
+    if (!this.beepFired[0] && approaching < 0.785) { playBeep(320, 0.1); this.beepFired[0] = true; }
+    if (!this.beepFired[1] && approaching < 0.524) { playBeep(520, 0.13); this.beepFired[1] = true; }
+    if (!this.beepFired[2] && approaching < 0.262) { playBeep(840, 0.16); this.beepFired[2] = true; }
+  },
+
+  loop(timestamp) {
+    const dt = Math.min((timestamp - this.lastTime) / 1000, 0.05);
+    this.lastTime = timestamp;
+    this.time += dt;
+    this.update(dt);
+    this.render();
+    requestAnimationFrame(t => this.loop(t));
+  },
+
+  update(dt) {
+    this.blinkTimer += dt;
+    if (this.blinkTimer > 0.5) { this.blinkTimer = 0; this.blinkOn = !this.blinkOn; }
+    this.glowPulse = (Math.sin(this.time * 4) + 1) / 2;
+    this.zoomScale += (this.zoomTarget - this.zoomScale) * 12 * dt;
+    if (Math.abs(this.zoomTarget - 1.0) > 0.001) this.zoomTarget += (1.0 - this.zoomTarget) * 8 * dt;
+    if (this.comboDisplayTimer > 0) this.comboDisplayTimer -= dt;
+
+    // Bread bob decay
+    for (let i = 0; i < 3; i++) {
+      if (this.breadBob[i] > 0) {
+        this.breadBob[i] -= dt * 6;
+        if (this.breadBob[i] < 0) this.breadBob[i] = 0;
+      }
+    }
+    // Bread spin
+    if (this.breadSpinActive >= 0) {
+      this.breadSpin[this.breadSpinActive] += 6 * dt;
+    }
+
+    if (this.state === 'PLAYING') {
+      this.needleAngle += this.needleSpeed * dt;
+      // Sweet spot rotates per level
+      this.sweetSpotAngle += this.sweetSpotRotSpeed * dt;
+      const wFreq = 6 + this.level * 1.2;
+      const wAmp = 0.02 + this.level * 0.008;
+      this.wobblePhase += wFreq * dt;
+      this.needleWobble = Math.sin(this.wobblePhase) * wAmp;
+      this.checkProximityBeeps();
+    }
+
+    if (this.state === 'HIT_ANIM' || this.state === 'MISS_ANIM') {
+      this.animTimer -= dt;
+      this.shakeX *= 0.70;
+      this.shakeY *= 0.70;
+      if (Math.abs(this.shakeX) < 0.1) this.shakeX = 0;
+      if (Math.abs(this.shakeY) < 0.1) this.shakeY = 0;
+
+      for (let i = 0; i < 3; i++) {
+        if (this.breadBob[i] > 0) {
+          this.breadBob[i] -= dt * 6;
+          if (this.breadBob[i] < 0) this.breadBob[i] = 0;
+        }
+      }
+      if (this.breadSpinActive >= 0) {
+        this.breadSpin[this.breadSpinActive] += 6 * dt;
+      }
+
+      if (this.animTimer <= 0) {
+        if (this.animResult === 'hit') {
+          this.randomizeSweetSpot();
+          this.state = 'PLAYING';
+          this.breadSpinActive = -1;
+        } else {
+          this.breadSpinActive = -1;
+          if (this.lives <= 0) {
+            if (this.score > highScore) { highScore = this.score; localStorage.setItem('gc_hs', highScore); }
+            this.state = 'GAME_OVER';
+            stopMusic();
+            playGameOver();
+          } else {
+            this.randomizeSweetSpot();
+            this.state = 'PLAYING';
+          }
+        }
+      }
+    }
+  },
+
+  render() {
+    ctx.save();
+    if (this.shakeX || this.shakeY) {
+      ctx.translate((Math.random() * 2 - 1) * this.shakeX, (Math.random() * 2 - 1) * this.shakeY);
+    }
+    if (Math.abs(this.zoomScale - 1.0) > 0.001) {
+      ctx.translate(W / 2, H / 2); ctx.scale(this.zoomScale, this.zoomScale); ctx.translate(-W / 2, -H / 2);
+    }
+
+    switch (this.state) {
+      case 'START_SCREEN': this.drawStart(); break;
+      case 'PLAYING':
+      case 'HIT_ANIM':
+      case 'MISS_ANIM': this.drawGame(); break;
+      case 'PAUSED': this.drawGame(); this.drawPause(); break;
+      case 'GAME_OVER': this.drawGameOver(); break;
+    }
+    ctx.restore();
+  },
+
+  drawStart() {
+    if (imgReady(startImg)) {
+      ctx.drawImage(startImg, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = C.bg;
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#F5E6C8';
+      ctx.fillRect(0, 160, W, 80);
+      ctx.fillStyle = '#E8D5B0';
+      ctx.fillRect(0, 155, W, 8);
+      ctx.fillStyle = C.wood;
+      ctx.fillRect(100, 85, 120, 75);
+      ctx.strokeStyle = C.choc;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(100, 85, 120, 75);
+      ctx.fillStyle = C.choc;
+      ctx.fillRect(115, 100, 90, 50);
+      ctx.fillStyle = '#2a1a0a';
+      ctx.fillRect(118, 103, 84, 44);
+      const glow = ctx.createRadialGradient(160, 125, 5, 160, 125, 30);
+      glow.addColorStop(0, '#FFA040');
+      glow.addColorStop(0.5, '#FF6010');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(118, 103, 84, 44);
+      ctx.fillStyle = C.woodDk;
+      ctx.fillRect(108, 158, 14, 10);
+      ctx.fillRect(198, 158, 14, 10);
+      this.drawBreadLoaf(ctx, 148, 78, '#F4D03F', 1.0);
+      ctx.fillStyle = C.choc;
+      ctx.font = 'bold 22px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('GOLDEN CRUST', W / 2, 40);
+      ctx.font = 'bold 8px monospace';
+      ctx.fillStyle = C.woodDk;
+      ctx.fillText('A MUNCHBOY BAKERY GAME', W / 2, 52);
+    }
+    if (this.blinkOn) {
+      ctx.fillStyle = C.choc;
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText("PRESS 'A' TO START", W / 2, 220);
+    }
+  },
+
+  drawGame() {
+    ctx.fillStyle = this.bgColor;
+    ctx.fillRect(0, 0, W, H);
+
+    if (this.state === 'HIT_ANIM') {
+      ctx.fillStyle = C.flash;
+      ctx.fillRect(0, 0, W, H);
+    } else if (this.state === 'MISS_ANIM') {
+      ctx.fillStyle = C.flashR;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    this.drawHUD();
+    this.drawDial();
+    this.drawComboDisplay();
+
+    if (this.state === 'HIT_ANIM') {
+      const a = Math.min(1, this.animTimer * 6);
+      ctx.globalAlpha = a;
+      ctx.font = 'bold 16px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(0,0,0,.3)';
+      ctx.fillText('PERFECT!', W / 2, 28);
+      ctx.fillStyle = C.greenDk;
+      ctx.fillText('PERFECT!', W / 2, 27);
+      ctx.globalAlpha = 1;
+    } else if (this.state === 'MISS_ANIM') {
+      const a = Math.min(1, this.animTimer * 6);
+      ctx.globalAlpha = a;
+      ctx.font = 'bold 16px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(0,0,0,.3)';
+      ctx.fillText('BURNT!', W / 2 + 1, 28 + 1);
+      ctx.fillStyle = C.redDk;
+      ctx.fillText('BURNT!', W / 2, 28);
+      ctx.globalAlpha = 1;
+    } else {
+      // Cafe-style pill button
+      const bakeY = H - 16;
+      const pillW = 110, pillH = 18;
+      const pillX = W / 2 - pillW / 2, pillY = bakeY - pillH / 2;
+      const r = 9; // Corner radius
+
+      // Pill background (cream with tan border)
+      ctx.fillStyle = '#F5E6D3';
+      ctx.beginPath();
+      ctx.moveTo(pillX + r, pillY);
+      ctx.lineTo(pillX + pillW - r, pillY);
+      ctx.arcTo(pillX + pillW, pillY, pillX + pillW, pillY + r, r);
+      ctx.lineTo(pillX + pillW, pillY + pillH - r);
+      ctx.arcTo(pillX + pillW, pillY + pillH, pillX + pillW - r, pillY + pillH, r);
+      ctx.lineTo(pillX + r, pillY + pillH);
+      ctx.arcTo(pillX, pillY + pillH, pillX, pillY + pillH - r, r);
+      ctx.lineTo(pillX, pillY + r);
+      ctx.arcTo(pillX, pillY, pillX + r, pillY, r);
+      ctx.closePath();
+      ctx.fill();
+
+      // Subtle shadow border
+      ctx.strokeStyle = 'rgba(75,54,33,0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Inner highlight for depth
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 0.8;
+      const ir = 8;
+      ctx.beginPath();
+      ctx.moveTo(pillX + 1 + ir, pillY + 1);
+      ctx.lineTo(pillX + pillW - 1 - ir, pillY + 1);
+      ctx.arcTo(pillX + pillW - 1, pillY + 1, pillX + pillW - 1, pillY + 1 + ir, ir);
+      ctx.lineTo(pillX + pillW - 1, pillY + pillH - 3 - ir);
+      ctx.arcTo(pillX + pillW - 1, pillY + pillH - 3, pillX + pillW - 1 - ir, pillY + pillH - 3, ir);
+      ctx.lineTo(pillX + 1 + ir, pillY + pillH - 3);
+      ctx.arcTo(pillX + 1, pillY + pillH - 3, pillX + 1, pillY + pillH - 3 - ir, ir);
+      ctx.lineTo(pillX + 1, pillY + 1 + ir);
+      ctx.arcTo(pillX + 1, pillY + 1, pillX + 1 + ir, pillY + 1, ir);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = C.choc;
+      ctx.fillText('PRESS [ A ] TO BAKE', W / 2, bakeY + 3);
+    }
+  },
+
+  drawCounter() {
+    // Kitchen counter surface
+    ctx.fillStyle = '#8B7355';
+    ctx.fillRect(0, 165, W, H - 165);
+    ctx.fillStyle = '#A0894D';
+    ctx.fillRect(0, 165, W, 3);
+    ctx.fillStyle = 'rgba(0,0,0,.08)';
+    ctx.fillRect(0, 165, W, H - 165);
+  },
+
+  drawHUD() {
+    // HUD background bar
+    ctx.fillStyle = 'rgba(75,54,33,.15)';
+    ctx.fillRect(0, 0, W, 28);
+    ctx.strokeStyle = 'rgba(75,54,33,.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, 28);
+    ctx.lineTo(W, 28);
+    ctx.stroke();
+
+    // Lives
+    for (let i = 0; i < 3; i++) {
+      const active = i < this.lives;
+      const bobOffset = active ? -Math.sin(this.breadBob[i] * Math.PI) * 4 : 0;
+      const spinAngle = this.breadSpinActive === i ? this.breadSpin[i] : 0;
+      this.drawBreadLoaf(ctx, 14 + i * 24, 5 + bobOffset, active ? '#F4D03F' : '#999', active ? 1 : 0.4, spinAngle);
+    }
+
+    // Level badge (center)
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 7px monospace';
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillText('LVL', W / 2 + 1, 10 + 1);
+    ctx.fillStyle = C.choc;
+    ctx.fillText('LVL', W / 2, 10);
+    ctx.font = 'bold 14px monospace';
+    ctx.fillStyle = 'rgba(0,0,0,.15)';
+    ctx.fillText(String(this.level).padStart(2, '0'), W / 2 + 1, 24 + 1);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = '#00FFFF';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillText(String(this.level).padStart(2, '0'), W / 2, 24);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    // Score panel (right side)
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 7px monospace';
+    ctx.fillStyle = 'rgba(0,0,0,.4)';
+    ctx.fillText('SCORE', W - 10 + 1, 10 + 1);
+    ctx.fillStyle = C.choc;
+    ctx.fillText('SCORE', W - 10, 10);
+    ctx.font = 'bold 13px monospace';
+    ctx.fillStyle = 'rgba(0,0,0,.15)';
+    ctx.fillText(String(this.score).padStart(4, '0'), W - 10 + 1, 24 + 1);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = '#00FFFF';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillText(String(this.score).padStart(4, '0'), W - 10, 24);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  },
+
+  drawComboDisplay() {
+    if (this.comboDisplayTimer <= 0 || this.combo < 2) return;
+    const alpha = Math.min(1, this.comboDisplayTimer * 2);
+    ctx.globalAlpha = alpha;
+    const labels = ['', '', '2x COMBO!', '3x COMBO!', '4x COMBO!', '4x COMBO!'];
+    const colors = ['', '', '#EAB308', '#F97316', '#EF4444', '#EF4444'];
+    const label = labels[Math.min(this.combo, 4)];
+    const col = colors[Math.min(this.combo, 4)];
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0,0,0,.3)';
+    ctx.fillText(label, W / 2 + 1, 38 + 1);
+    ctx.fillStyle = col;
+    ctx.fillText(label, W / 2, 38);
+    ctx.globalAlpha = 1;
+  },
+
+  drawDial() {
+    const cx = 160, cy = 118, rOut = 72, rIn = 50;
+    const arc = this.sweetSpotArc, sa = this.sweetSpotAngle;
+
+    ctx.beginPath();
+    ctx.arc(cx + 2, cy + 3, rOut + 2, 0, TAU);
+    ctx.fillStyle = C.shadow;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, rOut, sa + arc / 2, sa - arc / 2 + TAU, false);
+    ctx.arc(cx, cy, rIn, sa - arc / 2 + TAU, sa + arc / 2, true);
+    ctx.closePath();
+    ctx.fillStyle = C.tan;
+    ctx.fill();
+
+    [-1, 1].forEach(side => {
+      const edgeAngle = sa + side * arc / 2;
+      const start = side < 0 ? edgeAngle - 0.42 : edgeAngle;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rOut, start, start + 0.42, false);
+      ctx.arc(cx, cy, rIn, start + 0.42, start, true);
+      ctx.closePath();
+      ctx.fillStyle = C.red;
+      ctx.fill();
+    });
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = C.woodDk;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rOut, 0, TAU);
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rIn, 0, TAU);
+    ctx.stroke();
+
+    ctx.strokeStyle = C.choc;
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * TAU - Math.PI / 2;
+      const isMajor = i % 6 === 0;
+      const len = isMajor ? 9 : 5;
+      ctx.lineWidth = isMajor ? 1.5 : 0.8;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * (rOut - 2), cy + Math.sin(a) * (rOut - 2));
+      ctx.lineTo(cx + Math.cos(a) * (rOut - 2 - len), cy + Math.sin(a) * (rOut - 2 - len));
+      ctx.stroke();
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, TAU);
+    ctx.fillStyle = C.wood;
+    ctx.fill();
+    ctx.strokeStyle = C.choc;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Green sweet spot
+    ctx.beginPath();
+    ctx.arc(cx, cy, rOut, sa - arc / 2, sa + arc / 2, false);
+    ctx.arc(cx, cy, rIn, sa + arc / 2, sa - arc / 2, true);
+    ctx.closePath();
+    ctx.fillStyle = C.green;
+    ctx.fill();
+
+    // Needle
+    const displayAngle = this.needleAngle + this.needleWobble;
+    const nx = cx + Math.cos(displayAngle) * 65, ny = cy + Math.sin(displayAngle) * 65;
+    ctx.beginPath();
+    ctx.moveTo(cx + 1, cy + 1);
+    ctx.lineTo(nx + 1, ny + 1);
+    ctx.strokeStyle = 'rgba(0,0,0,.2)';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(nx, ny);
+    ctx.strokeStyle = C.choc;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(nx, ny, 3, 0, TAU);
+    ctx.fillStyle = C.choc;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, TAU);
+    ctx.fillStyle = C.choc;
+    ctx.fill();
+
+    // Survival display removed (level already shown in HUD)
+  },
+
+  drawPause() {
+    ctx.fillStyle = C.overlay;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = C.cream;
+    ctx.font = 'bold 26px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('PAUSED', W / 2, H / 2 - 8);
+    ctx.font = 'bold 9px monospace';
+    ctx.fillStyle = C.wood;
+    ctx.fillText('PRESS START TO RESUME', W / 2, H / 2 + 14);
+  },
+
+  drawGameOver() {
+    if (imgReady(gameoverImg)) {
+      ctx.drawImage(gameoverImg, 0, 0, W, H);
+      ctx.fillStyle = 'rgba(10,4,2,.55)';
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#2a1008';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = C.redDk;
+      ctx.font = 'bold 20px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('OVEN BURNED OUT!', W / 2, 60);
+    }
+
+    ctx.fillStyle = 'rgba(20,10,4,.76)';
+    ctx.beginPath();
+    ctx.arc(W / 2 - 36, 100, 36, 0, TAU);
+    ctx.arc(W / 2 + 36, 100, 36, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = C.wood;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    const isNew = this.score > 0 && this.score >= highScore && highScore > 0;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText('SCORE: ' + this.score, W / 2, 106);
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = C.wood;
+    ctx.fillText('BEST: ' + highScore, W / 2, 122);
+    ctx.font = 'bold 8px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,.55)';
+    ctx.fillText('SURVIVED ' + this.level + ' LEVELS', W / 2, 136);
+    if (isNew) {
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('★ NEW HIGH SCORE! ★', W / 2, 152);
+    }
+    if (this.blinkOn) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText("PRESS 'A' TO RETRY", W / 2, H - 14);
+    }
+  },
+
+  drawBreadLoaf(ctx, x, y, color, alpha, spinAngle) {
+    ctx.globalAlpha = alpha || 1;
+    if (spinAngle) {
+      ctx.save();
+      ctx.translate(x + 11, y + 7);
+      ctx.rotate(spinAngle);
+      ctx.translate(-(x + 11), -(y + 7));
+    }
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(x + 11, y + 7, 11, 6, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = C.woodDk;
+    ctx.lineWidth = 1;
+    [8, 11, 14].forEach(ox => {
+      ctx.beginPath();
+      ctx.moveTo(x + ox, y + 4);
+      ctx.lineTo(x + ox, y + 10);
+      ctx.stroke();
+    });
+    if (spinAngle) ctx.restore();
+    ctx.globalAlpha = 1;
+  },
+};
+
+window.addEventListener('load', () => {
+  Game.init();
+  window.parent.postMessage({ type: 'GAME_LOADED' }, '*');
+});
+</script>
+</body>
+</html>
