@@ -87,9 +87,9 @@ function setMusicSpeed(speed) {
 
 // Images
 const startImg = new Image();
-startImg.src = 'start.webp';
+startImg.src = 'assets/start-screen.png';
 const gameoverImg = new Image();
-gameoverImg.src = 'gameover.webp';
+gameoverImg.src = 'assets/gameover-screen.png';
 function imgReady(img) { return img.complete && img.naturalWidth > 0; }
 
 // High score
@@ -558,7 +558,7 @@ const Game = {
     ctx.fillStyle = 'rgba(0,0,0,.15)';
     ctx.fillText(String(this.level).padStart(2, '0'), W / 2 + 1, 24 + 1);
     ctx.fillStyle = '#FFFFFF';
-    ctx.shadowColor = '#00FFFF';
+    ctx.shadowColor = '#22FF22';
     ctx.shadowBlur = 8;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
@@ -577,7 +577,7 @@ const Game = {
     ctx.fillStyle = 'rgba(0,0,0,.15)';
     ctx.fillText(String(this.score).padStart(4, '0'), W - 10 + 1, 24 + 1);
     ctx.fillStyle = '#FFFFFF';
-    ctx.shadowColor = '#00FFFF';
+    ctx.shadowColor = '#22FF22';
     ctx.shadowBlur = 8;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;

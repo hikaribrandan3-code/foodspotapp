@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>[GAME NAME]</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        /* Game fills entire screen */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            position: relative;
+        }
+
+        /* Canvas (or game content) fills the container */
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        /* Safe area adjustments for notched devices */
+        @supports (padding: max(0px)) {
+            #game-container {
+                padding-top: max(0px, env(safe-area-inset-top));
+                padding-bottom: max(0px, env(safe-area-inset-bottom));
+                padding-left: max(0px, env(safe-area-inset-left));
+                padding-right: max(0px, env(safe-area-inset-right));
+            }
+        }
+
+        /* Debug (remove in production) */
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: #0f0;
+            font-size: 10px;
+            font-family: monospace;
+            display: none;
+            z-index: 9999;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Your game renders here -->
+        <!-- Option 1: Canvas element -->
+        <!-- <canvas id="game-canvas"></canvas> -->
+
+        <!-- Option 2: HTML/CSS game -->
+        <!-- <div id="game-world"></div> -->
+    </div>
+
+    <div class="debug-info" id="debug"></div>
+
+    <script>
+        // ============================================
+        // HikariBoy Game Template
+        // ============================================
+        // Game receives button events via postMessage from HikariBoy shell
+        // Listen for: BUTTON_PRESS, BUTTON_RELEASE
+        //
+        // Available buttons:
+        // - dpad-up, dpad-down, dpad-left, dpad-right
+        // - a, b
+        // - select, start, menu, l, r
+        // ============================================
+
+        const Game = {
+            canvas: null,
+            ctx: null,
+            gameWidth: 320,  // Adjust to your game's native resolution
+            gameHeight: 240, // Adjust to your game's native resolution
+            scale: 1,
+            keys: {},
+
+            init() {
+                // Setup canvas if using canvas-based game
+                // this.canvas = document.getElementById('game-canvas');
+                // if (this.canvas) {
+                //     this.ctx = this.canvas.getContext('2d');
+                //     this.resizeCanvas();
+                //     window.addEventListener('resize', () => this.resizeCanvas());
+                // }
+
+                // Listen for button events from HikariBoy
+                window.addEventListener('message', (e) => this.handleButtonEvent(e));
+
+                // Start game loop
+                this.gameLoop();
+            },
+
+            resizeCanvas() {
+                const container = document.getElementById('game-container');
+                const maxWidth = container.clientWidth;
+                const maxHeight = container.clientHeight;
+
+                // Calculate scale to fit screen while maintaining aspect ratio
+                const scaleX = maxWidth / this.gameWidth;
+                const scaleY = maxHeight / this.gameHeight;
+                this.scale = Math.floor(Math.min(scaleX, scaleY));
+                this.scale = Math.max(1, this.scale); // At least 1x
+
+                this.canvas.width = this.gameWidth * this.scale;
+                this.canvas.height = this.gameHeight * this.scale;
+            },
+
+            handleButtonEvent(e) {
+                const { type, button } = e.data;
+
+                if (!button) return;
+
+                if (type === 'BUTTON_PRESS') {
+                    this.keys[button] = true;
+                    console.log(`[Game] Button pressed: ${button}`);
+                    // Handle button press in your game logic
+                    this.onButtonPress(button);
+                } else if (type === 'BUTTON_RELEASE') {
+                    this.keys[button] = false;
+                    console.log(`[Game] Button released: ${button}`);
+                    // Handle button release in your game logic
+                    this.onButtonRelease(button);
+                }
+            },
+
+            onButtonPress(button) {
+                // Override this in your game
+                // Example:
+                // if (button === 'a') this.jump();
+                // if (button === 'dpad-left') this.moveLeft();
+            },
+
+            onButtonRelease(button) {
+                // Override this in your game
+            },
+
+            isKeyPressed(button) {
+                return this.keys[button] || false;
+            },
+
+            update(deltaTime) {
+                // Update game logic here
+                // Called 60fps
+            },
+
+            render() {
+                // Draw game here
+                // If using canvas:
+                // this.ctx.fillStyle = '#000';
+                // this.ctx.fillRect(0, 0, this.gameWidth, this.gameHeight);
+            },
+
+            gameLoop() {
+                const now = performance.now();
+                const deltaTime = (now - (this.lastFrameTime || now)) / 1000;
+                this.lastFrameTime = now;
+
+                this.update(deltaTime);
+                this.render();
+
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        };
+
+        // Initialize game when page loads
+        window.addEventListener('load', () => Game.init());
+
+        // Signal to HikariBoy that game loaded (removes loading overlay)
+        window.addEventListener('load', () => {
+            window.parent.postMessage({ type: 'GAME_LOADED' }, '*');
+        });
+    </script>
+</body>
+</html>

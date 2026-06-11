@@ -31,9 +31,10 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 7 games
+// Curated game library - 8 games
 // proOnly: true = locked for free tier users
 const GAMES = [
+  { id: 'golden-crust',   name: 'Golden Crust',       cover: '/games/bakery-timer/assets/game-chip.png', url: '/games/bakery-timer/index.html',     proOnly: false },
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
   { id: 'spice-invaders', name: 'Spice Invaders',      cover: '/games/spice-invaders/cover.webp',   url: '/games/spice-invaders/index.html',   proOnly: false },
   { id: 'kanzo',          name: 'Kanzo',              cover: '/games/kanzo/cover.png',             url: '/games/kanzo/index.html',            proOnly: false },
