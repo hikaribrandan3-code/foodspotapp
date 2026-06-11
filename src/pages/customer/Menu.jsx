@@ -36,7 +36,7 @@ const MENU_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function readMenuCache(businessId) {
     try {
-        const raw = sessionStorage.getItem(`fs_menu_${businessId}`);
+        const raw = sessionStorage.getItem(`fs_menu_v2_${businessId}`);
         if (!raw) return null;
         const { data, ts } = JSON.parse(raw);
         return Date.now() - ts < MENU_CACHE_TTL ? data : null;
@@ -45,7 +45,7 @@ function readMenuCache(businessId) {
 
 function writeMenuCache(businessId, data) {
     try {
-        sessionStorage.setItem(`fs_menu_${businessId}`, JSON.stringify({ data, ts: Date.now() }));
+        sessionStorage.setItem(`fs_menu_v2_${businessId}`, JSON.stringify({ data, ts: Date.now() }));
     } catch { /* quota exceeded or private mode — silent */ }
 }
 
@@ -288,7 +288,7 @@ export default function Menu({ config: configProp }) {
         }
 
         fetchMenu()
-    }, [tenantLoaded, businessId])
+    }, [tenantLoaded, businessId, tenantData])
 
     // =========================================================================
     // 2. AUTH & OWNER MODE (HARDWIRED BYPASS)
