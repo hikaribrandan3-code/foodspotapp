@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 // @ts-ignore
 import { supabase } from '../../lib/supabaseClient.js'
 import OwnerEventsView from '../../components/owner/OwnerEventsView'
+// @ts-ignore
+import { LanguageProvider as MainLanguageProvider } from '../../contexts/LanguageContext'
 
 function getStaffRole(): string {
   try {
@@ -62,13 +64,15 @@ export default function EventsView() {
   }
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto' }}>
-      <OwnerEventsView
-        businessId={businessId}
-        tenantSlug={tenantSlug}
-        lang={language}
-        onBack={() => {}}
-      />
-    </div>
+    <MainLanguageProvider>
+      <div style={{ height: '100%', overflowY: 'auto' }}>
+        <OwnerEventsView
+          businessId={businessId}
+          tenantSlug={tenantSlug}
+          lang={language}
+          onBack={() => {}}
+        />
+      </div>
+    </MainLanguageProvider>
   )
 }

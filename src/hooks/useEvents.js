@@ -43,6 +43,7 @@ export function useEvents(tenantSlug) {
                 .eq('business_id', branding.business_id)
                 .eq('status', 'live')
                 .is('deleted_at', null)
+                .or(`end_date.gte.${todayStart.toISOString()},end_date.is.null`)
                 .order('start_date', { ascending: true })
 
             if (fetchError) {
