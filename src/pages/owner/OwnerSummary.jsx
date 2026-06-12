@@ -1319,8 +1319,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                 name: newStaff.name,
                 username: newStaff.username.toLowerCase().trim(),
                 pin: simpleHash(newStaff.pin),
-                role: newStaff.role,
-                status: 'active'
+                role: newStaff.role
             })
 
         if (!error) {
@@ -1340,7 +1339,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
 
         await supabase
             .from('staff')
-            .update({ status: 'inactive' })
+            .update({ is_active: false })
             .eq('id', staffId)
 
         fetchStaff()
