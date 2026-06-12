@@ -256,7 +256,7 @@ const Game = {
         this.sweetSpotArc = Math.max(0.22, this.sweetSpotArc - 0.044);
         // Sweet spot rotation starts at level 2, ramps up gradually
         if (this.level >= 2) {
-          this.sweetSpotRotSpeed = 0.15 + (this.level - 2) * 0.12;
+          this.sweetSpotRotSpeed = 0.17 + (this.level - 2) * 0.07;
         }
         this.bgColor = getLevelBg(this.level);
         // Speed up music
@@ -731,24 +731,36 @@ const Game = {
       ctx.fillStyle = C.redDk;
       ctx.font = 'bold 20px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText('OVEN BURNED OUT!', W / 2, 60);
+      ctx.fillText('OVEN BURNED OUT!', W / 2, 50);
 
-      // Score display
-      ctx.font = 'bold 12px monospace';
+      // Level
+      ctx.font = 'bold 11px monospace';
       ctx.fillStyle = 'rgba(255,255,255,.6)';
-      ctx.fillText('FINAL SCORE', W / 2, 100);
-      ctx.font = 'bold 28px monospace';
+      ctx.fillText('LEVEL', W / 2 - 45, 95);
+      ctx.font = 'bold 18px monospace';
       ctx.fillStyle = '#FFFFFF';
       ctx.shadowColor = '#22FF22';
-      ctx.shadowBlur = 12;
-      ctx.fillText(String(this.score).padStart(4, '0'), W / 2, 130);
+      ctx.shadowBlur = 8;
+      ctx.fillText(String(this.level).padStart(2, '0'), W / 2 - 45, 120);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      // Score display
+      ctx.font = 'bold 11px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ctx.fillText('SCORE', W / 2 + 45, 95);
+      ctx.font = 'bold 18px monospace';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = '#22FF22';
+      ctx.shadowBlur = 8;
+      ctx.fillText(String(this.score).padStart(4, '0'), W / 2 + 45, 120);
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
 
       // High score
       ctx.font = 'bold 9px monospace';
       ctx.fillStyle = 'rgba(255,255,255,.5)';
-      ctx.fillText(`HIGH SCORE: ${String(highScore).padStart(4, '0')}`, W / 2, 160);
+      ctx.fillText(`HIGH SCORE: ${String(highScore).padStart(4, '0')}`, W / 2, 155);
     }
   },
 
@@ -790,11 +802,7 @@ const Game = {
     ctx.fillStyle = 'rgba(0,0,0,.2)';
     ctx.fillText(timer, W / 2 + 2, H / 2 + 30);
     ctx.fillStyle = '#FFFFFF';
-    ctx.shadowColor = '#10b981';
-    ctx.shadowBlur = 16;
     ctx.fillText(timer, W / 2, H / 2 + 28);
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
   },
 
   drawBreadLoaf(ctx, x, y, color, alpha, spinAngle) {
