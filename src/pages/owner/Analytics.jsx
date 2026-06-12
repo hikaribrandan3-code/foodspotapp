@@ -265,7 +265,7 @@ const Analytics = () => {
                 ) : (
                     <>
                         {/* KPI GRID — 4 columns on desktop, 2x2 on mobile */}
-                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
                             <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
                                 <span style={labelStyle}>{t('revenue_total')}</span>
                                 <h3 style={{ ...valueStyle, color: primaryColor }}>{formatPrice(stats.totalRevenue)}</h3>
@@ -291,10 +291,10 @@ const Analytics = () => {
                         )}
 
                         {/* BOTTOM SECTION — 2 columns on desktop */}
-                        <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : '1fr 1fr', gap: 20 }}>
+                        <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : '1fr 1fr', gap: 24 }}>
 
                             {/* LEFT COL: order types + payment */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                                 {/* ORDER TYPE BREAKDOWN */}
                                 <div style={cardStyle}>
                                     <span style={{ ...labelStyle, marginBottom: 16 }}>{t('by_order_type')}</span>

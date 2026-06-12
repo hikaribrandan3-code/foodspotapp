@@ -264,7 +264,7 @@ export default function FinancialTrackerDashboard() {
   }
 
   return (
-    <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #E5E7EB' }}>
+    <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #E5E7EB' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>
@@ -317,7 +317,7 @@ export default function FinancialTrackerDashboard() {
       </div>
 
       {/* KPI Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
         <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
           <span style={labelStyle}>{t('net_profit')}</span>
           <h3 style={{ ...valueStyle, color: netProfit >= 0 ? primaryColor : '#DC2626' }}>
@@ -345,7 +345,7 @@ export default function FinancialTrackerDashboard() {
 
       {/* Charts */}
       {filteredExpenses.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24, marginBottom: 24 }}>
           {/* Pie Chart */}
           <div style={cardStyle}>
             <span style={{ ...labelStyle, marginBottom: 12 }}>Expenses by Category</span>
@@ -388,7 +388,7 @@ export default function FinancialTrackerDashboard() {
                   <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="#9CA3AF" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="#9CA3AF" tickFormatter={(v) => `$${v}`} />
+                    <YAxis tick={{ fontSize: 10 }} stroke="#9CA3AF" tickFormatter={(v) => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : v >= 1000 ? `$${(v/1000).toFixed(0)}K` : `$${v}`} width={45} />
                     <ReTooltip formatter={(v) => fmtMoney(v)} />
                     <Bar dataKey="revenue" fill={primaryColor} radius={[4, 4, 0, 0]} />
                     <Bar dataKey="expenses" fill="#DC2626" radius={[4, 4, 0, 0]} />
@@ -452,7 +452,7 @@ export default function FinancialTrackerDashboard() {
       )}
 
       {/* Revenue Breakdown */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 20, marginTop: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 24, marginBottom: 24, marginTop: 24 }}>
         <div style={cardStyle}>
           <span style={{ ...labelStyle, marginBottom: 16 }}>{t('revenue_breakdown')}</span>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #F3F4F6' }}>
@@ -474,69 +474,10 @@ export default function FinancialTrackerDashboard() {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div style={cardStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <span style={labelStyle}>{t('recent_activity')}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, color: '#9CA3AF' }}>{filteredExpenses.length} expenses</span>
-              <button
-                onClick={exportCSV}
-                style={{ padding: 6, background: '#F3F4F6', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#6B7280', display: 'flex', alignItems: 'center' }}
-                title="Export CSV"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {filteredExpenses.length === 0 ? (
-            <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>
-              No expenses for this period. Add one below.
-            </p>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {filteredExpenses.map((expense) => {
-                const meta = getCatMeta(expense.category);
-                return (
-                  <div key={expense.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, background: '#F9FAFB', borderRadius: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 36, height: 36, background: meta.color + '15', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, fontWeight: 700, color: meta.color }}>
-                        {meta.name?.[0] || '?'}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.description}</p>
-                        <p style={{ fontSize: 12, color: '#6B7280', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ color: meta.color, fontWeight: 600 }}>{expense.category}</span>
-                          <span>•</span>
-                          <span>{expense.date}</span>
-                          {expense.is_recurring && <span title="Recurring monthly"><Repeat className="w-3 h-3" style={{ color: primaryColor }} /></span>}
-                        </p>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
-                        -${(expense.amount || 0).toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => deleteExpense(expense.id)}
-                        style={{ padding: 6, background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8, color: '#9CA3AF' }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = '#DC2626'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Quick Add Form + Toast — side by side with recent activity on desktop */}
-      <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : '1fr 1fr', gap: isMobile ? undefined : 20, marginBottom: 20 }}>
+      <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : '1fr 1fr', gap: isMobile ? undefined : 24, marginBottom: 24 }}>
 
       {/* Left: Quick Add */}
       <div>
