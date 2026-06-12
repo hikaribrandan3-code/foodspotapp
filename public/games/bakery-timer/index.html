@@ -154,6 +154,8 @@ const Game = {
   zoomScale: 1.0,
   zoomTarget: 1.0,
   beepFired: [false, false, false],
+  countdownValue: 3,
+  countdownTimer: 0,
   lastTime: 0,
   time: 0,
 
@@ -216,7 +218,9 @@ const Game = {
     this.zoomScale = 1.0;
     this.zoomTarget = 1.0;
     this.randomizeSweetSpot();
-    this.state = 'PLAYING';
+    this.countdownValue = 3;
+    this.countdownTimer = 3.0;
+    this.state = 'COUNTDOWN';
     playMusic();
     setMusicSpeed(1.0);
   },
@@ -249,9 +253,7 @@ const Game = {
       if (this.bakeCount % progressInterval === 0) {
         this.level++;
         this.needleSpeed *= 1.10;
-        this.sweetSpotArc = Math.max(0.175, this.sweetSpotArc - 0.087);
-        // Sweet spot now rotates
-        this.sweetSpotRotSpeed = 0.3 + this.level * 0.15;
+        this.sweetSpotArc = Math.max(0.22, this.sweetSpotArc - 0.044);
         this.bgColor = getLevelBg(this.level);
         // Speed up music
         const newSpeed = 1.0 + (this.level - 1) * 0.12;
@@ -317,10 +319,21 @@ const Game = {
       this.breadSpin[this.breadSpinActive] += 6 * dt;
     }
 
+    if (this.state === 'COUNTDOWN') {
+      this.countdownTimer -= dt;
+      const newVal = Math.ceil(this.countdownTimer);
+      if (newVal !== this.countdownValue && newVal > 0) {
+        this.countdownValue = newVal;
+        playBeep(880, 0.2);
+      }
+      if (this.countdownTimer <= 0) {
+        this.state = 'PLAYING';
+        playBeep(1320, 0.25);
+      }
+    }
+
     if (this.state === 'PLAYING') {
       this.needleAngle += this.needleSpeed * dt;
-      // Sweet spot rotates per level
-      this.sweetSpotAngle += this.sweetSpotRotSpeed * dt;
       const wFreq = 6 + this.level * 1.2;
       const wAmp = 0.02 + this.level * 0.008;
       this.wobblePhase += wFreq * dt;
@@ -377,6 +390,7 @@ const Game = {
 
     switch (this.state) {
       case 'START_SCREEN': this.drawStart(); break;
+      case 'COUNTDOWN': this.drawGame(); this.drawCountdown(); break;
       case 'PLAYING':
       case 'HIT_ANIM':
       case 'MISS_ANIM': this.drawGame(); break;
@@ -533,12 +547,12 @@ const Game = {
     ctx.lineTo(W, 28);
     ctx.stroke();
 
-    // Lives
+    // Lives (hearts)
     for (let i = 0; i < 3; i++) {
       const active = i < this.lives;
       const bobOffset = active ? -Math.sin(this.breadBob[i] * Math.PI) * 4 : 0;
       const spinAngle = this.breadSpinActive === i ? this.breadSpin[i] : 0;
-      this.drawBreadLoaf(ctx, 14 + i * 24, 5 + bobOffset, active ? '#F4D03F' : '#999', active ? 1 : 0.4, spinAngle);
+      this.drawPixelHeart(ctx, 14 + i * 24, 5 + bobOffset, active ? '#EF4444' : '#999', active ? 1 : 0.4, spinAngle);
     }
 
     // Level badge (center)
@@ -712,7 +726,69 @@ const Game = {
       ctx.font = 'bold 20px monospace';
       ctx.textAlign = 'center';
       ctx.fillText('OVEN BURNED OUT!', W / 2, 60);
+
+      // Score display
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,.6)';
+      ctx.fillText('FINAL SCORE', W / 2, 100);
+      ctx.font = 'bold 28px monospace';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = '#22FF22';
+      ctx.shadowBlur = 12;
+      ctx.fillText(String(this.score).padStart(4, '0'), W / 2, 130);
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+
+      // High score
+      ctx.font = 'bold 9px monospace';
+      ctx.fillStyle = 'rgba(255,255,255,.5)';
+      ctx.fillText(`HIGH SCORE: ${String(highScore).padStart(4, '0')}`, W / 2, 160);
     }
+  },
+
+  drawPixelHeart(ctx, x, y, color, alpha, spinAngle) {
+    ctx.globalAlpha = alpha || 1;
+    if (spinAngle) {
+      ctx.save();
+      ctx.translate(x + 7, y + 7);
+      ctx.rotate(spinAngle);
+      ctx.translate(-(x + 7), -(y + 7));
+    }
+    ctx.fillStyle = color;
+    const px = 1; // pixel size
+    // Zelda-style pixelated heart: 8x7 pixels
+    const heart = [
+      [0, 1, 1, 0, 0, 1, 1, 0],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1],
+      [0, 1, 1, 1, 1, 1, 1, 0],
+      [0, 0, 1, 1, 1, 1, 0, 0],
+      [0, 0, 0, 1, 1, 0, 0, 0],
+    ];
+    for (let row = 0; row < heart.length; row++) {
+      for (let col = 0; col < heart[row].length; col++) {
+        if (heart[row][col]) {
+          ctx.fillRect(x + col * px, y + row * px, px, px);
+        }
+      }
+    }
+    if (spinAngle) ctx.restore();
+    ctx.globalAlpha = 1;
+  },
+
+  drawCountdown() {
+    const countNum = Math.ceil(this.countdownValue);
+    ctx.font = 'bold 80px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0,0,0,.2)';
+    ctx.fillText(String(countNum), W / 2 + 2, H / 2 + 30);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = '#10b981';
+    ctx.shadowBlur = 16;
+    ctx.fillText(String(countNum), W / 2, H / 2 + 28);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
   },
 
   drawBreadLoaf(ctx, x, y, color, alpha, spinAngle) {
