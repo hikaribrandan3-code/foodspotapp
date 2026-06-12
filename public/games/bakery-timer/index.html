@@ -115,10 +115,10 @@ function playTone(f1, f2, type, dur, vol) {
   o.start(); o.stop(audioCtx.currentTime + dur + 0.01);
 }
 function playHit()     { playTone(880, 1320, 'triangle', 0.15, 0.25); }
-function playMiss()    { playTone(220, 100, 'sawtooth', 0.22, 0.28); }
+function playMiss()    { playTone(220, 100, 'sawtooth', 0.22, 0.28); navigator.vibrate([50, 30, 50]); }
 function playCombo(n)  { playTone(660+n*120, 900+n*120, 'triangle', 0.12, 0.22); }
 function playLevelUp() { [523,659,784,1047].forEach((f,i) => setTimeout(()=>playTone(f,f,'sine',0.12,0.22), i*80)); }
-function playGameOver(){ playTone(180, 70, 'sawtooth', 0.55, 0.32); }
+function playGameOver(){ playTone(180, 70, 'sawtooth', 0.55, 0.32); navigator.vibrate([100, 50, 100, 50, 100]); }
 function playBeep(freq, vol) { playTone(freq, freq, 'sine', 0.07, vol || 0.12); }
 
 // Game
@@ -723,45 +723,36 @@ const Game = {
   },
 
   drawGameOver() {
-    if (imgReady(gameoverImg)) {
-      ctx.drawImage(gameoverImg, 0, 0, W, H);
-    } else {
-      ctx.fillStyle = '#2a1008';
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = C.redDk;
-      ctx.font = 'bold 20px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('OVEN BURNED OUT!', W / 2, 50);
+    ctx.fillStyle = '#2a1008';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = C.redDk;
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('OVEN BURNED OUT!', W / 2, 50);
 
-      // Level
-      ctx.font = 'bold 11px monospace';
-      ctx.fillStyle = 'rgba(255,255,255,.6)';
-      ctx.fillText('LEVEL', W / 2 - 45, 95);
-      ctx.font = 'bold 18px monospace';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = '#22FF22';
-      ctx.shadowBlur = 8;
-      ctx.fillText(String(this.level).padStart(2, '0'), W / 2 - 45, 120);
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
+    // Level
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fillText('LVL', W / 2 - 50, 100);
+    ctx.font = 'bold 32px monospace';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = '#22FF22';
+    ctx.shadowBlur = 10;
+    ctx.fillText(String(this.level).padStart(2, '0'), W / 2 - 50, 135);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
 
-      // Score display
-      ctx.font = 'bold 11px monospace';
-      ctx.fillStyle = 'rgba(255,255,255,.6)';
-      ctx.fillText('SCORE', W / 2 + 45, 95);
-      ctx.font = 'bold 18px monospace';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.shadowColor = '#22FF22';
-      ctx.shadowBlur = 8;
-      ctx.fillText(String(this.score).padStart(4, '0'), W / 2 + 45, 120);
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-
-      // High score
-      ctx.font = 'bold 9px monospace';
-      ctx.fillStyle = 'rgba(255,255,255,.5)';
-      ctx.fillText(`HIGH SCORE: ${String(highScore).padStart(4, '0')}`, W / 2, 155);
-    }
+    // Score
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,.5)';
+    ctx.fillText('SCORE', W / 2 + 50, 100);
+    ctx.font = 'bold 32px monospace';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = '#22FF22';
+    ctx.shadowBlur = 10;
+    ctx.fillText(String(this.score).padStart(4, '0'), W / 2 + 50, 135);
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
   },
 
   drawPixelHeart(ctx, x, y, color, alpha, spinAngle) {
