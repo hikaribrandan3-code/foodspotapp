@@ -309,8 +309,8 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
   // ── List view ───────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      {/* Header — paddingRight leaves room for the absolute profile icon in MobileFrame */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingRight: 52 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {onBack && (
             <button onClick={onBack} style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer' }}>
@@ -817,7 +817,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
         <span style={{ fontSize: 12, color: theme.textSecondary, fontWeight: 700, minWidth: 32 }}>{step - 1}/3</span>
       </div>
 
-      <div style={{ padding: '20px 16px 24px' }}>
+      <div style={{ padding: '20px 16px 100px' }}>
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>

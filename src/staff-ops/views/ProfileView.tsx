@@ -170,12 +170,15 @@ export default function ProfileView() {
     setEventCode('');
     setCheckinResult(null);
     setCheckinCount(0);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
     const { data } = await supabase
       .from('events')
       .select('id, name, start_date')
       .eq('business_id', businessId)
       .eq('status', 'live')
       .eq('is_deleted', false)
+      .or(`end_date.gte.${todayStart.toISOString()},end_date.is.null`)
       .order('start_date', { ascending: true });
     setLiveEvents(data || []);
   };
