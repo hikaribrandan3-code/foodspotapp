@@ -1341,7 +1341,11 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             console.error('Error code:', error?.code)
             console.error('Error message:', error?.message)
             console.error('Error details:', error?.details)
-            alert(`Failed to save staff: ${error?.message || 'Unknown error'}`)
+            if (error?.code === '23505') {
+                alert(`Username "@${newStaff.username}" is already taken. Try a different username.`)
+            } else {
+                alert(`Failed to save staff: ${error?.message || 'Unknown error'}`)
+            }
         }
         setSaving(false)
     }
@@ -1351,8 +1355,9 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
 
         await supabase
             .from('staff')
-            .update({ status: 'inactive' })
+            .delete()
             .eq('id', staffId)
+            .eq('business_id', businessId)
 
         fetchStaff()
         onSaved?.()
