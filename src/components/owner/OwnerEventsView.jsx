@@ -230,7 +230,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     const totalRev = events.reduce((a, e) => a + (e.total_revenue_cents || 0), 0)
     const revenueSplits = events.map(e => ({ name: e.name, amount: e.total_revenue_cents || 0 })).sort((a, b) => b.amount - a.amount)
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 100 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
           <ArrowLeft size={18} /> {t('back')}
         </button>
@@ -252,7 +252,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
     const ticketBreakdown = events.flatMap(e => e.ticket_tiers?.map(t => ({ eventName: e.name, tier: t.name, sold: t.sold, capacity: t.capacity })) || []).sort((a, b) => b.sold - a.sold)
     const totalSold = ticketBreakdown.reduce((a, t) => a + t.sold, 0)
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 100 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
           <ArrowLeft size={18} /> {t('back')}
         </button>
@@ -285,7 +285,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
       { name: 'Alex Chen', time: '5:58 PM', tier: 'VIP', event: 'Summer Night Market' },
     ]
     return (
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40 }}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 100 }}>
         <button onClick={() => setStatModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
           <ArrowLeft size={18} /> {t('back')}
         </button>
@@ -308,7 +308,7 @@ export default function OwnerEventsView({ businessId, tenantSlug, lang, onBack }
 
   // ── List view ───────────────────────────────────────────────────────────────
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 40, paddingTop: 20 }}>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ paddingBottom: 100, paddingTop: 20 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingRight: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -442,7 +442,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14 }}>
@@ -1216,7 +1216,7 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
@@ -1444,7 +1444,7 @@ function AttendeeListView({ event, businessId, onBack }) {
   }, [event.id])
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
@@ -1607,7 +1607,7 @@ function CheckinView({ event, businessId, onBack }) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 40 }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 100 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
@@ -1757,7 +1757,7 @@ function PromosView({ event, businessId, onBack }) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 40 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
