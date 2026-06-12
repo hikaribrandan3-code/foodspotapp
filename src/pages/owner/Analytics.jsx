@@ -199,56 +199,60 @@ const Analytics = () => {
                 }
             />
 
-            <div style={{ padding: 16 }}>
-                {/* MAIN TABS */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
-                    {[
-                        { id: 'analytics', label: t('analytics') },
-                        { id: 'financials', label: t('expenses') },
-                        ...(isMobile ? [{ id: 'events', label: t('events') }] : []),
-                    ].map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            style={{
-                                flex: 1,
-                                padding: '10px 16px', borderRadius: 12, fontSize: 13, fontWeight: 600,
-                                border: '1px solid',
-                                cursor: 'pointer', whiteSpace: 'nowrap',
-                                background: activeTab === tab.id ? primaryColor : '#FFFFFF',
-                                color: activeTab === tab.id ? '#FFFFFF' : '#4B5563',
-                                borderColor: activeTab === tab.id ? primaryColor : '#E5E7EB',
-                                boxShadow: activeTab === tab.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+            <div style={{ padding: isMobile ? 16 : '24px 32px', maxWidth: isMobile ? undefined : 1200, margin: isMobile ? undefined : '0 auto' }}>
+
+                {/* MAIN TABS + DATE RANGE — single row on desktop */}
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', gap: 12, marginBottom: 24 }}>
+                    <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+                        {[
+                            { id: 'analytics', label: t('analytics') },
+                            { id: 'financials', label: t('expenses') },
+                            ...(isMobile ? [{ id: 'events', label: t('events') }] : []),
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                style={{
+                                    padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                                    border: '1px solid',
+                                    cursor: 'pointer', whiteSpace: 'nowrap',
+                                    background: activeTab === tab.id ? primaryColor : '#FFFFFF',
+                                    color: activeTab === tab.id ? '#FFFFFF' : '#4B5563',
+                                    borderColor: activeTab === tab.id ? primaryColor : '#E5E7EB',
+                                    boxShadow: activeTab === tab.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Date range only visible on analytics tab */}
+                    {activeTab === 'analytics' && (
+                        <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+                            {DATE_RANGES(t).map(range => (
+                                <button
+                                    key={range.id}
+                                    onClick={() => setDateRange(range.id)}
+                                    style={{
+                                        padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                                        border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                                        background: dateRange === range.id ? primaryColor : '#FFFFFF',
+                                        color: dateRange === range.id ? '#FFFFFF' : '#4B5563',
+                                        boxShadow: dateRange === range.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {range.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {activeTab === 'analytics' && (
                 <div>
-                {/* DATE RANGE TABS */}
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
-                    {DATE_RANGES(t).map(range => (
-                        <button
-                            key={range.id}
-                            onClick={() => setDateRange(range.id)}
-                            style={{
-                                padding: '8px 18px', borderRadius: 20, fontSize: 13, fontWeight: 600,
-                                border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                                background: dateRange === range.id ? primaryColor : '#FFFFFF',
-                                color: dateRange === range.id ? '#FFFFFF' : '#4B5563',
-                                boxShadow: dateRange === range.id ? `0 4px 12px ${primaryColor}40` : '0 1px 2px rgba(0,0,0,0.05)',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {range.label}
-                        </button>
-                    ))}
-                </div>
-
                 {loading ? (
                     <div style={{ textAlign: 'center', padding: 60, color: '#9CA3AF' }}>
                         <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
@@ -260,8 +264,8 @@ const Analytics = () => {
                     </div>
                 ) : (
                     <>
-                        {/* KPI GRID */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+                        {/* KPI GRID — 4 columns on desktop, 2x2 on mobile */}
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
                             <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
                                 <span style={labelStyle}>{t('revenue_total')}</span>
                                 <h3 style={{ ...valueStyle, color: primaryColor }}>{formatPrice(stats.totalRevenue)}</h3>
@@ -280,82 +284,88 @@ const Analytics = () => {
                             </div>
                         </div>
 
-                        {/* ORDER TYPE BREAKDOWN */}
-                        <div style={{ ...cardStyle, marginBottom: 20 }}>
-                            <span style={{ ...labelStyle, marginBottom: 16 }}>{t('by_order_type')}</span>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                {[
-                                    { label: t('delivery'), count: stats.deliveryCount, color: '#3B82F6' },
-                                    { label: t('pickup'), count: stats.pickupCount, color: '#10B981' },
-                                    { label: t('dine_in'), count: stats.dineInCount, color: '#8B5CF6' }
-                                ].map(type => (
-                                    <div key={type.label} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#F9FAFB', borderRadius: 12 }}>
-                                        <div style={{ fontSize: 20, fontWeight: 800, color: type.color }}>{type.count}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>{type.label}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* PAYMENT METHOD SPLIT */}
-                        <div style={{ ...cardStyle, marginBottom: 20 }}>
-                            <span style={{ ...labelStyle, marginBottom: 16 }}>{t('payment_methods')}</span>
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#EFF6FF', borderRadius: 12 }}>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>MP</div>
-                                    <div>
-                                        <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.mpRevenue)}</div>
-                                    </div>
-                                </div>
-                                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>$</div>
-                                    <div>
-                                        <div style={{ fontSize: 18, fontWeight: 800, color: '#16A34A' }}>{stats.cashCount}</div>
-                                        <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.cashRevenue)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         {stats.isAtLimit && (
                             <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: '10px 14px', marginBottom: 20, fontSize: 13, color: '#92400E' }}>
                                 ⚠️ Showing first 500 orders. Switch to a shorter date range for full accuracy.
                             </div>
                         )}
 
-                        {/* TOP ITEMS */}
-                        <div style={cardStyle}>
-                            <span style={{ ...labelStyle, marginBottom: 16 }}>{t('top_products')}</span>
-                            {stats.topItems.length === 0 ? (
-                                <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>{t('no_data')}</p>
-                            ) : (
-                                stats.topItems.map((item, i) => (
-                                    <div key={item.name} style={{
-                                        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
-                                        borderBottom: i < stats.topItems.length - 1 ? '1px solid #F3F4F6' : 'none'
-                                    }}>
-                                        <div style={{
-                                            width: 28, height: 28, borderRadius: 8,
-                                            background: primaryColor + '15', color: primaryColor,
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontWeight: 800, fontSize: 13
-                                        }}>
-                                            {i + 1}
+                        {/* BOTTOM SECTION — 2 columns on desktop */}
+                        <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : '1fr 1fr', gap: 20 }}>
+
+                            {/* LEFT COL: order types + payment */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                                {/* ORDER TYPE BREAKDOWN */}
+                                <div style={cardStyle}>
+                                    <span style={{ ...labelStyle, marginBottom: 16 }}>{t('by_order_type')}</span>
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        {[
+                                            { label: t('delivery'), count: stats.deliveryCount, color: '#3B82F6' },
+                                            { label: t('pickup'), count: stats.pickupCount, color: '#10B981' },
+                                            { label: t('dine_in'), count: stats.dineInCount, color: '#8B5CF6' }
+                                        ].map(type => (
+                                            <div key={type.label} style={{ flex: 1, textAlign: 'center', padding: '12px 0', background: '#F9FAFB', borderRadius: 12 }}>
+                                                <div style={{ fontSize: 20, fontWeight: 800, color: type.color }}>{type.count}</div>
+                                                <div style={{ fontSize: 11, color: '#6B7280', fontWeight: 500 }}>{type.label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* PAYMENT METHOD SPLIT */}
+                                <div style={{ ...cardStyle, marginBottom: isMobile ? 20 : 0 }}>
+                                    <span style={{ ...labelStyle, marginBottom: 16 }}>{t('payment_methods')}</span>
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#EFF6FF', borderRadius: 12 }}>
+                                            <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>MP</div>
+                                            <div>
+                                                <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
+                                                <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.mpRevenue)}</div>
+                                            </div>
                                         </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{item.name}</div>
-                                            <div style={{ fontSize: 12, color: '#6B7280' }}>{item.qty} {t('sold_count')}</div>
-                                        </div>
-                                        <div style={{ fontSize: 14, fontWeight: 700, color: primaryColor }}>
-                                            {formatPrice(item.revenue)}
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
+                                            <div style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>$</div>
+                                            <div>
+                                                <div style={{ fontSize: 18, fontWeight: 800, color: '#16A34A' }}>{stats.cashCount}</div>
+                                                <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.cashRevenue)}</div>
+                                            </div>
                                         </div>
                                     </div>
-                                ))
-                            )}
+                                </div>
+                            </div>
+
+                            {/* RIGHT COL: top products */}
+                            <div style={cardStyle}>
+                                <span style={{ ...labelStyle, marginBottom: 16 }}>{t('top_products')}</span>
+                                {stats.topItems.length === 0 ? (
+                                    <p style={{ color: '#9CA3AF', fontSize: 14, textAlign: 'center', padding: 20 }}>{t('no_data')}</p>
+                                ) : (
+                                    stats.topItems.map((item, i) => (
+                                        <div key={item.name} style={{
+                                            display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+                                            borderBottom: i < stats.topItems.length - 1 ? '1px solid #F3F4F6' : 'none'
+                                        }}>
+                                            <div style={{
+                                                width: 28, height: 28, borderRadius: 8,
+                                                background: primaryColor + '15', color: primaryColor,
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontWeight: 800, fontSize: 13
+                                            }}>
+                                                {i + 1}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{item.name}</div>
+                                                <div style={{ fontSize: 12, color: '#6B7280' }}>{item.qty} {t('sold_count')}</div>
+                                            </div>
+                                            <div style={{ fontSize: 14, fontWeight: 700, color: primaryColor }}>
+                                                {formatPrice(item.revenue)}
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
                         </div>
-
-
                     </>
                 )}
                 </div>
