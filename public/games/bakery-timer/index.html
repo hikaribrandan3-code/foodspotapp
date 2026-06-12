@@ -256,7 +256,7 @@ const Game = {
         this.sweetSpotArc = Math.max(0.22, this.sweetSpotArc - 0.044);
         // Sweet spot rotation starts at level 2, ramps up gradually
         if (this.level >= 2) {
-          this.sweetSpotRotSpeed = 0.17 + (this.level - 2) * 0.07;
+          this.sweetSpotRotSpeed = 0.20 + (this.level - 2) * 0.07;
         }
         this.bgColor = getLevelBg(this.level);
         // Speed up music
