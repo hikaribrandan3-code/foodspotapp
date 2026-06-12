@@ -442,7 +442,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100, paddingTop: 35 }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14 }}>
@@ -466,7 +466,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.45) 45%, transparent 80%)', borderRadius: 20 }} />
         <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
-          <h2 className="event-hero-title" style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800 }}>{event.name}</h2>
+          <h2 className="event-hero-title" style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#FFFFFF' }}>{event.name}</h2>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', display: 'flex', gap: 12 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Calendar size={12} /> {new Date(event.start_date).toLocaleDateString()}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={12} /> {event.venue_name}</span>
@@ -800,7 +800,7 @@ function CreateEventView({ businessId, onBack, onSuccess }) {
   return (
     <div style={{ minHeight: '100vh', background: theme.bgSurface }}>
       {/* Header */}
-      <div style={{ padding: '18px 16px', background: theme.bgWhite, borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ padding: '18px 16px 18px 16px', paddingTop: '53px', background: theme.bgWhite, borderBottom: `1px solid ${theme.border}`, display: 'flex', alignItems: 'center', gap: 12 }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
           <ArrowLeft size={22} color={theme.textPrimary} />
         </button>
@@ -1216,7 +1216,7 @@ function EditEventView({ event, businessId, onBack, onSuccess }) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100, paddingTop: 35 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
@@ -1444,7 +1444,7 @@ function AttendeeListView({ event, businessId, onBack }) {
   }, [event.id])
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100, paddingTop: 35 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
@@ -1607,7 +1607,7 @@ function CheckinView({ event, businessId, onBack }) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 100 }}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ paddingBottom: 100, paddingTop: 35 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
@@ -1757,7 +1757,7 @@ function PromosView({ event, businessId, onBack }) {
   }
 
   return (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100 }}>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100, paddingTop: 35 }}>
       <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
         <ArrowLeft size={18} /> Back
       </button>
