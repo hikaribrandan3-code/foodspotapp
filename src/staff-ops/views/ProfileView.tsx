@@ -170,15 +170,15 @@ export default function ProfileView() {
     setEventCode('');
     setCheckinResult(null);
     setCheckinCount(0);
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    // Show events from the last 7 days onward — covers ongoing multi-day events + upcoming
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data } = await supabase
       .from('events')
       .select('id, name, start_date')
       .eq('business_id', businessId)
       .eq('status', 'live')
-      .eq('is_deleted', false)
-      .or(`end_date.gte.${todayStart.toISOString()},end_date.is.null`)
+      .is('deleted_at', null)
+      .gte('start_date', sevenDaysAgo)
       .order('start_date', { ascending: true });
     setLiveEvents(data || []);
   };

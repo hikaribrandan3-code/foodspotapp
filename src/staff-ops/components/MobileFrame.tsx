@@ -103,15 +103,17 @@ export default function MobileFrame() {
 
       {/* Main content */}
       <div className="relative flex-1 overflow-hidden" style={{ backgroundColor: 'var(--app-frame)' }}>
-        {/* Profile icon — top-right corner, always visible */}
-        <button
-          onClick={() => setProfileOpen(true)}
-          className="absolute top-3 right-3 z-40 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-          style={{ backgroundColor: '#EFF6FF', color: '#3B82F6', border: '2px solid #3B82F6' }}
-          aria-label="Profile"
-        >
-          <User size={20} strokeWidth={2.2} />
-        </button>
+        {/* Profile icon — hidden on events tab to avoid overlapping event management UI */}
+        {state.currentTab !== 'events' && (
+          <button
+            onClick={() => setProfileOpen(true)}
+            className="absolute top-3 right-3 z-40 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+            style={{ backgroundColor: '#EFF6FF', color: '#3B82F6', border: '2px solid #3B82F6' }}
+            aria-label="Profile"
+          >
+            <User size={20} strokeWidth={2.2} />
+          </button>
+        )}
 
         <AnimatePresence mode="wait">
           <motion.div
