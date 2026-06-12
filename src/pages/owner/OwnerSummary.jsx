@@ -1281,7 +1281,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             .from('staff')
             .select('*')
             .eq('business_id', businessId)
-            .eq('is_active', true)
+            .neq('status', 'inactive')
             .order('name')
 
         if (error) {
@@ -1351,7 +1351,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
 
         await supabase
             .from('staff')
-            .update({ is_active: false })
+            .update({ status: 'inactive' })
             .eq('id', staffId)
 
         fetchStaff()
