@@ -1275,6 +1275,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
     const fetchStaff = async () => {
         if (!businessId) return
         setLoading(true)
+        console.log('📋 [Staff Fetch] Loading staff for business:', businessId)
         localStorage.setItem('fs_business_id', businessId)
         const { data, error } = await supabase
             .from('staff')
@@ -1283,7 +1284,12 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             .eq('is_active', true)
             .order('name')
 
-        if (!error && data) setStaffList(data)
+        if (error) {
+            console.error('❌ [Staff Fetch Error]', error)
+        } else {
+            console.log('✅ [Staff Fetch] Loaded', data?.length || 0, 'staff members:', data)
+            setStaffList(data || [])
+        }
         setLoading(false)
     }
 
@@ -1298,8 +1304,8 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             return
         }
         setSaving(true)
+        console.log('🔐 [Staff Create] Starting insert for:', { name: newStaff.name, username: newStaff.username, role: newStaff.role, businessId })
 
-        // Ensure x-business-id header is set for RLS
         localStorage.setItem('fs_business_id', businessId)
 
         const simpleHash = (str) => {
@@ -1312,7 +1318,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
             return Math.abs(hash).toString(16);
         }
 
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('staff')
             .insert({
                 business_id: businessId,
@@ -1321,14 +1327,20 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                 pin: simpleHash(newStaff.pin),
                 role: newStaff.role
             })
+            .select()
 
         if (!error) {
+            console.log('✅ [Staff Create] Insert successful!', data)
             setNewStaff({ name: '', username: '', pin: '', role: 'kitchen' })
             setShowAddForm(false)
+            console.log('🔄 [Staff Create] Fetching updated list...')
             fetchStaff()
             onSaved?.()
         } else {
-            console.error('[Staff Insert Error]', error?.message)
+            console.error('❌ [Staff Insert Error]', error)
+            console.error('Error code:', error?.code)
+            console.error('Error message:', error?.message)
+            console.error('Error details:', error?.details)
             alert(`Failed to save staff: ${error?.message || 'Unknown error'}`)
         }
         setSaving(false)
@@ -1390,6 +1402,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         value={newStaff.username}
                                         onChange={(e) => setNewStaff(p => ({ ...p, username: e.target.value }))}
                                         placeholder="juan_kitchen"
+                                        autoComplete="off"
                                     />
                                     <InputField
                                         label={`PIN (${t('4_digits') || '4 digits'})`}
@@ -1397,6 +1410,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                                         value={newStaff.pin}
                                         onChange={(e) => setNewStaff(p => ({ ...p, pin: e.target.value }))}
                                         placeholder="1234"
+                                        autoComplete="new-password"
                                     />
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('role') || 'Role'}</label>
