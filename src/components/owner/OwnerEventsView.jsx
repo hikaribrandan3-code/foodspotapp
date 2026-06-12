@@ -444,7 +444,7 @@ function EventDetailView({ event, businessId, onBack, onEdit, onAttendees, onChe
   return (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} style={{ paddingBottom: 100, paddingTop: 35 }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: theme.textSecondary, fontWeight: 600, fontSize: 14 }}>
           <ArrowLeft size={18} /> {t('back')}
         </button>
