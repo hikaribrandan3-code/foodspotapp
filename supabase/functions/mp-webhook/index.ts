@@ -39,12 +39,16 @@ async function upsertLedgerEntry(supabase: any, orderId: string, payment: any, b
             .eq("order_id", orderId)
             .single();
 
+        const grossCents = Math.round(payment.transaction_amount * 100);
         const ledgerData = {
             order_id: orderId,
             business_id: businessId,
             transaction_type: 'payment',
             status: payment.status === 'approved' ? 'completed' : 'pending',
-            amount_gross_cents: Math.round(payment.transaction_amount * 100),
+            amount_gross_cents: grossCents,
+            platform_fee_cents: 0,
+            net_to_owner_cents: grossCents,
+            idempotency_key: `mp-${payment.id}`,
             external_reference: payment.external_reference,
             mercado_pago_response: {
                 id: payment.id,
@@ -240,16 +244,99 @@ serve(async (req: Request) => {
         }
 
         const payment = await mpResponse.json();
-        const orderId = payment.external_reference;
+        const externalReference = payment.external_reference;
 
-        if (!orderId) {
-            console.error("❌ No external_reference (Order ID) found in payment");
+        if (!externalReference) {
+            console.error("❌ No external_reference found in payment");
             return new Response(JSON.stringify({ error: "Missing external_reference" }), { status: 400, headers: corsHeaders });
         }
 
         // ============================================
-        // 5. IDEMPOTENCY GUARD
+        // 5. ROUTE: EVENT ORDER vs FOOD ORDER
+        // Event orders: external_reference = "business_id:order_id"
+        // Food orders:  external_reference = "order_id" (bare UUID, no colon)
         // ============================================
+        if (externalReference.includes(':')) {
+            const eventOrderId = externalReference.split(':').pop()!;
+            console.log(`🎫 Event payment received: ${eventOrderId}`);
+
+            const { data: eventOrder, error: eventOrderError } = await supabase
+                .from("event_orders")
+                .select("id, payment_status, mp_payment_id, business_id, event_id, promo_code, tier_snapshot, quantity")
+                .eq("id", eventOrderId)
+                .single();
+
+            if (eventOrderError || !eventOrder) {
+                console.error(`❌ Event order not found: ${eventOrderId}`);
+                return new Response(JSON.stringify({ error: "Event order not found" }), { status: 404, headers: corsHeaders });
+            }
+
+            // Idempotency
+            if (eventOrder.mp_payment_id === dataId && eventOrder.payment_status === 'paid') {
+                console.log(`♻️ Idempotent replay: Event order ${eventOrderId} already processed`);
+                return new Response(JSON.stringify({ status: "already_processed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+            }
+
+            if (eventOrder.payment_status === 'paid' && eventOrder.mp_payment_id && eventOrder.mp_payment_id !== dataId) {
+                console.warn(`⚠️ Event order ${eventOrderId} already paid with different payment ID`);
+                return new Response(JSON.stringify({ status: "ignored_duplicate_payment" }), { status: 200, headers: corsHeaders });
+            }
+
+            if (payment.status === "approved") {
+                const { error: updateError } = await supabase
+                    .from("event_orders")
+                    .update({
+                        payment_status: 'paid',
+                        mp_payment_id: dataId,
+                        payment_method: 'mercado_pago',
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", eventOrderId);
+
+                if (updateError) {
+                    console.error(`❌ Event order update error:`, updateError);
+                    return new Response(JSON.stringify({ error: "Failed to update event order" }), { status: 500, headers: corsHeaders });
+                }
+
+                // Fire-and-forget: tier sold count — order is already marked paid, don't block on this
+                if (eventOrder.tier_snapshot?.id && eventOrder.quantity) {
+                    supabase.rpc('increment_event_tier_sold', {
+                        p_event_id: eventOrder.event_id,
+                        p_tier_id: eventOrder.tier_snapshot.id,
+                        p_quantity: eventOrder.quantity
+                    }).then(({ error: tierError }) => {
+                        if (tierError) console.warn(`[mp-webhook] Tier increment failed (non-fatal):`, tierError.message);
+                    });
+                }
+
+                // Fire-and-forget: promo used count
+                if (eventOrder.promo_code) {
+                    supabase.rpc('increment_promo_used_count', {
+                        p_event_id: eventOrder.event_id,
+                        p_code: eventOrder.promo_code.toUpperCase()
+                    }).then(({ error: promoError }) => {
+                        if (promoError) console.warn(`[mp-webhook] Promo increment failed (non-fatal):`, promoError.message);
+                    });
+                }
+
+                console.log(`🎫 Event order ${eventOrderId} PAID!`);
+                return new Response(
+                    JSON.stringify({ success: true, order_id: eventOrderId, type: 'event' }),
+                    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+            }
+
+            console.log(`⏳ Event payment not approved: ${payment.status}`);
+            return new Response(
+                JSON.stringify({ status: "pending", payment_status: payment.status, type: 'event' }),
+                { status: 200, headers: corsHeaders }
+            );
+        }
+
+        // ============================================
+        // 5. IDEMPOTENCY GUARD (food orders)
+        // ============================================
+        const orderId = externalReference;
         const { data: existingOrder, error: orderError } = await supabase
             .from("orders")
             .select("id, payment_id, status, business_id")

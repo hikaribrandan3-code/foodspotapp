@@ -105,11 +105,13 @@ async function syncOfflinePayment(payment) {
                 transaction_type: 'payment',
                 status: 'completed',
                 amount_gross_cents: payment.amount_gross_cents,
+                platform_fee_cents: 0,
+                net_to_owner_cents: payment.amount_gross_cents,
+                idempotency_key: `cash-${payment.order_id}`,
                 currency: payment.currency,
                 payment_method: PAYMENT_METHOD.CASH,
                 external_reference: payment.external_reference,
                 processed_at: new Date().toISOString(),
-                offline_sync: true
             })
             .select()
             .single()

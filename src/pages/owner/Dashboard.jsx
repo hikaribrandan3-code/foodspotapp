@@ -650,6 +650,7 @@ export default function Dashboard() {
       const now = new Date().toISOString()
 
       // Write to transaction_ledger for analytics
+      const grossCents = Math.round((Number(paymentModalOrder.total) || 0) * 100)
       const { error: ledgerError } = await supabase
         .from('transaction_ledger')
         .insert({
@@ -657,12 +658,14 @@ export default function Dashboard() {
           business_id: paymentModalOrder.business_id || businessId,
           transaction_type: 'payment',
           status: 'completed',
-          amount_gross_cents: Math.round((Number(paymentModalOrder.total) || 0) * 100),
+          amount_gross_cents: grossCents,
+          platform_fee_cents: 0,
+          net_to_owner_cents: grossCents,
+          idempotency_key: `${method}-${paymentModalOrder.id}`,
           currency: 'ARS',
           payment_method: method,
           external_reference: `${method.toUpperCase()}-${paymentModalOrder.id}`,
           processed_at: now,
-          offline_sync: false,
         })
       if (ledgerError) {
         console.error('[Owner] Ledger insert failed:', ledgerError)
