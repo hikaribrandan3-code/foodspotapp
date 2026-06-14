@@ -48,7 +48,9 @@ serve(async (req: Request) => {
         const { error, data } = await supabase
             .from("orders")
             .delete()
-            .eq("business_id", business_id);
+            .eq("business_id", business_id)
+            .in("status", ["pending", "pending_payment"])
+            .select("id");
 
         if (error) {
             return new Response(
@@ -58,7 +60,7 @@ serve(async (req: Request) => {
         }
 
         return new Response(
-            JSON.stringify({ success: true, deleted: data }),
+            JSON.stringify({ success: true, cleared: data?.length ?? 0 }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     } catch (err) {

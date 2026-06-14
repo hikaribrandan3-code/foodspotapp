@@ -704,9 +704,9 @@ export default function Dashboard() {
   }
 
   const nukeAllOrders = async () => {
-    if (!confirm('⚠️ DELETE ALL ORDERS? This cannot be undone. Type "DELETE" to confirm.')) return
-    const response = prompt('Type DELETE to confirm:')
-    if (response !== 'DELETE') return
+    if (!confirm('Clear all PENDING orders? Paid orders and revenue history are preserved.')) return
+    const response = prompt('Type CLEAR to confirm:')
+    if (response !== 'CLEAR') return
 
     try {
       console.log('[Nuke] Calling edge function for business_id:', businessId)
@@ -721,9 +721,9 @@ export default function Dashboard() {
         return
       }
 
-      alert('✅ All orders deleted')
+      alert(`✅ ${data?.cleared ?? 0} pending orders cleared. Paid orders preserved.`)
       await new Promise(r => setTimeout(r, 800))
-      setDisplayOrders([])
+      setDisplayOrders(prev => prev.filter(o => o.status !== 'pending' && o.status !== 'pending_payment'))
       await refreshOrders()
     } catch (err) {
       console.error('[Nuke] Exception:', err)

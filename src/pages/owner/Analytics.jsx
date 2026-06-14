@@ -63,6 +63,7 @@ const Analytics = () => {
 
     // STATE
     const [orders, setOrders] = useState([])
+    const [ledgerEntries, setLedgerEntries] = useState([])
     const [loading, setLoading] = useState(true)
     const [fetchError, setFetchError] = useState(null)
     const [dateRange, setDateRange] = useState('today')
@@ -135,23 +136,59 @@ const Analytics = () => {
         }
     }, [businessId, dateRange])
 
+    // FETCH LEDGER — permanent revenue source (survives order deletion)
+    useEffect(() => {
+        if (!businessId) return
+        let cancelled = false
+
+        const fetchLedger = async () => {
+            let query = supabase
+                .from('transaction_ledger')
+                .select('amount_gross_cents, payment_method, processed_at')
+                .eq('business_id', businessId)
+                .eq('transaction_type', 'payment')
+                .eq('status', 'completed')
+                .order('processed_at', { ascending: false })
+
+            const cutoff = getDateCutoff(dateRange)
+            if (cutoff) query = query.gte('processed_at', cutoff)
+
+            const { data, error } = await query
+            if (!cancelled && !error) setLedgerEntries(data || [])
+        }
+
+        fetchLedger()
+
+        const subscription = supabase
+            .channel(`analytics-ledger-${businessId}-${dateRange}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'transaction_ledger', filter: `business_id=eq.${businessId}` },
+                () => { if (!cancelled) fetchLedger() })
+            .subscribe()
+
+        return () => {
+            cancelled = true
+            supabase.removeChannel(subscription)
+        }
+    }, [businessId, dateRange])
+
     // COMPUTED STATS
     const stats = useMemo(() => {
-        // Count revenue for all paid/active statuses — not just terminal ones.
-        // MP webhook sets orders to released_to_kitchen on approval; they may never
-        // reach 'delivered' in normal flow so counting only terminal states = $0 revenue.
+        // Revenue from transaction_ledger (permanent, survives order deletion)
+        const totalRevenue = ledgerEntries.reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
+        const mpRevenue = ledgerEntries.filter(l => l.payment_method !== 'cash').reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
+        const cashRevenue = ledgerEntries.filter(l => l.payment_method === 'cash').reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
+        const mpCount = ledgerEntries.filter(l => l.payment_method !== 'cash').length
+        const cashCount = ledgerEntries.filter(l => l.payment_method === 'cash').length
+        const avgTicket = ledgerEntries.length > 0 ? totalRevenue / ledgerEntries.length : 0
+
+        // Operational stats from orders (item breakdown, order types)
         const EXCLUDED = ['pending', 'pending_payment', 'cancelled', 'refunded']
         const completed = orders.filter(o => !EXCLUDED.includes(o.status))
         const delivered = orders.filter(o => o.status === ORDER_STATUS.DELIVERED)
-        const totalRevenue = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
         const deliveryCount = completed.filter(o => o.order_type === 'delivery').length
         const pickupCount = completed.filter(o => o.order_type === 'pickup').length
         const dineInCount = completed.filter(o => o.order_type === 'dine_in').length
-        const avgTicket = completed.length > 0 ? totalRevenue / completed.length : 0
-        const mpCount = completed.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO).length
-        const cashCount = completed.filter(o => o.payment_method === PAYMENT_METHOD.CASH).length
 
-        // Top items
         const itemMap = {}
         completed.forEach(o => {
             (o.items || []).forEach(item => {
@@ -163,16 +200,13 @@ const Analytics = () => {
         })
         const topItems = Object.values(itemMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
 
-        const mpRevenue = completed.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO).reduce((sum, o) => sum + (Number(o.total) || 0), 0)
-        const cashRevenue = completed.filter(o => o.payment_method === PAYMENT_METHOD.CASH).reduce((sum, o) => sum + (Number(o.total) || 0), 0)
-
         return {
-            totalRevenue, orderCount: completed.length, deliveredCount: delivered.length,
+            totalRevenue, orderCount: ledgerEntries.length, deliveredCount: delivered.length,
             deliveryCount, pickupCount, dineInCount, avgTicket,
             mpCount, cashCount, mpRevenue, cashRevenue, topItems,
             isAtLimit: orders.length >= 500
         }
-    }, [orders])
+    }, [orders, ledgerEntries])
 
     // STYLES
     const cardStyle = {

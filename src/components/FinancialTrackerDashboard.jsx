@@ -64,6 +64,7 @@ export default function FinancialTrackerDashboard() {
   const fmtMoney = (n) =>
     new Intl.NumberFormat('es-AR', { style: 'currency', currency }).format(n || 0);
   const [orders, setOrders] = useState([]);
+  const [ledgerEntries, setLedgerEntries] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(() =>
@@ -116,18 +117,24 @@ export default function FinancialTrackerDashboard() {
     localStorage.setItem(budgetKey, JSON.stringify(budgets));
   }, [budgets, budgetKey]);
 
-  // Fetch real orders + menu items
+  // Fetch orders (operational counts), ledger (revenue), and menu items
   useEffect(() => {
     if (!businessId) return;
     let cancelled = false;
     const fetchData = async () => {
       setLoading(true);
-      const [{ data: orderData }, { data: menuData }] = await Promise.all([
+      const [{ data: orderData }, { data: ledgerData }, { data: menuData }] = await Promise.all([
         supabase
           .from('orders')
           .select('total, status, created_at')
           .eq('business_id', businessId)
           .not('status', 'in', '(pending,pending_payment,cancelled,refunded)'),
+        supabase
+          .from('transaction_ledger')
+          .select('amount_gross_cents, processed_at')
+          .eq('business_id', businessId)
+          .eq('transaction_type', 'payment')
+          .eq('status', 'completed'),
         supabase
           .from('menu_items')
           .select('id, available')
@@ -135,6 +142,7 @@ export default function FinancialTrackerDashboard() {
       ]);
       if (cancelled) return;
       setOrders(orderData || []);
+      setLedgerEntries(ledgerData || []);
       setMenuItems(menuData || []);
       setLoading(false);
     };
@@ -156,7 +164,14 @@ export default function FinancialTrackerDashboard() {
     });
   }, [orders, rangeStart, rangeEnd]);
 
-  const totalRevenue = useMemo(() => filteredOrders.reduce((s, o) => s + (o.total || 0), 0), [filteredOrders]);
+  const filteredLedger = useMemo(() => {
+    return ledgerEntries.filter((l) => {
+      const d = l.processed_at?.split('T')[0];
+      return d >= rangeStart && d <= rangeEnd;
+    });
+  }, [ledgerEntries, rangeStart, rangeEnd]);
+
+  const totalRevenue = useMemo(() => filteredLedger.reduce((s, l) => s + (l.amount_gross_cents || 0), 0) / 100, [filteredLedger]);
   const totalExpenses = useMemo(() => filteredExpenses.reduce((s, e) => s + (e.amount || 0), 0), [filteredExpenses]);
   const netProfit = totalRevenue - totalExpenses;
   const activeProducts = menuItems.filter((m) => m.available !== false).length;
@@ -174,17 +189,17 @@ export default function FinancialTrackerDashboard() {
 
   const barData = useMemo(() => {
     const map = {};
-    filteredOrders.forEach((o) => {
-      const d = o.created_at?.split('T')[0];
+    filteredLedger.forEach((l) => {
+      const d = l.processed_at?.split('T')[0];
       if (!map[d]) map[d] = { date: d, revenue: 0, expenses: 0 };
-      map[d].revenue += o.total || 0;
+      map[d].revenue += (l.amount_gross_cents || 0) / 100;
     });
     filteredExpenses.forEach((e) => {
       if (!map[e.date]) map[e.date] = { date: e.date, revenue: 0, expenses: 0 };
       map[e.date].expenses += e.amount || 0;
     });
     return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
-  }, [filteredOrders, filteredExpenses]);
+  }, [filteredLedger, filteredExpenses]);
 
   // Form state
   const [desc, setDesc] = useState('');
@@ -584,7 +599,7 @@ export default function FinancialTrackerDashboard() {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>
-                        -${(expense.amount || 0).toFixed(2)}
+                        -{fmtMoney(expense.amount || 0)}
                       </span>
                       <button
                         onClick={() => deleteExpense(expense.id)}

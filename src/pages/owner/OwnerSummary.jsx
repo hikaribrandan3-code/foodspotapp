@@ -132,55 +132,53 @@ function OwnerSummary() {
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
 
-    // ☁️ CLOUD ORDERS STATE (replaces getOrders() localStorage)
-    const [orders, setOrders] = useState([])
+    // ☁️ CLOUD LEDGER STATE — permanent revenue source (survives order deletion)
+    const [ledgerEntries, setLedgerEntries] = useState([])
     const [ordersLoading, setOrdersLoading] = useState(true)
 
-    // Fetch today's + recent orders from Supabase
     useEffect(() => {
         if (!businessId) return
         let cancelled = false
 
-        const fetchOrders = async () => {
+        const fetchLedger = async () => {
             setOrdersLoading(true)
             const monthAgo = new Date()
             monthAgo.setDate(monthAgo.getDate() - 30)
 
             const { data, error } = await supabase
-                .from('orders')
-                .select('id, total, status, payment_method, created_at')
+                .from('transaction_ledger')
+                .select('id, amount_gross_cents, payment_method, processed_at')
                 .eq('business_id', businessId)
-                .gte('created_at', monthAgo.toISOString())
-                .not('status', 'in', '(pending,pending_payment,cancelled,refunded)')
-                .order('created_at', { ascending: false })
+                .eq('transaction_type', 'payment')
+                .eq('status', 'completed')
+                .gte('processed_at', monthAgo.toISOString())
+                .order('processed_at', { ascending: false })
 
             if (!cancelled && !error && data) {
-                setOrders(data)
+                setLedgerEntries(data)
             }
             if (!cancelled) setOrdersLoading(false)
         }
 
-        fetchOrders()
+        fetchLedger()
 
-        // Subscribe to real-time changes (SILO-FILTERED)
         const subscription = supabase
-            .channel(`summary-orders-${businessId}`)
+            .channel(`summary-ledger-${businessId}`)
             .on(
                 'postgres_changes',
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'orders',
-                    filter: `business_id=eq.${businessId}` // 🔐 SILO FILTER
+                    table: 'transaction_ledger',
+                    filter: `business_id=eq.${businessId}`
                 },
                 () => {
-                    if (!cancelled) fetchOrders()
+                    if (!cancelled) fetchLedger()
                 }
             )
             .subscribe()
 
-        // Fallback poll every 30s if subscription fails
-        const interval = setInterval(fetchOrders, 30000)
+        const interval = setInterval(fetchLedger, 30000)
         return () => {
             cancelled = true
             clearInterval(interval)
@@ -226,26 +224,27 @@ function OwnerSummary() {
         window.location.href = `/${tenantSlug}`
     }
 
-    // Stats calculations (from Supabase data)
+    // Stats from transaction_ledger (permanent, delete-proof)
     const stats = useMemo(() => {
         const today = new Date().toDateString()
         const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
 
-        const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today)
-        const mpOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.MERCADO_PAGO)
-        const cashOrders = todayOrders.filter(o => o.payment_method === PAYMENT_METHOD.CASH)
-        const mpTotal = mpOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
-        const cashTotal = cashOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+        const todayEntries = ledgerEntries.filter(l => new Date(l.processed_at).toDateString() === today)
+        const mpEntries = todayEntries.filter(l => l.payment_method !== 'cash')
+        const cashEntries = todayEntries.filter(l => l.payment_method === 'cash')
+        const mpTotal = mpEntries.reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
+        const cashTotal = cashEntries.reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
 
-        const weekOrders = orders.filter(o => new Date(o.created_at) >= weekAgo)
+        const weekEntries = ledgerEntries.filter(l => new Date(l.processed_at) >= weekAgo)
 
         return {
-            todayOrders, mpOrders, cashOrders, mpTotal, cashTotal,
+            todayOrders: todayEntries, mpOrders: mpEntries, cashOrders: cashEntries,
+            mpTotal, cashTotal,
             totalToday: mpTotal + cashTotal,
-            weekCount: weekOrders.length,
-            monthCount: orders.length
+            weekCount: weekEntries.length,
+            monthCount: ledgerEntries.length
         }
-    }, [orders])
+    }, [ledgerEntries])
 
     // ☁️ CLOUD SAVE for business info
     const [savingConfig, setSavingConfig] = useState(false)
