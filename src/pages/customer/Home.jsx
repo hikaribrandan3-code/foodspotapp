@@ -660,9 +660,9 @@ function Home({ config: configProp }) {
             return
         }
 
-        // Navigate with tenant-scoped path
+        // Navigate with tenant-scoped path (preserve search params like ownerStart)
         // console.log(`🚀 NAVIGATING to: /${tenantSlug}/${path}`)
-        navigate(`/${tenantSlug}/${path}`)
+        navigate(`/${tenantSlug}/${path}${location.search}`)
     }, [navigate, isEditMode, tenantSlug])
 
     // ====== THE MISSING ATOMIC SEAL (HOME) ======
@@ -958,7 +958,7 @@ function Home({ config: configProp }) {
                     return (
                         <Link
                             {...commonTileProps}
-                            to={`/${tenantSlug}/${action.path}`}
+                            to={`/${tenantSlug}/${action.path}${location.search}`}
                             onClick={(e) => {
                                 // Double check isolation if needed
                                 if (isDraggingRef.current || isEditMode) {
