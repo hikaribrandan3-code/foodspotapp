@@ -388,7 +388,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         {/* Invisible Button - Over ORDER NOW text in image */}
                         <button onClick={handleClaimPromo} style={{
                             position: 'absolute',
-                            bottom: '18px',
+                            bottom: '24px',
                             left: '18px',
                             width: '120px',
                             height: '44px',
