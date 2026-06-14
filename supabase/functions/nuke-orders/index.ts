@@ -45,21 +45,6 @@ serve(async (req: Request) => {
             );
         }
 
-        // Verify user owns this business
-        const { data: business, error: bizError } = await supabase
-            .from("businesses")
-            .select("id")
-            .eq("id", business_id)
-            .eq("owner_id", user.id)
-            .single();
-
-        if (bizError || !business) {
-            return new Response(
-                JSON.stringify({ error: "Unauthorized: you do not own this business" }),
-                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-        }
-
         const { error, data } = await supabase
             .from("orders")
             .delete()
