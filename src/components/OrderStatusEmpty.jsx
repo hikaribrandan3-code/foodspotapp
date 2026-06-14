@@ -37,14 +37,58 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
     const displayCity = extractedCity || tenantData?.city || ''
 
     const [showArcade, setShowArcade] = useState(false)
+    const [countdown, setCountdown] = useState(0)
+
     const primaryColor = config?.branding?.primaryColor || '#FF9500'
     const navBgColor = config?.branding?.navbar_color || primaryColor
 
+    // Real digital countdown timer to World Cup
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+
+    useEffect(() => {
+        const calculateTimeToWorldCup = () => {
+            const worldCupDate = new Date(2026, 5, 11, 0, 0, 0) // June 11, 2026 midnight
+            const now = new Date()
+            const diff = worldCupDate - now
+
+            if (diff <= 0) {
+                return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+            return { days, hours, minutes, seconds }
+        }
+
+        setTimeLeft(calculateTimeToWorldCup())
+
+        const interval = setInterval(() => {
+            setTimeLeft(calculateTimeToWorldCup())
+        }, 1000) // Update every second
+
+        return () => clearInterval(interval)
+    }, [])
+
+    // Calculate days until 2026 FIFA World Cup (June 11, 2026)
+    const calculateDaysToWorldCup = () => {
+        const worldCupDate = new Date(2026, 5, 11) // June 11, 2026 (0-indexed months)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        worldCupDate.setHours(0, 0, 0, 0)
+        const daysRemaining = Math.ceil((worldCupDate - today) / (1000 * 60 * 60 * 24))
+        return Math.max(0, daysRemaining)
+    }
+
+    const daysToWorldCup = calculateDaysToWorldCup()
+
     // Promo banner config (fallback to hardcoded)
     const promoConfig = {
-        enabled: tenantData?.app_config?.promo_banner_enabled ?? false,
+        enabled: tenantData?.app_config?.promo_banner_enabled ?? true,
         text: tenantData?.app_config?.promo_banner_text || '¡Vamos Vamos Argentina! 🇦🇷',
-        subtext: tenantData?.app_config?.promo_banner_subtext || '🏆 FIFA World Cup 2026 ⚽',
+        subtext: tenantData?.app_config?.promo_banner_subtext || `${daysToWorldCup} days until FIFA World Cup 2026 ⚽`,
         cta: tenantData?.app_config?.promo_banner_cta || 'Order Now',
         image: tenantData?.app_config?.promo_banner_image || null
     }
@@ -340,6 +384,25 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         overflow: 'hidden',
                         boxShadow: '0 8px 24px rgba(28, 90, 160, 0.25)'
                     }}>
+                        {/* Digital Countdown Timer - Left Above ORDER NOW */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '68px',
+                            left: '28px',
+                            fontFamily: 'monospace',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#FFD700',
+                            textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+                            letterSpacing: '1px',
+                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            zIndex: 10
+                        }}>
+                            {String(timeLeft.days).padStart(2, '0')}D {String(timeLeft.hours).padStart(2, '0')}H {String(timeLeft.minutes).padStart(2, '0')}M {String(timeLeft.seconds).padStart(2, '0')}S
+                        </div>
+
 
                         {/* Invisible Button - Over ORDER NOW text in image */}
                         <button onClick={handleClaimPromo} style={{
