@@ -1053,28 +1053,15 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                    <div className="flex gap-3">
-                                        {[
-                                            { code: 'es', label: 'Español' },
-                                            { code: 'en', label: 'English' },
-                                            { code: 'pt', label: 'Português' },
-                                        ].map(({ code, label }) => {
-                                            const isActive = lang === code
-                                            return (
-                                                <button
-                                                    key={code}
-                                                    onClick={() => saveLanguage(code)}
-                                                    className={`flex-1 py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${
-                                                        isActive
-                                                            ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 text-emerald-700 dark:text-emerald-400'
-                                                            : 'bg-stone-50 dark:bg-[#334155] border-stone-200 dark:border-white/10 text-stone-600 dark:text-stone-400 hover:border-emerald-400'
-                                                    }`}
-                                                >
-                                                    {label}
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
+                                    <select
+                                        value={lang}
+                                        onChange={(e) => saveLanguage(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="es">Español</option>
+                                        <option value="en">English</option>
+                                        <option value="pt">Português</option>
+                                    </select>
                                 </div>
                             </motion.div>
                         )}
