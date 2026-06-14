@@ -874,7 +874,7 @@ export default function Dashboard() {
             cursor: 'pointer',
             letterSpacing: '0.02em',
           }}>
-            {t('clear_pending_orders')}
+            {t('clear')}
           </button>
         </div>
 

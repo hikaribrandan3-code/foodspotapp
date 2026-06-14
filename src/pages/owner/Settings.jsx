@@ -759,7 +759,7 @@ const Settings = () => {
                             placeholder={t('business_name_placeholder')}
                         />
                         <p style={{ fontSize: '11px', color: '#10B981', fontWeight: '600', textAlign: 'center', margin: '0', letterSpacing: '0.02em' }}>
-                            💡 Agregá un emoji al nombre — aparece en la cámara de tus clientes
+                            {t('add_emoji_name_note')}
                         </p>
                         <div className="typo-grid">
                             {/* Font Family Dropdown */}
@@ -1079,7 +1079,7 @@ const Settings = () => {
                 <section className="branding-card">
                     <h3>5. {t('theme_colors')}</h3>
                     <p style={{ fontSize: '11px', color: '#10B981', fontWeight: '600', marginBottom: '12px', letterSpacing: '0.02em' }}>
-                        Estos colores aparecen en botones de pago, confirmaciones y recibos
+                        {t('theme_color_note')}
                     </p>
                     <div className="color-grid">
                         <ColorPillar label={t('confirmation')} keyName="confirmation_color" cssVar="--color-primary" defaultValue={DEFAULTS.confirmation} />

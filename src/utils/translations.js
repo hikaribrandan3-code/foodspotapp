@@ -1159,6 +1159,21 @@ export const translations = {
     directions_label:   { en: 'Directions',            es: 'Cómo llegar',            pt: 'Como chegar' },
     open_in_google_maps:{ en: 'Open in Google Maps',   es: 'Abrir en Google Maps',   pt: 'Abrir no Google Maps' },
     reviews_label:      { en: 'Reviews',               es: 'Reseñas',                pt: 'Avaliações' },
-    leave_a_review:     { en: 'Leave a Review',        es: 'Dejar una Reseña',       pt: 'Deixar uma Avaliação' }
+    leave_a_review:     { en: 'Leave a Review',        es: 'Dejar una Reseña',       pt: 'Deixar uma Avaliação' },
+
+    // ── Owner Summary / QR Section ─────────────────────────────────────────────
+    qr_code_section:    { en: 'Your QR Code',          es: 'Tu Código QR',           pt: 'Seu Código QR' },
+    your_store_link:    { en: 'Your Store Link',        es: 'Tu Link de Pedidos',     pt: 'Seu Link da Loja' },
+    copy:               { en: 'Copy',                  es: 'Copiar',                 pt: 'Copiar' },
+    copied:             { en: 'Copied',                es: 'Copiado',                pt: 'Copiado' },
+    download_qr:        { en: 'Download QR (PNG)',      es: 'Descargar QR (PNG)',     pt: 'Baixar QR (PNG)' },
+    qr_section_note:    { en: 'Print this QR and place it on tables, delivery bags, and your store entrance.', es: 'Imprimí este QR y pegalo en mesas, bolsas de delivery y la puerta de tu local.', pt: 'Imprima este QR e coloque nas mesas, sacolas de entrega e na entrada do seu estabelecimento.' },
+
+    // ── Owner Branding / Settings ──────────────────────────────────────────────
+    add_emoji_name_note:{ en: 'Add an emoji to the name — it appears in your customers\' camera', es: 'Agregá un emoji al nombre — aparece en la cámara de tus clientes', pt: 'Adicione um emoji ao nome — ele aparece na câmera dos seus clientes' },
+    theme_color_note:   { en: 'These colors appear in payment buttons, confirmations, and receipts', es: 'Estos colores aparecen en botones de pago, confirmaciones y recibos', pt: 'Estas cores aparecem nos botões de pagamento, confirmações e recibos' },
+
+    // ── Orders / Dashboard ─────────────────────────────────────────────────────
+    clear:              { en: 'Clear',                  es: 'Limpiar',               pt: 'Limpar' }
 };
 

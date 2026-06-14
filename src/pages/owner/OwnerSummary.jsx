@@ -28,7 +28,7 @@ function OwnerSummary() {
     const navigate = useNavigate()
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
-    const { t } = useLanguage()
+    const { t, lang } = useLanguage()
     const { theme, setTheme } = useTheme()
     const appConfig = tenantData?.app_config || {}
     const [businessInfoLocal, setBusinessInfoLocal] = useState({})
@@ -1055,23 +1055,22 @@ function OwnerSummary() {
                                 <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div className="flex gap-3">
                                         {[
-                                            { code: 'es', label: 'Español', flag: '🇦🇷' },
-                                            { code: 'en', label: 'English', flag: '🇺🇸' },
-                                            { code: 'pt', label: 'Português', flag: '🇧🇷' },
-                                        ].map(({ code, label, flag }) => {
-                                            const isActive = (tenantData?.language || 'es') === code
+                                            { code: 'es', label: 'Español' },
+                                            { code: 'en', label: 'English' },
+                                            { code: 'pt', label: 'Português' },
+                                        ].map(({ code, label }) => {
+                                            const isActive = lang === code
                                             return (
                                                 <button
                                                     key={code}
                                                     onClick={() => saveLanguage(code)}
-                                                    className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${
+                                                    className={`flex-1 py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${
                                                         isActive
                                                             ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 text-emerald-700 dark:text-emerald-400'
                                                             : 'bg-stone-50 dark:bg-[#334155] border-stone-200 dark:border-white/10 text-stone-600 dark:text-stone-400 hover:border-emerald-400'
                                                     }`}
                                                 >
-                                                    <span className="text-xl">{flag}</span>
-                                                    <span>{label}</span>
+                                                    {label}
                                                 </button>
                                             )
                                         })}
@@ -1089,7 +1088,7 @@ function OwnerSummary() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
                     <SectionHeader
                         icon={<QrCode size={14} />}
-                        title="Tu Código QR"
+                        title={t('qr_code_section')}
                         isOpen={openSections.qr}
                         onToggle={() => toggleSection('qr')}
                     />
@@ -1103,7 +1102,7 @@ function OwnerSummary() {
                             >
                                 <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">Tu Link de Pedidos</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('your_store_link')}</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
@@ -1116,7 +1115,7 @@ function OwnerSummary() {
                                                 onClick={copyStoreUrl}
                                                 className="px-5 py-3 rounded-2xl text-sm font-black bg-stone-100 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white flex items-center gap-2 whitespace-nowrap"
                                             >
-                                                {urlCopied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+                                                {urlCopied ? <><Check size={14} /> {t('copied')}</> : <><Copy size={14} /> {t('copy')}</>}
                                             </motion.button>
                                         </div>
                                     </div>
@@ -1138,10 +1137,10 @@ function OwnerSummary() {
                                             className="w-full py-2.5 rounded-xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2"
                                         >
                                             <Download size={16} />
-                                            Descargar QR (PNG)
+                                            {t('download_qr')}
                                         </motion.button>
                                         <p className="text-xs text-stone-400 dark:text-stone-500 text-center leading-relaxed">
-                                            Imprimí este QR y pegalo en mesas, bolsas de delivery y la puerta de tu local.
+                                            {t('qr_section_note')}
                                         </p>
                                     </div>
                                 </div>
