@@ -885,6 +885,7 @@ export const translations = {
     recent_orders: { en: 'Recent Orders', es: 'Pedidos Recientes', pt: 'Pedidos Recentes' },
     new_order: { en: 'New Order', es: 'Nuevo Pedido', pt: 'Novo Pedido' },
     delete_label: { en: 'Delete', es: 'Eliminar', pt: 'Excluir' },
+    clear_pending_orders: { en: 'Clear Pending Orders', es: 'Limpiar Pedidos Pendientes', pt: 'Limpar Pedidos Pendentes' },
     net_profit: { en: 'Net Profit', es: 'Ganancia Neta', pt: 'Lucro Líquido' },
     orders_lowercase: { en: 'orders', es: 'pedidos', pt: 'pedidos' },
     entries_lowercase: { en: 'entries', es: 'registros', pt: 'registros' },
