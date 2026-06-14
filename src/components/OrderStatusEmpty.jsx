@@ -384,25 +384,6 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         overflow: 'hidden',
                         boxShadow: '0 8px 24px rgba(28, 90, 160, 0.25)'
                     }}>
-                        {/* Digital Countdown Timer - Left Above ORDER NOW */}
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '68px',
-                            left: '28px',
-                            fontFamily: 'monospace',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#FFD700',
-                            textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
-                            letterSpacing: '1px',
-                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            zIndex: 10
-                        }}>
-                            {String(timeLeft.days).padStart(2, '0')}D {String(timeLeft.hours).padStart(2, '0')}H {String(timeLeft.minutes).padStart(2, '0')}M {String(timeLeft.seconds).padStart(2, '0')}S
-                        </div>
-
 
                         {/* Invisible Button - Over ORDER NOW text in image */}
                         <button onClick={handleClaimPromo} style={{
