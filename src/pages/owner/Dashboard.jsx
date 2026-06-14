@@ -7,7 +7,7 @@ import { useKDSAudio } from '../../hooks/useKDSAudio'
 import { VolumeIcon, BellIcon } from '../../components/AudioIcons'
 import { formatPrice } from '../../config/menuData'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
-import BurgerLoader from '../../components/BurgerLoader'
+import { LoadingScreen } from '../../components/LoadingScreen'
 import BackendNav from '../../components/BackendNav'
 import BackendHeader from '../../components/BackendHeader'
 import { ORDER_STATUS } from '../../constants/database.js';
@@ -758,7 +758,7 @@ export default function Dashboard() {
     setLastOrderCount(displayOrders.length)
   }, [displayOrders.length, lastOrderCount, playChime])
 
-  if (loading) return <BurgerLoader />
+  if (loading) return <LoadingScreen />
 
   return (
     <div style={{

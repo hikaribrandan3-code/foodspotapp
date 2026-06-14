@@ -7,7 +7,7 @@ import { useCamTechListener } from '../../hooks/useCamTech';
 import { useStaff } from '../../contexts/StaffContext';
 import { useKDSAudio } from '../../hooks/useKDSAudio.js';
 import { VolumeIcon, BellIcon } from '../../components/AudioIcons';
-import BurgerLoader from '../../components/BurgerLoader';
+import { LoadingScreen } from '../../components/LoadingScreen'
 import { ORDER_STATUS } from '../../constants/database.js';
 
 
@@ -63,7 +63,7 @@ export const StaffKDS = () => {
         return grouped;
     }, [orders]);
 
-    if (loading) return <BurgerLoader />;
+    if (loading) return <LoadingScreen />;
 
     if (!businessId) return <div className="kds-error">No business ID found. Please login.</div>;
 

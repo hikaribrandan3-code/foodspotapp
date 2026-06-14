@@ -11,7 +11,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
-import BurgerLoader from '../../components/BurgerLoader'
+import { LoadingScreen } from '../../components/LoadingScreen'
 import { ORDER_STATUS } from '../../constants/database.js';
 
 
@@ -316,7 +316,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     // ============================================
     // RENDER
     // ============================================
-    if (loading) return <BurgerLoader />
+    if (loading) return <LoadingScreen />
 
     return (
         <div style={{ minHeight: '100vh', background: '#F9FAFB', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>

@@ -6,7 +6,7 @@ import { exportContactsToCSV } from '../../services/contactsService.js'
 import { translations } from '../../utils/translations.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
-import BurgerLoader from '../../components/BurgerLoader.jsx'
+import { LoadingScreen } from '../../components/LoadingScreen'
 import { ReservationsContent } from './Reservations.jsx'
 
 const T = {
@@ -143,7 +143,7 @@ export default function CustomerContacts({ defaultTab = 'clientes' }) {
     )
   }, [contacts, search])
 
-  if (loading) return <BurgerLoader />
+  if (loading) return <LoadingScreen />
 
   return (
     <div style={{ width: '100%', height: '100vh', background: T.bg, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

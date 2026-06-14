@@ -10,7 +10,7 @@ import BackendHeader from '../../components/BackendHeader';
 import BackendNav from '../../components/BackendNav';
 import CoverImageEditor from '../../components/CoverImageEditor';
 import ColorPickerModal from '../../components/ColorPickerModal';
-import BurgerLoader from '../../components/BurgerLoader';
+import { LoadingScreen } from '../../components/LoadingScreen'
 import { clearAuth } from '../../utils/storage';
 import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon } from '../../components/HeroIcons.jsx';
 import { HERO_ICON_DARK } from '../../config/appConfig.v2.js';
@@ -736,7 +736,7 @@ const Settings = () => {
         };
     }, []); // runs once on mount, cleaned up on unmount
 
-    if (loading || !tenant || !isDraftReady) return <BurgerLoader />;
+    if (loading || !tenant || !isDraftReady) return <LoadingScreen />;
 
     const heroIconMode = draft.hero_icon_mode || 'black';
     const navIconMode = draft.nav_icon_mode || 'white';
