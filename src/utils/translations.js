@@ -1149,6 +1149,16 @@ export const translations = {
     error_saving:       { en: 'Error saving',          es: 'Error al guardar',       pt: 'Erro ao salvar' },
     upgrade:            { en: 'Upgrade',               es: 'Mejorar Plan',           pt: 'Atualizar Plano' },
     staff_ops:          { en: 'Staff Operations',      es: 'Operaciones de Personal', pt: 'Operações de Pessoal' },
-    take_order:         { en: 'Take Order',            es: 'Tomar Pedido',           pt: 'Pegar Pedido' }
+    take_order:         { en: 'Take Order',            es: 'Tomar Pedido',           pt: 'Pegar Pedido' },
+
+    // ── Language System ────────────────────────────────────────────────────────
+    language_section:   { en: 'Language',              es: 'Idioma',                 pt: 'Idioma' },
+    language_saved:     { en: 'Language saved',        es: 'Idioma guardado',        pt: 'Idioma salvo' },
+
+    // ── Info Page (customer-facing) ────────────────────────────────────────────
+    directions_label:   { en: 'Directions',            es: 'Cómo llegar',            pt: 'Como chegar' },
+    open_in_google_maps:{ en: 'Open in Google Maps',   es: 'Abrir en Google Maps',   pt: 'Abrir no Google Maps' },
+    reviews_label:      { en: 'Reviews',               es: 'Reseñas',                pt: 'Avaliações' },
+    leave_a_review:     { en: 'Leave a Review',        es: 'Dejar una Reseña',       pt: 'Deixar uma Avaliação' }
 };
 

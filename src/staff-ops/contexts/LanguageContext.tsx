@@ -15,40 +15,36 @@ export function LanguageProvider({ businessId, children }: { businessId?: string
   // CRITICAL: Start with null to force Supabase fetch instead of stale localStorage
   const [language, setLanguageState] = useState<string | null>(null);
 
-  // Fetch tenant's language from app_config on mount (highest priority)
+  // Load language: staff personal preference (localStorage) takes priority over business default
   useEffect(() => {
     const fetchLanguage = async () => {
-      console.log('[LanguageContext] businessId:', businessId);
+      // If staff has already set a personal language preference, respect it
+      const staffPersonalLang = localStorage.getItem('fs_staff_language');
+      if (staffPersonalLang) {
+        setLanguageState(staffPersonalLang);
+        return;
+      }
 
       if (!businessId) {
-        console.log('[LanguageContext] No businessId, defaulting to en');
         setLanguageState('en');
         return;
       }
 
       try {
-        // Query businesses table for language (now the single source of truth)
         const { data, error } = await supabase
           .from('businesses')
           .select('language')
           .eq('id', businessId)
           .single();
 
-        console.log('[LanguageContext] Query result:', { data, error, businessId });
-
         if (error || !data) {
-          console.warn('[LanguageContext] Failed to fetch language, defaulting to en');
           setLanguageState('en');
-          localStorage.setItem('fs_staff_language', 'en');
           return;
         }
 
-        // Use businesses.language (single source of truth)
-        const tenantLang = data?.language || 'en';
-        setLanguageState(tenantLang);
-        localStorage.setItem('fs_staff_language', tenantLang);
+        // No personal preference — use business language as default (do NOT save to localStorage)
+        setLanguageState(data?.language || 'en');
       } catch (err) {
-        console.error('[LanguageContext] Failed to fetch language:', err);
         setLanguageState('en');
       }
     };

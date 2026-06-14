@@ -4,8 +4,7 @@ import { translations } from '../utils/translations';
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-    // 🔒 Spanish is hardwired globally — no switching, no localStorage, no DB sync
-    const [lang] = useState('es');
+    const [lang, setLang] = useState('es');
 
     const t = (key) => {
         if (!translations[key]) {
@@ -15,11 +14,10 @@ export const LanguageProvider = ({ children }) => {
         return translations[key][lang] || translations[key]['es'] || translations[key]['en'] || key;
     };
 
-    // No-op — language is locked to Spanish
-    const changeLanguage = async () => {};
+    const changeLanguage = (newLang) => { if (newLang) setLang(newLang); };
 
     return (
-        <LanguageContext.Provider value={{ lang, t, changeLanguage, language: lang, setLanguage: changeLanguage }}>
+        <LanguageContext.Provider value={{ lang, t, changeLanguage, language: lang, setLanguage: setLang }}>
             {children}
         </LanguageContext.Provider>
     );

@@ -127,7 +127,7 @@ function OwnerSummary() {
         mp: false,
         currency: true,
         qr: false,
-        language: false,
+        language: true,
         team: false,
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
@@ -482,6 +482,17 @@ function OwnerSummary() {
     const handleCurrencyChange = (currencyCode) => {
         setBusinessCurrency(currencyCode)
         saveBusinessCurrency(currencyCode)
+    }
+
+    const saveLanguage = async (lang) => {
+        if (!businessId) return
+        try {
+            await supabase.from('businesses').update({ language: lang }).eq('id', businessId)
+            setAutoSaveStatus({ type: 'language', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
+        } catch (err) {
+            console.error('[OwnerSummary] Failed to save language:', err)
+        }
     }
 
     const instagramDebounceRef = useRef(null)
@@ -1019,6 +1030,52 @@ function OwnerSummary() {
                                         <option value="USD">USD — US Dollar</option>
                                         <option value="UYU">UYU — Uruguayan Peso</option>
                                     </select>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Language */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }}>
+                    <SectionHeader
+                        icon={<Globe size={14} />}
+                        title={t('language_section')}
+                        isOpen={openSections.language}
+                        onToggle={() => toggleSection('language')}
+                    />
+                    <AnimatePresence>
+                        {openSections.language && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    <div className="flex gap-3">
+                                        {[
+                                            { code: 'es', label: 'Español', flag: '🇦🇷' },
+                                            { code: 'en', label: 'English', flag: '🇺🇸' },
+                                            { code: 'pt', label: 'Português', flag: '🇧🇷' },
+                                        ].map(({ code, label, flag }) => {
+                                            const isActive = (tenantData?.language || 'es') === code
+                                            return (
+                                                <button
+                                                    key={code}
+                                                    onClick={() => saveLanguage(code)}
+                                                    className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl border text-sm font-semibold transition-all ${
+                                                        isActive
+                                                            ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 text-emerald-700 dark:text-emerald-400'
+                                                            : 'bg-stone-50 dark:bg-[#334155] border-stone-200 dark:border-white/10 text-stone-600 dark:text-stone-400 hover:border-emerald-400'
+                                                    }`}
+                                                >
+                                                    <span className="text-xl">{flag}</span>
+                                                    <span>{label}</span>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
                                 </div>
                             </motion.div>
                         )}

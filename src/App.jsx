@@ -200,6 +200,16 @@ function StaffOpsRedirect() {
     return <BurgerLoader />; // Show loader while redirecting
 }
 
+// Bridges businesses.language from TenantContext into LanguageContext — zero extra Supabase queries
+function AppLanguageBridge() {
+    const { tenantData } = useTenant();
+    const { setLanguage } = useLanguage();
+    useEffect(() => {
+        if (tenantData?.language) setLanguage(tenantData.language);
+    }, [tenantData?.language]);
+    return null;
+}
+
 function App() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -628,6 +638,7 @@ function App() {
         <AdminIntentProvider>
             <StaffProvider>
                 <LanguageProvider>
+                    <AppLanguageBridge />
                     <ThemeProvider>
                         <StrategyDraftProvider>
                         <CartProvider>
