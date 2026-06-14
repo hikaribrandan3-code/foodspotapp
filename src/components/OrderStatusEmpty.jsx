@@ -375,7 +375,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                         <h3 className="ose-section-title">{recommendedText}</h3>
                         <button
                             className="ose-see-more"
-                            style={{ backgroundColor: primaryColor }}
+                            style={{ backgroundColor: '#2563EB' }}
                             onClick={() => navigate(`/${tenantSlug}/menu`)}
                         >
                             {seeMoreText}
