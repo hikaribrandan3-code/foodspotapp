@@ -127,10 +127,10 @@ export default function FinancialTrackerDashboard() {
           .from('orders')
           .select('total, status, created_at')
           .eq('business_id', businessId)
-          .in('status', [ORDER_STATUS.DELIVERED, ORDER_STATUS.READY, ORDER_STATUS.DISPATCHED, ORDER_STATUS.RELEASED_TO_KITCHEN, ORDER_STATUS.PREPARING, ORDER_STATUS.PAID_UNRELEASED]),
+          .not('status', 'in', '(pending,pending_payment,cancelled,refunded)'),
         supabase
           .from('menu_items')
-          .select('id, active')
+          .select('id, available')
           .eq('business_id', businessId),
       ]);
       if (cancelled) return;
@@ -159,7 +159,7 @@ export default function FinancialTrackerDashboard() {
   const totalRevenue = useMemo(() => filteredOrders.reduce((s, o) => s + (o.total || 0), 0), [filteredOrders]);
   const totalExpenses = useMemo(() => filteredExpenses.reduce((s, e) => s + (e.amount || 0), 0), [filteredExpenses]);
   const netProfit = totalRevenue - totalExpenses;
-  const activeProducts = menuItems.filter((m) => m.active !== false).length;
+  const activeProducts = menuItems.filter((m) => m.available !== false).length;
 
   // Charts data
   const pieData = useMemo(() => {

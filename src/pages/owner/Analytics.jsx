@@ -137,9 +137,11 @@ const Analytics = () => {
 
     // COMPUTED STATS
     const stats = useMemo(() => {
-        const completed = orders.filter(o =>
-            [ORDER_STATUS.DELIVERED, ORDER_STATUS.DISPATCHED].includes(o.status)
-        )
+        // Count revenue for all paid/active statuses — not just terminal ones.
+        // MP webhook sets orders to released_to_kitchen on approval; they may never
+        // reach 'delivered' in normal flow so counting only terminal states = $0 revenue.
+        const EXCLUDED = ['pending', 'pending_payment', 'cancelled', 'refunded']
+        const completed = orders.filter(o => !EXCLUDED.includes(o.status))
         const delivered = orders.filter(o => o.status === ORDER_STATUS.DELIVERED)
         const totalRevenue = completed.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
         const deliveryCount = completed.filter(o => o.order_type === 'delivery').length
