@@ -249,7 +249,7 @@ export default function MenuTab({
 
   // Auto-scroll container to keep drag target visible
   useEffect(() => {
-    if (!dragTargetIndex !== null || !categoryScrollContainerRef.current || !isDragging.current) return;
+    if (dragTargetIndex === null || !categoryScrollContainerRef.current || !isDragging.current) return;
 
     const container = categoryScrollContainerRef.current;
     const targetPill = container.querySelectorAll('button')[dragTargetIndex + 1]; // +1 for "All Categories" button
