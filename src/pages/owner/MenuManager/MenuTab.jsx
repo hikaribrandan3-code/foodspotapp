@@ -47,6 +47,7 @@ export default function MenuTab({
   const dragStartX = useRef(null);
   const isDragging = useRef(false);
   const actionModalRef = useRef(null);
+  const categoryScrollContainerRef = useRef(null);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -113,6 +114,22 @@ export default function MenuTab({
     if ((delta < -40 || delta > 40) && extraHoldTimerRef.current) {
       clearTimeout(extraHoldTimerRef.current);
       extraHoldTimerRef.current = null;
+    }
+
+    // Auto-scroll container when dragging near edges
+    if (categoryScrollContainerRef.current) {
+      const container = categoryScrollContainerRef.current;
+      const containerRect = container.getBoundingClientRect();
+      const rightEdge = containerRect.right - 100; // 100px from right edge
+      const leftEdge = containerRect.left + 100;   // 100px from left edge
+
+      if (clientX > rightEdge) {
+        // Scroll right
+        container.scrollLeft += 10;
+      } else if (clientX < leftEdge) {
+        // Scroll left
+        container.scrollLeft -= 10;
+      }
     }
 
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
@@ -287,7 +304,15 @@ export default function MenuTab({
       </div>
 
       {/* Category Filter Pills */}
-      <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
+      <div
+        ref={categoryScrollContainerRef}
+        className="flex gap-3 mb-8 overflow-x-auto pb-2"
+        style={{
+          scrollBehavior: 'smooth',
+          WebkitOverflowScrolling: 'touch',
+          scrollSnapType: 'x proximity'
+        }}
+      >
         <button
           onClick={() => { setActionCategoryId(null); onSelectCategory(''); }}
           className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
@@ -327,6 +352,8 @@ export default function MenuTab({
                 border: isSwapTarget ? '2px dashed #10b981' : undefined,
                 opacity: isSwapTarget ? 0.6 : 1,
                 position: 'relative',
+                scrollSnapAlign: 'start',
+                flexShrink: 0,
               }}
               className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap select-none ${
                 activeCategory === cat.id
