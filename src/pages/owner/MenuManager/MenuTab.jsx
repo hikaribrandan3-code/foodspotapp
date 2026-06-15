@@ -153,8 +153,15 @@ export default function MenuTab({
 
     if (isDragging.current && dragPillId && dragTargetIndex !== null) {
       const currentIndex = categories.findIndex(c => c.id === dragPillId);
+
+      // Move to target position (may require multiple swaps)
       const direction = dragTargetIndex < currentIndex ? 'left' : 'right';
-      onMoveCategory(dragPillId, direction);
+      const swapsNeeded = Math.abs(dragTargetIndex - currentIndex);
+
+      for (let i = 0; i < swapsNeeded; i++) {
+        onMoveCategory(dragPillId, direction);
+      }
+
       if (navigator.vibrate) navigator.vibrate(20);
     }
 
