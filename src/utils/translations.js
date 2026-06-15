@@ -1169,6 +1169,26 @@ export const translations = {
     download_qr:        { en: 'Download QR (PNG)',      es: 'Descargar QR (PNG)',     pt: 'Baixar QR (PNG)' },
     qr_section_note:    { en: 'Print this QR and place it on tables, delivery bags, and your store entrance.', es: 'Imprimí este QR y pegalo en mesas, bolsas de delivery y la puerta de tu local.', pt: 'Imprima este QR e coloque nas mesas, sacolas de entrega e na entrada do seu estabelecimento.' },
 
+    // ── Loyalty Rewards ────────────────────────────────────────────────────────
+    loyaltySection:        { en: 'Loyalty Rewards',                        es: 'Recompensas',                          pt: 'Recompensas' },
+    loyaltyEnabled:        { en: 'Enable Rewards Program',                 es: 'Activar Programa de Puntos',           pt: 'Ativar Programa de Pontos' },
+    loyaltyEnabledHint:    { en: 'Customers earn points on qualifying orders', es: 'Los clientes ganan puntos en pedidos calificados', pt: 'Clientes ganham pontos em pedidos qualificados' },
+    loyaltyMinOrder:       { en: 'Min. Order to Earn (ARS)',               es: 'Pedido Mínimo para Ganar (ARS)',       pt: 'Pedido Mínimo para Ganhar (ARS)' },
+    loyaltyMinOrderHint:   { en: 'Orders above this amount earn points',   es: 'Pedidos por encima de este monto ganan puntos', pt: 'Pedidos acima deste valor ganham pontos' },
+    loyaltyPointsEarn:     { en: 'Points per order',                       es: 'Puntos por pedido',                   pt: 'Pontos por pedido' },
+    loyaltyPointsRedeem:   { en: 'Points to redeem',                       es: 'Puntos para canjear',                 pt: 'Pontos para resgatar' },
+    loyaltyPointsHint:     { en: 'Points needed for 1 free item',          es: 'Puntos necesarios para 1 item gratis', pt: 'Pontos necessários para 1 item grátis' },
+    loyaltyFreeItems:      { en: 'Free Item Options (up to 3)',             es: 'Opciones de Item Gratis (hasta 3)',   pt: 'Opções de Item Grátis (até 3)' },
+    loyaltySelectItem:     { en: '— Select free item —',                   es: '— Seleccionar item gratis —',         pt: '— Selecionar item grátis —' },
+    loyaltyFreeItemsHint:  { en: 'Customer picks 1 when redeeming',        es: 'El cliente elige 1 al canjear',       pt: 'Cliente escolhe 1 ao resgatar' },
+    saveLoyalty:           { en: 'Save Loyalty',                           es: 'Guardar Recompensas',                 pt: 'Salvar Recompensas' },
+    loyaltyYourPoints:     { en: 'Your Points',                            es: 'Tus Puntos',                          pt: 'Seus Pontos' },
+    loyaltyReadyToRedeem:  { en: '🎁 Ready to redeem! Use at checkout.',   es: '🎁 ¡Listo para canjear! Usá al pagar.', pt: '🎁 Pronto para resgatar! Use no checkout.' },
+    loyaltyPointsAway:     { en: 'pts to a free item',                     es: 'pts para un item gratis',             pt: 'pts para um item grátis' },
+    loyaltyRedeemBanner:   { en: 'You have points!',                       es: '¡Tenés puntos!',                      pt: 'Você tem pontos!' },
+    loyaltyRedeemHint:     { en: 'Use pts for a free item',                es: 'Usá pts para un item gratis',         pt: 'Use pts para um item grátis' },
+    loyaltyFreeItemSelected: { en: 'Free:',                                es: 'Gratis:',                             pt: 'Grátis:' },
+
     // ── Owner Branding / Settings ──────────────────────────────────────────────
     add_emoji_name_note:{ en: 'Add an emoji to the name — it appears in your customers\' camera', es: 'Agregá un emoji al nombre — aparece en la cámara de tus clientes', pt: 'Adicione um emoji ao nome — ele aparece na câmera dos seus clientes' },
     theme_color_note:   { en: 'These colors appear in payment buttons, confirmations, and receipts', es: 'Estos colores aparecen en botones de pago, confirmaciones y recibos', pt: 'Estas cores aparecem nos botões de pagamento, confirmações e recibos' },
