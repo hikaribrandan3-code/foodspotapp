@@ -590,13 +590,7 @@ export default function Dashboard() {
         return
       }
 
-      if (data && !data.success) {
-        console.warn('FSM Rejection:', data.error, data.message)
-        setDisplayOrders(prevOrders)
-        alert(data.message || 'Transition not allowed')
-        setProcessingOrderId(null)
-        return
-      }
+      // RPC returns the new status (TEXT) on success — no error = success
 
       refreshOrders()
     } catch (err) {
