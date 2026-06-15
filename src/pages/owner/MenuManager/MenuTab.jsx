@@ -131,7 +131,7 @@ export default function MenuTab({
     }
 
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
-    const notchSize = 40; // px per notch/position (drag distance threshold)
+    const notchSize = 40; // px per notch/position
     const notchesFromStart = Math.round(delta / notchSize);
 
     // Only update target if notch position changed (snap-to-notch)
@@ -144,12 +144,8 @@ export default function MenuTab({
 
       setDragTargetIndex(newTargetIndex);
 
-      // Measure actual pill width and sync visual offset
-      const draggedButton = categoryScrollContainerRef.current?.querySelector(
-        `button:nth-child(${currentIndex + 2})` // +2 for "All Categories" button
-      );
-      const pillWidth = draggedButton?.offsetWidth || 110; // Fallback to 110px
-      const visualOffset = (newTargetIndex - currentIndex) * (pillWidth + 12); // +12 for gap
+      // Sync dragOffsetX to visual notch position (pill moves TO target, not continuously)
+      const visualOffset = (newTargetIndex - currentIndex) * notchSize;
       setDragOffsetX(visualOffset);
     }
   };
