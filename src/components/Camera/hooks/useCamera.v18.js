@@ -581,6 +581,35 @@ export function useCamera() {
     }, [flashMode])
 
     // ═══════════════════════════════════════════════════════════════════
+    // TAP-TO-FOCUS (best-effort hardware AF/AE at a normalized point)
+    // The yellow iOS-style reticle is drawn by the UI regardless; this just
+    // nudges the sensor where supported (Chrome/Android; Safari often no-ops).
+    // ═══════════════════════════════════════════════════════════════════
+
+    const focusAt = useCallback(async function focusAt(nx, ny) {
+        const track = trackRef.current
+        if (!track || !track.getCapabilities) return
+        try {
+            const caps = track.getCapabilities()
+            const advanced = []
+            if (Array.isArray(caps.focusMode)) {
+                if (caps.focusMode.includes('single-shot')) advanced.push({ focusMode: 'single-shot' })
+                else if (caps.focusMode.includes('manual')) advanced.push({ focusMode: 'manual' })
+            }
+            if (caps.pointsOfInterest) {
+                advanced.push({ pointsOfInterest: [{ x: nx, y: ny }] })
+            }
+            if (Array.isArray(caps.exposureMode) && caps.exposureMode.includes('single-shot')) {
+                advanced.push({ exposureMode: 'single-shot' })
+            }
+            if (advanced.length) await track.applyConstraints({ advanced })
+        } catch (e) {
+            /* focus point not supported — UI reticle still shows */
+        }
+        if (navigator.vibrate) navigator.vibrate(8)
+    }, [])
+
+    // ═══════════════════════════════════════════════════════════════════
     // 4K SHUTTER
     // ═══════════════════════════════════════════════════════════════════
 
@@ -755,6 +784,7 @@ export function useCamera() {
         setZoom: setZoom,
         updateHardwareZoom: updateHardwareZoom,
         zoomRange: zoomRangeRef.current,
+        focusAt: focusAt,
         captureHighResFrame: captureHighResFrame,
         startBurstCapture: startBurstCapture,
         statusMessage: statusMessage,
