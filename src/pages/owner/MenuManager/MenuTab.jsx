@@ -117,8 +117,22 @@ export default function MenuTab({
       extraHoldTimerRef.current = null;
     }
 
+    // Smart edge scrolling: if finger near screen edge, auto-scroll container
+    if (categoryScrollContainerRef.current) {
+      const edgeThreshold = 40; // px from screen edge
+      const windowWidth = window.innerWidth;
+
+      if (clientX < edgeThreshold) {
+        // Finger near left edge — scroll left
+        categoryScrollContainerRef.current.scrollLeft -= 20;
+      } else if (clientX > windowWidth - edgeThreshold) {
+        // Finger near right edge — scroll right
+        categoryScrollContainerRef.current.scrollLeft += 20;
+      }
+    }
+
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
-    const notchSize = 60; // px per notch/position
+    const notchSize = 40; // px per notch/position (reduced from 60)
     const notchesFromStart = Math.round(delta / notchSize);
 
     // Only update target if notch position changed (snap-to-notch)
