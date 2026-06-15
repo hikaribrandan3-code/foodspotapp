@@ -118,21 +118,16 @@ export default function MenuTab({
     }
 
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
-    const pillWidth = 110; // Approximate pill width (px)
-    const swapsAllowed = Math.floor(Math.abs(delta) / pillWidth);
+    const notchSize = 60; // px per notch/position
+    const notchesFromStart = Math.round(delta / notchSize);
 
-    // Only update target if swapsAllowed changed (reduces jitter)
-    if (swapsAllowed !== lastSwapsAllowed.current) {
-      lastSwapsAllowed.current = swapsAllowed;
+    // Only update target if notch position changed (snap-to-notch)
+    if (notchesFromStart !== lastSwapsAllowed.current) {
+      lastSwapsAllowed.current = notchesFromStart;
 
-      let newTargetIndex = null;
-      if (delta < -40 && currentIndex > 0) {
-        // Dragging left — can swap multiple positions left
-        newTargetIndex = Math.max(0, currentIndex - swapsAllowed);
-      } else if (delta > 40 && currentIndex < categories.length - 1) {
-        // Dragging right — can swap multiple positions right
-        newTargetIndex = Math.min(categories.length - 1, currentIndex + swapsAllowed);
-      }
+      let newTargetIndex = currentIndex + notchesFromStart;
+      // Clamp to valid bounds
+      newTargetIndex = Math.max(0, Math.min(categories.length - 1, newTargetIndex));
 
       setDragTargetIndex(newTargetIndex);
     }
