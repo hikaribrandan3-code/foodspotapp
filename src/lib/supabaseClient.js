@@ -436,6 +436,39 @@ export async function updateBranding(updates, businessId) {
 }
 
 /**
+ * Get delivery settings for a tenant from the delivery_settings table.
+ * @param {string} businessId
+ */
+export async function getDeliverySettings(businessId) {
+    if (!businessId) return { data: null, error: new Error('Missing business ID') }
+    const { data, error } = await supabase
+        .from('delivery_settings')
+        .select('*')
+        .eq('business_id', businessId)
+        .maybeSingle()
+    return { data, error }
+}
+
+/**
+ * Upsert delivery settings for a tenant.
+ * All monetary values must be in integer cents (ARS minor units).
+ * @param {{ radius_km: number, fee_cents: number, free_threshold_cents: number, is_paused: boolean }} settings
+ * @param {string} businessId
+ */
+export async function upsertDeliverySettings(settings, businessId) {
+    if (!businessId) return { data: null, error: new Error('Missing business ID') }
+    const { data, error } = await supabase
+        .from('delivery_settings')
+        .upsert(
+            { ...settings, business_id: businessId, updated_at: new Date().toISOString() },
+            { onConflict: 'business_id' }
+        )
+        .select()
+        .maybeSingle()
+    return { data, error }
+}
+
+/**
  * Get current authenticated user
  * @returns {Promise<{user: object|null, error: Error|null}>}
  */

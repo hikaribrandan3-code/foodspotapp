@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
-import { supabase, updateBranding } from '../../../lib/supabaseClient';
-import { deepMergeAppConfig } from '../../../utils/appConfig';
+import { supabase, updateBranding, upsertDeliverySettings } from '../../../lib/supabaseClient';
 import BackendNav from '../../../components/BackendNav';
 import PortalHeader from './PortalHeader';
 import MenuTab from './MenuTab';
@@ -93,25 +92,18 @@ export default function MenuManager() {
   };
 
   const loadDeliverySettings = () => {
-    // FLAT COLUMNS FIRST (canonical source of truth per DB Bible v2.2)
-    const flatRadius = tenantData?.delivery_radius ?? tenantData?.delivery_radius_km ?? null;
-    const flatFee = tenantData?.delivery_fee ?? null;
-    const flatThreshold = tenantData?.free_delivery_threshold ?? null;
-    const flatPaused = tenantData?.is_paused ?? tenantData?.pause_orders ?? null;
-    const flatLat = tenantData?.store_lat ?? null;
-    const flatLon = tenantData?.store_lon ?? null;
-    // FALLBACK: legacy JSONB nested delivery object (migration safety)
-    const appConfig = tenantData?.app_config || {};
-    const delivery = appConfig.delivery || {};
-
-    setDeliveryRadius(flatRadius !== null ? Number(flatRadius) : (delivery.radius || 5));
-    setDeliveryFee(String(flatFee !== null ? flatFee : (delivery.fee || '2.99')));
-    setFreeDeliveryThreshold(String(flatThreshold !== null ? flatThreshold : (delivery.free_threshold || '35.00')));
-    setIsDeliveryFeeEnabled(delivery.fee_enabled !== false);
-    setIsFreeDeliveryEnabled(delivery.free_enabled !== false);
-    setIsDeliveryPaused(flatPaused !== null ? Boolean(flatPaused) : (delivery.paused || false));
-
-
+    // Read from delivery_settings_raw (new table) via TenantContext
+    const ds = tenantData?.delivery_settings_raw;
+    if (ds) {
+      setDeliveryRadius(ds.radius_km ?? 5);
+      // fee_cents and free_threshold_cents are ARS minor units — divide by 100 for input display
+      setDeliveryFee(String(Math.round((ds.fee_cents ?? 0) / 100)));
+      setFreeDeliveryThreshold(String(Math.round((ds.free_threshold_cents ?? 0) / 100)));
+      setIsDeliveryFeeEnabled((ds.fee_cents ?? 0) > 0);
+      setIsFreeDeliveryEnabled((ds.free_threshold_cents ?? 0) > 0);
+      setIsDeliveryPaused(ds.is_paused ?? false);
+    }
+    // If no delivery_settings row yet, leave UI at defaults (5km, 0 fee)
   };
 
   // Debounced save for item field changes
@@ -326,32 +318,24 @@ export default function MenuManager() {
     }
   };
 
-  // Save delivery settings to flat branding columns (canonical per DB Bible v2.2)
+  // Save delivery settings to delivery_settings table (integer cents per DB bible)
   const saveDeliverySettings = useCallback(async () => {
     if (!businessId) return;
 
-    const payload = {
-      delivery_radius: Number(deliveryRadius) || 5,
-      delivery_fee: deliveryFee === '' ? 0 : Number(deliveryFee),
-      free_delivery_threshold: freeDeliveryThreshold === '' ? 0 : Number(freeDeliveryThreshold),
+    // User inputs ARS amounts (e.g. "4000") → multiply by 100 for cents storage
+    const feeCents = isDeliveryFeeEnabled ? Math.round(parseFloat(deliveryFee || 0) * 100) : 0;
+    const thresholdCents = isFreeDeliveryEnabled ? Math.round(parseFloat(freeDeliveryThreshold || 0) * 100) : 0;
+
+    const settings = {
+      radius_km: Number(deliveryRadius) || 5,
+      fee_cents: feeCents,
+      free_threshold_cents: thresholdCents,
       is_paused: Boolean(isDeliveryPaused),
-      pause_orders: Boolean(isDeliveryPaused),
-      // Backward-compat: also keep JSONB in sync during migration
-      app_config: deepMergeAppConfig(tenantData?.app_config || {}, {
-        delivery: {
-          radius: Number(deliveryRadius) || 5,
-          fee: deliveryFee === '' ? 0 : Number(deliveryFee),
-          free_threshold: freeDeliveryThreshold === '' ? 0 : Number(freeDeliveryThreshold),
-          fee_enabled: isDeliveryFeeEnabled,
-          free_enabled: isFreeDeliveryEnabled,
-          paused: Boolean(isDeliveryPaused)
-        }
-      })
     };
 
     setSaveStatus({ error: false, message: t('saving') || 'Saving...' });
     try {
-      const { data, error } = await updateBranding(payload, businessId);
+      const { error } = await upsertDeliverySettings(settings, businessId);
       if (error) throw error;
       setSaveStatus({ error: false, message: t('saved') || 'Saved' });
       setTimeout(() => setSaveStatus(null), 2000);
@@ -366,7 +350,7 @@ export default function MenuManager() {
       });
     }
   }, [
-    businessId, tenantData, deliveryRadius, deliveryFee, freeDeliveryThreshold,
+    businessId, deliveryRadius, deliveryFee, freeDeliveryThreshold,
     isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused, t
   ]);
 

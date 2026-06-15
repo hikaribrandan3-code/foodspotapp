@@ -131,24 +131,31 @@ export function TenantProvider({ children }) {
                 throw new Error(`No branding data found for '${slug}'`);
             }
 
-            // 🔗 FETCH LANGUAGE: Get language from businesses table
-            let language = 'en'; // default
+            // 🔗 FETCH LANGUAGE + DELIVERY SETTINGS in parallel
+            let language = 'en';
+            let deliverySettings = null;
             try {
-                const { data: businessData } = await supabase
-                    .from('businesses')
-                    .select('language')
-                    .eq('id', brandingData.business_id)
-                    .maybeSingle();
-
-                if (businessData?.language) {
-                    language = businessData.language;
-                }
+                const [businessResult, deliveryResult] = await Promise.all([
+                    supabase.from('businesses').select('language').eq('id', brandingData.business_id).maybeSingle(),
+                    supabase.from('delivery_settings').select('*').eq('business_id', brandingData.business_id).maybeSingle(),
+                ]);
+                if (businessResult.data?.language) language = businessResult.data.language;
+                if (!deliveryResult.error) deliverySettings = deliveryResult.data;
             } catch (err) {
-                console.warn('[TenantLock] Could not fetch language:', err?.message);
+                console.warn('[TenantLock] Could not fetch language/delivery:', err?.message);
             }
 
             if (mounted) {
-                const configData = { ...brandingData, language };
+                const configData = {
+                    ...brandingData,
+                    language,
+                    // Overlay delivery_settings table values as flat keys (backward-compat with Order.jsx)
+                    delivery_fee: deliverySettings?.fee_cents ?? brandingData.delivery_fee ?? 0,
+                    delivery_radius: deliverySettings?.radius_km ?? brandingData.delivery_radius ?? 5,
+                    free_delivery_threshold: deliverySettings?.free_threshold_cents ?? brandingData.free_delivery_threshold ?? 0,
+                    is_delivery_paused: deliverySettings?.is_paused ?? false,
+                    delivery_settings_raw: deliverySettings,
+                };
                 setTenantData(configData)
                 setBusinessId(configData.business_id)
                 setTenantStoragePrefix(configData.business_id)
@@ -171,6 +178,7 @@ export function TenantProvider({ children }) {
         // 📡 REAL-TIME LANGUAGE SYNC: Listen for language changes (now in businesses table)
         let businessesChannel = null;
         let brandingChannel = null;
+        let deliveryChannel = null;
 
         try {
             businessesChannel = supabase
@@ -264,6 +272,31 @@ export function TenantProvider({ children }) {
             console.warn('[TenantLock] ⚠️ Branding realtime unavailable:', err?.message);
         }
 
+        // 📡 REAL-TIME DELIVERY SETTINGS SYNC
+        try {
+            deliveryChannel = supabase
+                .channel('delivery-settings-sync')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'delivery_settings',
+                    filter: businessId ? `business_id=eq.${businessId}` : undefined,
+                }, (payload) => {
+                    const d = payload.new;
+                    setTenantData(prev => ({
+                        ...prev,
+                        delivery_fee: d.fee_cents ?? prev.delivery_fee,
+                        delivery_radius: d.radius_km ?? prev.delivery_radius,
+                        free_delivery_threshold: d.free_threshold_cents ?? prev.free_delivery_threshold,
+                        is_delivery_paused: d.is_paused ?? prev.is_delivery_paused,
+                        delivery_settings_raw: d,
+                    }));
+                })
+                .subscribe();
+        } catch (err) {
+            console.warn('[TenantLock] ⚠️ Delivery settings realtime unavailable:', err?.message);
+        }
+
         // 📡 FRONTEND SYNC EVENT LISTENER: Catch Settings saves instantly (no real-time delay)
         // This ensures cameraPinStyle and other app_config changes update tenantData immediately
         const handleFrontendSync = (e) => {
@@ -295,6 +328,7 @@ export function TenantProvider({ children }) {
             window.removeEventListener('frontendSync', handleFrontendSync);
             if (businessesChannel) supabase.removeChannel(businessesChannel);
             if (brandingChannel) supabase.removeChannel(brandingChannel);
+            if (deliveryChannel) supabase.removeChannel(deliveryChannel);
         }
     }, [forceRefresh, businessId])
 
@@ -315,23 +349,28 @@ export function TenantProvider({ children }) {
             }
 
             if (brandingData) {
-                // 🔗 FETCH LANGUAGE: Get latest language from businesses table
                 let language = tenantData?.language || 'en';
+                let deliverySettings = null;
                 try {
-                    const { data: businessData } = await supabase
-                        .from('businesses')
-                        .select('language')
-                        .eq('id', businessId)
-                        .maybeSingle();
-
-                    if (businessData?.language) {
-                        language = businessData.language;
-                    }
+                    const [businessResult, deliveryResult] = await Promise.all([
+                        supabase.from('businesses').select('language').eq('id', businessId).maybeSingle(),
+                        supabase.from('delivery_settings').select('*').eq('business_id', businessId).maybeSingle(),
+                    ]);
+                    if (businessResult.data?.language) language = businessResult.data.language;
+                    if (!deliveryResult.error) deliverySettings = deliveryResult.data;
                 } catch (err) {
-                    console.warn('[TenantLock] Could not fetch language on refresh:', err?.message);
+                    console.warn('[TenantLock] Could not fetch language/delivery on refresh:', err?.message);
                 }
 
-                const configData = { ...brandingData, language };
+                const configData = {
+                    ...brandingData,
+                    language,
+                    delivery_fee: deliverySettings?.fee_cents ?? brandingData.delivery_fee ?? 0,
+                    delivery_radius: deliverySettings?.radius_km ?? brandingData.delivery_radius ?? 5,
+                    free_delivery_threshold: deliverySettings?.free_threshold_cents ?? brandingData.free_delivery_threshold ?? 0,
+                    is_delivery_paused: deliverySettings?.is_paused ?? false,
+                    delivery_settings_raw: deliverySettings,
+                };
                 setTenantData(configData)
                 localStorage.setItem('fs_business_id', configData.business_id)
             }

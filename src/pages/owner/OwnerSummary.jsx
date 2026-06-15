@@ -1199,7 +1199,7 @@ function OwnerSummary() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
                     <SectionHeader
                         icon={<Gift size={14} />}
-                        title={t('loyalty_section') || 'Loyalty Rewards'}
+                        title={t('loyaltySection') || 'Loyalty Rewards'}
                         isOpen={openSections.loyalty}
                         onToggle={() => toggleSection('loyalty')}
                     />
@@ -1215,8 +1215,8 @@ function OwnerSummary() {
                                     {/* ON/OFF Toggle */}
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-sm font-bold text-stone-950 dark:text-white">{t('loyalty_enabled') || 'Enable Rewards Program'}</p>
-                                            <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t('loyalty_enabled_hint') || 'Customers earn points on qualifying orders'}</p>
+                                            <p className="text-sm font-bold text-stone-950 dark:text-white">{t('loyaltyEnabled') || 'Enable Rewards Program'}</p>
+                                            <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t('loyaltyEnabledHint') || 'Customers earn points on qualifying orders'}</p>
                                         </div>
                                         <button
                                             onClick={() => setLoyaltyEnabled(v => !v)}
@@ -1230,7 +1230,7 @@ function OwnerSummary() {
                                         <div className="space-y-4 pt-1 border-t border-stone-100 dark:border-white/5">
                                             {/* Min order */}
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyalty_min_order') || 'Min. Order to Earn (ARS)'}</label>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyaltyMinOrder') || 'Min. Order to Earn (ARS)'}</label>
                                                 <input
                                                     type="number"
                                                     value={loyaltyMinOrder}
@@ -1238,13 +1238,13 @@ function OwnerSummary() {
                                                     className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
                                                     placeholder="8000"
                                                 />
-                                                <p className="text-xs text-stone-400 mt-1">{t('loyalty_min_order_hint') || 'Orders above this amount earn points'}</p>
+                                                <p className="text-xs text-stone-400 mt-1">{t('loyaltyMinOrderHint') || 'Orders above this amount earn points'}</p>
                                             </div>
 
                                             {/* Points per order */}
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyalty_points_earn') || 'Points per order'}</label>
+                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyaltyPointsEarn') || 'Points per order'}</label>
                                                     <input
                                                         type="number"
                                                         value={loyaltyPointsPerOrder}
@@ -1254,7 +1254,7 @@ function OwnerSummary() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyalty_points_redeem') || 'Points to redeem'}</label>
+                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyaltyPointsRedeem') || 'Points to redeem'}</label>
                                                     <input
                                                         type="number"
                                                         value={loyaltyPointsToRedeem}
@@ -1265,12 +1265,12 @@ function OwnerSummary() {
                                                 </div>
                                             </div>
                                             <p className="text-xs text-stone-400 -mt-2">
-                                                {t('loyalty_points_hint') || `Customers redeem ${loyaltyPointsToRedeem} pts for 1 free item`}
+                                                {t('loyaltyPointsHint') || `Customers redeem ${loyaltyPointsToRedeem} pts for 1 free item`}
                                             </p>
 
                                             {/* Free Item Pickers */}
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('loyalty_free_items') || 'Free Item Options (pick up to 3)'}</label>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('loyaltyFreeItems') || 'Free Item Options (pick up to 3)'}</label>
                                                 <div className="space-y-2">
                                                     {[0, 1, 2].map(i => (
                                                         <select
@@ -1283,14 +1283,14 @@ function OwnerSummary() {
                                                             }}
                                                             className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all appearance-none cursor-pointer"
                                                         >
-                                                            <option value="">{t('loyalty_select_item') || `— Free item ${i + 1} —`}</option>
+                                                            <option value="">{t('loyaltySelectItem') || `— Free item ${i + 1} —`}</option>
                                                             {loyaltyMenuItems.map(item => (
                                                                 <option key={item.id} value={item.id}>{item.name}</option>
                                                             ))}
                                                         </select>
                                                     ))}
                                                 </div>
-                                                <p className="text-xs text-stone-400 mt-1.5">{t('loyalty_free_items_hint') || 'Customer picks 1 of these when redeeming'}</p>
+                                                <p className="text-xs text-stone-400 mt-1.5">{t('loyaltyFreeItemsHint') || 'Customer picks 1 of these when redeeming'}</p>
                                             </div>
                                         </div>
                                     )}
@@ -1300,9 +1300,9 @@ function OwnerSummary() {
                                         whileTap={{ scale: 0.97 }}
                                         onClick={saveLoyalty}
                                         disabled={loyaltySaving}
-                                        className="w-full py-2.5 rounded-xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                                        className="w-full py-2.5 rounded-3xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2 disabled:opacity-60"
                                     >
-                                        {loyaltySaved ? <><Check size={14} /> {t('saved') || 'Saved'}</> : loyaltySaving ? (t('saving') || 'Saving...') : <><Gift size={14} /> {t('save_loyalty') || 'Save Rewards'}</>}
+                                        {loyaltySaved ? <><Check size={14} /> {t('saved') || 'Saved'}</> : loyaltySaving ? (t('saving') || 'Saving...') : <><Gift size={14} /> {t('saveLoyalty') || 'Save Loyalty'}</>}
                                     </motion.button>
                                 </div>
                             </motion.div>
