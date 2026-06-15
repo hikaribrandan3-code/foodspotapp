@@ -109,7 +109,6 @@ export default function MenuTab({
     e.preventDefault();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const delta = clientX - dragStartX.current;
-    setDragOffsetX(delta);
 
     // If user is actively dragging (>40px movement), cancel the edit/delete modal timer
     if ((delta < -40 || delta > 40) && extraHoldTimerRef.current) {
@@ -132,7 +131,7 @@ export default function MenuTab({
     }
 
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
-    const notchSize = 40; // px per notch/position (reduced from 60)
+    const notchSize = 40; // px per notch/position
     const notchesFromStart = Math.round(delta / notchSize);
 
     // Only update target if notch position changed (snap-to-notch)
@@ -144,6 +143,10 @@ export default function MenuTab({
       newTargetIndex = Math.max(0, Math.min(categories.length - 1, newTargetIndex));
 
       setDragTargetIndex(newTargetIndex);
+
+      // Sync dragOffsetX to visual notch position (pill moves TO target, not continuously)
+      const visualOffset = (newTargetIndex - currentIndex) * notchSize;
+      setDragOffsetX(visualOffset);
     }
   };
 
