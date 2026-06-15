@@ -114,23 +114,21 @@ function Camera({ neonContext = null, branding = null }) {
             zIndex: 1000,
             pointerEvents: 'auto'
         }}>
-            {/* Camera version badge (owners only) */}
+            {/* Owner indicator dot (owners only, top-right to avoid exit button) */}
             {isOwner && (
                 <div style={{
                     position: 'fixed',
-                    top: 12,
-                    left: 12,
+                    top: 24,
+                    right: 24,
+                    width: 12,
+                    height: 12,
                     background: '#10B981',
-                    color: '#fff',
-                    padding: '6px 12px',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    fontWeight: 600,
+                    borderRadius: '50%',
                     zIndex: 1001,
-                    textTransform: 'uppercase'
-                }}>
-                    Building Camera
-                </div>
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+                }}
+                title="Owner Mode"
+                />
             )}
 
             {mode === 'CAMERA' && (
