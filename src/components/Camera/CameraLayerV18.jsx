@@ -87,11 +87,8 @@ function snapZoom(z) {
   return best;
 }
 
-const dbg = (...args) => {
-  if (typeof localStorage !== 'undefined' && localStorage.getItem('fsc_debug') === '1') {
-    console.log('[FSC-CAM]', ...args);
-  }
-};
+// Always log capture diagnostics (no localStorage needed — just connect & check console)
+const dbg = (...args) => console.log('[FSC-CAMERA]', ...args);
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function CameraLayer({
