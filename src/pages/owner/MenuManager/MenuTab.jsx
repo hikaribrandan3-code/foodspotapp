@@ -133,13 +133,19 @@ export default function MenuTab({
     }
 
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
+    const pillWidth = 110; // Approximate pill width (px)
+    const swapsAllowed = Math.floor(Math.abs(delta) / pillWidth);
+
+    let newTargetIndex = null;
     if (delta < -40 && currentIndex > 0) {
-      setDragTargetIndex(currentIndex - 1);
+      // Dragging left — can swap multiple positions left
+      newTargetIndex = Math.max(0, currentIndex - swapsAllowed);
     } else if (delta > 40 && currentIndex < categories.length - 1) {
-      setDragTargetIndex(currentIndex + 1);
-    } else {
-      setDragTargetIndex(null);
+      // Dragging right — can swap multiple positions right
+      newTargetIndex = Math.min(categories.length - 1, currentIndex + swapsAllowed);
     }
+
+    setDragTargetIndex(newTargetIndex);
   };
 
   const handleDragEnd = () => {
