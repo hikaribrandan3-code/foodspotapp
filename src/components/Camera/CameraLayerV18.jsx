@@ -148,7 +148,8 @@ export default function CameraLayer({
   useEffect(() => { if (isReady) applyNicheMode(initialScene); }, [isReady]); // eslint-disable-line
   useEffect(() => {
     return () => {
-      if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+      // DO NOT revoke blob URLs here — EditorLayer manages them.
+      // Only kill timers + hardware.
       clearTimeout(filterToastTimer.current);
       clearTimeout(zoomTimer.current);
       clearTimeout(reticleTimer.current);
