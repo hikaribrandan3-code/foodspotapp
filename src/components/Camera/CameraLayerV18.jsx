@@ -1,222 +1,231 @@
 /**
  * FoodSpot Camera — CameraLayerV18.jsx
- * ----------------------------------------------------------------------
- * Owner "Building Camera" — real CamTech v1.8 engine (useCamera.v18.js:
- * NICHE_PHYSICS hardware zoom + thermal + kinetic stabilizer) under a clean
- * UI that matches the customer camera.
+ * Owner "Building Camera" — CamTech v1.8 engine.
  *
- * CAPTURE: we grab the frame from the live <video> element (the same proven
- * path the customer camera uses — reliable on iOS Safari) at the track's full
- * negotiated resolution. We deliberately DO NOT use ImageCapture.grabFrame():
- * on iOS it returns black / freezes the track, which was the camera→editor
- * black-screen bug. We draw clean (no canvas ctx.filter — Safari breaks it),
- * bake the scene+filter look in raw pixels (bakeCapture, same numbers as the
- * live previewCss), then hand EditorLayer { objectURL, blob, width, height }.
+ * CAPTURE path: draw from live <video> to canvas at full track resolution.
+ * NO ImageCapture.grabFrame() — it freezes/blacks on iOS Safari.
+ * NO ctx.filter — silently broken on iOS Safari; we bake pixels manually.
  *
- * Props: onCapture, onClose, locationLabel, pinBg, pinText, initialScene
+ * DEBUG mode: set localStorage.setItem('fsc_debug','1') in Safari console,
+ * then every capture logs a full trace to console (readyState, dimensions,
+ * center pixel RGBA, blob size). Disable: localStorage.removeItem('fsc_debug').
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import useCamera from './hooks/useCamera.v18.js';
 import {
   SCENE_ORDER,
-  SCENE_LABEL,
   CAPTURE_FILTERS,
   previewCss,
   bakeCapture,
 } from './utils/scenePresets.js';
 
 const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
-const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 }; // w/h, portrait
-const ZOOM_STOPS = [0.5, 1, 2, 5, 10];
+// w/h ratios (portrait frames)
+const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 };
+const ZOOM_STOPS   = [0.5, 1, 2, 5, 10];
 const STABILIZE_AT = 4;
-const TIMER_OPTS = [null, 3, 5, 7]; // off, 3s, 5s, 7s
+const TIMER_OPTS   = [null, 3, 5, 7];
 
-// flash icons drawn in the same stroke style as the flip icon
+// ── SVG assets ───────────────────────────────────────────────────────────────
 const FLASH_ICON = {
   off: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" opacity="0.5" />
-      <path d="M2 2l20 20" />
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" opacity="0.4"/>
+      <path d="M2 2l20 20"/>
     </svg>
   ),
   on: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
-      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
     </svg>
   ),
   auto: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
     </svg>
   ),
   torch: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
-      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
-      <circle cx="19" cy="4" r="2.5" fill="#FFD60A" stroke="none" />
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>
+      <circle cx="19" cy="4" r="2.5" fill="#FFD60A" stroke="none"/>
     </svg>
   ),
 };
 
-// timer icon
-const TIMER_ICON = (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="13" r="8" />
-    <path d="M12 9v4l3 2" />
-    <path d="M7 4h10" />
+const FLIP_ICON = (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/>
+    <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="m18 22-3-3 3-3"/><path d="m6 2 3 3-3 3"/>
   </svg>
 );
 
+const TIMER_ICON = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="13" r="8"/>
+    <path d="M12 9v4l3 2"/>
+    <path d="M7 4h10"/>
+  </svg>
+);
+
+const FILTER_ICON = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" opacity="0.3"/>
+  </svg>
+);
+
+// ── helpers ──────────────────────────────────────────────────────────────────
 function snapZoom(z) {
-  let best = z;
-  let bestD = Infinity;
+  let best = z, bestD = Infinity;
   for (const s of ZOOM_STOPS) {
     const d = Math.abs(z - s);
-    if (d < 0.18 && d < bestD) { bestD = d; best = s; }
+    if (d < 0.22 && d < bestD) { bestD = d; best = s; }
   }
   return best;
 }
 
+const dbg = (...args) => {
+  if (typeof localStorage !== 'undefined' && localStorage.getItem('fsc_debug') === '1') {
+    console.log('[FSC-CAM]', ...args);
+  }
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function CameraLayer({
   onCapture,
   onClose,
   locationLabel = 'FoodSpot',
-  pinBg = 'rgba(20,20,24,0.55)',
+  pinBg   = 'rgba(20,20,24,0.55)',
   pinText = '#ffffff',
   initialScene = 'FOOD',
 }) {
   const {
-    videoRef,
-    isReady,
-    error,
-    facingMode,
-    initCamera,
-    flipCamera,
-    terminateHardware,
-    flashMode,
-    flashSupported,
-    cycleFlash,
-    applyFlash,
-    zoomLevel,
-    setZoom,
-    zoomRange,
-    focusAt,
-    applyNicheMode,
-    nicheMode,
-    gimbalEnabled,
-    toggleGimbal,
-    calculateKineticOffset,
-    getKineticOffset,
+    videoRef, isReady, error,
+    facingMode, initCamera, flipCamera, terminateHardware,
+    flashMode, flashSupported, cycleFlash, applyFlash,
+    zoomLevel, setZoom, zoomRange,
+    focusAt, applyNicheMode, nicheMode,
+    gimbalEnabled, toggleGimbal,
     statusMessage,
   } = useCamera();
 
-  const [aspect, setAspect] = useState('9:16');
-  const [filterId, setFilterId] = useState('original');
-  const [filterToast, setFilterToast] = useState(null);
-  const [zoomActive, setZoomActive] = useState(false);
-  const [timerSec, setTimerSec] = useState(null); // active timer: null | 3 | 5 | 7
-  const [timerCountdown, setTimerCountdown] = useState(null); // display countdown
-  const [reticle, setReticle] = useState(null);
-  const [screenFlash, setScreenFlash] = useState(false);
-  const [shutterPulse, setShutterPulse] = useState(false);
+  const [aspect,        setAspect]        = useState('9:16');
+  const [filterId,      setFilterId]      = useState('original');
+  const [filterToast,   setFilterToast]   = useState(null);
+  const [zoomActive,    setZoomActive]    = useState(false);
+  const [timerSec,      setTimerSec]      = useState(null);
+  const [timerCd,       setTimerCd]       = useState(null);   // countdown display
+  const [timerToast,    setTimerToast]    = useState(false);  // brief flash when timer changes
+  const [reticle,       setReticle]       = useState(null);
+  const [screenFlash,   setScreenFlash]   = useState(false);
+  const [shutterPulse,  setShutterPulse]  = useState(false);
 
-  const frameRef = useRef(null);
-  const lastUrlRef = useRef(null);
-  const pinchStartRef = useRef(0);
-  const pinchZoomRef = useRef(1);
-  const tapRef = useRef({ t: 0, moved: false });
+  const frameRef         = useRef(null);
+  const lastUrlRef       = useRef(null);
+  const pinchStartRef    = useRef(0);
+  const pinchZoomRef     = useRef(1);
+  const tapRef           = useRef({ t: 0, moved: false });
   const filterToastTimer = useRef(null);
-  const zoomTimer = useRef(null);
-  const reticleTimer = useRef(null);
-  const timerIntervalRef = useRef(null);
-  const motionReqRef = useRef(false);
-  const zoomInitRef = useRef(false);
+  const zoomTimer        = useRef(null);
+  const reticleTimer     = useRef(null);
+  const timerInterval    = useRef(null);
+  const timerToastTimer  = useRef(null);
+  const motionReqRef     = useRef(false);
+  const zoomInitRef      = useRef(false);
 
-  // ---- lifecycle ----------------------------------------------------------
-  useEffect(() => {
-    initCamera();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facingMode]);
+  // Keep mutable refs for values used inside timer callbacks (avoids stale closures)
+  const flashModeRef    = useRef(flashMode);
+  const flashSuppRef    = useRef(flashSupported);
+  const facingModeRef   = useRef(facingMode);
+  const captureRef      = useRef(null); // set below; always current version
 
-  useEffect(() => {
-    if (isReady) applyNicheMode(initialScene);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady]);
+  useEffect(() => { flashModeRef.current  = flashMode;     }, [flashMode]);
+  useEffect(() => { flashSuppRef.current  = flashSupported;}, [flashSupported]);
+  useEffect(() => { facingModeRef.current = facingMode;    }, [facingMode]);
 
+  // ── lifecycle ──────────────────────────────────────────────────────────────
+  useEffect(() => { initCamera(); }, [facingMode]); // eslint-disable-line
+  useEffect(() => { if (isReady) applyNicheMode(initialScene); }, [isReady]); // eslint-disable-line
   useEffect(() => {
     return () => {
       if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
       clearTimeout(filterToastTimer.current);
       clearTimeout(zoomTimer.current);
       clearTimeout(reticleTimer.current);
-      clearInterval(timerIntervalRef.current);
+      clearTimeout(timerToastTimer.current);
+      clearInterval(timerInterval.current);
       terminateHardware();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line
 
-  // ---- flash: torch constant only in 'torch'; 'on' pulses at capture ------
+  // ── flash: apply torch continuously; 'on' is pulsed at capture ────────────
   useEffect(() => {
     if (!flashSupported) return;
     applyFlash(flashMode === 'torch' ? 'torch' : 'off');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flashMode, flashSupported]);
+  }, [flashMode, flashSupported]); // eslint-disable-line
 
-  // ---- zoom readout on EVERY zoom change -----------------------
+  // ── zoom readout ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (!zoomInitRef.current) { zoomInitRef.current = true; return; }
     setZoomActive(true);
     clearTimeout(zoomTimer.current);
-    zoomTimer.current = setTimeout(() => setZoomActive(false), 1100);
+    zoomTimer.current = setTimeout(() => setZoomActive(false), 900);
   }, [zoomLevel]);
 
-  // ---- auto-stabilizer at high zoom (best-effort) -------------------------
+  // ── auto-stabilizer: enable at 4× (best-effort software) ─────────────────
   useEffect(() => {
     const want = zoomLevel >= STABILIZE_AT;
-    if (want && !gimbalEnabled) toggleGimbal(true);
-    else if (!want && gimbalEnabled) toggleGimbal(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoomLevel]);
+    if (want && !gimbalEnabled)  toggleGimbal(true);
+    if (!want && gimbalEnabled)  toggleGimbal(false);
+  }, [zoomLevel]); // eslint-disable-line
 
-  // ---- gimbal RAF: DeviceMotion → kinetic offset → video transform --------
+  // ── software stabilizer: EMA on accelerometer → subtle video translate ────
   useEffect(() => {
-    const base = () => (facingMode === 'user' ? 'scaleX(-1)' : '');
+    const mirrorBase = facingMode === 'user' ? 'scaleX(-1)' : '';
     if (!gimbalEnabled) {
       const el = videoRef.current;
-      if (el) el.style.transform = base();
+      if (el) el.style.transform = mirrorBase || '';
       return;
     }
+
     let raf = 0;
-    let imu = { beta: 0, gamma: 0 };
+    let smX = 0, smY = 0;
+    const ALPHA = 0.08; // EMA weight — lower = heavier damping
+    const MAX_PX = 3;   // max translate pixels (keeps it subtle)
+
     const onMotion = (e) => {
-      const r = e.rotationRate || {};
-      imu = { beta: r.beta || 0, gamma: r.gamma || 0 };
+      const a = e.accelerationIncludingGravity || e.acceleration || {};
+      smX = ALPHA * (a.x || 0) + (1 - ALPHA) * smX;
+      smY = ALPHA * (a.y || 0) + (1 - ALPHA) * smY;
     };
-    window.addEventListener('devicemotion', onMotion);
+    window.addEventListener('devicemotion', onMotion, { passive: true });
+
     const loop = () => {
-      calculateKineticOffset(imu);
-      const { x, y } = getKineticOffset();
       const el = videoRef.current;
       if (el) {
-        const moving = Math.abs(x) > 0.0005 || Math.abs(y) > 0.0005;
-        el.style.transform = moving
-          ? `${base()} translate(${(-x * 100).toFixed(2)}%, ${(-y * 100).toFixed(2)}%) scale(1.06)`
-          : base();
+        const tx = Math.max(-MAX_PX, Math.min(MAX_PX, -smX * 0.4));
+        const ty = Math.max(-MAX_PX, Math.min(MAX_PX,  smY * 0.4));
+        el.style.transform = mirrorBase
+          ? `scaleX(-1) translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(1.04)`
+          : `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(1.04)`;
       }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
+
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('devicemotion', onMotion);
       const el = videoRef.current;
-      if (el) el.style.transform = base();
+      if (el) el.style.transform = mirrorBase || '';
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gimbalEnabled, facingMode]);
+  }, [gimbalEnabled, facingMode]); // eslint-disable-line
 
-  // iOS requires a user gesture to grant motion access (for stabilization)
-  const ensureMotionPermission = useCallback(() => {
+  // ── request iOS motion permission on first touch ───────────────────────────
+  const ensureMotionPerm = useCallback(() => {
     if (motionReqRef.current) return;
     motionReqRef.current = true;
     const DME = window.DeviceMotionEvent;
@@ -225,132 +234,186 @@ export default function CameraLayer({
     }
   }, []);
 
-  // ---- capture: live <video> frame → clean draw → pixel bake → blob -------
+  // ── capture: draw video → canvas → pixel bake → blob ─────────────────────
   const captureFromVideo = useCallback(async () => {
     const v = videoRef.current;
-    if (!v || !v.videoWidth || !v.videoHeight) return null;
-    const sw = v.videoWidth;
-    const sh = v.videoHeight;
-    const targetRatio = ASPECT_RATIO[aspect] || 9 / 16;
-    const srcRatio = sw / sh;
 
-    let cropW;
-    let cropH;
+    // ── DEBUG trace (enable via localStorage.setItem('fsc_debug','1')) ──
+    dbg('captureFromVideo START', {
+      exists: !!v,
+      videoWidth:  v?.videoWidth,
+      videoHeight: v?.videoHeight,
+      readyState:  v?.readyState,   // 0=HAVE_NOTHING 1=HAVE_METADATA 2=HAVE_CURRENT_DATA 3/4=playing
+      paused:      v?.paused,
+      srcObject:   !!(v?.srcObject),
+    });
+
+    if (!v)                            { dbg('FAIL: no videoRef');        return null; }
+    if (!v.videoWidth || !v.videoHeight){ dbg('FAIL: zero dimensions');   return null; }
+
+    // readyState < 2 means iOS doesn't have a rendered frame yet.
+    // We wait up to 500ms for it rather than returning a black canvas.
+    if (v.readyState < 2) {
+      dbg('WARN: readyState < 2 — waiting for frame…', v.readyState);
+      await new Promise((res) => {
+        const check = () => {
+          if (!videoRef.current || videoRef.current.readyState >= 2) { res(); return; }
+          setTimeout(check, 50);
+        };
+        setTimeout(check, 50);
+      });
+      if (!v.videoWidth) { dbg('FAIL: still no frame after wait'); return null; }
+    }
+
+    const sw  = v.videoWidth;
+    const sh  = v.videoHeight;
+    const targetRatio = ASPECT_RATIO[aspect] || 9 / 16;
+    const srcRatio    = sw / sh;
+
+    let cropW, cropH;
     if (srcRatio > targetRatio) {
-      cropH = sh;
-      cropW = Math.round(sh * targetRatio);
+      cropH = sh;  cropW = Math.round(sh * targetRatio);
     } else {
-      cropW = sw;
-      cropH = Math.round(sw / targetRatio);
+      cropW = sw;  cropH = Math.round(sw / targetRatio);
     }
     const cropX = Math.round((sw - cropW) / 2);
     const cropY = Math.round((sh - cropH) / 2);
+    dbg('CROP', { sw, sh, cropW, cropH, cropX, cropY, aspect });
 
     const canvas = document.createElement('canvas');
-    canvas.width = cropW;
+    canvas.width  = cropW;
     canvas.height = cropH;
+    // Note: willReadFrequently can slow drawImage on GPU path — only use it when we must getImageData.
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
+    // Mirror front-facing camera (CSS scaleX(-1) doesn't affect drawImage; we must mirror manually)
     if (facingMode === 'user') {
+      ctx.save();
       ctx.translate(cropW, 0);
       ctx.scale(-1, 1);
+      ctx.drawImage(v, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      ctx.restore();
+    } else {
+      ctx.drawImage(v, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
     }
-    ctx.drawImage(v, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-    if (facingMode === 'user') ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // Sample center pixel so we can detect black frame in debug logs
+    const sample = ctx.getImageData(Math.floor(cropW / 2), Math.floor(cropH / 2), 1, 1).data;
+    dbg('CENTER PIXEL', { r: sample[0], g: sample[1], b: sample[2], a: sample[3] });
+    if (sample[0] === 0 && sample[1] === 0 && sample[2] === 0) {
+      dbg('⚠️ CENTER PIXEL IS BLACK — drawImage produced a black frame');
+    }
 
     bakeCapture(ctx, cropW, cropH, nicheMode, filterId);
 
     const blob = await new Promise((resolve) =>
-      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.98)
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.97)
     );
-    if (!blob) return null;
+    dbg('BLOB', { size: blob?.size, type: blob?.type, valid: !!blob });
+
+    if (!blob || blob.size < 500) {
+      dbg('FAIL: blob empty or too small', blob?.size);
+      return null;
+    }
+
     const objectURL = URL.createObjectURL(blob);
+    dbg('SUCCESS — objectURL created', objectURL.slice(0, 60));
     return {
-      objectURL,
-      blob,
-      width: cropW,
-      height: cropH,
+      objectURL, blob,
+      width: cropW, height: cropH,
       aspectRatio: cropW / cropH,
       meta: { scene: nicheMode, filter: filterId, aspect, zoom: zoomLevel, facing: facingMode, ts: Date.now() },
     };
-  }, [aspect, nicheMode, filterId, facingMode, zoomLevel]);
+  }, [aspect, nicheMode, filterId, facingMode, zoomLevel]); // eslint-disable-line
 
-  const cycleTimer = useCallback(() => {
-    setTimerSec((cur) => {
-      const i = TIMER_OPTS.indexOf(cur);
-      return TIMER_OPTS[(i + 1) % TIMER_OPTS.length];
-    });
-  }, []);
+  // Keep captureRef always current so timer callback uses latest version
+  useEffect(() => { captureRef.current = captureFromVideo; }, [captureFromVideo]);
 
-  const handleShutter = useCallback(async () => {
-    // if timer is active, count down then capture
-    if (timerSec !== null) {
-      let remaining = timerSec;
-      setTimerCountdown(remaining);
-      setShutterPulse(true);
-      setTimeout(() => setShutterPulse(false), 130);
-
-      const countdown = setInterval(() => {
-        remaining--;
-        setTimerCountdown(remaining);
-        if (remaining <= 0) {
-          clearInterval(countdown);
-          timerIntervalRef.current = null;
-          captureNow();
-        }
-      }, 1000);
-      timerIntervalRef.current = countdown;
-      return;
-    }
-
-    captureNow();
-  }, [timerSec, captureFromVideo, flashMode, flashSupported, facingMode, applyFlash, onCapture]);
-
-  const captureNow = useCallback(async () => {
+  // ── fire actual capture (shared by immediate + timer paths) ───────────────
+  const fireCapture = useCallback(async () => {
     setShutterPulse(true);
     setTimeout(() => setShutterPulse(false), 130);
-    setTimerCountdown(null);
+    setTimerCd(null);
 
-    const wantsFlash = flashMode === 'on' || flashMode === 'torch';
-    const rearTorch = wantsFlash && flashSupported && facingMode === 'environment';
+    const fm = flashModeRef.current;
+    const fs = flashSuppRef.current;
+    const fc = facingModeRef.current;
+    const wantsFlash = fm === 'on' || fm === 'torch';
+    const rearTorch  = wantsFlash && fs && fc === 'environment';
 
     try {
-      if (rearTorch && flashMode === 'on') {
+      if (rearTorch && fm === 'on') {
         await applyFlash('on');
         await new Promise((r) => setTimeout(r, 180));
-      } else if (wantsFlash && facingMode === 'user') {
+      } else if (wantsFlash && fc === 'user') {
         setScreenFlash(true);
         setTimeout(() => setScreenFlash(false), 160);
         await new Promise((r) => setTimeout(r, 120));
       }
 
-      const result = await captureFromVideo();
+      const result = await captureRef.current();
+      dbg('fireCapture result', { ok: !!result, objectURL: result?.objectURL?.slice(0,40) });
       if (!result) return;
 
       if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
       lastUrlRef.current = result.objectURL;
       if (onCapture) onCapture(result);
-    } catch {
-      /* ignore */
+    } catch (err) {
+      dbg('fireCapture ERROR', err?.message, err);
+      console.error('[FSC-CAM] capture error:', err);
     } finally {
-      if (rearTorch && flashMode === 'on') applyFlash('off');
+      if (rearTorch && fm === 'on') applyFlash('off');
     }
-  }, [flashMode, flashSupported, facingMode, applyFlash, captureFromVideo, onCapture]);
+  }, [applyFlash, onCapture]); // eslint-disable-line
 
-  // ---- aspect / mode / filter ---------------------------------------------
+  // ── shutter handler (starts timer if set, else fires immediately) ─────────
+  const handleShutter = useCallback(async () => {
+    if (timerSec !== null) {
+      clearInterval(timerInterval.current);
+      let remaining = timerSec;
+      setTimerCd(remaining);
+      setShutterPulse(true);
+      setTimeout(() => setShutterPulse(false), 130);
+      timerInterval.current = setInterval(() => {
+        remaining--;
+        setTimerCd(remaining);
+        if (remaining <= 0) {
+          clearInterval(timerInterval.current);
+          timerInterval.current = null;
+          fireCapture();
+        }
+      }, 1000);
+      return;
+    }
+    fireCapture();
+  }, [timerSec, fireCapture]);
+
+  // ── timer cycle (null→3→5→7→null) with brief toast ───────────────────────
+  const cycleTimer = useCallback(() => {
+    clearInterval(timerInterval.current);
+    setTimerCd(null);
+    setTimerSec((cur) => {
+      const next = TIMER_OPTS[(TIMER_OPTS.indexOf(cur) + 1) % TIMER_OPTS.length];
+      setTimerToast(true);
+      clearTimeout(timerToastTimer.current);
+      timerToastTimer.current = setTimeout(() => setTimerToast(false), 900);
+      return next;
+    });
+  }, []);
+
+  // ── aspect / mode / filter ────────────────────────────────────────────────
   const cycleAspect = useCallback(() => {
     setAspect((a) => ASPECT_CYCLE[(ASPECT_CYCLE.indexOf(a) + 1) % ASPECT_CYCLE.length]);
   }, []);
 
   const cycleMode = useCallback(() => {
-    const i = SCENE_ORDER.indexOf(nicheMode);
-    const next = SCENE_ORDER[(i + 1) % SCENE_ORDER.length];
+    const next = SCENE_ORDER[(SCENE_ORDER.indexOf(nicheMode) + 1) % SCENE_ORDER.length];
     applyNicheMode(next);
   }, [nicheMode, applyNicheMode]);
 
   const cycleFilter = useCallback(() => {
     setFilterId((cur) => {
-      const i = CAPTURE_FILTERS.findIndex((f) => f.id === cur);
+      const i    = CAPTURE_FILTERS.findIndex((f) => f.id === cur);
       const next = CAPTURE_FILTERS[(i + 1) % CAPTURE_FILTERS.length];
       setFilterToast(next.label);
       clearTimeout(filterToastTimer.current);
@@ -359,29 +422,29 @@ export default function CameraLayer({
     });
   }, []);
 
-  // ---- touch: tap-to-focus + pinch-to-zoom --------------------------------
+  // ── touch: tap-to-focus + pinch-to-zoom ───────────────────────────────────
   const onTouchStart = useCallback((e) => {
-    ensureMotionPermission();
+    ensureMotionPerm();
     if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       pinchStartRef.current = Math.hypot(dx, dy);
-      pinchZoomRef.current = zoomLevel;
-      tapRef.current.moved = true;
+      pinchZoomRef.current  = zoomLevel;
+      tapRef.current.moved  = true;
     } else {
       tapRef.current = { t: Date.now(), moved: false };
     }
-  }, [zoomLevel, ensureMotionPermission]);
+  }, [zoomLevel, ensureMotionPerm]);
 
   const onTouchMove = useCallback((e) => {
     if (e.touches.length === 2 && pinchStartRef.current > 0) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dx   = e.touches[0].clientX - e.touches[1].clientX;
+      const dy   = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.hypot(dx, dy);
-      const factor = 1 + (dist / pinchStartRef.current - 1) * 2.2;
-      const min = zoomRange?.min ?? 1;
-      const max = zoomRange?.max ?? 10;
-      setZoom(Math.max(min, Math.min(max, pinchZoomRef.current * factor)));
+      const fac  = 1 + (dist / pinchStartRef.current - 1) * 2.2;
+      const min  = zoomRange?.min ?? 1;
+      const max  = zoomRange?.max ?? 10;
+      setZoom(Math.max(min, Math.min(max, pinchZoomRef.current * fac)));
     } else {
       tapRef.current.moved = true;
     }
@@ -395,8 +458,8 @@ export default function CameraLayer({
     }
     const { t, moved } = tapRef.current;
     if (!moved && Date.now() - t < 300) {
-      const touch = e.changedTouches && e.changedTouches[0];
-      const el = frameRef.current;
+      const touch = e.changedTouches?.[0];
+      const el    = frameRef.current;
       if (touch && el) {
         const rect = el.getBoundingClientRect();
         const x = touch.clientX - rect.left;
@@ -410,12 +473,14 @@ export default function CameraLayer({
   }, [zoomLevel, setZoom, focusAt]);
 
   const liveFilter = previewCss(nicheMode, filterId);
+  const timerLabel = timerSec ? `${timerSec}s` : null;
 
+  // ── render ─────────────────────────────────────────────────────────────────
   return (
     <div className="fsc-root" data-aspect={aspect}>
       <style>{styles}</style>
 
-      {/* ============ VIEWFINDER ============ */}
+      {/* ── VIEWFINDER ────────────────────────────────────────────────────── */}
       <div
         className="fsc-frame"
         ref={frameRef}
@@ -426,23 +491,34 @@ export default function CameraLayer({
         <video
           ref={videoRef}
           className="fsc-video"
-          autoPlay
-          playsInline
-          muted
+          autoPlay playsInline muted
           style={{
             transform: facingMode === 'user' ? 'scaleX(-1)' : undefined,
-            filter: liveFilter === 'none' ? undefined : liveFilter,
+            filter:    liveFilter !== 'none'  ? liveFilter  : undefined,
           }}
         />
 
-        {/* iOS-style tap-to-focus reticle */}
+        {/* tap-to-focus reticle */}
         {reticle && <div className="fsc-reticle" style={{ left: reticle.x, top: reticle.y }} />}
 
         {screenFlash && <div className="fsc-screenflash" />}
 
+        {/* close + pin: INSIDE frame so they follow it on 4:3 / 1:1 */}
+        <button className="fsc-close" onClick={onClose} aria-label="Cerrar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+        <div className="fsc-pin" style={{ background: pinBg, color: pinText }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+          </svg>
+          <span>{String(locationLabel).toUpperCase()}</span>
+        </div>
+
         {!isReady && !error && (
           <div className="fsc-status">
-            <div className="fsc-spinner" />
+            <div className="fsc-spinner"/>
             {statusMessage || 'Iniciando cámara…'}
           </div>
         )}
@@ -456,87 +532,72 @@ export default function CameraLayer({
         )}
       </div>
 
-      {/* ============ TOP-LEFT: close + business pin ============ */}
-      <button className="fsc-close" onClick={onClose} aria-label="Cerrar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M18 6L6 18M6 6l12 12" />
-        </svg>
-      </button>
-      <div className="fsc-pin" style={{ background: pinBg, color: pinText }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
-        </svg>
-        <span>{String(locationLabel).toUpperCase()}</span>
-      </div>
-
-      {/* ============ RIGHT RAIL: aspect · flip · flash ============ */}
+      {/* ── RIGHT RAIL: aspect · flip · flash · timer ─────────────────────── */}
       <div className="fsc-toolbar">
         <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} aria-label="Formato">{aspect}</button>
-        <button className="fsc-tool" onClick={flipCamera} aria-label="Girar cámara">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5" />
-            <path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5" />
-            <circle cx="12" cy="12" r="3" />
-            <path d="m18 22-3-3 3-3" />
-            <path d="m6 2 3 3-3 3" />
-          </svg>
-        </button>
+        <button className="fsc-tool" onClick={flipCamera} aria-label="Girar">{FLIP_ICON}</button>
         <button
           className={`fsc-tool ${flashMode !== 'off' ? 'is-on' : ''}`}
           onClick={cycleFlash}
-          aria-label="Flash"
           disabled={!flashSupported}
+          aria-label="Flash"
         >
           {FLASH_ICON[flashMode]}
         </button>
+        {/* timer: badge shows current value */}
         <button
           className={`fsc-tool ${timerSec !== null ? 'is-on' : ''}`}
           onClick={cycleTimer}
           aria-label="Temporizador"
-          title={timerSec ? `${timerSec}s` : 'Timer'}
         >
-          {TIMER_ICON}
+          <span className="fsc-timerwrap">
+            {TIMER_ICON}
+            {timerSec !== null && <span className="fsc-timerbadge">{timerSec}s</span>}
+          </span>
         </button>
       </div>
 
-      {/* ============ ZOOM READOUT (dominant, every change) ============ */}
+      {/* ── ZOOM READOUT: subtle, above shutter row ───────────────────────── */}
       {zoomActive && (
         <div className="fsc-zoomreadout">{zoomLevel.toFixed(zoomLevel < 10 ? 1 : 0)}×</div>
       )}
 
-      {/* ============ TIMER COUNTDOWN ============ */}
-      {timerCountdown !== null && (
-        <div className="fsc-timercount">{timerCountdown}</div>
+      {/* ── TIMER COUNTDOWN ───────────────────────────────────────────────── */}
+      {timerCd !== null && (
+        <div className="fsc-timercount">{timerCd}</div>
       )}
 
-      {/* ============ FILTER TOAST ============ */}
+      {/* ── TIMER TOAST (brief "3s set" / "OFF") ─────────────────────────── */}
+      {timerToast && (
+        <div className="fsc-timertoast">
+          {timerSec !== null ? `Timer ${timerSec}s` : 'Timer OFF'}
+        </div>
+      )}
+
+      {/* ── FILTER TOAST ─────────────────────────────────────────────────── */}
       {filterToast && <div className="fsc-filtertoast">{filterToast}</div>}
 
-      {/* ============ BOTTOM ============ */}
+      {/* ── BOTTOM BAR ────────────────────────────────────────────────────── */}
       <div className="fsc-bottom">
+        {/* zoom pill: shows above shutter, subtle */}
         <div className="fsc-shutterrow">
-          {/* left: single MODE button (cycles FOOD ↔ PORTRAIT) */}
+          {/* MODE button — always says "MODE" (cycles scene on tap) */}
           <div className="fsc-side">
-            <button className="fsc-modebtn" onClick={cycleMode}>{SCENE_LABEL[nicheMode] || 'MODE'}</button>
+            <button className="fsc-modebtn" onClick={cycleMode}>MODE</button>
           </div>
 
-          {/* center: shutter */}
           <button
             className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''}`}
             onClick={handleShutter}
             disabled={!isReady}
             aria-label="Capturar"
           >
-            <span className="fsc-shutter-inner" />
+            <span className="fsc-shutter-inner"/>
           </button>
 
-          {/* right: small filter toggle */}
           <div className="fsc-side fsc-side-right">
             <button className="fsc-filterbtn" onClick={cycleFilter} aria-label="Filtros">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor" opacity="0.3" />
-              </svg>
+              {FILTER_ICON}
             </button>
           </div>
         </div>
@@ -545,146 +606,203 @@ export default function CameraLayer({
   );
 }
 
-/* ====================================================================== */
+/* ============================================================================
+   STYLES
+   =========================================================================== */
 const styles = `
 .fsc-root {
-  --fsc-text: #FFFFFF;
-  --fsc-dim: rgba(255,255,255,0.62);
-  --fsc-glass: rgba(0,0,0,0.22);
-  --fsc-chip: rgba(255,255,255,0.15);
+  --fsc-text:   #FFFFFF;
+  --fsc-dim:    rgba(255,255,255,0.62);
+  --fsc-glass:  rgba(0,0,0,0.22);
+  --fsc-chip:   rgba(255,255,255,0.15);
   --fsc-stroke: rgba(255,255,255,0.16);
   --fsc-accent: #FF6B3D;
-  --fsc-lock: #FFD60A;
+  --fsc-lock:   #FFD60A;
   position: fixed; inset: 0; background: #000; color: var(--fsc-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   -webkit-user-select: none; user-select: none; touch-action: none;
 }
 
-.fsc-frame { position: relative; overflow: hidden; background: #000; width: 100vw; height: 100dvh; }
-.fsc-root[data-aspect="4:3"] .fsc-frame { width: min(100vw, calc(100dvh * 0.75)); height: min(100dvh, calc(100vw / 0.75)); border-radius: 18px; }
-.fsc-root[data-aspect="1:1"] .fsc-frame { width: min(100vw, 100dvh); height: min(100vw, 100dvh); border-radius: 18px; }
+/* ── frame ── */
+.fsc-frame {
+  position: relative; overflow: hidden; background: #000;
+  width: 100vw; height: 100dvh;
+}
+.fsc-root[data-aspect="4:3"] .fsc-frame {
+  width:  min(100vw, calc(100dvh * 0.75));
+  height: min(100dvh, calc(100vw / 0.75));
+  border-radius: 18px;
+}
+.fsc-root[data-aspect="1:1"] .fsc-frame {
+  width:  min(100vw, 100dvh);
+  height: min(100vw, 100dvh);
+  border-radius: 18px;
+}
 .fsc-video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
 
-/* tap-to-focus reticle — iOS yellow square */
+/* ── reticle ── */
 .fsc-reticle {
-  position: absolute; width: 78px; height: 78px; margin: -39px 0 0 -39px; z-index: 4;
-  border: 1.5px solid var(--fsc-lock); border-radius: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
-  pointer-events: none; animation: fsc-focus 1s ease-out forwards;
+  position: absolute; width: 74px; height: 74px; margin: -37px 0 0 -37px; z-index: 4;
+  border: 1.5px solid var(--fsc-lock); border-radius: 6px; pointer-events: none;
+  animation: fsc-focus 1s ease-out forwards;
 }
 @keyframes fsc-focus {
-  0% { transform: scale(1.4); opacity: 0; }
-  18% { transform: scale(1); opacity: 1; }
-  35% { transform: scale(0.92); } 50% { transform: scale(1); }
-  80% { opacity: 1; } 100% { opacity: 0.55; }
+  0%   { transform: scale(1.5); opacity: 0; }
+  20%  { transform: scale(1);   opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0.5; }
 }
 
 .fsc-screenflash { position: absolute; inset: 0; background: #fff; z-index: 30; animation: fsc-blink 0.16s ease-out; }
-@keyframes fsc-blink { from { opacity: 1; } to { opacity: 0.85; } }
+@keyframes fsc-blink { from { opacity: 1; } to { opacity: 0.8; } }
 
-.fsc-status {
-  position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; gap: 14px;
-  align-items: center; justify-content: center; background: #000; color: var(--fsc-dim);
-  font-size: 13px; text-align: center; padding: 0 32px; letter-spacing: 0.04em;
+/* ── close + pin (NOW INSIDE .fsc-frame so they track on all aspect ratios) ── */
+.fsc-close {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 14px); left: 14px; z-index: 200;
+  width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,0.48);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: none; color: #fff; display: flex; align-items: center; justify-content: center;
 }
-.fsc-spinner { width: 46px; height: 46px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #fff; border-radius: 50%; animation: fsc-spin 0.8s linear infinite; }
+.fsc-pin {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 66px); left: 14px; z-index: 10;
+  display: flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 20px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.fsc-pin span {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; line-height: 1;
+  white-space: nowrap; max-width: 44vw; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── status ── */
+.fsc-status {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; gap: 14px;
+  align-items: center; justify-content: center;
+  background: #000; color: var(--fsc-dim); font-size: 13px;
+  text-align: center; padding: 0 32px; letter-spacing: 0.04em;
+}
+.fsc-spinner { width: 44px; height: 44px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #fff; border-radius: 50%; animation: fsc-spin 0.8s linear infinite; }
 @keyframes fsc-spin { to { transform: rotate(360deg); } }
 .fsc-retry { background: var(--fsc-accent); color: #fff; border: 0; padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 600; }
 
-/* top-left close + pin */
-.fsc-close {
-  position: absolute; top: calc(env(safe-area-inset-top,0px) + 16px); left: 16px;
-  width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  border: none; color: #fff; display: flex; align-items: center; justify-content: center; z-index: 200;
-}
-.fsc-pin {
-  position: absolute; top: calc(env(safe-area-inset-top,0px) + 72px); left: 16px; z-index: 10;
-  display: flex; align-items: center; gap: 5px; padding: 8px 14px; border-radius: 20px;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-}
-.fsc-pin span { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; line-height: 1; white-space: nowrap; max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
-
-/* right rail: aspect · flip · flash */
+/* ── right rail ── */
 .fsc-toolbar {
-  position: absolute; right: 16px; top: 50%; transform: translateY(-50%); z-index: 50;
-  display: flex; flex-direction: column; gap: 8px; padding: 12px 8px;
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%); z-index: 50;
+  display: flex; flex-direction: column; gap: 4px; padding: 10px 6px;
   background: var(--fsc-glass); border-radius: 22px;
-  backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px); box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 .fsc-tool {
   width: 44px; height: 44px; border-radius: 50%; background: transparent; border: none;
   color: rgba(255,255,255,0.62); display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent; transition: color 0.15s, background 0.15s;
+  position: relative;
 }
-.fsc-tool:active { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.92); }
-.fsc-tool.is-on { color: var(--fsc-lock); }
-.fsc-tool:disabled { opacity: 0.3; }
-.fsc-aspecttool { font-size: 11px; font-weight: 800; letter-spacing: 0.02em; }
+.fsc-tool:active  { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.92); }
+.fsc-tool.is-on   { color: var(--fsc-lock); }
+.fsc-tool:disabled{ opacity: 0.3; }
+.fsc-aspecttool   { font-size: 10px; font-weight: 800; letter-spacing: 0.02em; }
 
-/* zoom readout — dominant */
+/* timer wrapper + badge */
+.fsc-timerwrap { position: relative; display: flex; align-items: center; justify-content: center; }
+.fsc-timerbadge {
+  position: absolute; bottom: -4px; right: -6px;
+  background: var(--fsc-lock); color: #000;
+  font-size: 9px; font-weight: 800; padding: 1px 4px; border-radius: 8px;
+  line-height: 1.3; letter-spacing: 0.02em; pointer-events: none;
+}
+
+/* ── zoom readout: subtle pill just above shutter ── */
 .fsc-zoomreadout {
-  position: absolute; top: 46%; left: 50%; transform: translate(-50%, -50%); z-index: 60;
-  background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  color: var(--fsc-lock); padding: 8px 22px; border-radius: 999px;
-  font-size: 26px; font-weight: 800; letter-spacing: 0.01em;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.35); animation: fsc-pop 0.18s ease-out;
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 130px);
+  left: 50%; transform: translateX(-50%); z-index: 60;
+  background: rgba(0,0,0,0.46); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #fff; padding: 5px 16px; border-radius: 999px;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  animation: fsc-pop 0.15s ease-out;
 }
-@keyframes fsc-pop { from { transform: translate(-50%, -50%) scale(0.85); opacity: 0.4; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes fsc-pop { from { opacity: 0; transform: translateX(-50%) scale(0.88); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 
-/* timer countdown */
+/* ── timer countdown (big, centered) ── */
 .fsc-timercount {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 65;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  color: var(--fsc-lock); padding: 12px 32px; border-radius: 999px;
-  font-size: 48px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: fsc-pulse 1s ease-in-out infinite;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: var(--fsc-lock); padding: 10px 28px; border-radius: 999px;
+  font-size: 52px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: fsc-pulse 1s ease-in-out infinite;
 }
-@keyframes fsc-pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.08); } }
+@keyframes fsc-pulse { 0%,100% { transform: translate(-50%,-50%) scale(1); } 50% { transform: translate(-50%,-50%) scale(1.06); } }
 
+/* ── timer toast (briefly shows "Timer 5s" / "Timer OFF") ── */
+.fsc-timertoast {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 22px); left: 50%;
+  transform: translateX(-50%); z-index: 60;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); color: #fff;
+  padding: 7px 18px; border-radius: 20px; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; white-space: nowrap;
+  animation: fsc-fade 0.9s ease-out forwards;
+}
+@keyframes fsc-fade { 0% { opacity: 0; } 15% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ── filter toast ── */
 .fsc-filtertoast {
-  position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%); z-index: 60;
+  position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 175px);
+  left: 50%; transform: translateX(-50%); z-index: 60;
   background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); color: #fff;
-  padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;
+  padding: 7px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
   animation: fsc-fade 0.7s ease-out forwards;
 }
-@keyframes fsc-fade { 0% { opacity: 0; } 18% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 
-/* bottom */
-.fsc-bottom { position: absolute; left: 0; right: 0; bottom: calc(env(safe-area-inset-bottom,0px) + 38px); display: flex; justify-content: center; z-index: 100; }
-.fsc-shutterrow { width: 100%; max-width: 460px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; box-sizing: border-box; }
-.fsc-side { width: 84px; display: flex; align-items: center; }
-.fsc-side-right { justify-content: flex-end; }
+/* ── bottom bar ── */
+.fsc-bottom {
+  position: absolute; left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom,0px) + 36px);
+  display: flex; justify-content: center; z-index: 100;
+}
+.fsc-shutterrow {
+  width: 100%; max-width: 460px; display: flex;
+  align-items: center; justify-content: space-between;
+  padding: 0 26px; box-sizing: border-box;
+}
+.fsc-side        { width: 80px; display: flex; align-items: center; }
+.fsc-side-right  { justify-content: flex-end; }
 
 .fsc-modebtn {
-  background: var(--fsc-glass); border: 1px solid var(--fsc-stroke); backdrop-filter: blur(12px);
-  color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
-  padding: 9px 14px; border-radius: 999px;
+  background: var(--fsc-glass); border: 1px solid var(--fsc-stroke);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+  padding: 8px 13px; border-radius: 999px;
 }
 
 .fsc-shutter {
-  width: 74px; height: 74px; border-radius: 50%; border: 4px solid #fff; background: transparent;
-  display: flex; align-items: center; justify-content: center; padding: 4px; flex-shrink: 0;
-  box-shadow: 0 4px 20px rgba(255,255,255,0.22);
+  width: 72px; height: 72px; border-radius: 50%; border: 3.5px solid #fff;
+  background: transparent; display: flex; align-items: center; justify-content: center;
+  padding: 4px; flex-shrink: 0; box-shadow: 0 4px 18px rgba(255,255,255,0.2);
 }
 .fsc-shutter:disabled { opacity: 0.5; }
 .fsc-shutter-inner { width: 100%; height: 100%; border-radius: 50%; background: #fff; transition: transform 0.1s ease-out; }
 .fsc-shutter.is-firing .fsc-shutter-inner { transform: scale(0.82); }
 
 .fsc-filterbtn {
-  width: 46px; height: 46px; border-radius: 50%;
-  background: var(--fsc-chip); border: none; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--fsc-chip); border: none;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   color: #fff; display: flex; align-items: center; justify-content: center;
 }
 
 @media (orientation: landscape) {
-  .fsc-root[data-aspect="4:3"] .fsc-frame { width: min(100vw, calc(100dvh / 0.75)); height: min(100dvh, calc(100vw * 0.75)); }
   .fsc-bottom { left: auto; right: calc(env(safe-area-inset-right,0px) + 18px); top: 0; bottom: 0; align-items: center; }
-  .fsc-shutterrow { width: auto; flex-direction: column-reverse; gap: 18px; padding: 0; }
+  .fsc-shutterrow { width: auto; flex-direction: column-reverse; gap: 16px; padding: 0; }
   .fsc-side { width: auto; }
-  .fsc-toolbar { right: auto; left: 16px; }
+  .fsc-toolbar { right: auto; left: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fsc-reticle, .fsc-screenflash, .fsc-zoomreadout, .fsc-filtertoast, .fsc-vignette { animation: none; transition: none; }
+  .fsc-reticle, .fsc-screenflash, .fsc-zoomreadout,
+  .fsc-filtertoast, .fsc-timercount, .fsc-timertoast { animation: none; transition: none; }
 }
 `;
