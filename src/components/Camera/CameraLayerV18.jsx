@@ -30,6 +30,7 @@ const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
 const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 }; // w/h, portrait
 const ZOOM_STOPS = [0.5, 1, 2, 5, 10];
 const STABILIZE_AT = 4;
+const TIMER_OPTS = [null, 3, 5, 7]; // off, 3s, 5s, 7s
 
 // flash icons drawn in the same stroke style as the flip icon
 const FLASH_ICON = {
@@ -56,6 +57,15 @@ const FLASH_ICON = {
     </svg>
   ),
 };
+
+// timer icon
+const TIMER_ICON = (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="13" r="8" />
+    <path d="M12 9v4l3 2" />
+    <path d="M7 4h10" />
+  </svg>
+);
 
 function snapZoom(z) {
   let best = z;
@@ -104,6 +114,8 @@ export default function CameraLayer({
   const [filterId, setFilterId] = useState('original');
   const [filterToast, setFilterToast] = useState(null);
   const [zoomActive, setZoomActive] = useState(false);
+  const [timerSec, setTimerSec] = useState(null); // active timer: null | 3 | 5 | 7
+  const [timerCountdown, setTimerCountdown] = useState(null); // display countdown
   const [reticle, setReticle] = useState(null);
   const [screenFlash, setScreenFlash] = useState(false);
   const [shutterPulse, setShutterPulse] = useState(false);
@@ -116,6 +128,7 @@ export default function CameraLayer({
   const filterToastTimer = useRef(null);
   const zoomTimer = useRef(null);
   const reticleTimer = useRef(null);
+  const timerIntervalRef = useRef(null);
   const motionReqRef = useRef(false);
   const zoomInitRef = useRef(false);
 
@@ -136,6 +149,7 @@ export default function CameraLayer({
       clearTimeout(filterToastTimer.current);
       clearTimeout(zoomTimer.current);
       clearTimeout(reticleTimer.current);
+      clearInterval(timerIntervalRef.current);
       terminateHardware();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -261,9 +275,41 @@ export default function CameraLayer({
     };
   }, [aspect, nicheMode, filterId, facingMode, zoomLevel]);
 
+  const cycleTimer = useCallback(() => {
+    setTimerSec((cur) => {
+      const i = TIMER_OPTS.indexOf(cur);
+      return TIMER_OPTS[(i + 1) % TIMER_OPTS.length];
+    });
+  }, []);
+
   const handleShutter = useCallback(async () => {
+    // if timer is active, count down then capture
+    if (timerSec !== null) {
+      let remaining = timerSec;
+      setTimerCountdown(remaining);
+      setShutterPulse(true);
+      setTimeout(() => setShutterPulse(false), 130);
+
+      const countdown = setInterval(() => {
+        remaining--;
+        setTimerCountdown(remaining);
+        if (remaining <= 0) {
+          clearInterval(countdown);
+          timerIntervalRef.current = null;
+          captureNow();
+        }
+      }, 1000);
+      timerIntervalRef.current = countdown;
+      return;
+    }
+
+    captureNow();
+  }, [timerSec, captureFromVideo, flashMode, flashSupported, facingMode, applyFlash, onCapture]);
+
+  const captureNow = useCallback(async () => {
     setShutterPulse(true);
     setTimeout(() => setShutterPulse(false), 130);
+    setTimerCountdown(null);
 
     const wantsFlash = flashMode === 'on' || flashMode === 'torch';
     const rearTorch = wantsFlash && flashSupported && facingMode === 'environment';
@@ -443,11 +489,24 @@ export default function CameraLayer({
         >
           {FLASH_ICON[flashMode]}
         </button>
+        <button
+          className={`fsc-tool ${timerSec !== null ? 'is-on' : ''}`}
+          onClick={cycleTimer}
+          aria-label="Temporizador"
+          title={timerSec ? `${timerSec}s` : 'Timer'}
+        >
+          {TIMER_ICON}
+        </button>
       </div>
 
       {/* ============ ZOOM READOUT (dominant, every change) ============ */}
       {zoomActive && (
         <div className="fsc-zoomreadout">{zoomLevel.toFixed(zoomLevel < 10 ? 1 : 0)}×</div>
+      )}
+
+      {/* ============ TIMER COUNTDOWN ============ */}
+      {timerCountdown !== null && (
+        <div className="fsc-timercount">{timerCountdown}</div>
       )}
 
       {/* ============ FILTER TOAST ============ */}
@@ -572,6 +631,16 @@ const styles = `
   box-shadow: 0 4px 20px rgba(0,0,0,0.35); animation: fsc-pop 0.18s ease-out;
 }
 @keyframes fsc-pop { from { transform: translate(-50%, -50%) scale(0.85); opacity: 0.4; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+/* timer countdown */
+.fsc-timercount {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 65;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: var(--fsc-lock); padding: 12px 32px; border-radius: 999px;
+  font-size: 48px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4); animation: fsc-pulse 1s ease-in-out infinite;
+}
+@keyframes fsc-pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.08); } }
 
 .fsc-filtertoast {
   position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%); z-index: 60;
