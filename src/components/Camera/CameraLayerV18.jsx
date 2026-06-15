@@ -148,7 +148,7 @@ export default function CameraLayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flashMode, flashSupported]);
 
-  // ---- zoom readout + vignette on EVERY zoom change -----------------------
+  // ---- zoom readout on EVERY zoom change -----------------------
   useEffect(() => {
     if (!zoomInitRef.current) { zoomInitRef.current = true; return; }
     setZoomActive(true);
@@ -389,9 +389,6 @@ export default function CameraLayer({
           }}
         />
 
-        {/* zoom spotlight vignette */}
-        <div className={`fsc-vignette ${zoomActive ? 'is-on' : ''}`} />
-
         {/* iOS-style tap-to-focus reticle */}
         {reticle && <div className="fsc-reticle" style={{ left: reticle.x, top: reticle.y }} />}
 
@@ -509,14 +506,6 @@ const styles = `
 .fsc-root[data-aspect="4:3"] .fsc-frame { width: min(100vw, calc(100dvh * 0.75)); height: min(100dvh, calc(100vw / 0.75)); border-radius: 18px; }
 .fsc-root[data-aspect="1:1"] .fsc-frame { width: min(100vw, 100dvh); height: min(100vw, 100dvh); border-radius: 18px; }
 .fsc-video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
-
-/* zoom spotlight vignette */
-.fsc-vignette {
-  position: absolute; inset: 0; pointer-events: none; z-index: 2;
-  background: radial-gradient(ellipse 70% 55% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.42) 100%);
-  opacity: 0; transition: opacity 0.25s ease;
-}
-.fsc-vignette.is-on { opacity: 1; }
 
 /* tap-to-focus reticle — iOS yellow square */
 .fsc-reticle {
