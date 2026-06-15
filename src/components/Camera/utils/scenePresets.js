@@ -26,17 +26,6 @@ export const SCENE_PRESETS = {
     cssFilter: 'saturate(1.18) sepia(0.14) brightness(1.05) contrast(1.03)',
   },
 
-  PET: {
-    id: 'PET',
-    label: 'PET',
-    // Neutral color, continuous AF for moving subjects
-    whiteBalance: { mode: 'continuous' },
-    exposureCompensation: 0,
-    focus: { mode: 'continuous', macroAvailable: false },
-    faceDetect: false,
-    cssFilter: 'none',
-  },
-
   PORTRAIT: {
     id: 'PORTRAIT',
     label: 'PORTRAIT',
@@ -49,7 +38,7 @@ export const SCENE_PRESETS = {
   },
 };
 
-export const SCENE_ORDER = ['FOOD', 'PET', 'PORTRAIT'];
+export const SCENE_ORDER = ['FOOD', 'PORTRAIT'];
 export const DEFAULT_SCENE = 'FOOD';
 
 /**

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
+import { useTenant } from '../../contexts/TenantContext'
 import CameraLayer from './CameraLayer.jsx'
 import CameraLayerV18 from './CameraLayerV18.jsx'
 import EditorLayer from './EditorLayer.jsx'
@@ -8,6 +9,15 @@ import SettingsSheet from './SettingsSheet.jsx'
 import { useCamTechBroadcaster } from '../../hooks/useCamTech'
 import './CameraLayer.css'
 import './EditorLayer.css'
+
+// Business pin colors — mirrors the customer camera (CameraLayer.jsx)
+const PIN_STYLE_COLORS = {
+    classic: 'rgba(255, 255, 255, 0.22)',
+    cafe:    'rgba(130, 90, 60, 0.55)',
+    vegan:   'rgba(145, 170, 100, 0.55)',
+    natural: 'rgba(145, 170, 100, 0.55)',
+    burger:  'rgba(255, 193, 7, 0.60)',
+}
 
 /**
  * CamTech v2.2 - Camera Component
@@ -19,8 +29,17 @@ export const VERSION = 'CamTech v2.2'
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
     const { activateCamera, deactivateCamera } = useCamTechBroadcaster()
+    const { tenantData } = useTenant() || {}
     const [isOwner, setIsOwner] = useState(false)
     const [authLoading, setAuthLoading] = useState(true)
+
+    // Business pin — name + style colors from tenant config
+    const businessName = tenantData?.business_name || 'FoodSpot'
+    const pinStyle   = tenantData?.app_config?.cameraPinStyle || 'classic'
+    const customBg   = tenantData?.app_config?.cameraPinCustomBg   || 'rgba(20,20,24,0.55)'
+    const customText = tenantData?.app_config?.cameraPinCustomText || '#ffffff'
+    const pinBg   = pinStyle === 'custom' ? customBg   : (PIN_STYLE_COLORS[pinStyle] || PIN_STYLE_COLORS.classic)
+    const pinText = pinStyle === 'custom' ? customText : '#ffffff'
 
     const [mode, setMode] = useState('CAMERA')
     const [capturedImage, setCapturedImage] = useState(null)
@@ -136,9 +155,10 @@ function Camera({ neonContext = null, branding = null }) {
                 isOwner ? (
                     <CameraLayerV18
                         onCapture={handleCapture}
-                        onOpenSettings={handleOpenSettings}
                         onClose={handleClose}
-                        toolPosition={toolPosition}
+                        locationLabel={businessName}
+                        pinBg={pinBg}
+                        pinText={pinText}
                     />
                 ) : (
                     <CameraLayer

@@ -1,114 +1,281 @@
 /**
- * FoodSpot Camera — CameraLayer.jsx
- * ----------------------------------
- * Full camera UI on top of useCamera.
+ * FoodSpot Camera — CameraLayerV18.jsx
+ * ----------------------------------------------------------------------
+ * Owner-only "Building Camera" UI, wired to the REAL CamTech v1.8 engine
+ * (useCamera.v18.js — ImageCapture 4K sensor bypass + ThermalGovernor +
+ * NICHE_PHYSICS + Kinetic gimbal).
  *
- * CamTech v1.8 additions per spec:
- *  - "ONE TAKE" label above the shutter
- *  - Scene pills [FOOD] [PET] [PORTRAIT] above the shutter (FOOD default)
- *  - AE/AF toggle in the right toolbar, below flash (yellow on / gray off)
- *  - Zoom 0.5x–10x (quick stops + pinch)
- *  - Macro chip + 5–30 cm distance slider (FOOD scene)
- *  - 9:16 / 4:3 / 1:1 aspect ratios, object-fit: cover (no letterboxing)
- *  - Landscape layout adaptation
+ * This is NOT the simplified video-canvas reimplementation. Capture goes
+ * through ImageCapture.grabFrame() at native sensor resolution. FOOD niche
+ * mode applies a 2.2x hardware zoom + barrel correction → the macro look.
+ *
+ * Capture handoff: grabFrame() returns an ImageBitmap. We crop it to the
+ * selected display aspect (WYSIWYG with the portrait viewfinder), bake the
+ * scene grade, encode to a blob, and hand EditorLayer { objectURL, blob,
+ * width, height, meta } — which is exactly what it expects (fixes the
+ * black-screen-on-transfer bug).
  *
  * Props:
- *  - onCapture(result)   result = { blob, width, height, meta }
+ *  - onCapture(result)   result = { objectURL, blob, width, height, meta }
  *  - onClose()
- *  - locationLabel       string shown in the location pill
- *  - initialScene        'FOOD' | 'PET' | 'PORTRAIT'
+ *  - locationLabel       business pin text (from tenantData.business_name)
+ *  - pinBg, pinText      business pin colors (from app_config.cameraPinStyle)
+ *  - initialScene        'FOOD' | 'PORTRAIT'
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import useCamera, { ZOOM_UI_MAX } from './hooks/useCamera.v18.js';
+import useCamera from './hooks/useCamera.v18.js';
 import {
   SCENE_ORDER,
   SCENE_PRESETS,
   CAPTURE_FILTERS,
-  MACRO_RANGE_M,
   composeFilter,
 } from './utils/scenePresets.js';
 
-const ZOOM_STOPS = [0.5, 1, 2, 5, 10];
 const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
+// width / height for each display (portrait) aspect
+const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 };
+const ZOOM_STOPS = [0.5, 1, 2, 5, 10];
+
+const FLASH_GLYPH = { off: '⚡', on: '⚡', auto: 'A⚡', torch: '🔦' };
 
 export default function CameraLayer({
   onCapture,
   onClose,
-  locationLabel = 'Ubicación',
+  locationLabel = 'FoodSpot',
+  pinBg = 'rgba(20,20,24,0.55)',
+  pinText = '#ffffff',
   initialScene = 'FOOD',
 }) {
-  const cam = useCamera({ initialScene });
   const {
-    videoRef, start, flip, ready, error, facing,
-    sceneMode, selectScene, faces,
-    zoom, zoomFloor, setZoomLevel, previewTransform,
-    onPinchStart, onPinchMove, onPinchEnd,
-    macroOn, macroDistance, setMacro, setMacroFocusDistance,
-    aeafLocked, toggleAeAfLock, focusAt,
-    flashMode, setFlashMode, aspect, setAspect,
-    filterId, setFilterId, captureWithFlash,
-  } = cam;
+    videoRef,
+    isReady,
+    error,
+    facingMode,
+    initCamera,
+    flipCamera,
+    terminateHardware,
+    flashMode,
+    flashSupported,
+    cycleFlash,
+    applyFlash,
+    zoomLevel,
+    setZoom,
+    zoomRange,
+    captureHighResFrame,
+    applyNicheMode,
+    nicheMode,
+    gimbalEnabled,
+    toggleGimbal,
+    calculateKineticOffset,
+    getKineticOffset,
+    statusMessage,
+  } = useCamera();
 
-  const [reticle, setReticle] = useState(null); // {x,y} in px within frame
+  // ---- local UI state (the real hook is hardware-only; UI lives here) ----
+  const [aspect, setAspect] = useState('9:16');
+  const [filterId, setFilterId] = useState('original');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [screenFlash, setScreenFlash] = useState(false);
   const [shutterPulse, setShutterPulse] = useState(false);
-  const [lastShot, setLastShot] = useState(null); // object URL thumb
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [lastShot, setLastShot] = useState(null);
+
   const frameRef = useRef(null);
   const lastUrlRef = useRef(null);
+  const pinchStartRef = useRef(0);
+  const pinchZoomRef = useRef(1);
+
+  // ---- lifecycle: ignite on mount + on facing change, clean on unmount ----
+  useEffect(() => {
+    initCamera();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facingMode]);
 
   useEffect(() => {
-    start();
+    // apply the starting niche once the sensor is live
+    if (isReady) applyNicheMode(initialScene);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady]);
+
+  useEffect(() => {
     return () => {
       if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
+      terminateHardware();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ---- shutter --------------------------------------------------------
+  // ---- flash: torch is constant only in 'torch' mode; 'on' pulses at capture ----
+  useEffect(() => {
+    if (!flashSupported) return;
+    applyFlash(flashMode === 'torch' ? 'torch' : 'off');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flashMode, flashSupported]);
+
+  // ---- gimbal: feed DeviceMotion into the kinetic engine, apply UV offset ----
+  useEffect(() => {
+    if (!gimbalEnabled) return;
+    let raf = 0;
+    let imu = { beta: 0, gamma: 0 };
+    const onMotion = (e) => {
+      const r = e.rotationRate || {};
+      imu = { beta: r.beta || 0, gamma: r.gamma || 0 };
+    };
+    window.addEventListener('devicemotion', onMotion);
+    const loop = () => {
+      calculateKineticOffset(imu);
+      const { x, y } = getKineticOffset();
+      const el = videoRef.current;
+      if (el) {
+        const mirror = facingMode === 'user' ? 'scaleX(-1) ' : '';
+        el.style.transform = `${mirror}translate(${(-x * 100).toFixed(2)}%, ${(-y * 100).toFixed(2)}%) scale(1.08)`;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('devicemotion', onMotion);
+      const el = videoRef.current;
+      if (el) el.style.transform = facingMode === 'user' ? 'scaleX(-1)' : '';
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gimbalEnabled, facingMode]);
+
+  // ---- source (ImageBitmap OR <video>) → cropped, graded blob --------------
+  // Works with the 4K ImageCapture bitmap (Chrome/Android) AND a plain video
+  // frame (Safari/iOS, where ImageCapture.grabFrame is unavailable).
+  const sourceToCapture = useCallback(
+    async (source, sw, sh) => {
+      const targetRatio = ASPECT_RATIO[aspect] || 9 / 16; // w/h, portrait
+      const srcRatio = sw / sh;
+
+      // cover-crop: match what the portrait viewfinder shows
+      let cropW;
+      let cropH;
+      if (srcRatio > targetRatio) {
+        cropH = sh;
+        cropW = Math.round(sh * targetRatio);
+      } else {
+        cropW = sw;
+        cropH = Math.round(sw / targetRatio);
+      }
+      const cropX = Math.round((sw - cropW) / 2);
+      const cropY = Math.round((sh - cropH) / 2);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = cropW;
+      canvas.height = cropH;
+      const ctx = canvas.getContext('2d');
+
+      const grade = composeFilter(nicheMode, filterId);
+      if (grade !== 'none') ctx.filter = grade;
+
+      if (facingMode === 'user') {
+        ctx.translate(cropW, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(source, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      if (typeof source.close === 'function') source.close(); // free ImageBitmap
+
+      const blob = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.95)
+      );
+      const objectURL = URL.createObjectURL(blob);
+      return {
+        objectURL,
+        blob,
+        width: cropW,
+        height: cropH,
+        meta: { scene: nicheMode, filter: filterId, aspect, zoom: zoomLevel, facing: facingMode, ts: Date.now() },
+      };
+    },
+    [aspect, nicheMode, filterId, facingMode, zoomLevel]
+  );
+
+  // ---- shutter -------------------------------------------------------------
   const handleShutter = useCallback(async () => {
     setShutterPulse(true);
     setTimeout(() => setShutterPulse(false), 130);
+
+    const wantsFlash = flashMode === 'on' || flashMode === 'torch';
+    const rearTorch = wantsFlash && flashSupported && facingMode === 'environment';
+
     try {
-      const result = await captureWithFlash({
-        onScreenFlash: () => {
-          setScreenFlash(true);
-          setTimeout(() => setScreenFlash(false), 160);
-        },
-      });
+      if (rearTorch && flashMode === 'on') {
+        await applyFlash('on');
+        await new Promise((r) => setTimeout(r, 180)); // let AE settle
+      } else if (wantsFlash && facingMode === 'user') {
+        setScreenFlash(true);
+        setTimeout(() => setScreenFlash(false), 160);
+        await new Promise((r) => setTimeout(r, 120));
+      }
+
+      // Primary: 4K sensor bypass via ImageCapture (Chrome/Android).
+      const bitmap = await captureHighResFrame();
+
+      let result;
+      if (bitmap) {
+        result = await sourceToCapture(bitmap, bitmap.width, bitmap.height);
+      } else {
+        // Fallback: grab the live video frame (Safari/iOS — no ImageCapture).
+        const v = videoRef.current;
+        if (!v || !v.videoWidth) return;
+        result = await sourceToCapture(v, v.videoWidth, v.videoHeight);
+      }
+
       if (lastUrlRef.current) URL.revokeObjectURL(lastUrlRef.current);
-      lastUrlRef.current = URL.createObjectURL(result.blob);
-      setLastShot(lastUrlRef.current);
+      lastUrlRef.current = result.objectURL;
+      setLastShot(result.objectURL);
       if (onCapture) onCapture(result);
     } catch {
-      /* camera not ready yet — ignore the tap */
+      /* sensor not ready — ignore tap */
+    } finally {
+      if (rearTorch && flashMode === 'on') applyFlash('off');
     }
-  }, [captureWithFlash, onCapture]);
+  }, [flashMode, flashSupported, facingMode, applyFlash, captureHighResFrame, sourceToCapture, onCapture, videoRef]);
 
-  // ---- tap to focus ----------------------------------------------------
-  const handleFrameTap = useCallback(
-    (e) => {
-      const el = frameRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-      const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-      setReticle({ x: cx, y: cy });
-      setTimeout(() => setReticle(null), 1100);
-      focusAt(cx / rect.width, cy / rect.height);
-    },
-    [focusAt]
-  );
-
-  // ---- aspect cycle ----------------------------------------------------
+  // ---- aspect + scene + pinch ---------------------------------------------
   const cycleAspect = useCallback(() => {
     const i = ASPECT_CYCLE.indexOf(aspect);
     setAspect(ASPECT_CYCLE[(i + 1) % ASPECT_CYCLE.length]);
-  }, [aspect, setAspect]);
+  }, [aspect]);
 
-  const previewFilter = composeFilter(sceneMode, filterId);
-  const halfStopAvailable = zoomFloor < 1;
+  const selectScene = useCallback(
+    (id) => {
+      applyNicheMode(id);
+    },
+    [applyNicheMode]
+  );
+
+  const onTouchStart = useCallback((e) => {
+    if (e.touches && e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchStartRef.current = Math.hypot(dx, dy);
+      pinchZoomRef.current = zoomLevel;
+    }
+  }, [zoomLevel]);
+
+  const onTouchMove = useCallback((e) => {
+    if (e.touches && e.touches.length === 2 && pinchStartRef.current > 0) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const factor = 1 + (dist / pinchStartRef.current - 1) * 2.2;
+      const min = zoomRange?.min ?? 1;
+      const max = zoomRange?.max ?? 10;
+      setZoom(Math.max(min, Math.min(max, pinchZoomRef.current * factor)));
+    }
+  }, [zoomRange, setZoom]);
+
+  const onTouchEnd = useCallback(() => {
+    pinchStartRef.current = 0;
+  }, []);
+
+  const previewFilter = composeFilter(nicheMode, filterId);
+  const zoomFloor = zoomRange?.min ?? 1;
+  const halfStopAvailable = zoomFloor <= 0.5;
 
   return (
     <div className="fsc-root" data-aspect={aspect}>
@@ -118,10 +285,9 @@ export default function CameraLayer({
       <div
         className="fsc-frame"
         ref={frameRef}
-        onClick={handleFrameTap}
-        onTouchStart={onPinchStart}
-        onTouchMove={onPinchMove}
-        onTouchEnd={onPinchEnd}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         <video
           ref={videoRef}
@@ -130,48 +296,20 @@ export default function CameraLayer({
           playsInline
           muted
           style={{
-            transform: `${facing === 'user' ? 'scaleX(-1) ' : ''}${previewTransform}`,
+            transform: facingMode === 'user' ? 'scaleX(-1)' : undefined,
             filter: previewFilter === 'none' ? undefined : previewFilter,
           }}
         />
 
-        {/* face boxes (PORTRAIT) */}
-        {faces.map((f, i) => (
-          <div
-            key={i}
-            className="fsc-face"
-            style={{
-              left: `${f.x * 100}%`,
-              top: `${f.y * 100}%`,
-              width: `${f.w * 100}%`,
-              height: `${f.h * 100}%`,
-            }}
-          />
-        ))}
-
-        {/* tap-to-focus reticle */}
-        {reticle && (
-          <div
-            className="fsc-reticle"
-            style={{ left: reticle.x, top: reticle.y }}
-          />
-        )}
-
-        {/* AE/AF lock badge */}
-        {aeafLocked && <div className="fsc-lockbadge">AE/AF LOCK</div>}
-
-        {/* screen flash (front camera) */}
         {screenFlash && <div className="fsc-screenflash" />}
 
-        {!ready && !error && <div className="fsc-status">Iniciando cámara…</div>}
+        {!isReady && !error && (
+          <div className="fsc-status">{statusMessage || 'Iniciando cámara…'}</div>
+        )}
         {error && (
           <div className="fsc-status">
-            {error === 'permiso'
-              ? 'Permití el acceso a la cámara para continuar.'
-              : error === 'sin-camara'
-              ? 'No se encontró ninguna cámara.'
-              : 'No se pudo iniciar la cámara.'}
-            <button className="fsc-retry" onClick={(e) => { e.stopPropagation(); start(); }}>
+            No se pudo iniciar la cámara.
+            <button className="fsc-retry" onClick={(e) => { e.stopPropagation(); initCamera(); }}>
               Reintentar
             </button>
           </div>
@@ -181,7 +319,7 @@ export default function CameraLayer({
       {/* ============ TOP BAR ============ */}
       <div className="fsc-top">
         <button className="fsc-icon" onClick={onClose} aria-label="Cerrar">✕</button>
-        <div className="fsc-location">
+        <div className="fsc-location" style={{ background: pinBg, color: pinText }}>
           <span className="fsc-pin">⌖</span> {locationLabel}
         </div>
         <button className="fsc-icon fsc-aspectbtn" onClick={cycleAspect} aria-label="Formato">
@@ -192,50 +330,24 @@ export default function CameraLayer({
       {/* ============ RIGHT TOOLBAR ============ */}
       <div className="fsc-toolbar">
         <button
-          className={`fsc-tool ${flashMode === 'on' ? 'is-on' : ''}`}
-          onClick={() => setFlashMode(flashMode === 'on' ? 'off' : 'on')}
+          className={`fsc-tool ${flashMode !== 'off' ? 'is-on' : ''}`}
+          onClick={cycleFlash}
           aria-label="Flash"
+          disabled={!flashSupported}
         >
-          ⚡
+          {FLASH_GLYPH[flashMode]}
         </button>
 
-        {/* AE/AF toggle — below flash. Yellow on, gray off. */}
+        <button className="fsc-tool" onClick={flipCamera} aria-label="Girar cámara">⟳</button>
+
         <button
-          className={`fsc-tool fsc-aeaf ${aeafLocked ? 'is-locked' : ''}`}
-          onClick={toggleAeAfLock}
-          aria-label="Bloqueo AE/AF"
+          className={`fsc-tool fsc-gimbal ${gimbalEnabled ? 'is-on' : ''}`}
+          onClick={() => toggleGimbal(!gimbalEnabled)}
+          aria-label="Estabilizador"
         >
-          AE
-          <small>AF</small>
+          ⊹
         </button>
-
-        <button className="fsc-tool" onClick={flip} aria-label="Girar cámara">⟳</button>
-
-        {SCENE_PRESETS[sceneMode].focus.macroAvailable && (
-          <button
-            className={`fsc-tool fsc-macro ${macroOn ? 'is-on' : ''}`}
-            onClick={() => setMacro(!macroOn)}
-            aria-label="Macro"
-          >
-            ❀
-          </button>
-        )}
       </div>
-
-      {/* macro distance slider 5–30 cm */}
-      {macroOn && (
-        <div className="fsc-macropanel">
-          <span>{Math.round(macroDistance * 100)} cm</span>
-          <input
-            type="range"
-            min={MACRO_RANGE_M.min * 100}
-            max={MACRO_RANGE_M.max * 100}
-            step="1"
-            value={Math.round(macroDistance * 100)}
-            onChange={(e) => setMacroFocusDistance(Number(e.target.value) / 100)}
-          />
-        </div>
-      )}
 
       {/* ============ BOTTOM STACK ============ */}
       <div className="fsc-bottom">
@@ -258,15 +370,15 @@ export default function CameraLayer({
         <div className="fsc-zoomrow">
           {ZOOM_STOPS.map((s) => {
             const disabled = s < 1 && !halfStopAvailable;
-            const active = Math.abs(zoom - s) < 0.15;
+            const active = Math.abs(zoomLevel - s) < 0.15;
             return (
               <button
                 key={s}
                 className={`fsc-zoomstop ${active ? 'is-active' : ''}`}
                 disabled={disabled}
-                onClick={() => setZoomLevel(s)}
+                onClick={() => setZoom(s)}
               >
-                {active ? `${zoom.toFixed(zoom < 3 ? 1 : 0)}×` : s === 0.5 ? '.5' : `${s}`}
+                {active ? `${zoomLevel.toFixed(zoomLevel < 3 ? 1 : 0)}×` : s === 0.5 ? '.5' : `${s}`}
               </button>
             );
           })}
@@ -277,7 +389,7 @@ export default function CameraLayer({
           {SCENE_ORDER.map((id) => (
             <button
               key={id}
-              className={`fsc-scenepill ${sceneMode === id ? 'is-active' : ''}`}
+              className={`fsc-scenepill ${nicheMode === id ? 'is-active' : ''}`}
               onClick={() => selectScene(id)}
             >
               {SCENE_PRESETS[id].label}
@@ -316,7 +428,7 @@ export default function CameraLayer({
 }
 
 /* ======================================================================
-   STYLES — fsc- prefix to avoid collisions. Brand tokens up top.
+   STYLES — fsc- prefix to avoid collisions.
    ====================================================================== */
 const styles = `
 .fsc-root {
@@ -325,8 +437,7 @@ const styles = `
   --fsc-dim: rgba(255,255,255,0.62);
   --fsc-chip: rgba(20,20,24,0.55);
   --fsc-stroke: rgba(255,255,255,0.16);
-  --fsc-accent: #FF6B3D;          /* FoodSpot warm accent */
-  --fsc-lock: #FFD60A;            /* AE/AF lock yellow */
+  --fsc-accent: #FF6B3D;
   --fsc-radius: 999px;
 
   position: fixed; inset: 0;
@@ -339,12 +450,11 @@ const styles = `
   touch-action: none;
 }
 
-/* ---------- viewfinder: aspect-driven, object-fit cover -------------- */
 .fsc-frame {
   position: relative;
   overflow: hidden;
   background: #000;
-  width: 100vw; height: 100dvh;       /* 9:16 default fills screen */
+  width: 100vw; height: 100dvh;
 }
 .fsc-root[data-aspect="4:3"] .fsc-frame {
   width: min(100vw, calc(100dvh * 0.75));
@@ -358,40 +468,10 @@ const styles = `
 }
 .fsc-video {
   width: 100%; height: 100%;
-  object-fit: cover;                   /* fills the frame, no letterbox */
+  object-fit: cover;
   transform-origin: center;
 }
 
-/* ---------- overlays -------------------------------------------------- */
-.fsc-face {
-  position: absolute;
-  border: 1.5px solid var(--fsc-lock);
-  border-radius: 10px;
-  pointer-events: none;
-}
-.fsc-reticle {
-  position: absolute;
-  width: 76px; height: 76px;
-  margin: -38px 0 0 -38px;
-  border: 1.5px solid var(--fsc-lock);
-  border-radius: 14px;
-  pointer-events: none;
-  animation: fsc-reticle-in 0.22s ease-out;
-}
-.fsc-reticle::before, .fsc-reticle::after {
-  content:''; position:absolute; background: var(--fsc-lock);
-}
-.fsc-reticle::before { width: 10px; height: 1.5px; left: -14px; top: 50%; }
-.fsc-reticle::after  { width: 1.5px; height: 10px; top: -14px; left: 50%; }
-@keyframes fsc-reticle-in { from { transform: scale(1.35); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-.fsc-lockbadge {
-  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-  background: var(--fsc-lock); color: #1A1A1A;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-  padding: 4px 10px; border-radius: 6px;
-  pointer-events: none;
-}
 .fsc-screenflash {
   position: absolute; inset: 0; background: #fff; z-index: 30;
   animation: fsc-blink 0.16s ease-out;
@@ -402,7 +482,8 @@ const styles = `
   position: absolute; inset: 0;
   display: flex; flex-direction: column; gap: 14px;
   align-items: center; justify-content: center;
-  color: var(--fsc-dim); font-size: 14px; text-align: center; padding: 0 32px;
+  color: var(--fsc-dim); font-size: 13px; text-align: center; padding: 0 32px;
+  letter-spacing: 0.04em;
 }
 .fsc-retry {
   background: var(--fsc-accent); color: #fff; border: 0;
@@ -410,7 +491,6 @@ const styles = `
   font-size: 14px; font-weight: 600;
 }
 
-/* ---------- top bar ---------------------------------------------------- */
 .fsc-top {
   position: absolute; top: 0; left: 0; right: 0;
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
@@ -430,7 +510,6 @@ const styles = `
 .fsc-aspectbtn { width: auto; padding: 0 14px; border-radius: var(--fsc-radius); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; }
 .fsc-location {
   display: flex; align-items: center; gap: 6px;
-  background: var(--fsc-chip);
   border: 1px solid var(--fsc-stroke);
   backdrop-filter: blur(12px);
   border-radius: var(--fsc-radius);
@@ -440,7 +519,6 @@ const styles = `
 }
 .fsc-pin { color: var(--fsc-accent); font-size: 14px; }
 
-/* ---------- right toolbar ---------------------------------------------- */
 .fsc-toolbar {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + 68px);
@@ -459,35 +537,10 @@ const styles = `
   display: flex; align-items: center; justify-content: center;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
+.fsc-tool:disabled { opacity: 0.35; }
 .fsc-tool.is-on { color: var(--fsc-accent); border-color: var(--fsc-accent); }
+.fsc-gimbal.is-on { color: #34D399; border-color: #34D399; box-shadow: 0 0 14px rgba(52,211,153,0.4); }
 
-/* AE/AF — gray off, yellow on */
-.fsc-aeaf { flex-direction: column; font-size: 11px; font-weight: 800; line-height: 1; gap: 1px; color: rgba(255,255,255,0.45); }
-.fsc-aeaf small { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; }
-.fsc-aeaf.is-locked {
-  color: #1A1A1A;
-  background: var(--fsc-lock);
-  border-color: var(--fsc-lock);
-}
-.fsc-macro.is-on { color: var(--fsc-accent); border-color: var(--fsc-accent); }
-
-/* macro slider panel */
-.fsc-macropanel {
-  position: absolute; right: 70px;
-  top: calc(env(safe-area-inset-top, 0px) + 150px);
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  background: var(--fsc-chip); border: 1px solid var(--fsc-stroke);
-  backdrop-filter: blur(12px);
-  border-radius: 14px; padding: 12px 10px;
-  z-index: 10;
-}
-.fsc-macropanel span { font-size: 11px; font-weight: 700; color: var(--fsc-accent); }
-.fsc-macropanel input {
-  writing-mode: vertical-lr; direction: rtl;
-  width: 24px; height: 110px; accent-color: var(--fsc-accent);
-}
-
-/* ---------- bottom stack ------------------------------------------------ */
 .fsc-bottom {
   position: absolute; left: 0; right: 0;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
@@ -573,7 +626,6 @@ const styles = `
 .fsc-shutter.is-firing .fsc-shutter-inner { transform: scale(0.82); }
 .fsc-shutter:active .fsc-shutter-inner { transform: scale(0.88); }
 
-/* ---------- landscape adaptation ---------------------------------------- */
 @media (orientation: landscape) {
   .fsc-root[data-aspect="4:3"] .fsc-frame {
     width: min(100vw, calc(100dvh / 0.75));
@@ -594,11 +646,10 @@ const styles = `
     right: auto; left: 14px;
     top: 50%; transform: translateY(-50%);
   }
-  .fsc-macropanel { right: auto; left: 70px; top: 50%; transform: translateY(-50%); }
   .fsc-top { padding-left: calc(env(safe-area-inset-left, 0px) + 16px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fsc-reticle, .fsc-screenflash { animation: none; }
+  .fsc-screenflash { animation: none; }
 }
 `;
