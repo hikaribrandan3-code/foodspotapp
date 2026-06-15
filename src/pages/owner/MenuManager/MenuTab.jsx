@@ -109,6 +109,12 @@ export default function MenuTab({
     const delta = clientX - dragStartX.current;
     setDragOffsetX(delta);
 
+    // If user is actively dragging (>40px movement), cancel the edit/delete modal timer
+    if ((delta < -40 || delta > 40) && extraHoldTimerRef.current) {
+      clearTimeout(extraHoldTimerRef.current);
+      extraHoldTimerRef.current = null;
+    }
+
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
     if (delta < -40 && currentIndex > 0) {
       setDragTargetIndex(currentIndex - 1);
