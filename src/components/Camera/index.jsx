@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import CameraLayer from './CameraLayer.jsx'
+import CameraLayerV18 from './CameraLayerV18.jsx'
 import EditorLayer from './EditorLayer.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
 import { useCamTechBroadcaster } from '../../hooks/useCamTech'
@@ -132,13 +133,21 @@ function Camera({ neonContext = null, branding = null }) {
             )}
 
             {mode === 'CAMERA' && (
-                <CameraLayer
-                    onCapture={handleCapture}
-                    onOpenSettings={handleOpenSettings}
-                    onClose={handleClose}
-                    toolPosition={toolPosition}
-                    isOwnerMode={isOwner}
-                />
+                isOwner ? (
+                    <CameraLayerV18
+                        onCapture={handleCapture}
+                        onOpenSettings={handleOpenSettings}
+                        onClose={handleClose}
+                        toolPosition={toolPosition}
+                    />
+                ) : (
+                    <CameraLayer
+                        onCapture={handleCapture}
+                        onOpenSettings={handleOpenSettings}
+                        onClose={handleClose}
+                        toolPosition={toolPosition}
+                    />
+                )
             )}
 
             {mode === 'EDITOR' && capturedImage && (
