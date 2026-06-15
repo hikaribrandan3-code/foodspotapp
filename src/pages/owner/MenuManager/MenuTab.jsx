@@ -116,19 +116,19 @@ export default function MenuTab({
       extraHoldTimerRef.current = null;
     }
 
-    // Auto-scroll container when dragging near edges
+    // Auto-scroll container aggressively when dragging near edges
     if (categoryScrollContainerRef.current) {
       const container = categoryScrollContainerRef.current;
       const containerRect = container.getBoundingClientRect();
-      const rightEdge = containerRect.right - 100; // 100px from right edge
-      const leftEdge = containerRect.left + 100;   // 100px from left edge
+      const rightEdge = containerRect.right - 60; // 60px from right edge (more aggressive)
+      const leftEdge = containerRect.left + 60;   // 60px from left edge
 
       if (clientX > rightEdge) {
-        // Scroll right
-        container.scrollLeft += 10;
+        // Scroll right — faster scroll
+        container.scrollLeft += 30;
       } else if (clientX < leftEdge) {
-        // Scroll left
-        container.scrollLeft -= 10;
+        // Scroll left — faster scroll
+        container.scrollLeft -= 30;
       }
     }
 
@@ -308,9 +308,8 @@ export default function MenuTab({
         ref={categoryScrollContainerRef}
         className="flex gap-3 mb-8 overflow-x-auto pb-2"
         style={{
-          scrollBehavior: 'smooth',
           WebkitOverflowScrolling: 'touch',
-          scrollSnapType: 'x proximity'
+          scrollBehavior: 'auto'
         }}
       >
         <button
@@ -352,7 +351,6 @@ export default function MenuTab({
                 border: isSwapTarget ? '2px dashed #10b981' : undefined,
                 opacity: isSwapTarget ? 0.6 : 1,
                 position: 'relative',
-                scrollSnapAlign: 'start',
                 flexShrink: 0,
               }}
               className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap select-none ${
