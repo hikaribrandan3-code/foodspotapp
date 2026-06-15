@@ -313,6 +313,19 @@ export default function OrderPayment({ config: configProp }) {
               <span style={{ color: '#6B7280', fontWeight: 500 }}>{formatPrice(item.price * item.quantity)}</span>
             </div>
           ))}
+          {order.delivery_fee > 0 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 14,
+              color: '#374151',
+              padding: '4px 0',
+              marginTop: 8,
+            }}>
+              <span>Delivery</span>
+              <span style={{ color: '#6B7280', fontWeight: 500 }}>{formatPrice(order.delivery_fee)}</span>
+            </div>
+          )}
           <div style={{
             marginTop: 12,
             paddingTop: 12,
