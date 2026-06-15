@@ -20,14 +20,14 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import useCamera, { ZOOM_UI_MAX } from '../hooks/useCamera';
+import useCamera, { ZOOM_UI_MAX } from './hooks/useCamera.v18.js';
 import {
   SCENE_ORDER,
   SCENE_PRESETS,
   CAPTURE_FILTERS,
   MACRO_RANGE_M,
   composeFilter,
-} from '../utils/scenePresets';
+} from './utils/scenePresets.js';
 
 const ZOOM_STOPS = [0.5, 1, 2, 5, 10];
 const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
