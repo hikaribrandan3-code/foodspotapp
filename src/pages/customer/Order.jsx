@@ -1329,10 +1329,10 @@ function Order({ config: configProp }) {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: loyaltyRedeemEnabled ? 12 : 0 }}>
                         <div>
                             <p style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                                🎁 {t('loyalty_redeem_banner') || `You have ${loyaltyBalance} pts!`}
+                                🎁 {t('loyaltyRedeemBanner')} ({loyaltyBalance} pts)
                             </p>
                             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', margin: '2px 0 0' }}>
-                                {t('loyalty_redeem_hint') || `Use ${loyaltySettings.points_to_redeem ?? 100} pts for a free item`}
+                                {t('loyaltyRedeemHint').replace('pts', loyaltySettings.points_to_redeem ?? 100)}
                             </p>
                         </div>
                         <button
