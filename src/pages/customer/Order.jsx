@@ -447,7 +447,15 @@ function Order({ config: configProp }) {
             customer_phone: customerInfo.phone || null,
             delivery_address: isDelivery ? (customerInfo.address || null) : null,
             table_number: orderType === 'dine_in' ? customerInfo.tableNumber : null,
-            notes: customerInfo.specialRequests || null,
+            notes: (() => {
+                const base = customerInfo.specialRequests || ''
+                if (loyaltyRedeemEnabled && loyaltyFreeItems.length > 0) {
+                    const freeItem = loyaltyFreeItems[loyaltySelectedItem]?.menu_item_name || loyaltyFreeItems[0]?.menu_item_name
+                    const freeNote = `🎁 FREE ITEM (loyalty): ${freeItem}`
+                    return base ? `${base} | ${freeNote}` : freeNote
+                }
+                return base || null
+            })(),
             payment_method: effectivePaymentMethod,
             distance_km: isDelivery ? distanceResult.distanceKm : null,
             created_at: new Date().toISOString()
@@ -633,11 +641,11 @@ function Order({ config: configProp }) {
                 return
             }
 
-            // ─── LOYALTY: earn + redeem (fire-and-forget, non-blocking) ───
+            // ─── LOYALTY: redeem only at placement, earn via DB trigger on delivery ───
             if (customerInfo.phone && businessId) {
                 const phone = customerInfo.phone
                 localStorage.setItem(`fs_loyalty_phone_${businessId}`, phone)
-                earnPoints(phone, businessId, savedOrder.id, subtotal).catch(() => {})
+                // Only redeem at order time — earning happens via DB trigger when order is confirmed
                 if (loyaltyRedeemEnabled && loyaltyBalance >= (loyaltySettings?.points_to_redeem ?? 100)) {
                     redeemPoints(phone, businessId, savedOrder.id).catch(() => {})
                 }
@@ -1190,6 +1198,79 @@ function Order({ config: configProp }) {
                 </div>
                 )}
 
+                {/* LOYALTY REDEEM BANNER — above order summary for micro-decision */}
+                {loyaltySettings && loyaltyFreeItems.length > 0 && loyaltyBalance >= (loyaltySettings.points_to_redeem ?? 100) && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
+                        borderRadius: 16,
+                        padding: '14px 16px',
+                        marginBottom: 12,
+                        boxShadow: '0 4px 16px rgba(5,150,105,0.2)',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: loyaltyRedeemEnabled ? 12 : 0 }}>
+                            <div>
+                                <p style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                                    🎁 {t('loyaltyRedeemBanner')} ({loyaltyBalance} pts)
+                                </p>
+                                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', margin: '2px 0 0' }}>
+                                    {t('loyaltyRedeemHint').replace('pts', loyaltySettings.points_to_redeem ?? 100)}
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setLoyaltyRedeemEnabled(v => !v)}
+                                style={{
+                                    width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                                    background: loyaltyRedeemEnabled ? '#ffffff' : 'rgba(255,255,255,0.3)',
+                                    position: 'relative', transition: 'background 0.2s', flexShrink: 0
+                                }}
+                            >
+                                <span style={{
+                                    position: 'absolute', top: 2, width: 20, height: 20, borderRadius: 10,
+                                    background: loyaltyRedeemEnabled ? '#059669' : '#ffffff',
+                                    transition: 'left 0.2s',
+                                    left: loyaltyRedeemEnabled ? 22 : 2,
+                                }} />
+                            </button>
+                        </div>
+                        {loyaltyRedeemEnabled && loyaltyFreeItems.length > 1 && (
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {loyaltyFreeItems.map((item, i) => (
+                                    <button
+                                        key={item.menu_item_id}
+                                        onClick={() => setLoyaltySelectedItem(i)}
+                                        style={{
+                                            padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                                            border: loyaltySelectedItem === i ? '2px solid #fff' : '2px solid rgba(255,255,255,0.4)',
+                                            background: loyaltySelectedItem === i ? 'rgba(255,255,255,0.25)' : 'transparent',
+                                            color: '#ffffff', cursor: 'pointer'
+                                        }}
+                                    >
+                                        {item.menu_item_name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {loyaltyRedeemEnabled && loyaltyFreeItems.length === 1 && (
+                            <p style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                                {t('loyaltyFreeItemSelected')} {loyaltyFreeItems[0]?.menu_item_name}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {/* Points reminder if they have balance but not enough yet */}
+                {loyaltySettings && loyaltyBalance > 0 && loyaltyBalance < (loyaltySettings.points_to_redeem ?? 100) && (
+                    <div style={{
+                        background: 'rgba(5,150,105,0.08)', borderRadius: 12, padding: '10px 14px',
+                        marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8
+                    }}>
+                        <span style={{ fontSize: 16 }}>⭐</span>
+                        <p style={{ fontSize: 12, color: '#059669', fontWeight: 600, margin: 0 }}>
+                            {loyaltyBalance} pts — {(loyaltySettings.points_to_redeem ?? 100) - loyaltyBalance} {t('loyaltyPointsAway')}
+                        </p>
+                    </div>
+                )}
+
                 {/* 4. ORDER ITEMS */}
                 <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
                     <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', marginBottom: 16 }}>{t('summary')}</h3>
@@ -1290,7 +1371,7 @@ function Order({ config: configProp }) {
                     )}
                     {loyaltyRedeemEnabled && loyaltyFreeItems.length === 1 && (
                         <p style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                            {t('loyalty_free_item_selected') || `Free: ${loyaltyFreeItems[0]?.menu_item_name}`}
+                            {t('loyaltyFreeItemSelected')} {loyaltyFreeItems[0]?.menu_item_name}
                         </p>
                     )}
                 </div>

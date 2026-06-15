@@ -215,6 +215,22 @@ export default function Receipt() {
                 </div>
               ))}
             </div>
+            {order.notes && order.notes.includes('🎁 FREE ITEM (loyalty):') && (
+              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>🎁</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
+                  {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || 'Free item (loyalty reward)'}
+                </span>
+              </div>
+            )}
+            {order.notes && !order.notes.includes('🎁 FREE ITEM (loyalty):') && (
+              <p style={{ fontSize: 12, color: '#6B7280', marginTop: 10, fontStyle: 'italic' }}>{order.notes}</p>
+            )}
+            {order.notes && order.notes.includes('🎁 FREE ITEM (loyalty):') && order.notes.includes(' | ') && (
+              <p style={{ fontSize: 12, color: '#6B7280', marginTop: 6, fontStyle: 'italic' }}>
+                {order.notes.split(' | 🎁')[0]}
+              </p>
+            )}
             <div style={{ borderTop: '1px solid #F3F4F6', marginTop: 12, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontWeight: 600, color: '#111827' }}>{t('total_label')}</span>
               <span style={{ fontSize: 18, fontWeight: 700 }}>${(Number(order.total) / 100).toFixed(2)}</span>
