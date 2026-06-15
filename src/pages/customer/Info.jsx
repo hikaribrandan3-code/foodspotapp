@@ -137,15 +137,15 @@ const Info = ({ config }) => {
                         }}>
                             <div style={{ textAlign: 'left' }}>
                                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    {t('loyalty_your_points') || 'Your Points'}
+                                    {t('loyaltyYourPoints')}
                                 </p>
                                 <p style={{ fontSize: 32, color: '#ffffff', margin: '2px 0 0', fontWeight: 900, lineHeight: 1 }}>
                                     {loyaltyPoints}
                                 </p>
                                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>
                                     {loyaltyPoints >= (loyaltySettings.points_to_redeem || 100)
-                                        ? (t('loyalty_ready_to_redeem') || '🎁 Ready to redeem! Use at checkout.')
-                                        : `${(loyaltySettings.points_to_redeem || 100) - loyaltyPoints} ${t('loyalty_points_away') || 'pts to a free item'}`
+                                        ? t('loyaltyReadyToRedeem')
+                                        : `${(loyaltySettings.points_to_redeem || 100) - loyaltyPoints} ${t('loyaltyPointsAway')}`
                                     }
                                 </p>
                             </div>
