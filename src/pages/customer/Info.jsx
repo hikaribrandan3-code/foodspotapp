@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabaseClient';
+import { getLoyaltyBalance, getLoyaltySettings } from '../../lib/loyaltyClient';
 import HeaderClamp from '../../components/HeaderClamp.jsx';
 import BurgerLoader from '../../components/BurgerLoader';
 
@@ -12,6 +13,9 @@ const Info = ({ config }) => {
     const { tenantData, loading } = useTenant();
     const { t } = useLanguage();
     const [authUser, setAuthUser] = useState(null);
+    const [loyaltyPoints, setLoyaltyPoints] = useState(null);
+    const [loyaltySettings, setLoyaltySettingsState] = useState(null);
+    const { businessId } = useTenant();
 
     useEffect(() => {
         const checkOwner = async () => {
@@ -20,6 +24,21 @@ const Info = ({ config }) => {
         };
         checkOwner();
     }, []);
+
+    useEffect(() => {
+        if (!businessId) return;
+        const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone');
+        if (!phone) return;
+        Promise.all([
+            getLoyaltyBalance(phone, businessId),
+            getLoyaltySettings(businessId),
+        ]).then(([{ data: account }, { data: settings }]) => {
+            if (settings?.enabled) {
+                setLoyaltyPoints(account?.points_balance ?? 0);
+                setLoyaltySettingsState(settings);
+            }
+        });
+    }, [businessId]);
 
     const isOwner = authUser && (authUser.id === tenantData?.user_id || authUser.id === tenantData?.owner_id);
 
@@ -103,6 +122,37 @@ const Info = ({ config }) => {
             }}>
                 {/* 2. COLORFUL BUTTON STACK - Now uses config from Settings */}
                 <div>
+                    {/* LOYALTY POINTS CARD */}
+                    {loyaltyPoints !== null && loyaltySettings && (
+                        <div style={{
+                            fontFamily: "'Outfit', sans-serif",
+                            background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
+                            borderRadius: 20,
+                            padding: '18px 20px',
+                            marginBottom: 16,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            boxShadow: '0 4px 20px rgba(5,150,105,0.25)',
+                        }}>
+                            <div style={{ textAlign: 'left' }}>
+                                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    {t('loyalty_your_points') || 'Your Points'}
+                                </p>
+                                <p style={{ fontSize: 32, color: '#ffffff', margin: '2px 0 0', fontWeight: 900, lineHeight: 1 }}>
+                                    {loyaltyPoints}
+                                </p>
+                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>
+                                    {loyaltyPoints >= (loyaltySettings.points_to_redeem || 100)
+                                        ? (t('loyalty_ready_to_redeem') || '🎁 Ready to redeem! Use at checkout.')
+                                        : `${(loyaltySettings.points_to_redeem || 100) - loyaltyPoints} ${t('loyalty_points_away') || 'pts to a free item'}`
+                                    }
+                                </p>
+                            </div>
+                            <div style={{ fontSize: 36, lineHeight: 1 }}>🎁</div>
+                        </div>
+                    )}
+
                     {/* VENUE INFO HERO CARD */}
                     {(whatsapp || address || mapsUrl || businessHours) && (
                         <div style={{

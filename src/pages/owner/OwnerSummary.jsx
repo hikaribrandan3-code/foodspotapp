@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CreditCard, Banknote, DollarSign, MapPin, Link as LinkIcon, Globe,
     Settings, Phone, ChevronRight, ChevronDown, RefreshCw, BarChart3,
-    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download
+    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download, Gift
 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { clearAuth } from '../../utils/storage.js'
@@ -12,6 +12,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
+import { getLoyaltySettings, upsertLoyaltySettings, getLoyaltyFreeItems, saveLoyaltyFreeItems } from '../../lib/loyaltyClient.js'
 import { formatPrice } from '../../config/menuData.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
@@ -129,8 +130,66 @@ function OwnerSummary() {
         qr: false,
         language: true,
         team: false,
+        loyalty: false,
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
+
+    // ─── LOYALTY REWARDS STATE ──────────────────────────────────────
+    const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
+    const [loyaltyMinOrder, setLoyaltyMinOrder] = useState('8000')
+    const [loyaltyPointsPerOrder, setLoyaltyPointsPerOrder] = useState('50')
+    const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState('100')
+    const [loyaltyMenuItems, setLoyaltyMenuItems] = useState([])
+    const [loyaltyFreeSlots, setLoyaltyFreeSlots] = useState(['', '', ''])
+    const [loyaltySaving, setLoyaltySaving] = useState(false)
+    const [loyaltySaved, setLoyaltySaved] = useState(false)
+    const loyaltyInitialized = useRef(false)
+
+    useEffect(() => {
+        if (!businessId || loyaltyInitialized.current) return
+        loyaltyInitialized.current = true
+
+        const load = async () => {
+            const [{ data: settings }, { data: freeItems }, { data: menuItems }] = await Promise.all([
+                getLoyaltySettings(businessId),
+                getLoyaltyFreeItems(businessId),
+                supabase.from('menu_items').select('id, name, price').eq('business_id', businessId).eq('available', true).order('name'),
+            ])
+            if (settings) {
+                setLoyaltyEnabled(settings.enabled ?? false)
+                setLoyaltyMinOrder(String(Math.round((settings.min_order_cents ?? 800000) / 100)))
+                setLoyaltyPointsPerOrder(String(settings.points_per_order ?? 50))
+                setLoyaltyPointsToRedeem(String(settings.points_to_redeem ?? 100))
+            }
+            if (freeItems?.length) {
+                const slots = ['', '', '']
+                freeItems.forEach((item, i) => { if (i < 3) slots[i] = item.menu_item_id })
+                setLoyaltyFreeSlots(slots)
+            }
+            if (menuItems) setLoyaltyMenuItems(menuItems)
+        }
+        load()
+    }, [businessId])
+
+    const saveLoyalty = async () => {
+        if (!businessId) return
+        setLoyaltySaving(true)
+        const minCents = Math.round(parseFloat(loyaltyMinOrder || '0') * 100)
+        await upsertLoyaltySettings({
+            enabled: loyaltyEnabled,
+            min_order_cents: minCents,
+            points_per_order: parseInt(loyaltyPointsPerOrder || '50'),
+            points_to_redeem: parseInt(loyaltyPointsToRedeem || '100'),
+        }, businessId)
+        const chosenItems = loyaltyFreeSlots
+            .map(id => loyaltyMenuItems.find(m => m.id === id))
+            .filter(Boolean)
+            .map(m => ({ menu_item_id: m.id, menu_item_name: m.name }))
+        await saveLoyaltyFreeItems(chosenItems, businessId)
+        setLoyaltySaving(false)
+        setLoyaltySaved(true)
+        setTimeout(() => setLoyaltySaved(false), 2000)
+    }
 
     // ☁️ CLOUD LEDGER STATE — permanent revenue source (survives order deletion)
     const [ledgerEntries, setLedgerEntries] = useState([])
@@ -1130,6 +1189,121 @@ function OwnerSummary() {
                                             {t('qr_section_note')}
                                         </p>
                                     </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Loyalty Rewards */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
+                    <SectionHeader
+                        icon={<Gift size={14} />}
+                        title={t('loyalty_section') || 'Loyalty Rewards'}
+                        isOpen={openSections.loyalty}
+                        onToggle={() => toggleSection('loyalty')}
+                    />
+                    <AnimatePresence>
+                        {openSections.loyalty && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    {/* ON/OFF Toggle */}
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-bold text-stone-950 dark:text-white">{t('loyalty_enabled') || 'Enable Rewards Program'}</p>
+                                            <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t('loyalty_enabled_hint') || 'Customers earn points on qualifying orders'}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setLoyaltyEnabled(v => !v)}
+                                            className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${loyaltyEnabled ? 'bg-emerald-600' : 'bg-stone-200 dark:bg-stone-700'}`}
+                                        >
+                                            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${loyaltyEnabled ? 'left-[22px]' : 'left-0.5'}`} />
+                                        </button>
+                                    </div>
+
+                                    {loyaltyEnabled && (
+                                        <div className="space-y-4 pt-1 border-t border-stone-100 dark:border-white/5">
+                                            {/* Min order */}
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyalty_min_order') || 'Min. Order to Earn (ARS)'}</label>
+                                                <input
+                                                    type="number"
+                                                    value={loyaltyMinOrder}
+                                                    onChange={e => setLoyaltyMinOrder(e.target.value)}
+                                                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                    placeholder="8000"
+                                                />
+                                                <p className="text-xs text-stone-400 mt-1">{t('loyalty_min_order_hint') || 'Orders above this amount earn points'}</p>
+                                            </div>
+
+                                            {/* Points per order */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyalty_points_earn') || 'Points per order'}</label>
+                                                    <input
+                                                        type="number"
+                                                        value={loyaltyPointsPerOrder}
+                                                        onChange={e => setLoyaltyPointsPerOrder(e.target.value)}
+                                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                        placeholder="50"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('loyalty_points_redeem') || 'Points to redeem'}</label>
+                                                    <input
+                                                        type="number"
+                                                        value={loyaltyPointsToRedeem}
+                                                        onChange={e => setLoyaltyPointsToRedeem(e.target.value)}
+                                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                        placeholder="100"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-stone-400 -mt-2">
+                                                {t('loyalty_points_hint') || `Customers redeem ${loyaltyPointsToRedeem} pts for 1 free item`}
+                                            </p>
+
+                                            {/* Free Item Pickers */}
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('loyalty_free_items') || 'Free Item Options (pick up to 3)'}</label>
+                                                <div className="space-y-2">
+                                                    {[0, 1, 2].map(i => (
+                                                        <select
+                                                            key={i}
+                                                            value={loyaltyFreeSlots[i]}
+                                                            onChange={e => {
+                                                                const next = [...loyaltyFreeSlots]
+                                                                next[i] = e.target.value
+                                                                setLoyaltyFreeSlots(next)
+                                                            }}
+                                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all appearance-none cursor-pointer"
+                                                        >
+                                                            <option value="">{t('loyalty_select_item') || `— Free item ${i + 1} —`}</option>
+                                                            {loyaltyMenuItems.map(item => (
+                                                                <option key={item.id} value={item.id}>{item.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    ))}
+                                                </div>
+                                                <p className="text-xs text-stone-400 mt-1.5">{t('loyalty_free_items_hint') || 'Customer picks 1 of these when redeeming'}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Save button */}
+                                    <motion.button
+                                        whileTap={{ scale: 0.97 }}
+                                        onClick={saveLoyalty}
+                                        disabled={loyaltySaving}
+                                        className="w-full py-2.5 rounded-xl text-sm font-black uppercase tracking-[0.15em] bg-emerald-600 text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                                    >
+                                        {loyaltySaved ? <><Check size={14} /> {t('saved') || 'Saved'}</> : loyaltySaving ? (t('saving') || 'Saving...') : <><Gift size={14} /> {t('save_loyalty') || 'Save Rewards'}</>}
+                                    </motion.button>
                                 </div>
                             </motion.div>
                         )}
