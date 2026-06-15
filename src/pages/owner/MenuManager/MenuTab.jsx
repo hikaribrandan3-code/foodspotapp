@@ -117,22 +117,6 @@ export default function MenuTab({
       extraHoldTimerRef.current = null;
     }
 
-    // Auto-scroll container aggressively when dragging near edges
-    if (categoryScrollContainerRef.current) {
-      const container = categoryScrollContainerRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const rightEdge = containerRect.right - 60; // 60px from right edge (more aggressive)
-      const leftEdge = containerRect.left + 60;   // 60px from left edge
-
-      if (clientX > rightEdge) {
-        // Scroll right — faster scroll
-        container.scrollLeft += 30;
-      } else if (clientX < leftEdge) {
-        // Scroll left — faster scroll
-        container.scrollLeft -= 30;
-      }
-    }
-
     const currentIndex = categories.findIndex(c => c.id === dragPillId);
     const pillWidth = 110; // Approximate pill width (px)
     const swapsAllowed = Math.floor(Math.abs(delta) / pillWidth);
