@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabaseClient'
 import CameraLayer from './CameraLayer.jsx'
 import EditorLayer from './EditorLayer.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
@@ -17,11 +18,30 @@ export const VERSION = 'CamTech v2.2'
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
     const { activateCamera, deactivateCamera } = useCamTechBroadcaster()
+    const [isOwner, setIsOwner] = useState(false)
+    const [authLoading, setAuthLoading] = useState(true)
 
     const [mode, setMode] = useState('CAMERA')
     const [capturedImage, setCapturedImage] = useState(null)
     const [showSettings, setShowSettings] = useState(false)
     const [toolPosition, setToolPosition] = useState('right')
+
+    // --- AUTH CHECK: Detect if user is owner (building camera for owners) ---
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (session?.user?.user_metadata?.role === 'owner') {
+                    setIsOwner(true)
+                }
+            } catch (err) {
+                console.error('Auth check failed:', err)
+            } finally {
+                setAuthLoading(false)
+            }
+        }
+        checkAuth()
+    }, [])
 
     // --- CAMTECH BLACK BOX: Global State Management ---
     useEffect(() => {
@@ -64,6 +84,25 @@ function Camera({ neonContext = null, branding = null }) {
         setToolPosition(position)
     }
 
+    if (authLoading) {
+        return (
+            <div className="camera-fullscreen-wrapper" style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: '#000',
+                zIndex: 1000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <div style={{ color: '#fff', fontSize: 16 }}>Loading camera...</div>
+            </div>
+        )
+    }
+
     return (
         <div className="camera-fullscreen-wrapper" style={{
             position: 'fixed',
@@ -75,12 +114,32 @@ function Camera({ neonContext = null, branding = null }) {
             zIndex: 1000,
             pointerEvents: 'auto'
         }}>
+            {/* Camera version badge (owners only) */}
+            {isOwner && (
+                <div style={{
+                    position: 'fixed',
+                    top: 12,
+                    left: 12,
+                    background: '#10B981',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    borderRadius: 4,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    zIndex: 1001,
+                    textTransform: 'uppercase'
+                }}>
+                    Building Camera
+                </div>
+            )}
+
             {mode === 'CAMERA' && (
                 <CameraLayer
                     onCapture={handleCapture}
                     onOpenSettings={handleOpenSettings}
                     onClose={handleClose}
                     toolPosition={toolPosition}
+                    isOwnerMode={isOwner}
                 />
             )}
 
