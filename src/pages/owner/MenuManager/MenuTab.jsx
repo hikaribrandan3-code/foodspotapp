@@ -247,6 +247,28 @@ export default function MenuTab({
     };
   }, [actionCategoryId]);
 
+  // Auto-scroll container to keep drag target visible
+  useEffect(() => {
+    if (!dragTargetIndex !== null || !categoryScrollContainerRef.current || !isDragging.current) return;
+
+    const container = categoryScrollContainerRef.current;
+    const targetPill = container.querySelectorAll('button')[dragTargetIndex + 1]; // +1 for "All Categories" button
+
+    if (targetPill) {
+      const pillRect = targetPill.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // If target is off-screen, scroll to make it visible
+      if (pillRect.right > containerRect.right) {
+        // Off-screen right
+        container.scrollLeft += Math.min(pillRect.right - containerRect.right + 20, 60);
+      } else if (pillRect.left < containerRect.left) {
+        // Off-screen left
+        container.scrollLeft -= Math.min(containerRect.left - pillRect.left + 20, 60);
+      }
+    }
+  }, [dragTargetIndex, isDragging.current]);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
