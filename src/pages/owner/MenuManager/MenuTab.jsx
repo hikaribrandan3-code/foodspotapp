@@ -48,6 +48,7 @@ export default function MenuTab({
   const isDragging = useRef(false);
   const actionModalRef = useRef(null);
   const categoryScrollContainerRef = useRef(null);
+  const lastSwapsAllowed = useRef(0);
   const [newRecipe, setNewRecipe] = useState({
     name: '',
     description: '',
@@ -136,16 +137,21 @@ export default function MenuTab({
     const pillWidth = 110; // Approximate pill width (px)
     const swapsAllowed = Math.floor(Math.abs(delta) / pillWidth);
 
-    let newTargetIndex = null;
-    if (delta < -40 && currentIndex > 0) {
-      // Dragging left — can swap multiple positions left
-      newTargetIndex = Math.max(0, currentIndex - swapsAllowed);
-    } else if (delta > 40 && currentIndex < categories.length - 1) {
-      // Dragging right — can swap multiple positions right
-      newTargetIndex = Math.min(categories.length - 1, currentIndex + swapsAllowed);
-    }
+    // Only update target if swapsAllowed changed (reduces jitter)
+    if (swapsAllowed !== lastSwapsAllowed.current) {
+      lastSwapsAllowed.current = swapsAllowed;
 
-    setDragTargetIndex(newTargetIndex);
+      let newTargetIndex = null;
+      if (delta < -40 && currentIndex > 0) {
+        // Dragging left — can swap multiple positions left
+        newTargetIndex = Math.max(0, currentIndex - swapsAllowed);
+      } else if (delta > 40 && currentIndex < categories.length - 1) {
+        // Dragging right — can swap multiple positions right
+        newTargetIndex = Math.min(categories.length - 1, currentIndex + swapsAllowed);
+      }
+
+      setDragTargetIndex(newTargetIndex);
+    }
   };
 
   const handleDragEnd = () => {
@@ -163,6 +169,7 @@ export default function MenuTab({
     setDragOffsetX(0);
     setDragTargetIndex(null);
     isDragging.current = false;
+    lastSwapsAllowed.current = 0;
   };
 
   const handleEditCategory = () => {
