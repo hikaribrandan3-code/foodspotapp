@@ -128,10 +128,14 @@ function burnBranding(ctx, width, height, branding, trueScale) {
     const pillW = pillPaddingH + pinSize + pinTextGap + textW + pillPaddingH
     const pillH = pillPaddingV + Math.max(pinSize, fontSize) + pillPaddingV
 
-    // Top-left positioning (match DOM pill in EditorLayer)
-    // Position below close button and text tools (approximately 70-80px from top)
+    // Top-left positioning (match DOM pill in EditorLayer).
+    // pillY is relative to image HEIGHT, not a flat width-scaled pixel —
+    // a fixed pixel inset looks fine on tall 9:16 frames but sits
+    // disproportionately close to the top on shorter 4:3/1:1 frames.
+    // 10.8% matches the original 75px-on-9:16 baseline exactly, and now
+    // scales correctly to every aspect ratio.
     const pillX = Math.round(16 * scale)
-    const pillY = Math.round(75 * scale)  // Below close button and toolbar
+    const pillY = Math.round(height * 0.108)
 
     // Glassmorphism pill background — color driven by cameraPinStyle
     const pillColor = cameraPinStyle === 'custom'

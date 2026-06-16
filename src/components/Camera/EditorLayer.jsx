@@ -517,12 +517,13 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
 
             {/* ── TOP LEFT: Location Pill — anchored to the ACTUAL rendered image ──
                  (not the screen) so it sits inside the photo on 9:16 / 4:3 / 1:1.
-                 16px left / 75px top from the image origin matches the baked
-                 output in ExportEngine.burnBranding exactly. */}
+                 Top inset is 10.8% of the image's own height (not a flat pixel)
+                 so it lands in the same VISUAL spot on every aspect ratio —
+                 matches ExportEngine.burnBranding's pillY exactly. */}
             {!preview && canvasDimensions.width > 0 && (
                 <div style={{
                     position: 'absolute',
-                    top: `${canvasOffset.y + 75}px`,
+                    top: `${canvasOffset.y + canvasDimensions.height * 0.108}px`,
                     left: `${canvasOffset.x + 16}px`,
                     display: 'flex',
                     alignItems: 'center',
