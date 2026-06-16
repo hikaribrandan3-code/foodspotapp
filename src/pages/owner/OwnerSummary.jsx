@@ -1310,7 +1310,7 @@ function OwnerSummary() {
                                                     placeholder="10"
                                                     min="0"
                                                 />
-                                                <p className="text-xs text-stone-400 mt-1">{t('ugcReceiptsHint') || 'Points awarded per photo shared'}</p>
+                                                <p className="text-xs text-stone-400 mt-1">{t('ugcReceiptsHint') || 'Reward per photo shared — drives viral moments & customer content'}</p>
                                             </div>
 
                                             {/* Share & Earn */}

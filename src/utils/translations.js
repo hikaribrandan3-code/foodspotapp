@@ -1189,7 +1189,7 @@ export const translations = {
     loyaltyRedeemHint:     { en: 'Use points for a free item',             es: 'Usá puntos para un producto gratis',  pt: 'Use pontos para um produto grátis' },
     loyaltyFreeItemSelected: { en: 'Free:',                                es: 'Gratis:',                             pt: 'Grátis:' },
     ugcReceipts:             { en: 'UGC Receipts',                          es: 'Comprobante UGC',                     pt: 'Comprobante UGC' },
-    ugcReceiptsHint:         { en: 'Points awarded per photo shared',       es: 'Puntos por cada foto compartida',     pt: 'Pontos por cada foto compartilhada' },
+    ugcReceiptsHint:         { en: 'Reward per photo shared — drives viral moments & customer content', es: 'Puntos por foto — impulsa momentos virales y contenido de clientes', pt: 'Pontos por foto — promove momentos virais e conteúdo do cliente' },
     ugcPointsEarned:         { en: 'points earned for sharing!',            es: 'puntos ganados por compartir!',       pt: 'pontos ganhos por compartilhar!' },
     referralPoints:          { en: 'Share & Earn Points',                   es: 'Puntos por Referido',                 pt: 'Pontos por Indicação' },
     referralPointsHint:      { en: 'Points when a friend places first order', es: 'Puntos cuando un amigo hace su primer pedido', pt: 'Pontos quando um amigo faz seu primeiro pedido' },

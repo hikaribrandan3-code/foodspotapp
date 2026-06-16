@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { translations } from '../../utils/translations.js'
+import { getLoyaltySettings } from '../../lib/loyaltyClient.js'
 import { CheckCircle, Truck, Clock, Home, MapPin, CreditCard, Banknote, AlertCircle, Loader2, Package } from 'lucide-react'
 import CameraTrigger from '../../components/Camera/CameraTrigger'
 
@@ -16,6 +17,7 @@ export default function Receipt() {
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [loyaltySettings, setLoyaltySettings] = useState(null)
 
   const t = (key) => translations[key]?.[language] || translations[key]?.en || key
 
@@ -30,6 +32,14 @@ export default function Receipt() {
   const orderId = searchParams.get('order_id') || searchParams.get('orderId')
   // MP redirects back with ?payment=success — trust it optimistically while webhook catches up
   const mpReturnStatus = searchParams.get('payment')
+
+  // Fetch loyalty settings for points display
+  useEffect(() => {
+    if (!businessId) return
+    getLoyaltySettings(businessId).then(({ data }) => {
+      if (data?.enabled) setLoyaltySettings(data)
+    }).catch(() => {})
+  }, [businessId])
 
   useEffect(() => {
     if (!orderId) { setError('No order ID'); setLoading(false); return }
@@ -218,9 +228,16 @@ export default function Receipt() {
             {order.notes && order.notes.includes('🎁 FREE ITEM (loyalty):') && (
               <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 16 }}>🎁</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
-                  {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || 'Free item (loyalty reward)'}
-                </span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
+                    {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || 'Free item (loyalty reward)'}
+                  </span>
+                  {loyaltySettings?.points_to_redeem && (
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginLeft: 8 }}>
+                      (−{loyaltySettings.points_to_redeem} pts)
+                    </span>
+                  )}
+                </div>
               </div>
             )}
             {order.notes && !order.notes.includes('🎁 FREE ITEM (loyalty):') && (
