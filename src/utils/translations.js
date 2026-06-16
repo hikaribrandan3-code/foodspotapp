@@ -1183,7 +1183,7 @@ export const translations = {
     loyaltyFreeItemsHint:  { en: 'Customer picks 1 when redeeming',        es: 'El cliente elige 1 al canjear',       pt: 'Cliente escolhe 1 ao resgatar' },
     saveLoyalty:           { en: 'Save Loyalty',                           es: 'Guardar Recompensas',                 pt: 'Salvar Recompensas' },
     loyaltyYourPoints:     { en: 'Loyalty Points',                         es: 'Puntos de Lealtad',                   pt: 'Pontos de Fidelização' },
-    loyaltyReadyToRedeem:  { en: '🎁 Ready to redeem! Use at checkout.',   es: '🎁 ¡Listo para canjear! Usá al pagar.', pt: '🎁 Pronto para resgatar! Use no checkout.' },
+    loyaltyReadyToRedeem:  { en: 'Ready to redeem! Use at checkout.',   es: '¡Listo para canjear! Usá al pagar.', pt: 'Pronto para resgatar! Use no checkout.' },
     loyaltyPointsAway:     { en: 'points to a free item',                  es: 'puntos para un producto gratis',      pt: 'pontos para um produto grátis' },
     loyaltyRedeemBanner:   { en: 'You have points!',                       es: '¡Tenés puntos!',                      pt: 'Você tem pontos!' },
     loyaltyRedeemHint:     { en: 'Use points for a free item',             es: 'Usá puntos para un producto gratis',  pt: 'Use pontos para um produto grátis' },
