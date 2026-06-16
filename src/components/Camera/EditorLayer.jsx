@@ -508,12 +508,15 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 </button>
             )}
 
-            {/* ── TOP LEFT: Location Pill (Restored for Editor Parity) ── */}
-            {!preview && (
+            {/* ── TOP LEFT: Location Pill — anchored to the ACTUAL rendered image ──
+                 (not the screen) so it sits inside the photo on 9:16 / 4:3 / 1:1.
+                 16px left / 75px top from the image origin matches the baked
+                 output in ExportEngine.burnBranding exactly. */}
+            {!preview && canvasDimensions.width > 0 && (
                 <div style={{
                     position: 'absolute',
-                    top: '72px',
-                    left: '16px',
+                    top: `${canvasOffset.y + 75}px`,
+                    left: `${canvasOffset.x + 16}px`,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '5px',
@@ -527,7 +530,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                     <svg width="14" height="14" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
                     </svg>
-                    <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.08em', lineHeight: 1, color: pinText }}>
+                    <span style={{ fontSize: '12px', fontWeight: '700', letterSpacing: '0.08em', lineHeight: 1, color: pinText, whiteSpace: 'nowrap' }}>
                         {businessName.toUpperCase()}
                     </span>
                 </div>

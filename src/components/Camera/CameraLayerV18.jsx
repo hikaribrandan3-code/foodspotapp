@@ -729,7 +729,7 @@ const styles = `
   color: #fff; padding: 5px 16px; border-radius: 999px;
   font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-  animation: fsc-pop 0.15s ease-out;
+  animation: fsc-modehold 2.4s ease-out forwards;
 }
 @keyframes fsc-pop { from { opacity: 0; transform: translateX(-50%) scale(0.88); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 
