@@ -256,25 +256,28 @@ export async function handleCashPayment({ orderId, amountCents, businessId, curr
         business_id: businessId,
         currency
     }
-    
+
     if (isOnline()) {
-        // Try online first
+        // Fresh order online: record ledger only, do NOT auto-advance.
+        // Staff KDS confirmation (verifyCash) will advance the order.
         try {
-            const result = await syncOfflinePayment({
-                ...paymentData,
-                amount_gross_cents: amountCents,
-                external_reference: `CASH-${orderId}`
-            })
-            
-            if (result.success) {
-                return {
-                    success: true,
-                    method: 'online',
-                    data: { ledgerId: result.ledgerId }
-                }
+            const { data: rpcResult, error: ledgerError } = await supabase
+                .rpc('record_cash_payment', {
+                    p_order_id: orderId,
+                    p_business_id: businessId,
+                    p_payment_method: PAYMENT_METHOD.CASH,
+                    p_currency: currency || 'ARS',
+                })
+
+            if (ledgerError) throw ledgerError
+            if (!rpcResult?.success) throw new Error(rpcResult?.error || 'record_cash_payment failed')
+
+            return {
+                success: true,
+                method: 'online',
+                data: { ledgerRecorded: true }
             }
-            throw new Error(result.error)
-            
+
         } catch (error) {
             // Online failed, fall back to offline queue
             console.warn('[OfflinePayment] Online payment failed, queueing:', error.message)

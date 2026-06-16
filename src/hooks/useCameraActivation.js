@@ -43,7 +43,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
       hasShownBannerRef.current = true;
       setActivationStatus('ready');
       supabase
-        .from('ugc_activations')
+        .from('ugc_activation_states')
         .update({ status: 'shown', banner_shown_at: new Date().toISOString() })
         .eq('order_id', orderId)
         .eq('user_id', effectiveUserId)
@@ -59,7 +59,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
 
     const loadState = async () => {
       const { data, error } = await supabase
-        .from('ugc_activations')
+        .from('ugc_activation_states')
         .select('status, banner_shown_at, captured_at')
         .eq('order_id', orderId)
         .eq('user_id', effectiveUserId)
@@ -116,7 +116,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
 
       console.log(`[camera] TRIGGERED — orderType=${orderType}`);
 
-      await supabase.from('ugc_activations').upsert(
+      await supabase.from('ugc_activation_states').upsert(
         {
           user_id: effectiveUserId,
           order_id: orderId,
@@ -225,7 +225,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
     setActivationStatus('dismissed');
     localStorage.removeItem(LS_KEY);
     await supabase
-      .from('ugc_activations')
+      .from('ugc_activation_states')
       .update({ status: 'dismissed', banner_shown_at: new Date().toISOString() })
       .eq('order_id', orderId)
       .eq('user_id', effectiveUserId)
@@ -237,7 +237,7 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
     setActivationStatus('captured');
     localStorage.removeItem(LS_KEY);
     await supabase
-      .from('ugc_activations')
+      .from('ugc_activation_states')
       .update({ status: 'captured', captured_at: new Date().toISOString() })
       .eq('order_id', orderId)
       .eq('user_id', effectiveUserId)
