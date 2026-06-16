@@ -143,66 +143,63 @@ const Info = ({ config }) => {
             }}>
                 {/* 2. COLORFUL BUTTON STACK - Now uses config from Settings */}
                 <div>
-                    {/* LOYALTY POINTS CARD */}
+                    {/* LOYALTY POINTS CARD + SHARE ROW */}
                     {loyaltyPoints !== null && loyaltySettings && (
                         <div style={{
                             fontFamily: "'Outfit', sans-serif",
                             background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
                             borderRadius: 20,
-                            padding: '18px 20px',
+                            padding: '18px 20px 0',
                             marginBottom: 16,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
                             boxShadow: '0 4px 20px rgba(5,150,105,0.25)',
                         }}>
-                            <div style={{ textAlign: 'left' }}>
-                                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    {t('loyaltyYourPoints')}
-                                </p>
-                                <p style={{ fontSize: 32, color: '#ffffff', margin: '2px 0 0', fontWeight: 900, lineHeight: 1 }}>
-                                    {loyaltyPoints}
-                                </p>
-                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>
-                                    {loyaltyPoints >= (loyaltySettings.points_to_redeem || 100)
-                                        ? t('loyaltyReadyToRedeem')
-                                        : `${(loyaltySettings.points_to_redeem || 100) - loyaltyPoints} ${t('loyaltyPointsAway')}`
-                                    }
-                                </p>
+                            {/* Top row: points + gift */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16 }}>
+                                <div style={{ textAlign: 'left' }}>
+                                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {t('loyaltyYourPoints')}
+                                    </p>
+                                    <p style={{ fontSize: 32, color: '#ffffff', margin: '2px 0 0', fontWeight: 900, lineHeight: 1 }}>
+                                        {loyaltyPoints}
+                                    </p>
+                                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>
+                                        {loyaltyPoints >= (loyaltySettings.points_to_redeem || 100)
+                                            ? t('loyaltyReadyToRedeem')
+                                            : `${(loyaltySettings.points_to_redeem || 100) - loyaltyPoints} ${t('loyaltyPointsAway')}`
+                                        }
+                                    </p>
+                                </div>
+                                <div style={{ fontSize: 36, lineHeight: 1 }}>🎁</div>
                             </div>
-                            <div style={{ fontSize: 36, lineHeight: 1 }}>🎁</div>
-                        </div>
-                    )}
 
-                    {/* SHARE & EARN BUTTON */}
-                    {loyaltySettings && (loyaltySettings.referral_points ?? 100) > 0 && (
-                        <button
-                            onClick={handleShareApp}
-                            style={{
-                                fontFamily: "'Outfit', sans-serif",
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 8,
-                                width: '100%',
-                                padding: '13px 20px',
-                                marginBottom: 16,
-                                borderRadius: 16,
-                                border: '2px solid #059669',
-                                background: shareToast ? '#059669' : '#ffffff',
-                                color: shareToast ? '#ffffff' : '#059669',
-                                fontSize: 14,
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s',
-                            }}
-                        >
-                            <span style={{ fontSize: 18 }}>📲</span>
-                            {shareToast
-                                ? '✓ Link copied!'
-                                : `${t('shareAndEarn')} · +${loyaltySettings.referral_points} pts`
-                            }
-                        </button>
+                            {/* Share & Earn — inset divider row */}
+                            <button
+                                onClick={handleShareApp}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: 8,
+                                    width: '100%',
+                                    padding: '11px 0',
+                                    background: 'rgba(255,255,255,0.12)',
+                                    border: 'none',
+                                    borderTop: '1px solid rgba(255,255,255,0.18)',
+                                    borderRadius: '0 0 20px 20px',
+                                    color: '#ffffff',
+                                    fontSize: 13,
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    letterSpacing: '0.02em',
+                                }}
+                            >
+                                <span style={{ fontSize: 16 }}>📲</span>
+                                {shareToast
+                                    ? '✓ Link copiado!'
+                                    : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`
+                                }
+                            </button>
+                        </div>
                     )}
 
                     {/* VENUE INFO HERO CARD */}
