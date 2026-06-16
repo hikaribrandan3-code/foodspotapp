@@ -112,6 +112,7 @@ export default function CameraLayer({
   const [aspect,        setAspect]        = useState('9:16');
   const [filterId,      setFilterId]      = useState('original');
   const [filterToast,   setFilterToast]   = useState(null);
+  const [modeToast,     setModeToast]     = useState(null);
   const [zoomActive,    setZoomActive]    = useState(false);
   const [timerSec,      setTimerSec]      = useState(null);
   const [timerCd,       setTimerCd]       = useState(null);   // countdown display
@@ -126,6 +127,7 @@ export default function CameraLayer({
   const pinchZoomRef     = useRef(1);
   const tapRef           = useRef({ t: 0, moved: false });
   const filterToastTimer = useRef(null);
+  const modeToastTimer   = useRef(null);
   const zoomTimer        = useRef(null);
   const reticleTimer     = useRef(null);
   const timerInterval    = useRef(null);
@@ -406,6 +408,9 @@ export default function CameraLayer({
 
   const cycleMode = useCallback(() => {
     const next = SCENE_ORDER[(SCENE_ORDER.indexOf(nicheMode) + 1) % SCENE_ORDER.length];
+    setModeToast(next);
+    clearTimeout(modeToastTimer.current);
+    modeToastTimer.current = setTimeout(() => setModeToast(null), 400);
     applyNicheMode(next);
   }, [nicheMode, applyNicheMode]);
 
@@ -574,6 +579,9 @@ export default function CameraLayer({
 
       {/* ── FILTER TOAST ─────────────────────────────────────────────────── */}
       {filterToast && <div className="fsc-filtertoast">{filterToast}</div>}
+
+      {/* ── MODE TOAST ───────────────────────────────────────────────────── */}
+      {modeToast && <div className="fsc-modetoast">{modeToast}</div>}
 
       {/* ── BOTTOM BAR ────────────────────────────────────────────────────── */}
       <div className="fsc-bottom">
@@ -756,6 +764,15 @@ const styles = `
   animation: fsc-fade 0.7s ease-out forwards;
 }
 
+.fsc-modetoast {
+  position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 175px);
+  left: 50%; transform: translateX(-50%); z-index: 60;
+  background: rgba(5,150,105,0.8); backdrop-filter: blur(10px); color: #fff;
+  padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 700;
+  animation: fsc-fade 0.4s ease-out forwards;
+  letter-spacing: 0.05em;
+}
+
 /* ── bottom bar ── */
 .fsc-bottom {
   position: absolute; left: 0; right: 0;
@@ -765,7 +782,7 @@ const styles = `
 .fsc-shutterrow {
   width: 100%; max-width: 460px; display: flex;
   align-items: center; justify-content: space-between;
-  padding: 0 26px; box-sizing: border-box;
+  padding: 0 16px; box-sizing: border-box;
 }
 .fsc-side        { width: 80px; display: flex; align-items: center; }
 .fsc-side-right  { justify-content: flex-end; }
