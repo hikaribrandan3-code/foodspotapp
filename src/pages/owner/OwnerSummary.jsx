@@ -141,6 +141,8 @@ function OwnerSummary() {
     const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState('100')
     const [loyaltyMenuItems, setLoyaltyMenuItems] = useState([])
     const [loyaltyFreeSlots, setLoyaltyFreeSlots] = useState(['', '', ''])
+    const [ugcPointsPerShare, setUgcPointsPerShare] = useState('10')
+    const [referralPoints, setReferralPoints] = useState('100')
     const [loyaltySaving, setLoyaltySaving] = useState(false)
     const [loyaltySaved, setLoyaltySaved] = useState(false)
     const loyaltyInitialized = useRef(false)
@@ -160,6 +162,8 @@ function OwnerSummary() {
                 setLoyaltyMinOrder(String(Math.round((settings.min_order_cents ?? 800000) / 100)))
                 setLoyaltyPointsPerOrder(String(settings.points_per_order ?? 50))
                 setLoyaltyPointsToRedeem(String(settings.points_to_redeem ?? 100))
+                setUgcPointsPerShare(String(settings.ugc_points_per_share ?? 10))
+                setReferralPoints(String(settings.referral_points ?? 100))
             }
             if (freeItems?.length) {
                 const slots = ['', '', '']
@@ -180,6 +184,8 @@ function OwnerSummary() {
             min_order_cents: minCents,
             points_per_order: parseInt(loyaltyPointsPerOrder || '50'),
             points_to_redeem: parseInt(loyaltyPointsToRedeem || '100'),
+            ugc_points_per_share: parseInt(ugcPointsPerShare || '10'),
+            referral_points: parseInt(referralPoints || '100'),
         }, businessId)
         const chosenItems = loyaltyFreeSlots
             .map(id => loyaltyMenuItems.find(m => m.id === id))
@@ -1291,6 +1297,34 @@ function OwnerSummary() {
                                                     ))}
                                                 </div>
                                                 <p className="text-xs text-stone-400 mt-1.5">{t('loyaltyFreeItemsHint') || 'Customer picks 1 of these when redeeming'}</p>
+                                            </div>
+
+                                            {/* UGC Receipts */}
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('ugcReceipts') || 'UGC Receipts'}</label>
+                                                <input
+                                                    type="number"
+                                                    value={ugcPointsPerShare}
+                                                    onChange={e => setUgcPointsPerShare(e.target.value)}
+                                                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                    placeholder="10"
+                                                    min="0"
+                                                />
+                                                <p className="text-xs text-stone-400 mt-1">{t('ugcReceiptsHint') || 'Points awarded per photo shared'}</p>
+                                            </div>
+
+                                            {/* Share & Earn */}
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-1.5">{t('referralPoints') || 'Share & Earn Points'}</label>
+                                                <input
+                                                    type="number"
+                                                    value={referralPoints}
+                                                    onChange={e => setReferralPoints(e.target.value)}
+                                                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                    placeholder="100"
+                                                    min="0"
+                                                />
+                                                <p className="text-xs text-stone-400 mt-1">{t('referralPointsHint') || 'Points when a friend places first order'}</p>
                                             </div>
                                         </div>
                                     )}

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTenant } from '../../contexts/TenantContext';
+import { earnUGCPoints } from '../../lib/loyaltyClient';
 
 /**
  * PreviewActions.jsx — Immersive Preview Layer
@@ -6,7 +8,9 @@ import React from 'react';
  * Renders inside the glassmorphism action bar (no self-positioning).
  */
 export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
+    const { businessId } = useTenant();
     const [debugLogs, setDebugLogs] = React.useState([]);
+    const [ugcToast, setUgcToast] = React.useState(null);
     const shareBtnRef = React.useRef(null);
     const saveBtnRef = React.useRef(null);
 
@@ -57,7 +61,19 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         }
     }, [shareFile, capturedBlob, capturedImg, addLog]);
 
-    // 🚀 SHARE TO SOCIALS 
+    const awardUGCPoints = React.useCallback(() => {
+        const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`)
+            || localStorage.getItem('fs_customer_phone');
+        if (!phone || !businessId) return;
+        earnUGCPoints(phone, businessId).then(({ earned, points }) => {
+            if (earned && points) {
+                setUgcToast(`+${points} points`);
+                setTimeout(() => setUgcToast(null), 2500);
+            }
+        }).catch(() => {});
+    }, [businessId]);
+
+    // 🚀 SHARE TO SOCIALS
     const handleShare = React.useCallback(async (e) => {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         addLog("Share executed");
@@ -69,6 +85,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     title: 'Check out my FoodSpot moment!',
                     text: 'Shared via FoodSpot',
                 });
+                awardUGCPoints();
                 return;
             }
 
@@ -87,13 +104,14 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     title: 'Check out my FoodSpot moment!',
                     text: 'Shared via FoodSpot',
                 });
+                awardUGCPoints();
             } else {
                 alert("Sharing is not supported on this browser or device. Try saving to gallery instead.");
             }
         } catch (err) {
             if (err.name !== 'AbortError') addLog(`Share err: ${err.message}`, true);
         }
-    }, [shareFile, capturedImg, addLog]);
+    }, [shareFile, capturedImg, addLog, awardUGCPoints]);
 
     // CRITICAL: Manually bind native DOM events to bypass React SyntheticEvents
     React.useEffect(() => {
@@ -117,6 +135,20 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
 
     return (
         <div style={styles.wrapper}>
+
+            {/* UGC Points Toast */}
+            {ugcToast && (
+                <div style={{
+                    position: 'absolute', top: -48, left: '50%', transform: 'translateX(-50%)',
+                    background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
+                    color: '#fff', fontWeight: 800, fontSize: 14, padding: '8px 18px',
+                    borderRadius: 24, whiteSpace: 'nowrap', zIndex: 99999,
+                    boxShadow: '0 4px 16px rgba(5,150,105,0.4)',
+                    animation: 'fadeInUp 0.25s ease',
+                }}>
+                    📸 {ugcToast}
+                </div>
+            )}
 
             {/* DEBUG LOGGER (VISIBLE ON DEVICE) */}
             {debugLogs.length > 0 && (

@@ -1188,6 +1188,12 @@ export const translations = {
     loyaltyRedeemBanner:   { en: 'You have points!',                       es: '¡Tenés puntos!',                      pt: 'Você tem pontos!' },
     loyaltyRedeemHint:     { en: 'Use points for a free item',             es: 'Usá puntos para un producto gratis',  pt: 'Use pontos para um produto grátis' },
     loyaltyFreeItemSelected: { en: 'Free:',                                es: 'Gratis:',                             pt: 'Grátis:' },
+    ugcReceipts:             { en: 'UGC Receipts',                          es: 'Comprobante UGC',                     pt: 'Comprobante UGC' },
+    ugcReceiptsHint:         { en: 'Points awarded per photo shared',       es: 'Puntos por cada foto compartida',     pt: 'Pontos por cada foto compartilhada' },
+    ugcPointsEarned:         { en: 'points earned for sharing!',            es: 'puntos ganados por compartir!',       pt: 'pontos ganhos por compartilhar!' },
+    referralPoints:          { en: 'Share & Earn Points',                   es: 'Puntos por Referido',                 pt: 'Pontos por Indicação' },
+    referralPointsHint:      { en: 'Points when a friend places first order', es: 'Puntos cuando un amigo hace su primer pedido', pt: 'Pontos quando um amigo faz seu primeiro pedido' },
+    shareAndEarn:            { en: 'Share & Earn',                          es: 'Compartir y Ganar',                   pt: 'Compartilhar e Ganhar' },
 
     // ── Owner Branding / Settings ──────────────────────────────────────────────
     add_emoji_name_note:{ en: 'Add an emoji to the name — it appears in your customers\' camera', es: 'Agregá un emoji al nombre — aparece en la cámara de tus clientes', pt: 'Adicione um emoji ao nome — ele aparece na câmera dos seus clientes' },

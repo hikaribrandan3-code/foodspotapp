@@ -15,6 +15,7 @@ const Info = ({ config }) => {
     const [authUser, setAuthUser] = useState(null);
     const [loyaltyPoints, setLoyaltyPoints] = useState(null);
     const [loyaltySettings, setLoyaltySettingsState] = useState(null);
+    const [shareToast, setShareToast] = useState(false);
     const { businessId } = useTenant();
 
     useEffect(() => {
@@ -41,6 +42,26 @@ const Info = ({ config }) => {
     }, [businessId]);
 
     const isOwner = authUser && (authUser.id === tenantData?.user_id || authUser.id === tenantData?.owner_id);
+
+    const handleShareApp = async () => {
+        const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone');
+        const url = `${window.location.origin}/${tenantSlug}${phone ? `?ref=${encodeURIComponent(phone)}` : ''}`;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title: tenantData?.venue_name || tenantData?.business_name || 'FoodSpot', url });
+            } else {
+                await navigator.clipboard.writeText(url);
+                setShareToast(true);
+                setTimeout(() => setShareToast(false), 2000);
+            }
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                await navigator.clipboard.writeText(url).catch(() => {});
+                setShareToast(true);
+                setTimeout(() => setShareToast(false), 2000);
+            }
+        }
+    };
 
     if (loading) return <BurgerLoader />;
 
@@ -151,6 +172,37 @@ const Info = ({ config }) => {
                             </div>
                             <div style={{ fontSize: 36, lineHeight: 1 }}>🎁</div>
                         </div>
+                    )}
+
+                    {/* SHARE & EARN BUTTON */}
+                    {loyaltySettings?.referral_points > 0 && (
+                        <button
+                            onClick={handleShareApp}
+                            style={{
+                                fontFamily: "'Outfit', sans-serif",
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 8,
+                                width: '100%',
+                                padding: '13px 20px',
+                                marginBottom: 16,
+                                borderRadius: 16,
+                                border: '2px solid #059669',
+                                background: shareToast ? '#059669' : '#ffffff',
+                                color: shareToast ? '#ffffff' : '#059669',
+                                fontSize: 14,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                            }}
+                        >
+                            <span style={{ fontSize: 18 }}>📲</span>
+                            {shareToast
+                                ? '✓ Link copied!'
+                                : `${t('shareAndEarn')} · +${loyaltySettings.referral_points} pts`
+                            }
+                        </button>
                     )}
 
                     {/* VENUE INFO HERO CARD */}

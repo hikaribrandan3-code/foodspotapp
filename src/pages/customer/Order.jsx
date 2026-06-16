@@ -25,7 +25,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
 import { ORDER_STATUS } from '../../constants/database.js';
-import { earnPoints, redeemPoints, getLoyaltyBalance, getLoyaltyFreeItems, getLoyaltySettings } from '../../lib/loyaltyClient.js';
+import { earnPoints, redeemPoints, getLoyaltyBalance, getLoyaltyFreeItems, getLoyaltySettings, awardReferralPoints } from '../../lib/loyaltyClient.js';
 
 // ============================================
 // 🛒 RESERVATION HELPERS
@@ -242,6 +242,16 @@ function Order({ config: configProp }) {
                 setLoyaltyFreeItems(freeItems || [])
             }
         })
+    }, [businessId])
+
+    // Detect ?ref= referral param and store it for later claim
+    useEffect(() => {
+        if (!businessId) return
+        const params = new URLSearchParams(window.location.search)
+        const ref = params.get('ref')
+        if (ref) {
+            sessionStorage.setItem(`fs_referral_${businessId}`, decodeURIComponent(ref))
+        }
     }, [businessId])
 
     // Check balance when phone changes
@@ -648,6 +658,12 @@ function Order({ config: configProp }) {
                 // Only redeem at order time — earning happens via DB trigger when order is confirmed
                 if (loyaltyRedeemEnabled && loyaltyBalance >= (loyaltySettings?.points_to_redeem ?? 100)) {
                     redeemPoints(phone, businessId, savedOrder.id).catch(() => {})
+                }
+                // Referral: award referrer if this is the referee's first order via share link
+                const referrerPhone = sessionStorage.getItem(`fs_referral_${businessId}`)
+                if (referrerPhone && referrerPhone !== phone.replace(/\s/g, '')) {
+                    awardReferralPoints(referrerPhone, phone, businessId, savedOrder.id).catch(() => {})
+                    sessionStorage.removeItem(`fs_referral_${businessId}`)
                 }
             }
 
