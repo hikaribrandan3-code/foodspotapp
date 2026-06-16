@@ -172,7 +172,7 @@ export default function CameraLayer({
     if (!zoomInitRef.current) { zoomInitRef.current = true; return; }
     setZoomActive(true);
     clearTimeout(zoomTimer.current);
-    zoomTimer.current = setTimeout(() => setZoomActive(false), 900);
+    zoomTimer.current = setTimeout(() => setZoomActive(false), 2400);
   }, [zoomLevel]);
 
   // ── auto-stabilizer: enable at 4× (best-effort software) ─────────────────
