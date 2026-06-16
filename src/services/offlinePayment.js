@@ -96,27 +96,20 @@ async function syncOfflinePayment(payment) {
         // Only advance status if order is still in a payment-pending state
         const shouldAdvanceStatus = currentStatus === ORDER_STATUS.PENDING_PAYMENT || currentStatus === ORDER_STATUS.PAID_UNRELEASED
 
-        // Create ledger entry
-        const { data: ledgerData, error: ledgerError } = await supabase
-            .from('transaction_ledger')
-            .insert({
-                order_id: payment.order_id,
-                business_id: payment.business_id,
-                transaction_type: 'payment',
-                status: 'completed',
-                amount_gross_cents: payment.amount_gross_cents,
-                platform_fee_cents: 0,
-                net_to_owner_cents: payment.amount_gross_cents,
-                idempotency_key: `cash-${payment.order_id}`,
-                currency: payment.currency,
-                payment_method: PAYMENT_METHOD.CASH,
-                external_reference: payment.external_reference,
-                processed_at: new Date().toISOString(),
+        // Create ledger entry via SECURITY DEFINER RPC. A direct insert here
+        // 403s under RLS (this drain runs on the anon client). The RPC reads the
+        // amount from orders.total server-side and is idempotent on cash-<id>,
+        // so replaying the queue can never double-count.
+        const { data: rpcResult, error: ledgerError } = await supabase
+            .rpc('record_cash_payment', {
+                p_order_id: payment.order_id,
+                p_business_id: payment.business_id,
+                p_payment_method: PAYMENT_METHOD.CASH,
+                p_currency: payment.currency || 'ARS',
             })
-            .select()
-            .single()
 
         if (ledgerError) throw ledgerError
+        if (!rpcResult?.success) throw new Error(rpcResult?.error || 'record_cash_payment failed')
 
         // Update order status ONLY if it hasn't been advanced by staff/owner yet
         if (shouldAdvanceStatus) {
@@ -136,8 +129,8 @@ async function syncOfflinePayment(payment) {
             if (orderError) throw orderError
         }
 
-        console.log('[OfflinePayment] ✅ Synced:', payment.id, 'Ledger:', ledgerData.id, 'Advanced:', shouldAdvanceStatus)
-        return { success: true, ledgerId: ledgerData.id }
+        console.log('[OfflinePayment] ✅ Synced:', payment.id, 'Ledger recorded:', rpcResult?.already_recorded ? 'existing' : 'new', 'Advanced:', shouldAdvanceStatus)
+        return { success: true, alreadyRecorded: !!rpcResult?.already_recorded }
 
     } catch (error) {
         console.error('[OfflinePayment] ❌ Sync failed:', payment.id, error.message)

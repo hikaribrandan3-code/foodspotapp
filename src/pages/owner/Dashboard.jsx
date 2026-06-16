@@ -643,8 +643,9 @@ export default function Dashboard() {
     try {
       const now = new Date().toISOString()
 
-      // Write to transaction_ledger for analytics
-      const grossCents = Math.round((Number(paymentModalOrder.total) || 0) * 100)
+      // Write to transaction_ledger for analytics.
+      // orders.total is ALREADY integer cents — do NOT multiply by 100.
+      const grossCents = Math.round(Number(paymentModalOrder.total) || 0)
       const { error: ledgerError } = await supabase
         .from('transaction_ledger')
         .insert({
@@ -655,6 +656,9 @@ export default function Dashboard() {
           amount_gross_cents: grossCents,
           platform_fee_cents: 0,
           net_to_owner_cents: grossCents,
+          // Per-(method,order) key. For cash this is `cash-<id>`, matching the
+          // record_cash_payment RPC so staff verifyCash + owner confirm dedupe
+          // to one ledger row; MP stays on its own `mercado_pago-<id>` key.
           idempotency_key: `${method}-${paymentModalOrder.id}`,
           currency: 'ARS',
           payment_method: method,

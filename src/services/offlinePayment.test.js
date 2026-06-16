@@ -136,19 +136,9 @@ describe('Offline Payment Service', () => {
                 value: true,
             });
 
+            // Ledger write now goes through the record_cash_payment RPC.
+            supabase.rpc.mockResolvedValue({ data: { success: true }, error: null });
             supabase.from.mockImplementation((table) => {
-                if (table === 'transaction_ledger') {
-                    return {
-                        insert: vi.fn().mockReturnValue({
-                            select: vi.fn().mockReturnValue({
-                                single: vi.fn().mockResolvedValue({
-                                    data: { id: 'ledger-123' },
-                                    error: null
-                                })
-                            })
-                        })
-                    };
-                }
                 if (table === 'orders') {
                     return {
                         select: vi.fn().mockReturnValue({
@@ -180,7 +170,10 @@ describe('Offline Payment Service', () => {
             const result = await processOfflineQueue();
 
             expect(result.processed).toBeGreaterThan(0);
-            expect(supabase.from).toHaveBeenCalledWith('transaction_ledger');
+            expect(supabase.rpc).toHaveBeenCalledWith('record_cash_payment', expect.objectContaining({
+                p_order_id: 'order-123',
+                p_business_id: 'biz-123',
+            }));
         });
 
         it('should retry failed payments up to 5 times', async () => {
@@ -222,19 +215,8 @@ describe('Offline Payment Service', () => {
                 value: true,
             });
 
+            supabase.rpc.mockResolvedValue({ data: { success: true }, error: null });
             supabase.from.mockImplementation((table) => {
-                if (table === 'transaction_ledger') {
-                    return {
-                        insert: vi.fn().mockReturnValue({
-                            select: vi.fn().mockReturnValue({
-                                single: vi.fn().mockResolvedValue({
-                                    data: { id: 'ledger-123' },
-                                    error: null
-                                })
-                            })
-                        })
-                    };
-                }
                 if (table === 'orders') {
                     return {
                         select: vi.fn().mockReturnValue({
@@ -272,6 +254,8 @@ describe('Offline Payment Service', () => {
                 value: true,
             });
 
+            // RPC reports failure → online path throws → falls back to offline queue.
+            supabase.rpc.mockResolvedValue({ data: null, error: new Error('Sync failed') });
             supabase.from.mockImplementation((table) => {
                 if (table === 'orders') {
                     return {
@@ -285,12 +269,6 @@ describe('Offline Payment Service', () => {
                         })
                     };
                 }
-                return {
-                    insert: vi.fn().mockResolvedValue({
-                        data: null,
-                        error: new Error('Sync failed')
-                    })
-                };
             });
 
             const result = await handleCashPayment({
@@ -336,19 +314,8 @@ describe('Offline Payment Service', () => {
                 value: true,
             });
 
+            supabase.rpc.mockResolvedValue({ data: { success: true }, error: null });
             supabase.from.mockImplementation((table) => {
-                if (table === 'transaction_ledger') {
-                    return {
-                        insert: vi.fn().mockReturnValue({
-                            select: vi.fn().mockReturnValue({
-                                single: vi.fn().mockResolvedValue({
-                                    data: { id: 'ledger-123' },
-                                    error: null
-                                })
-                            })
-                        })
-                    };
-                }
                 if (table === 'orders') {
                     return {
                         select: vi.fn().mockReturnValue({

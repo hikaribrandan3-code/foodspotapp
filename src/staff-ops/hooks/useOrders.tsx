@@ -390,7 +390,23 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         addToast({ type: 'critical', title: 'Update Failed', message: rpcData?.message || rpcError?.message || 'Could not verify cash', orderId });
         return;
       }
-      // 2) Set payment flags via direct update (best-effort)
+      // 2) Record the cash payment in transaction_ledger via SECURITY DEFINER
+      //    RPC. staff-ops runs on the anon key, which cannot INSERT into
+      //    transaction_ledger directly (RLS), so this is the only path that
+      //    keeps owner revenue analytics whole. Best-effort: a ledger miss must
+      //    not block sending the order to the kitchen. Server reads the amount
+      //    from orders.total — the client never sends money.
+      supabase.rpc('record_cash_payment', {
+        p_order_id: orderId,
+        p_business_id: businessId,
+        p_payment_method: 'cash',
+      }).then(({ data, error }) => {
+        if (error || !data?.success) {
+          console.error('[StaffOps] record_cash_payment failed:', error?.message || data?.error);
+        }
+      }, () => {});
+
+      // 3) Set payment flags via direct update (best-effort)
       updateOrderCloud(orderId, { payment_confirmed: true, payment_status: 'paid' }, businessId)
         .catch(() => {});
       dispatch({ type: 'VERIFY_CASH', orderId });
