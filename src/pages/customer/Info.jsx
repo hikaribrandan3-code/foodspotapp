@@ -143,63 +143,87 @@ const Info = ({ config }) => {
             }}>
                 {/* 2. COLORFUL BUTTON STACK - Now uses config from Settings */}
                 <div>
-                    {/* LOYALTY POINTS CARD + SHARE ROW */}
-                    {loyaltyPoints !== null && loyaltySettings && (
-                        <div style={{
-                            fontFamily: "'Outfit', sans-serif",
-                            background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                            borderRadius: 20,
-                            padding: '18px 20px 0',
-                            marginBottom: 16,
-                            boxShadow: '0 4px 20px rgba(5,150,105,0.25)',
-                        }}>
-                            {/* Top row: points + gift */}
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16 }}>
-                                <div style={{ textAlign: 'left' }}>
-                                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                        {t('loyaltyYourPoints')}
-                                    </p>
-                                    <p style={{ fontSize: 32, color: '#ffffff', margin: '2px 0 0', fontWeight: 900, lineHeight: 1 }}>
-                                        {loyaltyPoints}
-                                    </p>
-                                    <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', margin: '4px 0 0' }}>
-                                        {loyaltyPoints >= (loyaltySettings.points_to_redeem || 100)
-                                            ? t('loyaltyReadyToRedeem')
-                                            : `${(loyaltySettings.points_to_redeem || 100) - loyaltyPoints} ${t('loyaltyPointsAway')}`
-                                        }
-                                    </p>
+                    {/* LOYALTY CARD — Starbucks/Uber Eats minimal style */}
+                    {loyaltyPoints !== null && loyaltySettings && (() => {
+                        const cap = loyaltySettings.points_to_redeem || 100;
+                        const pct = Math.min(100, Math.round((loyaltyPoints / cap) * 100));
+                        const isReady = loyaltyPoints >= cap;
+                        return (
+                            <div style={{
+                                fontFamily: "'Outfit', sans-serif",
+                                background: '#ffffff',
+                                borderRadius: 20,
+                                marginBottom: 16,
+                                boxShadow: '0 2px 20px rgba(5,150,105,0.10)',
+                                border: '1px solid #D1FAE5',
+                                overflow: 'hidden',
+                            }}>
+                                {/* Top: points + badge */}
+                                <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <p style={{ fontSize: 10, color: '#059669', margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                                            {t('loyaltyYourPoints')}
+                                        </p>
+                                        <p style={{ fontSize: 48, color: '#064e3b', margin: '2px 0 0', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                                            {loyaltyPoints}
+                                        </p>
+                                        <p style={{ fontSize: 12, color: isReady ? '#059669' : '#6B7280', margin: '5px 0 0', fontWeight: 600 }}>
+                                            {isReady
+                                                ? t('loyaltyReadyToRedeem')
+                                                : `${cap - loyaltyPoints} ${t('loyaltyPointsAway')}`
+                                            }
+                                        </p>
+                                    </div>
+                                    {/* Circle badge */}
+                                    <div style={{
+                                        width: 48, height: 48, borderRadius: '50%',
+                                        background: isReady ? '#059669' : '#F0FDF4',
+                                        border: `2px solid ${isReady ? '#059669' : '#A7F3D0'}`,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                    }}>
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isReady ? '#fff' : '#059669'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+                                        </svg>
+                                    </div>
                                 </div>
-                                <div style={{ fontSize: 36, lineHeight: 1 }}>🎁</div>
-                            </div>
 
-                            {/* Share & Earn — inset divider row */}
-                            <button
-                                onClick={handleShareApp}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 8,
-                                    width: '100%',
-                                    padding: '11px 0',
-                                    background: 'rgba(255,255,255,0.12)',
-                                    border: 'none',
-                                    borderTop: '1px solid rgba(255,255,255,0.18)',
-                                    borderRadius: '0 0 20px 20px',
-                                    color: '#ffffff',
-                                    fontSize: 13,
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    letterSpacing: '0.02em',
-                                }}
-                            >
-                                {shareToast
-                                    ? '✓ Link copiado!'
-                                    : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`
-                                }
-                            </button>
-                        </div>
-                    )}
+                                {/* Progress bar */}
+                                <div style={{ padding: '0 20px 16px' }}>
+                                    <div style={{ height: 5, background: '#E5E7EB', borderRadius: 99, overflow: 'hidden' }}>
+                                        <div style={{
+                                            height: '100%', width: `${pct}%`,
+                                            background: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
+                                            borderRadius: 99, transition: 'width 0.6s ease',
+                                        }} />
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                                        <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600 }}>0</span>
+                                        <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600 }}>{cap} pts</span>
+                                    </div>
+                                </div>
+
+                                {/* Share & Earn row */}
+                                <button
+                                    onClick={handleShareApp}
+                                    style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                        width: '100%', padding: '12px 20px',
+                                        background: shareToast ? '#059669' : '#F0FDF4',
+                                        border: 'none', borderTop: '1px solid #D1FAE5',
+                                        color: shareToast ? '#ffffff' : '#059669',
+                                        fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                                    }}
+                                >
+                                    <span>{shareToast ? '✓ Link copiado!' : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`}</span>
+                                    {!shareToast && (
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
+                        );
+                    })()}
 
                     {/* VENUE INFO HERO CARD */}
                     {(whatsapp || address || mapsUrl || businessHours) && (
