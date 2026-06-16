@@ -410,7 +410,7 @@ export default function CameraLayer({
     const next = SCENE_ORDER[(SCENE_ORDER.indexOf(nicheMode) + 1) % SCENE_ORDER.length];
     setModeToast(next);
     clearTimeout(modeToastTimer.current);
-    modeToastTimer.current = setTimeout(() => setModeToast(null), 400);
+    modeToastTimer.current = setTimeout(() => setModeToast(null), 2400);
     applyNicheMode(next);
   }, [nicheMode, applyNicheMode]);
 
@@ -765,12 +765,19 @@ const styles = `
 }
 
 .fsc-modetoast {
-  position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 175px);
+  position: absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 150px);
   left: 50%; transform: translateX(-50%); z-index: 60;
-  background: rgba(5,150,105,0.8); backdrop-filter: blur(10px); color: #fff;
-  padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 700;
-  animation: fsc-fade 0.4s ease-out forwards;
-  letter-spacing: 0.05em;
+  background: rgba(0,0,0,0.46); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #fff; padding: 5px 16px; border-radius: 999px;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25); white-space: nowrap;
+  animation: fsc-modehold 2.4s ease-out forwards;
+}
+@keyframes fsc-modehold {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.88); }
+  8%   { opacity: 1; transform: translateX(-50%) scale(1); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ── bottom bar ── */
@@ -780,11 +787,11 @@ const styles = `
   display: flex; justify-content: center; z-index: 100;
 }
 .fsc-shutterrow {
-  width: 100%; max-width: 460px; display: flex;
-  align-items: center; justify-content: space-between;
-  padding: 0 16px; box-sizing: border-box;
+  width: 100%; display: flex;
+  align-items: center; justify-content: center;
+  gap: 28px; padding: 0; box-sizing: border-box;
 }
-.fsc-side        { width: 80px; display: flex; align-items: center; }
+.fsc-side        { display: flex; align-items: center; }
 .fsc-side-right  { justify-content: flex-end; }
 
 .fsc-modebtn {
