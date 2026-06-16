@@ -175,7 +175,7 @@ const Info = ({ config }) => {
                     )}
 
                     {/* SHARE & EARN BUTTON */}
-                    {loyaltySettings?.referral_points > 0 && (
+                    {loyaltySettings && (loyaltySettings.referral_points ?? 100) > 0 && (
                         <button
                             onClick={handleShareApp}
                             style={{
