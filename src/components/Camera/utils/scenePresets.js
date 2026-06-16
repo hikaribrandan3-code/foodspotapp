@@ -39,6 +39,16 @@ export const CAPTURE_FILTERS = [
 
 const FILTER_BY_ID = Object.fromEntries(CAPTURE_FILTERS.map((f) => [f.id, f]));
 
+// Mono must be a TRUE neutral B&W — not a grayscale pass over an already
+// sepia/saturate-warmed scene grade (FOOD's warm tone would otherwise bake
+// into the tonality before being flattened to gray). Strip the scene's
+// color components (saturate, sepia) and keep only its tonal ones
+// (brightness, contrast) when Mono is the active filter.
+function neutralizeForMono(grade) {
+  if (!grade) return grade;
+  return { brightness: grade.brightness, contrast: grade.contrast };
+}
+
 // ── CSS string from a grade (for the live preview) ───────────────────────
 function gradeToCss(g) {
   if (!g) return '';
@@ -52,7 +62,8 @@ function gradeToCss(g) {
 
 /** Live-preview CSS filter for the <video>, combining scene grade + user filter. */
 export function previewCss(sceneId, filterId) {
-  const scene = SCENE_GRADE[sceneId] || SCENE_GRADE[DEFAULT_SCENE];
+  const sceneRaw = SCENE_GRADE[sceneId] || SCENE_GRADE[DEFAULT_SCENE];
+  const scene = filterId === 'mono' ? neutralizeForMono(sceneRaw) : sceneRaw;
   const filter = (FILTER_BY_ID[filterId] || FILTER_BY_ID.original).grade;
   const css = [gradeToCss(scene), gradeToCss(filter)].filter(Boolean).join(' ');
   return css || 'none';
@@ -105,7 +116,8 @@ function applyGrade(data, g) {
  * Mutates the canvas in place. Skips entirely when there's nothing to apply.
  */
 export function bakeCapture(ctx, width, height, sceneId, filterId) {
-  const scene = SCENE_GRADE[sceneId] || SCENE_GRADE[DEFAULT_SCENE];
+  const sceneRaw = SCENE_GRADE[sceneId] || SCENE_GRADE[DEFAULT_SCENE];
+  const scene = filterId === 'mono' ? neutralizeForMono(sceneRaw) : sceneRaw;
   const filter = (FILTER_BY_ID[filterId] || FILTER_BY_ID.original).grade;
 
   const sceneNoop = !scene || (scene.brightness === 1 && scene.contrast === 1 && scene.saturate === 1 && !scene.sepia);

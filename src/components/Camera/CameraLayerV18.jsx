@@ -723,7 +723,7 @@ const styles = `
 /* ── zoom readout: subtle pill just above shutter ── */
 .fsc-zoomreadout {
   position: absolute;
-  bottom: calc(env(safe-area-inset-bottom,0px) + 200px);
+  bottom: calc(env(safe-area-inset-bottom,0px) + 130px);
   left: 50%; transform: translateX(-50%); z-index: 60;
   background: rgba(0,0,0,0.46); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   color: #fff; padding: 5px 16px; border-radius: 999px;
