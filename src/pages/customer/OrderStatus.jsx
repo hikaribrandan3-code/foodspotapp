@@ -579,13 +579,22 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 <span style={{ color: '#0a0a0a' }}>{t('table')} {order.table_number}</span>
                             </div>
                         )}
-                        {order.notes && (
+                        {order.notes && !order.notes.includes('🎁 FREE ITEM (loyalty):') && (
                             <div style={{
                                 padding: '8px 10px', marginTop: 6, marginBottom: 2,
                                 background: '#f5f5f5', borderRadius: 4, fontSize: 13,
                             }}>
-                                <span style={{ color: '#737373', fontWeight: 500 }}>📝 Special Requests: </span>
+                                <span style={{ color: '#737373', fontWeight: 500 }}>Notes: </span>
                                 <span style={{ color: '#0a0a0a' }}>{order.notes}</span>
+                            </div>
+                        )}
+                        {order.notes && order.notes.includes('🎁 FREE ITEM (loyalty):') && (
+                            <div style={{
+                                padding: '8px 10px', marginTop: 6, marginBottom: 2,
+                                background: '#f0fdf4', borderRadius: 4, fontSize: 13, border: '1px solid #dcfce7'
+                            }}>
+                                <span style={{ color: '#15803d', fontWeight: 500 }}>Free Item: </span>
+                                <span style={{ color: '#0a0a0a' }}>{order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || order.notes}</span>
                             </div>
                         )}
                         <div style={{

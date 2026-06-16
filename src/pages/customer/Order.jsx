@@ -1333,66 +1333,6 @@ function Order({ config: configProp }) {
                 </div>
             </div>
 
-            {/* LOYALTY REDEEM BANNER */}
-            {loyaltySettings && loyaltyFreeItems.length > 0 && loyaltyBalance >= (loyaltySettings.points_to_redeem ?? 100) && (
-                <div style={{
-                    margin: '0 16px 16px',
-                    background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                    borderRadius: 16,
-                    padding: '14px 16px',
-                    boxShadow: '0 4px 16px rgba(5,150,105,0.2)',
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: loyaltyRedeemEnabled ? 12 : 0 }}>
-                        <div>
-                            <p style={{ fontSize: 13, fontWeight: 800, color: '#ffffff', margin: 0 }}>
-                                🎁 {t('loyaltyRedeemBanner')} ({loyaltyBalance} pts)
-                            </p>
-                            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', margin: '2px 0 0' }}>
-                                {t('loyaltyRedeemHint').replace('pts', loyaltySettings.points_to_redeem ?? 100)}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setLoyaltyRedeemEnabled(v => !v)}
-                            style={{
-                                width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                                background: loyaltyRedeemEnabled ? '#ffffff' : 'rgba(255,255,255,0.3)',
-                                position: 'relative', transition: 'background 0.2s', flexShrink: 0
-                            }}
-                        >
-                            <span style={{
-                                position: 'absolute', top: 2, width: 20, height: 20, borderRadius: 10,
-                                background: loyaltyRedeemEnabled ? '#059669' : '#ffffff',
-                                transition: 'left 0.2s',
-                                left: loyaltyRedeemEnabled ? 22 : 2,
-                            }} />
-                        </button>
-                    </div>
-                    {loyaltyRedeemEnabled && loyaltyFreeItems.length > 1 && (
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            {loyaltyFreeItems.map((item, i) => (
-                                <button
-                                    key={item.menu_item_id}
-                                    onClick={() => setLoyaltySelectedItem(i)}
-                                    style={{
-                                        padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                                        border: loyaltySelectedItem === i ? '2px solid #fff' : '2px solid rgba(255,255,255,0.4)',
-                                        background: loyaltySelectedItem === i ? 'rgba(255,255,255,0.25)' : 'transparent',
-                                        color: '#ffffff', cursor: 'pointer'
-                                    }}
-                                >
-                                    {item.menu_item_name}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    {loyaltyRedeemEnabled && loyaltyFreeItems.length === 1 && (
-                        <p style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                            {t('loyaltyFreeItemSelected')} {loyaltyFreeItems[0]?.menu_item_name}
-                        </p>
-                    )}
-                </div>
-            )}
-
             {/* FLOATING ACTION BUTTONS */}
             <div style={{
                 position: 'fixed', bottom: '70px', left: 0, right: 0,

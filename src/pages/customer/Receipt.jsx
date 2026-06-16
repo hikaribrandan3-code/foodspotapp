@@ -226,18 +226,18 @@ export default function Receipt() {
               ))}
             </div>
             {order.notes && order.notes.includes('🎁 FREE ITEM (loyalty):') && (
-              <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 10, background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16 }}>🎁</span>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
-                    {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || 'Free item (loyalty reward)'}
+              <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #dcfce7', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
+                  Free Item
+                </span>
+                <span style={{ fontSize: 13, color: '#0a0a0a' }}>
+                  {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || 'Loyalty reward'}
+                </span>
+                {loyaltySettings?.points_to_redeem && (
+                  <span style={{ fontSize: 11, color: '#6b7280' }}>
+                    Points used: {loyaltySettings.points_to_redeem}
                   </span>
-                  {loyaltySettings?.points_to_redeem && (
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginLeft: 8 }}>
-                      (−{loyaltySettings.points_to_redeem} pts)
-                    </span>
-                  )}
-                </div>
+                )}
               </div>
             )}
             {order.notes && !order.notes.includes('🎁 FREE ITEM (loyalty):') && (
