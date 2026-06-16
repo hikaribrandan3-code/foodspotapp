@@ -193,7 +193,6 @@ const Info = ({ config }) => {
                                     letterSpacing: '0.02em',
                                 }}
                             >
-                                <span style={{ fontSize: 16 }}>📲</span>
                                 {shareToast
                                     ? '✓ Link copiado!'
                                     : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`
