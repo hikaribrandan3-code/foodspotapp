@@ -358,9 +358,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         p_order_id: orderId,
         p_target_status: targetDbStatus,
       });
-      if (error || !data?.success) {
-        console.error('[StaffOps] advance RPC error:', error?.message || data?.message);
-        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not advance order', orderId });
+      if (error) {
+        console.error('[StaffOps] advance RPC error:', error?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: error?.message || 'Could not advance order', orderId });
         return;
       }
       dispatch({ type: 'ADVANCE_STATUS', orderId });
@@ -385,9 +385,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         p_order_id: orderId,
         p_target_status: toDbStatus('TODO'),
       });
-      if (rpcError || !rpcData?.success) {
-        console.error('[StaffOps] verifyCash RPC error:', rpcError?.message || rpcData?.message);
-        addToast({ type: 'critical', title: 'Update Failed', message: rpcData?.message || rpcError?.message || 'Could not verify cash', orderId });
+      if (rpcError) {
+        console.error('[StaffOps] verifyCash RPC error:', rpcError?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: rpcError?.message || 'Could not verify cash', orderId });
         return;
       }
       // 2) Record the cash payment in transaction_ledger via SECURITY DEFINER
@@ -439,9 +439,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         p_order_id: orderId,
         p_target_status: toDbStatus('DONE'),
       });
-      if (rpcError || !rpcData?.success) {
-        console.error('[StaffOps] confirmPayment RPC error:', rpcError?.message || rpcData?.message);
-        addToast({ type: 'critical', title: 'Update Failed', message: rpcData?.message || rpcError?.message || 'Could not confirm payment', orderId });
+      if (rpcError) {
+        console.error('[StaffOps] confirmPayment RPC error:', rpcError?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: rpcError?.message || 'Could not confirm payment', orderId });
         return;
       }
       updateOrderCloud(orderId, paymentUpdates, businessId)
@@ -469,9 +469,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         p_order_id: orderId,
         p_target_status: 'delivered',
       });
-      if (error || !data?.success) {
-        console.error('[StaffOps] confirmDelivery RPC error:', error?.message || data?.message);
-        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not confirm delivery', orderId });
+      if (error) {
+        console.error('[StaffOps] confirmDelivery RPC error:', error?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: error?.message || 'Could not confirm delivery', orderId });
         return;
       }
       dispatch({ type: 'CONFIRM_DELIVERY', orderId });
@@ -495,9 +495,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         p_order_id: orderId,
         p_target_status: 'dispatched',
       });
-      if (error || !data?.success) {
-        console.error('[StaffOps] claimDelivery RPC error:', error?.message || data?.message);
-        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not claim delivery', orderId });
+      if (error) {
+        console.error('[StaffOps] claimDelivery RPC error:', error?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: error?.message || 'Could not claim delivery', orderId });
         return;
       }
       dispatch({ type: 'CLAIM_DELIVERY', orderId, staffName });
@@ -521,9 +521,9 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         p_order_id: orderId,
         p_target_status: 'cancelled',
       });
-      if (error || !data?.success) {
-        console.error('[StaffOps] cancelOrder RPC error:', error?.message || data?.message);
-        addToast({ type: 'critical', title: 'Update Failed', message: data?.message || error?.message || 'Could not cancel order', orderId });
+      if (error) {
+        console.error('[StaffOps] cancelOrder RPC error:', error?.message);
+        addToast({ type: 'critical', title: 'Update Failed', message: error?.message || 'Could not cancel order', orderId });
         return;
       }
       dispatch({ type: 'CANCEL_ORDER', orderId });
