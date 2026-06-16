@@ -93,6 +93,13 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const pinBg   = cameraPinStyleToUse === 'custom' ? customBg   : (PIN_STYLE_COLORS[cameraPinStyleToUse] || PIN_STYLE_COLORS.classic)
     const pinText = cameraPinStyleToUse === 'custom' ? customText : '#ffffff'
 
+    // Shutter frame rounds corners on 4:3 / 1:1 (CameraLayerV18 .fsc-frame border-radius:18px)
+    // but stays edge-to-edge on 9:16. Match that here so the photo doesn't look
+    // "different" switching from viewfinder to editor.
+    const capturedAspect = imageData?.meta?.aspect
+    const isFullBleed = !capturedAspect || Math.abs(capturedAspect - 9 / 16) < 0.01
+    const photoCornerRadius = isFullBleed ? 0 : 18
+
     // Canvas refs for layer architecture
     const containerRef = useRef(null)
     const baseCanvasRef = useRef(null)
@@ -557,6 +564,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 <canvas
                     ref={baseCanvasRef}
                     className="base-canvas"
+                    style={{ borderRadius: `${photoCornerRadius}px`, overflow: 'hidden' }}
                 />
 
                 {/* Layer 2: Draw Tool - Canvas overlay */}
