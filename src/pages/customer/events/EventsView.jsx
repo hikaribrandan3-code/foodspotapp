@@ -277,7 +277,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
     const guestToken = searchParams.get('guest_token');
     const mpReturnStatus = searchParams.get('payment');
 
-    if (orderId && guestToken) {
+    if (orderId && guestToken && businessId) {
       localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', guestToken);
 
       const fetchOrder = async () => {
@@ -290,7 +290,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
                 name, image_url, share_image_url, venue_name, start_date, description
               )
             `)
-            .headers({ 'x-guest-token': guestToken })
+            .headers({ 'x-guest-token': guestToken, 'x-business-id': businessId })
             .eq('id', orderId)
             .eq('guest_token', guestToken)
             .single();
@@ -346,7 +346,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
 
       fetchOrder();
     }
-  }, [searchParams]);
+  }, [searchParams, businessId]);
 
   const goToStage = (s) => {
     setStage(s);
