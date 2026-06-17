@@ -1,9 +1,7 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
-import confetti from 'canvas-confetti';
 
 /**
  * PreviewActions.jsx — Immersive Preview Layer
@@ -14,7 +12,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     const { businessId } = useTenant();
     const { t } = useLanguage();
     const [debugLogs, setDebugLogs] = React.useState([]);
-    const [ugcToast, setUgcToast] = React.useState(null);
     const shareBtnRef = React.useRef(null);
     const saveBtnRef = React.useRef(null);
 
@@ -66,40 +63,28 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     }, [shareFile, capturedBlob, capturedImg, addLog]);
 
     const awardUGCPoints = React.useCallback(() => {
-        if (!businessId) return;
+        if (!businessId) { onDone && onDone(0); return; }
         const identifier = getCustomerIdentifier(businessId);
-        if (!identifier) return;
+        if (!identifier) { onDone && onDone(0); return; }
         earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
-            if (!earned || !points) return;
+            const pts = (earned && points) ? points : 0;
 
-            const showToast = () => {
-                setUgcToast(points);
-                const duration = 2.5 * 1000;
-                const animationEnd = Date.now() + duration;
-                const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 1000 };
-                const interval = setInterval(() => {
-                    const timeLeft = animationEnd - Date.now();
-                    if (timeLeft <= 0) return clearInterval(interval);
-                    const particleCount = 35 * (timeLeft / duration);
-                    confetti({ ...defaults, particleCount, origin: { x: 0.5, y: 0.5 } });
-                }, 250);
-                setTimeout(() => setUgcToast(null), 2800);
-            };
+            // Wait until user returns from social app, then navigate home with earned points
+            const navigate = () => { onDone && onDone(pts); };
 
-            // Wait until user is back in the app before showing toast
             if (document.visibilityState === 'visible') {
-                setTimeout(showToast, 350);
+                setTimeout(navigate, 350);
             } else {
                 const onReturn = () => {
                     if (document.visibilityState === 'visible') {
                         document.removeEventListener('visibilitychange', onReturn);
-                        setTimeout(showToast, 350);
+                        setTimeout(navigate, 350);
                     }
                 };
                 document.addEventListener('visibilitychange', onReturn);
             }
-        }).catch(() => {});
-    }, [businessId]);
+        }).catch(() => { onDone && onDone(0); });
+    }, [businessId, onDone]);
 
     // 🚀 SHARE TO SOCIALS
     const handleShare = React.useCallback(async (e) => {
@@ -163,28 +148,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
 
     return (
         <div style={styles.wrapper}>
-
-            {/* UGC Points Toast */}
-            {ugcToast && createPortal(
-                <div style={{
-                    position: 'fixed', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                    color: '#fff', zIndex: 999999, borderRadius: 20,
-                    boxShadow: '0 12px 48px rgba(5,150,105,0.5)',
-                    padding: '28px 36px', textAlign: 'center', whiteSpace: 'nowrap',
-                    animation: 'fadeInUp 0.3s ease',
-                }}>
-                    <div style={{ fontSize: 28, marginBottom: 8 }}>:)</div>
-                    <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: '0.01em' }}>
-                        {t('ugcToastThanks')}
-                    </div>
-                    <div style={{ fontWeight: 700, fontSize: 15, opacity: 0.9, marginTop: 6 }}>
-                        +{ugcToast} {t('ugcToastEarned')}
-                    </div>
-                </div>,
-                document.body
-            )}
 
             {/* DEBUG LOGGER (VISIBLE ON DEVICE) */}
             {debugLogs.length > 0 && (

@@ -72,12 +72,13 @@ function Camera({ neonContext = null, branding = null }) {
         setMode('CAMERA')
     }
 
-    const handleDone = () => {
-        // Don't revoke blob here — EditorLayer still needs it for DualPostScreen.
-        // Let EditorLayer manage the blob lifecycle via its own useEffect cleanup.
-        setMode('CAMERA')
-        // Clear capturedImage only after a tick so EditorLayer can unmount cleanly
-        setTimeout(() => setCapturedImage(null), 0)
+    const handleDone = (points = 0) => {
+        const slug = window.location.pathname.split('/').filter(Boolean)[0]
+        if (points > 0) {
+            navigate(`/${slug}?ugcShared=true&ugcPoints=${points}`)
+        } else {
+            navigate(-1)
+        }
     }
 
     const handleClose = () => {

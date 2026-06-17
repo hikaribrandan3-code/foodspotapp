@@ -1214,6 +1214,7 @@ export const translations = {
     shareAppText:            { en: 'Order food & earn rewards. Use my referral link for bonus points!', es: '¡Pedí comida y ganá puntos! Usá mi link de referido para puntos extra.', pt: 'Peça comida e ganhe pontos! Use meu link de indicação para pontos bônus.' },
     ugcToastThanks:          { en: 'Thanks for your support!',              es: '¡Gracias por tu apoyo!',               pt: 'Obrigado pelo seu apoio!' },
     ugcToastEarned:          { en: 'pts earned',                            es: 'pts ganados',                         pt: 'pts ganhos' },
+    ugcToastSeeYouNextTime:  { en: 'See you next time! 👋',                  es: '¡Hasta la próxima! 👋',                pt: 'Até a próxima! 👋' },
     referralConfirmed:       { en: 'Referral confirmed!',                   es: '¡Referido confirmado!',               pt: 'Referência confirmada!' },
     referralAwardMessage:    { en: 'Your friend got their order. You earned +400 pts!', es: 'Tu amigo recibió su pedido. ¡Ganaste +400 pts!', pt: 'Seu amigo recebeu o pedido. Você ganhou +400 pts!' },
     referralThankBtn:        { en: 'Thanks!',                               es: '¡Gracias!',                           pt: 'Obrigado!' },
