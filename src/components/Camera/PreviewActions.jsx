@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTenant } from '../../contexts/TenantContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
 
 /**
@@ -9,6 +10,7 @@ import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
  */
 export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     const { businessId } = useTenant();
+    const { t } = useLanguage();
     const [debugLogs, setDebugLogs] = React.useState([]);
     const [ugcToast, setUgcToast] = React.useState(null);
     const shareBtnRef = React.useRef(null);
@@ -148,10 +150,10 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                 }}>
                     <div style={{ fontSize: 18, marginBottom: 2 }}>:)</div>
                     <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.01em' }}>
-                        Thanks for your support!
+                        {t('ugcToastThanks')}
                     </div>
                     <div style={{ fontWeight: 700, fontSize: 13, opacity: 0.9, marginTop: 2 }}>
-                        +{ugcToast} pts earned
+                        +{ugcToast} {t('ugcToastEarned')}
                     </div>
                 </div>
             )}

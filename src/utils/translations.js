@@ -1208,6 +1208,8 @@ export const translations = {
     referralPoints:          { en: 'Share & Earn Points',                   es: 'Puntos por Referido',                 pt: 'Pontos por Indicação' },
     referralPointsHint:      { en: 'Points when a friend places first order', es: 'Puntos cuando un amigo hace su primer pedido', pt: 'Pontos quando um amigo faz seu primeiro pedido' },
     shareAndEarn:            { en: 'Share & Earn',                          es: 'Compartir y Ganar',                   pt: 'Compartilhar e Ganhar' },
+    ugcToastThanks:          { en: 'Thanks for your support!',              es: '¡Gracias por tu apoyo!',               pt: 'Obrigado pelo seu apoio!' },
+    ugcToastEarned:          { en: 'pts earned',                            es: 'pts ganados',                         pt: 'pts ganhos' },
 
     // ── Owner Branding / Settings ──────────────────────────────────────────────
     add_emoji_name_note:{ en: 'Add an emoji to the name — it appears in your customers\' camera', es: 'Agregá un emoji al nombre — aparece en la cámara de tus clientes', pt: 'Adicione um emoji ao nome — ele aparece na câmera dos seus clientes' },
