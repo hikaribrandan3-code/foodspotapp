@@ -72,6 +72,12 @@ function Camera({ neonContext = null, branding = null }) {
         setMode('CAMERA')
     }
 
+    const handleDone = () => {
+        // Reset to camera mode (don't navigate yet — wait for user to tap X)
+        setMode('CAMERA')
+        setTimeout(() => setCapturedImage(null), 0)
+    }
+
     const handleClose = () => {
         const slug = window.location.pathname.split('/').filter(Boolean)[0]
         const flagData = localStorage.getItem(`fs_ugc_just_shared_${businessId}`)
