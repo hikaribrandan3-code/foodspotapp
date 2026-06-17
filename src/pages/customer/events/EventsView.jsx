@@ -290,7 +290,6 @@ export default function EventsView({ onViewTickets, onStageChange }) {
                 name, image_url, share_image_url, venue_name, start_date, description
               )
             `)
-            .headers({ 'x-guest-token': guestToken, 'x-business-id': businessId })
             .eq('id', orderId)
             .eq('guest_token', guestToken)
             .single();
@@ -302,7 +301,6 @@ export default function EventsView({ onViewTickets, onStageChange }) {
               await supabase
                 .from('event_orders')
                 .update({ payment_status: 'paid' })
-                .headers({ 'x-guest-token': guestToken, 'x-business-id': businessId })
                 .eq('id', orderId)
                 .catch(err => console.warn('[EventsView] Payment status update failed:', err));
 
