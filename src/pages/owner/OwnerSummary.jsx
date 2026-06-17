@@ -1304,15 +1304,16 @@ function OwnerSummary() {
                                                                 {selectedItem && (
                                                                     <input
                                                                         type="number"
-                                                                        value={itemCost}
+                                                                        value={itemCost || ''}
                                                                         onChange={e => {
-                                                                            const cost = parseInt(e.target.value) || 0
+                                                                            const val = e.target.value.trim()
+                                                                            const cost = val === '' ? '' : Math.max(1, parseInt(val) || 1)
                                                                             setLoyaltyItemCosts(prev => ({
                                                                                 ...prev,
                                                                                 [selectedItem.name]: cost
                                                                             }))
                                                                         }}
-                                                                        className="w-20 px-3 py-2.5 rounded-xl text-sm font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                                        className="w-20 px-3 py-2.5 rounded-2xl text-sm font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
                                                                         placeholder="100"
                                                                         min="1"
                                                                     />
