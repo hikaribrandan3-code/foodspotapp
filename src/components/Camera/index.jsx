@@ -28,7 +28,7 @@ export const VERSION = 'CamTech v2.2'
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
     const { activateCamera, deactivateCamera } = useCamTechBroadcaster()
-    const { tenantData } = useTenant() || {}
+    const { tenantData, businessId } = useTenant() || {}
     const [isOwner, setIsOwner] = useState(false)
     const [authLoading, setAuthLoading] = useState(true)
 
@@ -72,16 +72,20 @@ function Camera({ neonContext = null, branding = null }) {
         setMode('CAMERA')
     }
 
-    const handleDone = (points = 0) => {
-        const slug = window.location.pathname.split('/').filter(Boolean)[0]
-        if (points > 0) {
-            navigate(`/${slug}?ugcShared=true&ugcPoints=${points}`)
-        } else {
-            navigate(-1)
-        }
-    }
-
     const handleClose = () => {
+        const slug = window.location.pathname.split('/').filter(Boolean)[0]
+        const flagData = localStorage.getItem(`fs_ugc_just_shared_${businessId}`)
+
+        if (flagData) {
+            try {
+                const { points } = JSON.parse(flagData)
+                localStorage.removeItem(`fs_ugc_just_shared_${businessId}`)
+                navigate(`/${slug}?ugcShared=true&ugcPoints=${points}`)
+                return
+            } catch (e) {
+                // Malformed flag, ignore and just go back
+            }
+        }
         navigate(-1)
     }
 

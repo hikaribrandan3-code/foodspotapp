@@ -63,28 +63,18 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     }, [shareFile, capturedBlob, capturedImg, addLog]);
 
     const awardUGCPoints = React.useCallback(() => {
-        if (!businessId) { onDone && onDone(0); return; }
+        if (!businessId) return;
         const identifier = getCustomerIdentifier(businessId);
-        if (!identifier) { onDone && onDone(0); return; }
+        if (!identifier) return;
         earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
             const pts = (earned && points) ? points : 0;
-
-            // Wait until user returns from social app, then navigate home with earned points
-            const navigate = () => { onDone && onDone(pts); };
-
-            if (document.visibilityState === 'visible') {
-                setTimeout(navigate, 350);
-            } else {
-                const onReturn = () => {
-                    if (document.visibilityState === 'visible') {
-                        document.removeEventListener('visibilitychange', onReturn);
-                        setTimeout(navigate, 350);
-                    }
-                };
-                document.addEventListener('visibilitychange', onReturn);
+            if (pts > 0) {
+                // Store shared state in localStorage — X button will check this
+                localStorage.setItem(`fs_ugc_just_shared_${businessId}`, JSON.stringify({ points: pts }));
+                addLog(`UGC share stored: +${pts} pts`);
             }
-        }).catch(() => { onDone && onDone(0); });
-    }, [businessId, onDone]);
+        }).catch(() => {});
+    }, [businessId, addLog]);
 
     // 🚀 SHARE TO SOCIALS
     const handleShare = React.useCallback(async (e) => {

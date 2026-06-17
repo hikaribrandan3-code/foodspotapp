@@ -135,11 +135,12 @@ function Home({ config: configProp }) {
             }
         }
 
-        // UGC share celebration — fired when camera navigates home after a successful share
+        // UGC share celebration — fired when user closes camera after sharing
         const ugcShared = params.get('ugcShared') === 'true'
         const ugcPoints = parseInt(params.get('ugcPoints')) || 0
         if (ugcShared) {
             window.history.replaceState({}, '', window.location.pathname)
+            if (businessId) localStorage.removeItem(`fs_ugc_just_shared_${businessId}`)
             setUgcCelebration({ points: ugcPoints })
             import('canvas-confetti').then(({ default: confetti }) => {
                 const end = Date.now() + 2500
