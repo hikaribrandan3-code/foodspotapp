@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
-import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { normalizeTenantConfig } from '../../utils/configNormalizer'
 import { defaultConfig, HERO_ICON_DARK, HERO_DEFAULT } from '../../config/appConfig.v2.js'
@@ -134,23 +133,6 @@ function Home({ config: configProp }) {
                 setIsEditMode(true)
             }
         }
-
-        // UGC share celebration — fired when user closes camera after sharing
-        const ugcShared = params.get('ugcShared') === 'true'
-        const ugcPoints = parseInt(params.get('ugcPoints')) || 0
-        if (ugcShared) {
-            window.history.replaceState({}, '', window.location.pathname)
-            if (businessId) localStorage.removeItem(`fs_ugc_just_shared_${businessId}`)
-            setUgcCelebration({ points: ugcPoints })
-            import('canvas-confetti').then(({ default: confetti }) => {
-                const end = Date.now() + 2500
-                const iv = setInterval(() => {
-                    if (Date.now() > end) return clearInterval(iv)
-                    confetti({ particleCount: 35, spread: 360, startVelocity: 25, ticks: 50, zIndex: 1000, origin: { x: 0.5, y: 0.5 } })
-                }, 250)
-            })
-            setTimeout(() => setUgcCelebration(null), 4000)
-        }
     }, [])
 
     // Referral source detection — save ?ref=<phone> for later award at checkout
@@ -164,8 +146,6 @@ function Home({ config: configProp }) {
         if (myPhone && ref === myPhone.replace(/\s/g, '')) return
         localStorage.setItem(`fs_referral_source_${businessId}`, ref)
     }, [businessId])
-    const [ugcCelebration, setUgcCelebration] = useState(null)
-
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
     const [hasChanges, setHasChanges] = useState(false)
@@ -1250,36 +1230,6 @@ function Home({ config: configProp }) {
             )}
 
         </div>
-
-        {/* UGC Share Celebration Toast — fires on home screen after camera share */}
-        {ugcCelebration && createPortal(
-            <div style={{
-                position: 'fixed', top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-                background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                color: '#fff', zIndex: 999999, borderRadius: 20,
-                boxShadow: '0 12px 48px rgba(5,150,105,0.5)',
-                padding: '32px 40px', textAlign: 'center',
-                minWidth: 260, maxWidth: 320,
-                animation: 'fadeInUp 0.35s ease',
-            }}>
-                <style>{`@keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)); } to { opacity: 1; transform: translate(-50%, -50%); } }`}</style>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
-                <div style={{ fontWeight: 800, fontSize: 18, letterSpacing: '0.01em' }}>
-                    {t('ugcToastThanks')}
-                </div>
-                {ugcCelebration.points > 0 && (
-                    <div style={{ fontWeight: 700, fontSize: 15, opacity: 0.9, marginTop: 6 }}>
-                        +{ugcCelebration.points} {t('ugcToastEarned')}
-                    </div>
-                )}
-                <div style={{ fontSize: 13, opacity: 0.75, marginTop: 8 }}>
-                    {t('ugcToastSeeYouNextTime')}
-                </div>
-            </div>,
-            document.body
-        )}
-
         </>
     )
 }

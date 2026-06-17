@@ -73,25 +73,12 @@ function Camera({ neonContext = null, branding = null }) {
     }
 
     const handleDone = () => {
-        // Reset to camera mode (don't navigate yet — wait for user to tap X)
+        // Reset to camera mode
         setMode('CAMERA')
         setTimeout(() => setCapturedImage(null), 0)
     }
 
     const handleClose = () => {
-        const slug = window.location.pathname.split('/').filter(Boolean)[0]
-        const flagData = localStorage.getItem(`fs_ugc_just_shared_${businessId}`)
-
-        if (flagData) {
-            try {
-                const { points } = JSON.parse(flagData)
-                localStorage.removeItem(`fs_ugc_just_shared_${businessId}`)
-                navigate(`/${slug}?ugcShared=true&ugcPoints=${points}`)
-                return
-            } catch (e) {
-                // Malformed flag, ignore and just go back
-            }
-        }
         navigate(-1)
     }
 

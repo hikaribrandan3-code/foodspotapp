@@ -12,6 +12,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     const { businessId } = useTenant();
     const { t } = useLanguage();
     const [debugLogs, setDebugLogs] = React.useState([]);
+    const [ugcPoints, setUgcPoints] = React.useState(null);
     const shareBtnRef = React.useRef(null);
     const saveBtnRef = React.useRef(null);
 
@@ -69,9 +70,8 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
             const pts = (earned && points) ? points : 0;
             if (pts > 0) {
-                // Store shared state in localStorage — X button will check this
-                localStorage.setItem(`fs_ugc_just_shared_${businessId}`, JSON.stringify({ points: pts }));
-                addLog(`UGC share stored: +${pts} pts`);
+                setUgcPoints(pts);
+                addLog(`UGC points earned: +${pts} pts`);
             }
         }).catch(() => {});
     }, [businessId, addLog]);
@@ -138,6 +138,24 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
 
     return (
         <div style={styles.wrapper}>
+
+            {/* ── UGC CONFIRMATION MESSAGE ── */}
+            {ugcPoints && (
+                <div style={{
+                    marginBottom: 12,
+                    padding: '12px 16px',
+                    background: 'rgba(34, 197, 94, 0.15)',
+                    border: '1.5px solid #22C55E',
+                    borderRadius: 12,
+                    textAlign: 'center',
+                    color: '#22C55E',
+                    fontWeight: 700,
+                    fontSize: 14,
+                    letterSpacing: '0.01em',
+                }}>
+                    ✅ +{ugcPoints} {t('ugcToastEarned')} — {t('ugcToastThanks')}
+                </div>
+            )}
 
             {/* DEBUG LOGGER (VISIBLE ON DEVICE) */}
             {debugLogs.length > 0 && (
