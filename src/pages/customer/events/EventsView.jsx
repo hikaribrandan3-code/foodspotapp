@@ -277,7 +277,12 @@ export default function EventsView({ onViewTickets, onStageChange }) {
     const guestToken = searchParams.get('guest_token');
     const mpReturnStatus = searchParams.get('payment');
 
-    if (!orderId || !guestToken) return;
+    console.log('[EventsView] MP Return detected - orderId:', orderId, 'guestToken:', guestToken, 'payment:', mpReturnStatus);
+
+    if (!orderId || !guestToken) {
+      console.log('[EventsView] Missing orderId or guestToken, returning');
+      return;
+    }
 
     localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', guestToken);
 
@@ -289,6 +294,8 @@ export default function EventsView({ onViewTickets, onStageChange }) {
             p_guest_token: guestToken
           });
 
+        console.log('[EventsView] RPC get_event_order_for_ticket result:', { data, error });
+
         if (error) {
           console.error('[EventsView] RPC error:', error.message);
           return;
@@ -298,6 +305,8 @@ export default function EventsView({ onViewTickets, onStageChange }) {
           console.warn('[EventsView] No order found for', orderId);
           return;
         }
+
+        console.log('[EventsView] Order loaded successfully, setting stage to ticket with ticket_code:', data.ticket_code);
 
         // Fire-and-forget: increment tier sold in case webhook lags
         if (mpReturnStatus === 'success' && data.tier_snapshot?.id && data.quantity) {

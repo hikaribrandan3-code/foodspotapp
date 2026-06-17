@@ -93,6 +93,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
     setPaymentError(null);
 
     try {
+      console.log('[EventCheckout] About to call create-event-preference for event:', event.id, 'tier:', tier.id);
       const { data, error } = await supabase.functions.invoke('create-event-preference', {
         body: {
           event_id: event.id,
@@ -126,6 +127,8 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
         setIsProcessing(false);
         return;
       }
+
+      console.log('[EventCheckout] Edge function response:', { order_id: data.order_id, guest_token: data.guest_token, ticket_code: data.ticket_code, init_point: data.init_point });
 
       // Store guest token and order ID for reference
       if (data.guest_token) {
