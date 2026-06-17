@@ -37,20 +37,26 @@ const Info = ({ config }) => {
         Promise.all([
             getLoyaltyBalance(identifier, businessId),
             getLoyaltySettings(businessId),
-            // Check if referral was already claimed (friend ordered) → hide share row
+            // Check if referral was already redeemed — look in loyalty_transactions for 'referral' type
             phone ? supabase
-                .from('loyalty_referral_claims')
+                .from('loyalty_transactions')
                 .select('id')
                 .eq('business_id', businessId)
-                .eq('referrer_phone', phone.replace(/\s/g, ''))
+                .eq('customer_phone', phone.replace(/\s/g, ''))
+                .eq('type', 'referral')
                 .maybeSingle() : Promise.resolve({ data: null }),
-        ]).then(([{ data: account }, { data: settings }, { data: claim }]) => {
+        ]).then(([{ data: account }, { data: settings }, { data: referralTx }]) => {
             if (settings?.enabled) {
                 setLoyaltyPoints(account?.points_balance ?? 0);
                 setLoyaltySettingsState(settings);
             }
-            // Hide share row if referral already claimed OR localStorage flag set
-            setHasShared(!!claim || !!localStorage.getItem(`fs_shared_referral_${businessId}`));
+            // Hide share row entirely once referral points were earned (friend ordered)
+            // Also hide if they shared but friend hasn't ordered yet (localStorage flag)
+            if (referralTx) {
+                setHasShared('claimed'); // friend ordered — hide row completely
+            } else {
+                setHasShared(!!localStorage.getItem(`fs_shared_referral_${businessId}`) ? 'shared' : false);
+            }
         });
     }, [businessId]);
 
@@ -70,7 +76,7 @@ const Info = ({ config }) => {
                 // Mark as shared (one-time — hides share button)
                 if (phone) {
                     localStorage.setItem(`fs_shared_referral_${businessId}`, phone);
-                    setHasShared(true);
+                    setHasShared('shared');
                 }
             } else {
                 await navigator.clipboard.writeText(url);
@@ -225,8 +231,8 @@ const Info = ({ config }) => {
                                     </div>
                                 </div>
 
-                                {/* Share & Earn row */}
-                                {hasShared ? (
+                                {/* Share & Earn row — 3 states: false=show button, 'shared'=pending, 'claimed'=hide */}
+                                {hasShared === 'claimed' ? null : hasShared === 'shared' ? (
                                     <div style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                         width: '100%', padding: '12px 20px',
