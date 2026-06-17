@@ -158,17 +158,35 @@ export async function earnUGCPoints(phone, businessId) {
     const identifier = phone ? phone.replace(/\s/g, '') : getCustomerIdentifier(businessId)
     if (!identifier) return { earned: false }
 
-    // 24h cooldown per device — one UGC award per day
-    const cooldownKey = `fs_ugc_${businessId}_${new Date().toISOString().slice(0, 10)}`
-    if (localStorage.getItem(cooldownKey)) return { earned: false }
-
     const { data: settings } = await getLoyaltySettings(businessId)
     if (!settings?.enabled) return { earned: false }
+
+    // One UGC award per order — check if already earned for most recent order
+    const { data: lastOrder } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('business_id', businessId)
+        .eq('customer_phone', identifier)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    if (lastOrder?.id) {
+        const { data: alreadyEarned } = await supabase
+            .from('loyalty_transactions')
+            .select('id')
+            .eq('business_id', businessId)
+            .eq('customer_phone', identifier)
+            .eq('order_id', lastOrder.id)
+            .eq('type', 'ugc_receipt')
+            .maybeSingle()
+        if (alreadyEarned) return { earned: false }
+    }
 
     const pts = settings.ugc_points_per_share ?? 10
     if (pts <= 0) return { earned: false }
 
-    // Upsert account first — same as order trigger, prevents RPC fail on new identifier
+    // Upsert account first — same as order trigger
     await supabase
         .from('loyalty_accounts')
         .upsert(
@@ -187,12 +205,11 @@ export async function earnUGCPoints(phone, businessId) {
     await supabase.from('loyalty_transactions').insert({
         business_id: businessId,
         customer_phone: identifier,
-        order_id: null,
+        order_id: lastOrder?.id || null,
         type: 'ugc_receipt',
         points_delta: pts,
     })
 
-    localStorage.setItem(cooldownKey, '1')
     return { earned: true, points: pts }
 }
 
