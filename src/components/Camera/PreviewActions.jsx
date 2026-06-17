@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTenant } from '../../contexts/TenantContext';
-import { earnUGCPoints } from '../../lib/loyaltyClient';
+import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
 
 /**
  * PreviewActions.jsx — Immersive Preview Layer
@@ -62,10 +62,10 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     }, [shareFile, capturedBlob, capturedImg, addLog]);
 
     const awardUGCPoints = React.useCallback(() => {
-        const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`)
-            || localStorage.getItem('fs_customer_phone');
-        if (!phone || !businessId) return;
-        earnUGCPoints(phone, businessId).then(({ earned, points }) => {
+        if (!businessId) return;
+        const identifier = getCustomerIdentifier(businessId);
+        if (!identifier) return;
+        earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
             if (earned && points) {
                 setUgcToast(`+${points} points`);
                 setTimeout(() => setUgcToast(null), 2500);
