@@ -781,17 +781,7 @@ function Home({ config: configProp }) {
                                 Order #{String(activeOrder.order_number).padStart(3, '0')}
                             </div>
                             <div style={{ fontSize: 12, color: '#C2410C', textTransform: 'capitalize' }}>
-                                {({
-                                    pending_payment: 'Awaiting Payment',
-                                    paid_unreleased: 'Order Confirmed',
-                                    released_to_kitchen: 'Order Received',
-                                    preparing: 'Preparing',
-                                    ready: 'Ready',
-                                    dispatched: 'On the Way',
-                                    delivered: 'Delivered',
-                                    cancelled: 'Cancelled',
-                                    refunded: 'Refunded',
-                                })[activeOrder.status] || activeOrder.status}
+                                {t(`order_status_${activeOrder.status}`) || activeOrder.status}
                             </div>
                         </div>
                     </div>

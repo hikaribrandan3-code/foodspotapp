@@ -204,7 +204,7 @@ export const translations = {
     maps_placeholder: { es: "https://maps.google.com/...", en: "https://maps.google.com/...", pt: "https://maps.google.com/..." },
     notes_placeholder: { es: "ej: Timbre 2A, subir escaleras", en: "ex: Doorbell 2A, up the stairs", pt: "ex: Campainha 2A, subir as escadas" },
 
-    mp_alias_label: { es: "Mercado Pago (Alias)", en: "Mercado Pago (Alias)", pt: "Mercado Pago (Alias)" },
+    mp_alias_label: { es: "(Alias)", en: "(Alias)", pt: "(Alias)" },
     mp_alias_placeholder: { es: "ej: foodspot.mp", en: "ex: yourstore.mp", pt: "ex: sualoja.mp" },
 
     // Mercado Pago Setup
@@ -444,6 +444,20 @@ export const translations = {
     order_number: { es: "Pedido #", en: "Order #", pt: "Pedido #" },
     order_cancelled_message: { es: "Este pedido fue cancelado y no puede completarse.", en: "This order has been cancelled and cannot be completed.", pt: "Este pedido foi cancelado e não pode ser concluído." },
     completing_payment: { es: "Completando pago... tu recibo aparecerá aquí.", en: "Completing payment... your receipt will appear here.", pt: "Completando pagamento... seu recibo aparecerá aqui." },
+
+    order_status_pending_payment: { es: "Esperando Pago", en: "Awaiting Payment", pt: "Aguardando Pagamento" },
+    order_status_paid_unreleased: { es: "Pedido Confirmado", en: "Order Confirmed", pt: "Pedido Confirmado" },
+    order_status_released_to_kitchen: { es: "Pedido Recibido", en: "Order Received", pt: "Pedido Recebido" },
+    order_status_preparing: { es: "Preparando", en: "Preparing", pt: "Preparando" },
+    order_status_ready: { es: "Listo", en: "Ready", pt: "Pronto" },
+    order_status_dispatched: { es: "En Camino", en: "On the Way", pt: "A Caminho" },
+    order_status_delivered: { es: "Entregado", en: "Delivered", pt: "Entregue" },
+    order_status_cancelled: { es: "Cancelado", en: "Cancelled", pt: "Cancelado" },
+    order_status_refunded: { es: "Reembolsado", en: "Refunded", pt: "Reembolsado" },
+
+    free_item: { es: "Item Gratis", en: "Free Item", pt: "Item Grátis" },
+    loyalty_reward: { es: "Recompensa de Lealtad", en: "Loyalty Reward", pt: "Recompensa de Fidelidade" },
+
     order_again: { es: "Pedir de Nuevo", en: "Order Again", pt: "Pedir Novamente" },
     need_help: { es: "¿Necesitas ayuda?", en: "Need help?", pt: "Precisa de ajuda?" },
     delivery_address: { es: "Dirección de entrega", en: "Delivery address", pt: "Endereço de entrega" },
@@ -945,7 +959,7 @@ export const translations = {
     whatsappOwner: { en: 'WhatsApp Owner', es: 'Dueño por WhatsApp', pt: 'Proprietário no WhatsApp' },
     confirmAndPayViaChat: { en: 'Confirm and pay via chat', es: 'Confirmar y pagar por chat', pt: 'Confirmar e pagar pelo chat' },
     notAvailable: { en: 'Not available', es: 'No disponible', pt: 'Não disponível' },
-    mercadoPagoAliasTitle: { en: 'Mercado Pago Alias', es: 'Alias de Mercado Pago', pt: 'Alias do Mercado Pago' },
+    mercadoPagoAliasTitle: { en: 'Alias', es: 'Alias', pt: 'Alias' },
     scanQrToPay: { en: 'Scan QR to pay instantly', es: 'Escanea el QR para pagar al instante', pt: 'Escaneie o QR para pagar instantaneamente' },
     aliasNotConfigured: { en: 'Alias not configured', es: 'Alias no configurado', pt: 'Alias não configurado' },
     restaurant: { es: "Restaurante", en: "Restaurant", pt: "Restaurante" },

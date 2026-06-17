@@ -228,10 +228,10 @@ export default function Receipt() {
             {order.notes && order.notes.includes('🎁 FREE ITEM (loyalty):') && (
               <div style={{ marginTop: 12, padding: '10px 12px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #dcfce7', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#15803d' }}>
-                  Free Item
+                  {t('free_item')}
                 </span>
                 <span style={{ fontSize: 13, color: '#0a0a0a' }}>
-                  {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || 'Loyalty reward'}
+                  {order.notes.match(/🎁 FREE ITEM \(loyalty\): (.+?)(\s*\|.*)?$/)?.[1] || t('loyalty_reward')}
                 </span>
                 {loyaltySettings?.points_to_redeem && (
                   <span style={{ fontSize: 11, color: '#6b7280' }}>

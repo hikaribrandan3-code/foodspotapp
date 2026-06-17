@@ -419,7 +419,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                         </div>
                     ) : !paid && !isCashMethod ? (
                         <div style={{ textAlign: 'center', padding: '20px 0', color: '#737373', fontSize: 14 }}>
-                            Completing payment... your receipt will appear here.
+                            {t('completing_payment')}
                         </div>
                     ) : (
                         <>
