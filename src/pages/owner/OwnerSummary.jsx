@@ -141,6 +141,7 @@ function OwnerSummary() {
     const [loyaltyPointsToRedeem, setLoyaltyPointsToRedeem] = useState('100')
     const [loyaltyMenuItems, setLoyaltyMenuItems] = useState([])
     const [loyaltyFreeSlots, setLoyaltyFreeSlots] = useState(['', '', ''])
+    const [loyaltyItemCosts, setLoyaltyItemCosts] = useState({})
     const [ugcPointsPerShare, setUgcPointsPerShare] = useState('10')
     const [referralPoints, setReferralPoints] = useState('100')
     const [loyaltySaving, setLoyaltySaving] = useState(false)
@@ -162,6 +163,7 @@ function OwnerSummary() {
                 setLoyaltyMinOrder(String(Math.round((settings.min_order_cents ?? 800000) / 100)))
                 setLoyaltyPointsPerOrder(String(settings.points_per_order ?? 50))
                 setLoyaltyPointsToRedeem(String(settings.points_to_redeem ?? 100))
+                setLoyaltyItemCosts(settings.item_point_costs ?? {})
                 setUgcPointsPerShare(String(settings.ugc_points_per_share ?? 10))
                 setReferralPoints(String(settings.referral_points ?? 100))
             }
@@ -184,6 +186,7 @@ function OwnerSummary() {
             min_order_cents: minCents,
             points_per_order: parseInt(loyaltyPointsPerOrder || '50'),
             points_to_redeem: parseInt(loyaltyPointsToRedeem || '100'),
+            item_point_costs: loyaltyItemCosts,
             ugc_points_per_share: parseInt(ugcPointsPerShare || '10'),
             referral_points: parseInt(referralPoints || '100'),
         }, businessId)
@@ -1277,26 +1280,48 @@ function OwnerSummary() {
                                             {/* Free Item Pickers */}
                                             <div>
                                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 dark:text-emerald-400 block mb-2">{t('loyaltyFreeItems') || 'Free Item Options (pick up to 3)'}</label>
-                                                <div className="space-y-2">
-                                                    {[0, 1, 2].map(i => (
-                                                        <select
-                                                            key={i}
-                                                            value={loyaltyFreeSlots[i]}
-                                                            onChange={e => {
-                                                                const next = [...loyaltyFreeSlots]
-                                                                next[i] = e.target.value
-                                                                setLoyaltyFreeSlots(next)
-                                                            }}
-                                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all appearance-none cursor-pointer"
-                                                        >
-                                                            <option value="">{t('loyaltySelectItem') || `— Free item ${i + 1} —`}</option>
-                                                            {loyaltyMenuItems.map(item => (
-                                                                <option key={item.id} value={item.id}>{item.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    ))}
+                                                <div className="space-y-3">
+                                                    {[0, 1, 2].map(i => {
+                                                        const selectedItemId = loyaltyFreeSlots[i]
+                                                        const selectedItem = loyaltyMenuItems.find(m => m.id === selectedItemId)
+                                                        const itemCost = selectedItem ? (loyaltyItemCosts[selectedItem.name] ?? parseInt(loyaltyPointsToRedeem || '100')) : ''
+                                                        return (
+                                                            <div key={i} className="flex gap-2">
+                                                                <select
+                                                                    value={selectedItemId}
+                                                                    onChange={e => {
+                                                                        const next = [...loyaltyFreeSlots]
+                                                                        next[i] = e.target.value
+                                                                        setLoyaltyFreeSlots(next)
+                                                                    }}
+                                                                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all appearance-none cursor-pointer"
+                                                                >
+                                                                    <option value="">{t('loyaltySelectItem') || `— Item ${i + 1} —`}</option>
+                                                                    {loyaltyMenuItems.map(item => (
+                                                                        <option key={item.id} value={item.id}>{item.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                                {selectedItem && (
+                                                                    <input
+                                                                        type="number"
+                                                                        value={itemCost}
+                                                                        onChange={e => {
+                                                                            const cost = parseInt(e.target.value) || 0
+                                                                            setLoyaltyItemCosts(prev => ({
+                                                                                ...prev,
+                                                                                [selectedItem.name]: cost
+                                                                            }))
+                                                                        }}
+                                                                        className="w-20 px-3 py-2.5 rounded-xl text-sm font-medium bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-stone-950 dark:text-white outline-none focus:border-emerald-600 transition-all"
+                                                                        placeholder="100"
+                                                                        min="1"
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    })}
                                                 </div>
-                                                <p className="text-xs text-stone-400 mt-1.5">{t('loyaltyFreeItemsHint') || 'Customer picks 1 of these when redeeming'}</p>
+                                                <p className="text-xs text-stone-400 mt-1.5">{t('loyaltyFreeItemsHint') || 'Set point cost for each item — like arcade games!'}</p>
                                             </div>
 
                                             {/* UGC Receipts */}

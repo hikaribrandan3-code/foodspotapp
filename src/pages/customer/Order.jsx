@@ -1250,25 +1250,32 @@ function Order({ config: configProp }) {
                         </div>
                         {loyaltyRedeemEnabled && loyaltyFreeItems.length > 1 && (
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                {loyaltyFreeItems.map((item, i) => (
-                                    <button
-                                        key={item.menu_item_id}
-                                        onClick={() => setLoyaltySelectedItem(i)}
-                                        style={{
-                                            padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
-                                            border: loyaltySelectedItem === i ? '2px solid #fff' : '2px solid rgba(255,255,255,0.4)',
-                                            background: loyaltySelectedItem === i ? 'rgba(255,255,255,0.25)' : 'transparent',
-                                            color: '#ffffff', cursor: 'pointer'
-                                        }}
-                                    >
-                                        {item.menu_item_name}
-                                    </button>
-                                ))}
+                                {loyaltyFreeItems.map((item, i) => {
+                                    const itemCost = loyaltySettings?.item_point_costs?.[item.menu_item_name] ?? (loyaltySettings?.points_to_redeem ?? 100)
+                                    const canAfford = loyaltyBalance >= itemCost
+                                    return (
+                                        <button
+                                            key={item.menu_item_id}
+                                            onClick={() => canAfford && setLoyaltySelectedItem(i)}
+                                            disabled={!canAfford}
+                                            style={{
+                                                padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                                                border: loyaltySelectedItem === i && canAfford ? '2px solid #fff' : '2px solid rgba(255,255,255,0.4)',
+                                                background: loyaltySelectedItem === i && canAfford ? 'rgba(255,255,255,0.25)' : 'transparent',
+                                                color: canAfford ? '#ffffff' : 'rgba(255,255,255,0.5)',
+                                                cursor: canAfford ? 'pointer' : 'not-allowed',
+                                                opacity: canAfford ? 1 : 0.5
+                                            }}
+                                        >
+                                            {item.menu_item_name} ({itemCost} pts)
+                                        </button>
+                                    )
+                                })}
                             </div>
                         )}
                         {loyaltyRedeemEnabled && loyaltyFreeItems.length === 1 && (
                             <p style={{ fontSize: 12, fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                                {t('loyaltyFreeItemSelected')} {loyaltyFreeItems[0]?.menu_item_name}
+                                {t('loyaltyFreeItemSelected')} {loyaltyFreeItems[0]?.menu_item_name} ({loyaltySettings?.item_point_costs?.[loyaltyFreeItems[0]?.menu_item_name] ?? (loyaltySettings?.points_to_redeem ?? 100)} pts)
                             </p>
                         )}
                     </div>
