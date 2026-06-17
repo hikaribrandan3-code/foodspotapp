@@ -67,8 +67,8 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         if (!identifier) return;
         earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
             if (earned && points) {
-                setUgcToast(`+${points} points`);
-                setTimeout(() => setUgcToast(null), 2500);
+                setUgcToast(points);
+                setTimeout(() => setUgcToast(null), 4000);
             }
         }).catch(() => {});
     }, [businessId]);
@@ -139,14 +139,20 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             {/* UGC Points Toast */}
             {ugcToast && (
                 <div style={{
-                    position: 'absolute', top: -48, left: '50%', transform: 'translateX(-50%)',
+                    position: 'absolute', top: -88, left: '50%', transform: 'translateX(-50%)',
                     background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                    color: '#fff', fontWeight: 800, fontSize: 14, padding: '8px 18px',
-                    borderRadius: 24, whiteSpace: 'nowrap', zIndex: 99999,
-                    boxShadow: '0 4px 16px rgba(5,150,105,0.4)',
-                    animation: 'fadeInUp 0.25s ease',
+                    color: '#fff', zIndex: 99999, borderRadius: 18,
+                    boxShadow: '0 8px 32px rgba(5,150,105,0.45)',
+                    padding: '14px 22px', textAlign: 'center', whiteSpace: 'nowrap',
+                    animation: 'fadeInUp 0.3s ease',
                 }}>
-                    📸 {ugcToast}
+                    <div style={{ fontSize: 18, marginBottom: 2 }}>:)</div>
+                    <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.01em' }}>
+                        Thanks for your support!
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 13, opacity: 0.9, marginTop: 2 }}>
+                        +{ugcToast} pts earned
+                    </div>
                 </div>
             )}
 

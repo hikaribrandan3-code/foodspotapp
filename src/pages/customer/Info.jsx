@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabaseClient';
-import { getLoyaltyBalance, getLoyaltySettings } from '../../lib/loyaltyClient';
+import { getLoyaltyBalance, getLoyaltySettings, getCustomerIdentifier } from '../../lib/loyaltyClient';
 import HeaderClamp from '../../components/HeaderClamp.jsx';
 import BurgerLoader from '../../components/BurgerLoader';
 
@@ -16,6 +16,7 @@ const Info = ({ config }) => {
     const [loyaltyPoints, setLoyaltyPoints] = useState(null);
     const [loyaltySettings, setLoyaltySettingsState] = useState(null);
     const [shareToast, setShareToast] = useState(false);
+    const [hasShared, setHasShared] = useState(false);
     const { businessId } = useTenant();
 
     useEffect(() => {
@@ -28,10 +29,11 @@ const Info = ({ config }) => {
 
     useEffect(() => {
         if (!businessId) return;
-        const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone');
-        if (!phone) return;
+        setHasShared(!!localStorage.getItem(`fs_shared_referral_${businessId}`));
+        const identifier = getCustomerIdentifier(businessId);
+        if (!identifier) return;
         Promise.all([
-            getLoyaltyBalance(phone, businessId),
+            getLoyaltyBalance(identifier, businessId),
             getLoyaltySettings(businessId),
         ]).then(([{ data: account }, { data: settings }]) => {
             if (settings?.enabled) {
@@ -54,9 +56,10 @@ const Info = ({ config }) => {
                     text: `Check out ${businessName} on FoodSpot! Order food & earn rewards. ${phone ? 'Use my referral link for bonus points!' : ''}`,
                     url
                 });
-                // Award referral points after successful share
+                // Mark as shared (one-time — hides share button)
                 if (phone) {
-                    localStorage.setItem(`fs_referral_${businessId}`, phone);
+                    localStorage.setItem(`fs_shared_referral_${businessId}`, phone);
+                    setHasShared(true);
                 }
             } else {
                 await navigator.clipboard.writeText(url);
@@ -212,24 +215,36 @@ const Info = ({ config }) => {
                                 </div>
 
                                 {/* Share & Earn row */}
-                                <button
-                                    onClick={handleShareApp}
-                                    style={{
+                                {hasShared ? (
+                                    <div style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                         width: '100%', padding: '12px 20px',
-                                        background: shareToast ? '#059669' : '#F0FDF4',
-                                        border: 'none', borderTop: '1px solid #D1FAE5',
-                                        color: shareToast ? '#ffffff' : '#059669',
-                                        fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                                    }}
-                                >
-                                    <span>{shareToast ? '✓ Link copiado!' : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`}</span>
-                                    {!shareToast && (
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                                        </svg>
-                                    )}
-                                </button>
+                                        background: '#F0FDF4', borderTop: '1px solid #D1FAE5',
+                                        color: '#6B7280', fontSize: 13, fontWeight: 600,
+                                        boxSizing: 'border-box',
+                                    }}>
+                                        <span>✓ Link compartido — +{loyaltySettings.referral_points ?? 100} pts when friend orders</span>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={handleShareApp}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            width: '100%', padding: '12px 20px',
+                                            background: shareToast ? '#059669' : '#F0FDF4',
+                                            border: 'none', borderTop: '1px solid #D1FAE5',
+                                            color: shareToast ? '#ffffff' : '#059669',
+                                            fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                                        }}
+                                    >
+                                        <span>{shareToast ? '✓ Link copiado!' : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`}</span>
+                                        {!shareToast && (
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                                            </svg>
+                                        )}
+                                    </button>
+                                )}
                             </div>
                         );
                     })()}

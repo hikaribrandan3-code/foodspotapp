@@ -12,6 +12,7 @@ import HeaderClamp from '../../components/HeaderClamp.jsx'
 import CameraTrigger from '../../components/Camera/CameraTrigger'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
+import { awardReferralPoints, getCustomerIdentifier } from '../../lib/loyaltyClient.js';
 import mapboxgl from 'mapbox-gl';
 
 
@@ -140,6 +141,24 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
 
         return () => { clearInterval(interval); clearTimeout(timeout) }
     }, [tenantSlug, order?.id, order?.payment_method, order?.status])
+
+    // Award referral points to the sharer when this order confirms
+    const referralAwardedRef = useRef(false)
+    useEffect(() => {
+        if (order?.status !== ORDER_STATUS.RELEASED_TO_KITCHEN) return
+        if (!businessId || !order?.id) return
+        if (referralAwardedRef.current) return
+        const referrerPhone = localStorage.getItem(`fs_referral_source_${businessId}`)
+        if (!referrerPhone) return
+        const customerIdentifier = getCustomerIdentifier(businessId)
+        if (!customerIdentifier || customerIdentifier === referrerPhone) return
+        referralAwardedRef.current = true
+        awardReferralPoints(referrerPhone, customerIdentifier, businessId, order.id)
+            .then(({ awarded }) => {
+                if (awarded) localStorage.removeItem(`fs_referral_source_${businessId}`)
+            })
+            .catch(() => {})
+    }, [order?.status, order?.id, businessId])
 
     useEffect(() => {
         if (order?.status === ORDER_STATUS.DELIVERED || order?.status === ORDER_STATUS.CANCELLED) {

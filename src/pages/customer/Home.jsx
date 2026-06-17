@@ -134,6 +134,18 @@ function Home({ config: configProp }) {
             }
         }
     }, [])
+
+    // Referral source detection — save ?ref=<phone> for later award at checkout
+    useEffect(() => {
+        if (!businessId) return
+        const params = new URLSearchParams(window.location.search)
+        const ref = params.get('ref')
+        if (!ref) return
+        const myPhone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone')
+        // Don't save self-referrals
+        if (myPhone && ref === myPhone.replace(/\s/g, '')) return
+        localStorage.setItem(`fs_referral_source_${businessId}`, ref)
+    }, [businessId])
     const longPressTimerRef = useRef(null)
     const longPressStartRef = useRef(null)
     const [hasChanges, setHasChanges] = useState(false)
