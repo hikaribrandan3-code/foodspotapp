@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import CameraLayer from './CameraLayer.jsx'
 import CameraLayerV18 from './CameraLayerV18.jsx'
@@ -29,7 +28,7 @@ export const VERSION = 'CamTech v2.2'
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
     const { activateCamera, deactivateCamera } = useCamTechBroadcaster()
-    const { tenantData, businessId } = useTenant() || {}
+    const { tenantData } = useTenant() || {}
     const [isOwner, setIsOwner] = useState(false)
     const [authLoading, setAuthLoading] = useState(true)
 
@@ -46,23 +45,15 @@ function Camera({ neonContext = null, branding = null }) {
     const [showSettings, setShowSettings] = useState(false)
     const [toolPosition, setToolPosition] = useState('right')
 
-    // --- AUTH CHECK: Owner only if session user matches this business's owner ---
+    // --- OWNER MODE: driven by the SAME ?ownerStart signal Home.jsx uses ---
+    // NOT the auth session. Owner "View Store" carries ?ownerStart=true through
+    // navigation → advanced camera. Delete the param → customer → normal camera.
+    // Component stays mounted through capture→editor→back, so reading once is enough.
     useEffect(() => {
-        if (!tenantData) return
-        const checkAuth = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession()
-                if (!session?.user) { setAuthLoading(false); return }
-                const uid = session.user.id
-                setIsOwner(uid === tenantData.owner_id || uid === tenantData.user_id)
-            } catch (err) {
-                console.error('Auth check failed:', err)
-            } finally {
-                setAuthLoading(false)
-            }
-        }
-        checkAuth()
-    }, [tenantData?.owner_id, tenantData?.user_id])
+        const ownerStart = new URLSearchParams(window.location.search).get('ownerStart') === 'true'
+        setIsOwner(ownerStart)
+        setAuthLoading(false)
+    }, [])
 
     // --- CAMTECH BLACK BOX: Global State Management ---
     useEffect(() => {
