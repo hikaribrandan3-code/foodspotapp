@@ -152,18 +152,19 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             {/* UGC Points Toast */}
             {ugcToast && (
                 <div style={{
-                    position: 'absolute', top: -88, left: '50%', transform: 'translateX(-50%)',
+                    position: 'fixed', top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
                     background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                    color: '#fff', zIndex: 99999, borderRadius: 18,
-                    boxShadow: '0 8px 32px rgba(5,150,105,0.45)',
-                    padding: '14px 22px', textAlign: 'center', whiteSpace: 'nowrap',
+                    color: '#fff', zIndex: 99999, borderRadius: 20,
+                    boxShadow: '0 12px 48px rgba(5,150,105,0.5)',
+                    padding: '28px 36px', textAlign: 'center', whiteSpace: 'nowrap',
                     animation: 'fadeInUp 0.3s ease',
                 }}>
-                    <div style={{ fontSize: 18, marginBottom: 2 }}>:)</div>
-                    <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.01em' }}>
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>:)</div>
+                    <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: '0.01em' }}>
                         {t('ugcToastThanks')}
                     </div>
-                    <div style={{ fontWeight: 700, fontSize: 13, opacity: 0.9, marginTop: 2 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, opacity: 0.9, marginTop: 6 }}>
                         +{ugcToast} {t('ugcToastEarned')}
                     </div>
                 </div>

@@ -29,7 +29,7 @@ export const VERSION = 'CamTech v2.2'
 function Camera({ neonContext = null, branding = null }) {
     const navigate = useNavigate()
     const { activateCamera, deactivateCamera } = useCamTechBroadcaster()
-    const { tenantData } = useTenant() || {}
+    const { tenantData, businessId } = useTenant() || {}
     const [isOwner, setIsOwner] = useState(false)
     const [authLoading, setAuthLoading] = useState(true)
 
@@ -46,14 +46,20 @@ function Camera({ neonContext = null, branding = null }) {
     const [showSettings, setShowSettings] = useState(false)
     const [toolPosition, setToolPosition] = useState('right')
 
-    // --- AUTH CHECK: Detect if user is owner (building camera for owners) ---
+    // --- AUTH CHECK: Owner only if they own THIS specific business ---
     useEffect(() => {
+        if (!businessId) return
         const checkAuth = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession()
-                if (session?.user?.user_metadata?.role === 'owner') {
-                    setIsOwner(true)
-                }
+                if (!session?.user) { setAuthLoading(false); return }
+                const { data: owned } = await supabase
+                    .from('businesses')
+                    .select('id')
+                    .eq('owner_id', session.user.id)
+                    .eq('id', businessId)
+                    .maybeSingle()
+                setIsOwner(!!owned)
             } catch (err) {
                 console.error('Auth check failed:', err)
             } finally {
@@ -61,7 +67,7 @@ function Camera({ neonContext = null, branding = null }) {
             }
         }
         checkAuth()
-    }, [])
+    }, [businessId])
 
     // --- CAMTECH BLACK BOX: Global State Management ---
     useEffect(() => {
