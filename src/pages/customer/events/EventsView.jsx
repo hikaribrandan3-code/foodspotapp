@@ -277,75 +277,64 @@ export default function EventsView({ onViewTickets, onStageChange }) {
     const guestToken = searchParams.get('guest_token');
     const mpReturnStatus = searchParams.get('payment');
 
-    if (orderId && guestToken && businessId) {
-      localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', guestToken);
+    if (!orderId || !guestToken) return;
 
-      const fetchOrder = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('event_orders')
-            .select(`
-              *,
-              events:event_id (
-                name, image_url, share_image_url, venue_name, start_date, description
-              )
-            `)
-            .eq('id', orderId)
-            .eq('guest_token', guestToken)
-            .single();
+    localStorage.setItem(tenantSlug ? `fs_guest_token_${tenantSlug}` : 'fs_guest_token', guestToken);
 
-          if (!error && data) {
-            // If MP redirected with ?payment=success, update payment_status to 'paid' now
-            // (webhook may take seconds to process — don't let owner check-in fail due to lag)
-            if (mpReturnStatus === 'success' && data.payment_status !== 'paid') {
-              await supabase
-                .from('event_orders')
-                .update({ payment_status: 'paid' })
-                .eq('id', orderId)
-                .catch(err => console.warn('[EventsView] Payment status update failed:', err));
+    const fetchOrder = async () => {
+      try {
+        const { data, error } = await supabase
+          .rpc('get_event_order_for_ticket', {
+            p_order_id: orderId,
+            p_guest_token: guestToken
+          });
 
-              // Fallback: increment tier sold count in case webhook hasn't fired yet.
-              // FOR UPDATE lock in RPC prevents double-count if webhook also runs.
-              if (data.tier_snapshot?.id && data.quantity) {
-                supabase.rpc('increment_event_tier_sold', {
-                  p_event_id: data.event_id,
-                  p_tier_id: data.tier_snapshot.id,
-                  p_quantity: data.quantity
-                }).then(({ error: rpcErr }) => {
-                  if (rpcErr) console.warn('[EventsView] Tier sold fallback failed:', rpcErr.message)
-                })
-              }
-            }
-
-            const booking = {
-              id: data.ticket_code,
-              ticket_code: data.ticket_code,
-              order_id: data.id,
-              event_id: data.event_id,
-              event_name: data.events?.name || 'Event',
-              tier_name: data.tier_snapshot?.name || '',
-              quantity: data.quantity,
-              total: data.total_cents / 100,
-              purchase_date: data.created_at,
-              venue_name: data.events?.venue_name || '',
-              date: data.events?.start_date || '',
-              image: data.events?.image_url || '',
-              description: data.events?.description || '',
-              category: data.events?.category || '',
-              payment_method: data.payment_method || '',
-              guest_token: guestToken
-            };
-            setBookingData(booking);
-            setStage('ticket');
-          }
-        } catch (err) {
-          console.error('Failed to load order:', err);
+        if (error) {
+          console.error('[EventsView] RPC error:', error.message);
+          return;
         }
-      };
 
-      fetchOrder();
-    }
-  }, [searchParams, businessId]);
+        if (!data) {
+          console.warn('[EventsView] No order found for', orderId);
+          return;
+        }
+
+        // Fire-and-forget: increment tier sold in case webhook lags
+        if (mpReturnStatus === 'success' && data.tier_snapshot?.id && data.quantity) {
+          supabase.rpc('increment_event_tier_sold', {
+            p_event_id: data.event_id,
+            p_tier_id: data.tier_snapshot.id,
+            p_quantity: data.quantity
+          }).catch(() => {});
+        }
+
+        const booking = {
+          id: data.ticket_code,
+          ticket_code: data.ticket_code,
+          order_id: data.id,
+          event_id: data.event_id,
+          event_name: data.events?.name || 'Event',
+          tier_name: data.tier_snapshot?.name || '',
+          quantity: data.quantity,
+          total: data.total_cents / 100,
+          purchase_date: data.created_at,
+          venue_name: data.events?.venue_name || '',
+          date: data.events?.start_date || '',
+          image: data.events?.image_url || '',
+          description: data.events?.description || '',
+          category: data.events?.category || '',
+          payment_method: data.payment_method || '',
+          guest_token: guestToken
+        };
+        setBookingData(booking);
+        setStage('ticket');
+      } catch (err) {
+        console.error('[EventsView] fetchOrder exception:', err);
+      }
+    };
+
+    fetchOrder();
+  }, [searchParams, tenantSlug]);
 
   const goToStage = (s) => {
     setStage(s);
