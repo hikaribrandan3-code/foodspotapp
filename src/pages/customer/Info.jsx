@@ -46,9 +46,18 @@ const Info = ({ config }) => {
     const handleShareApp = async () => {
         const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone');
         const url = `${window.location.origin}/${tenantSlug}${phone ? `?ref=${encodeURIComponent(phone)}` : ''}`;
+        const businessName = tenantData?.venue_name || tenantData?.business_name || 'FoodSpot';
         try {
             if (navigator.share) {
-                await navigator.share({ title: tenantData?.venue_name || tenantData?.business_name || 'FoodSpot', url });
+                await navigator.share({
+                    title: businessName,
+                    text: `Check out ${businessName} on FoodSpot! Order food & earn rewards. ${phone ? 'Use my referral link for bonus points!' : ''}`,
+                    url
+                });
+                // Award referral points after successful share
+                if (phone) {
+                    localStorage.setItem(`fs_referral_${businessId}`, phone);
+                }
             } else {
                 await navigator.clipboard.writeText(url);
                 setShareToast(true);
