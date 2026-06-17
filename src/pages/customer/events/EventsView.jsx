@@ -308,15 +308,6 @@ export default function EventsView({ onViewTickets, onStageChange }) {
 
         console.log('[EventsView] Order loaded successfully, setting stage to ticket with ticket_code:', data.ticket_code);
 
-        // Fire-and-forget: increment tier sold in case webhook lags
-        if (mpReturnStatus === 'success' && data.tier_snapshot?.id && data.quantity) {
-          supabase.rpc('increment_event_tier_sold', {
-            p_event_id: data.event_id,
-            p_tier_id: data.tier_snapshot.id,
-            p_quantity: data.quantity
-          }).catch(() => {});
-        }
-
         const booking = {
           id: data.ticket_code,
           ticket_code: data.ticket_code,
@@ -337,6 +328,15 @@ export default function EventsView({ onViewTickets, onStageChange }) {
         };
         setBookingData(booking);
         setStage('ticket');
+
+        // Fire-and-forget: increment tier sold (webhook may lag)
+        if (mpReturnStatus === 'success' && data.tier_snapshot?.id && data.quantity) {
+          supabase.rpc('increment_event_tier_sold', {
+            p_event_id: data.event_id,
+            p_tier_id: data.tier_snapshot.id,
+            p_quantity: data.quantity
+          });
+        }
       } catch (err) {
         console.error('[EventsView] fetchOrder exception:', err);
       }
