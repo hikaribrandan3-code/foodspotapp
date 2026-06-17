@@ -290,6 +290,7 @@ export default function EventsView({ onViewTickets, onStageChange }) {
                 name, image_url, share_image_url, venue_name, start_date, description
               )
             `)
+            .headers({ 'x-guest-token': guestToken })
             .eq('id', orderId)
             .eq('guest_token', guestToken)
             .single();
