@@ -2,6 +2,7 @@ import React from 'react';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
+import confetti from 'canvas-confetti';
 
 /**
  * PreviewActions.jsx — Immersive Preview Layer
@@ -70,6 +71,16 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
             if (earned && points) {
                 setUgcToast(points);
+                // Confetti burst
+                const duration = 2.5 * 1000;
+                const animationEnd = Date.now() + duration;
+                const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 1000 };
+                const interval = setInterval(() => {
+                    const timeLeft = animationEnd - Date.now();
+                    if (timeLeft <= 0) return clearInterval(interval);
+                    const particleCount = 35 * (timeLeft / duration);
+                    confetti({ ...defaults, particleCount, origin: { x: 0.5, y: 0.5 } });
+                }, 250);
                 setTimeout(() => setUgcToast(null), 4000);
             }
         }).catch(() => {});

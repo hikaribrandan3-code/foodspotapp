@@ -13,6 +13,7 @@ import CameraTrigger from '../../components/Camera/CameraTrigger'
 import { ORDER_STATUS } from '../../constants/database.js';
 import { PAYMENT_METHOD } from '../../constants/database.js';
 import { awardReferralPoints, getCustomerIdentifier } from '../../lib/loyaltyClient.js';
+import confetti from 'canvas-confetti';
 import mapboxgl from 'mapbox-gl';
 
 
@@ -32,6 +33,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     const [order, setOrder] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [referralAwardedUI, setReferralAwardedUI] = useState(false)
     const mapContainer = useRef(null)
     const map = useRef(null)
 
@@ -154,8 +156,21 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         if (!customerIdentifier || customerIdentifier === referrerPhone) return
         referralAwardedRef.current = true
         awardReferralPoints(referrerPhone, customerIdentifier, businessId, order.id)
-            .then(({ awarded }) => {
-                if (awarded) localStorage.removeItem(`fs_referral_source_${businessId}`)
+            .then(({ awarded, points }) => {
+                if (awarded) {
+                    localStorage.removeItem(`fs_referral_source_${businessId}`)
+                    setReferralAwardedUI(true)
+                    // Confetti burst
+                    const duration = 2.5 * 1000
+                    const animationEnd = Date.now() + duration
+                    const defaults = { startVelocity: 28, spread: 360, ticks: 50, zIndex: 1000 }
+                    const interval = setInterval(() => {
+                        const timeLeft = animationEnd - Date.now()
+                        if (timeLeft <= 0) return clearInterval(interval)
+                        const particleCount = 40 * (timeLeft / duration)
+                        confetti({ ...defaults, particleCount, origin: { x: 0.5, y: 0.5 } })
+                    }, 250)
+                }
             })
             .catch(() => {})
     }, [order?.status, order?.id, businessId])
@@ -346,6 +361,39 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     return (
       <CameraTrigger orderId={order.id} orderType={orderType} delayMs={1000}>
         <>
+            {/* Referral Award Modal */}
+            {referralAwardedUI && (
+                <div style={{
+                    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 99999
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
+                        color: '#fff', padding: '32px 24px', borderRadius: 20,
+                        textAlign: 'center', maxWidth: 320, boxShadow: '0 20px 60px rgba(5,150,105,0.3)'
+                    }}>
+                        <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
+                        <h2 style={{ fontSize: 18, fontWeight: 800, margin: '0 0 8px', letterSpacing: '0.01em' }}>
+                            {t('referralConfirmed')}
+                        </h2>
+                        <p style={{ fontSize: 14, margin: '0 0 16px', opacity: 0.9 }}>
+                            {t('referralAwardMessage')}
+                        </p>
+                        <button
+                            onClick={() => setReferralAwardedUI(false)}
+                            style={{
+                                background: '#fff', color: '#059669', border: 'none',
+                                padding: '10px 20px', borderRadius: 12, fontWeight: 700,
+                                cursor: 'pointer', fontSize: 14
+                            }}
+                        >
+                            {t('referralThankBtn')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <HeaderClamp config={config} />
             <div style={{
                 background: '#fff',

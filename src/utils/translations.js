@@ -1210,6 +1210,9 @@ export const translations = {
     shareAndEarn:            { en: 'Share & Earn',                          es: 'Compartir y Ganar',                   pt: 'Compartilhar e Ganhar' },
     ugcToastThanks:          { en: 'Thanks for your support!',              es: '¡Gracias por tu apoyo!',               pt: 'Obrigado pelo seu apoio!' },
     ugcToastEarned:          { en: 'pts earned',                            es: 'pts ganados',                         pt: 'pts ganhos' },
+    referralConfirmed:       { en: 'Referral confirmed!',                   es: '¡Referido confirmado!',               pt: 'Referência confirmada!' },
+    referralAwardMessage:    { en: 'Your friend got their order. You earned +400 pts!', es: 'Tu amigo recibió su pedido. ¡Ganaste +400 pts!', pt: 'Seu amigo recebeu o pedido. Você ganhou +400 pts!' },
+    referralThankBtn:        { en: 'Thanks!',                               es: '¡Gracias!',                           pt: 'Obrigado!' },
 
     // ── Owner Branding / Settings ──────────────────────────────────────────────
     add_emoji_name_note:{ en: 'Add an emoji to the name — it appears in your customers\' camera', es: 'Agregá un emoji al nombre — aparece en la cámara de tus clientes', pt: 'Adicione um emoji ao nome — ele aparece na câmera dos seus clientes' },
