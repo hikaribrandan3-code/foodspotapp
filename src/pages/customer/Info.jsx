@@ -29,17 +29,28 @@ const Info = ({ config }) => {
 
     useEffect(() => {
         if (!businessId) return;
-        setHasShared(!!localStorage.getItem(`fs_shared_referral_${businessId}`));
         const identifier = getCustomerIdentifier(businessId);
         if (!identifier) return;
+
+        const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone');
+
         Promise.all([
             getLoyaltyBalance(identifier, businessId),
             getLoyaltySettings(businessId),
-        ]).then(([{ data: account }, { data: settings }]) => {
+            // Check if referral was already claimed (friend ordered) → hide share row
+            phone ? supabase
+                .from('loyalty_referral_claims')
+                .select('id')
+                .eq('business_id', businessId)
+                .eq('referrer_phone', phone.replace(/\s/g, ''))
+                .maybeSingle() : Promise.resolve({ data: null }),
+        ]).then(([{ data: account }, { data: settings }, { data: claim }]) => {
             if (settings?.enabled) {
                 setLoyaltyPoints(account?.points_balance ?? 0);
                 setLoyaltySettingsState(settings);
             }
+            // Hide share row if referral already claimed OR localStorage flag set
+            setHasShared(!!claim || !!localStorage.getItem(`fs_shared_referral_${businessId}`));
         });
     }, [businessId]);
 

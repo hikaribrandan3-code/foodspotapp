@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
@@ -150,12 +151,12 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         <div style={styles.wrapper}>
 
             {/* UGC Points Toast */}
-            {ugcToast && (
+            {ugcToast && createPortal(
                 <div style={{
                     position: 'fixed', top: '50%', left: '50%',
                     transform: 'translate(-50%, -50%)',
                     background: 'linear-gradient(135deg, #065f46 0%, #059669 100%)',
-                    color: '#fff', zIndex: 99999, borderRadius: 20,
+                    color: '#fff', zIndex: 999999, borderRadius: 20,
                     boxShadow: '0 12px 48px rgba(5,150,105,0.5)',
                     padding: '28px 36px', textAlign: 'center', whiteSpace: 'nowrap',
                     animation: 'fadeInUp 0.3s ease',
@@ -167,7 +168,8 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     <div style={{ fontWeight: 700, fontSize: 15, opacity: 0.9, marginTop: 6 }}>
                         +{ugcToast} {t('ugcToastEarned')}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* DEBUG LOGGER (VISIBLE ON DEVICE) */}

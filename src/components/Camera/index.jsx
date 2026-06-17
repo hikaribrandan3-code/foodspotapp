@@ -46,20 +46,14 @@ function Camera({ neonContext = null, branding = null }) {
     const [showSettings, setShowSettings] = useState(false)
     const [toolPosition, setToolPosition] = useState('right')
 
-    // --- AUTH CHECK: Owner only if they own THIS specific business ---
+    // --- AUTH CHECK: Owner only if session user matches this business's owner_id ---
     useEffect(() => {
-        if (!businessId) return
+        if (!tenantData) return
         const checkAuth = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession()
                 if (!session?.user) { setAuthLoading(false); return }
-                const { data: owned } = await supabase
-                    .from('businesses')
-                    .select('id')
-                    .eq('owner_id', session.user.id)
-                    .eq('id', businessId)
-                    .maybeSingle()
-                setIsOwner(!!owned)
+                setIsOwner(session.user.id === tenantData.owner_id)
             } catch (err) {
                 console.error('Auth check failed:', err)
             } finally {
@@ -67,7 +61,7 @@ function Camera({ neonContext = null, branding = null }) {
             }
         }
         checkAuth()
-    }, [businessId])
+    }, [tenantData?.owner_id])
 
     // --- CAMTECH BLACK BOX: Global State Management ---
     useEffect(() => {
