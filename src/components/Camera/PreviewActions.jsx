@@ -70,9 +70,10 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         const identifier = getCustomerIdentifier(businessId);
         if (!identifier) return;
         earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
-            if (earned && points) {
+            if (!earned || !points) return;
+
+            const showToast = () => {
                 setUgcToast(points);
-                // Confetti burst
                 const duration = 2.5 * 1000;
                 const animationEnd = Date.now() + duration;
                 const defaults = { startVelocity: 25, spread: 360, ticks: 50, zIndex: 1000 };
@@ -82,7 +83,20 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     const particleCount = 35 * (timeLeft / duration);
                     confetti({ ...defaults, particleCount, origin: { x: 0.5, y: 0.5 } });
                 }, 250);
-                setTimeout(() => setUgcToast(null), 4000);
+                setTimeout(() => setUgcToast(null), 2800);
+            };
+
+            // Wait until user is back in the app before showing toast
+            if (document.visibilityState === 'visible') {
+                setTimeout(showToast, 350);
+            } else {
+                const onReturn = () => {
+                    if (document.visibilityState === 'visible') {
+                        document.removeEventListener('visibilitychange', onReturn);
+                        setTimeout(showToast, 350);
+                    }
+                };
+                document.addEventListener('visibilitychange', onReturn);
             }
         }).catch(() => {});
     }, [businessId]);
