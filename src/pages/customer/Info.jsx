@@ -53,7 +53,7 @@ const Info = ({ config }) => {
             if (navigator.share) {
                 await navigator.share({
                     title: businessName,
-                    text: `Check out ${businessName} on FoodSpot! Order food & earn rewards. ${phone ? 'Use my referral link for bonus points!' : ''}`,
+                    text: `${businessName} — ${t('shareAppText')}`,
                     url
                 });
                 // Mark as shared (one-time — hides share button)
@@ -223,7 +223,7 @@ const Info = ({ config }) => {
                                         color: '#6B7280', fontSize: 13, fontWeight: 600,
                                         boxSizing: 'border-box',
                                     }}>
-                                        <span>✓ Link compartido — +{loyaltySettings.referral_points ?? 100} pts when friend orders</span>
+                                        <span>{t('linkSharedDone')} — +{loyaltySettings.referral_points ?? 100} {t('whenFriendOrders')}</span>
                                     </div>
                                 ) : (
                                     <button
@@ -237,7 +237,7 @@ const Info = ({ config }) => {
                                             fontSize: 13, fontWeight: 700, cursor: 'pointer',
                                         }}
                                     >
-                                        <span>{shareToast ? '✓ Link copiado!' : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`}</span>
+                                        <span>{shareToast ? t('linkCopied') : `${t('shareAndEarn')} · +${loyaltySettings.referral_points ?? 100} pts`}</span>
                                         {!shareToast && (
                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                 <path d="M5 12h14M12 5l7 7-7 7"/>

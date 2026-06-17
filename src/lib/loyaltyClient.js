@@ -158,17 +158,31 @@ export async function earnUGCPoints(phone, businessId) {
     const identifier = phone ? phone.replace(/\s/g, '') : getCustomerIdentifier(businessId)
     if (!identifier) return { earned: false }
 
+    // 24h cooldown per device — one UGC award per day
+    const cooldownKey = `fs_ugc_${businessId}_${new Date().toISOString().slice(0, 10)}`
+    if (localStorage.getItem(cooldownKey)) return { earned: false }
+
     const { data: settings } = await getLoyaltySettings(businessId)
     if (!settings?.enabled) return { earned: false }
 
     const pts = settings.ugc_points_per_share ?? 10
     if (pts <= 0) return { earned: false }
 
-    await supabase.rpc('increment_loyalty_points', {
+    // Upsert account first — same as order trigger, prevents RPC fail on new identifier
+    await supabase
+        .from('loyalty_accounts')
+        .upsert(
+            { business_id: businessId, customer_phone: identifier, points_balance: 0 },
+            { onConflict: 'business_id,customer_phone', ignoreDuplicates: true }
+        )
+
+    const { error: rpcError } = await supabase.rpc('increment_loyalty_points', {
         p_business_id: businessId,
         p_phone: identifier,
         p_delta: pts,
     })
+
+    if (rpcError) return { earned: false }
 
     await supabase.from('loyalty_transactions').insert({
         business_id: businessId,
@@ -178,6 +192,7 @@ export async function earnUGCPoints(phone, businessId) {
         points_delta: pts,
     })
 
+    localStorage.setItem(cooldownKey, '1')
     return { earned: true, points: pts }
 }
 
