@@ -81,6 +81,9 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         addLog("Share executed");
 
+        // ✅ Award points IMMEDIATELY before they leave the app
+        awardUGCPoints();
+
         try {
             if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
                 await navigator.share({
@@ -88,7 +91,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     title: 'Check out my FoodSpot moment!',
                     text: 'Shared via FoodSpot',
                 });
-                awardUGCPoints();
                 return;
             }
 
@@ -107,7 +109,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     title: 'Check out my FoodSpot moment!',
                     text: 'Shared via FoodSpot',
                 });
-                awardUGCPoints();
             } else {
                 alert("Sharing is not supported on this browser or device. Try saving to gallery instead.");
             }
@@ -115,6 +116,27 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
             if (err.name !== 'AbortError') addLog(`Share err: ${err.message}`, true);
         }
     }, [shareFile, capturedImg, addLog, awardUGCPoints]);
+
+    // 🎬 INJECT KEYFRAME ANIMATIONS
+    React.useEffect(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; transform: scale(0.9); }
+                to { opacity: 1; transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+        return () => document.head.removeChild(style);
+    }, []);
+
+    // ⏰ AUTO-DISMISS NOTIFICATION
+    React.useEffect(() => {
+        if (ugcPoints) {
+            const timer = setTimeout(() => setUgcPoints(null), 4000);
+            return () => clearTimeout(timer);
+        }
+    }, [ugcPoints]);
 
     // CRITICAL: Manually bind native DOM events to bypass React SyntheticEvents
     React.useEffect(() => {
@@ -139,21 +161,62 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     return (
         <div style={styles.wrapper}>
 
-            {/* ── UGC CONFIRMATION MESSAGE ── */}
+            {/* ── UGC CONFIRMATION MESSAGE (CENTER OF SCREEN) ── */}
             {ugcPoints && (
                 <div style={{
-                    marginBottom: 12,
-                    padding: '12px 16px',
-                    background: 'rgba(34, 197, 94, 0.15)',
-                    border: '1.5px solid #22C55E',
-                    borderRadius: 12,
-                    textAlign: 'center',
-                    color: '#22C55E',
-                    fontWeight: 700,
-                    fontSize: 14,
-                    letterSpacing: '0.01em',
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(0, 0, 0, 0.4)',
+                    backdropFilter: 'blur(4px)',
+                    zIndex: 999999,
+                    animation: 'fadeIn 0.3s ease-out',
                 }}>
-                    ✅ +{ugcPoints} {t('ugcToastEarned')} — {t('ugcToastThanks')}
+                    <div style={{
+                        padding: '32px 24px',
+                        background: '#fff',
+                        borderRadius: '20px',
+                        textAlign: 'center',
+                        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
+                        maxWidth: '90%',
+                    }}>
+                        <div style={{
+                            fontSize: '48px',
+                            marginBottom: '16px',
+                        }}>
+                            ✅
+                        </div>
+                        <div style={{
+                            fontSize: '28px',
+                            fontWeight: 800,
+                            color: '#22C55E',
+                            marginBottom: '8px',
+                            letterSpacing: '0.02em',
+                        }}>
+                            +{ugcPoints} {t('ugcToastEarned')}
+                        </div>
+                        <div style={{
+                            fontSize: '16px',
+                            color: '#666',
+                            fontWeight: 500,
+                            marginTop: '12px',
+                        }}>
+                            {t('ugcToastThanks')}
+                        </div>
+                        <div style={{
+                            fontSize: '14px',
+                            color: '#999',
+                            marginTop: '16px',
+                            fontWeight: 400,
+                        }}>
+                            Thanks for supporting us! 🎉
+                        </div>
+                    </div>
                 </div>
             )}
 
