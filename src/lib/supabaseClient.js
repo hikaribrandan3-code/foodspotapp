@@ -457,15 +457,34 @@ export async function getDeliverySettings(businessId) {
  */
 export async function upsertDeliverySettings(settings, businessId) {
     if (!businessId) return { data: null, error: new Error('Missing business ID') }
-    const { data, error } = await supabase
+
+    const payload = { ...settings, business_id: businessId, updated_at: new Date().toISOString() }
+
+    // Try UPDATE first (RLS-compliant with business_id filter)
+    const { data: updateData, error: updateError } = await supabase
         .from('delivery_settings')
-        .upsert(
-            { ...settings, business_id: businessId, updated_at: new Date().toISOString() },
-            { onConflict: 'business_id' }
-        )
+        .update(payload)
+        .eq('business_id', businessId)
         .select()
         .maybeSingle()
-    return { data, error }
+
+    // If row exists, return the update result
+    if (!updateError && updateData) {
+        return { data: updateData, error: null }
+    }
+
+    // If no row exists, INSERT new one
+    if (!updateError && !updateData) {
+        const { data: insertData, error: insertError } = await supabase
+            .from('delivery_settings')
+            .insert(payload)
+            .select()
+            .maybeSingle()
+        return { data: insertData, error: insertError }
+    }
+
+    // If update failed with actual error, return it
+    return { data: null, error: updateError }
 }
 
 /**
