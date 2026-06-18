@@ -317,8 +317,8 @@ export default function MenuManager() {
   const saveDeliverySettings = useCallback(async () => {
     if (!businessId) return;
 
-    const feeCents = isDeliveryFeeEnabled ? Math.round(parseFloat(deliveryFee || 0) * 100) : 0;
-    const thresholdCents = isFreeDeliveryEnabled ? Math.round(parseFloat(freeDeliveryThreshold || 0) * 100) : 0;
+    const feeCents = isDeliveryFeeEnabled ? Math.round(parseFloat((deliveryFee || 0).toString().replace(',', '.')) * 100) : 0;
+    const thresholdCents = isFreeDeliveryEnabled ? Math.round(parseFloat((freeDeliveryThreshold || 0).toString().replace(',', '.')) * 100) : 0;
 
     const settings = {
       fee_cents: feeCents,
