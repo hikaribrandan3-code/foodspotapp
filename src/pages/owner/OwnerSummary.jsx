@@ -541,6 +541,11 @@ function OwnerSummary() {
             setBusinessCurrency(currencyCode)
             setAutoSaveStatus({ type: 'currency', timestamp: Date.now() })
             setTimeout(() => setAutoSaveStatus(null), 2000)
+
+            // Dispatch frontendSync to immediately update all components
+            window.dispatchEvent(new CustomEvent('frontendSync', {
+              detail: { app_config: updatedConfig }
+            }))
         } catch (err) {
             console.error('[OwnerSummary] Failed to save business currency:', err)
         } finally {
