@@ -35,13 +35,13 @@ export default function MenuManager() {
   const [isDeliveryPaused, setIsDeliveryPaused] = useState(false);
 
 
-  // Fetch menu items and delivery settings on mount / businessId change
+  // Fetch menu items and delivery settings on mount / businessId or tenantData change
   useEffect(() => {
     if (!businessId) return;
     fetchMenuItems();
     fetchCategories();
     loadDeliverySettings();
-  }, [businessId]);
+  }, [businessId, tenantData?.delivery_settings_raw]);
 
   const fetchCategories = async () => {
     try {
