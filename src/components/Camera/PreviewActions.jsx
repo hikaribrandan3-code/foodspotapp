@@ -7,6 +7,7 @@ import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
  * PreviewActions.jsx — Immersive Preview Layer
  * Electric Green primary + Pure White secondary + Discard link.
  * Renders inside the glassmorphism action bar (no self-positioning).
+ * Updated: UGC share confirmation modal with center-screen notification.
  */
 export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     const { businessId } = useTenant();
