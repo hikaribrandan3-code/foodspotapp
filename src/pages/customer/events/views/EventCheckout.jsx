@@ -13,6 +13,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
   const [paymentError, setPaymentError] = useState(null);
   const [promoCode, setPromoCode] = useState('');
   const [promoError, setPromoError] = useState(null);
+  const [email, setEmail] = useState('');
 
   // Calculate max available quantity
   const maxQty = Math.max(1, (tier.qty || 0) - (tier.sold || 0));
@@ -89,6 +90,10 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
 
   const handleConfirm = async () => {
     if (isProcessing) return;
+    if (!email.trim()) {
+      setPaymentError('Please enter your email');
+      return;
+    }
     setIsProcessing(true);
     setPaymentError(null);
 
@@ -99,7 +104,7 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
           event_id: event.id,
           tier_id: tier.id,
           quantity: qty,
-          customer: { name: '', email: '', phone: '' },
+          customer: { name: '', email: email.trim(), phone: '' },
           promo_code: promoCode.trim() || null
         }
       });
@@ -342,6 +347,15 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
               <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
             </div>
           )}
+          {/* Email Input */}
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="your@email.com"
+            required
+            className="w-full bg-[var(--canvas-bg)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-xs font-bold text-[var(--text-primary)] placeholder:opacity-30 outline-none focus:border-[var(--color-primary)] transition-colors"
+          />
           {/* Primary: Mercado Pago */}
           <button
             onClick={handleConfirm}

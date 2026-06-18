@@ -79,6 +79,10 @@ export default function MyTickets() {
   const [isToppingUp, setIsToppingUp] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [recoveryError, setRecoveryError] = useState(null);
+  const [recoveredTickets, setRecoveredTickets] = useState([]);
 
   // Get guest token using correct key format: fs_guest_token_${tenantSlug}
   const getGuestToken = () => {
@@ -152,6 +156,83 @@ export default function MyTickets() {
       alert(t('delete_failed') || 'Could not delete ticket. Please try again.');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleRecoverByEmail = async () => {
+    if (!recoveryEmail.trim()) {
+      setRecoveryError('Please enter your email');
+      return;
+    }
+
+    setRecoveryLoading(true);
+    setRecoveryError(null);
+    setRecoveredTickets([]);
+
+    try {
+      const { data, error } = await supabase
+        .from('event_orders')
+        .select(`
+          id,
+          ticket_code,
+          event_id,
+          quantity,
+          total_cents,
+          created_at,
+          payment_status,
+          deleted_at,
+          events (
+            id,
+            name,
+            start_date,
+            venue_name,
+            image_url,
+            status
+          )
+        `)
+        .eq('customer_email', recoveryEmail.trim().toLowerCase())
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Recovery error:', error);
+        setRecoveryError('Could not retrieve tickets. Please try again.');
+        setRecoveryLoading(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setRecoveryError('No active tickets found for this email');
+        setRecoveryLoading(false);
+        return;
+      }
+
+      // Transform to booking format
+      const tickets = data.map(order => {
+        const event = order.events || {};
+        const startDate = event.start_date ? new Date(event.start_date) : new Date();
+        return {
+          id: order.id,
+          ticket_code: order.ticket_code,
+          event_id: order.event_id,
+          event_name: event.name || 'Unknown Event',
+          date: startDate.toISOString().split('T')[0],
+          time: startDate.toTimeString().slice(0, 5),
+          venue_name: event.venue_name || '',
+          image: event.image_url || '',
+          quantity: order.quantity || 1,
+          total: (order.total_cents || 0) / 100,
+          purchase_date: order.created_at,
+          status: event.status || 'live'
+        };
+      });
+
+      setRecoveredTickets(tickets);
+    } catch (err) {
+      console.error('Recovery exception:', err);
+      setRecoveryError('Network error. Please try again.');
+    } finally {
+      setRecoveryLoading(false);
     }
   };
 
@@ -337,12 +418,42 @@ export default function MyTickets() {
           </div>
         </section>
 
+        {/* Recovery Section - Show if no tickets */}
+        {upcomingTickets.length === 0 && recoveredTickets.length === 0 && (
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] p-6 space-y-4">
+            <div>
+              <h3 className="text-lg font-black text-[var(--text-primary)] mb-2">Can't find your tickets?</h3>
+              <p className="text-xs font-medium text-[var(--text-secondary)] opacity-70">Enter the email you used to purchase tickets</p>
+            </div>
+            <div className="space-y-2">
+              <input
+                type="email"
+                value={recoveryEmail}
+                onChange={e => { setRecoveryEmail(e.target.value); setRecoveryError(null); }}
+                placeholder="your@email.com"
+                disabled={recoveryLoading}
+                className="w-full bg-[var(--canvas-bg)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-xs font-bold text-[var(--text-primary)] placeholder:opacity-30 outline-none focus:border-[var(--color-primary)] transition-colors disabled:opacity-50"
+              />
+              <button
+                onClick={handleRecoverByEmail}
+                disabled={recoveryLoading || !recoveryEmail.trim()}
+                className="w-full bg-[var(--color-primary)] text-white rounded-2xl py-3 font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {recoveryLoading ? 'Searching...' : 'Search Tickets'}
+              </button>
+              {recoveryError && (
+                <p className="text-xs font-bold text-red-500 text-center">{recoveryError}</p>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
            <div className="flex items-center justify-between px-2">
              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] opacity-50">{t('upcoming')}</h3>
-             <span className="text-[10px] font-black text-[var(--color-primary)]">{upcomingTickets.length} active</span>
+             <span className="text-[10px] font-black text-[var(--color-primary)]">{(upcomingTickets.length + recoveredTickets.length)} active</span>
            </div>
-           {upcomingTickets.map(ticket => (
+           {[...upcomingTickets, ...recoveredTickets].map(ticket => (
              <TicketCard
               key={ticket.id}
               ticket={{...ticket, name: ticket.event_name, venue: ticket.venue_name}}
