@@ -17,6 +17,10 @@ const Info = ({ config }) => {
     const [loyaltySettings, setLoyaltySettingsState] = useState(null);
     const [shareToast, setShareToast] = useState(false);
     const [hasShared, setHasShared] = useState(false);
+    const [recoveryPhone, setRecoveryPhone] = useState('');
+    const [recoveryLoading, setRecoveryLoading] = useState(false);
+    const [recoveryError, setRecoveryError] = useState(null);
+    const [showRecovery, setShowRecovery] = useState(false);
     const { businessId } = useTenant();
 
     useEffect(() => {
@@ -89,6 +93,35 @@ const Info = ({ config }) => {
                 setShareToast(true);
                 setTimeout(() => setShareToast(false), 2000);
             }
+        }
+    };
+
+    const handleRecoverPoints = async () => {
+        if (!recoveryPhone.trim()) {
+            setRecoveryError('Please enter your phone number');
+            return;
+        }
+
+        setRecoveryLoading(true);
+        setRecoveryError(null);
+
+        try {
+            const cleanPhone = recoveryPhone.replace(/\D/g, '');
+            const { data: balance } = await getLoyaltyBalance(cleanPhone, businessId);
+
+            if (balance && balance.points_balance > 0) {
+                setLoyaltyPoints(balance.points_balance);
+                localStorage.setItem(`fs_loyalty_phone_${businessId}`, cleanPhone);
+                setShowRecovery(false);
+                setRecoveryPhone('');
+            } else {
+                setRecoveryError('No points found for this phone number');
+            }
+        } catch (err) {
+            console.error('Recovery error:', err);
+            setRecoveryError('Could not retrieve points. Please try again.');
+        } finally {
+            setRecoveryLoading(false);
         }
     };
 
@@ -265,6 +298,89 @@ const Info = ({ config }) => {
                             </div>
                         );
                     })()}
+
+                    {/* POINTS RECOVERY - Show when points = 0 */}
+                    {loyaltyPoints === 0 && loyaltySettings && (
+                        <div style={{
+                            fontFamily: "'Outfit', sans-serif",
+                            background: '#FFFFFF',
+                            borderRadius: 20,
+                            marginBottom: 16,
+                            boxShadow: '0 2px 20px rgba(5,150,105,0.10)',
+                            border: '1px solid #D1FAE5',
+                            overflow: 'hidden',
+                        }}>
+                            <button
+                                onClick={() => setShowRecovery(!showRecovery)}
+                                style={{
+                                    width: '100%',
+                                    padding: '16px 20px',
+                                    background: 'none',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    cursor: 'pointer',
+                                    fontFamily: "'Outfit', sans-serif",
+                                }}
+                            >
+                                <div style={{ textAlign: 'left' }}>
+                                    <p style={{ fontSize: 12, color: '#059669', margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                                        Don't see your points?
+                                    </p>
+                                    <p style={{ fontSize: 13, color: '#374151', margin: '4px 0 0', fontWeight: 600 }}>
+                                        Search by phone number
+                                    </p>
+                                </div>
+                                <span style={{ fontSize: 16, color: '#9CA3AF', transition: 'transform 0.2s', transform: showRecovery ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                            </button>
+
+                            {showRecovery && (
+                                <div style={{ padding: '0 20px 16px', borderTop: '1px solid #D1FAE5', paddingTop: 16 }}>
+                                    <input
+                                        type="tel"
+                                        value={recoveryPhone}
+                                        onChange={e => { setRecoveryPhone(e.target.value); setRecoveryError(null); }}
+                                        placeholder="Your phone number"
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            border: '1px solid #D1FAE5',
+                                            borderRadius: 12,
+                                            fontSize: 14,
+                                            fontWeight: 600,
+                                            marginBottom: 8,
+                                            boxSizing: 'border-box',
+                                            outline: 'none',
+                                        }}
+                                    />
+                                    <button
+                                        onClick={handleRecoverPoints}
+                                        disabled={recoveryLoading || !recoveryPhone.trim()}
+                                        style={{
+                                            width: '100%',
+                                            padding: '12px 16px',
+                                            background: '#059669',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: 12,
+                                            fontWeight: 700,
+                                            fontSize: 13,
+                                            cursor: recoveryLoading ? 'not-allowed' : 'pointer',
+                                            opacity: recoveryLoading || !recoveryPhone.trim() ? 0.5 : 1,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                        }}
+                                    >
+                                        {recoveryLoading ? 'Searching...' : 'Search'}
+                                    </button>
+                                    {recoveryError && (
+                                        <p style={{ fontSize: 12, color: '#EF4444', marginTop: 8, textAlign: 'center' }}>{recoveryError}</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* VENUE INFO HERO CARD */}
                     {(whatsapp || address || mapsUrl || businessHours) && (

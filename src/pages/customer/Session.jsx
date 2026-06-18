@@ -18,6 +18,7 @@ function Session({ config }) {
     const [mode, setMode] = useState('loading');
     const [tableInput, setTableInput] = useState('');
     const [nameInput, setNameInput] = useState('');
+    const [phoneInput, setPhoneInput] = useState('');
     const [codeInput, setCodeInput] = useState('');
     const [showCopied, setShowCopied] = useState(false);
 
@@ -49,6 +50,12 @@ function Session({ config }) {
             sessionName: nameInput || null
         });
         if (result.success) {
+            // Save phone for loyalty points redemption
+            if (phoneInput.trim()) {
+                const cleanPhone = phoneInput.replace(/\D/g, '');
+                localStorage.setItem('fs_customer_phone', cleanPhone);
+                localStorage.setItem(`fs_loyalty_phone_${tenantData?.id}`, cleanPhone);
+            }
             setMode('active');
         }
     };
@@ -315,6 +322,27 @@ function Session({ config }) {
                             value={nameInput}
                             onChange={(e) => setNameInput(e.target.value)}
                             placeholder="Ej: Cumpleaños de Juan"
+                            style={{
+                                width: '100%',
+                                padding: 14,
+                                borderRadius: 12,
+                                border: '1px solid #E5E7EB',
+                                fontSize: 16,
+                                outline: 'none',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: 20 }}>
+                        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 8, display: 'block' }}>
+                            {t('phone_number_optional') || 'Teléfono (para canjear puntos)'}
+                        </label>
+                        <input
+                            type="tel"
+                            value={phoneInput}
+                            onChange={(e) => setPhoneInput(e.target.value)}
+                            placeholder="Ej: +54 9 11 1234-5678"
                             style={{
                                 width: '100%',
                                 padding: 14,
