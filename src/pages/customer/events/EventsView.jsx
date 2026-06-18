@@ -326,6 +326,13 @@ export default function EventsView({ onViewTickets, onStageChange }) {
           payment_method: data.payment_method || '',
           guest_token: guestToken
         };
+        // Save to My Tickets
+        const existing = JSON.parse(localStorage.getItem('event_bookings') || '[]');
+        localStorage.setItem('event_bookings', JSON.stringify([booking, ...existing].slice(0, 20)));
+
+        // Clean URL so refresh doesn't re-trigger this flow
+        window.history.replaceState({}, '', window.location.pathname);
+
         setBookingData(booking);
         setStage('ticket');
 
