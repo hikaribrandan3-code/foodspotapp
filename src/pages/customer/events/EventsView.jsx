@@ -336,15 +336,16 @@ export default function EventsView({ onViewTickets, onStageChange }) {
         setBookingData(booking);
         setStage('ticket');
 
-        // Mark paid + increment tier sold after UI is showing
+        // Mark paid + increment tier sold
         if (mpReturnStatus === 'success') {
-          supabase.rpc('mark_event_order_paid', {
+          const { error: paidErr } = await supabase.rpc('mark_event_order_paid', {
             p_order_id: orderId,
             p_guest_token: guestToken
           });
+          if (paidErr) console.error('[EventsView] mark_event_order_paid failed:', paidErr.message);
 
           if (data.tier_snapshot?.id && data.quantity) {
-            supabase.rpc('increment_event_tier_sold', {
+            await supabase.rpc('increment_event_tier_sold', {
               p_event_id: data.event_id,
               p_tier_id: data.tier_snapshot.id,
               p_quantity: data.quantity
