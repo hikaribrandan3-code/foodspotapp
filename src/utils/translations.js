@@ -1207,7 +1207,7 @@ export const translations = {
     loyaltySearchButton:   { en: 'Search',                                 es: 'Buscar',                              pt: 'Pesquisar' },
     phone_number_optional: { en: 'Phone (to redeem points)',              es: 'Teléfono (para canjear puntos)',      pt: 'Telefone (para resgatar pontos)' },
     contact_number: { en: 'Contact Number', es: 'Teléfono', pt: 'Telefone' },
-    cash_debit_cards: { en: 'Cash & Debit Cards', es: 'Mercado Pago', pt: 'Mercado Pago' },
+    debit_cards: { en: 'Debit Cards', es: 'Mercado Pago', pt: 'Mercado Pago' },
     whatsapp_payment_label: { en: 'Contact Payment', es: 'WhatsApp', pt: 'WhatsApp' },
     ugcReceipts:             { en: 'UGC Receipts',                          es: 'Comprobante UGC',                     pt: 'Comprobante UGC' },
     ugcReceiptsHint:         { en: 'Reward per photo shared — drives viral moments & customer content', es: 'Puntos por foto — impulsa momentos virales y contenido de clientes', pt: 'Pontos por foto — promove momentos virais e conteúdo do cliente' },

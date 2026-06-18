@@ -721,7 +721,7 @@ function OwnerSummary() {
                                 <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <MenuRow
                                         icon={<CreditCard size={18} />}
-                                        label={t('cash_debit_cards') || 'Cash & Debit Cards'}
+                                        label={t('debit_cards') || 'Debit Cards'}
                                         subValue={`${stats.mpOrders.length} ${t('orders_count') || 'orders'}`}
                                         value={formatPrice(stats.mpTotal)}
                                         highlight
@@ -789,8 +789,8 @@ function OwnerSummary() {
                                             onFocus={() => { isTypingRef.current = true }}
                                             onChange={(e) => updateBusinessInfo('phone', e.target.value)}
                                             onBlur={() => { isTypingRef.current = false; flushBusinessInfoSave(); showVenueSavedPill() }}
-                                            placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            placeholder={t('phone_placeholder') || '(+54) 9 1234-5678'}
+                                            className="w-full px-4 py-2.5 rounded-2xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border-0 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white transition-all shadow-sm"
                                         />
                                     </div>
 
@@ -804,8 +804,8 @@ function OwnerSummary() {
                                             onFocus={() => { isTypingRef.current = true }}
                                             onChange={(e) => updateBusinessInfo('whatsapp', e.target.value)}
                                             onBlur={() => { isTypingRef.current = false; flushBusinessInfoSave(); showVenueSavedPill() }}
-                                            placeholder={t('phone_placeholder') || '+1 (555) 000-0000'}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            placeholder={t('phone_placeholder') || '(+54) 9 1234-5678'}
+                                            className="w-full px-4 py-2.5 rounded-2xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border-0 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white transition-all shadow-sm"
                                         />
                                     </div>
 
