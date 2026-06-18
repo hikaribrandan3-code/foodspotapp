@@ -177,6 +177,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     backdropFilter: 'blur(4px)',
                     zIndex: 999999,
                     animation: 'fadeIn 0.3s ease-out',
+                    paddingBottom: '200px',
                 }}>
                     <div style={{
                         padding: '32px 24px',
