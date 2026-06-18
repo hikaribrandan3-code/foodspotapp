@@ -721,7 +721,7 @@ function OwnerSummary() {
                                 <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <MenuRow
                                         icon={<CreditCard size={18} />}
-                                        label="Mercado Pago"
+                                        label={t('cash_debit_cards') || 'Cash & Debit Cards'}
                                         subValue={`${stats.mpOrders.length} ${t('orders_count') || 'orders'}`}
                                         value={formatPrice(stats.mpTotal)}
                                         highlight
@@ -781,7 +781,7 @@ function OwnerSummary() {
                                 <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                                     <div>
                                         <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] dark:text-emerald-400 block mb-2">
-                                            {t('whatsapp_contact') || 'WhatsApp'}
+                                            {t('contact_number') || 'Contact Number'}
                                         </label>
                                         <input
                                             type="text"
