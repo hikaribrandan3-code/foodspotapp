@@ -329,13 +329,20 @@ export default function EventsView({ onViewTickets, onStageChange }) {
         setBookingData(booking);
         setStage('ticket');
 
-        // Fire-and-forget: increment tier sold (webhook may lag)
-        if (mpReturnStatus === 'success' && data.tier_snapshot?.id && data.quantity) {
-          supabase.rpc('increment_event_tier_sold', {
-            p_event_id: data.event_id,
-            p_tier_id: data.tier_snapshot.id,
-            p_quantity: data.quantity
+        // Mark paid + increment tier sold after UI is showing
+        if (mpReturnStatus === 'success') {
+          supabase.rpc('mark_event_order_paid', {
+            p_order_id: orderId,
+            p_guest_token: guestToken
           });
+
+          if (data.tier_snapshot?.id && data.quantity) {
+            supabase.rpc('increment_event_tier_sold', {
+              p_event_id: data.event_id,
+              p_tier_id: data.tier_snapshot.id,
+              p_quantity: data.quantity
+            });
+          }
         }
       } catch (err) {
         console.error('[EventsView] fetchOrder exception:', err);
