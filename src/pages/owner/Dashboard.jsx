@@ -5,7 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { useOrdersPolling } from '../../hooks/useOrdersPolling'
 import { useKDSAudio } from '../../hooks/useKDSAudio'
 import { VolumeIcon, BellIcon } from '../../components/AudioIcons'
-import { formatPrice } from '../../config/menuData'
+import { useCurrency } from '../../hooks/useCurrency'
 import { formatAddressForDisplay, generateDriverMessage } from '../../utils/logistics'
 import { LoadingScreen } from '../../components/LoadingScreen'
 import BackendNav from '../../components/BackendNav'
@@ -302,7 +302,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
             {(order.items || []).length} {(order.items || []).length === 1 ? t('item_short') : t('items_short')}
             <span style={{ margin: '0 6px', color: T.muted2 }}>·</span>
             <span style={{ fontWeight: 700, color: T.ink2, fontVariantNumeric: 'tabular-nums' }}>
-              {formatPrice(order.total)}
+              {fmt(order.total)}
             </span>
           </div>
           <span style={{ fontSize: 11, color: T.statPrep, fontWeight: 600 }}>
@@ -321,7 +321,7 @@ function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
             {(order.items || []).map((item, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: T.body, padding: '3px 0' }}>
                 <span>{item.quantity}× {item.name}</span>
-                <span style={{ color: T.muted, fontVariantNumeric: 'tabular-nums' }}>{formatPrice(item.price * item.quantity)}</span>
+                <span style={{ color: T.muted, fontVariantNumeric: 'tabular-nums' }}>{fmt(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
@@ -459,6 +459,7 @@ export default function Dashboard() {
   const { businessId, tenantData } = useTenant()
   const { orders: fetchedOrders, loading, refreshOrders } = useOrdersPolling(businessId)
   const { t } = useLanguage()
+  const fmt = useCurrency()
   const { isPro, mpUsed, mpLimit } = useTier()
   const { isMuted, volume, isUnlocked, toggleMute, cycleVolume, playChime } = useKDSAudio()
   const [tab, setTab] = useState('active')
@@ -748,7 +749,7 @@ export default function Dashboard() {
       if ('Notification' in window && Notification.permission === 'granted' && latestOrder) {
         try {
           new Notification(`New Order #${String(latestOrder.order_number).padStart(3, '0')}`, {
-            body: `${latestOrder.customer_name || 'Guest'} — ${(latestOrder.items || []).length} item${(latestOrder.items || []).length !== 1 ? 's' : ''} · ${formatPrice(latestOrder.total)}`,
+            body: `${latestOrder.customer_name || 'Guest'} — ${(latestOrder.items || []).length} item${(latestOrder.items || []).length !== 1 ? 's' : ''} · ${fmt(latestOrder.total)}`,
             icon: '/pwa-icons/icon-192x192.png',
             tag: latestOrder.id,
             requireInteraction: true,

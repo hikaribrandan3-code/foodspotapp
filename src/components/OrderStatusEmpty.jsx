@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTenant } from '../contexts/TenantContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { supabase } from '../lib/supabaseClient.js'
 import { HikariBoy } from './HikariBoy/HikariBoy'
 import BurgerLoader from './BurgerLoader'
@@ -300,9 +301,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
         return '🍽️'
     }
 
-    const formatPrice = (price) => {
-        return `$${(parseFloat(price) / 100).toFixed(2)}`
-    }
+    const fmt = useCurrency()
 
     if (loading) {
         return (
@@ -458,7 +457,7 @@ const OrderStatusEmpty = ({ config: configProp, tenantSlug: tenantSlugProp }) =>
                                                 : item.categoryName || ''}
                                         </p>
                                         <div className="ose-card-footer">
-                                            <span className="ose-card-price">{formatPrice(item.price)}</span>
+                                            <span className="ose-card-price">{fmt(item.price)}</span>
                                             <button className="ose-card-add" style={{ backgroundColor: '#2563EB' }}>
                                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                                     <line x1="12" y1="5" x2="12" y2="19"></line>

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useCurrency } from '../../hooks/useCurrency'
 import { useCart } from '../../contexts/CartContext'
 import { MenuSkeleton } from '../../components/Shimmers.jsx'
 import HeaderClamp from '../../components/HeaderClamp'
@@ -395,11 +396,7 @@ export default function Menu({ config: configProp }) {
     // =========================================================================
     // HELPERS
     // =========================================================================
-    const formatPrice = (price) => {
-        if (typeof price !== 'number') return '$0'
-        const pesos = price / 100
-        return '$' + pesos.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-    }
+    const fmt = useCurrency()
 
     const getItemImage = (item) => {
         const itemImage = item.image || item.image_url
@@ -911,7 +908,7 @@ export default function Menu({ config: configProp }) {
                                     <span style={{ fontSize: 14, color: '#374151', fontWeight: 450 }}>{item.name}</span>
                                     <span style={{ fontSize: 12, color: '#9CA3AF' }}>×{item.quantity}</span>
                                 </div>
-                                <span style={{ fontSize: 14, color: '#374151', fontFamily: 'system-ui' }}>{formatPrice(item.price * item.quantity)}</span>
+                                <span style={{ fontSize: 14, color: '#374151', fontFamily: 'system-ui' }}>{fmt(item.price * item.quantity)}</span>
                             </div>
                         ))}
                     </div>
@@ -919,7 +916,7 @@ export default function Menu({ config: configProp }) {
                     {/* Total & Action */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, paddingTop: 10, borderTop: '1px solid #E0DDD7' }}>
                         <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{t('total')}</span>
-                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{formatPrice(cartTotal)}</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: '#1F2937' }}>{fmt(cartTotal)}</span>
                     </div>
 
                     <button

@@ -5,7 +5,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import { TierGuard } from '../../components/TierGuard.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
-import { formatPrice } from '../../config/menuData.js'
+import { useCurrency } from '../../hooks/useCurrency.js'
 import { logout } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { ORDER_STATUS } from '../../constants/database.js';
@@ -51,6 +51,7 @@ const Analytics = () => {
     const { tenantSlug } = useParams()
     const { businessId, tenantData } = useTenant()
     const { t, lang } = useLanguage()
+    const fmt = useCurrency()
     // 🍃 OVERRIDE: Use Green for analytics as requested
     const primaryColor = '#10B981'
 
@@ -304,7 +305,7 @@ const Analytics = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
                             <div style={{ ...cardStyle, borderLeft: `4px solid ${primaryColor}` }}>
                                 <span style={labelStyle}>{t('revenue_total')}</span>
-                                <h3 style={{ ...valueStyle, color: primaryColor }}>{formatPrice(stats.totalRevenue)}</h3>
+                                <h3 style={{ ...valueStyle, color: primaryColor }}>{fmt(stats.totalRevenue)}</h3>
                             </div>
                             <div style={cardStyle}>
                                 <span style={labelStyle}>{t('orders')}</span>
@@ -312,7 +313,7 @@ const Analytics = () => {
                             </div>
                             <div style={cardStyle}>
                                 <span style={labelStyle}>{t('avg_ticket')}</span>
-                                <h3 style={valueStyle}>{formatPrice(stats.avgTicket)}</h3>
+                                <h3 style={valueStyle}>{fmt(stats.avgTicket)}</h3>
                             </div>
                             <div style={cardStyle}>
                                 <span style={labelStyle}>{t(ORDER_STATUS.DELIVERED)}</span>
@@ -356,14 +357,14 @@ const Analytics = () => {
                                             <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>MP</div>
                                             <div>
                                                 <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
-                                                <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.mpRevenue)}</div>
+                                                <div style={{ fontSize: 11, color: '#6B7280' }}>{fmt(stats.mpRevenue)}</div>
                                             </div>
                                         </div>
                                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#F0FDF4', borderRadius: 12 }}>
                                             <div style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>$</div>
                                             <div>
                                                 <div style={{ fontSize: 18, fontWeight: 800, color: '#16A34A' }}>{stats.cashCount}</div>
-                                                <div style={{ fontSize: 11, color: '#6B7280' }}>{formatPrice(stats.cashRevenue)}</div>
+                                                <div style={{ fontSize: 11, color: '#6B7280' }}>{fmt(stats.cashRevenue)}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -394,7 +395,7 @@ const Analytics = () => {
                                                 <div style={{ fontSize: 12, color: '#6B7280' }}>{item.qty} {t('sold_count')}</div>
                                             </div>
                                             <div style={{ fontSize: 14, fontWeight: 700, color: primaryColor }}>
-                                                {formatPrice(item.revenue)}
+                                                {fmt(item.revenue)}
                                             </div>
                                         </div>
                                     ))

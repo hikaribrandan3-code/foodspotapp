@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import './PrintMenuModal.css';
+import { formatCurrency } from '../utils/currency';
 
 const PRESET_THEMES = {
   american: {
@@ -57,11 +58,8 @@ const PrintMenuModal = ({ isOpen, onClose, menu, tenantData, tenantSlug }) => {
     setSeparatorStyle(theme.separator);
   };
 
-  const formatPrice = (price) => new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 0
-  }).format(price);
+  const currency = tenantData?.app_config?.businessCurrency || 'ARS';
+  const fmt = (price) => formatCurrency(price, currency);
 
   if (!isOpen) return null;
 
@@ -238,7 +236,7 @@ const PrintMenuModal = ({ isOpen, onClose, menu, tenantData, tenantSlug }) => {
                           <div className="item-header">
                             <span className="item-name">{item.name}</span>
                             {showPrices && (
-                              <span className="item-price">{formatPrice(item.price)}</span>
+                              <span className="item-price">{fmt(item.price)}</span>
                             )}
                           </div>
                           {item.description && (

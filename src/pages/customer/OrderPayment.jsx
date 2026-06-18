@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
-import { formatPrice } from '../../config/menuData.js'
+import { useCurrency } from '../../hooks/useCurrency.js'
 import { PAYMENT_METHOD } from '../../constants/database.js'
 import MercadoPagoAliasQR from '../../components/MercadoPagoAliasQR.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
@@ -75,6 +75,7 @@ export default function OrderPayment({ config: configProp }) {
   const { tenantSlug } = useParams()
   const [searchParams] = useSearchParams()
   const { businessId, tenantData } = useTenant()
+  const fmt = useCurrency()
   const { t } = useLanguage()
   const config = configProp || tenantData?.app_config || {}
 
@@ -256,8 +257,6 @@ export default function OrderPayment({ config: configProp }) {
     )
   }
 
-  const fmt = (n) => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
   return (
     <div style={{ minHeight: '100vh', paddingBottom: 140, background: '#F8F9FA' }}>
       <HeaderClamp config={config} />
@@ -310,7 +309,7 @@ export default function OrderPayment({ config: configProp }) {
               padding: '4px 0',
             }}>
               <span>{item.quantity}× {item.name}</span>
-              <span style={{ color: '#6B7280', fontWeight: 500 }}>{formatPrice(item.price * item.quantity)}</span>
+              <span style={{ color: '#6B7280', fontWeight: 500 }}>{fmt(item.price * item.quantity)}</span>
             </div>
           ))}
           {order.delivery_fee > 0 && (
@@ -323,7 +322,7 @@ export default function OrderPayment({ config: configProp }) {
               marginTop: 8,
             }}>
               <span>Delivery</span>
-              <span style={{ color: '#6B7280', fontWeight: 500 }}>{formatPrice(order.delivery_fee)}</span>
+              <span style={{ color: '#6B7280', fontWeight: 500 }}>{fmt(order.delivery_fee)}</span>
             </div>
           )}
           <div style={{
@@ -336,7 +335,7 @@ export default function OrderPayment({ config: configProp }) {
           }}>
             <span style={{ fontSize: 16, fontWeight: 700, color: '#1F2937' }}>Total</span>
             <span style={{ fontSize: 20, fontWeight: 800, color: primaryColor }}>
-              {formatPrice(order.total)}
+              {fmt(order.total)}
             </span>
           </div>
         </div>

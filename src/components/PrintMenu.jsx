@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import './PrintMenu.css';
+import { formatCurrency } from '../utils/currency';
 
 const PrintMenu = ({ menu, tenantData, tenantSlug }) => {
   const [fontFamily, setFontFamily] = useState('Inter');
@@ -12,13 +13,8 @@ const PrintMenu = ({ menu, tenantData, tenantSlug }) => {
 
   const categories = menu?.categories?.filter(c => c.items?.length > 0) || [];
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0
-    }).format((price ?? 0) / 100);
-  };
+  const currency = tenantData?.app_config?.businessCurrency || 'ARS';
+  const fmt = (price) => formatCurrency(price, currency);
 
   if (!categories.length) {
     return (
@@ -132,7 +128,7 @@ const PrintMenu = ({ menu, tenantData, tenantSlug }) => {
                     <div className="item-header">
                       <span className="item-name">{item.name}</span>
                       {showPrices && (
-                        <span className="item-price">{formatPrice(item.price)}</span>
+                        <span className="item-price">{fmt(item.price)}</span>
                       )}
                     </div>
                     {item.description && (

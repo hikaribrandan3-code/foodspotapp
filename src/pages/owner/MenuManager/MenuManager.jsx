@@ -28,7 +28,6 @@ export default function MenuManager() {
   const debounceRefs = useRef(new Map());
 
   // Delivery settings state
-  const [deliveryRadius, setDeliveryRadius] = useState(5);
   const [deliveryFee, setDeliveryFee] = useState('2.99');
   const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState('35.00');
   const [isDeliveryFeeEnabled, setIsDeliveryFeeEnabled] = useState(true);
@@ -92,18 +91,14 @@ export default function MenuManager() {
   };
 
   const loadDeliverySettings = () => {
-    // Read from delivery_settings_raw (new table) via TenantContext
     const ds = tenantData?.delivery_settings_raw;
     if (ds) {
-      setDeliveryRadius(ds.radius_km ?? 5);
-      // fee_cents and free_threshold_cents are ARS minor units — divide by 100 for input display
       setDeliveryFee(String(Math.round((ds.fee_cents ?? 0) / 100)));
       setFreeDeliveryThreshold(String(Math.round((ds.free_threshold_cents ?? 0) / 100)));
       setIsDeliveryFeeEnabled((ds.fee_cents ?? 0) > 0);
       setIsFreeDeliveryEnabled((ds.free_threshold_cents ?? 0) > 0);
       setIsDeliveryPaused(ds.is_paused ?? false);
     }
-    // If no delivery_settings row yet, leave UI at defaults (5km, 0 fee)
   };
 
   // Debounced save for item field changes
@@ -322,12 +317,10 @@ export default function MenuManager() {
   const saveDeliverySettings = useCallback(async () => {
     if (!businessId) return;
 
-    // User inputs ARS amounts (e.g. "4000") → multiply by 100 for cents storage
     const feeCents = isDeliveryFeeEnabled ? Math.round(parseFloat(deliveryFee || 0) * 100) : 0;
     const thresholdCents = isFreeDeliveryEnabled ? Math.round(parseFloat(freeDeliveryThreshold || 0) * 100) : 0;
 
     const settings = {
-      radius_km: Number(deliveryRadius) || 5,
       fee_cents: feeCents,
       free_threshold_cents: thresholdCents,
       is_paused: Boolean(isDeliveryPaused),
@@ -350,7 +343,7 @@ export default function MenuManager() {
       });
     }
   }, [
-    businessId, deliveryRadius, deliveryFee, freeDeliveryThreshold,
+    businessId, deliveryFee, freeDeliveryThreshold,
     isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused, t
   ]);
 
@@ -362,7 +355,7 @@ export default function MenuManager() {
     }, 800);
     return () => clearTimeout(timer);
   }, [
-    deliveryRadius, deliveryFee, freeDeliveryThreshold,
+    deliveryFee, freeDeliveryThreshold,
     isDeliveryFeeEnabled, isFreeDeliveryEnabled, isDeliveryPaused
   ]);
 
@@ -408,8 +401,6 @@ export default function MenuManager() {
               businessId={businessId}
             />
             <DeliverySettingsTab
-              deliveryRadius={deliveryRadius}
-              setDeliveryRadius={setDeliveryRadius}
               deliveryFee={deliveryFee}
               setDeliveryFee={setDeliveryFee}
               freeDeliveryThreshold={freeDeliveryThreshold}

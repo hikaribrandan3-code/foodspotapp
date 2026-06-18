@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient.js'
-import { formatPrice } from '../../config/menuData.js'
+import { useCurrency } from '../../hooks/useCurrency.js'
 import { getAuth, clearAuth, getOrders, updateOrder } from '../../utils/storage.js'
 import { handleCashPayment } from '../../services/offlinePayment.js'
 import { canAdvanceOrder } from '../../utils/orderStateGuard.js'
@@ -72,6 +72,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
     const { tenantSlug } = useParams()
     const { t } = useLanguage()
     const { businessId } = useTenant()
+    const fmt = useCurrency()
 
     const [orders, setOrders] = useState([])
     const [loading, setLoading] = useState(!demoMode)
@@ -433,7 +434,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                                     {order.order_type === 'delivery' ? 'Delivery' : 'Take Out'}
                                                 </span>
                                                 <span style={{ fontSize: 14, fontWeight: 700, color: status.color }}>
-                                                    {formatPrice(order.total)}
+                                                    {fmt(order.total)}
                                                 </span>
                                                 <span style={{
                                                     background: isPaid ? '#DCFCE7' : '#FEF3C7',
@@ -555,7 +556,7 @@ function DeliveryManager({ config: configProp, demoMode = false }) {
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontWeight: 700, color: statusConf.color }}>{formatPrice(order.total)}</div>
+                                        <div style={{ fontWeight: 700, color: statusConf.color }}>{fmt(order.total)}</div>
                                         <div style={{
                                             background: statusConf.bg, color: statusConf.color,
                                             padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600,

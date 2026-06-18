@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { formatPrice } from '../../config/menuData.js'
+import { useCurrency } from '../../hooks/useCurrency.js'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getScopedGuestToken } from '../../utils/storage.js'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -150,6 +150,7 @@ function Order({ config: configProp }) {
     const { clearCart } = useCart()
     const { businessId, tenantData, serviceModes } = useTenant()
     const { t } = useLanguage()
+    const fmt = useCurrency()
     const config = configProp || tenantData?.app_config || {}
     const paymentMethods = config.payment_methods || { cash: true }
     const navigate = useNavigate()
@@ -1309,7 +1310,7 @@ function Order({ config: configProp }) {
                             )}
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 15, fontWeight: 600, color: '#1F2937' }}>{item.name}</div>
-                                <div style={{ fontSize: 14, color: '#6B7280' }}>{formatPrice(item.price)}</div>
+                                <div style={{ fontSize: 14, color: '#6B7280' }}>{fmt(item.price)}</div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#F9FAFB', padding: '4px 8px', borderRadius: 20 }}>
                                 <button onClick={() => handleQuantityChange(index, -1)} style={{ border: 'none', background: 'none', fontSize: 16, cursor: 'pointer', color: '#6B7280' }}>−</button>
@@ -1322,19 +1323,19 @@ function Order({ config: configProp }) {
                     <div style={{ marginTop: 20, paddingTop: 20, borderTop: '2px dashed #E5E7EB' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 15 }}>
                             <span style={{ color: '#6B7280' }}>Subtotal</span>
-                            <span style={{ fontWeight: 500 }}>{formatPrice(subtotal)}</span>
+                            <span style={{ fontWeight: 500 }}>{fmt(subtotal)}</span>
                         </div>
                         {isDelivery && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 15 }}>
                                 <span style={{ color: '#6B7280' }}>Envío</span>
                                 <span style={{ fontWeight: 500, color: isFreeDelivery ? '#22C55E' : 'inherit' }}>
-                                    {isFreeDelivery ? 'Gratis' : formatPrice(actualDeliveryFee)}
+                                    {isFreeDelivery ? 'Gratis' : fmt(actualDeliveryFee)}
                                 </span>
                             </div>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, alignItems: 'flex-end' }}>
                             <span style={{ fontSize: 20, fontWeight: 800, color: '#1F2937' }}>Total</span>
-                            <span style={{ fontSize: 24, fontWeight: 800, color: tenantData?.confirmation_color || '#C4856A' }}>{formatPrice(total)}</span>
+                            <span style={{ fontSize: 24, fontWeight: 800, color: tenantData?.confirmation_color || '#C4856A' }}>{fmt(total)}</span>
                         </div>
                     </div>
                 </div>

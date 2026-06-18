@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Flame, Leaf, Wheat, Star, X, ShoppingCart } from 'lucide-react'
 import { getOptimizedImageUrl } from '../utils/imageUrl'
 
 export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) {
   const { t } = useLanguage()
+  const fmt = useCurrency()
   const [imgError, setImgError] = useState(false)
   const [quantity, setQuantity] = useState(1)
 
@@ -127,7 +128,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
                 {item.name}
               </h2>
               <span className="text-xl font-bold text-emerald-600 whitespace-nowrap">
-                {formatPrice(item.price)}
+                {fmt(item.price)}
               </span>
             </div>
 
@@ -206,7 +207,7 @@ export default function ItemDetailModal({ item, isOpen, onClose, onAddToCart }) 
                 : ((t('add_to_cart') && t('add_to_cart') !== 'add_to_cart') ? t('add_to_cart') : 'Add to Cart')
               }
               <span className="ml-1 opacity-80">
-                • {formatPrice(item.price * quantity)}
+                • {fmt(item.price * quantity)}
               </span>
             </button>
           </div>

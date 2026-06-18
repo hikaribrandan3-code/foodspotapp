@@ -1,7 +1,7 @@
 
 import { useState, memo } from 'react'
-import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { Info, Leaf, Wheat, Flame, Star } from 'lucide-react'
 import { getOptimizedImageUrl } from '../utils/imageUrl'
 
@@ -21,6 +21,7 @@ const ItemCard = ({
     readOnly = false
 }) => {
     const { t } = useLanguage()
+    const fmt = useCurrency()
     // 🛡️ VISUAL LOGIC
     const isDragging = dragState?.itemId === item.id
     const shakeStyle = (isEditMode && !dragState) ? { animation: 'wiggle 0.3s infinite linear alternate', animationDelay: `${Math.random() * 0.1}s` } : {}
@@ -129,7 +130,7 @@ const ItemCard = ({
             <div style={{ padding: '8px 4px', opacity: isPlaceholder ? 0 : 1, position: 'relative' }}>
                 <p style={{ fontSize: 13, fontWeight: 500, color: '#1F2937', marginBottom: 2, lineHeight: 1.3 }}>{item.name}</p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <p style={{ fontSize: 12, color: '#6B7280' }}>{formatPrice(item.price)}</p>
+                    <p style={{ fontSize: 12, color: '#6B7280' }}>{fmt(item.price)}</p>
                     {!isEditMode && !readOnly && (item.description || hasAnyTag) && (
                         <button
                             onClick={(e) => {

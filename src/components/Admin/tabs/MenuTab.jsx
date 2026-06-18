@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { formatPrice } from '../../../config/menuData.js';
+import { useCurrency } from '../../../hooks/useCurrency.js';
 import { processAndStoreImage } from '../../../utils/imageOptimizer.js';
 
 const cardStyle = { background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginBottom: 16 };
@@ -7,6 +7,7 @@ const labelStyle = { fontSize: 11, fontWeight: 600, color: '#6B7280', marginBott
 const inputStyle = { width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 14, marginBottom: 12 };
 
 export default function MenuTab({ menu, setMenu, categories, setCategories, businessId, updateMenuItemCloud, uploadAsset }) {
+    const fmt = useCurrency();
     const [editingItem, setEditingItem] = useState(null);
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -72,7 +73,7 @@ export default function MenuTab({ menu, setMenu, categories, setCategories, busi
                                 ) : (
                                     <>
                                         <p style={{ fontSize: 14, fontWeight: 500, margin: 0 }}>{item.name}</p>
-                                        <p style={{ fontSize: 12, color: '#22C55E', margin: '2px 0 0' }}>${formatPrice(item.price)}</p>
+                                        <p style={{ fontSize: 12, color: '#22C55E', margin: '2px 0 0' }}>${fmt(item.price)}</p>
                                     </>
                                 )}
                             </div>

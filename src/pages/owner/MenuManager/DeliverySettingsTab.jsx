@@ -2,8 +2,6 @@ import { Gift, Leaf } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
 export default function DeliverySettingsTab({
-  deliveryRadius,
-  setDeliveryRadius,
   deliveryFee,
   setDeliveryFee,
   freeDeliveryThreshold,
@@ -55,24 +53,6 @@ export default function DeliverySettingsTab({
       </div>
 
       <div className={`flex flex-col gap-4 transition-opacity duration-500 ${isDeliveryPaused ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-        {/* Delivery Radius: Custom Input */}
-        <div className="bg-stone-50 rounded-3xl p-4 flex flex-col">
-          <div className="text-left">
-            <p className="text-stone-400 font-bold uppercase text-[9px] tracking-[0.2em] mb-0.5">{t('delivery_radius') || 'Delivery Radius'}</p>
-            <h3 className="text-sm text-stone-950 font-['Outfit',sans-serif] font-black italic mb-3">Coverage Area</h3>
-          </div>
-          <div className="relative">
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 font-['Outfit',sans-serif] font-black text-lg italic">km</div>
-            <input
-              type="text"
-              value={deliveryRadius}
-              onChange={(e) => setDeliveryRadius(e.target.value)}
-              className="w-full bg-white text-stone-950 font-['Outfit',sans-serif] font-black pr-8 py-2.5 rounded-2xl focus:bg-emerald-50 transition-all text-xl outline-none border border-stone-200"
-              placeholder="0"
-            />
-          </div>
-        </div>
-
         {/* Fee Settings: 2-Column Grid */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Service Fee Card */}

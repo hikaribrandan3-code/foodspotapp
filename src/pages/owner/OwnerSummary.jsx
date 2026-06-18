@@ -13,7 +13,7 @@ import BackendNav from '../../components/BackendNav.jsx'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { getLoyaltySettings, upsertLoyaltySettings, getLoyaltyFreeItems, saveLoyaltyFreeItems } from '../../lib/loyaltyClient.js'
-import { formatPrice } from '../../config/menuData.js'
+import { useCurrency } from '../../hooks/useCurrency.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
@@ -30,6 +30,7 @@ function OwnerSummary() {
     const { tenantSlug } = useParams()
     const { businessId, tenantData, refreshTenantData } = useTenant()
     const { t, lang } = useLanguage()
+    const fmt = useCurrency()
     const { theme, setTheme } = useTheme()
     const appConfig = tenantData?.app_config || {}
     const [businessInfoLocal, setBusinessInfoLocal] = useState({})
@@ -723,19 +724,19 @@ function OwnerSummary() {
                                         icon={<CreditCard size={18} />}
                                         label={t('debit_cards') || 'Debit Cards'}
                                         subValue={`${stats.mpOrders.length} ${t('orders_count') || 'orders'}`}
-                                        value={formatPrice(stats.mpTotal)}
+                                        value={fmt(stats.mpTotal)}
                                         highlight
                                     />
                                     <MenuRow
                                         icon={<Banknote size={18} />}
                                         label={t(PAYMENT_METHOD.CASH) || 'Cash'}
                                         subValue={`${stats.cashOrders.length} ${t('orders_count') || 'orders'}`}
-                                        value={formatPrice(stats.cashTotal)}
+                                        value={fmt(stats.cashTotal)}
                                         highlight
                                     />
                                     <div className="flex items-center justify-between px-4 py-3.5 border-t border-stone-100 dark:border-white/10">
                                         <span className="text-sm font-semibold text-stone-950 dark:text-white">{t('total_day') || 'Total'}</span>
-                                        <span className="text-base font-bold text-stone-950 dark:text-white">{formatPrice(stats.totalToday)}</span>
+                                        <span className="text-base font-bold text-stone-950 dark:text-white">{fmt(stats.totalToday)}</span>
                                     </div>
                                 </div>
                             </motion.div>

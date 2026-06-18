@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { formatPrice } from '../config/menuData'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useCurrency } from '../hooks/useCurrency'
 import { getOptimizedImageUrl } from '../utils/imageUrl'
 
 const DetailedMenuItemCard = ({
@@ -9,6 +9,7 @@ const DetailedMenuItemCard = ({
   isDarkMode = false,
 }) => {
   const { t } = useLanguage()
+  const fmt = useCurrency()
   const [imgError, setImgError] = useState(false)
   const [isFav, setIsFav] = useState(false)
 
@@ -84,7 +85,7 @@ const DetailedMenuItemCard = ({
 
         {/* Price */}
         <div className="text-base font-bold text-on-surface dark:text-zinc-100 mb-3">
-          {formatPrice(item.price)}
+          {fmt(item.price)}
         </div>
 
         {/* Add to Cart */}
