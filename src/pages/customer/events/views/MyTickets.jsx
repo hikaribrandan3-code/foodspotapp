@@ -83,6 +83,7 @@ export default function MyTickets() {
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [recoveryError, setRecoveryError] = useState(null);
   const [recoveredTickets, setRecoveredTickets] = useState([]);
+  const [showRecovery, setShowRecovery] = useState(false);
 
   // Get guest token using correct key format: fs_guest_token_${tenantSlug}
   const getGuestToken = () => {
@@ -418,14 +419,21 @@ export default function MyTickets() {
           </div>
         </section>
 
-        {/* Recovery Section - Show if no tickets */}
-        {upcomingTickets.length === 0 && recoveredTickets.length === 0 && (
-          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] p-6 space-y-4">
-            <div>
-              <h3 className="text-lg font-black text-[var(--text-primary)] mb-2">Can't find your tickets?</h3>
-              <p className="text-xs font-medium text-[var(--text-secondary)] opacity-70">Enter the email you used to purchase tickets</p>
+        {/* Recovery Section - Always Available */}
+        <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-[var(--border-color)] overflow-hidden">
+          <button
+            onClick={() => setShowRecovery(!showRecovery)}
+            className="w-full p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          >
+            <div className="text-left">
+              <h3 className="text-sm font-black text-[var(--text-primary)] mb-1">Lost access to your tickets?</h3>
+              <p className="text-xs font-medium text-[var(--text-secondary)] opacity-70">Recover by email</p>
             </div>
-            <div className="space-y-2">
+            <span className="text-lg text-[var(--text-secondary)] transition-transform" style={{ transform: showRecovery ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+          </button>
+
+          {showRecovery && (
+            <div className="border-t border-[var(--border-color)] p-6 space-y-3">
               <input
                 type="email"
                 value={recoveryEmail}
@@ -445,8 +453,8 @@ export default function MyTickets() {
                 <p className="text-xs font-bold text-red-500 text-center">{recoveryError}</p>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="space-y-4">
            <div className="flex items-center justify-between px-2">

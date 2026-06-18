@@ -347,15 +347,18 @@ export default function EventCheckout({ event, tier, onConfirm, onBack }) {
               <p className="text-xs font-bold text-red-700 dark:text-red-400">{paymentError}</p>
             </div>
           )}
-          {/* Email Input */}
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="your@email.com"
-            required
-            className="w-full bg-[var(--canvas-bg)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-xs font-bold text-[var(--text-primary)] placeholder:opacity-30 outline-none focus:border-[var(--color-primary)] transition-colors"
-          />
+          {/* Email Input - REQUIRED */}
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] opacity-50 mb-2 block">Email (Required — to recover your tickets)</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+              className="w-full bg-[var(--canvas-bg)] border border-[var(--border-color)] rounded-2xl px-4 py-3 text-xs font-bold text-[var(--text-primary)] placeholder:opacity-30 outline-none focus:border-[var(--color-primary)] transition-colors"
+            />
+          </div>
           {/* Primary: Mercado Pago */}
           <button
             onClick={handleConfirm}
