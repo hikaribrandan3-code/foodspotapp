@@ -112,6 +112,23 @@ const Info = ({ config }) => {
             if (balance && balance.points_balance > 0) {
                 setLoyaltyPoints(balance.points_balance);
                 localStorage.setItem(`fs_loyalty_phone_${businessId}`, cleanPhone);
+                localStorage.setItem('fs_customer_phone', cleanPhone);
+
+                // Preserve share state — check if this phone already claimed referral
+                const { data: referralTx } = await supabase
+                    .from('loyalty_transactions')
+                    .select('id')
+                    .eq('business_id', businessId)
+                    .eq('customer_phone', cleanPhone)
+                    .eq('type', 'referral')
+                    .maybeSingle();
+
+                if (referralTx) {
+                    setHasShared('claimed'); // Friend already ordered — hide share button
+                } else if (localStorage.getItem(`fs_shared_referral_${businessId}`)) {
+                    setHasShared('shared'); // They already shared — show pending state
+                }
+
                 setShowRecovery(false);
                 setRecoveryPhone('');
             } else {
@@ -326,10 +343,10 @@ const Info = ({ config }) => {
                             >
                                 <div style={{ textAlign: 'left' }}>
                                     <p style={{ fontSize: 12, color: '#059669', margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
-                                        Don't see your points?
+                                        {t('loyaltyPointsNotFound')}
                                     </p>
                                     <p style={{ fontSize: 13, color: '#374151', margin: '4px 0 0', fontWeight: 600 }}>
-                                        Search by phone number
+                                        {t('loyaltySearchByPhone')}
                                     </p>
                                 </div>
                                 <span style={{ fontSize: 16, color: '#9CA3AF', transition: 'transform 0.2s', transform: showRecovery ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
@@ -372,7 +389,7 @@ const Info = ({ config }) => {
                                             letterSpacing: '0.05em',
                                         }}
                                     >
-                                        {recoveryLoading ? 'Searching...' : 'Search'}
+                                        {recoveryLoading ? `${t('loading')}...` : t('loyaltySearchButton')}
                                     </button>
                                     {recoveryError && (
                                         <p style={{ fontSize: 12, color: '#EF4444', marginTop: 8, textAlign: 'center' }}>{recoveryError}</p>
