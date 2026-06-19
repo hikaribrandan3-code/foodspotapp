@@ -1,7 +1,9 @@
 -- ============================================================
 -- RPC: create_linked_location
--- Creates a new business + branding row linked to the same owner,
--- then sets parent_slug on BOTH the new and existing businesses.
+-- Creates a new business + branding row linked to the same owner.
+-- Auto-copies all menu categories & items from first location.
+-- Each location's menu is independent (can add/edit/delete without affecting others).
+-- Sets parent_slug on ALL owner businesses for hub linking.
 -- Called from AddLocationModal.jsx
 -- ============================================================
 
@@ -83,6 +85,58 @@ BEGIN
     p_location_name,
     p_location_address,
     p_parent_brand_logo
+  );
+
+  -- Copy menu categories from owner's first business to the new location
+  INSERT INTO menu_categories (
+    business_id,
+    name,
+    sort_order
+  )
+  SELECT
+    v_new_biz_id,
+    name,
+    sort_order
+  FROM menu_categories
+  WHERE business_id IN (
+    SELECT id FROM businesses WHERE owner_id = v_owner_id ORDER BY created_at ASC LIMIT 1
+  );
+
+  -- Copy menu items with correct category_id mapping (match by category name)
+  INSERT INTO menu_items (
+    business_id,
+    category_id,
+    name,
+    description,
+    price,
+    image,
+    image_url,
+    available,
+    display_order,
+    category_name,
+    calories
+  )
+  SELECT
+    v_new_biz_id,
+    COALESCE(
+      (SELECT id FROM menu_categories mc_new
+       WHERE mc_new.business_id = v_new_biz_id
+       AND mc_new.name = mc_old.name),
+      (SELECT id FROM menu_categories mc_new WHERE mc_new.business_id = v_new_biz_id LIMIT 1)
+    ),
+    mi.name,
+    mi.description,
+    mi.price,
+    mi.image,
+    mi.image_url,
+    mi.available,
+    mi.display_order,
+    mi.category_name,
+    mi.calories
+  FROM menu_items mi
+  LEFT JOIN menu_categories mc_old ON mi.category_id = mc_old.id
+  WHERE mi.business_id IN (
+    SELECT id FROM businesses WHERE owner_id = v_owner_id ORDER BY created_at ASC LIMIT 1
   );
 
   -- Link ALL existing businesses for this owner to the same parent_slug
