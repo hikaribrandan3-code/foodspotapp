@@ -240,6 +240,7 @@ function ActionButton({ intent = 'blue', icon, children, onClick }) {
 }
 
 function OrderCard({ order, onAdvance, onCancel, expanded, onToggle, t }) {
+  const fmt = useCurrency()
   const isDelivery = order.order_type === 'delivery'
   const isDineIn = order.order_type === 'dine_in'
   const next = nextActionFor(order.status, order.order_type, order.payment_status, t)
