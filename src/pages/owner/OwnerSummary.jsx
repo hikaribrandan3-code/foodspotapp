@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CreditCard, Banknote, DollarSign, MapPin, Link as LinkIcon, Globe,
     Settings, Phone, ChevronRight, ChevronDown, RefreshCw, BarChart3,
-    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download, Gift
+    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download, Gift, Plus
 } from 'lucide-react'
+import AddLocationModal from '../../components/AddLocationModal.jsx'
 import { QRCodeCanvas } from 'qrcode.react'
 import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
@@ -49,6 +50,7 @@ function OwnerSummary() {
     const [combinedStats, setCombinedStats] = useState([])
     const [combinedStatsDays, setCombinedStatsDays] = useState(7)
     const ownerLocationsLoaded = useRef(false)
+    const [showAddLocation, setShowAddLocation] = useState(false)
     const [locationLabel, setLocationLabel] = useState('')
     const [parentSlug, setParentSlug] = useState('')
     const [parentBrandName, setParentBrandName] = useState('')
@@ -63,9 +65,9 @@ function OwnerSummary() {
         const fetchLocations = async () => {
             try {
                 const { data } = await supabase.rpc('get_owner_locations')
-                if (data && data.length > 1) {
+                if (data) {
                     setOwnerLocations(data)
-                    localStorage.setItem('fs_multi_location', 'true')
+                    if (data.length > 1) localStorage.setItem('fs_multi_location', 'true')
                 }
             } catch (_) { /* RPC may not exist yet */ }
         }
@@ -703,9 +705,27 @@ function OwnerSummary() {
         setMpUserIdSaving(false)
     }
 
+    const handleLocationCreated = async () => {
+        ownerLocationsLoaded.current = false
+        const { data } = await supabase.rpc('get_owner_locations')
+        if (data) {
+            setOwnerLocations(data)
+            if (data.length > 1) localStorage.setItem('fs_multi_location', 'true')
+        }
+    }
+
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-[#020617] font-sans antialiased">
             <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
+            <AnimatePresence>
+                {showAddLocation && (
+                    <AddLocationModal
+                        onClose={() => setShowAddLocation(false)}
+                        currentBusiness={tenantData}
+                        onCreated={handleLocationCreated}
+                    />
+                )}
+            </AnimatePresence>
             <BackendHeader
                 title={t('summary')}
                 onLogout={handleLogout}
@@ -1375,15 +1395,27 @@ function OwnerSummary() {
                     </AnimatePresence>
                 </motion.div>
 
-                {/* Multi-Location Config — only for owners with 2+ locations */}
-                {ownerLocations.length > 1 && (
+                {/* Multi-Location Config — always visible */}
+                {ownerLocations.length >= 1 && (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
-                        <SectionHeader
-                            icon={<MapPin size={14} />}
-                            title={t('multi_location') || 'Multi-Location'}
-                            isOpen={openSections.multiLocation}
-                            onToggle={() => toggleSection('multiLocation')}
-                        />
+                        <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                                <SectionHeader
+                                    icon={<MapPin size={14} />}
+                                    title={t('multi_location') || 'Multi-Location'}
+                                    isOpen={openSections.multiLocation}
+                                    onToggle={() => toggleSection('multiLocation')}
+                                />
+                            </div>
+                            <button
+                                onClick={() => setShowAddLocation(true)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white mb-2 shrink-0"
+                                style={{ background: 'var(--color-primary, #10B981)' }}
+                            >
+                                <Plus size={12} />
+                                {t('add_location') || 'Add Location'}
+                            </button>
+                        </div>
                         <AnimatePresence>
                             {openSections.multiLocation && (
                                 <motion.div
