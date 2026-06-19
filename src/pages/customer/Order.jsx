@@ -263,7 +263,7 @@ function Order({ config: configProp }) {
             return
         }
         const t = setTimeout(() => {
-            getLoyaltyBalance(phone, businessId).then(({ data }) => {
+            getLoyaltyBalance(phone).then(({ data }) => {
                 setLoyaltyBalance(data?.points_balance ?? 0)
             })
         }, 600)

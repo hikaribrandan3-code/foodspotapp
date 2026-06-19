@@ -1,14 +1,16 @@
 /**
- * FoodSpot Loyalty Client
- * Item-tier rewards: earn 50pts per qualifying order, 100pts = 1 free item
- * All monetary thresholds in ARS cents (integer).
- * Supports both phone-based and localStorage-based (anonymous) tracking.
+ * FoodSpot Loyalty Client — Universal Points
+ * Points are tied to customer_phone globally across all locations.
+ * loyalty_settings & loyalty_free_items remain per-location (each location configures its own rates/rewards).
+ * loyalty_transactions keeps business_id for audit (which location earned/spent points).
+ * Anonymous customers (no phone) earn local-only points via anon ID — expected behavior.
  */
 
 import { supabase } from './supabaseClient.js'
 
-// ─── ANONYMOUS CUSTOMER ID ────────────────────────────────────────
-// For unidentified customers, use localStorage UUID as "phone"
+// ─── CUSTOMER IDENTIFIER ──────────────────────────────────────────────────────
+// Phone-identified customers get a global balance across all locations.
+// Anonymous customers fall back to a per-location anon ID (points don't transfer — intentional).
 
 export function getOrCreateAnonymousId(businessId) {
     if (!businessId) return null
@@ -22,14 +24,13 @@ export function getOrCreateAnonymousId(businessId) {
 }
 
 export function getCustomerIdentifier(businessId) {
-    // Try phone first (identified customer), fallback to anonymous ID
     const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`)
         || localStorage.getItem('fs_customer_phone')
     if (phone) return phone.replace(/\s/g, '')
     return getOrCreateAnonymousId(businessId)
 }
 
-// ─── SETTINGS ──────────────────────────────────────────────────────
+// ─── SETTINGS (per-location) ──────────────────────────────────────────────────
 
 export async function getLoyaltySettings(businessId) {
     if (!businessId) return { data: null, error: null }
@@ -54,7 +55,7 @@ export async function upsertLoyaltySettings(settings, businessId) {
     return { data, error }
 }
 
-// ─── FREE ITEMS ─────────────────────────────────────────────────────
+// ─── FREE ITEMS (per-location) ────────────────────────────────────────────────
 
 export async function getLoyaltyFreeItems(businessId) {
     if (!businessId) return { data: [], error: null }
@@ -68,7 +69,6 @@ export async function getLoyaltyFreeItems(businessId) {
 
 export async function saveLoyaltyFreeItems(items, businessId) {
     if (!businessId) return { error: new Error('Missing business ID') }
-    // Delete existing, reinsert (max 3)
     await supabase.from('loyalty_free_items').delete().eq('business_id', businessId)
     if (!items.length) return { error: null }
     const rows = items.slice(0, 3).map((item, i) => ({
@@ -81,65 +81,62 @@ export async function saveLoyaltyFreeItems(items, businessId) {
     return { error }
 }
 
-// ─── BALANCE ────────────────────────────────────────────────────────
+// ─── BALANCE (global — phone only) ───────────────────────────────────────────
 
-export async function getLoyaltyBalance(phone, businessId) {
-    if (!phone || !businessId) return { data: null, error: null }
+export async function getLoyaltyBalance(phone) {
+    if (!phone) return { data: null, error: null }
     const { data, error } = await supabase
         .from('loyalty_accounts')
         .select('*')
-        .eq('business_id', businessId)
         .eq('customer_phone', phone.replace(/\s/g, ''))
         .maybeSingle()
     return { data, error }
 }
 
-export async function getLoyaltyTransactions(phone, businessId) {
-    if (!phone || !businessId) return { data: [], error: null }
-    const { data, error } = await supabase
+// Returns all transactions across locations — pass businessId to filter to one location
+export async function getLoyaltyTransactions(phone, businessId = null) {
+    if (!phone) return { data: [], error: null }
+    let query = supabase
         .from('loyalty_transactions')
         .select('*')
-        .eq('business_id', businessId)
         .eq('customer_phone', phone.replace(/\s/g, ''))
         .order('created_at', { ascending: false })
-        .limit(20)
+        .limit(30)
+    if (businessId) query = query.eq('business_id', businessId)
+    const { data, error } = await query
     return { data: data || [], error }
 }
 
-// ─── EARN ────────────────────────────────────────────────────────────
+// ─── EARN (per-order) ────────────────────────────────────────────────────────
 
 export async function earnPoints(phone, businessId, orderId, orderSubtotalCents) {
     if (!businessId) return { earned: false }
     const identifier = phone ? phone.replace(/\s/g, '') : getCustomerIdentifier(businessId)
     if (!identifier) return { earned: false }
 
-    // Get settings to check threshold
     const { data: settings } = await getLoyaltySettings(businessId)
     if (!settings?.enabled) return { earned: false }
 
-    const minCents = settings.min_order_cents ?? 800000 // 8000 ARS default
+    const minCents = settings.min_order_cents ?? 800000
     const pointsPerOrder = settings.points_per_order ?? 50
 
     if (orderSubtotalCents < minCents) return { earned: false }
 
-    // Upsert loyalty_account
-    const { data: account } = await supabase
+    // Ensure global account exists
+    await supabase
         .from('loyalty_accounts')
         .upsert(
-            { business_id: businessId, customer_phone: identifier, points_balance: 0 },
-            { onConflict: 'business_id,customer_phone', ignoreDuplicates: true }
+            { customer_phone: identifier, points_balance: 0 },
+            { onConflict: 'customer_phone', ignoreDuplicates: true }
         )
-        .select()
-        .maybeSingle()
 
-    // Increment balance
-    await supabase.rpc('increment_loyalty_points', {
-        p_business_id: businessId,
+    const { error: rpcError } = await supabase.rpc('increment_loyalty_points', {
         p_phone: identifier,
         p_delta: pointsPerOrder,
+        p_business_id: businessId,
     })
+    if (rpcError) return { earned: false }
 
-    // Log transaction
     await supabase.from('loyalty_transactions').insert({
         business_id: businessId,
         customer_phone: identifier,
@@ -151,7 +148,7 @@ export async function earnPoints(phone, businessId, orderId, orderSubtotalCents)
     return { earned: true, points: pointsPerOrder }
 }
 
-// ─── EARN UGC (camera share) ─────────────────────────────────────────
+// ─── EARN UGC (camera share) ─────────────────────────────────────────────────
 
 export async function earnUGCPoints(phone, businessId) {
     if (!businessId) return { earned: false }
@@ -161,7 +158,10 @@ export async function earnUGCPoints(phone, businessId) {
     const { data: settings } = await getLoyaltySettings(businessId)
     if (!settings?.enabled) return { earned: false }
 
-    // One UGC award per order — check if already earned for most recent order
+    const pts = settings.ugc_points_per_share ?? 10
+    if (pts <= 0) return { earned: false }
+
+    // One UGC award per order — deduplicate against most recent order at this location
     const { data: lastOrder } = await supabase
         .from('orders')
         .select('id')
@@ -183,23 +183,18 @@ export async function earnUGCPoints(phone, businessId) {
         if (alreadyEarned) return { earned: false }
     }
 
-    const pts = settings.ugc_points_per_share ?? 10
-    if (pts <= 0) return { earned: false }
-
-    // Upsert account first — same as order trigger
     await supabase
         .from('loyalty_accounts')
         .upsert(
-            { business_id: businessId, customer_phone: identifier, points_balance: 0 },
-            { onConflict: 'business_id,customer_phone', ignoreDuplicates: true }
+            { customer_phone: identifier, points_balance: 0 },
+            { onConflict: 'customer_phone', ignoreDuplicates: true }
         )
 
     const { error: rpcError } = await supabase.rpc('increment_loyalty_points', {
-        p_business_id: businessId,
         p_phone: identifier,
         p_delta: pts,
+        p_business_id: businessId,
     })
-
     if (rpcError) return { earned: false }
 
     await supabase.from('loyalty_transactions').insert({
@@ -213,7 +208,9 @@ export async function earnUGCPoints(phone, businessId) {
     return { earned: true, points: pts }
 }
 
-// ─── REFERRAL AWARD ──────────────────────────────────────────────────
+// ─── REFERRAL AWARD ──────────────────────────────────────────────────────────
+// Referral claims are now global per referee phone — a customer can only be referred once
+// across all locations in the group.
 
 export async function awardReferralPoints(referrerPhone, refereePhone, businessId, orderId) {
     if (!businessId) return { awarded: false }
@@ -227,7 +224,7 @@ export async function awardReferralPoints(referrerPhone, refereePhone, businessI
     const pts = settings.referral_points ?? 100
     if (pts <= 0) return { awarded: false }
 
-    // Insert claim — UNIQUE(business_id, referee_phone) blocks double award
+    // UNIQUE(referee_phone) — blocks double award globally across all locations
     const { error: claimError } = await supabase
         .from('loyalty_referral_claims')
         .insert({
@@ -237,13 +234,12 @@ export async function awardReferralPoints(referrerPhone, refereePhone, businessI
             order_id: orderId || null,
         })
 
-    if (claimError) return { awarded: false } // unique_violation = already claimed
+    if (claimError) return { awarded: false }
 
-    // Award points to the referrer
     await supabase.rpc('increment_loyalty_points', {
-        p_business_id: businessId,
         p_phone: cleanReferrer,
         p_delta: pts,
+        p_business_id: businessId,
     })
 
     await supabase.from('loyalty_transactions').insert({
@@ -257,7 +253,7 @@ export async function awardReferralPoints(referrerPhone, refereePhone, businessI
     return { awarded: true, points: pts }
 }
 
-// ─── REDEEM ──────────────────────────────────────────────────────────
+// ─── REDEEM ───────────────────────────────────────────────────────────────────
 
 export async function redeemPoints(phone, businessId, orderId) {
     if (!businessId) return { redeemed: false }
@@ -267,18 +263,17 @@ export async function redeemPoints(phone, businessId, orderId) {
     const { data: settings } = await getLoyaltySettings(businessId)
     const pointsNeeded = settings?.points_to_redeem ?? 100
 
-    // Check balance
-    const { data: account } = await getLoyaltyBalance(identifier, businessId)
+    // Check global balance
+    const { data: account } = await getLoyaltyBalance(identifier)
     if (!account || account.points_balance < pointsNeeded) return { redeemed: false }
 
-    // Deduct balance
-    await supabase.rpc('increment_loyalty_points', {
-        p_business_id: businessId,
+    const { error: rpcError } = await supabase.rpc('increment_loyalty_points', {
         p_phone: identifier,
         p_delta: -pointsNeeded,
+        p_business_id: businessId,
     })
+    if (rpcError) return { redeemed: false }
 
-    // Log transaction
     await supabase.from('loyalty_transactions').insert({
         business_id: businessId,
         customer_phone: identifier,

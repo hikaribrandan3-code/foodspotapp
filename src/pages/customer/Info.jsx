@@ -39,7 +39,7 @@ const Info = ({ config }) => {
         const phone = localStorage.getItem(`fs_loyalty_phone_${businessId}`) || localStorage.getItem('fs_customer_phone');
 
         Promise.all([
-            getLoyaltyBalance(identifier, businessId),
+            getLoyaltyBalance(identifier),
             getLoyaltySettings(businessId),
             // Check if referral was already redeemed — look in loyalty_transactions for 'referral' type
             phone ? supabase
@@ -107,7 +107,7 @@ const Info = ({ config }) => {
 
         try {
             const cleanPhone = recoveryPhone.replace(/\D/g, '');
-            const { data: balance } = await getLoyaltyBalance(cleanPhone, businessId);
+            const { data: balance } = await getLoyaltyBalance(cleanPhone);
 
             if (balance && balance.points_balance > 0) {
                 setLoyaltyPoints(balance.points_balance);
