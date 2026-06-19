@@ -44,6 +44,85 @@ function OwnerSummary() {
     const [mpAliasSaving, setMpAliasSaving] = useState(false)
     const mpAliasInitialized = useRef(false)
 
+    // Multi-location state
+    const [ownerLocations, setOwnerLocations] = useState([])
+    const [combinedStats, setCombinedStats] = useState([])
+    const [combinedStatsDays, setCombinedStatsDays] = useState(7)
+    const ownerLocationsLoaded = useRef(false)
+    const [locationLabel, setLocationLabel] = useState('')
+    const [parentSlug, setParentSlug] = useState('')
+    const [parentBrandName, setParentBrandName] = useState('')
+    const [parentBrandLogo, setParentBrandLogo] = useState('')
+    const [locationConfigSaving, setLocationConfigSaving] = useState(false)
+    const [locationConfigSaved, setLocationConfigSaved] = useState(false)
+    const locationConfigInitialized = useRef(false)
+
+    useEffect(() => {
+        if (ownerLocationsLoaded.current) return
+        ownerLocationsLoaded.current = true
+        const fetchLocations = async () => {
+            try {
+                const { data } = await supabase.rpc('get_owner_locations')
+                if (data && data.length > 1) {
+                    setOwnerLocations(data)
+                    localStorage.setItem('fs_multi_location', 'true')
+                }
+            } catch (_) { /* RPC may not exist yet */ }
+        }
+        fetchLocations()
+    }, [])
+
+    useEffect(() => {
+        if (ownerLocations.length < 2) return
+        const fetchStats = async () => {
+            try {
+                const { data } = await supabase.rpc('get_combined_stats', { p_days: combinedStatsDays })
+                if (data) setCombinedStats(data)
+            } catch (_) { /* RPC may not exist yet */ }
+        }
+        fetchStats()
+    }, [ownerLocations.length, combinedStatsDays])
+
+    useEffect(() => {
+        if (locationConfigInitialized.current || !businessId) return
+        locationConfigInitialized.current = true
+        const loadConfig = async () => {
+            try {
+                const { data } = await supabase
+                    .from('businesses')
+                    .select('location_label, parent_slug, parent_brand_name, parent_brand_logo')
+                    .eq('id', businessId)
+                    .single()
+                if (data) {
+                    setLocationLabel(data.location_label || '')
+                    setParentSlug(data.parent_slug || '')
+                    setParentBrandName(data.parent_brand_name || '')
+                    setParentBrandLogo(data.parent_brand_logo || '')
+                }
+            } catch (_) { /* columns may not exist yet */ }
+        }
+        loadConfig()
+    }, [businessId])
+
+    const saveLocationConfig = async () => {
+        if (!businessId) return
+        setLocationConfigSaving(true)
+        try {
+            await supabase
+                .from('businesses')
+                .update({
+                    location_label: locationLabel || null,
+                    parent_slug: parentSlug || null,
+                    parent_brand_name: parentBrandName || null,
+                    parent_brand_logo: parentBrandLogo || null,
+                })
+                .eq('id', businessId)
+            setLocationConfigSaved(true)
+            setTimeout(() => setLocationConfigSaved(false), 2000)
+        } catch (_) { /* columns may not exist yet */ }
+        setLocationConfigSaving(false)
+    }
+
     // External Links local state
     const [instagramInput, setInstagramInput] = useState('')
     const instagramInitialized = useRef(false)
@@ -132,6 +211,7 @@ function OwnerSummary() {
         language: true,
         team: false,
         loyalty: false,
+        multiLocation: false,
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
 
@@ -662,6 +742,76 @@ function OwnerSummary() {
                         </div>
                     </div>
                 </motion.div>
+
+                {/* All Locations Card — only visible for multi-location owners */}
+                {ownerLocations.length > 1 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.06 }}
+                        className="rounded-2xl p-4 md:p-5 bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <BarChart3 size={14} className="text-emerald-600" />
+                                <span className="text-xs font-black uppercase tracking-[0.15em] text-stone-500 dark:text-white/60">
+                                    {t('all_locations') || 'All Locations'}
+                                </span>
+                            </div>
+                            <div className="flex gap-1">
+                                {[7, 30, 90].map(d => (
+                                    <button
+                                        key={d}
+                                        onClick={() => setCombinedStatsDays(d)}
+                                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-all ${
+                                            combinedStatsDays === d
+                                                ? 'bg-emerald-600 text-white'
+                                                : 'bg-stone-100 dark:bg-white/10 text-stone-500 dark:text-white/50'
+                                        }`}
+                                    >
+                                        {d}d
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Totals */}
+                        <div className="flex gap-4 mb-4">
+                            <div className="flex-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl p-3 text-center">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600/60 dark:text-emerald-400/60 mb-1">
+                                    {t('total_revenue') || 'Total Revenue'}
+                                </p>
+                                <p className="text-lg font-black text-emerald-700 dark:text-emerald-400 font-['Outfit',sans-serif]">
+                                    {fmt(combinedStats.reduce((sum, s) => sum + Number(s.total_revenue_cents || 0), 0))}
+                                </p>
+                            </div>
+                            <div className="flex-1 bg-stone-100 dark:bg-white/5 rounded-xl p-3 text-center">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-white/40 mb-1">
+                                    {t('total_orders') || 'Total Orders'}
+                                </p>
+                                <p className="text-lg font-black text-stone-700 dark:text-white font-['Outfit',sans-serif]">
+                                    {combinedStats.reduce((sum, s) => sum + Number(s.total_orders || 0), 0)}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Per-location breakdown */}
+                        <div className="grid grid-cols-2 gap-2">
+                            {combinedStats.map(loc => (
+                                <button
+                                    key={loc.business_id}
+                                    onClick={() => navigate(`/${loc.slug}/owner/summary`)}
+                                    className="text-left p-3 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-100 dark:border-white/5 hover:border-emerald-300 dark:hover:border-emerald-500/30 transition-all"
+                                >
+                                    <p className="text-xs font-bold text-stone-800 dark:text-white truncate mb-1">{loc.name}</p>
+                                    <p className="text-sm font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{fmt(Number(loc.total_revenue_cents || 0))}</p>
+                                    <p className="text-[10px] text-stone-400 dark:text-white/40">{Number(loc.total_orders || 0)} {t('orders') || 'orders'}</p>
+                                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mt-1 inline-block">{t('view') || 'View'} →</span>
+                                </button>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* Preferences */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
@@ -1224,6 +1374,90 @@ function OwnerSummary() {
                         )}
                     </AnimatePresence>
                 </motion.div>
+
+                {/* Multi-Location Config — only for owners with 2+ locations */}
+                {ownerLocations.length > 1 && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
+                        <SectionHeader
+                            icon={<MapPin size={14} />}
+                            title={t('multi_location') || 'Multi-Location'}
+                            isOpen={openSections.multiLocation}
+                            onToggle={() => toggleSection('multiLocation')}
+                        />
+                        <AnimatePresence>
+                            {openSections.multiLocation && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                                {t('location_label') || 'Location Label'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={locationLabel}
+                                                onChange={(e) => setLocationLabel(e.target.value)}
+                                                placeholder="e.g. Downtown, Belgrano"
+                                                className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                                {t('parent_slug') || 'Hub URL Slug'}
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-stone-400 dark:text-white/30">foodspot.com/</span>
+                                                <input
+                                                    type="text"
+                                                    value={parentSlug}
+                                                    onChange={(e) => setParentSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                                    placeholder="lacantina"
+                                                    className="flex-1 px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                                {t('brand_name') || 'Brand Name'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={parentBrandName}
+                                                onChange={(e) => setParentBrandName(e.target.value)}
+                                                placeholder="La Cantina Group"
+                                                className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                                {t('brand_logo_url') || 'Brand Logo URL'}
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={parentBrandLogo}
+                                                onChange={(e) => setParentBrandLogo(e.target.value)}
+                                                placeholder="https://..."
+                                                className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                        <button
+                                            onClick={saveLocationConfig}
+                                            disabled={locationConfigSaving}
+                                            className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                                            style={{ background: locationConfigSaved ? '#10B981' : 'var(--color-primary, #10B981)' }}
+                                        >
+                                            {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                )}
 
                 {/* Loyalty Rewards */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>

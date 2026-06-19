@@ -679,6 +679,27 @@ function BackendNav({
                         </button>
                     )}
 
+                    {/* Switch Location (multi-location owners only) */}
+                    {localStorage.getItem('fs_multi_location') === 'true' && (
+                        <button
+                            onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                width: '100%', padding: '9px 12px', borderRadius: 10,
+                                border: 'none', background: 'transparent',
+                                cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                            }}
+                        >
+                            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={isDark ? '#64748b' : '#9ca3af'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#64748b' : '#9ca3af' }}>
+                                {t('switch_location') || 'Switch Location'}
+                            </span>
+                        </button>
+                    )}
+
                     {/* Logout */}
                     <button
                         onClick={async () => {

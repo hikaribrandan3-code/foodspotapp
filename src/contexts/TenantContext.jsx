@@ -66,6 +66,7 @@ export function TenantProvider({ children }) {
     const [businessId, setBusinessId] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const [parentSlugLocations, setParentSlugLocations] = useState(null)
 
     // Compatibility State
     const [trialExpired, setTrialExpired] = useState(false)
@@ -126,6 +127,18 @@ export function TenantProvider({ children }) {
             }
 
             if (!brandingData) {
+                // Try parent_slug fallback for multi-location hub
+                try {
+                    const { data: hubLocations } = await supabase.rpc('get_locations_by_parent_slug', { p_parent_slug: slug })
+                    if (hubLocations && hubLocations.length > 0) {
+                        if (mounted) {
+                            setParentSlugLocations(hubLocations)
+                            setLoading(false)
+                        }
+                        return
+                    }
+                } catch (_) { /* RPC may not exist yet — fall through */ }
+
                 localStorage.removeItem('fs_last_active_slug');
                 localStorage.removeItem('fs_business_id');
                 throw new Error(`No branding data found for '${slug}'`);
@@ -408,7 +421,8 @@ export function TenantProvider({ children }) {
         emergencyUnblock,
         refreshTenantData,
         forceRefresh,
-        isLoaded: !loading
+        isLoaded: !loading,
+        parentSlugLocations
     }
 
     return (

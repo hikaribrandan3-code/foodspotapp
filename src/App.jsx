@@ -132,6 +132,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx'
 // Customer Pages — Home + Menu stay eager (first two screens every customer sees)
 import Home from './pages/customer/Home.jsx'
 import Menu from './pages/customer/Menu.jsx'
+import LocationsHub from './pages/customer/LocationsHub.jsx'
 
 // All other customer pages lazy-loaded — defers canvas-confetti (2MB), Camera suite,
 // HikariBoy, html2canvas, jsPDF, qrcode.react out of the initial bundle
@@ -175,6 +176,14 @@ import AdminErrorBoundary from './components/Error/AdminErrorBoundary.jsx'
 // Auth Pages
 import TrialSignup from './pages/auth/TrialSignup.jsx'
 import BurgerLoader from './components/BurgerLoader.jsx'
+
+function HomeOrHub({ config }) {
+    const { parentSlugLocations } = useTenant()
+    if (parentSlugLocations && parentSlugLocations.length > 0) {
+        return <LocationsHub locations={parentSlugLocations} />
+    }
+    return <Home config={config} />
+}
 
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
@@ -655,7 +664,7 @@ function App() {
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
 
                                             {/* TENANT ROUTES — Home + Menu are eager; all others lazy */}
-                                            <Route path="/:tenantSlug" element={<Home config={safeConfig} />} />
+                                            <Route path="/:tenantSlug" element={<HomeOrHub config={safeConfig} />} />
                                             <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
                                             <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
                                             <Route path="/:tenantSlug/camera" element={<Suspense fallback={<LazyFallback />}><CameraGuard /></Suspense>} />

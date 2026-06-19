@@ -1230,6 +1230,17 @@ export const translations = {
     add_emoji_name_note:{ en: 'Add an emoji to the name — it appears in your customers\' camera', es: 'Agregá un emoji al nombre — aparece en la cámara de tus clientes', pt: 'Adicione um emoji ao nome — ele aparece na câmera dos seus clientes' },
     theme_color_note:   { en: 'These colors appear in payment buttons, confirmations, and receipts', es: 'Estos colores aparecen en botones de pago, confirmaciones y recibos', pt: 'Estas cores aparecem nos botões de pagamento, confirmações e recibos' },
 
+    // ── Multi-Location Hub ─────────────────────────────────────────────────────
+    all_locations:      { en: 'All Locations',           es: 'Todas las Ubicaciones',  pt: 'Todas as Localizações' },
+    multi_location:     { en: 'Multi-Location',          es: 'Multi-Ubicación',        pt: 'Multi-Localização' },
+    total_revenue:      { en: 'Total Revenue',           es: 'Ingresos Totales',       pt: 'Receita Total' },
+    total_orders:       { en: 'Total Orders',            es: 'Pedidos Totales',        pt: 'Pedidos Totais' },
+    location_label:     { en: 'Location Label',          es: 'Etiqueta de Ubicación',  pt: 'Etiqueta da Localização' },
+    parent_slug:        { en: 'Hub URL Slug',            es: 'Slug URL del Hub',       pt: 'Slug URL do Hub' },
+    brand_name:         { en: 'Brand Name',              es: 'Nombre de Marca',        pt: 'Nome da Marca' },
+    brand_logo_url:     { en: 'Brand Logo URL',          es: 'URL del Logo de Marca',  pt: 'URL do Logo da Marca' },
+    switch_location:    { en: 'Switch Location',         es: 'Cambiar Ubicación',      pt: 'Trocar Localização' },
+
     // ── Orders / Dashboard ─────────────────────────────────────────────────────
     clear:              { en: 'Clear',                  es: 'Limpiar',               pt: 'Limpar' }
 };
