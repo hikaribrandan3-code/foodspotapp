@@ -22,6 +22,8 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
     const [locationSlug, setLocationSlug] = useState('')
     const [locationLabel, setLocationLabel] = useState('')
     const [locationAddress, setLocationAddress] = useState('')
+    const [locationHours, setLocationHours] = useState(currentBusiness?.hours || '')
+    const [locationPhone, setLocationPhone] = useState('')
 
     // Auto-use current business branding (not editable, user can change in Hub Settings later)
     const parentBrandName = currentBusiness?.business_name || currentBusiness?.name || ''
@@ -49,6 +51,8 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                 p_location_slug: locationSlug,
                 p_location_label: locationName,
                 p_location_address: locationAddress || null,
+                p_location_hours: locationHours || null,
+                p_location_phone: locationPhone || null,
                 p_parent_slug: parentSlug || null,
                 p_parent_brand_name: parentBrandName || null,
                 p_parent_brand_logo: parentBrandLogo || null,
@@ -181,6 +185,26 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                                 className={inputCls}
                                             />
                                         </div>
+                                        <div>
+                                            <label className={labelCls}>{t('business_hours') || 'Hours'} <span className="text-stone-400">(optional)</span></label>
+                                            <input
+                                                type="text"
+                                                value={locationHours}
+                                                onChange={e => setLocationHours(e.target.value)}
+                                                placeholder="Mon-Fri 9:00-21:00, Sat-Sun 10:00-18:00"
+                                                className={inputCls}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className={labelCls}>{t('phone') || 'Phone'} <span className="text-stone-400">(optional)</span></label>
+                                            <input
+                                                type="text"
+                                                value={locationPhone}
+                                                onChange={e => setLocationPhone(e.target.value)}
+                                                placeholder="+54 9 351 645 9100"
+                                                className={inputCls}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <button
@@ -205,6 +229,8 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                         [t('location_name') || 'Name', locationName],
                                         [t('location_url') || 'URL', `/${locationSlug}`],
                                         locationAddress && [t('address') || 'Address', locationAddress],
+                                        locationHours && [t('business_hours') || 'Hours', locationHours],
+                                        locationPhone && [t('phone') || 'Phone', locationPhone],
                                         parentBrandName && [t('brand_name') || 'Brand', parentBrandName],
                                         parentSlug && [t('hub_url_slug') || 'Hub', `/${parentSlug}`],
                                     ].filter(Boolean).map(([label, value]) => (
