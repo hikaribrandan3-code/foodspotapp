@@ -1,4 +1,6 @@
 -- Update get_owner_locations RPC to include hours field
+DROP FUNCTION IF EXISTS get_owner_locations();
+
 CREATE OR REPLACE FUNCTION get_owner_locations()
 RETURNS TABLE (
   id UUID,
