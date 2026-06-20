@@ -833,17 +833,17 @@ function OwnerSummary() {
                         )}
                     </div>
 
-                    {/* Hub Settings — only for 2+ locations */}
-                    {ownerLocations.length >= 2 && (
-                        <>
-                            <button
-                                onClick={() => toggleSection('multiLocation')}
-                                className="w-full flex items-center justify-between px-4 py-2.5 border-t border-stone-100 dark:border-white/5 text-xs font-bold text-stone-400 dark:text-white/30 hover:text-stone-600 dark:hover:text-white/50 transition-colors"
-                            >
-                                <span className="uppercase tracking-[0.12em]">{t('hub_settings') || 'Hub Settings'}</span>
-                                <ChevronRight size={13} className={`transition-transform ${openSections.multiLocation ? 'rotate-90' : ''}`} />
-                            </button>
 
+                {/* Hub Settings — only for 2+ locations */}
+                {ownerLocations.length >= 2 && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+                        <SectionHeader
+                            icon={<MapPin size={14} />}
+                            title={t('hub_settings') || 'Hub Settings'}
+                            isOpen={openSections.multiLocation}
+                            onToggle={() => toggleSection('multiLocation')}
+                        />
+                        <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
                             <AnimatePresence>
                                 {openSections.multiLocation && (
                                     <motion.div
@@ -852,44 +852,45 @@ function OwnerSummary() {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="overflow-hidden"
                                     >
-                                        <div className="px-4 pb-4 pt-1 space-y-3">
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                            {t('location_label') || 'Location Label'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={locationLabel}
-                                            onChange={(e) => setLocationLabel(e.target.value)}
-                                            placeholder="e.g. Downtown, Belgrano"
-                                            className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                            {t('brand_name') || 'Brand Name'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={parentBrandName}
-                                            onChange={(e) => setParentBrandName(e.target.value)}
-                                            placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
-                                            className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={saveLocationConfig}
-                                        disabled={locationConfigSaving}
-                                        className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                                    >
-                                        {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                        </>
-                    )}
+                                        <div className="p-4 md:p-5 space-y-3">
+                                            <div>
+                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                    {t('location_label') || 'Location Label'}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={locationLabel}
+                                                    onChange={(e) => setLocationLabel(e.target.value)}
+                                                    placeholder="e.g. Downtown, Belgrano"
+                                                    className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                    {t('brand_name') || 'Brand Name'}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={parentBrandName}
+                                                    onChange={(e) => setParentBrandName(e.target.value)}
+                                                    placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
+                                                    className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={saveLocationConfig}
+                                                disabled={locationConfigSaving}
+                                                className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                                            >
+                                                {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </motion.div>
+                )}
 
                 {/* All Locations Card — visible for any owner with locations */}
                 {ownerLocations.length >= 1 && (
