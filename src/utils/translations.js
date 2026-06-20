@@ -1246,6 +1246,7 @@ export const translations = {
     switch_location:    { en: 'Switch Location',         es: 'Cambiar Ubicación',      pt: 'Trocar Localização' },
     add_location:       { en: 'Add Location',            es: 'Agregar Ubicación',      pt: 'Adicionar Localização' },
     location_name:      { en: 'Location Name',           es: 'Nombre de Ubicación',    pt: 'Nome da Localização' },
+    location_address:   { en: 'Address',                 es: 'Dirección',              pt: 'Endereço' },
     location_url:       { en: 'URL Slug',                es: 'Slug URL',               pt: 'Slug URL' },
     location_label_hint:{ en: 'Shown on the hub page card', es: 'Visible en la tarjeta del hub', pt: 'Visível no card do hub' },
     hub_url_slug:       { en: 'Hub URL Slug',            es: 'Slug URL del Hub',       pt: 'Slug URL do Hub' },
