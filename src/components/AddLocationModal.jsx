@@ -69,7 +69,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
         setSaving(false)
     }
 
-    const inputCls = "w-full px-3 py-2.5 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500 transition-colors"
+    const inputCls = "w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500 transition-colors"
     const labelCls = "text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block"
 
     return (
@@ -84,7 +84,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-stone-100 dark:border-white/5">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'var(--color-primary, #10B981)' }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#10B981' }}>
                             <MapPin size={14} className="text-white" />
                         </div>
                         <div>
@@ -108,7 +108,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                     <div className="h-0.5 bg-stone-100 dark:bg-white/5">
                         <div
                             className="h-full transition-all duration-300"
-                            style={{ width: `${((step + 1) / STEPS.length) * 100}%`, background: 'var(--color-primary, #10B981)' }}
+                            style={{ width: `${((step + 1) / STEPS.length) * 100}%`, background: '#10B981' }}
                         />
                     </div>
                 )}
@@ -130,14 +130,14 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                 <div className="flex flex-col gap-2">
                                     <button
                                         onClick={() => navigate(`/${createdSlug}/owner/summary`)}
-                                        className="w-full py-3 rounded-xl text-sm font-bold text-white"
-                                        style={{ background: 'var(--color-primary, #10B981)' }}
+                                        className="w-full py-3 rounded-full text-sm font-bold text-white"
+                                        style={{ background: '#10B981' }}
                                     >
                                         {t('setup_location') || 'Set Up Location'} →
                                     </button>
                                     <button
                                         onClick={onClose}
-                                        className="w-full py-3 rounded-xl text-sm font-semibold text-stone-500 dark:text-white/50 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
+                                        className="w-full py-3 rounded-full text-sm font-semibold text-stone-500 dark:text-white/50 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
                                     >
                                         {t('stay_here') || 'Stay Here'}
                                     </button>
@@ -205,8 +205,8 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                 <button
                                     onClick={() => setStep(1)}
                                     disabled={!locationName || !locationSlug}
-                                    className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
-                                    style={{ background: 'var(--color-primary, #10B981)' }}
+                                    className="w-full py-3 rounded-full text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
+                                    style={{ background: '#10B981' }}
                                 >
                                     {t('next') || 'Next'} <ChevronRight size={16} />
                                 </button>
@@ -265,14 +265,14 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setStep(0)}
-                                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-stone-500 dark:text-white/50 bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
+                                        className="flex-1 py-3 rounded-full text-sm font-semibold text-stone-500 dark:text-white/50 bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
                                     >
                                         {t('back') || 'Back'}
                                     </button>
                                     <button
                                         onClick={() => setStep(2)}
-                                        className="flex-1 py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2"
-                                        style={{ background: 'var(--color-primary, #10B981)' }}
+                                        className="flex-1 py-3 rounded-full text-sm font-bold text-white flex items-center justify-center gap-2"
+                                        style={{ background: '#10B981' }}
                                     >
                                         {t('review') || 'Review'} <ChevronRight size={16} />
                                     </button>
@@ -301,7 +301,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                         </div>
                                     ))}
                                 </div>
-                                <div className="rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 p-3">
+                                <div className="rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 p-3">
                                     <p className="text-[11px] text-amber-700 dark:text-amber-400">
                                         {t('new_location_menu_hint') || 'The new location starts with an empty menu — you\'ll build it separately after setup.'}
                                     </p>
@@ -312,15 +312,15 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setStep(1)}
-                                        className="flex-1 py-3 rounded-xl text-sm font-semibold text-stone-500 dark:text-white/50 bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
+                                        className="flex-1 py-3 rounded-full text-sm font-semibold text-stone-500 dark:text-white/50 bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
                                     >
                                         {t('back') || 'Back'}
                                     </button>
                                     <button
                                         onClick={handleCreate}
                                         disabled={saving}
-                                        className="flex-1 py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 disabled:opacity-70"
-                                        style={{ background: 'var(--color-primary, #10B981)' }}
+                                        className="flex-1 py-3 rounded-full text-sm font-bold text-white flex items-center justify-center gap-2 disabled:opacity-70"
+                                        style={{ background: '#10B981' }}
                                     >
                                         {saving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
                                         {saving ? (t('creating') || 'Creating...') : (t('create_location') || 'Create Location')}
