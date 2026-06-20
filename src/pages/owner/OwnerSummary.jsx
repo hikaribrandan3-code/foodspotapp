@@ -213,7 +213,7 @@ function OwnerSummary() {
         language: true,
         team: false,
         loyalty: false,
-        multiLocation: false,
+        multiLocation: true,
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
 
@@ -763,8 +763,149 @@ function OwnerSummary() {
                     </div>
                 </motion.div>
 
-                {/* All Locations Card — only visible for multi-location owners */}
-                {ownerLocations.length > 1 && (
+                {/* Locations Hub — always at top */}
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.065 }}
+                    className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)] overflow-hidden"
+                >
+                    <div className="flex items-center justify-between px-4 pt-4 pb-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10">
+                                <MapPin size={13} className="text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <span className="text-xs font-black uppercase tracking-[0.15em] text-stone-500 dark:text-white/60">
+                                {t('locations') || 'Locations'}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setShowAddLocation(true)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white"
+                            style={{ background: 'var(--color-primary, #10B981)' }}
+                        >
+                            <Plus size={11} />
+                            {t('add_location') || 'Add Location'}
+                        </button>
+                    </div>
+
+                    {/* Location tiles */}
+                    <div className="px-4 pb-3 flex flex-wrap gap-2">
+                        {ownerLocations.length === 0 ? (
+                            <button
+                                onClick={() => setShowAddLocation(true)}
+                                className="flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-dashed border-stone-200 dark:border-white/10 text-stone-400 dark:text-white/30 text-xs font-bold hover:border-emerald-400 hover:text-emerald-600 transition-all"
+                            >
+                                <Plus size={12} />
+                                {t('add_your_first_location') || 'Add your first location'}
+                            </button>
+                        ) : (
+                            ownerLocations.map(loc => {
+                                const isCurrent = loc.id === businessId
+                                return (
+                                    <button
+                                        key={loc.id}
+                                        onClick={() => !isCurrent && navigate(`/${loc.slug}/owner/summary`)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                                            isCurrent
+                                                ? 'bg-emerald-600 text-white shadow-md'
+                                                : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
+                                        }`}
+                                    >
+                                        <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
+                                        {loc.location_label || loc.venue_name || loc.business_name}
+                                        {isCurrent && <span className="text-[9px] opacity-70 ml-0.5">● here</span>}
+                                    </button>
+                                )
+                            })
+                        )}
+                    </div>
+
+                    {/* Config fields — collapsible */}
+                    <button
+                        onClick={() => toggleSection('multiLocation')}
+                        className="w-full flex items-center justify-between px-4 py-2.5 border-t border-stone-100 dark:border-white/5 text-xs font-bold text-stone-400 dark:text-white/30 hover:text-stone-600 dark:hover:text-white/50 transition-colors"
+                    >
+                        <span className="uppercase tracking-[0.12em]">{t('hub_settings') || 'Hub Settings'}</span>
+                        <ChevronRight size={13} className={`transition-transform ${openSections.multiLocation ? 'rotate-90' : ''}`} />
+                    </button>
+
+                    <AnimatePresence>
+                        {openSections.multiLocation && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="px-4 pb-4 pt-1 space-y-3">
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                            {t('location_label') || 'Location Label'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={locationLabel}
+                                            onChange={(e) => setLocationLabel(e.target.value)}
+                                            placeholder="e.g. Downtown, Belgrano"
+                                            className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                            {t('parent_slug') || 'Hub URL Slug'}
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-stone-400 dark:text-white/30">foodspot.com/</span>
+                                            <input
+                                                type="text"
+                                                value={parentSlug}
+                                                onChange={(e) => setParentSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                                placeholder="lacantina"
+                                                className="flex-1 px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                            {t('brand_name') || 'Brand Name'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={parentBrandName}
+                                            onChange={(e) => setParentBrandName(e.target.value)}
+                                            placeholder="La Cantina Group"
+                                            className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
+                                            {t('brand_logo_url') || 'Brand Logo URL'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={parentBrandLogo}
+                                            onChange={(e) => setParentBrandLogo(e.target.value)}
+                                            placeholder="https://..."
+                                            className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={saveLocationConfig}
+                                        disabled={locationConfigSaving}
+                                        className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+                                        style={{ background: locationConfigSaved ? '#10B981' : 'var(--color-primary, #10B981)' }}
+                                    >
+                                        {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* All Locations Card — visible for any owner with locations */}
+                {ownerLocations.length >= 1 && (
                     <motion.div
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -1395,101 +1536,6 @@ function OwnerSummary() {
                     </AnimatePresence>
                 </motion.div>
 
-                {/* Multi-Location Config — always visible */}
-                {ownerLocations.length >= 1 && (
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
-                        <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                                <SectionHeader
-                                    icon={<MapPin size={14} />}
-                                    title={t('multi_location') || 'Multi-Location'}
-                                    isOpen={openSections.multiLocation}
-                                    onToggle={() => toggleSection('multiLocation')}
-                                />
-                            </div>
-                            <button
-                                onClick={() => setShowAddLocation(true)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white mb-2 shrink-0"
-                                style={{ background: 'var(--color-primary, #10B981)' }}
-                            >
-                                <Plus size={12} />
-                                {t('add_location') || 'Add Location'}
-                            </button>
-                        </div>
-                        <AnimatePresence>
-                            {openSections.multiLocation && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-4 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                                {t('location_label') || 'Location Label'}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={locationLabel}
-                                                onChange={(e) => setLocationLabel(e.target.value)}
-                                                placeholder="e.g. Downtown, Belgrano"
-                                                className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                                {t('parent_slug') || 'Hub URL Slug'}
-                                            </label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-stone-400 dark:text-white/30">foodspot.com/</span>
-                                                <input
-                                                    type="text"
-                                                    value={parentSlug}
-                                                    onChange={(e) => setParentSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                                    placeholder="lacantina"
-                                                    className="flex-1 px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                                {t('brand_name') || 'Brand Name'}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={parentBrandName}
-                                                onChange={(e) => setParentBrandName(e.target.value)}
-                                                placeholder="La Cantina Group"
-                                                className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                                {t('brand_logo_url') || 'Brand Logo URL'}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={parentBrandLogo}
-                                                onChange={(e) => setParentBrandLogo(e.target.value)}
-                                                placeholder="https://..."
-                                                className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                            />
-                                        </div>
-                                        <button
-                                            onClick={saveLocationConfig}
-                                            disabled={locationConfigSaving}
-                                            className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                                            style={{ background: locationConfigSaved ? '#10B981' : 'var(--color-primary, #10B981)' }}
-                                        >
-                                            {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-                )}
 
                 {/* Loyalty Rewards */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
