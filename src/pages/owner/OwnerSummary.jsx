@@ -794,16 +794,12 @@ function OwnerSummary() {
 
                     {/* Location tiles */}
                     <div className="px-4 pb-3 flex flex-wrap gap-2">
-                        {!locationsLoading && ownerLocations.length === 0 ? (
-                            <button
-                                onClick={() => setShowAddLocation(true)}
-                                className="flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-dashed border-stone-200 dark:border-white/10 text-stone-400 dark:text-white/30 text-xs font-bold hover:border-emerald-400 hover:text-emerald-600 transition-all"
-                            >
-                                <Plus size={12} />
-                                {t('add_your_first_location') || 'Add your first location'}
-                            </button>
-                        ) : locationsLoading ? (
+                        {locationsLoading ? (
                             <div className="text-xs text-stone-400 dark:text-white/30 px-4 py-2">Loading...</div>
+                        ) : ownerLocations.length === 0 ? (
+                            <div className="text-xs text-stone-400 dark:text-white/30 px-4 py-2">
+                                {t('no_locations_yet') || 'No locations yet. Click "Add Location" above to get started.'}
+                            </div>
                         ) : (
                             ownerLocations.map(loc => {
                                 const isCurrent = loc.id === businessId

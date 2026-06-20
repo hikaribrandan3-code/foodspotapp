@@ -1234,6 +1234,7 @@ export const translations = {
     locations:              { en: 'Locations',                  es: 'Ubicaciones',                   pt: 'Localizações' },
     hub_settings:           { en: 'Hub Settings',               es: 'Config. del Hub',               pt: 'Config. do Hub' },
     add_your_first_location:{ en: 'Add your first location',    es: 'Agregar primera ubicación',     pt: 'Adicionar primeira localização' },
+    no_locations_yet:       { en: 'No locations yet. Click "Add Location" above to get started.', es: 'Sin ubicaciones aún. Haz clic en "Agregar Ubicación" arriba para comenzar.', pt: 'Sem localizações ainda. Clique em "Adicionar Localização" acima para começar.' },
     all_locations:      { en: 'All Locations',           es: 'Todas las Ubicaciones',  pt: 'Todas as Localizações' },
     multi_location:     { en: 'Multi-Location',          es: 'Multi-Ubicación',        pt: 'Multi-Localização' },
     total_revenue:      { en: 'Total Revenue',           es: 'Ingresos Totales',       pt: 'Receita Total' },
