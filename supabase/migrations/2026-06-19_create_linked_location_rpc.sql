@@ -26,6 +26,7 @@ DECLARE
   v_currency   TEXT;
   v_language   TEXT;
   v_app_config JSONB;
+  v_hours      TEXT;
 BEGIN
   -- Authenticated owner only
   v_owner_id := auth.uid();
@@ -38,9 +39,9 @@ BEGIN
     RAISE EXCEPTION 'Slug already taken: %', p_location_slug;
   END IF;
 
-  -- Inherit currency, language, app_config from owner's first business
-  SELECT b.currency, b.language, b.app_config
-  INTO v_currency, v_language, v_app_config
+  -- Inherit currency, language, app_config, hours from owner's first business
+  SELECT b.currency, b.language, b.app_config, b.hours
+  INTO v_currency, v_language, v_app_config, v_hours
   FROM businesses b
   WHERE b.owner_id = v_owner_id
   ORDER BY b.created_at ASC
@@ -53,6 +54,7 @@ BEGIN
     currency,
     language,
     app_config,
+    hours,
     location_label,
     parent_slug,
     parent_brand_name,
@@ -64,6 +66,7 @@ BEGIN
     COALESCE(v_currency, 'ARS'),
     COALESCE(v_language, 'es'),
     COALESCE(v_app_config, '{}'::JSONB),
+    v_hours,
     p_location_label,
     p_parent_slug,
     p_parent_brand_name,
