@@ -97,9 +97,9 @@ function OwnerSummary() {
                     .single()
                 if (data) {
                     setLocationLabel(data.location_label || '')
-                    setParentSlug(data.parent_slug || '')
-                    setParentBrandName(data.parent_brand_name || '')
-                    setParentBrandLogo(data.parent_brand_logo || '')
+                    setParentSlug(data.parent_slug || tenantData?.slug || '')
+                    setParentBrandName(data.parent_brand_name || tenantData?.business_name || tenantData?.venue_name || '')
+                    setParentBrandLogo(data.parent_brand_logo || tenantData?.logo_url || '')
                 }
             } catch (_) { /* columns may not exist yet */ }
         }
@@ -116,7 +116,7 @@ function OwnerSummary() {
                     location_label: locationLabel || null,
                     parent_slug: parentSlug || null,
                     parent_brand_name: parentBrandName || null,
-                    parent_brand_logo: parentBrandLogo || null,
+                    parent_brand_logo: parentBrandLogo || tenantData?.logo_url || null,
                 })
                 .eq('id', businessId)
             setLocationConfigSaved(true)
@@ -781,8 +781,7 @@ function OwnerSummary() {
                         </div>
                         <button
                             onClick={() => setShowAddLocation(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white"
-                            style={{ background: 'var(--color-primary, #10B981)' }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                         >
                             <Plus size={11} />
                             {t('add_location') || 'Add Location'}
@@ -848,23 +847,8 @@ function OwnerSummary() {
                                             value={locationLabel}
                                             onChange={(e) => setLocationLabel(e.target.value)}
                                             placeholder="e.g. Downtown, Belgrano"
-                                            className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                            className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                            {t('parent_slug') || 'Hub URL Slug'}
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-stone-400 dark:text-white/30">foodspot.com/</span>
-                                            <input
-                                                type="text"
-                                                value={parentSlug}
-                                                onChange={(e) => setParentSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                                placeholder="lacantina"
-                                                className="flex-1 px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                            />
-                                        </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
@@ -874,27 +858,14 @@ function OwnerSummary() {
                                             type="text"
                                             value={parentBrandName}
                                             onChange={(e) => setParentBrandName(e.target.value)}
-                                            placeholder="La Cantina Group"
-                                            className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
-                                            {t('brand_logo_url') || 'Brand Logo URL'}
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={parentBrandLogo}
-                                            onChange={(e) => setParentBrandLogo(e.target.value)}
-                                            placeholder="https://..."
-                                            className="w-full px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                            placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
+                                            className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
                                         />
                                     </div>
                                     <button
                                         onClick={saveLocationConfig}
                                         disabled={locationConfigSaving}
-                                        className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all"
-                                        style={{ background: locationConfigSaved ? '#10B981' : 'var(--color-primary, #10B981)' }}
+                                        className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                                     >
                                         {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
                                     </button>

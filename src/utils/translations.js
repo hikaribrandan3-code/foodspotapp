@@ -1231,6 +1231,9 @@ export const translations = {
     theme_color_note:   { en: 'These colors appear in payment buttons, confirmations, and receipts', es: 'Estos colores aparecen en botones de pago, confirmaciones y recibos', pt: 'Estas cores aparecem nos botões de pagamento, confirmações e recibos' },
 
     // ── Multi-Location Hub ─────────────────────────────────────────────────────
+    locations:              { en: 'Locations',                  es: 'Ubicaciones',                   pt: 'Localizações' },
+    hub_settings:           { en: 'Hub Settings',               es: 'Config. del Hub',               pt: 'Config. do Hub' },
+    add_your_first_location:{ en: 'Add your first location',    es: 'Agregar primera ubicación',     pt: 'Adicionar primeira localização' },
     all_locations:      { en: 'All Locations',           es: 'Todas las Ubicaciones',  pt: 'Todas as Localizações' },
     multi_location:     { en: 'Multi-Location',          es: 'Multi-Ubicación',        pt: 'Multi-Localização' },
     total_revenue:      { en: 'Total Revenue',           es: 'Ingresos Totales',       pt: 'Receita Total' },
