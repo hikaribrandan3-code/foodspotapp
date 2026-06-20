@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabaseClient.js'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext.jsx'
 
-const STEPS = ['basics', 'brand', 'confirm']
+const STEPS = ['basics', 'confirm']
 
 export default function AddLocationModal({ onClose, currentBusiness, onCreated }) {
     const { t } = useLanguage()
@@ -23,16 +23,10 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
     const [locationLabel, setLocationLabel] = useState('')
     const [locationAddress, setLocationAddress] = useState('')
 
-    // Step 2 — brand (pre-filled from current business)
-    const [parentBrandName, setParentBrandName] = useState(
-        currentBusiness?.business_name || currentBusiness?.name || ''
-    )
-    const [parentSlug, setParentSlug] = useState(
-        currentBusiness?.parent_slug || slugify(currentBusiness?.business_name || currentBusiness?.name || '')
-    )
-    const [parentBrandLogo, setParentBrandLogo] = useState(
-        currentBusiness?.logo_url || ''
-    )
+    // Auto-use current business branding (not editable, user can change in Hub Settings later)
+    const parentBrandName = currentBusiness?.business_name || currentBusiness?.name || ''
+    const parentSlug = currentBusiness?.parent_slug || slugify(currentBusiness?.business_name || currentBusiness?.name || '')
+    const parentBrandLogo = currentBusiness?.logo_url || ''
 
     function slugify(str) {
         return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -213,75 +207,8 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                             </motion.div>
                         )}
 
-                        {/* ── STEP 2: BRAND ── */}
+                        {/* ── STEP 2: CONFIRM ── */}
                         {!done && step === 1 && (
-                            <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
-                                <div>
-                                    <p className="text-sm font-semibold text-stone-700 dark:text-white/80 mb-1">
-                                        {t('brand_setup') || 'Brand setup'}
-                                    </p>
-                                    <p className="text-xs text-stone-400 dark:text-white/40 mb-4">
-                                        {t('brand_setup_hint') || 'Pre-filled from your current location — edit if needed'}
-                                    </p>
-                                    <div className="space-y-3">
-                                        <div>
-                                            <label className={labelCls}>{t('brand_name') || 'Brand Name'}</label>
-                                            <input
-                                                type="text"
-                                                value={parentBrandName}
-                                                onChange={e => setParentBrandName(e.target.value)}
-                                                placeholder="La Cantina Group"
-                                                className={inputCls}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>{t('hub_url_slug') || 'Hub URL Slug'}</label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-stone-400 dark:text-white/30 shrink-0">app.com/</span>
-                                                <input
-                                                    type="text"
-                                                    value={parentSlug}
-                                                    onChange={e => setParentSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                                    placeholder="lacantina"
-                                                    className={inputCls}
-                                                />
-                                            </div>
-                                            <p className="text-[10px] text-stone-400 dark:text-white/30 mt-1">
-                                                {t('hub_slug_hint') || 'Customers visit this URL to see all your locations'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>{t('brand_logo_url') || 'Brand Logo URL'}</label>
-                                            <input
-                                                type="text"
-                                                value={parentBrandLogo}
-                                                onChange={e => setParentBrandLogo(e.target.value)}
-                                                placeholder="https://..."
-                                                className={inputCls}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setStep(0)}
-                                        className="flex-1 py-3 rounded-full text-sm font-semibold text-stone-500 dark:text-white/50 bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
-                                    >
-                                        {t('back') || 'Back'}
-                                    </button>
-                                    <button
-                                        onClick={() => setStep(2)}
-                                        className="flex-1 py-3 rounded-full text-sm font-bold text-white flex items-center justify-center gap-2"
-                                        style={{ background: '#10B981' }}
-                                    >
-                                        {t('review') || 'Review'} <ChevronRight size={16} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {/* ── STEP 3: CONFIRM ── */}
-                        {!done && step === 2 && (
                             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                                 <p className="text-sm font-semibold text-stone-700 dark:text-white/80 mb-3">
                                     {t('confirm_location') || 'Confirm new location'}
@@ -311,7 +238,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                 )}
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => setStep(1)}
+                                        onClick={() => setStep(0)}
                                         className="flex-1 py-3 rounded-full text-sm font-semibold text-stone-500 dark:text-white/50 bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition-colors"
                                     >
                                         {t('back') || 'Back'}
