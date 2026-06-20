@@ -833,24 +833,26 @@ function OwnerSummary() {
                         )}
                     </div>
 
-                    {/* Config fields — collapsible */}
-                    <button
-                        onClick={() => toggleSection('multiLocation')}
-                        className="w-full flex items-center justify-between px-4 py-2.5 border-t border-stone-100 dark:border-white/5 text-xs font-bold text-stone-400 dark:text-white/30 hover:text-stone-600 dark:hover:text-white/50 transition-colors"
-                    >
-                        <span className="uppercase tracking-[0.12em]">{t('hub_settings') || 'Hub Settings'}</span>
-                        <ChevronRight size={13} className={`transition-transform ${openSections.multiLocation ? 'rotate-90' : ''}`} />
-                    </button>
-
-                    <AnimatePresence>
-                        {openSections.multiLocation && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="overflow-hidden"
+                    {/* Hub Settings — only for 2+ locations */}
+                    {ownerLocations.length >= 2 && (
+                        <>
+                            <button
+                                onClick={() => toggleSection('multiLocation')}
+                                className="w-full flex items-center justify-between px-4 py-2.5 border-t border-stone-100 dark:border-white/5 text-xs font-bold text-stone-400 dark:text-white/30 hover:text-stone-600 dark:hover:text-white/50 transition-colors"
                             >
-                                <div className="px-4 pb-4 pt-1 space-y-3">
+                                <span className="uppercase tracking-[0.12em]">{t('hub_settings') || 'Hub Settings'}</span>
+                                <ChevronRight size={13} className={`transition-transform ${openSections.multiLocation ? 'rotate-90' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {openSections.multiLocation && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="overflow-hidden"
+                                    >
+                                        <div className="px-4 pb-4 pt-1 space-y-3">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1 block">
                                             {t('location_label') || 'Location Label'}
@@ -886,7 +888,8 @@ function OwnerSummary() {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </motion.div>
+                        </>
+                    )}
 
                 {/* All Locations Card — visible for any owner with locations */}
                 {ownerLocations.length >= 1 && (
