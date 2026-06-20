@@ -354,7 +354,7 @@ const Analytics = () => {
                                     <span style={{ ...labelStyle, marginBottom: 16 }}>{t('payment_methods')}</span>
                                     <div style={{ display: 'flex', gap: 12 }}>
                                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, padding: 12, background: '#EFF6FF', borderRadius: 12 }}>
-                                            <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>MP</div>
+                                            <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>{lang === 'en' ? 'Debit Card' : 'MP'}</div>
                                             <div>
                                                 <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>{stats.mpCount}</div>
                                                 <div style={{ fontSize: 11, color: '#6B7280' }}>{fmt(stats.mpRevenue)}</div>

@@ -20,17 +20,13 @@ ALTER TABLE loyalty_accounts
 ALTER TABLE loyalty_accounts
   DROP CONSTRAINT IF EXISTS loyalty_accounts_pkey CASCADE;
 
--- ── STEP 3: Delete all but one row per phone (keep the one with highest balance,
--- then update it with the merged total)
+-- ── STEP 3: Delete all but one row per phone (keep the one with highest balance)
 DELETE FROM loyalty_accounts a
-  USING (
-    SELECT customer_phone, MIN(id) AS keep_id
+  WHERE id NOT IN (
+    SELECT DISTINCT ON (customer_phone) id
     FROM loyalty_accounts
-    GROUP BY customer_phone
-    HAVING COUNT(*) > 1
-  ) dup
-  WHERE a.customer_phone = dup.customer_phone
-    AND a.id != dup.keep_id;
+    ORDER BY customer_phone, points_balance DESC, created_at ASC
+  );
 
 -- ── STEP 4: Update kept rows to the merged total
 UPDATE loyalty_accounts la

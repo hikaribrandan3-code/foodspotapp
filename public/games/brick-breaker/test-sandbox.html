@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brick Breaker - Test Sandbox</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0e27;
+      font-family: 'Press Start 2P', monospace;
+      display: flex;
+      height: 100vh;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .game-container {
+      flex: 1;
+      background: #000;
+      border: 2px solid #28e0e0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    canvas {
+      flex: 1;
+      display: block;
+    }
+
+    .controller-container {
+      width: 280px;
+      background: #1a1a2e;
+      border: 2px solid #28e0e0;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 10px;
+      color: #28e0e0;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #28e0e0;
+      background: rgba(40, 224, 224, 0.1);
+    }
+
+    .section h3 {
+      margin-bottom: 10px;
+      font-size: 11px;
+      color: #ffe000;
+    }
+
+    .button {
+      padding: 8px;
+      margin: 5px 0;
+      background: #2a2a3e;
+      border: 1px solid #28e0e0;
+      color: #28e0e0;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      text-align: left;
+    }
+
+    .button.active {
+      background: #ff9b21;
+      color: #000;
+      border-color: #ff9b21;
+    }
+
+    .info {
+      font-size: 9px;
+      line-height: 1.5;
+      color: #35e85a;
+    }
+  </style>
+</head>
+<body>
+
+<div class="game-container">
+  <canvas id="gameCanvas"></canvas>
+</div>
+
+<div class="controller-container">
+  <div class="section">
+    <h3>MOVEMENT</h3>
+    <div class="button" id="btnLeft">← A (Left)</div>
+    <div class="button" id="btnRight">→ D (Right)</div>
+  </div>
+
+  <div class="section">
+    <h3>ACTION</h3>
+    <div class="button" id="btnA">🅰 K or SPACE</div>
+  </div>
+
+  <div class="info">
+    <strong>Keys:</strong><br>
+    A = Move Left<br>
+    D = Move Right<br>
+    K or SPACE = Launch<br>
+    <br>
+    <strong>State:</strong><br>
+    <span id="state">START</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const VW = 1000;
+let VH = 1500;
+let S = 1;
+
+function layout() {
+  S = canvas.width / VW;
+  VH = canvas.height / S;
+}
+
+let state = 'start';
+let score = 0, hi = 0;
+let stage = 1, lives = 3, combo = 0, blink = 0;
+let last = null;
+
+const ball = { x: 50, y: 50, vx: 0, vy: 0, r: 4, speed: 480, stuck: true };
+const paddle = { cx: 50, y: 85, w: 30, h: 6 };
+let bricks = [];
+
+const pf = { x: 2, y: 8, w: 96, h: 84 };
+const ROW_COLORS = ['#ff3b3b', '#ff9b21', '#ffe000', '#35e85a', '#28e0e0', '#a371ff', '#ff3b9a'];
+const ROW_DARK = ['#c41e3a', '#cc6600', '#ccaa00', '#228833', '#1a8888', '#663399', '#cc0066'];
+
+let keys = {};
+
+document.addEventListener('keydown', (e) => {
+  const key = e.key.toLowerCase();
+  if (key === 'a' || key === 'd' || key === 'k' || key === ' ') {
+    e.preventDefault();
+  }
+  keys[key] = true;
+
+  if (key === 'k' || key === ' ') {
+    confirm();
+  }
+  updateUI();
+});
+
+document.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase();
+  keys[key] = false;
+  updateUI();
+});
+
+function updateUI() {
+  const isLeft = keys['a'] === true;
+  const isRight = keys['d'] === true;
+  const isAction = keys['k'] === true || keys[' '] === true;
+
+  document.getElementById('btnLeft').classList.toggle('active', isLeft);
+  document.getElementById('btnRight').classList.toggle('active', isRight);
+  document.getElementById('btnA').classList.toggle('active', isAction);
+  document.getElementById('state').textContent = state.toUpperCase().replace(/_/g, ' ');
+}
+
+function confirm() {
+  if (state === 'start') { startGame(); }
+  else if (state === 'ready') { launchBall(); }
+  else if (state === 'stage_clear') { stage++; loadStage(stage); }
+  else if (state === 'gameover') { startGame(); }
+  updateUI();
+}
+
+function startGame() {
+  score = 0;
+  lives = 3;
+  stage = 1;
+  combo = 0;
+  loadStage(stage);
+}
+
+function launchBall() {
+  if (!ball.stuck) return;
+  ball.stuck = false;
+  const ang = (-Math.PI / 2) + (Math.random() * 0.5 - 0.25);
+  ball.vx = Math.cos(ang) * ball.speed;
+  ball.vy = Math.sin(ang) * ball.speed;
+  state = 'playing';
+}
+
+function loadStage(n) {
+  bricks = [];
+  state = 'ready';
+  ball.stuck = true;
+  ball.x = paddle.cx;
+  ball.y = paddle.y - ball.r - 2;
+  ball.vx = 0;
+  ball.vy = 0;
+  combo = 0;
+
+  const COLS = 11, ROWS = 8, BGAP = 8;
+  const brickW = 70, brickH = 34;
+  const sx = 14 + 14, sy = 78;
+
+  const rows = Math.min(3 + Math.floor((n - 1) / 4), 6);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const ci = Math.min(6, Math.floor(r * 7 / rows));
+      const hp = r < 2 ? 1 : (Math.random() < 0.3 ? 2 : 1);
+      bricks.push({
+        x: sx + c * (brickW + BGAP),
+        y: sy + r * (brickH + BGAP),
+        w: brickW,
+        h: brickH,
+        hp, maxHp: hp,
+        ci,
+        alive: true
+      });
+    }
+  }
+}
+
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function drawBrick(b) {
+  if (!b.alive) return;
+  const x = b.x * S, y = b.y * S, w = b.w * S, h = b.h * S;
+  const col = ROW_COLORS[b.ci], dark = ROW_DARK[b.ci];
+  ctx.save();
+  ctx.shadowColor = col;
+  ctx.shadowBlur = 6 * S;
+  const grd = ctx.createLinearGradient(0, y, 0, y + h);
+  grd.addColorStop(0, col);
+  grd.addColorStop(1, dark);
+  ctx.fillStyle = grd;
+  rr(x, y, w, h, 5 * S);
+  ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 2 * S;
+  rr(x, y, w, h, 5 * S);
+  ctx.stroke();
+}
+
+function drawPaddle() {
+  const x = (paddle.cx - paddle.w / 2) * S, y = paddle.y * S, w = paddle.w * S, h = paddle.h * S;
+  ctx.save();
+  ctx.shadowColor = '#28e0e0';
+  ctx.shadowBlur = 12 * S;
+  const cg = ctx.createLinearGradient(0, y, 0, y + h);
+  cg.addColorStop(0, '#7df0ff');
+  cg.addColorStop(1, '#16a8c8');
+  ctx.fillStyle = cg;
+  rr(x, y, w, h, h / 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#ff9b21';
+  rr(x, y, w * 0.22, h, h / 2);
+  ctx.fill();
+  rr(x + w - w * 0.22, y, w * 0.22, h, h / 2);
+  ctx.fill();
+}
+
+function drawHUD() {
+  const stats = [
+    { l: 'SCORE', v: String(score).padStart(6, '0'), c: '#ff9b21' },
+    { l: 'HIGH', v: String(hi).padStart(6, '0'), c: '#ffe000' },
+    { l: 'LIVES', v: lives, c: '#ff3b3b' },
+    { l: 'STAGE', v: String(stage).padStart(2, '0'), c: '#35e85a' },
+  ];
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `${15 * S}px 'Press Start 2P'`;
+  ctx.textAlign = 'center';
+
+  const colW = VW / 4;
+  for (let i = 0; i < 4; i++) {
+    const cx = colW * (i + 0.5);
+    ctx.fillText(stats[i].l, cx * S, 42 * S);
+    ctx.fillStyle = stats[i].c;
+    ctx.font = `${20 * S}px 'Press Start 2P'`;
+    ctx.fillText(stats[i].v, cx * S, 80 * S);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `${15 * S}px 'Press Start 2P'`;
+  }
+}
+
+function draw() {
+  const W = VW * S, H = VH * S;
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.rect(pf.x * S, pf.y * S, pf.w * S, pf.h * S);
+  ctx.clip();
+
+  for (const b of bricks) {
+    drawBrick(b);
+  }
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.shadowColor = '#28e0e0';
+  ctx.shadowBlur = 16 * S;
+  ctx.strokeStyle = '#28e0e0';
+  ctx.lineWidth = 3 * S;
+  rr(pf.x * S, pf.y * S, pf.w * S, pf.h * S, 14 * S);
+  ctx.stroke();
+  ctx.restore();
+
+  if (state !== 'gameover') {
+    ctx.save();
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 18 * S;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(ball.x * S, ball.y * S, ball.r * S, 0, 7);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawPaddle();
+  drawHUD();
+
+  if (state === 'start') {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `${58 * S}px 'Press Start 2P'`;
+    ctx.textAlign = 'center';
+    ctx.fillText('PRESS START', VW / 2 * S, VH * 0.6 * S);
+  } else if (state === 'ready') {
+    if (Math.sin(blink * 5) > -0.2) {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `${16 * S}px 'Press Start 2P'`;
+      ctx.textAlign = 'center';
+      ctx.fillText('TAP A TO LAUNCH', VW / 2 * S, VH * 0.66 * S);
+    }
+  }
+}
+
+function update(dt) {
+  blink += dt;
+
+  // Always allow paddle movement
+  if (keys['a']) {
+    paddle.cx -= 50 * dt;
+  }
+  if (keys['d']) {
+    paddle.cx += 50 * dt;
+  }
+  paddle.cx = Math.max(pf.x + paddle.w / 2, Math.min(pf.x + pf.w - paddle.w / 2, paddle.cx));
+
+  if (state === 'ready') {
+    ball.x = paddle.cx;
+    ball.y = paddle.y - ball.r - 2;
+  }
+
+  updateUI();
+}
+
+function loop(ts) {
+  if (!last) last = ts;
+  let dt = (ts - last) / 1000;
+  last = ts;
+  if (dt > 1 / 30) dt = 1 / 30;
+
+  layout();
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loadStage(1);
+updateUI();
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>

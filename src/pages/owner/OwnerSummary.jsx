@@ -47,6 +47,7 @@ function OwnerSummary() {
 
     // Multi-location state
     const [ownerLocations, setOwnerLocations] = useState([])
+    const [locationsLoading, setLocationsLoading] = useState(true)
     const [combinedStats, setCombinedStats] = useState([])
     const [combinedStatsDays, setCombinedStatsDays] = useState(7)
     const ownerLocationsLoaded = useRef(false)
@@ -70,6 +71,9 @@ function OwnerSummary() {
                     if (data.length > 1) localStorage.setItem('fs_multi_location', 'true')
                 }
             } catch (_) { /* RPC may not exist yet */ }
+            finally {
+                setLocationsLoading(false)
+            }
         }
         fetchLocations()
     }, [])
@@ -790,7 +794,7 @@ function OwnerSummary() {
 
                     {/* Location tiles */}
                     <div className="px-4 pb-3 flex flex-wrap gap-2">
-                        {ownerLocations.length === 0 ? (
+                        {!locationsLoading && ownerLocations.length === 0 ? (
                             <button
                                 onClick={() => setShowAddLocation(true)}
                                 className="flex items-center gap-2 px-4 py-2.5 rounded-full border-2 border-dashed border-stone-200 dark:border-white/10 text-stone-400 dark:text-white/30 text-xs font-bold hover:border-emerald-400 hover:text-emerald-600 transition-all"
@@ -798,6 +802,8 @@ function OwnerSummary() {
                                 <Plus size={12} />
                                 {t('add_your_first_location') || 'Add your first location'}
                             </button>
+                        ) : locationsLoading ? (
+                            <div className="text-xs text-stone-400 dark:text-white/30 px-4 py-2">Loading...</div>
                         ) : (
                             ownerLocations.map(loc => {
                                 const isCurrent = loc.id === businessId
@@ -805,15 +811,22 @@ function OwnerSummary() {
                                     <button
                                         key={loc.id}
                                         onClick={() => !isCurrent && navigate(`/${loc.slug}/owner/summary`)}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                                        className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
                                             isCurrent
                                                 ? 'bg-emerald-600 text-white shadow-md'
                                                 : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
                                         }`}
                                     >
-                                        <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
-                                        {loc.location_label || loc.venue_name || loc.business_name}
-                                        {isCurrent && <span className="text-[9px] opacity-70 ml-0.5">● here</span>}
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
+                                            {loc.location_label || loc.name}
+                                            {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
+                                        </div>
+                                        {loc.hours && (
+                                            <div className="text-[10px] opacity-70 ml-3">
+                                                {loc.hours}
+                                            </div>
+                                        )}
                                     </button>
                                 )
                             })

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Generate Brick Breaker Cover</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 20px; background: #111; display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+  <canvas id="cover" width="512" height="512"></canvas>
+  <script>
+    const canvas = document.getElementById('cover');
+    const ctx = canvas.getContext('2d');
+
+    // Background gradient
+    const grad = ctx.createLinearGradient(0, 0, 512, 512);
+    grad.addColorStop(0, '#0b0b24');
+    grad.addColorStop(1, '#2a1a4a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Neon border
+    ctx.strokeStyle = '#28e0e0';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(12, 12, 488, 488);
+    ctx.shadowColor = '#28e0e0';
+    ctx.shadowBlur = 20;
+
+    // Title
+    ctx.font = 'bold 48px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#ff9b21';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#ffe000';
+    ctx.fillText('BRICK', 256, 120);
+    ctx.fillStyle = '#ff9b21';
+    ctx.shadowColor = '#ffe000';
+    ctx.fillText('BREAKER', 256, 180);
+
+    // Decorative bricks
+    ctx.shadowBlur = 0;
+    const colors = ['#e84cff', '#ff3b3b', '#ff9b21', '#ffe000', '#35e85a', '#28e0e0'];
+    for (let i = 0; i < 6; i++) {
+      const x = 60 + i * 70;
+      const y = 280;
+      const w = 60;
+      const h = 30;
+
+      ctx.fillStyle = colors[i];
+      ctx.shadowColor = colors[i];
+      ctx.shadowBlur = 12;
+      ctx.fillRect(x, y, w, h);
+
+      ctx.strokeStyle = colors[i];
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+    }
+
+    // Paddle representation
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = '#28e0e0';
+    ctx.fillStyle = '#28e0e0';
+    ctx.fillRect(156, 400, 200, 24);
+
+    // Ball
+    ctx.shadowColor = '#ffffff';
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(256, 340, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Download instruction
+    setTimeout(() => {
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        console.log('Cover generated. Right-click and save as cover.webp:');
+        console.log(url);
+
+        // Create download link
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'cover.webp';
+        document.body.appendChild(a);
+        a.style.display = 'block';
+        a.style.marginTop = '20px';
+        a.style.color = '#28e0e0';
+        a.style.textDecoration = 'none';
+        a.style.fontFamily = 'Press Start 2P';
+        a.style.fontSize = '14px';
+        a.textContent = '⬇️ Click to Download cover.webp';
+      }, 'image/webp', 0.9);
+    }, 100);
+  </script>
+</body>
+</html>

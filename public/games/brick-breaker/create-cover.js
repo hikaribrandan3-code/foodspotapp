@@ -1,0 +1,44 @@
+const fs = require('fs');
+
+// Simple PNG creation - using data URL approach
+// We'll create a canvas-like image using a minimal PNG structure
+
+// For now, create an SVG and save as .webp via a data URL approach
+const svgContent = `<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0b0b24;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2a1a4a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  
+  <!-- Border -->
+  <rect x="12" y="12" width="488" height="488" fill="none" stroke="#28e0e0" stroke-width="6"/>
+  
+  <!-- Title: BRICK -->
+  <text x="256" y="120" font-family="Arial, sans-serif" font-size="64" font-weight="bold" text-anchor="middle" fill="#ffe000" filter="drop-shadow(0 0 16px #ff9b21)">BRICK</text>
+  
+  <!-- Title: BREAKER -->
+  <text x="256" y="200" font-family="Arial, sans-serif" font-size="64" font-weight="bold" text-anchor="middle" fill="#ff9b21" filter="drop-shadow(0 0 16px #ffe000)">BREAKER</text>
+  
+  <!-- Decorative bricks -->
+  <rect x="60" y="280" width="60" height="30" fill="#e84cff" filter="drop-shadow(0 0 12px #e84cff)"/>
+  <rect x="130" y="280" width="60" height="30" fill="#ff3b3b" filter="drop-shadow(0 0 12px #ff3b3b)"/>
+  <rect x="200" y="280" width="60" height="30" fill="#ff9b21" filter="drop-shadow(0 0 12px #ff9b21)"/>
+  <rect x="270" y="280" width="60" height="30" fill="#ffe000" filter="drop-shadow(0 0 12px #ffe000)"/>
+  <rect x="340" y="280" width="60" height="30" fill="#35e85a" filter="drop-shadow(0 0 12px #35e85a)"/>
+  <rect x="410" y="280" width="60" height="30" fill="#28e0e0" filter="drop-shadow(0 0 12px #28e0e0)"/>
+  
+  <!-- Paddle -->
+  <rect x="156" y="400" width="200" height="24" fill="#28e0e0" filter="drop-shadow(0 0 16px #28e0e0)"/>
+  
+  <!-- Ball -->
+  <circle cx="256" cy="340" r="18" fill="#ffffff" filter="drop-shadow(0 0 20px #ffffff)"/>
+</svg>`;
+
+// For now, save as SVG (browsers will load it fine)
+fs.writeFileSync('cover.svg', svgContent);
+console.log('✅ Created cover.svg');
