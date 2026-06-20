@@ -47,7 +47,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
             const { data, error: rpcError } = await supabase.rpc('create_linked_location', {
                 p_location_name: locationName,
                 p_location_slug: locationSlug,
-                p_location_label: locationLabel || null,
+                p_location_label: locationName,
                 p_location_address: locationAddress || null,
                 p_parent_slug: parentSlug || null,
                 p_parent_brand_name: parentBrandName || null,
@@ -172,20 +172,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                             </div>
                                         </div>
                                         <div>
-                                            <label className={labelCls}>{t('location_label') || 'Label (short)'}</label>
-                                            <input
-                                                type="text"
-                                                value={locationLabel}
-                                                onChange={e => setLocationLabel(e.target.value)}
-                                                placeholder="Belgrano"
-                                                className={inputCls}
-                                            />
-                                            <p className="text-[10px] text-stone-400 dark:text-white/30 mt-1">
-                                                {t('location_label_hint') || 'Shown on the hub page card'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <label className={labelCls}>{t('address') || 'Address'}</label>
+                                            <label className={labelCls}>{t('address') || 'Address'} <span className="text-stone-400">(optional)</span></label>
                                             <input
                                                 type="text"
                                                 value={locationAddress}
@@ -217,7 +204,6 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                     {[
                                         [t('location_name') || 'Name', locationName],
                                         [t('location_url') || 'URL', `/${locationSlug}`],
-                                        locationLabel && [t('location_label') || 'Label', locationLabel],
                                         locationAddress && [t('address') || 'Address', locationAddress],
                                         parentBrandName && [t('brand_name') || 'Brand', parentBrandName],
                                         parentSlug && [t('hub_url_slug') || 'Hub', `/${parentSlug}`],
