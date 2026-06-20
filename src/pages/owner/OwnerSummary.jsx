@@ -832,7 +832,7 @@ function OwnerSummary() {
                             })
                         )}
                     </div>
-
+                </motion.div>
 
                 {/* Hub Settings — only for 2+ locations */}
                 {ownerLocations.length >= 2 && (
