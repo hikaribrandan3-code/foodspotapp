@@ -773,6 +773,39 @@ const Settings = () => {
             <BackendHeader title={t('settings_title')} onLogout={handleLogout} />
 
             <div className="settings-vault">
+                {/* ========== STORE STATUS (TOP) ========== */}
+                <section className="branding-card" style={{ background: isPaused ? '#FEF2F2' : '#FFFFFF', border: isPaused ? '2px solid #EF4444' : '1px solid #E5E7EB' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                        <h3 style={{ color: isPaused ? '#DC2626' : '#10B981', fontSize: '16px', fontWeight: '700', margin: 0 }}>
+                            {isPaused ? '🔒 ' : '🟢 '}{t('pause_orders_label') || 'Store Status'}
+                        </h3>
+                        <div style={{ width: 48, height: 26, borderRadius: 13, background: isPaused ? '#EF4444' : '#10B981', position: 'relative', transition: 'all 0.2s', cursor: 'pointer' }} onClick={() => setIsPaused(p => !p)}>
+                            <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isPaused ? 24 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                        </div>
+                    </div>
+                    {isPaused && (
+                        <div>
+                            <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280', marginBottom: 8, display: 'block' }}>
+                                {t('pause_orders_msg') || 'Custom message (optional)'}
+                            </label>
+                            <input
+                                type="text"
+                                value={pauseMessage}
+                                onChange={e => setPauseMessage(e.target.value)}
+                                placeholder="Back in 20 min / Volvemos pronto"
+                                style={{
+                                    width: '100%', padding: '10px 12px', borderRadius: 8,
+                                    border: '1px solid #E5E7EB', fontSize: 13, color: '#374151',
+                                    background: '#FAFAFA', boxSizing: 'border-box', outline: 'none'
+                                }}
+                            />
+                            {pauseSaveStatus?.saving && (
+                                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 6, textAlign: 'right' }}>💾 Saving…</p>
+                            )}
+                        </div>
+                    )}
+                </section>
+
                 {/* ========== 1. IDENTITY & TYPOGRAPHY ========== */}
                 <section className="branding-card">
                     <h3 style={{ color: '#10B981', fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>1. {t('identity_typography')}</h3>
@@ -1459,45 +1492,6 @@ const Settings = () => {
                         </div>
 
                         {/* MP token warning removed for MVP — token kept dormant in DB */}
-                    </div>
-
-                    {/* PAUSE ORDERS */}
-                    <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #F3F4F6' }}>
-                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
-                            {t('pause_orders_label') || 'Pause Orders'}
-                        </p>
-                        <div
-                            onClick={() => setIsPaused(p => !p)}
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
-                                background: isPaused ? '#FEF2F2' : '#F9FAFB',
-                                border: `1px solid ${isPaused ? '#EF4444' : '#E5E7EB'}`
-                            }}
-                        >
-                            <span style={{ fontSize: 13, fontWeight: 500, color: isPaused ? '#DC2626' : '#374151' }}>
-                                {isPaused ? '🔒 ' : '🟢 '}{t('pause_orders_label') || 'Pause Orders'}
-                            </span>
-                            <div style={{ width: 36, height: 20, borderRadius: 10, background: isPaused ? '#EF4444' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
-                                <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isPaused ? 18 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                            </div>
-                        </div>
-                        {isPaused && (
-                            <input
-                                type="text"
-                                value={pauseMessage}
-                                onChange={e => setPauseMessage(e.target.value)}
-                                placeholder={t('pause_orders_msg') || 'Custom message (optional)'}
-                                style={{
-                                    marginTop: 8, width: '100%', padding: '10px 12px', borderRadius: 8,
-                                    border: '1px solid #E5E7EB', fontSize: 13, color: '#374151',
-                                    background: '#FAFAFA', boxSizing: 'border-box', outline: 'none'
-                                }}
-                            />
-                        )}
-                        {pauseSaveStatus?.saving && (
-                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4, textAlign: 'right' }}>Saving…</p>
-                        )}
                     </div>
                 </section>
             </div>
