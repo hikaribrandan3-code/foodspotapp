@@ -753,6 +753,19 @@ function Home({ config: configProp }) {
                     min-height: 100dvh !important;
                     padding-bottom: 0 !important;
                 }
+                @keyframes closed-pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.35; transform: scale(0.75); }
+                }
+                .closed-pulse-dot {
+                    display: inline-block;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                    background: #EF4444;
+                    animation: closed-pulse 2s ease-in-out infinite;
+                    flex-shrink: 0;
+                }
             `}</style>
             <div
                 className={`page home-tight ${isEditMode ? 'home-edit-mode' : ''}`}
@@ -767,6 +780,35 @@ function Home({ config: configProp }) {
             }}
         >
             <HeaderClamp config={config} isHomePage={true} />
+
+            {/* Closed Banner — sits between hero cover and hero grid */}
+            {(tenantData?.is_paused || tenantData?.pause_orders) && (
+                <div style={{
+                    marginTop: 10,
+                    padding: '11px 16px',
+                    background: 'rgba(10,10,10,0.94)',
+                    border: '1px solid rgba(239,68,68,0.22)',
+                    borderRadius: 14,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 3,
+                    textAlign: 'center',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span className="closed-pulse-dot" />
+                        <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#EF4444' }}>
+                            {t('store_closed_tag') || 'Cerrado'}
+                        </span>
+                    </div>
+                    <p style={{ margin: 0, color: '#ffffff', fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>
+                        {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
+                    </p>
+                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.38)', fontSize: 10.5, lineHeight: 1.4 }}>
+                        {t('store_closed_sub')}
+                    </p>
+                </div>
+            )}
 
             {/* 🛎️ ACTIVE ORDER BANNER — persists even if customer closes tab */}
             {activeOrder && (
@@ -801,44 +843,6 @@ function Home({ config: configProp }) {
                         Track →
                     </span>
                 </button>
-            )}
-
-            {/* Door Hanger — Store Closed for Orders */}
-            {(tenantData?.is_paused || tenantData?.pause_orders) && (
-                <div style={{
-                    marginTop: 12,
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    background: '#111111',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-                }}>
-                    <div style={{
-                        background: '#EF4444',
-                        padding: '6px 16px',
-                        textAlign: 'center',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}>
-                        <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase' }}>
-                            ● {t('store_closed_tag') || 'CLOSED'} ●
-                        </span>
-                    </div>
-                    <div style={{ padding: '20px 16px', textAlign: 'center' }}>
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 10px' }} xmlns="http://www.w3.org/2000/svg">
-                            <rect x="5" y="11" width="14" height="10" rx="2" fill="#EF4444" opacity="0.9"/>
-                            <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
-                            <circle cx="12" cy="16" r="1.5" fill="#fff"/>
-                        </svg>
-                        <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 16, margin: '0 0 8px', lineHeight: 1.3 }}>
-                            {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
-                        </p>
-                        <p style={{ color: '#888888', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-                            {t('store_closed_sub') || 'Podés ver el menú, jugar y explorar eventos'}
-                        </p>
-                    </div>
-                </div>
             )}
 
             {/* Edit Mode Done Button (Owner only) */}

@@ -849,7 +849,7 @@ function OwnerSummary() {
                             value={pauseMessage}
                             onChange={e => setPauseMessage(e.target.value)}
                             placeholder="Back in 20 min / Volvemos pronto"
-                            className="mt-3 w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-500/30 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-xs placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:ring-1 focus:ring-red-300 dark:focus:ring-red-500/40"
+                            className="mt-3 w-full px-4 py-3 rounded-2xl border border-red-200 dark:border-red-500/30 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-xs placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:ring-1 focus:ring-red-300 dark:focus:ring-red-500/40"
                         />
                     )}
                 </motion.div>
