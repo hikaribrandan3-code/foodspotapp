@@ -1,27 +1,96 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import { useTier } from '../../hooks/useTier'
+import { supabase } from '../../lib/supabaseClient.js'
+import { getScopedGuestToken } from '../../utils/storage.js'
+import { ORDER_STATUS } from '../../constants/database.js'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 
-/**
- * Arcade - Entry point for the HikariBoy Emulator Shell
- */
 const Arcade = () => {
     const navigate = useNavigate()
-    const { slug: tenantSlug, tenantData } = useTenant()
-    const { isPro, isLoading: tierLoading } = useTier()
+    const { slug: tenantSlug, tenantData, businessId } = useTenant()
+    const { t } = useLanguage()
+    const { isPro } = useTier()
 
-    // Load arcade-only fonts on demand — not in the global critical-path stylesheet
+    const [foodReady, setFoodReady] = useState(false)
+    const [readyOrderId, setReadyOrderId] = useState(null)
+    const channelRef = useRef(null)
+
+    // Load arcade-only fonts on demand
     useEffect(() => {
-        const ARCADE_FONT_ID = 'arcade-fonts';
-        if (document.getElementById(ARCADE_FONT_ID)) return;
-        const link = document.createElement('link');
-        link.id = ARCADE_FONT_ID;
-        link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap';
-        document.head.appendChild(link);
+        const ARCADE_FONT_ID = 'arcade-fonts'
+        if (document.getElementById(ARCADE_FONT_ID)) return
+        const link = document.createElement('link')
+        link.id = ARCADE_FONT_ID
+        link.rel = 'stylesheet'
+        link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap'
+        document.head.appendChild(link)
     }, [])
+
+    // Realtime: watch for pickup order hitting 'ready' status
+    useEffect(() => {
+        if (!businessId) return
+
+        const guestToken = getScopedGuestToken()
+        const storedPhone = localStorage.getItem('fs_customer_phone')
+        if (!guestToken && !storedPhone) return
+
+        const findAndWatchPickupOrder = async () => {
+            // Find the most recent active pickup order for this guest
+            let query = supabase
+                .from('orders')
+                .select('id, status, delivery_method')
+                .eq('business_id', businessId)
+                .eq('delivery_method', 'pickup')
+                .not('status', 'in', `(${ORDER_STATUS.DELIVERED},${ORDER_STATUS.CANCELLED})`)
+                .order('created_at', { ascending: false })
+                .limit(1)
+
+            if (guestToken) {
+                query = query.eq('guest_token', guestToken)
+            } else if (storedPhone) {
+                query = query.eq('customer_phone', storedPhone)
+            }
+
+            const { data } = await query
+            const order = data?.[0]
+            if (!order) return
+
+            // If already ready when arcade opens, fire immediately
+            if (order.status === ORDER_STATUS.READY) {
+                setReadyOrderId(order.id)
+                setFoodReady(true)
+                return
+            }
+
+            // Subscribe to this order's status changes
+            channelRef.current = supabase
+                .channel(`arcade-pickup-${order.id}`)
+                .on('postgres_changes', {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'orders',
+                    filter: `id=eq.${order.id}`
+                }, (payload) => {
+                    if (payload.new.status === ORDER_STATUS.READY &&
+                        payload.new.delivery_method === 'pickup') {
+                        setReadyOrderId(order.id)
+                        setFoodReady(true)
+                    }
+                })
+                .subscribe()
+        }
+
+        findAndWatchPickupOrder()
+
+        return () => {
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current)
+            }
+        }
+    }, [businessId])
 
     const handleClose = useCallback(() => {
         const homePath = tenantSlug ? `/${tenantSlug}/home` : '/home'
@@ -29,9 +98,28 @@ const Arcade = () => {
     }, [navigate, tenantSlug])
 
     const handleUpgrade = useCallback(() => {
-        // TODO: wire to upgrade/pricing page when built
         alert('Upgrade to FoodSpot Pro to unlock all games! 🎮')
     }, [])
+
+    const handleViewReceipt = useCallback((orderId) => {
+        const path = orderId
+            ? `/${tenantSlug}/status?orderId=${orderId}`
+            : `/${tenantSlug}/status`
+        navigate(path)
+    }, [navigate, tenantSlug])
+
+    const handleDismissFoodReady = useCallback(() => {
+        setFoodReady(false)
+    }, [])
+
+    // Translations for the notification card
+    const foodReadyTexts = {
+        title:   t('food_ready_title'),
+        sub:     t('food_ready_sub'),
+        view:    t('food_ready_view'),
+        keep:    t('food_ready_keep'),
+        resume:  t('food_ready_resume'),
+    }
 
     return (
         <div style={{
@@ -45,10 +133,14 @@ const Arcade = () => {
                 onClose={handleClose}
                 onUpgradeClick={handleUpgrade}
                 isPro={isPro}
-                controllerColor={tenantData?.confirmation_color || '#8B5CF6'}
                 munchboyShellColor={tenantData?.app_config?.munchboy?.shell_color || tenantData?.munchboy_shell_color}
                 munchboyAColor={tenantData?.app_config?.munchboy?.a_color || tenantData?.munchboy_a_color}
                 munchboyBColor={tenantData?.app_config?.munchboy?.b_color || tenantData?.munchboy_b_color}
+                foodReady={foodReady}
+                readyOrderId={readyOrderId}
+                foodReadyTexts={foodReadyTexts}
+                onViewReceipt={handleViewReceipt}
+                onDismissFoodReady={handleDismissFoodReady}
             />
         </div>
     )

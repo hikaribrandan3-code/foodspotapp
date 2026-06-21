@@ -207,19 +207,178 @@
   cursor: pointer;
 }
 
-/* Food Ready Banner */
-.hb-food-banner {
+/* ========== FOOD READY NOTIFICATION — RETRO ARCADE CARD ========== */
+.hb-food-notification {
   position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, #FFD700, #FFA500);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.93);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: hfn-fadein 0.2s ease;
+}
+
+@keyframes hfn-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.hfn-card {
+  width: 88%;
+  max-width: 340px;
+  background: #050510;
+  border: 2px solid #35e85a;
+  box-shadow:
+    0 0 0 1px #050510,
+    0 0 20px rgba(53, 232, 90, 0.35),
+    0 0 60px rgba(53, 232, 90, 0.12),
+    inset 0 0 20px rgba(53, 232, 90, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0 16px;
+  gap: 0;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* Top header bar */
+.hfn-header {
+  width: 100%;
+  background: #35e85a;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hfn-paused-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
   color: #000;
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 16px;
-  z-index: 100;
+  letter-spacing: 1px;
+}
+
+.hfn-blink {
+  font-size: 10px;
+  color: #000;
+  animation: hfn-blink 0.7s step-end infinite;
+}
+
+@keyframes hfn-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* Food icon */
+.hfn-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  animation: hfn-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes hfn-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.12); }
+}
+
+/* Main title */
+.hfn-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: #35e85a;
+  text-align: center;
+  line-height: 1.6;
+  padding: 0 16px;
+  text-shadow: 0 0 12px rgba(53, 232, 90, 0.8);
+  margin-bottom: 8px;
+}
+
+/* Subtitle */
+.hfn-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #888;
+  text-align: center;
+  padding: 0 16px;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+/* Pixel divider */
+.hfn-divider {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #222;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+}
+
+/* Primary CTA — VIEW RECEIPT */
+.hfn-btn-primary {
+  width: calc(100% - 32px);
+  background: #35e85a;
+  border: 2px solid #35e85a;
+  color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 0 #1a6b30, 0 0 16px rgba(53, 232, 90, 0.4);
+  transition: transform 0.08s, box-shadow 0.08s;
+  margin-bottom: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hfn-btn-primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #1a6b30, 0 0 8px rgba(53, 232, 90, 0.3);
+}
+
+.hfn-btn-icon {
+  font-size: 14px;
+}
+
+/* Secondary — KEEP PLAYING */
+.hfn-btn-secondary {
+  background: transparent;
+  border: none;
+  color: #444;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  padding: 8px 16px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hfn-btn-secondary:active {
+  color: #666;
+}
+
+/* Countdown */
+.hfn-countdown {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 1px;
+}
+
+.hfn-dot {
+  color: #35e85a;
+  font-size: 8px;
+  animation: hfn-blink 1s step-end infinite;
 }
 
 /* ========== BRAND MARK — MUNCH BOY ========== */

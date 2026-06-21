@@ -1266,6 +1266,13 @@ export const translations = {
     step:               { en: 'Step',                   es: 'Paso',                    pt: 'Passo' },
 
     // ── Orders / Dashboard ─────────────────────────────────────────────────────
-    clear:              { en: 'Clear',                  es: 'Limpiar',               pt: 'Limpar' }
+    clear:              { en: 'Clear',                  es: 'Limpiar',               pt: 'Limpar' },
+
+    // ── Arcade Food Ready Notification ────────────────────────────────────────
+    food_ready_title:   { en: 'YOUR FOOD IS READY!',   es: '¡TU COMIDA ESTÁ LISTA!', pt: 'SUA COMIDA ESTÁ PRONTA!' },
+    food_ready_sub:     { en: 'Pick up at the counter', es: 'Retírala en el mostrador', pt: 'Retire no balcão' },
+    food_ready_view:    { en: 'VIEW RECEIPT',           es: 'VER RECIBO',             pt: 'VER RECIBO' },
+    food_ready_keep:    { en: 'KEEP PLAYING',           es: 'SEGUIR JUGANDO',         pt: 'CONTINUAR JOGANDO' },
+    food_ready_resume:  { en: 'RESUMES IN',             es: 'CONTINÚA EN',            pt: 'CONTINUA EM' }
 };
 

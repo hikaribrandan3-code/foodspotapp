@@ -48,16 +48,22 @@ export function HikariBoy({
   onClose,
   onUpgradeClick,
   isPro = false,
-  foodReady = false,
   munchboyShellColor,
   munchboyAColor,
-  munchboyBColor
+  munchboyBColor,
+  foodReady = false,
+  readyOrderId = null,
+  foodReadyTexts = {},
+  onViewReceipt,
+  onDismissFoodReady,
 }) {
   const [isBooting, setIsBooting] = useState(true);
   const [currentGame, setCurrentGame] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showLoader, setShowLoader] = useState(false);
+  const [resumeCountdown, setResumeCountdown] = useState(30);
+  const countdownRef = useRef(null);
   const gameFrameRef = useRef(null);
   const loaderStartRef = useRef(0);
   const gameStartedRef = useRef(false);
@@ -140,6 +146,36 @@ export function HikariBoy({
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Food ready: pause game + start 30s auto-dismiss countdown
+  useEffect(() => {
+    if (!foodReady) {
+      clearInterval(countdownRef.current);
+      setResumeCountdown(30);
+      return;
+    }
+    // Pause the active game
+    if (currentGame && gameFrameRef.current) {
+      gameFrameRef.current.contentWindow?.postMessage({ type: 'BUTTON_PRESS', button: 'start' }, '*');
+    }
+    // Start countdown
+    setResumeCountdown(30);
+    countdownRef.current = setInterval(() => {
+      setResumeCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current);
+          onDismissFoodReady?.();
+          // Resume game
+          if (currentGame && gameFrameRef.current) {
+            gameFrameRef.current.contentWindow?.postMessage({ type: 'BUTTON_PRESS', button: 'start' }, '*');
+          }
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(countdownRef.current);
+  }, [foodReady]);
 
   // Launch game with instant loader overlay
   const launchGame = (game) => {
@@ -416,7 +452,55 @@ export function HikariBoy({
               </div>
             )}
             {foodReady && (
-              <div className="hb-food-banner">🍔 Your food is ready!</div>
+              <div className="hb-food-notification">
+                <div className="hfn-card">
+                  <div className="hfn-header">
+                    <span className="hfn-blink">▐</span>
+                    <span className="hfn-paused-text">⏸ GAME PAUSED ⏸</span>
+                    <span className="hfn-blink">▌</span>
+                  </div>
+                  <div className="hfn-icon">🍔</div>
+                  <div className="hfn-title">
+                    {foodReadyTexts.title || 'YOUR FOOD IS READY!'}
+                  </div>
+                  <div className="hfn-sub">
+                    {foodReadyTexts.sub || 'Pick up at the counter'}
+                  </div>
+                  <div className="hfn-divider">· · · · · · · · · · · · ·</div>
+                  <button
+                    className="hfn-btn-primary"
+                    onTouchStart={(e) => { e.preventDefault(); clearInterval(countdownRef.current); onViewReceipt?.(readyOrderId); }}
+                    onClick={() => { clearInterval(countdownRef.current); onViewReceipt?.(readyOrderId); }}
+                  >
+                    <span className="hfn-btn-icon">🧾</span>
+                    {foodReadyTexts.view || 'VIEW RECEIPT'}
+                  </button>
+                  <button
+                    className="hfn-btn-secondary"
+                    onTouchStart={(e) => {
+                      e.preventDefault();
+                      clearInterval(countdownRef.current);
+                      onDismissFoodReady?.();
+                      if (currentGame && gameFrameRef.current) {
+                        gameFrameRef.current.contentWindow?.postMessage({ type: 'BUTTON_PRESS', button: 'start' }, '*');
+                      }
+                    }}
+                    onClick={() => {
+                      clearInterval(countdownRef.current);
+                      onDismissFoodReady?.();
+                      if (currentGame && gameFrameRef.current) {
+                        gameFrameRef.current.contentWindow?.postMessage({ type: 'BUTTON_PRESS', button: 'start' }, '*');
+                      }
+                    }}
+                  >
+                    {foodReadyTexts.keep || 'KEEP PLAYING'}
+                  </button>
+                  <div className="hfn-countdown">
+                    <span className="hfn-dot">◉</span>
+                    {foodReadyTexts.resume || 'RESUMES IN'} 0:{String(resumeCountdown).padStart(2, '0')}
+                  </div>
+                </div>
+              </div>
             )}
           </>
         )}
