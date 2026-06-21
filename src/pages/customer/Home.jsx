@@ -1124,19 +1124,37 @@ function Home({ config: configProp }) {
                 )
             })()}
 
-            {/* Pause Orders Message */}
+            {/* Door Hanger — Store Closed for Orders */}
             {(tenantData?.is_paused || tenantData?.pause_orders) && (
                 <div style={{
-                    marginTop: 20,
-                    padding: 12,
-                    textAlign: 'center',
-                    borderRadius: 12,
-                    backgroundColor: '#FEF2F2',
-                    border: '1px solid #FEE2E2'
+                    margin: '20px 0',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    background: '#111111',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
                 }}>
-                    <p style={{ fontSize: 12, color: '#DC2626', margin: 0, fontWeight: 500 }}>
-                        {tenantData?.pause_message || 'Pedidos pausados'}
-                    </p>
+                    <div style={{
+                        background: '#EF4444',
+                        padding: '6px 16px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8
+                    }}>
+                        <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase' }}>
+                            ● {t('store_closed_tag') || 'CLOSED'} ●
+                        </span>
+                    </div>
+                    <div style={{ padding: '20px 16px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 38, marginBottom: 10 }}>🔒</div>
+                        <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 16, margin: '0 0 8px', lineHeight: 1.3 }}>
+                            {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
+                        </p>
+                        <p style={{ color: '#888888', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+                            {t('store_closed_sub') || 'Podés ver el menú, jugar y explorar eventos'}
+                        </p>
+                    </div>
                 </div>
             )}
             {/* Owner Pill (Home) */}

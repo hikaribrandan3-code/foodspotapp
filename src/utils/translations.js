@@ -1273,6 +1273,14 @@ export const translations = {
     food_ready_sub:     { en: 'Pick up at the counter', es: 'Retírala en el mostrador', pt: 'Retire no balcão' },
     food_ready_view:    { en: 'VIEW RECEIPT',           es: 'VER RECIBO',             pt: 'VER RECIBO' },
     food_ready_keep:    { en: 'KEEP PLAYING',           es: 'SEGUIR JUGANDO',         pt: 'CONTINUAR JOGANDO' },
-    food_ready_resume:  { en: 'RESUMES IN',             es: 'CONTINÚA EN',            pt: 'CONTINUA EM' }
+    food_ready_resume:  { en: 'RESUMES IN',             es: 'CONTINÚA EN',            pt: 'CONTINUA EM' },
+
+    // ── Store Closed / Pause Orders ───────────────────────────────────────────
+    store_closed:         { en: 'Closed for orders',     es: 'Cerrado para pedidos',    pt: 'Fechado para pedidos' },
+    store_closed_tag:     { en: 'CLOSED',                es: 'CERRADO',                 pt: 'FECHADO' },
+    store_closed_sub:     { en: 'You can still browse the menu, play games & explore events', es: 'Podés ver el menú, jugar y explorar eventos', pt: 'Você pode ver o menu, jogar e explorar eventos' },
+    pause_orders_label:   { en: 'Pause Orders',          es: 'Pausar Pedidos',          pt: 'Pausar Pedidos' },
+    pause_orders_msg:     { en: 'Custom message (optional)',  es: 'Mensaje personalizado (opcional)', pt: 'Mensagem personalizada (opcional)' },
+    go_back:              { en: 'Go Back',               es: 'Volver',                  pt: 'Voltar' }
 };
 

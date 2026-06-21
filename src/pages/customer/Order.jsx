@@ -857,6 +857,60 @@ function Order({ config: configProp }) {
     }
 
     // ============================================
+    // RENDER: STORE CLOSED
+    // ============================================
+    if (tenantData?.is_paused || tenantData?.pause_orders) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 24,
+                background: '#0d0d0d',
+                textAlign: 'center'
+            }}>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
+                <div style={{
+                    background: '#EF4444',
+                    color: '#fff',
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: 3,
+                    padding: '4px 16px',
+                    borderRadius: 20,
+                    marginBottom: 16,
+                    textTransform: 'uppercase'
+                }}>
+                    ● {t('store_closed_tag') || 'CLOSED'} ●
+                </div>
+                <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
+                    {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
+                </h2>
+                <p style={{ color: '#888', fontSize: 13, margin: '0 0 28px', lineHeight: 1.5 }}>
+                    {t('store_closed_sub') || 'Podés ver el menú, jugar y explorar eventos'}
+                </p>
+                <button
+                    onClick={() => navigate(`/${tenantSlug}`)}
+                    style={{
+                        background: '#fff',
+                        color: '#111',
+                        border: 'none',
+                        borderRadius: 50,
+                        padding: '12px 28px',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                    }}
+                >
+                    ← {t('go_back') || 'Volver'}
+                </button>
+            </div>
+        )
+    }
+
+    // ============================================
     // RENDER: RETRY MODE (Audit #7)
     // ============================================
     if (isRetryMode) {

@@ -98,6 +98,10 @@ const Settings = () => {
     const { t } = useLanguage();
     const navigate = useNavigate();
     
+    // Pause Orders State
+    const [isPaused, setIsPaused] = useState(false);
+    const [pauseMessage, setPauseMessage] = useState('');
+
     // UI State
     const [isSaving, setIsSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
@@ -220,6 +224,25 @@ const Settings = () => {
         isDraftReady
     );
 
+    // AUTO-SAVE: Pause Orders (1.2s debounce)
+    const { saveStatus: pauseSaveStatus } = useDebouncedAutoSave(
+        isDraftReady ? { isPaused, pauseMessage } : null,
+        async ({ isPaused: paused, pauseMessage: msg }) => {
+            if (!businessId) return;
+            const { data, error } = await updateBranding(
+                { is_paused: paused, pause_message: msg },
+                businessId
+            );
+            if (error || !data) throw error || new Error('Save returned no data');
+            window.dispatchEvent(new CustomEvent('frontendSync', {
+                detail: { is_paused: paused, pause_message: msg }
+            }));
+            return data;
+        },
+        1200,
+        isDraftReady
+    );
+
     // Color Picker Modal State
     const [colorPickerState, setColorPickerState] = useState({
         isOpen: false,
@@ -331,6 +354,9 @@ const Settings = () => {
         // Apply CSS variables immediately
         applyCssVariables(tenant);
         
+        setIsPaused(tenant.is_paused || false);
+        setPauseMessage(tenant.pause_message || '');
+
         initializedForBusinessRef.current = tenant.business_id;
         setHasChanges(false);
         setIsDraftReady(true);
@@ -1433,6 +1459,45 @@ const Settings = () => {
                         </div>
 
                         {/* MP token warning removed for MVP — token kept dormant in DB */}
+                    </div>
+
+                    {/* PAUSE ORDERS */}
+                    <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #F3F4F6' }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 10 }}>
+                            {t('pause_orders_label') || 'Pause Orders'}
+                        </p>
+                        <div
+                            onClick={() => setIsPaused(p => !p)}
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '10px 12px', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
+                                background: isPaused ? '#FEF2F2' : '#F9FAFB',
+                                border: `1px solid ${isPaused ? '#EF4444' : '#E5E7EB'}`
+                            }}
+                        >
+                            <span style={{ fontSize: 13, fontWeight: 500, color: isPaused ? '#DC2626' : '#374151' }}>
+                                {isPaused ? '🔒 ' : '🟢 '}{t('pause_orders_label') || 'Pause Orders'}
+                            </span>
+                            <div style={{ width: 36, height: 20, borderRadius: 10, background: isPaused ? '#EF4444' : '#D1D5DB', position: 'relative', transition: 'all 0.2s' }}>
+                                <div style={{ width: 16, height: 16, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isPaused ? 18 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                            </div>
+                        </div>
+                        {isPaused && (
+                            <input
+                                type="text"
+                                value={pauseMessage}
+                                onChange={e => setPauseMessage(e.target.value)}
+                                placeholder={t('pause_orders_msg') || 'Custom message (optional)'}
+                                style={{
+                                    marginTop: 8, width: '100%', padding: '10px 12px', borderRadius: 8,
+                                    border: '1px solid #E5E7EB', fontSize: 13, color: '#374151',
+                                    background: '#FAFAFA', boxSizing: 'border-box', outline: 'none'
+                                }}
+                            />
+                        )}
+                        {pauseSaveStatus?.saving && (
+                            <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4, textAlign: 'right' }}>Saving…</p>
+                        )}
                     </div>
                 </section>
             </div>
