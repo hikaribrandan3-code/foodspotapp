@@ -44,7 +44,8 @@ const Arcade = () => {
                 .select('id, status, delivery_method')
                 .eq('business_id', businessId)
                 .eq('delivery_method', 'pickup')
-                .not('status', 'in', `(${ORDER_STATUS.DELIVERED},${ORDER_STATUS.CANCELLED})`)
+                .neq('status', ORDER_STATUS.DELIVERED)
+                .neq('status', ORDER_STATUS.CANCELLED)
                 .order('created_at', { ascending: false })
                 .limit(1)
 
@@ -54,17 +55,27 @@ const Arcade = () => {
                 query = query.eq('customer_phone', storedPhone)
             }
 
-            const { data } = await query
+            const { data, error } = await query
+            if (error) {
+                console.error('[Arcade] Order lookup error:', error)
+                return
+            }
             const order = data?.[0]
-            if (!order) return
+            if (!order) {
+                console.log('[Arcade] No active pickup order found')
+                return
+            }
+            console.log('[Arcade] Found pickup order:', order.id, 'status:', order.status)
 
             // If already ready when arcade opens, fire immediately
             if (order.status === ORDER_STATUS.READY) {
+                console.log('[Arcade] Order already READY on arcade load')
                 setReadyOrderId(order.id)
                 setFoodReady(true)
                 return
             }
 
+            console.log('[Arcade] Setting up realtime subscription for order:', order.id)
             // Subscribe to this order's status changes
             channelRef.current = supabase
                 .channel(`arcade-pickup-${order.id}`)
@@ -74,13 +85,17 @@ const Arcade = () => {
                     table: 'orders',
                     filter: `id=eq.${order.id}`
                 }, (payload) => {
+                    console.log('[Arcade] Order update:', payload.new.status, 'method:', payload.new.delivery_method)
                     if (payload.new.status === ORDER_STATUS.READY &&
                         payload.new.delivery_method === 'pickup') {
+                        console.log('[Arcade] FIRING FOOD READY!')
                         setReadyOrderId(order.id)
                         setFoodReady(true)
                     }
                 })
-                .subscribe()
+                .subscribe((status) => {
+                    console.log('[Arcade] Subscription status:', status)
+                })
         }
 
         findAndWatchPickupOrder()
