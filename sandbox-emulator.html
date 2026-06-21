@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brick Breaker - Sandbox Emulator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100vh;
+      background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hikariboy-emulator {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 600px;
+      height: 100vh;
+      background: #000;
+      gap: 0;
+    }
+
+    /* ===== TOP SCREEN (53% height) ===== */
+    .hb-screen {
+      flex: 0 0 53%;
+      position: relative;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      width: 100%;
+      border: none;
+    }
+
+    .hb-game-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+      display: block;
+    }
+
+    /* ===== BRAND BAR ===== */
+    .hb-brand-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+      width: 100%;
+      height: auto;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #2a2a3e, #1a1a2e);
+    }
+
+    .hb-brand-text-layer {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      color: #E8E6E3;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      font-style: italic;
+      -webkit-text-stroke: 2px #1a1a1a;
+      paint-order: stroke fill;
+    }
+
+    /* ===== CONTROLLER SHELL (47% height) ===== */
+    .hb-controller {
+      flex: 0 0 47%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.2) 100%), #6E56CF;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+      min-height: 315px;
+    }
+
+    .hb-sparkle {
+      position: absolute;
+      bottom: 20px;
+      right: 24px;
+      font-size: 28px;
+      color: #7B2FD9;
+      opacity: 0.3;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+    }
+
+    /* ===== SHOULDERS ===== */
+    .hb-shoulders {
+      position: relative;
+      width: 100%;
+      height: auto;
+      flex: 0 0 auto;
+      background: transparent;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px 4px;
+    }
+
+    .shoulder-l, .shoulder-r {
+      height: 20px;
+      width: 28%;
+      background: linear-gradient(180deg, #F3F4F6 0%, #D1D5DB 18%, #D1D5DB 78%, #B8B8B8 100%);
+      border: 3px solid #1a1a1a;
+      border-radius: 2px 4px 20px 2px;
+      color: #444;
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      letter-spacing: 1px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      box-shadow: 0 3px 0 #1a1a1a, inset 0 2px 1px rgba(255,255,255,0.6);
+      transition: all 0.05s;
+    }
+
+    .shoulder-r {
+      border-radius: 4px 2px 2px 20px;
+      justify-content: flex-end;
+      padding-right: 8px;
+    }
+
+    .shoulder-l {
+      padding-left: 8px;
+    }
+
+    .shoulder-l:active, .shoulder-r:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 #1a1a1a, inset 0 2px 4px rgba(0,0,0,0.25);
+    }
+
+    /* ===== MAIN CONTROLS ROW ===== */
+    .hb-controls-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      flex: 1 1 auto;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* ===== D-PAD ===== */
+    .hb-dpad {
+      width: 140px;
+      height: 140px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+      z-index: 2;
+    }
+
+    .dpad-cross {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 4px 0 #1a1a1a);
+    }
+
+    .dpad-cross::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 100%;
+      height: 38%;
+      background: #D1D5DB;
+      border-radius: 6px;
+      border: 3px solid #1a1a1a;
+      box-shadow: inset 0 2px 2px rgba(255,255,255,0.35);
+    }
+
+    .dpad-cross::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 38%;
+      height: 100%;
+      background: #D1D5DB;
+      border-radius: 6px;
+      border: 3px solid #1a1a1a;
+      box-shadow: inset 0 2px 2px rgba(255,255,255,0.35);
+      z-index: 1;
+    }
+
+    .dpad-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 28%;
+      height: 28%;
+      background: #D1D5DB;
+      border: 3px solid #1a1a1a;
+      border-radius: 50%;
+      z-index: 2;
+      box-shadow: inset 0 2px 2px rgba(255,255,255,0.25);
+    }
+
+    .dpad-area {
+      position: absolute;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .dpad-area::after {
+      content: '';
+      width: 0;
+      height: 0;
+      filter: drop-shadow(0 1px 1px rgba(255,255,255,0.8));
+      opacity: 0.8;
+    }
+
+    .dpad-up { top: 0; left: 50%; transform: translateX(-50%); width: 36%; height: 30%; }
+    .dpad-up::after { border: none; border-bottom: 18px solid #9CA3AF; border-left: 14px solid transparent; border-right: 14px solid transparent; }
+
+    .dpad-down { bottom: 0; left: 50%; transform: translateX(-50%); width: 36%; height: 30%; }
+    .dpad-down::after { border: none; border-top: 18px solid #9CA3AF; border-left: 14px solid transparent; border-right: 14px solid transparent; }
+
+    .dpad-left { left: 0; top: 50%; transform: translateY(-50%); width: 30%; height: 36%; }
+    .dpad-left::after { border: none; border-right: 18px solid #9CA3AF; border-top: 14px solid transparent; border-bottom: 14px solid transparent; }
+
+    .dpad-right { right: 0; top: 50%; transform: translateY(-50%); width: 30%; height: 36%; }
+    .dpad-right::after { border: none; border-left: 18px solid #9CA3AF; border-top: 14px solid transparent; border-bottom: 14px solid transparent; }
+
+    .dpad-area:active { filter: brightness(0.97); }
+
+    /* ===== A/B BUTTONS ===== */
+    .hb-action-btns {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      margin-right: -10px;
+      z-index: 2;
+    }
+
+    .action-btn {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px solid #1a1a1a;
+      background: radial-gradient(circle at 35% 35%, #E8E8E8 0%, #D1D5DB 40%, #B8B8B8 100%);
+      box-shadow: 0 4px 0 #1a1a1a, inset 0 -1px 3px rgba(0,0,0,0.12), inset 0 1px 2px rgba(255,255,255,0.8);
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 800;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: all 0.05s;
+    }
+
+    .btn-a {
+      width: 75px;
+      height: 75px;
+      font-size: 32px;
+      top: 0;
+      right: 0;
+      background: #D1D5DB;
+    }
+
+    .btn-b {
+      width: 75px;
+      height: 75px;
+      font-size: 32px;
+      bottom: 12px;
+      left: 12px;
+      background: #D1D5DB;
+    }
+
+    .action-btn:active {
+      transform: scale(0.97) translateY(3px);
+      box-shadow: 0 2px 0 #1a1a1a, inset 0 -1px 4px rgba(0,0,0,0.17), inset 0 1px 2px rgba(255,255,255,0.6);
+    }
+
+    /* ===== SYSTEM BUTTONS ===== */
+    .hb-system-btns {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 30px 20px;
+      position: relative;
+      height: 60px;
+      flex: 0 0 auto;
+      gap: 15px;
+    }
+
+    .sys-btn-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .sys-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #D1D5DB;
+      border: 3px solid #1a1a1a;
+      box-shadow: inset 0 1px 3px rgba(255,255,255,0.85), 0 2px 4px rgba(0,0,0,0.4);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: all 0.05s;
+    }
+
+    .sys-circle:active {
+      transform: scale(0.88);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    .sys-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .menu-wrap { margin-right: auto; }
+    .select-wrap { margin-right: 0; }
+  </style>
+</head>
+<body>
+
+<div class="hikariboy-emulator">
+  <!-- TOP SCREEN: GAME -->
+  <div class="hb-screen">
+    <iframe class="hb-game-frame" id="gameFrame" src="/public/games/brick-breaker/index.html"></iframe>
+  </div>
+
+  <!-- BRAND BAR -->
+  <div class="hb-brand-mark">
+    <div class="hb-brand-text-layer">MUNCH BOY</div>
+  </div>
+
+  <!-- CONTROLLER SHELL -->
+  <div class="hb-controller">
+    <!-- SPARKLE -->
+    <div class="hb-sparkle">✨</div>
+
+    <!-- SHOULDERS -->
+    <div class="hb-shoulders">
+      <button class="shoulder-l" id="btnL">L</button>
+      <button class="shoulder-r" id="btnR">R</button>
+    </div>
+
+    <!-- MAIN CONTROLS -->
+    <div class="hb-controls-main">
+      <!-- D-PAD -->
+      <div class="hb-dpad">
+        <div class="dpad-cross">
+          <div class="dpad-center"></div>
+          <button class="dpad-area dpad-up" id="dpadUp"></button>
+          <button class="dpad-area dpad-down" id="dpadDown"></button>
+          <button class="dpad-area dpad-left" id="dpadLeft"></button>
+          <button class="dpad-area dpad-right" id="dpadRight"></button>
+        </div>
+      </div>
+
+      <!-- A/B BUTTONS -->
+      <div class="hb-action-btns">
+        <button class="action-btn btn-a" id="btnA">A</button>
+        <button class="action-btn btn-b" id="btnB">B</button>
+      </div>
+    </div>
+
+    <!-- SYSTEM BUTTONS -->
+    <div class="hb-system-btns">
+      <div class="sys-btn-wrap menu-wrap">
+        <button class="sys-circle" id="btnMenu"></button>
+        <div class="sys-label">MENU</div>
+      </div>
+      <div class="sys-btn-wrap select-wrap">
+        <button class="sys-circle" id="btnSelect"></button>
+        <div class="sys-label">SELECT</div>
+      </div>
+      <div class="sys-btn-wrap">
+        <button class="sys-circle" id="btnStart"></button>
+        <div class="sys-label">START</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const gameFrame = document.getElementById('gameFrame');
+
+function sendButton(button, isPress = true) {
+  try {
+    gameFrame.contentWindow.postMessage({
+      type: isPress ? 'BUTTON_PRESS' : 'BUTTON_RELEASE',
+      button: button
+    }, '*');
+  } catch (e) {}
+}
+
+// Wire buttons
+document.getElementById('dpadUp').addEventListener('mousedown', () => sendButton('dpad-up'));
+document.getElementById('dpadUp').addEventListener('mouseup', () => sendButton('dpad-up', false));
+document.getElementById('dpadDown').addEventListener('mousedown', () => sendButton('dpad-down'));
+document.getElementById('dpadDown').addEventListener('mouseup', () => sendButton('dpad-down', false));
+document.getElementById('dpadLeft').addEventListener('mousedown', () => sendButton('dpad-left'));
+document.getElementById('dpadLeft').addEventListener('mouseup', () => sendButton('dpad-left', false));
+document.getElementById('dpadRight').addEventListener('mousedown', () => sendButton('dpad-right'));
+document.getElementById('dpadRight').addEventListener('mouseup', () => sendButton('dpad-right', false));
+
+document.getElementById('btnA').addEventListener('mousedown', () => sendButton('a'));
+document.getElementById('btnA').addEventListener('mouseup', () => sendButton('a', false));
+document.getElementById('btnB').addEventListener('mousedown', () => sendButton('b'));
+document.getElementById('btnB').addEventListener('mouseup', () => sendButton('b', false));
+
+document.getElementById('btnMenu').addEventListener('click', () => sendButton('menu'));
+document.getElementById('btnSelect').addEventListener('mousedown', () => sendButton('select'));
+document.getElementById('btnSelect').addEventListener('mouseup', () => sendButton('select', false));
+document.getElementById('btnStart').addEventListener('click', () => sendButton('start'));
+
+document.getElementById('btnL').addEventListener('mousedown', () => sendButton('l'));
+document.getElementById('btnL').addEventListener('mouseup', () => sendButton('l', false));
+document.getElementById('btnR').addEventListener('mousedown', () => sendButton('r'));
+document.getElementById('btnR').addEventListener('mouseup', () => sendButton('r', false));
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  switch(e.key.toLowerCase()) {
+    case 'arrowleft':
+      e.preventDefault();
+      sendButton('dpad-left', true);
+      break;
+    case 'arrowright':
+      e.preventDefault();
+      sendButton('dpad-right', true);
+      break;
+    case ' ':
+      e.preventDefault();
+      sendButton('a', true);
+      break;
+    case 'p':
+      e.preventDefault();
+      sendButton('select', true);
+      break;
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  switch(e.key.toLowerCase()) {
+    case 'arrowleft':
+      sendButton('dpad-left', false);
+      break;
+    case 'arrowright':
+      sendButton('dpad-right', false);
+      break;
+    case ' ':
+      sendButton('a', false);
+      break;
+    case 'p':
+      sendButton('select', false);
+      break;
+  }
+});
+</script>
+
+</body>
+</html>
