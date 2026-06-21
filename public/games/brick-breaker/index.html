@@ -113,7 +113,7 @@ function sfx(name) {
 }
 
 /* ---------- BGM ---------- */
-const bgm = new Audio('/games/brick-breaker/bgm.mp3');
+const bgm = new Audio('./bgm.mp3');
 bgm.loop = true;
 bgm.volume = 0.4;
 
@@ -258,7 +258,7 @@ function resetPowerups() {
   paddle.w=paddle.baseW; paddle.laser=false;
 }
 function spawnBall(x,y,vx,vy,stuck=false) {
-  balls.push({x,y,vx,vy,r:10,speed:520,stuck,trail:[]});
+  balls.push({x,y,vx,vy,r:10,speed:680,stuck,trail:[]});
 }
 function launchBall() {
   const b=balls.find(b=>b.stuck); if(!b) return;
