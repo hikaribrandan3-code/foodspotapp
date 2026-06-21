@@ -396,9 +396,9 @@ function update(dt){
     if(b.trail.length>8) b.trail.shift();
     b.x+=b.vx*sdt; b.y+=b.vy*sdt;
 
-    if(b.x-b.r<pf.x)        {b.x=pf.x+b.r;          b.vx= Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.25;}
-    if(b.x+b.r>pf.x+pf.w)   {b.x=pf.x+pf.w-b.r;     b.vx=-Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.25;}
-    if(b.y-b.r<pf.y)         {b.y=pf.y+b.r;           b.vy= Math.abs(b.vy); sfx('wall'); haptic('wall'); shake+=0.25;}
+    if(b.x-b.r<pf.x)        {b.x=pf.x+b.r;          b.vx= Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.1;}
+    if(b.x+b.r>pf.x+pf.w)   {b.x=pf.x+pf.w-b.r;     b.vx=-Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.1;}
+    if(b.y-b.r<pf.y)         {b.y=pf.y+b.r;           b.vy= Math.abs(b.vy); sfx('wall'); haptic('wall'); shake+=0.1;}
     if(b.y-b.r>pf.y+pf.h)   {balls.splice(i,1); continue;}
 
     const px=paddle.cx-paddle.w/2,py=paddle.y;
@@ -410,7 +410,7 @@ function update(dt){
         const spd=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
         b.vx=Math.sin(angle)*spd; b.vy=-Math.cos(angle)*spd;
         sfx('paddle'); haptic('paddle');
-        shake+=0.35; combo=0;
+        shake+=0.15; combo=0;
         comboDisplay.timer=0;
       }
     }
@@ -419,7 +419,7 @@ function update(dt){
       if(!br.alive) continue;
       if(!circleRect(b.x,b.y,b.r,br.x,br.y,br.w,br.h)) continue;
       if(br.indestruct){
-        resolveCircleRect(b,br); sfx('hard'); shake+=0.3; br.flash=0.15;
+        resolveCircleRect(b,br); sfx('hard'); shake+=0.12; br.flash=0.15;
       } else {
         br.hp--; br.flash=0.15;
         if(br.hp<=0){
@@ -437,7 +437,7 @@ function update(dt){
           sfx(br.explosive?'explode':'brick');
           if(combo>=3) sfx('combo');
           haptic(br.explosive?'explode':'brick');
-          shake+=br.explosive?0.9:0.45;
+          shake+=br.explosive?0.4:0.2;
 
           // Update fighting-game combo display
           if(combo>=3){
