@@ -803,6 +803,44 @@ function Home({ config: configProp }) {
                 </button>
             )}
 
+            {/* Door Hanger — Store Closed for Orders */}
+            {(tenantData?.is_paused || tenantData?.pause_orders) && (
+                <div style={{
+                    marginTop: 12,
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    background: '#111111',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+                }}>
+                    <div style={{
+                        background: '#EF4444',
+                        padding: '6px 16px',
+                        textAlign: 'center',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8
+                    }}>
+                        <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase' }}>
+                            ● {t('store_closed_tag') || 'CLOSED'} ●
+                        </span>
+                    </div>
+                    <div style={{ padding: '20px 16px', textAlign: 'center' }}>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style={{ margin: '0 auto 10px' }} xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="11" width="14" height="10" rx="2" fill="#EF4444" opacity="0.9"/>
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="12" cy="16" r="1.5" fill="#fff"/>
+                        </svg>
+                        <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 16, margin: '0 0 8px', lineHeight: 1.3 }}>
+                            {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
+                        </p>
+                        <p style={{ color: '#888888', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+                            {t('store_closed_sub') || 'Podés ver el menú, jugar y explorar eventos'}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Edit Mode Done Button (Owner only) */}
             {isEditMode && (
                 <div style={{
@@ -1124,39 +1162,6 @@ function Home({ config: configProp }) {
                 )
             })()}
 
-            {/* Door Hanger — Store Closed for Orders */}
-            {(tenantData?.is_paused || tenantData?.pause_orders) && (
-                <div style={{
-                    margin: '20px 0',
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    background: '#111111',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-                }}>
-                    <div style={{
-                        background: '#EF4444',
-                        padding: '6px 16px',
-                        textAlign: 'center',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                    }}>
-                        <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase' }}>
-                            ● {t('store_closed_tag') || 'CLOSED'} ●
-                        </span>
-                    </div>
-                    <div style={{ padding: '20px 16px', textAlign: 'center' }}>
-                        <div style={{ fontSize: 38, marginBottom: 10 }}>🔒</div>
-                        <p style={{ color: '#FFFFFF', fontWeight: 700, fontSize: 16, margin: '0 0 8px', lineHeight: 1.3 }}>
-                            {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
-                        </p>
-                        <p style={{ color: '#888888', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-                            {t('store_closed_sub') || 'Podés ver el menú, jugar y explorar eventos'}
-                        </p>
-                    </div>
-                </div>
-            )}
             {/* Owner Pill (Home) */}
             {isOwnerMode && !isEditMode && config?.homeConfig?.allowEditing !== false && (
                 <button onClick={() => setIsEditMode(true)} style={{

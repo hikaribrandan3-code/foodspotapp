@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, CreditCard, Banknote, DollarSign, MapPin, Link as LinkIcon, Globe,
     Settings, Phone, ChevronRight, ChevronDown, RefreshCw, BarChart3,
-    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download, Gift, Plus
+    Shield, Check, X, Users, Moon, Sun, QrCode, Copy, Download, Gift, Plus, Lock
 } from 'lucide-react'
 import AddLocationModal from '../../components/AddLocationModal.jsx'
 import { QRCodeCanvas } from 'qrcode.react'
@@ -742,6 +742,8 @@ function OwnerSummary() {
             window.dispatchEvent(new CustomEvent('frontendSync', {
                 detail: { is_paused: paused, pause_message: msg }
             }))
+            setAutoSaveStatus({ type: 'pause', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
             return data
         },
         1200
@@ -814,7 +816,10 @@ function OwnerSummary() {
                                     ? 'bg-red-100 dark:bg-red-500/10'
                                     : 'bg-emerald-50 dark:bg-emerald-500/10'
                             }`}>
-                                <span className="text-lg">{isPaused ? '🔒' : '🟢'}</span>
+                                {isPaused
+                                    ? <Lock size={18} className="text-red-600 dark:text-red-400" />
+                                    : <Shield size={18} className="text-emerald-600 dark:text-emerald-400" />
+                                }
                             </div>
                             <div>
                                 <h3 className={`font-black text-sm ${isPaused ? 'text-red-700 dark:text-red-400' : 'text-stone-950 dark:text-white'}`}>
@@ -844,7 +849,7 @@ function OwnerSummary() {
                             value={pauseMessage}
                             onChange={e => setPauseMessage(e.target.value)}
                             placeholder="Back in 20 min / Volvemos pronto"
-                            className="mt-3 w-full px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-xs placeholder-stone-400 dark:placeholder-stone-500 outline-none"
+                            className="mt-3 w-full px-3 py-2.5 rounded-xl border border-red-200 dark:border-red-500/30 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-xs placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:ring-1 focus:ring-red-300 dark:focus:ring-red-500/40"
                         />
                     )}
                 </motion.div>
