@@ -112,6 +112,14 @@ function sfx(name) {
   }
 }
 
+/* ---------- BGM ---------- */
+const bgm = new Audio('/games/brick-breaker/bgm.mp3');
+bgm.loop = true;
+bgm.volume = 0.4;
+
+function playBGM() { bgm.play().catch(()=>{}); }
+function stopBGM() { bgm.pause(); bgm.currentTime = 0; }
+
 /* ---------- VIRTUAL COORDS ---------- */
 const VW = 1000;
 let VH = 1500, S = 1;
@@ -242,6 +250,7 @@ function startGame() {
   score=0; lives=3; stage=1; combo=0; maxCombo=0;
   hi = parseInt(localStorage.getItem('blocksmash_hi')||'0');
   resetPowerups(); loadStage(1);
+  playBGM();
 }
 function resetPowerups() {
   activePowerups={multi:false,wide:false,laser:false,shield:false,fire:false,slow:false};
@@ -464,7 +473,7 @@ function update(dt){
       state=STATE.READY;spawnBall(paddle.cx,paddle.y-16,0,0,true);
     } else {
       lives--; combo=0; comboDisplay.timer=0;
-      if(lives<=0){state=STATE.GAMEOVER;sfx('gameover');haptic('gameover');spawnParticles(paddle.cx,paddle.y,'#ff3b3b',60);}
+      if(lives<=0){state=STATE.GAMEOVER;stopBGM();sfx('gameover');haptic('gameover');spawnParticles(paddle.cx,paddle.y,'#ff3b3b',60);}
       else{state=STATE.READY;spawnBall(paddle.cx,paddle.y-16,0,0,true);resetPowerups();}
     }
   }
