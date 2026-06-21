@@ -13,7 +13,9 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
+import { updateBranding } from '../../lib/supabaseClient.js'
 import { getLoyaltySettings, upsertLoyaltySettings, getLoyaltyFreeItems, saveLoyaltyFreeItems } from '../../lib/loyaltyClient.js'
+import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave.js'
 import { useCurrency } from '../../hooks/useCurrency.js'
 import { getSession } from '../../utils/auth.js'
 import { useTenant } from '../../contexts/TenantContext.jsx'
@@ -44,6 +46,10 @@ function OwnerSummary() {
     const [mpAliasSaved, setMpAliasSaved] = useState(false)
     const [mpAliasSaving, setMpAliasSaving] = useState(false)
     const mpAliasInitialized = useRef(false)
+
+    // Store Status (Pause Orders)
+    const [isPaused, setIsPaused] = useState(tenantData?.is_paused || false)
+    const [pauseMessage, setPauseMessage] = useState(tenantData?.pause_message || '')
 
     // Multi-location state
     const [ownerLocations, setOwnerLocations] = useState([])
@@ -718,6 +724,29 @@ function OwnerSummary() {
         }
     }
 
+    // Sync pause state from tenantData
+    useEffect(() => {
+        setIsPaused(tenantData?.is_paused || false)
+        setPauseMessage(tenantData?.pause_message || '')
+    }, [tenantData?.is_paused, tenantData?.pause_message])
+
+    // AUTO-SAVE: Pause Orders (1.2s debounce)
+    useDebouncedAutoSave(
+        { isPaused, pauseMessage },
+        async ({ isPaused: paused, pauseMessage: msg }) => {
+            const { data, error } = await updateBranding(
+                { is_paused: paused, pause_message: msg },
+                businessId
+            )
+            if (error || !data) throw error || new Error('Save failed')
+            window.dispatchEvent(new CustomEvent('frontendSync', {
+                detail: { is_paused: paused, pause_message: msg }
+            }))
+            return data
+        },
+        1200
+    )
+
     return (
         <div className="min-h-screen bg-stone-50 dark:bg-[#020617] font-sans antialiased">
             <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
@@ -765,6 +794,59 @@ function OwnerSummary() {
                             )}
                         </div>
                     </div>
+                </motion.div>
+
+                {/* Store Status (Pause Orders) */}
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08 }}
+                    className={`rounded-2xl p-4 md:p-5 border shadow-[0_20px_50px_rgba(28,25,23,0.03)] ${
+                        isPaused
+                            ? 'bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20'
+                            : 'bg-white dark:bg-[#1e293b] border-stone-200 dark:border-white/5'
+                    }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                                isPaused
+                                    ? 'bg-red-100 dark:bg-red-500/10'
+                                    : 'bg-emerald-50 dark:bg-emerald-500/10'
+                            }`}>
+                                <span className="text-lg">{isPaused ? '🔒' : '🟢'}</span>
+                            </div>
+                            <div>
+                                <h3 className={`font-black text-sm ${isPaused ? 'text-red-700 dark:text-red-400' : 'text-stone-950 dark:text-white'}`}>
+                                    {t('pause_orders_label') || 'Store Status'}
+                                </h3>
+                                {isPaused && (
+                                    <p className="text-xs text-red-600 dark:text-red-300 mt-0.5">
+                                        {pauseMessage || t('store_closed') || 'Closed for orders'}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setIsPaused(p => !p)}
+                            className={`ml-2 shrink-0 w-12 h-7 rounded-full transition-colors ${
+                                isPaused
+                                    ? 'bg-red-600 dark:bg-red-500'
+                                    : 'bg-emerald-200 dark:bg-emerald-500/30'
+                            }`}
+                        >
+                            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isPaused ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+                    {isPaused && (
+                        <input
+                            type="text"
+                            value={pauseMessage}
+                            onChange={e => setPauseMessage(e.target.value)}
+                            placeholder="Back in 20 min / Volvemos pronto"
+                            className="mt-3 w-full px-3 py-2 rounded-lg border border-red-200 dark:border-red-500/30 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-xs placeholder-stone-400 dark:placeholder-stone-500 outline-none"
+                        />
+                    )}
                 </motion.div>
 
                 {/* Locations Hub — always at top */}
