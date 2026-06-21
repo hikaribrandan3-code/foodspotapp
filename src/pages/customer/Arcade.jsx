@@ -4,6 +4,7 @@ import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTier } from '../../hooks/useTier'
 import { supabase } from '../../lib/supabaseClient.js'
+import { getScopedGuestToken } from '../../utils/storage.js'
 import { ORDER_STATUS } from '../../constants/database.js'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 
@@ -28,18 +29,22 @@ const Arcade = () => {
         document.head.appendChild(link)
     }, [])
 
-    // Realtime: watch for any pickup order hitting 'ready' for this business
+    // Realtime: watch for THIS customer's pickup order hitting 'ready'
     useEffect(() => {
         console.log('[Arcade] useEffect fired, businessId:', businessId)
         if (!businessId) return
+
+        const guestToken = getScopedGuestToken()
+        console.log('[Arcade] guestToken:', guestToken)
 
         const findAndWatchPickupOrder = async () => {
             console.log('[Arcade] Querying for active pickup orders...')
             const { data, error } = await supabase
                 .from('orders')
-                .select('id, status, delivery_method')
+                .select('id, status, order_type')
                 .eq('business_id', businessId)
-                .eq('delivery_method', 'pickup')
+                .eq('order_type', 'pickup')
+                .eq('guest_token', guestToken)
                 .neq('status', ORDER_STATUS.DELIVERED)
                 .neq('status', ORDER_STATUS.CANCELLED)
                 .order('created_at', { ascending: false })
@@ -51,32 +56,11 @@ const Arcade = () => {
             }
             const order = data?.[0]
             if (!order) {
-                console.log('[Arcade] No active pickup order found — setting up broad channel')
-                // No order found yet — watch entire table for any new pickup order going READY
-                channelRef.current = supabase
-                    .channel(`arcade-business-${businessId}`)
-                    .on('postgres_changes', {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'orders',
-                        filter: `business_id=eq.${businessId}`
-                    }, (payload) => {
-                        console.log('[Arcade] Broad update:', payload.new.status, payload.new.delivery_method)
-                        if (payload.new.status === ORDER_STATUS.READY &&
-                            payload.new.delivery_method === 'pickup') {
-                            console.log('[Arcade] FIRING FOOD READY! (broad channel)')
-                            setReadyOrderId(payload.new.id)
-                            setFoodReady(true)
-                        }
-                    })
-                    .subscribe((status) => {
-                        console.log('[Arcade] Broad subscription status:', status)
-                    })
+                console.log('[Arcade] No active pickup order found for this guest')
                 return
             }
             console.log('[Arcade] Found pickup order:', order.id, 'status:', order.status)
 
-            // If already ready when arcade opens, fire immediately
             if (order.status === ORDER_STATUS.READY) {
                 console.log('[Arcade] Order already READY on arcade load')
                 setReadyOrderId(order.id)
@@ -93,9 +77,9 @@ const Arcade = () => {
                     table: 'orders',
                     filter: `id=eq.${order.id}`
                 }, (payload) => {
-                    console.log('[Arcade] Order update:', payload.new.status, 'method:', payload.new.delivery_method)
+                    console.log('[Arcade] Order update received:', payload.new.status, 'type:', payload.new.order_type)
                     if (payload.new.status === ORDER_STATUS.READY &&
-                        payload.new.delivery_method === 'pickup') {
+                        payload.new.order_type === 'pickup') {
                         console.log('[Arcade] FIRING FOOD READY!')
                         setReadyOrderId(order.id)
                         setFoodReady(true)
