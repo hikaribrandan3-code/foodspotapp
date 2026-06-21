@@ -8,6 +8,8 @@ import { getScopedGuestToken } from '../../utils/storage.js'
 import { ORDER_STATUS } from '../../constants/database.js'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 
+console.log('[Arcade] MODULE LOADED v3')
+
 const Arcade = () => {
     const navigate = useNavigate()
     const { slug: tenantSlug, tenantData, businessId } = useTenant()
