@@ -52,6 +52,8 @@ export default function ProfileView() {
   const { theme, toggleTheme } = useTheme();
   const [audioEnabled, toggleAudio] = useAudioPref();
   const { tenantSlug, businessId, mpAlias } = useBusiness();
+  const [isPaused, setIsPaused] = useState(false);
+  const [pauseMessage, setPauseMessage] = useState('');
 
   const staffMember = getStored<any>('fs_staff_member', null);
   const [currentShift, setCurrentShift] = useState(getStored<any>('fs_current_shift', null));
@@ -85,6 +87,42 @@ export default function ProfileView() {
       })
       .catch(() => {}); // silently fall back to localStorage
   }, [staffMember?.id, businessId]);
+
+  // Load pause state from branding table
+  useEffect(() => {
+    if (!businessId) return;
+    supabase
+      .from('branding')
+      .select('is_paused, pause_message')
+      .eq('business_id', businessId)
+      .single()
+      .then(({ data }: { data: any }) => {
+        if (data) {
+          setIsPaused(data.is_paused || false);
+          setPauseMessage(data.pause_message || '');
+        }
+      })
+      .catch(() => {}); // silently fail if not found
+  }, [businessId]);
+
+  // Auto-save pause state (debounced)
+  useEffect(() => {
+    if (!businessId) return;
+    const timer = setTimeout(() => {
+      supabase
+        .from('branding')
+        .update({ is_paused: isPaused, pause_message: pauseMessage })
+        .eq('business_id', businessId)
+        .then(() => {
+          // Dispatch event for live sync on main app
+          window.dispatchEvent(new CustomEvent('frontendSync', {
+            detail: { is_paused: isPaused, pause_message: pauseMessage }
+          }));
+        })
+        .catch(() => {}); // silently fail
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [isPaused, pauseMessage, businessId]);
 
   // Calculate shift statistics
   const shiftStats = useMemo(() => {
@@ -359,6 +397,48 @@ export default function ProfileView() {
         <Section title={t('event_checkin')}>
           <MenuItem icon={<Ticket size={18} />} label={t('event_checkin')}
             onClick={openEventsSheet} />
+        </Section>
+
+        {/* Store Status Section */}
+        <Section title={t('pause_orders_label') || 'Store Status'}>
+          <motion.div
+            onClick={() => setIsPaused(p => !p)}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors"
+            style={{
+              backgroundColor: isPaused ? 'rgba(239, 68, 68, 0.1)' : 'var(--card-bg)',
+              border: isPaused ? '1px solid rgb(239, 68, 68)' : '1px solid var(--card-border)'
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-lg">{isPaused ? '🔒' : '🟢'}</span>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: isPaused ? 'rgb(220, 38, 38)' : 'var(--text-primary)' }}>
+                  {isPaused ? t('store_closed') || 'Closed' : t('store_open') || 'Open'}
+                </p>
+                {isPaused && pauseMessage && (
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{pauseMessage}</p>
+                )}
+              </div>
+            </div>
+            <div className={`w-10 h-6 rounded-full transition-colors ${isPaused ? 'bg-red-600' : 'bg-emerald-500'}`}>
+              <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform mt-1 ${isPaused ? 'ml-5' : 'ml-1'}`} />
+            </div>
+          </motion.div>
+          {isPaused && (
+            <input
+              type="text"
+              value={pauseMessage}
+              onChange={e => setPauseMessage(e.target.value)}
+              placeholder="Back in 20 min..."
+              className="mt-3 w-full px-3 py-2 rounded-lg text-xs outline-none"
+              style={{
+                backgroundColor: 'var(--input-bg)',
+                border: '1px solid var(--card-border)',
+                color: 'var(--text-primary)'
+              }}
+            />
+          )}
         </Section>
 
         <Section title={t('preferences')}>
