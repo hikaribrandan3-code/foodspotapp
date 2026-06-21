@@ -4,7 +4,6 @@ import { useTenant } from '../../contexts/TenantContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useTier } from '../../hooks/useTier'
 import { supabase } from '../../lib/supabaseClient.js'
-import { getScopedGuestToken } from '../../utils/storage.js'
 import { ORDER_STATUS } from '../../constants/database.js'
 import { HikariBoy } from '../../components/HikariBoy/HikariBoy'
 
@@ -29,17 +28,14 @@ const Arcade = () => {
         document.head.appendChild(link)
     }, [])
 
-    // Realtime: watch for pickup order hitting 'ready' status
+    // Realtime: watch for any pickup order hitting 'ready' for this business
     useEffect(() => {
+        console.log('[Arcade] useEffect fired, businessId:', businessId)
         if (!businessId) return
 
-        const guestToken = getScopedGuestToken()
-        const storedPhone = localStorage.getItem('fs_customer_phone')
-        if (!guestToken && !storedPhone) return
-
         const findAndWatchPickupOrder = async () => {
-            // Find the most recent active pickup order for this guest
-            let query = supabase
+            console.log('[Arcade] Querying for active pickup orders...')
+            const { data, error } = await supabase
                 .from('orders')
                 .select('id, status, delivery_method')
                 .eq('business_id', businessId)
@@ -49,20 +45,33 @@ const Arcade = () => {
                 .order('created_at', { ascending: false })
                 .limit(1)
 
-            if (guestToken) {
-                query = query.eq('guest_token', guestToken)
-            } else if (storedPhone) {
-                query = query.eq('customer_phone', storedPhone)
-            }
-
-            const { data, error } = await query
             if (error) {
                 console.error('[Arcade] Order lookup error:', error)
                 return
             }
             const order = data?.[0]
             if (!order) {
-                console.log('[Arcade] No active pickup order found')
+                console.log('[Arcade] No active pickup order found — setting up broad channel')
+                // No order found yet — watch entire table for any new pickup order going READY
+                channelRef.current = supabase
+                    .channel(`arcade-business-${businessId}`)
+                    .on('postgres_changes', {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'orders',
+                        filter: `business_id=eq.${businessId}`
+                    }, (payload) => {
+                        console.log('[Arcade] Broad update:', payload.new.status, payload.new.delivery_method)
+                        if (payload.new.status === ORDER_STATUS.READY &&
+                            payload.new.delivery_method === 'pickup') {
+                            console.log('[Arcade] FIRING FOOD READY! (broad channel)')
+                            setReadyOrderId(payload.new.id)
+                            setFoodReady(true)
+                        }
+                    })
+                    .subscribe((status) => {
+                        console.log('[Arcade] Broad subscription status:', status)
+                    })
                 return
             }
             console.log('[Arcade] Found pickup order:', order.id, 'status:', order.status)
@@ -76,7 +85,6 @@ const Arcade = () => {
             }
 
             console.log('[Arcade] Setting up realtime subscription for order:', order.id)
-            // Subscribe to this order's status changes
             channelRef.current = supabase
                 .channel(`arcade-pickup-${order.id}`)
                 .on('postgres_changes', {
