@@ -785,25 +785,22 @@ function Home({ config: configProp }) {
             {(tenantData?.is_paused || tenantData?.pause_orders) && (
                 <div style={{
                     marginTop: 10,
-                    padding: '11px 16px',
+                    padding: '10px 16px',
                     background: '#F3F4F6',
                     border: '1px solid #E5E7EB',
                     borderRadius: 14,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: 3,
+                    gap: 6,
                     textAlign: 'center',
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span className="closed-pulse-dot" />
-                        <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#EF4444' }}>
-                            {t('store_closed_tag') || 'Cerrado'}
-                        </span>
+                        <p style={{ margin: 0, color: '#EF4444', fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>
+                            {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
+                        </p>
                     </div>
-                    <p style={{ margin: 0, color: '#EF4444', fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>
-                        {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
-                    </p>
                     <p style={{ margin: 0, color: '#6B7280', fontSize: 10.5, lineHeight: 1.4 }}>
                         {t('store_closed_sub')}
                     </p>
