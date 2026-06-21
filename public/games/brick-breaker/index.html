@@ -154,13 +154,13 @@ const POWERUP_TYPES=[
   {id:'wide',  name:'WIDE',  color:'#35e85a',chance:0.03},
   {id:'laser', name:'LASER', color:'#ff3b3b',chance:0.02},
   {id:'shield',name:'SHIELD',color:'#a371ff',chance:0.02},
-  {id:'fire',  name:'FIRE',  color:'#ff3b9a',chance:0.01},
-  {id:'slow',  name:'SLOW',  color:'#28e0e0',chance:0.02},
+  {id:'fire',  name:'FIRE',  color:'#ff3b9a',chance:0.04},
+  {id:'bigball',name:'BIG',  color:'#28e0e0',chance:0.02},
   {id:'life',  name:'+LIFE', color:'#ffe000',chance:0.02},
 ];
 
-let activePowerups={multi:false,wide:false,laser:false,shield:false,fire:false,slow:false};
-let powerupTimers={wide:0,laser:0,shield:0,fire:0,slow:0};
+let activePowerups={multi:false,wide:false,laser:false,shield:false,fire:false,bigball:false};
+let powerupTimers={wide:0,laser:0,shield:0,fire:0,bigball:0};
 let keys={};
 
 /* ---------- COMBO LABEL ---------- */
@@ -257,13 +257,14 @@ function startGame() {
   playBGM();
 }
 function resetPowerups() {
-  activePowerups={multi:false,wide:false,laser:false,shield:false,fire:false,slow:false};
-  powerupTimers={wide:0,laser:0,shield:0,fire:0,slow:0};
+  activePowerups={multi:false,wide:false,laser:false,shield:false,fire:false,bigball:false};
+  powerupTimers={wide:0,laser:0,shield:0,fire:0,bigball:0};
   paddle.w=paddle.baseW; paddle.laser=false;
 }
 function stageBallSpeed(){ return 680 + Math.min(stage-1, 9) * 40; }
 function spawnBall(x,y,vx,vy,stuck=false) {
-  balls.push({x,y,vx,vy,r:10,speed:stageBallSpeed(),stuck,trail:[]});
+  const r = activePowerups.bigball ? 18 : 10;
+  balls.push({x,y,vx,vy,r,speed:stageBallSpeed(),stuck,trail:[]});
 }
 function launchBall() {
   const b=balls.find(b=>b.stuck); if(!b) return;
@@ -360,6 +361,7 @@ function update(dt){
         activePowerups[k]=false;
         if(k==='wide')   paddle.w=paddle.baseW;
         if(k==='laser')  paddle.laser=false;
+        if(k==='bigball') for(const b of balls) b.r=10;
       }
     }
   }
@@ -546,7 +548,7 @@ function applyPowerup(type){
     case 'laser':  activePowerups.laser=true; paddle.laser=true; paddle.laserTimer=0; powerupTimers.laser=10; break;
     case 'shield': activePowerups.shield=true; powerupTimers.shield=15; break;
     case 'fire':   activePowerups.fire=true;  powerupTimers.fire=8; break;
-    case 'slow':   activePowerups.slow=true;  powerupTimers.slow=6; break;
+    case 'bigball': activePowerups.bigball=true; for(const b of balls) b.r=18; powerupTimers.bigball=10; sfx('powerup'); haptic('powerup'); break;
     case 'life':   lives++; sfx('life'); haptic('life'); break;
   }
 }
