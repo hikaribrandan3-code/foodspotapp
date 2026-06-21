@@ -41,7 +41,7 @@ const GAMES = [
   { id: 'candylandflip',  name: 'Candyland Flip',      cover: '/games/candylandflip/cover.webp',    url: '/games/candylandflip/index.html',    proOnly: false },
   { id: 'pool',           name: 'Munchboy Billiards',  cover: '/games/pool/cover.png',              url: '/games/pool/index.html',             proOnly: false, shellPause: false },
   { id: 'golden-crust',   name: 'Golden Crust',       cover: '/games/bakery-timer/assets/game-chip.png', url: '/games/bakery-timer/index.html',     proOnly: false },
-  { id: 'brick-breaker',  name: 'Block Smash',        cover: '/games/brick-breaker/cover.webp',     url: '/games/brick-breaker/index.html',    proOnly: false, shellPause: false },
+  { id: 'brick-breaker',  name: 'Block Smash',        cover: '/games/brick-breaker/cover.png',      url: '/games/brick-breaker/index.html',    proOnly: false, shellPause: false },
 ];
 
 export function HikariBoy({
