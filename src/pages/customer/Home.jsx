@@ -786,8 +786,8 @@ function Home({ config: configProp }) {
                 <div style={{
                     marginTop: 10,
                     padding: '11px 16px',
-                    background: 'rgba(10,10,10,0.94)',
-                    border: '1px solid rgba(239,68,68,0.22)',
+                    background: '#F3F4F6',
+                    border: '1px solid #E5E7EB',
                     borderRadius: 14,
                     display: 'flex',
                     flexDirection: 'column',
@@ -801,10 +801,10 @@ function Home({ config: configProp }) {
                             {t('store_closed_tag') || 'Cerrado'}
                         </span>
                     </div>
-                    <p style={{ margin: 0, color: '#ffffff', fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>
+                    <p style={{ margin: 0, color: '#EF4444', fontSize: 13, fontWeight: 700, lineHeight: 1.3 }}>
                         {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
                     </p>
-                    <p style={{ margin: 0, color: 'rgba(255,255,255,0.38)', fontSize: 10.5, lineHeight: 1.4 }}>
+                    <p style={{ margin: 0, color: '#6B7280', fontSize: 10.5, lineHeight: 1.4 }}>
                         {t('store_closed_sub')}
                     </p>
                 </div>
