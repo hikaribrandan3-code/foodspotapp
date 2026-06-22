@@ -488,10 +488,23 @@ function BackendNav({
     const dropRef = useRef(null)
 
     useEffect(() => {
-        supabase.rpc('get_owner_locations').then(({ data }) => {
-            if (data && data.length > 1) setLocations(data)
-        })
-    }, [])
+        const fetchLocations = async () => {
+            try {
+                const { data, error } = await supabase.rpc('get_owner_locations')
+                if (error) {
+                    console.error('[BackendNav] get_owner_locations error:', error)
+                    return
+                }
+                if (data && data.length > 0) {
+                    console.log('[BackendNav] Locations found:', data.length)
+                    setLocations(data)
+                }
+            } catch (err) {
+                console.error('[BackendNav] Fetch locations error:', err)
+            }
+        }
+        fetchLocations()
+    }, [tenantSlug])
 
     // Close dropdown on outside click
     useEffect(() => {
