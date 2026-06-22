@@ -95,7 +95,7 @@ const DEFAULTS = {
 
 const Settings = () => {
     const { tenantData: tenant, businessId, refreshTenantData, loading } = useTenant();
-    const { t } = useLanguage();
+    const { t, language: lang } = useLanguage();
     const navigate = useNavigate();
     
     // Pause Orders State
