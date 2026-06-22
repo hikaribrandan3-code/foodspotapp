@@ -493,14 +493,18 @@ function BackendNav({
                 const { data, error } = await supabase.rpc('get_owner_locations')
                 if (error) {
                     console.error('[BackendNav] get_owner_locations error:', error)
+                    setLocations([])
                     return
                 }
-                if (data && data.length > 0) {
-                    console.log('[BackendNav] Locations found:', data.length)
+                console.log('[BackendNav] RPC returned:', data)
+                if (data && Array.isArray(data)) {
                     setLocations(data)
+                } else {
+                    setLocations([])
                 }
             } catch (err) {
                 console.error('[BackendNav] Fetch locations error:', err)
+                setLocations([])
             }
         }
         fetchLocations()
