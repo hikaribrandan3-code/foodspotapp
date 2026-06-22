@@ -321,14 +321,20 @@ function OwnerLogin() {
             overflowX: 'hidden'
         }}>
             {/* Main Content Container */}
-            <main style={{ 
-                flexGrow: 1, 
-                display: 'flex', 
-                flexDirection: 'column', 
-                padding: '0 24px', 
+            <main style={{
+                flexGrow: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '0 24px',
                 paddingTop: '48px',
-                position: 'relative', 
-                zIndex: 10 
+                paddingBottom: '48px',
+                position: 'relative',
+                zIndex: 10,
+                alignItems: 'center',
+                justifyContent: 'center',
+                maxWidth: '600px',
+                margin: '0 auto',
+                width: '100%'
             }}>
                 {/* Brand Card Header */}
                 <header style={{ 
