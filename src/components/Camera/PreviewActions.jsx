@@ -135,11 +135,14 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     // Confetti burst when points awarded
     React.useEffect(() => {
         if (ugcPoints) {
+            // Burst from center-top where card appears
             confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.3 },
+                particleCount: 150,
+                spread: 100,
+                origin: { x: 0.5, y: 0.25 },
                 colors: ['#22C55E', '#10B981', '#059669', '#047857'],
+                gravity: 0.8,
+                decay: 0.95,
             });
         }
     }, [ugcPoints]);
