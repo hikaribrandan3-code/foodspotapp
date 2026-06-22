@@ -44,27 +44,10 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
     const handleCreate = async () => {
         if (!locationName || !locationSlug) return
         setSaving(true)
-        setError('')
-        try {
-            const { data, error: rpcError } = await supabase.rpc('create_linked_location', {
-                p_location_name: locationName,
-                p_location_slug: locationSlug,
-                p_location_label: locationName,
-                p_location_address: locationAddress || null,
-                p_location_hours: locationHours || null,
-                p_location_phone: locationPhone || null,
-                p_parent_slug: parentSlug || null,
-                p_parent_brand_name: parentBrandName || null,
-                p_parent_brand_logo: parentBrandLogo || null,
-            })
-            if (rpcError) throw rpcError
-            setCreatedSlug(locationSlug)
-            setDone(true)
-            onCreated?.()
-        } catch (err) {
-            setError(err.message || 'Failed to create location')
-        }
+        setError('Multi-location feature is in development. Coming soon!')
         setSaving(false)
+        // TODO: Fix create_linked_location RPC (column b.currency does not exist error)
+        // Temporarily disabled until backend schema is fixed
     }
 
     const inputCls = "w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500 transition-colors"
