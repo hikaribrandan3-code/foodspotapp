@@ -1245,6 +1245,8 @@ export const translations = {
     brand_logo_url:     { en: 'Brand Logo URL',          es: 'URL del Logo de Marca',  pt: 'URL do Logo da Marca' },
     switch_location:    { en: 'Switch Location',         es: 'Cambiar Ubicación',      pt: 'Trocar Localização' },
     add_location:       { en: 'Add Location',            es: 'Agregar Ubicación',      pt: 'Adicionar Localização' },
+    delete_location:    { en: 'Delete Location',         es: 'Eliminar Ubicación',     pt: 'Excluir Localização' },
+    cannot_delete_primary: { en: 'Cannot delete your primary location', es: 'No puedes eliminar tu ubicación principal', pt: 'Não é possível excluir sua localização principal' },
     location_name:      { en: 'Location Name',           es: 'Nombre de Ubicación',    pt: 'Nome da Localização' },
     location_address:   { en: 'Address',                 es: 'Dirección',              pt: 'Endereço' },
     location_url:       { en: 'URL Slug',                es: 'Slug URL',               pt: 'Slug URL' },

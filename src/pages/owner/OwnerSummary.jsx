@@ -58,6 +58,9 @@ function OwnerSummary() {
     const [combinedStatsDays, setCombinedStatsDays] = useState(7)
     const ownerLocationsLoaded = useRef(false)
     const [showAddLocation, setShowAddLocation] = useState(false)
+    const [deletingLocation, setDeletingLocation] = useState(null)
+    const [deleteConfirmText, setDeleteConfirmText] = useState('')
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const [locationLabel, setLocationLabel] = useState('')
     const [parentSlug, setParentSlug] = useState('')
     const [parentBrandName, setParentBrandName] = useState('')
@@ -724,6 +727,22 @@ function OwnerSummary() {
         }
     }
 
+    const handleDeleteLocation = async () => {
+        if (deleteConfirmText !== 'DELETE') return
+        setDeleteLoading(true)
+        const { data } = await supabase.rpc('delete_location', { p_business_id: deletingLocation.id })
+        if (data?.success) {
+            setDeletingLocation(null)
+            setDeleteConfirmText('')
+            ownerLocationsLoaded.current = false
+            const { data: locs } = await supabase.rpc('get_owner_locations')
+            if (locs) setOwnerLocations(locs)
+        } else {
+            alert(data?.error || 'Failed to delete location')
+        }
+        setDeleteLoading(false)
+    }
+
     // Sync pause state from tenantData
     useEffect(() => {
         setIsPaused(tenantData?.is_paused || false)
@@ -891,26 +910,35 @@ function OwnerSummary() {
                             ownerLocations.map(loc => {
                                 const isCurrent = loc.id === businessId
                                 return (
-                                    <button
-                                        key={loc.id}
-                                        onClick={() => !isCurrent && navigate(`/${loc.slug}/owner/summary`)}
-                                        className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
-                                            isCurrent
-                                                ? 'bg-emerald-600 text-white shadow-md'
-                                                : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
-                                            {loc.location_label || loc.name}
-                                            {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
-                                        </div>
-                                        {loc.hours && (
-                                            <div className="text-[10px] opacity-70 ml-3">
-                                                {loc.hours}
+                                    <div key={loc.id} className="relative group">
+                                        <button
+                                            onClick={() => !isCurrent && navigate(`/${loc.slug}/owner/summary`)}
+                                            className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                                                isCurrent
+                                                    ? 'bg-emerald-600 text-white shadow-md'
+                                                    : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
+                                                {loc.location_label || loc.name}
+                                                {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
                                             </div>
+                                            {loc.hours && (
+                                                <div className="text-[10px] opacity-70 ml-3">
+                                                    {loc.hours}
+                                                </div>
+                                            )}
+                                        </button>
+                                        {!isCurrent && (
+                                            <span
+                                                onClick={() => { setDeletingLocation({ id: loc.id, name: loc.location_label || loc.name }); setDeleteConfirmText('') }}
+                                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white hidden group-hover:flex items-center justify-center cursor-pointer z-10"
+                                            >
+                                                <X size={8} />
+                                            </span>
                                         )}
-                                    </button>
+                                    </div>
                                 )
                             })
                         )}
@@ -2157,6 +2185,56 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                 )}
             </AnimatePresence>
         </motion.div>
+
+        {/* Delete Location Modal */}
+        <AnimatePresence>
+            {deletingLocation && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                    onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
+                >
+                    <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.95, opacity: 0 }}
+                        onClick={e => e.stopPropagation()}
+                        className="bg-white dark:bg-[#1e293b] rounded-2xl p-6 w-full max-w-sm shadow-xl"
+                    >
+                        <h3 className="font-bold text-base mb-1 text-stone-900 dark:text-white">
+                            Delete {deletingLocation.name}?
+                        </h3>
+                        <p className="text-xs text-stone-500 dark:text-white/50 mb-4">
+                            This removes the location from your dashboard. Orders are preserved. Type <strong>DELETE</strong> to confirm.
+                        </p>
+                        <input
+                            value={deleteConfirmText}
+                            onChange={e => setDeleteConfirmText(e.target.value)}
+                            placeholder="DELETE"
+                            className="w-full border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 rounded-xl px-3 py-2 text-sm mb-3 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:border-red-400"
+                            autoFocus
+                        />
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
+                                className="flex-1 py-2 rounded-xl text-sm border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white/60 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteLocation}
+                                disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                                className="flex-1 py-2 rounded-xl text-sm bg-red-500 text-white font-bold disabled:opacity-40 hover:bg-red-600 transition-colors"
+                            >
+                                {deleteLoading ? 'Deleting...' : 'Delete'}
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }
 
