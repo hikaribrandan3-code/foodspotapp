@@ -802,9 +802,13 @@ const styles = {
 function AppWithDeviceDetection() {
     const device = useDevice()
 
-    // Tablet/Desktop: Staff login only
+    // Tablet/Desktop: Staff login only (minimal providers needed)
     if (device === 'tablet') {
-        return <TabletStaffApp />
+        return (
+            <LanguageProvider>
+                <TabletStaffApp />
+            </LanguageProvider>
+        )
     }
 
     // Mobile: Full customer ordering app
