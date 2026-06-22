@@ -490,15 +490,28 @@ function BackendNav({
     useEffect(() => {
         const fetchLocations = async () => {
             try {
+                // Try RPC first
                 const { data, error } = await supabase.rpc('get_owner_locations')
-                if (error) {
-                    console.error('[BackendNav] get_owner_locations error:', error)
-                    setLocations([])
+                if (data && Array.isArray(data) && data.length > 0) {
+                    console.log('[BackendNav] Locations from RPC:', data.length)
+                    setLocations(data)
                     return
                 }
-                console.log('[BackendNav] RPC returned:', data)
-                if (data && Array.isArray(data)) {
-                    setLocations(data)
+
+                // Fallback: query businesses + branding directly
+                const { data: bizData } = await supabase
+                    .from('businesses')
+                    .select('id, name, branding(slug)')
+                    .order('created_at', { ascending: true })
+
+                if (bizData && bizData.length > 0) {
+                    console.log('[BackendNav] Locations from fallback query:', bizData.length)
+                    const transformed = bizData.map(b => ({
+                        id: b.id,
+                        name: b.name,
+                        slug: b.branding?.[0]?.slug || ''
+                    }))
+                    setLocations(transformed)
                 } else {
                     setLocations([])
                 }
