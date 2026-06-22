@@ -2191,57 +2191,57 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.div>
 
-        {/* Delete Location Modal */}
-        <AnimatePresence>
-            {deletingLocation && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-                    onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
-                >
+            {/* Delete Location Modal */}
+            <AnimatePresence>
+                {deletingLocation && (
                     <motion.div
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.95, opacity: 0 }}
-                        onClick={e => e.stopPropagation()}
-                        className="bg-white dark:bg-[#1e293b] rounded-2xl p-6 w-full max-w-sm shadow-xl"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+                        onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
                     >
-                        <h3 className="font-bold text-base mb-1 text-stone-900 dark:text-white">
-                            Delete {deletingLocation.name}?
-                        </h3>
-                        <p className="text-xs text-stone-500 dark:text-white/50 mb-4">
-                            This removes the location from your dashboard. Orders are preserved. Type <strong>DELETE</strong> to confirm.
-                        </p>
-                        <input
-                            value={deleteConfirmText}
-                            onChange={e => setDeleteConfirmText(e.target.value)}
-                            placeholder="DELETE"
-                            className="w-full border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 rounded-xl px-3 py-2 text-sm mb-3 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:border-red-400"
-                            autoFocus
-                        />
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
-                                className="flex-1 py-2 rounded-xl text-sm border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white/60 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDeleteLocation}
-                                disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
-                                className="flex-1 py-2 rounded-xl text-sm bg-red-500 text-white font-bold disabled:opacity-40 hover:bg-red-600 transition-colors"
-                            >
-                                {deleteLoading ? 'Deleting...' : 'Delete'}
-                            </button>
-                        </div>
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={e => e.stopPropagation()}
+                            className="bg-white dark:bg-[#1e293b] rounded-2xl p-6 w-full max-w-sm shadow-xl"
+                        >
+                            <h3 className="font-bold text-base mb-1 text-stone-900 dark:text-white">
+                                Delete {deletingLocation.name}?
+                            </h3>
+                            <p className="text-xs text-stone-500 dark:text-white/50 mb-4">
+                                This removes the location from your dashboard. Orders are preserved. Type <strong>DELETE</strong> to confirm.
+                            </p>
+                            <input
+                                value={deleteConfirmText}
+                                onChange={e => setDeleteConfirmText(e.target.value)}
+                                placeholder="DELETE"
+                                className="w-full border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 rounded-xl px-3 py-2 text-sm mb-3 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:border-red-400"
+                                autoFocus
+                            />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
+                                    className="flex-1 py-2 rounded-xl text-sm border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white/60 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteLocation}
+                                    disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                                    className="flex-1 py-2 rounded-xl text-sm bg-red-500 text-white font-bold disabled:opacity-40 hover:bg-red-600 transition-colors"
+                                >
+                                    {deleteLoading ? 'Deleting...' : 'Delete'}
+                                </button>
+                            </div>
+                        </motion.div>
                     </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                )}
+            </AnimatePresence>
+        </motion.div>
     )
 }
 
