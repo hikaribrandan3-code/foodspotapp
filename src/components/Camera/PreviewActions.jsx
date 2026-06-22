@@ -171,7 +171,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                     backdropFilter: 'blur(4px)',
                     zIndex: 999999,
                     animation: 'fadeIn 0.3s ease-out',
-                    paddingBottom: '200px',
                 }}>
                     <div style={{
                         padding: '32px 24px',
@@ -180,7 +179,6 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                         textAlign: 'center',
                         boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
                         maxWidth: '90%',
-                        transform: 'translateY(-80px)',
                     }}>
                         <div style={{
                             fontSize: '48px',
