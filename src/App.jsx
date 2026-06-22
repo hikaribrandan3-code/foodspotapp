@@ -2,6 +2,8 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 
+import { useDevice } from './hooks/useDevice'
+import TabletStaffApp from './pages/TabletStaffApp'
 import { detectAndroidInAppBrowser, getChromeIntentUrl } from './utils/detectBrowser.js'
 import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
 import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
@@ -796,5 +798,23 @@ const styles = {
     },
 };
 
-export default App
+// Device-aware wrapper: routes tablet/desktop to staff login, mobile to full app
+function AppWithDeviceDetection() {
+    const device = useDevice()
+
+    // Tablet/Desktop: Staff login only
+    if (device === 'tablet') {
+        return <TabletStaffApp />
+    }
+
+    // Mobile: Full customer ordering app
+    // Return null while detecting device (shouldn't happen but safe)
+    if (!device) {
+        return null
+    }
+
+    return <App />
+}
+
+export default AppWithDeviceDetection
 // force deploy Fri Apr 17 16:07:07 -03 2026
