@@ -400,7 +400,7 @@ export default function ProfileView() {
         </Section>
 
         {/* Store Status Section */}
-        <Section title={t('pause_orders_label') || 'Pause Orders'}>
+        <Section title="Pause Orders">
           <motion.div
             className={`rounded-2xl p-4 border shadow-sm cursor-pointer transition-colors ${
               isPaused
