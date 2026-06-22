@@ -831,10 +831,11 @@ function BackendNav({
                         </button>
                     )}
 
-                    {/* Switch Location (multi-location owners only) */}
-                    {localStorage.getItem('fs_multi_location') === 'true' && (
+                    {/* Switch Location — show each other location as its own button */}
+                    {locations.filter(loc => loc.slug !== tenantSlug).map(loc => (
                         <button
-                            onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                            key={loc.id}
+                            onClick={() => handleSwitchLocation(loc.slug)}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: 10,
                                 width: '100%', padding: '9px 12px', borderRadius: 10,
@@ -846,11 +847,15 @@ function BackendNav({
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                                 <circle cx="12" cy="10" r="3" />
                             </svg>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: isDark ? '#64748b' : '#9ca3af' }}>
-                                {t('switch_location') || 'Switch Location'}
+                            <span style={{
+                                fontSize: 12, fontWeight: 600,
+                                color: isDark ? '#64748b' : '#9ca3af',
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                                {loc.name}
                             </span>
                         </button>
-                    )}
+                    ))}
 
                     {/* Logout */}
                     <button
