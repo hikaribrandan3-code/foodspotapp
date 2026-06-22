@@ -598,13 +598,13 @@ function App() {
         };
     }, [businessId, refreshConfig]);
 
-    // Device detection: route tablet/desktop to login
+    // Device detection: route tablet/desktop to login (only for unauthenticated users)
     const device = useDevice()
     useEffect(() => {
-        if (device === 'tablet' && !pathname.includes('/login')) {
+        if (device === 'tablet' && !pathname.includes('/login') && !authUser && !pathname.includes('/owner') && !pathname.includes('/staff')) {
             navigate('/login', { replace: true })
         }
-    }, [device, pathname, navigate])
+    }, [device, pathname, authUser, navigate])
 
     // Login interceptor fix
     useEffect(() => {
