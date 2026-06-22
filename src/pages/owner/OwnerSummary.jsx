@@ -910,35 +910,30 @@ function OwnerSummary() {
                             ownerLocations.map(loc => {
                                 const isCurrent = loc.id === businessId
                                 return (
-                                    <div key={loc.id} className="relative group">
-                                        <button
-                                            onClick={() => !isCurrent && navigate(`/${loc.slug}/owner/summary`)}
-                                            className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
-                                                isCurrent
-                                                    ? 'bg-emerald-600 text-white shadow-md'
-                                                    : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
-                                                {loc.location_label || loc.name}
-                                                {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
+                                    <button
+                                        key={loc.id}
+                                        onClick={() => {
+                                            if (isCurrent) return
+                                            localStorage.setItem('fs_last_active_slug', loc.slug)
+                                            window.location.href = `/${loc.slug}/owner/summary`
+                                        }}
+                                        className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                                            isCurrent
+                                                ? 'bg-emerald-600 text-white shadow-md'
+                                                : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
+                                            {loc.location_label || loc.name}
+                                            {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
+                                        </div>
+                                        {loc.hours && (
+                                            <div className="text-[10px] opacity-70 ml-3">
+                                                {loc.hours}
                                             </div>
-                                            {loc.hours && (
-                                                <div className="text-[10px] opacity-70 ml-3">
-                                                    {loc.hours}
-                                                </div>
-                                            )}
-                                        </button>
-                                        {!isCurrent && (
-                                            <span
-                                                onClick={() => { setDeletingLocation({ id: loc.id, name: loc.location_label || loc.name }); setDeleteConfirmText('') }}
-                                                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white hidden group-hover:flex items-center justify-center cursor-pointer z-10"
-                                            >
-                                                <X size={8} />
-                                            </span>
                                         )}
-                                    </div>
+                                    </button>
                                 )
                             })
                         )}
@@ -995,6 +990,18 @@ function OwnerSummary() {
                                             >
                                                 {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
                                             </button>
+                                            {/* Delete this location — only for non-primary locations */}
+                                            {ownerLocations.length > 1 && ownerLocations[0]?.id !== businessId && (
+                                                <button
+                                                    onClick={() => {
+                                                        const current = ownerLocations.find(l => l.id === businessId)
+                                                        if (current) { setDeletingLocation({ id: current.id, name: current.location_label || current.name }); setDeleteConfirmText('') }
+                                                    }}
+                                                    className="w-full py-2.5 rounded-full text-sm font-bold text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                >
+                                                    {t('delete_location') || 'Delete This Location'}
+                                                </button>
+                                            )}
                                         </div>
                                     </motion.div>
                                 )}
