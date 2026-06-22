@@ -990,8 +990,8 @@ function OwnerSummary() {
                                             >
                                                 {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
                                             </button>
-                                            {/* Delete this location — only for non-primary locations */}
-                                            {ownerLocations.length > 1 && ownerLocations[0]?.id !== businessId && (
+                                            {/* Delete this location — available if you have 2+ locations */}
+                                            {ownerLocations.length > 1 && (
                                                 <button
                                                     onClick={() => {
                                                         const current = ownerLocations.find(l => l.id === businessId)
