@@ -195,7 +195,10 @@ export async function earnUGCPoints(phone, businessId) {
         p_delta: pts,
         p_business_id: businessId,
     })
-    if (rpcError) return { earned: false }
+    if (rpcError) {
+        console.error('[earnUGC] RPC error:', rpcError)
+        return { earned: false }
+    }
 
     await supabase.from('loyalty_transactions').insert({
         business_id: businessId,

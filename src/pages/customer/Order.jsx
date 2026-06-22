@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { Lock } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCurrency } from '../../hooks/useCurrency.js'
 import { supabase } from '../../lib/supabaseClient.js'
@@ -871,7 +872,9 @@ function Order({ config: configProp }) {
                 background: '#0d0d0d',
                 textAlign: 'center'
             }}>
-                <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
+                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+                    <Lock size={56} color="#ffffff" />
+                </div>
                 <div style={{
                     background: '#EF4444',
                     color: '#fff',
@@ -885,9 +888,9 @@ function Order({ config: configProp }) {
                 }}>
                     ● {t('store_closed_tag') || 'CLOSED'} ●
                 </div>
-                <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
+                <div style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>
                     {tenantData?.pause_message || t('store_closed') || 'Cerrado para pedidos'}
-                </h2>
+                </div>
                 <p style={{ color: '#888', fontSize: 13, margin: '0 0 28px', lineHeight: 1.5 }}>
                     {t('store_closed_sub') || 'Podés ver el menú, jugar y explorar eventos'}
                 </p>

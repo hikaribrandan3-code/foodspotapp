@@ -131,13 +131,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         return () => document.head.removeChild(style);
     }, []);
 
-    // ⏰ AUTO-DISMISS NOTIFICATION
-    React.useEffect(() => {
-        if (ugcPoints) {
-            const timer = setTimeout(() => setUgcPoints(null), 4000);
-            return () => clearTimeout(timer);
-        }
-    }, [ugcPoints]);
+    // Notification stays until user exits camera — no auto-dismiss
 
     // CRITICAL: Manually bind native DOM events to bypass React SyntheticEvents
     React.useEffect(() => {

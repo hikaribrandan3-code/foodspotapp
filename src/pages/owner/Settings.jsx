@@ -794,7 +794,7 @@ const Settings = () => {
                                 onChange={e => setPauseMessage(e.target.value)}
                                 placeholder="Back in 20 min / Volvemos pronto"
                                 style={{
-                                    width: '100%', padding: '10px 12px', borderRadius: 8,
+                                    width: '100%', padding: '10px 12px', borderRadius: 12,
                                     border: '1px solid #E5E7EB', fontSize: 13, color: '#374151',
                                     background: '#FAFAFA', boxSizing: 'border-box', outline: 'none'
                                 }}
