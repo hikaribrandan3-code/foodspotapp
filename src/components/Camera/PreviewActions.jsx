@@ -1,4 +1,5 @@
 import React from 'react';
+import confetti from 'canvas-confetti';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
@@ -131,7 +132,17 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         return () => document.head.removeChild(style);
     }, []);
 
-    // Notification stays until user exits camera — no auto-dismiss
+    // Confetti burst when points awarded
+    React.useEffect(() => {
+        if (ugcPoints) {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.3 },
+                colors: ['#22C55E', '#10B981', '#059669', '#047857'],
+            });
+        }
+    }, [ugcPoints]);
 
     // CRITICAL: Manually bind native DOM events to bypass React SyntheticEvents
     React.useEffect(() => {
@@ -179,7 +190,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                         textAlign: 'center',
                         boxShadow: '0 20px 50px rgba(0, 0, 0, 0.15)',
                         maxWidth: '90%',
-                        transform: 'translateY(-200px)',
+                        transform: 'translateY(-240px)',
                     }}>
                         <div style={{
                             fontSize: '48px',
