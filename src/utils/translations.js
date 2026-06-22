@@ -1281,6 +1281,40 @@ export const translations = {
     store_closed_sub:     { en: 'You can still browse the menu, play games & explore events', es: 'Podés ver el menú, jugar y explorar eventos', pt: 'Você pode ver o menu, jogar e explorar eventos' },
     pause_orders_label:   { en: 'Pause Orders',          es: 'Pausar Pedidos',          pt: 'Pausar Pedidos' },
     pause_orders_msg:     { en: 'Custom message (optional)',  es: 'Mensaje personalizado (opcional)', pt: 'Mensagem personalizada (opcional)' },
-    go_back:              { en: 'Go Back',               es: 'Volver',                  pt: 'Voltar' }
+    go_back:              { en: 'Go Back',               es: 'Volver',                  pt: 'Voltar' },
+
+    // ── AddLocationModal ───────────────────────────────────────────────────────
+    phone:              { en: 'Phone',                  es: 'Teléfono',                pt: 'Telefone' },
+    phone_number:       { en: 'Phone number',           es: 'Número de teléfono',      pt: 'Número de telefone' },
+    location_details:   { en: 'Location details',       es: 'Detalles de la ubicación', pt: 'Detalhes da localização' },
+
+    // ── OwnerLogin ─────────────────────────────────────────────────────────────
+    ownerLogin:         { en: 'Owner Login',            es: 'Acceso Propietario',      pt: 'Login do Proprietário' },
+    staffLogin:         { en: 'Staff Login',            es: 'Acceso Staff',            pt: 'Login do Staff' },
+    emailLabel:         { en: 'Email',                  es: 'Correo',                  pt: 'E-mail' },
+    passwordLabel:      { en: 'Password',               es: 'Contraseña',              pt: 'Senha' },
+    staffUsername:      { en: 'Username',               es: 'Usuario',                 pt: 'Usuário' },
+    pinLabel:           { en: 'PIN',                    es: 'PIN',                     pt: 'PIN' },
+    resetTitle:         { en: 'Reset Password',         es: 'Restablecer Contraseña',  pt: 'Redefinir Senha' },
+    resetEmailLabel:    { en: 'Your email',             es: 'Tu correo',               pt: 'Seu e-mail' },
+    resetSend:          { en: 'Send Link',              es: 'Enviar enlace',           pt: 'Enviar link' },
+    resetBack:          { en: 'Back',                   es: 'Volver',                  pt: 'Voltar' },
+    resetVerify:        { en: 'Verify',                 es: 'Verificar',               pt: 'Verificar' },
+    resetNewLabel:      { en: 'New password',           es: 'Nueva contraseña',        pt: 'Nova senha' },
+    resetConfirmLabel:  { en: 'Confirm password',       es: 'Confirmar contraseña',    pt: 'Confirmar senha' },
+    resetSave:          { en: 'Save Password',          es: 'Guardar contraseña',      pt: 'Salvar senha' },
+    resetSuccess:       { en: 'Password updated!',      es: '¡Contraseña actualizada!', pt: 'Senha atualizada!' },
+    resetPin:           { en: 'Reset PIN',              es: 'Restablecer PIN',         pt: 'Redefinir PIN' },
+
+    // ── Staff Reservations ─────────────────────────────────────────────────────
+    reservations_title:   { en: 'Reservations',         es: 'Reservas',                pt: 'Reservas' },
+    reservations_pending: { en: 'Pending',               es: 'Pendientes',              pt: 'Pendentes' },
+    reservations_approved:{ en: 'Approved',              es: 'Aprobadas',               pt: 'Aprovadas' },
+    reservations_all:     { en: 'All',                   es: 'Todas',                   pt: 'Todas' },
+    reservation_empty:    { en: 'No reservations yet',   es: 'Sin reservas aún',        pt: 'Sem reservas ainda' },
+    reservation_people:   { en: 'people',                es: 'personas',                pt: 'pessoas' },
+    reservation_approve:  { en: 'Approve',               es: 'Aprobar',                 pt: 'Aprovar' },
+    reservation_reject:   { en: 'Reject',                es: 'Rechazar',                pt: 'Rejeitar' },
+    reservation_no_show:  { en: 'No Show',               es: 'No se presentó',          pt: 'Não compareceu' },
 };
 
