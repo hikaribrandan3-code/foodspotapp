@@ -33,7 +33,7 @@ import { useTenant } from '../contexts/TenantContext'
 import { useTier } from '../hooks/useTier'
 import { supabase } from '../lib/supabaseClient'
 
-const PRO_ONLY_TABS = ['analytics', 'ai']
+const PRO_ONLY_TABS = ['analytics', 'ai', 'events']
 
 // ============================================
 // TAB CONFIGURATIONS BY ROLE
