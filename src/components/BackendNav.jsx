@@ -518,7 +518,9 @@ function BackendNav({
 
     const handleSwitchLocation = (slug) => {
         setLocDropOpen(false)
-        navigate(`/${slug}/owner/summary`)
+        // Full reload so TenantContext re-hydrates from the new slug
+        localStorage.setItem('fs_last_active_slug', slug)
+        window.location.href = `/${slug}/owner/summary`
     }
 
     // ── DESKTOP SIDEBAR ──────────────────────────────────────────
