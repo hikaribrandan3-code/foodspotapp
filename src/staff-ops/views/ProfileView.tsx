@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  User, Settings, Bell, BellOff, Shield, Clock, Phone, LogOut,
+  User, Settings, Bell, BellOff, Shield, Clock, Phone, LogOut, Lock,
   ChevronRight, Moon, Sun, Wifi, WifiOff, Volume2, VolumeX,
   X, Check, Bike, Car, Truck, Ticket, CheckCircle2,
 } from 'lucide-react';
@@ -400,45 +400,60 @@ export default function ProfileView() {
         </Section>
 
         {/* Store Status Section */}
-        <Section title={t('pause_orders_label') || 'Store Status'}>
+        <Section title={t('pause_orders_label') || 'Pause Orders'}>
           <motion.div
-            onClick={() => setIsPaused(p => !p)}
+            className={`rounded-2xl p-4 border shadow-sm cursor-pointer transition-colors ${
+              isPaused
+                ? 'bg-red-50 border-red-200'
+                : 'bg-white border-gray-200'
+            }`}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors"
-            style={{
-              backgroundColor: isPaused ? 'rgba(239, 68, 68, 0.1)' : 'var(--card-bg)',
-              border: isPaused ? '1px solid rgb(239, 68, 68)' : '1px solid var(--card-border)'
-            }}
           >
-            <div className="flex items-center gap-3">
-              <span className="text-lg">{isPaused ? '🔒' : '🟢'}</span>
-              <div>
-                <p className="text-sm font-semibold" style={{ color: isPaused ? 'rgb(220, 38, 38)' : 'var(--text-primary)' }}>
-                  {isPaused ? t('store_closed') || 'Closed' : t('store_open') || 'Open'}
-                </p>
-                {isPaused && pauseMessage && (
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{pauseMessage}</p>
-                )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                  isPaused ? 'bg-red-100' : 'bg-emerald-50'
+                }`}>
+                  {isPaused
+                    ? <Lock size={18} className="text-red-600" />
+                    : <Shield size={18} className="text-emerald-600" />
+                  }
+                </div>
+                <div>
+                  <h3 className={`font-black text-sm ${isPaused ? 'text-red-700' : 'text-gray-950'}`}>
+                    {t('pause_orders_label') || 'Pause Orders'}
+                  </h3>
+                  {isPaused && (
+                    <p className="text-xs text-red-600 mt-0.5">
+                      {pauseMessage || t('store_closed') || 'Closed for orders'}
+                    </p>
+                  )}
+                </div>
               </div>
+              <button
+                onClick={() => setIsPaused(p => !p)}
+                className={`ml-2 shrink-0 w-12 h-7 rounded-full transition-colors ${
+                  isPaused ? 'bg-red-600' : 'bg-emerald-200'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${isPaused ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </div>
-            <div className={`w-10 h-6 rounded-full transition-colors ${isPaused ? 'bg-red-600' : 'bg-emerald-500'}`}>
-              <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform mt-1 ${isPaused ? 'ml-5' : 'ml-1'}`} />
-            </div>
+            {isPaused && (
+              <input
+                type="text"
+                value={pauseMessage}
+                onChange={e => setPauseMessage(e.target.value)}
+                placeholder="Back in 20 min..."
+                className="mt-3 w-full px-3 py-2 rounded-lg text-sm outline-none"
+                style={{
+                  backgroundColor: 'var(--input-bg)',
+                  border: '1px solid var(--card-border)',
+                  color: 'var(--text-primary)'
+                }}
+              />
+            )}
           </motion.div>
-          {isPaused && (
-            <input
-              type="text"
-              value={pauseMessage}
-              onChange={e => setPauseMessage(e.target.value)}
-              placeholder="Back in 20 min..."
-              className="mt-3 w-full px-3 py-2 rounded-lg text-xs outline-none"
-              style={{
-                backgroundColor: 'var(--input-bg)',
-                border: '1px solid var(--card-border)',
-                color: 'var(--text-primary)'
-              }}
-            />
-          )}
         </Section>
 
         <Section title={t('preferences')}>
