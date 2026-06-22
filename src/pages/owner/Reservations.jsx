@@ -98,7 +98,7 @@ export function ReservationsContent() {
               )}
             </div>
             <button onClick={fetchReservations}
-              style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid #E5E7EB', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              style={{ width: 36, height: 36, borderRadius: 20, border: '1px solid #E5E7EB', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
               <RefreshCw size={15} color="#6B7280" />
             </button>
           </div>
@@ -115,7 +115,7 @@ export function ReservationsContent() {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 style={{
-                  padding: '8px 16px', borderRadius: '10px 10px 0 0', border: 'none', whiteSpace: 'nowrap',
+                  padding: '8px 16px', borderRadius: 20, border: 'none', whiteSpace: 'nowrap',
                   background: filter === f.id ? '#111827' : 'transparent',
                   color: filter === f.id ? '#fff' : '#6B7280',
                   fontWeight: 600, fontSize: 13, cursor: 'pointer',
@@ -201,13 +201,13 @@ export function ReservationsContent() {
                       <button
                         onClick={() => updateStatus(r.id, 'rejected')}
                         disabled={!!actioning}
-                        style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: 'none', background: '#FEE2E2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 20, border: 'none', background: '#FEE2E2', color: '#DC2626', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <X size={15} /> Rechazar
                       </button>
                       <button
                         onClick={() => updateStatus(r.id, 'approved')}
                         disabled={!!actioning}
-                        style={{ flex: 2, padding: '10px 0', borderRadius: 12, border: 'none', background: '#D1FAE5', color: '#065F46', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                        style={{ flex: 2, padding: '10px 0', borderRadius: 20, border: 'none', background: '#D1FAE5', color: '#065F46', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         <Check size={15} /> {actioning === r.id + 'approved' ? 'Aprobando...' : 'Aprobar'}
                       </button>
                     </div>
@@ -216,11 +216,11 @@ export function ReservationsContent() {
                   {r.status === 'approved' && (
                     <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                       <button onClick={() => updateStatus(r.id, 'no_show')} disabled={!!actioning}
-                        style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: '1px solid #E5E7EB', background: '#fff', color: '#6B7280', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                        style={{ flex: 1, padding: '8px 0', borderRadius: 20, border: '1px solid #E5E7EB', background: '#fff', color: '#6B7280', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
                         No se presentó
                       </button>
                       <button onClick={() => updateStatus(r.id, 'completed')} disabled={!!actioning}
-                        style={{ flex: 1, padding: '8px 0', borderRadius: 10, border: 'none', background: '#EDE9FE', color: '#5B21B6', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                        style={{ flex: 1, padding: '8px 0', borderRadius: 20, border: 'none', background: '#EDE9FE', color: '#5B21B6', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                         ✓ Se presentó
                       </button>
                     </div>

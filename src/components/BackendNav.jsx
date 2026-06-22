@@ -593,7 +593,7 @@ function BackendNav({
                             border: locations.length > 1
                                 ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`
                                 : 'none',
-                            borderRadius: 8,
+                            borderRadius: 20,
                             padding: locations.length > 1 ? '7px 10px' : '0',
                             cursor: locations.length > 1 ? 'pointer' : 'default',
                             textAlign: 'left',
@@ -711,7 +711,7 @@ function BackendNav({
                                     width: '100%',
                                     padding: '10px 12px',
                                     marginBottom: 2,
-                                    borderRadius: 10,
+                                    borderRadius: 20,
                                     border: 'none',
                                     background: isActive
                                         ? (isDark ? 'rgba(16,185,129,0.12)' : '#ecfdf5')
@@ -775,7 +775,7 @@ function BackendNav({
                         onClick={() => window.open(storeUrl, '_blank')}
                         style={{
                             display: 'flex', alignItems: 'center', gap: 10,
-                            width: '100%', padding: '9px 12px', borderRadius: 10,
+                            width: '100%', padding: '9px 12px', borderRadius: 20,
                             border: 'none',
                             background: isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4',
                             cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
@@ -831,7 +831,7 @@ function BackendNav({
                             }}
                             style={{
                                 display: 'flex', alignItems: 'center', gap: 10,
-                                width: '100%', padding: '9px 12px', borderRadius: 10,
+                                width: '100%', padding: '9px 12px', borderRadius: 20,
                                 border: 'none', background: 'transparent',
                                 cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                             }}
@@ -858,7 +858,7 @@ function BackendNav({
                                 disabled={isCurrent}
                                 style={{
                                     display: 'flex', alignItems: 'center', gap: 10,
-                                    width: '100%', padding: '9px 12px', borderRadius: 10,
+                                    width: '100%', padding: '9px 12px', borderRadius: 20,
                                     border: 'none',
                                     background: isCurrent
                                         ? (isDark ? 'rgba(16,185,129,0.15)' : '#f0fdf4')
@@ -902,7 +902,7 @@ function BackendNav({
                         }}
                         style={{
                             display: 'flex', alignItems: 'center', gap: 10,
-                            width: '100%', padding: '9px 12px', borderRadius: 10,
+                            width: '100%', padding: '9px 12px', borderRadius: 20,
                             border: 'none', background: 'transparent',
                             cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
                         }}

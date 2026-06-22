@@ -229,7 +229,7 @@ const Analytics = () => {
                 extraActions={
                     <button
                         onClick={handleBack}
-                        style={{ background: '#F3F4F6', border: 'none', padding: '8px 14px', borderRadius: 10, cursor: 'pointer', fontWeight: 600, fontSize: 12, color: '#374151' }}
+                        style={{ background: '#F3F4F6', border: 'none', padding: '8px 14px', borderRadius: 20, cursor: 'pointer', fontWeight: 600, fontSize: 12, color: '#374151' }}
                     >
                         ← {t('back')}
                     </button>
@@ -250,7 +250,7 @@ const Analytics = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 style={{
-                                    padding: '10px 20px', borderRadius: 12, fontSize: 13, fontWeight: 600,
+                                    padding: '10px 20px', borderRadius: 20, fontSize: 13, fontWeight: 600,
                                     border: '1px solid',
                                     cursor: 'pointer', whiteSpace: 'nowrap',
                                     background: activeTab === tab.id ? primaryColor : '#FFFFFF',

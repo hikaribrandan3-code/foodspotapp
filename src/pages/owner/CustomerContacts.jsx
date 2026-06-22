@@ -76,7 +76,7 @@ function AddContactModal({ onClose, onAdd }) {
               onChange={e => setName(e.target.value)}
               placeholder={t('name')}
               style={{
-                width: '100%', padding: '12px 16px', borderRadius: 12,
+                width: '100%', padding: '12px 16px', borderRadius: 24,
                 border: `1.5px solid ${T.line}`, fontSize: 15, color: T.ink,
                 outline: 'none', boxSizing: 'border-box', background: T.bg,
                 fontFamily: 'inherit'
@@ -92,7 +92,7 @@ function AddContactModal({ onClose, onAdd }) {
               placeholder={t('phone_placeholder')}
               type="tel"
               style={{
-                width: '100%', padding: '12px 16px', borderRadius: 12,
+                width: '100%', padding: '12px 16px', borderRadius: 24,
                 border: `1.5px solid ${T.line}`, fontSize: 15, color: T.ink,
                 outline: 'none', boxSizing: 'border-box', background: T.bg,
                 fontFamily: 'inherit'
@@ -111,7 +111,7 @@ function AddContactModal({ onClose, onAdd }) {
             disabled={loading}
             style={{
               background: T.green, color: '#fff', border: 'none',
-              borderRadius: 12, padding: '14px', fontSize: 15,
+              borderRadius: 24, padding: '14px', fontSize: 15,
               fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
               opacity: loading ? 0.7 : 1, marginTop: 4, fontFamily: 'inherit'
             }}
@@ -159,7 +159,7 @@ export default function CustomerContacts({ defaultTab = 'clientes' }) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             style={{
-              padding: '10px 20px', borderRadius: '10px 10px 0 0', border: 'none',
+              padding: '10px 20px', borderRadius: 20, border: 'none',
               background: activeTab === tab.id ? T.card : 'transparent',
               color: activeTab === tab.id ? T.green : T.muted,
               fontWeight: 700, fontSize: 14, cursor: 'pointer',

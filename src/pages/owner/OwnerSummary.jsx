@@ -61,6 +61,7 @@ function OwnerSummary() {
     const [deletingLocation, setDeletingLocation] = useState(null)
     const [deleteConfirmText, setDeleteConfirmText] = useState('')
     const [deleteLoading, setDeleteLoading] = useState(false)
+    const [deleteSuccess, setDeleteSuccess] = useState(null)
     const [locationLabel, setLocationLabel] = useState('')
     const [parentSlug, setParentSlug] = useState('')
     const [parentBrandName, setParentBrandName] = useState('')
@@ -730,13 +731,20 @@ function OwnerSummary() {
     const handleDeleteLocation = async () => {
         if (deleteConfirmText !== 'DELETE') return
         setDeleteLoading(true)
+        const deletedName = deletingLocation.name
         const { data } = await supabase.rpc('delete_location', { p_business_id: deletingLocation.id })
         if (data?.success) {
-            setDeletingLocation(null)
-            setDeleteConfirmText('')
             ownerLocationsLoaded.current = false
             const { data: locs } = await supabase.rpc('get_owner_locations')
             if (locs) setOwnerLocations(locs)
+            setDeleteConfirmText('')
+            setDeletingLocation(null)
+            setDeleteSuccess(deletedName)
+            const primarySlug = locs?.[0]?.slug
+            setTimeout(() => {
+                setDeleteSuccess(null)
+                if (primarySlug) window.location.href = `/${primarySlug}/owner/summary`
+            }, 2200)
         } else {
             alert(data?.error || 'Failed to delete location')
         }
@@ -1274,7 +1282,7 @@ function OwnerSummary() {
                                                 onChange={(e) => updateBusinessInfo('address', e.target.value)}
                                                 onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                                 placeholder={t('address_placeholder') || '123 Main St'}
-                                                className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                             />
                                         </div>
 
@@ -1290,7 +1298,7 @@ function OwnerSummary() {
                                             onChange={(e) => updateBusinessInfo('hours', e.target.value)}
                                             onBlur={() => { isTypingRef.current = false; showVenueSavedPill() }}
                                             placeholder={t('hours_placeholder') || 'Mon-Fri 9:00-21:00, Sat-Sun 10:00-18:00'}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -1327,7 +1335,7 @@ function OwnerSummary() {
                                                 saveExternalLink('instagramUrl', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -1342,7 +1350,7 @@ function OwnerSummary() {
                                                 saveExternalLink('tiktokUrl', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -1357,7 +1365,7 @@ function OwnerSummary() {
                                                 saveExternalLink('mapsLink', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -1372,7 +1380,7 @@ function OwnerSummary() {
                                                 saveExternalLink('googleReviewUrl', e.target.value)
                                             }}
                                             onBlur={showLinksSavedPill}
-                                            className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                            className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
                                         />
                                     </div>
 
@@ -1898,6 +1906,21 @@ function OwnerSummary() {
                 )}
             </AnimatePresence>
 
+            {/* Delete Success Toast */}
+            <AnimatePresence>
+                {deleteSuccess && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2.5 bg-emerald-500 text-white text-sm font-bold px-5 py-3 rounded-full shadow-xl"
+                    >
+                        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        {deleteSuccess} deleted
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Delete Location Modal */}
             <AnimatePresence>
                 {deletingLocation && (
@@ -1925,20 +1948,20 @@ function OwnerSummary() {
                                 value={deleteConfirmText}
                                 onChange={e => setDeleteConfirmText(e.target.value)}
                                 placeholder="DELETE"
-                                className="w-full border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 rounded-xl px-3 py-2 text-sm mb-3 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:border-red-400"
+                                className="w-full border border-stone-200 dark:border-white/10 bg-stone-50 dark:bg-white/5 rounded-full px-4 py-2 text-sm mb-3 text-stone-900 dark:text-white placeholder-stone-400 focus:outline-none focus:border-red-400"
                                 autoFocus
                             />
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => { setDeletingLocation(null); setDeleteConfirmText('') }}
-                                    className="flex-1 py-2 rounded-xl text-sm border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white/60 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
+                                    className="flex-1 py-2 rounded-full text-sm border border-stone-200 dark:border-white/10 text-stone-600 dark:text-white/60 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleDeleteLocation}
                                     disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
-                                    className="flex-1 py-2 rounded-xl text-sm bg-red-500 text-white font-bold disabled:opacity-40 hover:bg-red-600 transition-colors"
+                                    className="flex-1 py-2 rounded-full text-sm bg-red-500 text-white font-bold disabled:opacity-40 hover:bg-red-600 transition-colors"
                                 >
                                     {deleteLoading ? 'Deleting...' : 'Delete'}
                                 </button>
@@ -2006,7 +2029,7 @@ function InputField({ label, value, onChange, placeholder, type = 'text' }) {
                 value={value || ''}
                 onChange={onChange}
                 placeholder={placeholder}
-                className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                className="w-full px-4 py-2.5 rounded-full text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-300 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
             />
         </div>
     )
