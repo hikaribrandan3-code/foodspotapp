@@ -140,7 +140,7 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
                 particleCount: 150,
                 spread: 100,
                 origin: { x: 0.5, y: 0.25 },
-                colors: ['#22C55E', '#10B981', '#059669', '#047857'],
+                colors: ['#22C55E', '#10B981', '#059669', '#047857', '#FF6B6B', '#FFA500', '#FFD700', '#FF1493', '#00CED1', '#FF4500'],
                 gravity: 0.8,
                 decay: 0.95,
             });
