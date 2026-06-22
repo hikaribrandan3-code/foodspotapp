@@ -31,6 +31,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTenant } from '../contexts/TenantContext'
 import { useTier } from '../hooks/useTier'
+import { supabase } from '../lib/supabaseClient'
 
 const PRO_ONLY_TABS = ['analytics', 'ai']
 
@@ -481,6 +482,32 @@ function BackendNav({
     const storeName = tenantData?.venue_name || tenantData?.business_name || 'FoodSpot'
     const storeUrl = tenantSlug ? `/${tenantSlug}` : '/'
 
+    // ── LOCATION SWITCHER STATE ──────────────────────────────────
+    const [locations, setLocations] = useState([])
+    const [locDropOpen, setLocDropOpen] = useState(false)
+    const dropRef = useRef(null)
+
+    useEffect(() => {
+        supabase.rpc('get_owner_locations').then(({ data }) => {
+            if (data && data.length > 1) setLocations(data)
+        })
+    }, [])
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        if (!locDropOpen) return
+        const handler = (e) => {
+            if (dropRef.current && !dropRef.current.contains(e.target)) setLocDropOpen(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [locDropOpen])
+
+    const handleSwitchLocation = (slug) => {
+        setLocDropOpen(false)
+        navigate(`/${slug}/owner/summary`)
+    }
+
     // ── DESKTOP SIDEBAR ──────────────────────────────────────────
     if (isSidebarMode) {
         return (
@@ -502,27 +529,137 @@ function BackendNav({
                 role="navigation"
                 aria-label="Owner navigation"
             >
-                {/* Brand */}
-                <div style={{
-                    padding: '20px 20px 16px',
-                    borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}`,
-                }}>
+                {/* Brand / Location Selector */}
+                <div
+                    ref={dropRef}
+                    style={{
+                        padding: '16px 14px 14px',
+                        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6'}`,
+                        position: 'relative',
+                    }}
+                >
                     <p style={{
                         fontSize: 11,
                         fontWeight: 800,
                         letterSpacing: '0.18em',
                         textTransform: 'uppercase',
                         color: '#10b981',
-                        marginBottom: 2,
+                        marginBottom: 4,
                     }}>FoodSpot</p>
-                    <p style={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: isDark ? '#f1f5f9' : '#111827',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                    }}>{storeName}</p>
+
+                    {/* Location pill — clickable only if multi-location */}
+                    <button
+                        onClick={() => locations.length > 1 && setLocDropOpen(o => !o)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            width: '100%',
+                            background: locations.length > 1
+                                ? (isDark ? 'rgba(255,255,255,0.04)' : '#f9fafb')
+                                : 'transparent',
+                            border: locations.length > 1
+                                ? `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`
+                                : 'none',
+                            borderRadius: 8,
+                            padding: locations.length > 1 ? '7px 10px' : '0',
+                            cursor: locations.length > 1 ? 'pointer' : 'default',
+                            textAlign: 'left',
+                        }}
+                    >
+                        {/* Map pin dot */}
+                        <span style={{
+                            width: 7, height: 7, borderRadius: '50%',
+                            background: '#10b981', flexShrink: 0,
+                        }} />
+                        <span style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: isDark ? '#f1f5f9' : '#111827',
+                            flex: 1,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }}>{storeName}</span>
+                        {locations.length > 1 && (
+                            <svg
+                                width={12} height={12}
+                                viewBox="0 0 24 24" fill="none"
+                                stroke={isDark ? '#64748b' : '#9ca3af'}
+                                strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"
+                                style={{ transform: locDropOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}
+                            >
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        )}
+                    </button>
+
+                    {/* Dropdown */}
+                    {locDropOpen && locations.length > 1 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 10,
+                            right: 10,
+                            background: isDark ? '#1e293b' : '#ffffff',
+                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e5e7eb'}`,
+                            borderRadius: 10,
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                            zIndex: 200,
+                            overflow: 'hidden',
+                            marginTop: 4,
+                        }}>
+                            {locations.map((loc) => {
+                                const isCurrent = loc.slug === tenantSlug
+                                return (
+                                    <button
+                                        key={loc.id}
+                                        onClick={() => handleSwitchLocation(loc.slug)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 8,
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            background: isCurrent
+                                                ? (isDark ? 'rgba(16,185,129,0.1)' : '#f0fdf4')
+                                                : 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : '#f3f4f6'}`,
+                                        }}
+                                    >
+                                        <span style={{
+                                            width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                            background: isCurrent ? '#10b981' : (isDark ? '#475569' : '#d1d5db'),
+                                        }} />
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <p style={{
+                                                fontSize: 12, fontWeight: isCurrent ? 700 : 500,
+                                                color: isCurrent ? '#10b981' : (isDark ? '#e2e8f0' : '#374151'),
+                                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                margin: 0,
+                                            }}>{loc.name}</p>
+                                            {loc.location_label && loc.location_label !== loc.name && (
+                                                <p style={{
+                                                    fontSize: 10, color: isDark ? '#64748b' : '#9ca3af',
+                                                    margin: 0, marginTop: 1,
+                                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                                }}>{loc.location_label}</p>
+                                            )}
+                                        </div>
+                                        {isCurrent && (
+                                            <svg width={12} height={12} viewBox="0 0 24 24" fill="none"
+                                                stroke="#10b981" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 {/* Nav items */}
