@@ -270,6 +270,17 @@ function Order({ config: configProp }) {
         }, 600)
         return () => clearTimeout(t)
     }, [customerInfo.phone, businessId, loyaltySettings])
+
+    // Auto-dismiss keyboard on autofill (for Android parity with iPhone behavior)
+    useEffect(() => {
+        if (customerInfo.phone && customerInfo.name) {
+            const activeEl = document.activeElement
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+                activeEl.blur()
+            }
+        }
+    }, [customerInfo.phone, customerInfo.name])
+
     const [mpStatus, setMpStatus] = useState(null) // null | 'processing' | 'connecting'
 
     // Page-load warm-up: second layer safety net (cart-add warm-up in CartContext is first)
