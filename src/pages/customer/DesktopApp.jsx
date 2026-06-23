@@ -8,6 +8,7 @@ import DesktopMenuTab from './desktop/DesktopMenuTab'
 import DesktopCart from './desktop/DesktopCart'
 import DesktopInfoTab from './desktop/DesktopInfoTab'
 import DesktopStatusTab from './desktop/DesktopStatusTab'
+import DesktopEventsTab from './desktop/DesktopEventsTab'
 import { buildTenantSeo } from './desktop/useTenantSeo'
 
 const NAV = [
@@ -124,7 +125,7 @@ export default function DesktopApp() {
                     {activeTab === 'menu' && (
                         <DesktopMenuTab searchQuery={searchQuery} onCategoriesLoaded={onCategoriesLoaded} />
                     )}
-                    {activeTab === 'events' && <ComingSoonStub label="Events" />}
+                    {activeTab === 'events' && <DesktopEventsTab />}
                     {activeTab === 'games' && <ComingSoonStub label="Games" />}
                     {activeTab === 'info' && <DesktopInfoTab />}
                     {activeTab === 'status' && <DesktopStatusTab />}
