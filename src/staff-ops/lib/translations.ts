@@ -428,6 +428,7 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'kds_delivery': { en: 'DELIVERY', es: 'ENTREGA', pt: 'ENTREGA' },
   'kds_pickup': { en: 'PICKUP', es: 'RETIRAR', pt: 'RETIRADA' },
   'kds_dine_in': { en: 'DINE-IN', es: 'COMER AQUÍ', pt: 'COMER NO LOCAL' },
+  'kds_display': { en: 'DISPLAY', es: 'PANTALLA', pt: 'EXIBIÇÃO' },
 };
 
 export function t(key: string, lang: string = 'en'): string {

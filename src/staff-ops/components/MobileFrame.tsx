@@ -73,9 +73,9 @@ function DesktopSidebar() {
           );
         })}
 
-        {/* Kitchen section — full-screen KDS takeover */}
+        {/* Display section — full-screen KDS takeover */}
         <p className="px-3 pt-5 pb-1 text-[10px] font-bold tracking-widest" style={{ color: 'var(--text-tertiary)' }}>
-          {t('kitchen').toUpperCase()}
+          {t('kds_display')}
         </p>
         <button
           onClick={() => setTab('kds')}
