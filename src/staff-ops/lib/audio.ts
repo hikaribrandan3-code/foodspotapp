@@ -87,44 +87,15 @@ export function alertDeliveryConfirmed() {
 }
 
 /**
- * Alert: Kitchen order ready to cook — 3 fast LOUD beeps (1.8s total)
- * Quick, energetic, hard-hitting alert for new orders
+ * Alert: Kitchen order ready to cook — cha-ching sound
+ * Money/success sound for new orders
  */
 export function alert3Beep() {
-  const ctx = getAudioContext();
-  const LOUD = 0.85;
-  const beepDuration = 0.2;
-  const now = ctx.currentTime;
-
-  // Schedule all 3 beeps using Web Audio API timing (more reliable than setTimeout)
-
-  // Beep 1 @ 800Hz, starts at now
-  playPingAt(800, beepDuration, 'square', LOUD, now);
-
-  // Beep 2 @ 900Hz, starts 0.3s later
-  playPingAt(900, beepDuration, 'square', LOUD, now + 0.3);
-
-  // Beep 3 @ 1000Hz, starts 0.6s later
-  playPingAt(1000, beepDuration, 'square', LOUD, now + 0.6);
-}
-
-/** Play a ping at a specific scheduled time (for coordinated multi-beep alerts) */
-function playPingAt(frequency: number, duration: number, type: OscillatorType, gain: number, startTime: number) {
-  const ctx = getAudioContext();
-  const osc = ctx.createOscillator();
-  const gainNode = ctx.createGain();
-
-  osc.type = type;
-  osc.frequency.setValueAtTime(frequency, startTime);
-
-  gainNode.gain.setValueAtTime(gain, startTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-  osc.connect(gainNode);
-  gainNode.connect(ctx.destination);
-
-  osc.start(startTime);
-  osc.stop(startTime + duration);
+  const audio = new Audio('/sounds/cha-ching.mp3');
+  audio.volume = 0.8;
+  audio.play().catch(() => {
+    // Fallback if audio fails to play
+  });
 }
 
 /**
