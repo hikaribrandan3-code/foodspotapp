@@ -38,42 +38,45 @@ export default function LocationsHub({ locations, parentBrand }) {
           clipPath: 'polygon(0% 0%, 5% 100%, 10% 0%, 15% 100%, 20% 0%, 25% 100%, 30% 0%, 35% 100%, 40% 0%, 45% 100%, 50% 0%, 55% 100%, 60% 0%, 65% 100%, 70% 0%, 75% 100%, 80% 0%, 85% 100%, 90% 0%, 95% 100%, 100% 0%)',
         }} />
 
-        {/* Brand header — full-width banner logo */}
+        {/* Logo banner — taller, with title integrated */}
         {brandLogo ? (
           <img
             src={brandLogo}
             alt={brandName}
             style={{
               width: '100%',
-              height: 120,
+              height: 160,
               objectFit: 'cover',
-              objectPosition: 'center',
+              objectPosition: 'center top',
               display: 'block',
+              borderRadius: '24px 24px 0 0',
             }}
           />
         ) : (
           <div style={{
             width: '100%',
-            height: 120,
+            height: 160,
             background: '#F3F4F6',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            borderRadius: '24px 24px 0 0',
           }}>
-            <MapPin size={40} color="#9CA3AF" />
+            <MapPin size={48} color="#9CA3AF" />
           </div>
         )}
 
-        {/* Title + subtitle */}
+        {/* Title + subtitle (inside card, no separator) */}
         <div style={{
           textAlign: 'center',
-          padding: '24px 24px 16px',
+          padding: '28px 24px 24px',
+          background: '#FFFFFF',
         }}>
           <h1 style={{
             fontSize: 24,
             fontWeight: 800,
             color: '#1F2937',
-            margin: '0 0 4px',
+            margin: '0 0 6px',
             letterSpacing: '-0.02em',
           }}>
             {brandName}
@@ -86,12 +89,6 @@ export default function LocationsHub({ locations, parentBrand }) {
             Select a location
           </p>
         </div>
-
-        {/* Dashed separator */}
-        <div style={{
-          borderTop: '2px dashed #E5E7EB',
-          margin: '0 24px',
-        }} />
 
         {/* Location cards */}
         <div style={{ padding: '20px 24px' }}>
