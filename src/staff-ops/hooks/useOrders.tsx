@@ -253,7 +253,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         .subscribe((status: string, err?: Error) => {
           if (err || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn('[useOrders] Realtime unavailable, falling back to polling:', status, err?.message);
-            // Fallback: poll every 15 seconds
+            // Fallback: poll every 30 seconds, but only update changed orders (avoid full-screen blink)
             pollInterval = setInterval(() => {
               supabase
                 .from('orders')
@@ -263,9 +263,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
                 .limit(100)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .then(({ data }: { data: any[] | null }) => {
-                  if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+                  if (data) {
+                    // Smart polling: sync each order individually to avoid screen blink
+                    data.map(mapDbOrderToKimi).forEach(polledOrder => {
+                      dispatch({ type: 'UPDATE_ORDER', order: polledOrder });
+                    });
+                  }
                 });
-            }, 15000);
+            }, 30000); // 30s instead of 15s to reduce polling frequency
           }
         });
     } catch (err) {
@@ -279,9 +284,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           .limit(100)
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .then(({ data }: { data: any[] | null }) => {
-            if (data) dispatch({ type: 'HYDRATE_ORDERS', orders: data.map(mapDbOrderToKimi) });
+            if (data) {
+              // Smart polling: sync each order individually to avoid screen blink
+              data.map(mapDbOrderToKimi).forEach(polledOrder => {
+                dispatch({ type: 'UPDATE_ORDER', order: polledOrder });
+              });
+            }
           });
-      }, 15000);
+      }, 30000); // 30s instead of 15s to reduce polling frequency
     }
 
     return () => {
