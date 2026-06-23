@@ -991,6 +991,24 @@ function OwnerSummary() {
                                                     className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
                                                 />
                                             </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                    {t('brand_logo') || 'Hub Brand Logo'}
+                                                </label>
+                                                <div className="flex gap-2">
+                                                    {parentBrandLogo && (
+                                                        <img src={parentBrandLogo} alt="Brand" className="w-12 h-12 rounded-full object-cover border border-stone-200 dark:border-white/10" />
+                                                    )}
+                                                    <input
+                                                        type="text"
+                                                        value={parentBrandLogo}
+                                                        onChange={(e) => setParentBrandLogo(e.target.value)}
+                                                        placeholder="https://..."
+                                                        className="flex-1 px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                    />
+                                                </div>
+                                                <p className="text-[11px] text-stone-400 dark:text-white/40 mt-1">Logo for multi-location hub page</p>
+                                            </div>
                                             <button
                                                 onClick={saveLocationConfig}
                                                 disabled={locationConfigSaving}

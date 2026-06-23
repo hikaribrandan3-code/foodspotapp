@@ -2,8 +2,8 @@ import { ChevronRight, MapPin } from 'lucide-react'
 
 export default function LocationsHub({ locations, parentBrand }) {
   const brandName = parentBrand?.name || locations?.[0]?.parent_brand_name || 'Our Locations'
-  // Use the first location's logo_url — all locations share the same brand logo
-  const brandLogo = parentBrand?.logo || locations?.[0]?.logo_url
+  // Parent brand logo (hub header) — falls back to first location's logo if not set
+  const brandLogo = parentBrand?.logo || locations?.[0]?.parent_brand_logo || locations?.[0]?.logo_url
 
   const goToLocation = (slug) => {
     // Hard redirect so TenantContext fully re-resolves for the new slug
