@@ -5,13 +5,13 @@ import {
 } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useAudioPref } from '@/hooks/useAudioPref';
-import { useTheme } from '@/hooks/useTheme';
 import { useBusiness } from '@/contexts/BusinessContext';
 import type { Order } from '@/types';
 import { getWaitMinutes, getUrgencyLevel } from '@/types';
 
 /* ──────────────────────────────────────────────────────────────────────────
- * KITCHEN DISPLAY SYSTEM (KDS) — iPad landscape, light + dark mode
+ * KITCHEN DISPLAY SYSTEM (KDS) — dark mode, iPad landscape
+ * Self-contained dark palette (white mode is a later pass). Matches mockup 1:1.
  * Columns map to existing order FSM:
  *   PENDING   = status 'TODO'  (released to kitchen, not started)
  *   PREPARING = status 'PREP'
@@ -19,8 +19,8 @@ import { getWaitMinutes, getUrgencyLevel } from '@/types';
  * Tapping a card advances it to the next column via advanceOrderStatus().
  * ────────────────────────────────────────────────────────────────────────── */
 
-// ── Palettes ──
-const DARK = {
+// ── Hardcoded dark palette (mockup-faithful) ──
+const C = {
   screen: '#0b0b0d',
   headerBorder: 'rgba(255,255,255,0.08)',
   divider: 'rgba(255,255,255,0.07)',
@@ -34,22 +34,6 @@ const DARK = {
   cardReady: '#e7e7ea',
   cardInk: '#18181b',
   cardInkDim: '#6b6b72',
-};
-
-const LIGHT = {
-  screen: '#f8fafc',
-  headerBorder: 'rgba(0,0,0,0.06)',
-  divider: 'rgba(0,0,0,0.08)',
-  textPrimary: '#0f172a',
-  textDim: '#64748b',
-  green: '#10b981',
-  red: '#ef4444',
-  amber: '#f59e0b',
-  blue: '#3b82f6',
-  cardWhite: '#ffffff',
-  cardReady: '#f0fdf4',
-  cardInk: '#1e293b',
-  cardInkDim: '#64748b',
 };
 
 type Fulfillment = 'all' | 'delivery' | 'pickup' | 'dine_in';
@@ -244,13 +228,10 @@ function Column({
 export default function KDSView() {
   const { state, advanceOrderStatus, setTab } = useOrders();
   const { tenantSlug } = useBusiness();
-  const { isDark } = useTheme();
   const [audioEnabled, toggleAudio] = useAudioPref();
   const [filter, setFilter] = useState<Fulfillment>('all');
   const [autoClear, setAutoClear] = useState(true);
   const [nowTick, setNowTick] = useState(Date.now());
-
-  const C = isDark ? DARK : LIGHT;
 
   // tick for auto-clear recompute
   useEffect(() => {
