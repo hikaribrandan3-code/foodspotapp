@@ -38,42 +38,37 @@ export default function LocationsHub({ locations, parentBrand }) {
           clipPath: 'polygon(0% 0%, 5% 100%, 10% 0%, 15% 100%, 20% 0%, 25% 100%, 30% 0%, 35% 100%, 40% 0%, 45% 100%, 50% 0%, 55% 100%, 60% 0%, 65% 100%, 70% 0%, 75% 100%, 80% 0%, 85% 100%, 90% 0%, 95% 100%, 100% 0%)',
         }} />
 
-        {/* Brand header */}
+        {/* Brand header — full-width banner logo */}
+        {brandLogo ? (
+          <img
+            src={brandLogo}
+            alt={brandName}
+            style={{
+              width: '100%',
+              height: 120,
+              objectFit: 'cover',
+              objectPosition: 'center',
+              display: 'block',
+            }}
+          />
+        ) : (
+          <div style={{
+            width: '100%',
+            height: 120,
+            background: '#F3F4F6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <MapPin size={40} color="#9CA3AF" />
+          </div>
+        )}
+
+        {/* Title + subtitle */}
         <div style={{
           textAlign: 'center',
-          padding: '32px 24px 24px',
+          padding: '24px 24px 16px',
         }}>
-          {brandLogo ? (
-            <img
-              src={brandLogo}
-              alt={brandName}
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                objectFit: 'cover',
-                margin: '0 auto 16px',
-                display: 'block',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                border: '3px solid white',
-              }}
-            />
-          ) : (
-            <div style={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              background: '#F3F4F6',
-              margin: '0 auto 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-              border: '3px solid white',
-            }}>
-              <MapPin size={32} color="#9CA3AF" />
-            </div>
-          )}
           <h1 style={{
             fontSize: 24,
             fontWeight: 800,
