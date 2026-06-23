@@ -966,39 +966,22 @@ function OwnerSummary() {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="overflow-hidden"
                                     >
-                                        <div className="p-4 md:p-5 space-y-3">
+                                        <div className="space-y-4">
+                                            {/* Full-width logo banner */}
                                             <div>
-                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
-                                                    {t('location_label') || 'Location Label'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={locationLabel}
-                                                    onChange={(e) => setLocationLabel(e.target.value)}
-                                                    placeholder="e.g. Downtown, Belgrano"
-                                                    className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
-                                                    {t('brand_name') || 'Brand Name'}
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={parentBrandName}
-                                                    onChange={(e) => setParentBrandName(e.target.value)}
-                                                    placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
-                                                    className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-2 block px-5 pt-4">
                                                     {t('brand_logo') || 'Hub Brand Logo'}
                                                 </label>
-                                                <div className="flex gap-3 items-center">
-                                                    {parentBrandLogo && (
-                                                        <img src={parentBrandLogo} alt="Brand" className="w-16 h-16 rounded-lg object-cover border border-stone-200 dark:border-white/10" />
+                                                <div className="relative w-full h-32 bg-stone-100 dark:bg-white/5 border-b border-stone-200 dark:border-white/10 overflow-hidden">
+                                                    {parentBrandLogo ? (
+                                                        <img src={parentBrandLogo} alt="Brand" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-stone-300 dark:text-white/20">
+                                                            <span className="text-sm">No logo selected</span>
+                                                        </div>
                                                     )}
+                                                </div>
+                                                <div className="px-5 pb-4 pt-3">
                                                     <input
                                                         type="file"
                                                         accept="image/*"
@@ -1012,30 +995,57 @@ function OwnerSummary() {
                                                                 reader.readAsDataURL(file);
                                                             }
                                                         }}
-                                                        className="flex-1 px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-600 dark:text-white/60 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-emerald-100 dark:file:bg-emerald-900 file:text-emerald-700 dark:file:text-emerald-200 outline-none focus:border-emerald-500"
+                                                        className="w-full px-4 py-2.5 rounded-lg bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-600 dark:text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-emerald-100 dark:file:bg-emerald-900 file:text-emerald-700 dark:file:text-emerald-200 outline-none focus:border-emerald-500"
                                                     />
                                                 </div>
-                                                <p className="text-[11px] text-stone-400 dark:text-white/40 mt-1">Logo for multi-location hub page</p>
                                             </div>
-                                            <button
-                                                onClick={saveLocationConfig}
-                                                disabled={locationConfigSaving}
-                                                className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                                            >
-                                                {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
-                                            </button>
-                                            {/* Delete this location — available if you have 2+ locations */}
-                                            {ownerLocations.length > 1 && (
+
+                                            {/* Form fields */}
+                                            <div className="px-5 space-y-3 pb-4">
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                        {t('location_label') || 'Location Label'}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={locationLabel}
+                                                        onChange={(e) => setLocationLabel(e.target.value)}
+                                                        placeholder="e.g. Downtown, Belgrano"
+                                                        className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                        {t('brand_name') || 'Brand Name'}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={parentBrandName}
+                                                        onChange={(e) => setParentBrandName(e.target.value)}
+                                                        placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
+                                                        className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                    />
+                                                </div>
                                                 <button
-                                                    onClick={() => {
-                                                        const current = ownerLocations.find(l => l.id === businessId)
-                                                        if (current) { setDeletingLocation({ id: current.id, name: current.location_label || current.name }); setDeleteConfirmText('') }
-                                                    }}
-                                                    className="w-full py-2.5 rounded-full text-sm font-bold text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                    onClick={saveLocationConfig}
+                                                    disabled={locationConfigSaving}
+                                                    className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                                                 >
-                                                    {t('delete_location') || 'Delete This Location'}
+                                                    {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
                                                 </button>
-                                            )}
+                                                {/* Delete this location — available if you have 2+ locations */}
+                                                {ownerLocations.length > 1 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            const current = ownerLocations.find(l => l.id === businessId)
+                                                            if (current) { setDeletingLocation({ id: current.id, name: current.location_label || current.name }); setDeleteConfirmText('') }
+                                                        }}
+                                                        className="w-full py-2.5 rounded-full text-sm font-bold text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                    >
+                                                        {t('delete_location') || 'Delete This Location'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </motion.div>
                                 )}
