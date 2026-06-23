@@ -19,76 +19,75 @@ import { getWaitMinutes, getUrgencyLevel } from '@/types';
  * Tapping a card advances it to the next column via advanceOrderStatus().
  * ────────────────────────────────────────────────────────────────────────── */
 
-// ── Hardcoded dark palette (mockup-faithful) ──
-const C = {
-  screen: '#0b0b0d',
-  headerBorder: 'rgba(255,255,255,0.08)',
-  divider: 'rgba(255,255,255,0.07)',
-  textPrimary: '#f5f5f7',
-  textDim: '#8a8a92',
-  green: '#22c55e',
-  red: '#ef4444',
-  amber: '#f59e0b',
-  blue: '#3b82f6',
-  cardWhite: '#f4f4f5',
-  cardReady: '#e7e7ea',
-  cardInk: '#18181b',
-  cardInkDim: '#6b6b72',
-};
-
 type Fulfillment = 'all' | 'delivery' | 'pickup' | 'dine_in';
 
-function orderLabel(o: Order): string {
-  const raw = o.orderNumber || o.id?.slice(-4) || '0000';
-  const clean = String(raw).replace(/^#/, '');
-  return `#${clean}`;
-}
+/* ── Main KDS View ── */
+export default function KDSView() {
+  // ── Hardcoded dark palette (mockup-faithful) ──
+  const C = {
+    screen: '#0b0b0d',
+    headerBorder: 'rgba(255,255,255,0.08)',
+    divider: 'rgba(255,255,255,0.07)',
+    textPrimary: '#f5f5f7',
+    textDim: '#8a8a92',
+    green: '#22c55e',
+    red: '#ef4444',
+    amber: '#f59e0b',
+    blue: '#3b82f6',
+    cardWhite: '#f4f4f5',
+    cardReady: '#e7e7ea',
+    cardInk: '#18181b',
+    cardInkDim: '#6b6b72',
+  };
 
-function fulfillmentTag(o: Order): { label: string; color: string } {
-  switch (o.deliveryType) {
-    case 'delivery': return { label: 'DELIVERY', color: C.blue };
-    case 'pickup': return { label: 'PICKUP', color: C.amber };
-    case 'dine_in': return { label: 'DINE-IN', color: C.green };
-    default: return { label: 'ORDER', color: C.textDim };
-  }
-}
+  const orderLabel = (o: Order): string => {
+    const raw = o.orderNumber || o.id?.slice(-4) || '0000';
+    const clean = String(raw).replace(/^#/, '');
+    return `#${clean}`;
+  };
 
-function fulfillmentLine(o: Order): string {
-  if (o.deliveryType === 'dine_in') return o.tableNumber ? `Dine-in / Table ${o.tableNumber}` : 'Dine-in';
-  if (o.deliveryType === 'pickup') return 'Pickup';
-  if (o.deliveryType === 'delivery') return 'Delivery';
-  return 'Order';
-}
+  const fulfillmentTag = (o: Order): { label: string; color: string } => {
+    switch (o.deliveryType) {
+      case 'delivery': return { label: 'DELIVERY', color: C.blue };
+      case 'pickup': return { label: 'PICKUP', color: C.amber };
+      case 'dine_in': return { label: 'DINE-IN', color: C.green };
+      default: return { label: 'ORDER', color: C.textDim };
+    }
+  };
 
-function readyLabel(o: Order): string {
-  if (o.deliveryType === 'delivery') return '[DELIVERY READY]';
-  if (o.deliveryType === 'dine_in') return '[DINE-IN READY]';
-  return '[PICKUP READY]';
-}
+  const fulfillmentLine = (o: Order): string => {
+    if (o.deliveryType === 'dine_in') return o.tableNumber ? `Dine-in / Table ${o.tableNumber}` : 'Dine-in';
+    if (o.deliveryType === 'pickup') return 'Pickup';
+    if (o.deliveryType === 'delivery') return 'Delivery';
+    return 'Order';
+  };
 
-/** mm:ss elapsed since createdAt */
-function useElapsed(createdAt: number): string {
-  const [, force] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => force(n => n + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const totalSec = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
-  const m = Math.floor(totalSec / 60);
-  const s = totalSec % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+  const readyLabel = (o: Order): string => {
+    if (o.deliveryType === 'delivery') return '[DELIVERY READY]';
+    if (o.deliveryType === 'dine_in') return '[DINE-IN READY]';
+    return '[PICKUP READY]';
+  };
 
-function urgencyColor(createdAt: number): string {
-  const u = getUrgencyLevel(createdAt);
-  if (u === 'critical') return C.red;
-  if (u === 'warning') return C.amber;
-  return C.green;
-}
+  const useElapsed = (createdAt: number): string => {
+    const [, force] = useState(0);
+    useEffect(() => {
+      const id = setInterval(() => force(n => n + 1), 1000);
+      return () => clearInterval(id);
+    }, []);
+    const totalSec = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
-/* ── Item list (shared) ── */
-function ItemLines({ o, dim }: { o: Order; dim?: boolean }) {
-  return (
+  const urgencyColor = (createdAt: number): string => {
+    const u = getUrgencyLevel(createdAt);
+    if (u === 'critical') return C.red;
+    if (u === 'warning') return C.amber;
+    return C.green;
+  };
+
+  const ItemLines = ({ o, dim }: { o: Order; dim?: boolean }) => (
     <div className="space-y-1">
       {o.items.map((it, i) => (
         <div key={it.id || i}>
@@ -104,85 +103,78 @@ function ItemLines({ o, dim }: { o: Order; dim?: boolean }) {
       ))}
     </div>
   );
-}
 
-/* ── PENDING card (colored header band + white body) ── */
-function PendingCard({ o, onAdvance }: { o: Order; onAdvance: () => void }) {
-  const elapsed = useElapsed(o.createdAt);
-  const uc = urgencyColor(o.createdAt);
-  const isUrgent = getUrgencyLevel(o.createdAt) === 'critical';
+  const PendingCard = ({ o, onAdvance }: { o: Order; onAdvance: () => void }) => {
+    const elapsed = useElapsed(o.createdAt);
+    const uc = urgencyColor(o.createdAt);
+    const isUrgent = getUrgencyLevel(o.createdAt) === 'critical';
 
-  return (
-    <motion.button
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      onClick={onAdvance}
-      className="w-full text-left rounded-2xl overflow-hidden shadow-lg active:scale-[0.98] transition-transform"
-      style={{ background: C.cardWhite }}
-    >
-      {/* Colored header band */}
-      <div className="flex items-center justify-between px-4 py-2.5" style={{ background: uc }}>
-        <span className="text-[17px] font-black text-white tracking-tight">{orderLabel(o)}</span>
-        {isUrgent && (
-          <span className="text-[10px] font-black text-white tracking-widest px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,0,0,0.18)' }}>
-            URGENT
+    return (
+      <motion.button
+        layout
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        onClick={onAdvance}
+        className="w-full text-left rounded-2xl overflow-hidden shadow-lg active:scale-[0.98] transition-transform"
+        style={{ background: C.cardWhite }}
+      >
+        <div className="flex items-center justify-between px-4 py-2.5" style={{ background: uc }}>
+          <span className="text-[17px] font-black text-white tracking-tight">{orderLabel(o)}</span>
+          {isUrgent && (
+            <span className="text-[10px] font-black text-white tracking-widest px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,0,0,0.18)' }}>
+              URGENT
+            </span>
+          )}
+        </div>
+        <div className="px-4 py-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1"><ItemLines o={o} /></div>
+            <span className="text-[15px] font-black font-mono-num shrink-0" style={{ color: uc }}>({elapsed})</span>
+          </div>
+          <div className="flex items-center justify-between mt-3 pt-2.5" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+            <span className="text-[12px] font-semibold" style={{ color: C.cardInkDim }}>{fulfillmentLine(o)}</span>
+            <span className="text-[12px] font-bold tracking-wide" style={{ color: C.cardInk }}>TAP →</span>
+          </div>
+        </div>
+      </motion.button>
+    );
+  };
+
+  const PreparingCard = ({ o, onAdvance }: { o: Order; onAdvance: () => void }) => {
+    const elapsed = useElapsed(o.createdAt);
+    const tag = fulfillmentTag(o);
+
+    return (
+      <motion.button
+        layout
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        onClick={onAdvance}
+        className="w-full text-left rounded-2xl overflow-hidden shadow-lg active:scale-[0.98] transition-transform"
+        style={{ background: C.cardWhite }}
+      >
+        <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+          <span className="text-[17px] font-black tracking-tight" style={{ color: C.cardInk }}>{orderLabel(o)}</span>
+          <span className="text-[10px] font-black text-white tracking-widest px-2 py-0.5 rounded-md" style={{ background: tag.color }}>
+            {tag.label}
           </span>
-        )}
-      </div>
-      {/* Body */}
-      <div className="px-4 py-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1"><ItemLines o={o} /></div>
-          <span className="text-[15px] font-black font-mono-num shrink-0" style={{ color: uc }}>({elapsed})</span>
         </div>
-        <div className="flex items-center justify-between mt-3 pt-2.5" style={{ borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-          <span className="text-[12px] font-semibold" style={{ color: C.cardInkDim }}>{fulfillmentLine(o)}</span>
-          <span className="text-[12px] font-bold tracking-wide" style={{ color: C.cardInk }}>TAP →</span>
+        <div className="px-4 pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1"><ItemLines o={o} /></div>
+            <span className="text-[15px] font-black font-mono-num shrink-0" style={{ color: C.cardInkDim }}>({elapsed})</span>
+          </div>
+          <div className="mt-2.5 text-right">
+            <span className="text-[12px] font-bold tracking-wide" style={{ color: C.cardInk }}>TAP →</span>
+          </div>
         </div>
-      </div>
-    </motion.button>
-  );
-}
+      </motion.button>
+    );
+  };
 
-/* ── PREPARING card (white, fulfillment badge) ── */
-function PreparingCard({ o, onAdvance }: { o: Order; onAdvance: () => void }) {
-  const elapsed = useElapsed(o.createdAt);
-  const tag = fulfillmentTag(o);
-
-  return (
-    <motion.button
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      onClick={onAdvance}
-      className="w-full text-left rounded-2xl overflow-hidden shadow-lg active:scale-[0.98] transition-transform"
-      style={{ background: C.cardWhite }}
-    >
-      <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-        <span className="text-[17px] font-black tracking-tight" style={{ color: C.cardInk }}>{orderLabel(o)}</span>
-        <span className="text-[10px] font-black text-white tracking-widest px-2 py-0.5 rounded-md" style={{ background: tag.color }}>
-          {tag.label}
-        </span>
-      </div>
-      <div className="px-4 pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1"><ItemLines o={o} /></div>
-          <span className="text-[15px] font-black font-mono-num shrink-0" style={{ color: C.cardInkDim }}>({elapsed})</span>
-        </div>
-        <div className="mt-2.5 text-right">
-          <span className="text-[12px] font-bold tracking-wide" style={{ color: C.cardInk }}>TAP →</span>
-        </div>
-      </div>
-    </motion.button>
-  );
-}
-
-/* ── READY card (muted, green check) ── */
-function ReadyCard({ o, onAdvance }: { o: Order; onAdvance: () => void }) {
-  return (
+  const ReadyCard = ({ o, onAdvance }: { o: Order; onAdvance: () => void }) => (
     <motion.button
       layout
       initial={{ opacity: 0, y: 10 }}
@@ -204,13 +196,10 @@ function ReadyCard({ o, onAdvance }: { o: Order; onAdvance: () => void }) {
       </div>
     </motion.button>
   );
-}
 
-/* ── Column shell ── */
-function Column({
-  title, count, countColor, children, divider,
-}: { title: string; count: number; countColor: string; children: React.ReactNode; divider?: boolean }) {
-  return (
+  const Column = ({
+    title, count, countColor, children, divider,
+  }: { title: string; count: number; countColor: string; children: React.ReactNode; divider?: boolean }) => (
     <div className="flex-1 min-w-0 flex flex-col h-full" style={divider ? { borderLeft: `1px solid ${C.divider}` } : undefined}>
       <div className="px-5 pt-5 pb-3">
         <h2 className="text-[20px] font-black tracking-tight" style={{ color: countColor }}>
@@ -222,10 +211,6 @@ function Column({
       </div>
     </div>
   );
-}
-
-/* ── Main KDS View ── */
-export default function KDSView() {
   const { state, advanceOrderStatus, setTab } = useOrders();
   const { tenantSlug } = useBusiness();
   const [audioEnabled, toggleAudio] = useAudioPref();
