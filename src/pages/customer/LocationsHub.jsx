@@ -66,25 +66,17 @@ export default function LocationsHub({ locations, parentBrand }) {
           </div>
         )}
 
-        {/* Title + subtitle (inside card, no separator) */}
+        {/* Subtitle only (inside card, no separator) */}
         <div style={{
           textAlign: 'center',
-          padding: '28px 24px 24px',
+          padding: '20px 24px',
           background: '#FFFFFF',
         }}>
-          <h1 style={{
-            fontSize: 24,
-            fontWeight: 800,
-            color: '#1F2937',
-            margin: '0 0 6px',
-            letterSpacing: '-0.02em',
-          }}>
-            {brandName}
-          </h1>
           <p style={{
-            fontSize: 14,
+            fontSize: 16,
             color: '#6B7280',
             margin: 0,
+            fontWeight: 500,
           }}>
             Select a location
           </p>
