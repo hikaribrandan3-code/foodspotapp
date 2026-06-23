@@ -7,6 +7,7 @@ import { useCart } from '../../contexts/CartContext'
 import DesktopMenuTab from './desktop/DesktopMenuTab'
 import DesktopCart from './desktop/DesktopCart'
 import DesktopInfoTab from './desktop/DesktopInfoTab'
+import DesktopStatusTab from './desktop/DesktopStatusTab'
 import { buildTenantSeo } from './desktop/useTenantSeo'
 
 const NAV = [
@@ -126,7 +127,7 @@ export default function DesktopApp() {
                     {activeTab === 'events' && <ComingSoonStub label="Events" />}
                     {activeTab === 'games' && <ComingSoonStub label="Games" />}
                     {activeTab === 'info' && <DesktopInfoTab />}
-                    {activeTab === 'status' && <ComingSoonStub label="Status" />}
+                    {activeTab === 'status' && <DesktopStatusTab />}
                 </main>
             </div>
 
