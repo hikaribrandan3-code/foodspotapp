@@ -848,49 +848,6 @@ function BackendNav({
                         </button>
                     )}
 
-                    {/* Switch Location — show ALL locations (current highlighted, others clickable) */}
-                    {locations.map(loc => {
-                        const isCurrent = loc.slug === tenantSlug
-                        return (
-                            <button
-                                key={loc.id}
-                                onClick={() => !isCurrent && handleSwitchLocation(loc.slug)}
-                                disabled={isCurrent}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: 10,
-                                    width: '100%', padding: '9px 12px', borderRadius: 20,
-                                    border: 'none',
-                                    background: isCurrent
-                                        ? (isDark ? 'rgba(16,185,129,0.15)' : '#f0fdf4')
-                                        : 'transparent',
-                                    cursor: isCurrent ? 'default' : 'pointer',
-                                    WebkitTapHighlightColor: 'transparent',
-                                    opacity: isCurrent ? 1 : 0.7,
-                                    transition: 'all 0.15s',
-                                }}
-                                onMouseEnter={(e) => !isCurrent && (e.currentTarget.style.opacity = '1')}
-                                onMouseLeave={(e) => !isCurrent && (e.currentTarget.style.opacity = '0.7')}
-                            >
-                                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={isCurrent ? '#10b981' : (isDark ? '#64748b' : '#9ca3af')} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                    <circle cx="12" cy="10" r="3" />
-                                </svg>
-                                <span style={{
-                                    fontSize: 12, fontWeight: isCurrent ? 700 : 600,
-                                    color: isCurrent ? '#10b981' : (isDark ? '#64748b' : '#9ca3af'),
-                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                    flex: 1,
-                                }}>
-                                    {loc.name}
-                                </span>
-                                {isCurrent && (
-                                    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                )}
-                            </button>
-                        )
-                    })}
 
                     {/* Logout */}
                     <button

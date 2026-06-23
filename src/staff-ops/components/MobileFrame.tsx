@@ -83,7 +83,7 @@ function DesktopSidebar() {
           style={{ backgroundColor: 'transparent', color: 'var(--text-tertiary)' }}
         >
           <Monitor size={20} strokeWidth={2.2} />
-          Kitchen Display
+          KDS System
         </button>
       </nav>
     </aside>
