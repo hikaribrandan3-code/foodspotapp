@@ -416,6 +416,18 @@ export const staffTranslations: Record<string, Record<string, string>> = {
   'reservation_empty': { en: 'No reservations yet', es: 'Sin reservas todavía', pt: 'Sem reservas ainda' },
   'reservation_today': { en: 'Today', es: 'Hoy', pt: 'Hoje' },
   'reservation_upcoming': { en: 'Upcoming', es: 'Próximas', pt: 'Próximas' },
+  // KDS (Kitchen Display System)
+  'kds_pending': { en: 'PENDING', es: 'PENDIENTE', pt: 'PENDENTE' },
+  'kds_preparing': { en: 'PREPARING', es: 'PREPARANDO', pt: 'PREPARANDO' },
+  'kds_ready': { en: 'READY', es: 'LISTO', pt: 'PRONTO' },
+  'kds_settings': { en: 'Settings', es: 'Configuración', pt: 'Configurações' },
+  'kds_auto_clear': { en: 'Auto-clear', es: 'Limpiar Automático', pt: 'Limpar Automático' },
+  'kds_filter': { en: 'Filter', es: 'Filtro', pt: 'Filtro' },
+  'kds_exit': { en: 'Exit', es: 'Salir', pt: 'Sair' },
+  'kds_active': { en: 'active', es: 'activo', pt: 'ativo' },
+  'kds_delivery': { en: 'DELIVERY', es: 'ENTREGA', pt: 'ENTREGA' },
+  'kds_pickup': { en: 'PICKUP', es: 'RETIRAR', pt: 'RETIRADA' },
+  'kds_dine_in': { en: 'DINE-IN', es: 'COMER AQUÍ', pt: 'COMER NO LOCAL' },
 };
 
 export function t(key: string, lang: string = 'en'): string {

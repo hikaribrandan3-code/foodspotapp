@@ -7,6 +7,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useAudioPref } from '@/hooks/useAudioPref';
 import { useTheme } from '@/hooks/useTheme';
 import { useBusiness } from '@/contexts/BusinessContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { Order } from '@/types';
 import { getWaitMinutes, getUrgencyLevel } from '@/types';
 
@@ -53,6 +54,7 @@ const LIGHT = {
 /* ── Main KDS View ── */
 export default function KDSView() {
   const { theme, toggleTheme } = useTheme();
+  const { language, t } = useLanguage();
   const C = theme === 'dark' ? DARK : LIGHT;
 
   const orderLabel = (o: Order): string => {
@@ -63,9 +65,9 @@ export default function KDSView() {
 
   const fulfillmentTag = (o: Order): { label: string; color: string } => {
     switch (o.deliveryType) {
-      case 'delivery': return { label: 'DELIVERY', color: C.blue };
-      case 'pickup': return { label: 'PICKUP', color: C.amber };
-      case 'dine_in': return { label: 'DINE-IN', color: C.green };
+      case 'delivery': return { label: t('kds_delivery'), color: C.blue };
+      case 'pickup': return { label: t('kds_pickup'), color: C.amber };
+      case 'dine_in': return { label: t('kds_dine_in'), color: C.green };
       default: return { label: 'ORDER', color: C.textDim };
     }
   };
@@ -304,20 +306,20 @@ export default function KDSView() {
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button onClick={() => setTab('board')} className="flex items-center gap-1.5" style={{ color: C.textDim }}>
-            <Home size={16} /><span className="text-[13px] font-semibold">Exit</span>
+            <Home size={16} /><span className="text-[13px] font-semibold">{t('kds_exit')}</span>
           </button>
         </div>
       </header>
 
       {/* ── Columns ── */}
       <div className="flex-1 flex min-h-0" style={{ background: C.colBg }}>
-        <Column title="PENDING" count={pending.length} countColor={C.textPrimary} C={C}>
+        <Column title={t('kds_pending')} count={pending.length} countColor={C.textPrimary} C={C}>
           {pending.map(o => <PendingCard key={o.id} o={o} onAdvance={() => advanceOrderStatus(o.id)} />)}
         </Column>
-        <Column title="PREPARING" count={preparing.length} countColor={C.textPrimary} divider C={C}>
+        <Column title={t('kds_preparing')} count={preparing.length} countColor={C.textPrimary} divider C={C}>
           {preparing.map(o => <PreparingCard key={o.id} o={o} onAdvance={() => advanceOrderStatus(o.id)} />)}
         </Column>
-        <Column title="READY" count={ready.length} countColor={C.green} divider C={C}>
+        <Column title={t('kds_ready')} count={ready.length} countColor={C.green} divider C={C}>
           {ready.map(o => <ReadyCard key={o.id} o={o} onAdvance={() => advanceOrderStatus(o.id)} />)}
         </Column>
       </div>
@@ -349,7 +351,7 @@ export default function KDSView() {
             className="flex items-center gap-2 px-4 h-9 rounded-full text-[13px] font-semibold"
             style={{ background: C.footerBtnBg, color: C.textPrimary }}
           >
-            Auto-clear
+            {t('kds_auto_clear')}
             <span
               className="w-9 h-5 rounded-full relative transition-colors"
               style={{ background: autoClear ? C.green : C.footerBtnBg }}
