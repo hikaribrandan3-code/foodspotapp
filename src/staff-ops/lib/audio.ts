@@ -87,20 +87,20 @@ export function alertDeliveryConfirmed() {
 }
 
 /**
- * Alert: Kitchen order ready to cook — 3 fast loud beeps (1.8s total)
- * Quick, energetic alert for new orders
+ * Alert: Kitchen order ready to cook — 3 fast LOUD beeps (1.8s total)
+ * Quick, energetic, hard-hitting alert for new orders
  */
 export function alert3Beep() {
-  const loudGain = 0.6; // Louder than default (0.3)
+  const LOUD = 0.85; // VERY LOUD (max safe without distortion)
 
-  // Beep 1 — sharp, bright tone (800Hz)
-  playPing(800, 0.4, 'square', loudGain);
+  // Beep 1 — sharp, bright tone (800Hz), short & punchy
+  playPing(800, 0.25, 'square', LOUD);
 
-  // Beep 2 — medium-high (900Hz), starts 0.5s after beep 1 ends
-  setTimeout(() => playPing(900, 0.4, 'square', loudGain), 500);
+  // Beep 2 — medium-high (900Hz), starts 0.35s after beep 1
+  setTimeout(() => playPing(900, 0.25, 'square', LOUD), 350);
 
-  // Beep 3 — higher (1000Hz), starts 1.0s after beep 1 ends
-  setTimeout(() => playPing(1000, 0.4, 'square', loudGain), 1000);
+  // Beep 3 — highest (1000Hz), starts 0.70s after beep 1
+  setTimeout(() => playPing(1000, 0.25, 'square', LOUD), 700);
 }
 
 /**
