@@ -1,44 +1,59 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Settings, BarChart3, Home, Volume2, VolumeX, SlidersHorizontal, Check,
+  Settings, BarChart3, Home, Volume2, VolumeX, SlidersHorizontal, Check, Sun, Moon,
 } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useAudioPref } from '@/hooks/useAudioPref';
+import { useTheme } from '@/hooks/useTheme';
 import { useBusiness } from '@/contexts/BusinessContext';
 import type { Order } from '@/types';
 import { getWaitMinutes, getUrgencyLevel } from '@/types';
 
-/* ──────────────────────────────────────────────────────────────────────────
- * KITCHEN DISPLAY SYSTEM (KDS) — dark mode, iPad landscape
- * Self-contained dark palette (white mode is a later pass). Matches mockup 1:1.
- * Columns map to existing order FSM:
- *   PENDING   = status 'TODO'  (released to kitchen, not started)
- *   PREPARING = status 'PREP'
- *   READY     = status 'READY'
- * Tapping a card advances it to the next column via advanceOrderStatus().
- * ────────────────────────────────────────────────────────────────────────── */
-
 type Fulfillment = 'all' | 'delivery' | 'pickup' | 'dine_in';
+
+const DARK = {
+  screen: '#0b0b0d',
+  headerBg: '#0b0b0d',
+  headerBorder: 'rgba(255,255,255,0.08)',
+  divider: 'rgba(255,255,255,0.07)',
+  textPrimary: '#f5f5f7',
+  textDim: '#8a8a92',
+  green: '#22c55e',
+  red: '#ef4444',
+  amber: '#f59e0b',
+  blue: '#3b82f6',
+  cardWhite: '#1e1e22',
+  cardReady: '#16211a',
+  cardInk: '#f4f4f5',
+  cardInkDim: '#9a9aa8',
+  footerBtnBg: 'rgba(255,255,255,0.06)',
+  colBg: '#0b0b0d',
+};
+
+const LIGHT = {
+  screen: '#f1f5f9',
+  headerBg: '#ffffff',
+  headerBorder: 'rgba(0,0,0,0.08)',
+  divider: 'rgba(0,0,0,0.07)',
+  textPrimary: '#0f172a',
+  textDim: '#64748b',
+  green: '#10b981',
+  red: '#ef4444',
+  amber: '#f59e0b',
+  blue: '#3b82f6',
+  cardWhite: '#ffffff',
+  cardReady: '#f0fdf4',
+  cardInk: '#18181b',
+  cardInkDim: '#6b7280',
+  footerBtnBg: 'rgba(0,0,0,0.06)',
+  colBg: '#f1f5f9',
+};
 
 /* ── Main KDS View ── */
 export default function KDSView() {
-  // ── Hardcoded dark palette (mockup-faithful) ──
-  const C = {
-    screen: '#0b0b0d',
-    headerBorder: 'rgba(255,255,255,0.08)',
-    divider: 'rgba(255,255,255,0.07)',
-    textPrimary: '#f5f5f7',
-    textDim: '#8a8a92',
-    green: '#22c55e',
-    red: '#ef4444',
-    amber: '#f59e0b',
-    blue: '#3b82f6',
-    cardWhite: '#f4f4f5',
-    cardReady: '#e7e7ea',
-    cardInk: '#18181b',
-    cardInkDim: '#6b6b72',
-  };
+  const { theme, toggleTheme } = useTheme();
+  const C = theme === 'dark' ? DARK : LIGHT;
 
   const orderLabel = (o: Order): string => {
     const raw = o.orderNumber || o.id?.slice(-4) || '0000';
@@ -198,9 +213,9 @@ export default function KDSView() {
   );
 
   const Column = ({
-    title, count, countColor, children, divider,
-  }: { title: string; count: number; countColor: string; children: React.ReactNode; divider?: boolean }) => (
-    <div className="flex-1 min-w-0 flex flex-col h-full" style={divider ? { borderLeft: `1px solid ${C.divider}` } : undefined}>
+    title, count, countColor, children, divider, C: palette,
+  }: { title: string; count: number; countColor: string; children: React.ReactNode; divider?: boolean; C: typeof DARK }) => (
+    <div className="flex-1 min-w-0 flex flex-col h-full" style={divider ? { borderLeft: `1px solid ${palette.divider}` } : undefined}>
       <div className="px-5 pt-5 pb-3">
         <h2 className="text-[20px] font-black tracking-tight" style={{ color: countColor }}>
           {title} <span style={{ color: countColor }}>({count})</span>
@@ -262,7 +277,7 @@ export default function KDSView() {
       {/* ── Header ── */}
       <header
         className="flex items-center justify-between px-5 h-14 shrink-0"
-        style={{ borderBottom: `1px solid ${C.headerBorder}` }}
+        style={{ borderBottom: `1px solid ${C.headerBorder}`, background: C.headerBg }}
       >
         {/* Logo → exit home */}
         <button onClick={() => setTab('board')} className="flex items-center gap-2 group">
@@ -277,12 +292,17 @@ export default function KDSView() {
 
         {/* Right controls */}
         <div className="flex items-center gap-5">
-          <button onClick={toggleAudio} className="flex items-center gap-1.5" style={{ color: C.textDim }}>
-            <Settings size={16} /><span className="text-[13px] font-semibold">Settings</span>
-          </button>
           <div className="flex items-center gap-1.5" style={{ color: C.textDim }}>
             <BarChart3 size={16} /><span className="text-[13px] font-semibold">{pending.length + preparing.length} active</span>
           </div>
+          <button
+            onClick={toggleTheme}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+            style={{ background: C.footerBtnBg, color: C.textDim }}
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <button onClick={() => setTab('board')} className="flex items-center gap-1.5" style={{ color: C.textDim }}>
             <Home size={16} /><span className="text-[13px] font-semibold">Exit</span>
           </button>
@@ -290,14 +310,14 @@ export default function KDSView() {
       </header>
 
       {/* ── Columns ── */}
-      <div className="flex-1 flex min-h-0">
-        <Column title="PENDING" count={pending.length} countColor={C.textPrimary}>
+      <div className="flex-1 flex min-h-0" style={{ background: C.colBg }}>
+        <Column title="PENDING" count={pending.length} countColor={C.textPrimary} C={C}>
           {pending.map(o => <PendingCard key={o.id} o={o} onAdvance={() => advanceOrderStatus(o.id)} />)}
         </Column>
-        <Column title="PREPARING" count={preparing.length} countColor={C.textPrimary} divider>
+        <Column title="PREPARING" count={preparing.length} countColor={C.textPrimary} divider C={C}>
           {preparing.map(o => <PreparingCard key={o.id} o={o} onAdvance={() => advanceOrderStatus(o.id)} />)}
         </Column>
-        <Column title="READY" count={ready.length} countColor={C.green} divider>
+        <Column title="READY" count={ready.length} countColor={C.green} divider C={C}>
           {ready.map(o => <ReadyCard key={o.id} o={o} onAdvance={() => advanceOrderStatus(o.id)} />)}
         </Column>
       </div>
@@ -305,12 +325,12 @@ export default function KDSView() {
       {/* ── Footer ── */}
       <footer
         className="flex items-center justify-between px-5 h-14 shrink-0"
-        style={{ borderTop: `1px solid ${C.headerBorder}` }}
+        style={{ borderTop: `1px solid ${C.headerBorder}`, background: C.headerBg }}
       >
         <button
           onClick={toggleAudio}
           className="w-9 h-9 rounded-full flex items-center justify-center"
-          style={{ background: 'rgba(255,255,255,0.06)', color: C.textDim }}
+          style={{ background: C.footerBtnBg, color: C.textDim }}
           aria-label={audioEnabled ? 'Mute alerts' : 'Unmute alerts'}
         >
           {audioEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -320,23 +340,23 @@ export default function KDSView() {
           <button
             onClick={cycleFilter}
             className="flex items-center gap-2 px-4 h-9 rounded-full text-[13px] font-semibold"
-            style={{ background: 'rgba(255,255,255,0.06)', color: C.textPrimary }}
+            style={{ background: C.footerBtnBg, color: C.textPrimary }}
           >
             <SlidersHorizontal size={15} /> {filterLabel}
           </button>
           <button
             onClick={() => setAutoClear(a => !a)}
             className="flex items-center gap-2 px-4 h-9 rounded-full text-[13px] font-semibold"
-            style={{ background: 'rgba(255,255,255,0.06)', color: C.textPrimary }}
+            style={{ background: C.footerBtnBg, color: C.textPrimary }}
           >
             Auto-clear
             <span
               className="w-9 h-5 rounded-full relative transition-colors"
-              style={{ background: autoClear ? C.green : 'rgba(255,255,255,0.15)' }}
+              style={{ background: autoClear ? C.green : C.footerBtnBg }}
             >
               <span
-                className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all"
-                style={{ left: autoClear ? '18px' : '2px' }}
+                className="absolute top-0.5 w-4 h-4 rounded-full transition-all"
+                style={{ left: autoClear ? '18px' : '2px', background: autoClear ? '#fff' : C.textDim }}
               />
             </span>
           </button>

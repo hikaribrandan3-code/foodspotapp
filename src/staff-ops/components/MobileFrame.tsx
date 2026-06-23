@@ -98,7 +98,7 @@ export default function MobileFrame() {
   // KDSView has its own Exit/Home control to return.
   if (state.currentTab === 'kds') {
     return (
-      <div className="w-full h-[100dvh] relative overflow-hidden" style={{ backgroundColor: '#0b0b0d' }}>
+      <div className="w-full h-[100dvh] relative overflow-hidden">
         <KDSView />
       </div>
     );
