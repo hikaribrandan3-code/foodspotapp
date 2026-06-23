@@ -1,10 +1,14 @@
-import { useNavigate } from 'react-router-dom'
 import { ChevronRight, MapPin } from 'lucide-react'
 
 export default function LocationsHub({ locations, parentBrand }) {
-  const navigate = useNavigate()
   const brandName = parentBrand?.name || locations?.[0]?.parent_brand_name || 'Our Locations'
-  const brandLogo = parentBrand?.logo || locations?.[0]?.parent_brand_logo || locations?.[0]?.logo_url
+  // Use the first location's logo_url — all locations share the same brand logo
+  const brandLogo = parentBrand?.logo || locations?.[0]?.logo_url
+
+  const goToLocation = (slug) => {
+    // Hard redirect so TenantContext fully re-resolves for the new slug
+    window.location.href = `/${slug}`
+  }
 
   return (
     <div style={{
@@ -99,7 +103,7 @@ export default function LocationsHub({ locations, parentBrand }) {
           {(locations || []).map((loc, i) => (
             <button
               key={loc.slug || i}
-              onClick={() => navigate(`/${loc.slug}`)}
+              onClick={() => goToLocation(loc.slug)}
               style={{
                 width: '100%',
                 display: 'flex',

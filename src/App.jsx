@@ -186,6 +186,12 @@ function HomeOrHub({ config }) {
     return <Home config={config} />
 }
 
+function BottomNavGuard({ config }) {
+    const { parentSlugLocations } = useTenant()
+    if (parentSlugLocations && parentSlugLocations.length > 0) return null
+    return <BottomNav config={config} />
+}
+
 // Redirects to the isolated staff-ops Vite entry, passing business context via URL params
 function StaffOpsRedirect() {
     const { tenantData, businessId, loading: tenantLoading } = useTenant();
@@ -724,7 +730,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && <BottomNav config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && <BottomNavGuard config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>
