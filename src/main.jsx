@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
+import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 
 // Core Imports (Static to prevent ChunkLoadError on mobile)
@@ -121,11 +122,13 @@ if (path.startsWith('/admin')) {
     try {
         root.render(
             <React.StrictMode>
-                <BrowserRouter>
-                    <TenantProvider>
-                        <App />
-                    </TenantProvider>
-                </BrowserRouter>
+                <HelmetProvider>
+                    <BrowserRouter>
+                        <TenantProvider>
+                            <App />
+                        </TenantProvider>
+                    </BrowserRouter>
+                </HelmetProvider>
             </React.StrictMode>
         )
     } catch (err) {

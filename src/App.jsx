@@ -153,6 +153,9 @@ const Arcade          = lazy(() => import('./pages/customer/Arcade.jsx'))
 const Session         = lazy(() => import('./pages/customer/Session.jsx'))
 const CameraGuard     = lazy(() => import('./components/Camera/CameraGuard.jsx'))
 
+// Desktop web frontend (lazy — desktop/tablet customer route)
+const DesktopApp = lazy(() => import('./pages/customer/DesktopApp.jsx'))
+
 // Staff Pages (lazy — staff users only)
 const StaffKDS = lazy(() => import('./pages/staff/StaffKDS.jsx'))
 
@@ -607,7 +610,7 @@ function App() {
     // Device detection: route tablet/desktop to login (only for unauthenticated users)
     const device = useDevice()
     useEffect(() => {
-        if (device === 'tablet' && !pathname.includes('/login') && !authUser && !pathname.includes('/owner') && !pathname.includes('/staff')) {
+        if (device === 'tablet' && !pathname.includes('/login') && !authUser && !pathname.includes('/owner') && !pathname.includes('/staff') && !pathname.includes('/web')) {
             navigate('/login', { replace: true })
         }
     }, [device, pathname, authUser, navigate])
@@ -682,6 +685,7 @@ function App() {
                                             <Route path="/:tenantSlug" element={<HomeOrHub config={safeConfig} />} />
                                             <Route path="/:tenantSlug/home" element={<Home config={safeConfig} />} />
                                             <Route path="/:tenantSlug/menu" element={<Menu config={safeConfig} />} />
+                                            <Route path="/:tenantSlug/web" element={<Suspense fallback={<LazyFallback />}><DesktopApp /></Suspense>} />
                                             <Route path="/:tenantSlug/camera" element={<Suspense fallback={<LazyFallback />}><CameraGuard /></Suspense>} />
                                             <Route path="/:tenantSlug/envios" element={<Suspense fallback={<LazyFallback />}><Envio config={safeConfig} /></Suspense>} />
                                             <Route path="/:tenantSlug/order" element={<Suspense fallback={<LazyFallback />}><Order config={safeConfig} /></Suspense>} />
@@ -730,7 +734,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && <BottomNavGuard config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && !pathname.includes('/web') && <BottomNavGuard config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>
