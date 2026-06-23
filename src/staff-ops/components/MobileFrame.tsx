@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, CalendarDays, Ticket, X } from 'lucide-react';
+import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, CalendarDays, Ticket, X, Monitor } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import BoardView from '@/views/BoardView';
@@ -11,6 +11,7 @@ import OrderView from '@/views/OrderView';
 import InventoryView from '@/views/InventoryView';
 import ReservationsView from '@/views/ReservationsView';
 import EventsView from '@/views/EventsView';
+import KDSView from '@/views/KDSView';
 import BottomNav from '@/components/BottomNav';
 import OrderDetailDrawer from '@/components/OrderDetailDrawer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -71,6 +72,19 @@ function DesktopSidebar() {
             </button>
           );
         })}
+
+        {/* Kitchen section — full-screen KDS takeover */}
+        <p className="px-3 pt-5 pb-1 text-[10px] font-bold tracking-widest" style={{ color: 'var(--text-tertiary)' }}>
+          {t('kitchen').toUpperCase()}
+        </p>
+        <button
+          onClick={() => setTab('kds')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150"
+          style={{ backgroundColor: 'transparent', color: 'var(--text-tertiary)' }}
+        >
+          <Monitor size={20} strokeWidth={2.2} />
+          Kitchen Display
+        </button>
       </nav>
     </aside>
   );
@@ -79,6 +93,16 @@ function DesktopSidebar() {
 export default function MobileFrame() {
   const { state } = useOrders();
   const [profileOpen, setProfileOpen] = useState(false);
+
+  // Kitchen Display takes over the full screen (no sidebar / bottom nav).
+  // KDSView has its own Exit/Home control to return.
+  if (state.currentTab === 'kds') {
+    return (
+      <div className="w-full h-[100dvh] relative overflow-hidden" style={{ backgroundColor: '#0b0b0d' }}>
+        <KDSView />
+      </div>
+    );
+  }
 
   const renderView = () => {
     switch (state.currentTab) {

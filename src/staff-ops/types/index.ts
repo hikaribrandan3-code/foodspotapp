@@ -40,7 +40,7 @@ export interface Order {
   total?: number;
 }
 
-export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'inventory' | 'reservations' | 'events';
+export type TabId = 'board' | 'prep' | 'logistics' | 'order' | 'inventory' | 'reservations' | 'events' | 'kds';
 
 export const STATUS_FLOW: Record<OrderStatus, OrderStatus | null> = {
   PENDING_VERIFICATION: 'TODO',
