@@ -66,24 +66,8 @@ export default function LocationsHub({ locations, parentBrand }) {
           </div>
         )}
 
-        {/* Subtitle only (inside card, no separator) */}
-        <div style={{
-          textAlign: 'center',
-          padding: '20px 24px',
-          background: '#FFFFFF',
-        }}>
-          <p style={{
-            fontSize: 16,
-            color: '#6B7280',
-            margin: 0,
-            fontWeight: 500,
-          }}>
-            Select a location
-          </p>
-        </div>
-
         {/* Location cards */}
-        <div style={{ padding: '20px 24px' }}>
+        <div style={{ padding: '24px 24px 16px' }}>
           {(locations || []).map((loc, i) => (
             <button
               key={loc.slug || i}
@@ -95,6 +79,7 @@ export default function LocationsHub({ locations, parentBrand }) {
                 gap: 14,
                 padding: '16px 14px',
                 marginBottom: i < locations.length - 1 ? 12 : 0,
+                minHeight: 76,
                 background: '#F9FAFB',
                 border: '1px solid #E5E7EB',
                 borderRadius: 16,
@@ -222,6 +207,42 @@ export default function LocationsHub({ locations, parentBrand }) {
           height: 16,
           background: '#FAFAF9',
           clipPath: 'polygon(0% 100%, 5% 0%, 10% 100%, 15% 0%, 20% 100%, 25% 0%, 30% 100%, 35% 0%, 40% 100%, 45% 0%, 50% 100%, 55% 0%, 60% 100%, 65% 0%, 70% 100%, 75% 0%, 80% 100%, 85% 0%, 90% 100%, 95% 0%, 100% 100%)',
+        }} />
+      </div>
+
+      {/* Stacked paper layers (bottom receipts) */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '100%',
+        maxWidth: 420,
+        zIndex: -1,
+        pointerEvents: 'none',
+      }}>
+        {/* Second receipt layer */}
+        <div style={{
+          width: '100%',
+          height: 12,
+          background: '#FFFFFF',
+          borderRadius: '0 0 24px 24px',
+          marginTop: -8,
+          boxShadow: '0 6px 24px rgba(0,0,0,0.06)',
+          marginLeft: 8,
+          marginRight: -8,
+        }} />
+
+        {/* Third receipt layer */}
+        <div style={{
+          width: '100%',
+          height: 8,
+          background: '#FFFFFF',
+          borderRadius: '0 0 24px 24px',
+          marginTop: -6,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+          marginLeft: 16,
+          marginRight: -16,
         }} />
       </div>
     </div>
