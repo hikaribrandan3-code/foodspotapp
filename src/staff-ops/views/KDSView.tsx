@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Settings, BarChart3, Home, Volume2, VolumeX, SlidersHorizontal, Check, Sun, Moon,
@@ -8,6 +8,7 @@ import { useAudioPref } from '@/hooks/useAudioPref';
 import { useTheme } from '@/hooks/useTheme';
 import { useBusiness } from '@/contexts/BusinessContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import * as audio from '@/lib/audio';
 import type { Order } from '@/types';
 import { getWaitMinutes, getUrgencyLevel } from '@/types';
 
@@ -234,6 +235,16 @@ export default function KDSView() {
   const [filter, setFilter] = useState<Fulfillment>('all');
   const [autoClear, setAutoClear] = useState(true);
   const [nowTick, setNowTick] = useState(Date.now());
+  const prevOrderCountRef = useRef(0);
+
+  // Play 3-beep alert when new orders arrive
+  useEffect(() => {
+    const currentCount = state.orders.length;
+    if (prevOrderCountRef.current > 0 && currentCount > prevOrderCountRef.current && audioEnabled) {
+      audio.alert3Beep();
+    }
+    prevOrderCountRef.current = currentCount;
+  }, [state.orders.length, audioEnabled]);
 
   // tick for auto-clear recompute
   useEffect(() => {

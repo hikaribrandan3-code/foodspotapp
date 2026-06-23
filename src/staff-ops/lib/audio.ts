@@ -16,7 +16,7 @@ function getAudioContext(): AudioContext {
 }
 
 /** Play a sharp kitchen-bell style ping */
-function playPing(frequency: number, duration: number, type: OscillatorType = 'sine') {
+function playPing(frequency: number, duration: number, type: OscillatorType = 'sine', initialGain: number = 0.3) {
   const ctx = getAudioContext();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -24,7 +24,7 @@ function playPing(frequency: number, duration: number, type: OscillatorType = 's
   osc.type = type;
   osc.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.setValueAtTime(initialGain, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
   osc.connect(gain);
@@ -84,6 +84,23 @@ export function alertCashVerified() {
 export function alertDeliveryConfirmed() {
   playPing(587, 0.1, 'sine');  // D5
   setTimeout(() => playPing(784, 0.2, 'sine'), 100); // G5
+}
+
+/**
+ * Alert: Kitchen order ready to cook — 3 fast loud beeps (1.8s total)
+ * Quick, energetic alert for new orders
+ */
+export function alert3Beep() {
+  const loudGain = 0.6; // Louder than default (0.3)
+
+  // Beep 1 — sharp, bright tone (800Hz)
+  playPing(800, 0.4, 'square', loudGain);
+
+  // Beep 2 — medium-high (900Hz), starts 0.5s after beep 1 ends
+  setTimeout(() => playPing(900, 0.4, 'square', loudGain), 500);
+
+  // Beep 3 — higher (1000Hz), starts 1.0s after beep 1 ends
+  setTimeout(() => playPing(1000, 0.4, 'square', loudGain), 1000);
 }
 
 /**
