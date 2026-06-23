@@ -995,16 +995,24 @@ function OwnerSummary() {
                                                 <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
                                                     {t('brand_logo') || 'Hub Brand Logo'}
                                                 </label>
-                                                <div className="flex gap-2">
+                                                <div className="flex gap-3 items-center">
                                                     {parentBrandLogo && (
-                                                        <img src={parentBrandLogo} alt="Brand" className="w-12 h-12 rounded-full object-cover border border-stone-200 dark:border-white/10" />
+                                                        <img src={parentBrandLogo} alt="Brand" className="w-16 h-16 rounded-lg object-cover border border-stone-200 dark:border-white/10" />
                                                     )}
                                                     <input
-                                                        type="text"
-                                                        value={parentBrandLogo}
-                                                        onChange={(e) => setParentBrandLogo(e.target.value)}
-                                                        placeholder="https://..."
-                                                        className="flex-1 px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                const reader = new FileReader();
+                                                                reader.onload = (event) => {
+                                                                    setParentBrandLogo(event.target.result);
+                                                                };
+                                                                reader.readAsDataURL(file);
+                                                            }
+                                                        }}
+                                                        className="flex-1 px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-600 dark:text-white/60 file:mr-3 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-emerald-100 dark:file:bg-emerald-900 file:text-emerald-700 dark:file:text-emerald-200 outline-none focus:border-emerald-500"
                                                     />
                                                 </div>
                                                 <p className="text-[11px] text-stone-400 dark:text-white/40 mt-1">Logo for multi-location hub page</p>
