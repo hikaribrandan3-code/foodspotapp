@@ -126,17 +126,32 @@ export default function LocationsHub({ locations, parentBrand }) {
                 e.currentTarget.style.boxShadow = 'none'
               }}
             >
-              {/* Status dot */}
+              {/* Status dot + text */}
               <div style={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: loc.is_paused ? '#EF4444' : '#10B981',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
                 flexShrink: 0,
-                boxShadow: loc.is_paused
-                  ? '0 0 6px rgba(239,68,68,0.4)'
-                  : '0 0 6px rgba(16,185,129,0.4)',
-              }} />
+              }}>
+                <div style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: loc.is_paused ? '#EF4444' : '#10B981',
+                  boxShadow: loc.is_paused
+                    ? '0 0 6px rgba(239,68,68,0.4)'
+                    : '0 0 6px rgba(16,185,129,0.4)',
+                }} />
+                <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: loc.is_paused ? '#EF4444' : '#10B981',
+                }}>
+                  {loc.is_paused ? 'CLOSED' : 'OPEN'}
+                </span>
+              </div>
 
               {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
