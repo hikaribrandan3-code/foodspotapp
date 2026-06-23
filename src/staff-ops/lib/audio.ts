@@ -91,16 +91,40 @@ export function alertDeliveryConfirmed() {
  * Quick, energetic, hard-hitting alert for new orders
  */
 export function alert3Beep() {
-  const LOUD = 0.85; // VERY LOUD (max safe without distortion)
+  const ctx = getAudioContext();
+  const LOUD = 0.85;
+  const beepDuration = 0.2;
+  const now = ctx.currentTime;
 
-  // Beep 1 — sharp, bright tone (800Hz), short & punchy
-  playPing(800, 0.25, 'square', LOUD);
+  // Schedule all 3 beeps using Web Audio API timing (more reliable than setTimeout)
 
-  // Beep 2 — medium-high (900Hz), starts 0.35s after beep 1
-  setTimeout(() => playPing(900, 0.25, 'square', LOUD), 350);
+  // Beep 1 @ 800Hz, starts at now
+  playPingAt(800, beepDuration, 'square', LOUD, now);
 
-  // Beep 3 — highest (1000Hz), starts 0.70s after beep 1
-  setTimeout(() => playPing(1000, 0.25, 'square', LOUD), 700);
+  // Beep 2 @ 900Hz, starts 0.3s later
+  playPingAt(900, beepDuration, 'square', LOUD, now + 0.3);
+
+  // Beep 3 @ 1000Hz, starts 0.6s later
+  playPingAt(1000, beepDuration, 'square', LOUD, now + 0.6);
+}
+
+/** Play a ping at a specific scheduled time (for coordinated multi-beep alerts) */
+function playPingAt(frequency: number, duration: number, type: OscillatorType, gain: number, startTime: number) {
+  const ctx = getAudioContext();
+  const osc = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(frequency, startTime);
+
+  gainNode.gain.setValueAtTime(gain, startTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+  osc.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  osc.start(startTime);
+  osc.stop(startTime + duration);
 }
 
 /**
