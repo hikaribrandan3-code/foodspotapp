@@ -16,6 +16,7 @@
  * - Config MUST be passed as prop, DO NOT call getConfig()
  * - All image URLs optimized for size (width, quality params)
  */
+import { useParams, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 
 // 🚀 IMAGE OPTIMIZATION: Reduce logo/cover load time
@@ -37,6 +38,8 @@ function getBreakpoint() {
 
 // INVARIANT: config must come from prop, not getConfig()
 function AppHeader({ config: configProp, isHomePage = false }) {
+    const { tenantSlug } = useParams()
+    const navigate = useNavigate()
     const { t } = useLanguage()
     const config = configProp || {};
     const canvasMode = config?.canvasMode || 'light'
@@ -157,8 +160,7 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                             height: 48,
                             maxHeight: 48,
                             width: 'auto',
-                            objectFit: 'contain',
-                            pointerEvents: 'none'
+                            objectFit: 'contain'
                         }}
                         loading="eager"
                     />
@@ -176,17 +178,23 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                 background: 'var(--canvas-bg)',
                 flexShrink: 0
             }}>
-                <div
+                <button
+                    onClick={() => navigate(`/${tenantSlug}`)}
                     className={useClamp ? 'cover-viewport' : undefined}
                     style={{
                         height: useClamp ? undefined : (breakpoint === 'tablet' ? 96 : 64),
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        width: '100%',
+                        padding: 0
                     }}
                 >
                     {logoContent}
-                </div>
+                </button>
             </header>
         )
     }
@@ -207,7 +215,6 @@ function AppHeader({ config: configProp, isHomePage = false }) {
                 fontWeight: 'var(--font-weight-brand)',
                 color: 'var(--canvas-text)',
                 letterSpacing: '-0.02em',
-                pointerEvents: 'none',
                 ...(config?.headerCover?.titleStyle || {})
             }}>
                 {businessName}
@@ -221,17 +228,23 @@ function AppHeader({ config: configProp, isHomePage = false }) {
             background: 'var(--canvas-bg)',
             flexShrink: 0
         }}>
-            <div
+            <button
+                onClick={() => navigate(`/${tenantSlug}`)}
                 className={useClamp ? 'cover-viewport' : undefined}
                 style={{
                     height: useClamp ? undefined : (breakpoint === 'tablet' ? 96 : 64),
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    padding: 0
                 }}
             >
                 {textContent}
-            </div>
+            </button>
         </header>
     )
 }
