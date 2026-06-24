@@ -896,6 +896,7 @@ export default function Menu({ config: configProp }) {
                                         onTouchEnd={handleTouchEndOrMove}
                                         onMouseDown={initiateDrag}
                                         isPlaceholder={isPlaceholder}
+                                        showEnglish={showEnglish}
                                     />
                                 )
                             })}
@@ -910,6 +911,7 @@ export default function Menu({ config: configProp }) {
                 isOpen={!!selectedItem}
                 onClose={() => setSelectedItem(null)}
                 onAddToCart={handleModalAddToCart}
+                showEnglish={showEnglish}
             />
 
             {/* 🛒 INTERACTIVE MINI-CART (Legacy Receipt Style) */}
