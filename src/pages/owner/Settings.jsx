@@ -97,10 +97,6 @@ const Settings = () => {
     const { tenantData: tenant, businessId, refreshTenantData, loading } = useTenant();
     const { t, language: lang } = useLanguage();
     const navigate = useNavigate();
-    
-    // Pause Orders State
-    const [isPaused, setIsPaused] = useState(false);
-    const [pauseMessage, setPauseMessage] = useState('');
 
     // UI State
     const [isSaving, setIsSaving] = useState(false);
@@ -218,25 +214,6 @@ const Settings = () => {
             };
             const { data, error } = await updateBranding(payload, businessId);
             if (error || !data) throw error || new Error('Save returned no data');
-            return data;
-        },
-        1200,
-        isDraftReady
-    );
-
-    // AUTO-SAVE: Pause Orders (1.2s debounce)
-    const { saveStatus: pauseSaveStatus } = useDebouncedAutoSave(
-        isDraftReady ? { isPaused, pauseMessage } : null,
-        async ({ isPaused: paused, pauseMessage: msg }) => {
-            if (!businessId) return;
-            const { data, error } = await updateBranding(
-                { is_paused: paused, pause_message: msg },
-                businessId
-            );
-            if (error || !data) throw error || new Error('Save returned no data');
-            window.dispatchEvent(new CustomEvent('frontendSync', {
-                detail: { is_paused: paused, pause_message: msg }
-            }));
             return data;
         },
         1200,
@@ -773,39 +750,6 @@ const Settings = () => {
             <BackendHeader title={t('settings_title')} onLogout={handleLogout} />
 
             <div className="settings-vault">
-                {/* ========== STORE STATUS (TOP) ========== */}
-                <section className="branding-card" style={{ background: isPaused ? '#FEF2F2' : '#FFFFFF', border: isPaused ? '2px solid #EF4444' : '1px solid #E5E7EB' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                        <h3 style={{ color: isPaused ? '#DC2626' : '#10B981', fontSize: '16px', fontWeight: '700', margin: 0 }}>
-                            {isPaused ? '🔒 ' : '🟢 '}{t('pause_orders_label') || 'Store Status'}
-                        </h3>
-                        <div style={{ width: 48, height: 26, borderRadius: 13, background: isPaused ? '#EF4444' : '#10B981', position: 'relative', transition: 'all 0.2s', cursor: 'pointer' }} onClick={() => setIsPaused(p => !p)}>
-                            <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'white', position: 'absolute', top: 2, left: isPaused ? 24 : 2, transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                        </div>
-                    </div>
-                    {isPaused && (
-                        <div>
-                            <label style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7280', marginBottom: 8, display: 'block' }}>
-                                {t('pause_orders_msg') || 'Custom message (optional)'}
-                            </label>
-                            <input
-                                type="text"
-                                value={pauseMessage}
-                                onChange={e => setPauseMessage(e.target.value)}
-                                placeholder="Back in 20 min / Volvemos pronto"
-                                style={{
-                                    width: '100%', padding: '10px 12px', borderRadius: 20,
-                                    border: '1px solid #E5E7EB', fontSize: 13, color: '#374151',
-                                    background: '#FAFAFA', boxSizing: 'border-box', outline: 'none'
-                                }}
-                            />
-                            {pauseSaveStatus?.saving && (
-                                <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 6, textAlign: 'right' }}>💾 Saving…</p>
-                            )}
-                        </div>
-                    )}
-                </section>
-
                 {/* ========== 1. IDENTITY & TYPOGRAPHY ========== */}
                 <section className="branding-card">
                     <h3 style={{ color: '#10B981', fontSize: '16px', fontWeight: '700', marginBottom: '16px' }}>1. {t('identity_typography')}</h3>
