@@ -56,7 +56,12 @@ export default function DesktopApp() {
                 className="w-[200px] shrink-0 flex flex-col py-4 px-3 gap-1"
                 style={{ background: 'var(--color-primary)' }}
             >
-                <div className="px-2 pb-4 text-white font-extrabold text-xl tracking-tight">FoodSpot</div>
+                <button
+                    onClick={() => window.location.href = `/${tenantSlug}`}
+                    className="px-2 pb-4 text-white font-extrabold text-xl tracking-tight cursor-pointer hover:opacity-80 transition-opacity border-none bg-none text-left"
+                >
+                    FoodSpot
+                </button>
                 {NAV.map(({ id, label, icon: Icon }) => {
                     const active = activeTab === id
                     return (

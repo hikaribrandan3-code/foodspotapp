@@ -126,8 +126,11 @@ function BackendHeader({ title, onLogout }) {
 
     return (
         <header className="bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between gap-3 min-h-[56px] sticky top-0 z-50 shadow-[0_2px_20px_rgba(28,25,23,0.04)]">
-            {/* LEFT: Business Identity (Logo or Text) */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* LEFT: Business Identity (Logo or Text) — Clickable Home */}
+            <button
+                onClick={() => navigate(`/${tenantSlug}/owner/summary`)}
+                className="flex items-center gap-3 flex-1 min-w-0 bg-none border-none cursor-pointer hover:opacity-70 transition-opacity"
+            >
                 {headerMode === 'logo' && logoUrl ? (
                     <img
                         src={logoUrl}
@@ -139,7 +142,7 @@ function BackendHeader({ title, onLogout }) {
                         {businessName}
                     </span>
                 )}
-            </div>
+            </button>
 
             {/* RIGHT: Actions — hidden on desktop (sidebar handles these) */}
             <div className="flex items-center gap-3 flex-shrink-0 md:hidden">
