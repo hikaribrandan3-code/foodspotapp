@@ -51,6 +51,9 @@ function OwnerSummary() {
     const [isPaused, setIsPaused] = useState(tenantData?.is_paused || false)
     const [pauseMessage, setPauseMessage] = useState(tenantData?.pause_message || '')
 
+    // Menu Translations (English)
+    const [enableMenuTranslations, setEnableMenuTranslations] = useState(tenantData?.enable_menu_translations || false)
+
     // Multi-location state
     const [ownerLocations, setOwnerLocations] = useState([])
     const [locationsLoading, setLocationsLoading] = useState(true)
@@ -764,7 +767,8 @@ function OwnerSummary() {
     useEffect(() => {
         setIsPaused(tenantData?.is_paused || false)
         setPauseMessage(tenantData?.pause_message || '')
-    }, [tenantData?.is_paused, tenantData?.pause_message])
+        setEnableMenuTranslations(tenantData?.enable_menu_translations || false)
+    }, [tenantData?.is_paused, tenantData?.pause_message, tenantData?.enable_menu_translations])
 
     // AUTO-SAVE: Pause Orders (1.2s debounce)
     useDebouncedAutoSave(
@@ -779,6 +783,25 @@ function OwnerSummary() {
                 detail: { is_paused: paused, pause_message: msg }
             }))
             setAutoSaveStatus({ type: 'pause', timestamp: Date.now() })
+            setTimeout(() => setAutoSaveStatus(null), 2000)
+            return data
+        },
+        1200
+    )
+
+    // AUTO-SAVE: Menu Translations (1.2s debounce)
+    useDebouncedAutoSave(
+        { enableMenuTranslations },
+        async ({ enableMenuTranslations: enabled }) => {
+            const { data, error } = await updateBranding(
+                { enable_menu_translations: enabled },
+                businessId
+            )
+            if (error || !data) throw error || new Error('Save failed')
+            window.dispatchEvent(new CustomEvent('frontendSync', {
+                detail: { enable_menu_translations: enabled }
+            }))
+            setAutoSaveStatus({ type: 'translations', timestamp: Date.now() })
             setTimeout(() => setAutoSaveStatus(null), 2000)
             return data
         },
@@ -888,6 +911,48 @@ function OwnerSummary() {
                             className="mt-3 w-full px-4 py-3 rounded-2xl border border-red-200 dark:border-red-500/30 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-xs placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:ring-1 focus:ring-red-300 dark:focus:ring-red-500/40"
                         />
                     )}
+                </motion.div>
+
+                {/* Menu Translations (English) */}
+                <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.095 }}
+                    className={`rounded-2xl p-4 md:p-5 border shadow-[0_20px_50px_rgba(28,25,23,0.03)] ${
+                        enableMenuTranslations
+                            ? 'bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/20'
+                            : 'bg-white dark:bg-[#1e293b] border-stone-200 dark:border-white/5'
+                    }`}
+                >
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                                enableMenuTranslations
+                                    ? 'bg-blue-100 dark:bg-blue-500/10'
+                                    : 'bg-stone-100 dark:bg-stone-500/10'
+                            }`}>
+                                <Globe size={18} className={enableMenuTranslations ? 'text-blue-600 dark:text-blue-400' : 'text-stone-600 dark:text-stone-400'} />
+                            </div>
+                            <div>
+                                <h3 className={`font-black text-sm ${enableMenuTranslations ? 'text-blue-700 dark:text-blue-400' : 'text-stone-950 dark:text-white'}`}>
+                                    {t('enable_english_menu') || 'English Menu'}
+                                </h3>
+                                <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                                    {enableMenuTranslations ? '🇺🇸 Available' : 'Disabled'}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setEnableMenuTranslations(p => !p)}
+                            className={`ml-2 shrink-0 w-12 h-7 rounded-full transition-colors ${
+                                enableMenuTranslations
+                                    ? 'bg-blue-600 dark:bg-blue-500'
+                                    : 'bg-stone-200 dark:bg-stone-600'
+                            }`}
+                        >
+                            <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${enableMenuTranslations ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
                 </motion.div>
 
                 {/* Locations Hub — always at top */}
