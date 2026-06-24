@@ -159,7 +159,6 @@ const DesktopApp = lazy(() => import('./pages/customer/DesktopApp.jsx'))
 // Staff Pages (lazy — staff users only)
 const StaffKDS = lazy(() => import('./pages/staff/StaffKDS.jsx'))
 const StaffTutorials = lazy(() => import('./pages/staff/Tutorials.jsx'))
-const TutorialsPreview = lazy(() => import('./pages/TutorialsPreview.jsx'))
 
 // Owner Pages (lazy — never loaded on customer routes)
 const OwnerLogin = lazy(() => import('./pages/owner/OwnerLogin.jsx'))
@@ -683,7 +682,6 @@ function App() {
                                             <Route path="/login/owner" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
-                                            <Route path="/tutorials-preview" element={<Suspense fallback={<LazyFallback />}><TutorialsPreview /></Suspense>} />
 
                                             {/* TENANT ROUTES — Home + Menu are eager; all others lazy */}
                                             <Route path="/:tenantSlug" element={<HomeOrHub config={safeConfig} />} />
