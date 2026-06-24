@@ -178,6 +178,16 @@ export default function Menu({ config: configProp }) {
         localStorage.setItem(`fs_menu_display_mode_${tenantSlug}`, newMode)
     }
 
+    // MENU TRANSLATION TOGGLE (English)
+    const [showEnglish, setShowEnglish] = useState(
+        () => localStorage.getItem(`fs_menu_lang_${tenantSlug}`) === 'en'
+    )
+    const handleToggleLanguage = () => {
+        const newState = !showEnglish
+        setShowEnglish(newState)
+        localStorage.setItem(`fs_menu_lang_${tenantSlug}`, newState ? 'en' : 'es')
+    }
+
     // MODAL STATE
     const [selectedItem, setSelectedItem] = useState(null)
 
@@ -717,8 +727,34 @@ export default function Menu({ config: configProp }) {
         <div style={{ minHeight: '100vh', paddingBottom: 100, background: 'var(--color-bg, #F9FAFB)', maxWidth: '100%', margin: '0 auto' }}>
             {/* Header */}
             {/* Header */}
-            <div style={{ margin: '0 2%' }}>
+            <div style={{ margin: '0 2%', position: 'relative' }}>
                 <HeaderClamp config={config} />
+                {/* English Flag Toggle */}
+                {tenantData?.enable_menu_translations && (
+                    <button
+                        onClick={handleToggleLanguage}
+                        style={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            background: showEnglish ? '#3B82F6' : 'rgba(0,0,0,0.05)',
+                            border: 'none',
+                            padding: '8px 12px',
+                            borderRadius: 20,
+                            cursor: 'pointer',
+                            fontSize: 18,
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: 44,
+                            minHeight: 44
+                        }}
+                        title={showEnglish ? 'Volver al español' : 'Show in English'}
+                    >
+                        {showEnglish ? '🇺🇸' : '🇪🇸'}
+                    </button>
+                )}
             </div>
 
             {/* Edit Mode HUD */}
