@@ -1,13 +1,18 @@
-import { ChevronRight, MapPin } from 'lucide-react'
+import { ChevronRight, MapPin, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 
 export default function LocationsHub({ locations, parentBrand }) {
+  const [redirectingSlug, setRedirectingSlug] = useState(null)
   const brandName = parentBrand?.name || locations?.[0]?.parent_brand_name || 'Our Locations'
   // Parent brand logo (hub header) — falls back to first location's logo if not set
   const brandLogo = parentBrand?.logo || locations?.[0]?.parent_brand_logo || locations?.[0]?.logo_url
 
   const goToLocation = (slug) => {
+    setRedirectingSlug(slug)
     // Hard redirect so TenantContext fully re-resolves for the new slug
-    window.location.href = `/${slug}`
+    setTimeout(() => {
+      window.location.href = `/${slug}`
+    }, 100)
   }
 
   return (
@@ -72,6 +77,7 @@ export default function LocationsHub({ locations, parentBrand }) {
             <button
               key={loc.slug || i}
               onClick={() => goToLocation(loc.slug)}
+              disabled={redirectingSlug !== null}
               style={{
                 width: '100%',
                 display: 'flex',
@@ -80,23 +86,28 @@ export default function LocationsHub({ locations, parentBrand }) {
                 padding: '16px 14px',
                 marginBottom: i < locations.length - 1 ? 12 : 0,
                 minHeight: 76,
-                background: '#F9FAFB',
-                border: '1px solid #E5E7EB',
+                background: redirectingSlug === loc.slug ? '#F0FDF4' : '#F9FAFB',
+                border: `1px solid ${redirectingSlug === loc.slug ? '#10B981' : '#E5E7EB'}`,
                 borderRadius: 16,
-                cursor: 'pointer',
+                cursor: redirectingSlug === null ? 'pointer' : 'not-allowed',
                 transition: 'all 0.2s ease',
                 textAlign: 'left',
                 fontFamily: 'inherit',
+                opacity: redirectingSlug !== null && redirectingSlug !== loc.slug ? 0.5 : 1,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#F0FDF4'
-                e.currentTarget.style.borderColor = '#10B981'
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.12)'
+                if (redirectingSlug === null) {
+                  e.currentTarget.style.background = '#F0FDF4'
+                  e.currentTarget.style.borderColor = '#10B981'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.12)'
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#F9FAFB'
-                e.currentTarget.style.borderColor = '#E5E7EB'
-                e.currentTarget.style.boxShadow = 'none'
+                if (redirectingSlug === null) {
+                  e.currentTarget.style.background = '#F9FAFB'
+                  e.currentTarget.style.borderColor = '#E5E7EB'
+                  e.currentTarget.style.boxShadow = 'none'
+                }
               }}
             >
               {/* Status dot + text */}
@@ -168,8 +179,12 @@ export default function LocationsHub({ locations, parentBrand }) {
                 )}
               </div>
 
-              {/* Chevron */}
-              <ChevronRight size={20} color="#9CA3AF" style={{ flexShrink: 0 }} />
+              {/* Chevron or Loader */}
+              {redirectingSlug === loc.slug ? (
+                <Loader2 size={20} color="#10B981" style={{ flexShrink: 0, animation: 'spin 1s linear infinite' }} />
+              ) : (
+                <ChevronRight size={20} color="#9CA3AF" style={{ flexShrink: 0 }} />
+              )}
             </button>
           ))}
         </div>

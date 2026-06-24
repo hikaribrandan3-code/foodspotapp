@@ -75,12 +75,21 @@ function OwnerSummary() {
         ownerLocationsLoaded.current = true
         const fetchLocations = async () => {
             try {
-                const { data } = await supabase.rpc('get_owner_locations')
-                if (data) {
-                    setOwnerLocations(data)
-                    if (data.length > 1) localStorage.setItem('fs_multi_location', 'true')
+                const { data, error } = await supabase.rpc('get_owner_locations')
+                if (error) {
+                    console.warn('[OwnerSummary] Could not fetch locations:', error.message)
+                    setLocationsLoading(false)
+                    return
                 }
-            } catch (_) { /* RPC may not exist yet */ }
+                if (data && Array.isArray(data)) {
+                    setOwnerLocations(data)
+                    if (data.length > 1) {
+                        localStorage.setItem('fs_multi_location', 'true')
+                    }
+                }
+            } catch (err) {
+                console.error('[OwnerSummary] RPC Exception:', err)
+            }
             finally {
                 setLocationsLoading(false)
             }

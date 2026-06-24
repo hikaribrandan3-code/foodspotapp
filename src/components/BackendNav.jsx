@@ -47,14 +47,16 @@ const OWNER_TABS = [
     { id: 'events', label: 'Events', route: null, desktopOnly: true },
     { id: 'analytics', label: 'Analytics', route: null },
     { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
-    { id: 'ai', label: 'AI', route: null }
+    { id: 'ai', label: 'AI', route: null },
+    { id: 'tutorials', label: 'Tutorials', route: null }
 ]
 
 const STAFF_TABS = [
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'delivery', label: 'Delivery', route: null, hasBadge: true },
     { id: 'events', label: 'Events', route: null, desktopOnly: true },
-    { id: 'history', label: 'History', route: null }
+    { id: 'history', label: 'History', route: null },
+    { id: 'tutorials', label: 'Tutorials', route: null }
 ]
 
 // Super Admin tabs - same as Owner but state-based (no navigation)
@@ -81,13 +83,15 @@ const getRouteMaps = (tenantSlug) => ({
         events: `/${tenantSlug}/owner/events`,
         analytics: `/${tenantSlug}/owner/analytics`,
         contacts: `/${tenantSlug}/owner/contacts`,
-        ai: `/${tenantSlug}/owner/ai`
+        ai: `/${tenantSlug}/owner/ai`,
+        tutorials: `/${tenantSlug}/owner/tutorials`
     },
     staff: {
         orders: `/${tenantSlug}/staff/ops`,
         delivery: `/${tenantSlug}/staff/ops`,
         events: `/${tenantSlug}/staff/events`,
-        history: `/${tenantSlug}/staff/ops`
+        history: `/${tenantSlug}/staff/ops`,
+        tutorials: `/${tenantSlug}/staff/tutorials`
     },
     demo: {
         summary: '/demo',
@@ -197,6 +201,13 @@ function TabIcon({ id, active }) {
             <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
+            </svg>
+        ),
+        // Tutorials (Play/Video icon)
+        tutorials: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7" />
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
             </svg>
         )
     }

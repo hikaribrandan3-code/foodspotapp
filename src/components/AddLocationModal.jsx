@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MapPin, Globe, Building2, ChevronRight, Check, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient.js'
@@ -16,6 +16,9 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
     const [error, setError] = useState('')
     const [done, setDone] = useState(false)
     const [createdSlug, setCreatedSlug] = useState('')
+    const [createdBusinessId, setCreatedBusinessId] = useState('')
+    const [slugExists, setSlugExists] = useState(false)
+    const slugCheckTimer = useRef(null)
 
     // Step 1 — basics
     const [locationName, setLocationName] = useState('')
@@ -41,22 +44,34 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
         }
     }
 
+    // Check slug uniqueness with debounce
+    useEffect(() => {
+        if (!locationSlug) {
+            setSlugExists(false)
+            return
+        }
+
+        clearTimeout(slugCheckTimer.current)
+        slugCheckTimer.current = setTimeout(async () => {
+            try {
+                const { count } = await supabase
+                    .from('branding')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('slug', locationSlug)
+                setSlugExists(count > 0)
+            } catch (err) {
+                console.warn('Could not check slug uniqueness:', err)
+            }
+        }, 400)
+
+        return () => clearTimeout(slugCheckTimer.current)
+    }, [locationSlug])
+
     const handleCreate = async () => {
-        if (!locationName || !locationSlug) return
+        if (!locationName || !locationSlug || slugExists) return
         setSaving(true)
         setError('')
         try {
-            console.log('[AddLocation] Calling create_linked_location with:', {
-                p_location_name: locationName,
-                p_location_slug: locationSlug,
-                p_location_label: locationName,
-                p_location_address: locationAddress || null,
-                p_location_hours: locationHours || null,
-                p_location_phone: locationPhone || null,
-                p_parent_slug: parentSlug || null,
-                p_parent_brand_name: parentBrandName || null,
-                p_parent_brand_logo: parentBrandLogo || null,
-            })
             const { data, error: rpcError } = await supabase.rpc('create_linked_location', {
                 p_location_name: locationName,
                 p_location_slug: locationSlug,
@@ -72,8 +87,14 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                 console.error('[AddLocation] RPC Error:', rpcError)
                 throw new Error(rpcError.message || JSON.stringify(rpcError))
             }
+            if (!data || !data.business_id) {
+                throw new Error('No business_id returned from location creation')
+            }
             console.log('[AddLocation] Success:', data)
             setCreatedSlug(locationSlug)
+            setCreatedBusinessId(data.business_id)
+            localStorage.setItem('fs_business_id', data.business_id)
+            localStorage.setItem('fs_last_active_slug', locationSlug)
             setDone(true)
             onCreated?.()
         } catch (err) {
@@ -190,6 +211,11 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                                     className={inputCls}
                                                 />
                                             </div>
+                                            {slugExists && (
+                                                <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">
+                                                    This URL is already taken
+                                                </p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className={labelCls}>{t('address') || 'Address'} <span className="text-stone-400">(optional)</span></label>
@@ -225,7 +251,7 @@ export default function AddLocationModal({ onClose, currentBusiness, onCreated }
                                 </div>
                                 <button
                                     onClick={() => setStep(1)}
-                                    disabled={!locationName || !locationSlug}
+                                    disabled={!locationName || !locationSlug || slugExists}
                                     className="w-full py-3 rounded-full text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity disabled:opacity-40"
                                     style={{ background: '#10B981' }}
                                 >

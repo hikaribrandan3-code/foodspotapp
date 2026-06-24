@@ -158,6 +158,8 @@ const DesktopApp = lazy(() => import('./pages/customer/DesktopApp.jsx'))
 
 // Staff Pages (lazy — staff users only)
 const StaffKDS = lazy(() => import('./pages/staff/StaffKDS.jsx'))
+const StaffTutorials = lazy(() => import('./pages/staff/Tutorials.jsx'))
+const TutorialsPreview = lazy(() => import('./pages/TutorialsPreview.jsx'))
 
 // Owner Pages (lazy — never loaded on customer routes)
 const OwnerLogin = lazy(() => import('./pages/owner/OwnerLogin.jsx'))
@@ -171,6 +173,7 @@ const FoodSpotAI = lazy(() => import('./pages/owner/FoodSpotAI.jsx'))
 const CustomerContacts = lazy(() => import('./pages/owner/CustomerContacts.jsx'))
 const Dashboard = lazy(() => import('./pages/owner/Dashboard.jsx'))
 const Reservations = lazy(() => import('./pages/owner/Reservations.jsx'))
+const OwnerTutorials = lazy(() => import('./pages/owner/Tutorials.jsx'))
 
 // Admin Pages (Lazy-loaded)
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
@@ -680,6 +683,7 @@ function App() {
                                             <Route path="/login/owner" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/admin" element={<AdminErrorBoundary><Suspense fallback={<LazyFallback />}><SuperAdmin config={safeConfig} /></Suspense></AdminErrorBoundary>} />
                                             <Route path="/admin/cover-preview" element={<CoverPreview config={safeConfig} />} />
+                                            <Route path="/tutorials-preview" element={<Suspense fallback={<LazyFallback />}><TutorialsPreview /></Suspense>} />
 
                                             {/* TENANT ROUTES — Home + Menu are eager; all others lazy */}
                                             <Route path="/:tenantSlug" element={<HomeOrHub config={safeConfig} />} />
@@ -712,6 +716,7 @@ function App() {
                                             <Route path="/:tenantSlug/staff/kds" element={<Suspense fallback={<LazyFallback />}><StaffKDS config={safeConfig} /></Suspense>} />
                                             <Route path="/:tenantSlug/staff/ops" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/events" element={<StaffOpsRedirect />} />
+                                            <Route path="/:tenantSlug/staff/tutorials" element={<Suspense fallback={<LazyFallback />}><StaffTutorials /></Suspense>} />
 
                                             <Route path="/:tenantSlug/owner" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerSummary config={safeConfig} /></Suspense></ProtectedRoute>} />
@@ -726,6 +731,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/reservations" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts defaultTab="reservas" /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/tutorials" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerTutorials /></Suspense></ProtectedRoute>} />
 
                                             <Route path="*" element={<Navigate to="/" replace />} />
                                         </Routes>
