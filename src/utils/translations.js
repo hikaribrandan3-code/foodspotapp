@@ -1318,5 +1318,67 @@ export const translations = {
     reservation_approve:  { en: 'Approve',               es: 'Aprobar',                 pt: 'Aprovar' },
     reservation_reject:   { en: 'Reject',                es: 'Rechazar',                pt: 'Rejeitar' },
     reservation_no_show:  { en: 'No Show',               es: 'No se presentó',          pt: 'Não compareceu' },
+
+    // Reservation tabs (table vs custom item)
+    res_tab_table:        { en: 'Reserve a Table',        es: 'Reservar Mesa',           pt: 'Reservar Mesa' },
+    res_tab_custom:       { en: 'Custom Order',           es: 'Pedido Especial',         pt: 'Pedido Especial' },
+
+    // Customer form — table
+    res_what_day:         { en: 'What day?',              es: '¿Qué día?',               pt: 'Qual dia?' },
+    res_what_time:        { en: 'What time?',             es: '¿A qué hora?',            pt: 'Que horas?' },
+    res_how_many:         { en: 'How many guests?',       es: '¿Cuántas personas?',      pt: 'Quantas pessoas?' },
+    res_your_info:        { en: 'Your details',           es: 'Tus datos',               pt: 'Seus dados' },
+    res_name:             { en: 'Full Name',              es: 'Nombre completo',         pt: 'Nome completo' },
+    res_phone:            { en: 'Phone',                  es: 'Teléfono',                pt: 'Telefone' },
+    res_notes:            { en: 'Notes (optional)',       es: 'Notas (opcional)',         pt: 'Notas (opcional)' },
+    res_notes_hint:       { en: 'Allergies, high chair, special occasion...', es: 'Alergias, silla de bebé, ocasión especial...', pt: 'Alergias, cadeira de bebê, ocasião especial...' },
+    res_continue:         { en: 'Continue',               es: 'Continuar',               pt: 'Continuar' },
+    res_back:             { en: 'Back',                   es: 'Atrás',                   pt: 'Voltar' },
+    res_confirm:          { en: 'Confirm Reservation',    es: 'Confirmar Reserva',       pt: 'Confirmar Reserva' },
+    res_sending:          { en: 'Sending...',             es: 'Enviando...',             pt: 'Enviando...' },
+    res_guests:           { en: 'guests',                 es: 'personas',                pt: 'pessoas' },
+
+    // Customer form — custom order
+    res_custom_title:     { en: 'Custom Order / Catering', es: 'Pedido Especial / Catering', pt: 'Pedido Especial / Catering' },
+    res_what_you_need:    { en: 'What do you need?',      es: '¿Qué necesitás?',         pt: 'O que você precisa?' },
+    res_item_desc:        { en: 'Describe your order',    es: 'Describí tu pedido',      pt: 'Descreva seu pedido' },
+    res_item_hint:        { en: 'E.g. Chocolate cake for 30 people, catering for a birthday...', es: 'Ej: Torta de chocolate para 30 personas, catering para cumpleaños...', pt: 'Ex: Bolo de chocolate para 30 pessoas, catering para aniversário...' },
+    res_occasion:         { en: 'What is this for?',      es: '¿Para qué es?',           pt: 'Para que é?' },
+    res_occasion_hint:    { en: 'Birthday, wedding, corporate event...', es: 'Cumpleaños, casamiento, evento empresarial...', pt: 'Aniversário, casamento, evento corporativo...' },
+    res_pickup_delivery:  { en: 'Pickup or Delivery?',    es: '¿Retiro o Delivery?',     pt: 'Retirada ou Entrega?' },
+    res_pickup:           { en: 'Pickup',                 es: 'Retiro',                  pt: 'Retirada' },
+    res_delivery:         { en: 'Delivery',               es: 'Delivery',                pt: 'Entrega' },
+    res_needed_by:        { en: 'Date needed',            es: 'Fecha que lo necesitás',  pt: 'Data que precisa' },
+    res_time_needed:      { en: 'Time needed',            es: 'Hora que lo necesitás',   pt: 'Hora que precisa' },
+    res_send_whatsapp:    { en: 'Send via WhatsApp',      es: 'Enviar por WhatsApp',     pt: 'Enviar pelo WhatsApp' },
+
+    // Success screens
+    res_sent_title:       { en: 'Request Sent!',          es: '¡Solicitud Enviada!',     pt: 'Solicitação Enviada!' },
+    res_sent_table:       { en: 'Your reservation was sent. The restaurant will confirm shortly via WhatsApp.', es: 'Tu reserva fue enviada. El restaurante la confirmará pronto por WhatsApp.', pt: 'Sua reserva foi enviada. O restaurante confirmará em breve pelo WhatsApp.' },
+    res_sent_custom:      { en: 'Your order request was sent. We\'ll contact you via WhatsApp to confirm details and price.', es: 'Tu pedido fue enviado. Te contactaremos por WhatsApp para confirmar detalles y precio.', pt: 'Seu pedido foi enviado. Entraremos em contato pelo WhatsApp para confirmar detalhes e preço.' },
+    res_back_home:        { en: 'Back to Home',           es: 'Volver al Inicio',        pt: 'Voltar ao Início' },
+
+    // Validation errors
+    res_err_name:         { en: 'Please enter your full name.', es: 'Por favor ingresá tu nombre completo.', pt: 'Por favor insira seu nome completo.' },
+    res_err_phone:        { en: 'Please enter a valid phone number.', es: 'Por favor ingresá un número de teléfono válido.', pt: 'Por favor insira um número de telefone válido.' },
+    res_err_desc:         { en: 'Please describe what you need.', es: 'Por favor describí qué necesitás.', pt: 'Por favor descreva o que você precisa.' },
+    res_err_date:         { en: 'Please select a date.', es: 'Por favor seleccioná una fecha.', pt: 'Por favor selecione uma data.' },
+    res_err_time:         { en: 'Please select a time.', es: 'Por favor seleccioná un horario.', pt: 'Por favor selecione um horário.' },
+    res_err_submit:       { en: 'Error sending request. Please try again.', es: 'Error al enviar. Por favor intentá de nuevo.', pt: 'Erro ao enviar. Por favor tente novamente.' },
+
+    // Owner dashboard — custom orders tab
+    res_owner_custom_tab:    { en: 'Custom Orders',       es: 'Pedidos Especiales',      pt: 'Pedidos Especiais' },
+    res_owner_table_tab:     { en: 'Table Bookings',      es: 'Mesas',                   pt: 'Mesas' },
+    res_owner_set_price:     { en: 'Set Price',           es: 'Fijar Precio',            pt: 'Definir Preço' },
+    res_owner_total:         { en: 'Total',               es: 'Total',                   pt: 'Total' },
+    res_owner_deposit:       { en: '50% Deposit',         es: 'Seña 50%',                pt: 'Sinal 50%' },
+    res_owner_send_link:     { en: 'Send Deposit Link',   es: 'Enviar Link de Seña',     pt: 'Enviar Link de Sinal' },
+    res_owner_deposit_paid:  { en: 'Deposit Paid ✓',      es: 'Seña Pagada ✓',           pt: 'Sinal Pago ✓' },
+    res_owner_mark_ready:    { en: 'Mark Ready',          es: 'Marcar Listo',            pt: 'Marcar Pronto' },
+    res_owner_occasion:      { en: 'Occasion',            es: 'Ocasión',                 pt: 'Ocasião' },
+    res_owner_type:          { en: 'Type',                es: 'Tipo',                    pt: 'Tipo' },
+    res_awaiting_deposit:    { en: 'Awaiting Deposit',    es: 'Esperando Seña',          pt: 'Aguardando Sinal' },
+    res_deposit_paid:        { en: 'Deposit Paid',        es: 'Seña Pagada',             pt: 'Sinal Pago' },
+    res_price_set:           { en: 'Price Set',           es: 'Precio Fijado',           pt: 'Preço Definido' },
 };
 
