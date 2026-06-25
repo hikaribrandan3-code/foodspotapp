@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, CalendarDays, Ticket, X, Monitor } from 'lucide-react';
+import { LayoutDashboard, ChefHat, Bike, User, ClipboardList, Package, CalendarDays, Ticket, X, Monitor, Banknote } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import type { TabId } from '@/types';
 import BoardView from '@/views/BoardView';
@@ -12,6 +12,7 @@ import InventoryView from '@/views/InventoryView';
 import ReservationsView from '@/views/ReservationsView';
 import EventsView from '@/views/EventsView';
 import KDSView from '@/views/KDSView';
+import CorteDeCajaView from '@/views/CorteDeCajaView';
 import BottomNav from '@/components/BottomNav';
 import OrderDetailDrawer from '@/components/OrderDetailDrawer';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -44,6 +45,7 @@ function DesktopSidebar() {
     { id: 'inventory', icon: <Package size={20} strokeWidth={2.2} />, label: t('inventory_title') },
     { id: 'reservations', icon: <CalendarDays size={20} strokeWidth={2.2} />, label: t('reservations_title') },
     ...(isManager ? [{ id: 'events' as TabId, icon: <Ticket size={20} strokeWidth={2.2} />, label: 'Eventos' }] : []),
+    { id: 'cash_close' as TabId, icon: <Banknote size={20} strokeWidth={2.2} />, label: t('corte_de_caja') },
   ];
   return (
     <aside
@@ -113,6 +115,7 @@ export default function MobileFrame() {
       case 'inventory': return <InventoryView />;
       case 'reservations': return <ReservationsView />;
       case 'events': return <EventsView />;
+      case 'cash_close': return <CorteDeCajaView />;
       default: return <BoardView />;
     }
   };

@@ -48,6 +48,7 @@ const OWNER_TABS = [
     { id: 'analytics', label: 'Analytics', route: null },
     { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
     { id: 'ai', label: 'AI', route: null },
+    { id: 'cash', label: 'Caja', route: null, desktopOnly: true },
     { id: 'tutorials', label: 'Tutorials', route: null }
 ]
 
@@ -84,6 +85,7 @@ const getRouteMaps = (tenantSlug) => ({
         analytics: `/${tenantSlug}/owner/analytics`,
         contacts: `/${tenantSlug}/owner/contacts`,
         ai: `/${tenantSlug}/owner/ai`,
+        cash: `/${tenantSlug}/owner/cash`,
         tutorials: `/${tenantSlug}/owner/tutorials`
     },
     staff: {

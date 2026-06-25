@@ -173,6 +173,7 @@ const CustomerContacts = lazy(() => import('./pages/owner/CustomerContacts.jsx')
 const Dashboard = lazy(() => import('./pages/owner/Dashboard.jsx'))
 const Reservations = lazy(() => import('./pages/owner/Reservations.jsx'))
 const OwnerTutorials = lazy(() => import('./pages/owner/Tutorials.jsx'))
+const CorteDeCaja = lazy(() => import('./pages/owner/CorteDeCaja.jsx'))
 
 // Admin Pages (Lazy-loaded)
 const SuperAdmin = lazy(() => import('./pages/admin/SuperAdmin.jsx'))
@@ -730,6 +731,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/reservations" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts defaultTab="reservas" /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/tutorials" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerTutorials /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/cash" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CorteDeCaja /></Suspense></ProtectedRoute>} />
 
                                             <Route path="*" element={<Navigate to="/" replace />} />
                                         </Routes>
