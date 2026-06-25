@@ -2,6 +2,36 @@
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 
+// Guard wrapper for tutorials (only visible to hikaribrandan3@gmail.com)
+function TutorialsGuard({ children }) {
+    const [userEmail, setUserEmail] = useState('')
+    const [isLoading, setIsLoading] = useState(true)
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    useEffect(() => {
+        const checkEmail = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            setUserEmail(session?.user?.email || '')
+            setIsLoading(false)
+
+            // Redirect if not authorized
+            if (session?.user?.email !== 'hikaribrandan3@gmail.com') {
+                navigate('/', { replace: true })
+            }
+        }
+        checkEmail()
+    }, [navigate])
+
+    if (isLoading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
+
+    if (userEmail !== 'hikaribrandan3@gmail.com') {
+        return null
+    }
+
+    return children
+}
+
 import { useDevice } from './hooks/useDevice'
 import { detectAndroidInAppBrowser, getChromeIntentUrl } from './utils/detectBrowser.js'
 import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
@@ -715,7 +745,7 @@ function App() {
                                             <Route path="/:tenantSlug/staff/kds" element={<Suspense fallback={<LazyFallback />}><StaffKDS config={safeConfig} /></Suspense>} />
                                             <Route path="/:tenantSlug/staff/ops" element={<StaffOpsRedirect />} />
                                             <Route path="/:tenantSlug/staff/events" element={<StaffOpsRedirect />} />
-                                            <Route path="/:tenantSlug/staff/tutorials" element={<Suspense fallback={<LazyFallback />}><StaffTutorials /></Suspense>} />
+                                            <Route path="/:tenantSlug/staff/tutorials" element={<TutorialsGuard><Suspense fallback={<LazyFallback />}><StaffTutorials /></Suspense></TutorialsGuard>} />
 
                                             <Route path="/:tenantSlug/owner" element={<Suspense fallback={<LazyFallback />}><OwnerLogin /></Suspense>} />
                                             <Route path="/:tenantSlug/owner/summary" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerSummary config={safeConfig} /></Suspense></ProtectedRoute>} />
@@ -730,7 +760,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/branding" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/reservations" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts defaultTab="reservas" /></Suspense></ProtectedRoute>} />
-                                            <Route path="/:tenantSlug/owner/tutorials" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerTutorials /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/tutorials" element={<TutorialsGuard><ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><OwnerTutorials /></Suspense></ProtectedRoute></TutorialsGuard>} />
                                             <Route path="/:tenantSlug/owner/cash" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CorteDeCaja /></Suspense></ProtectedRoute>} />
 
                                             <Route path="*" element={<Navigate to="/" replace />} />

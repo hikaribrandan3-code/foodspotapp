@@ -253,6 +253,7 @@ function BackendNav({
     const [isDark, setIsDark] = useState(
         () => typeof window !== 'undefined' && document.documentElement.classList.contains('dark')
     )
+    const [userEmail, setUserEmail] = useState('')
 
     // 🏢 SILO-AWARE: Extract tenant from URL
     // Fallback: extract from pathname if useParams doesn't return it
@@ -268,6 +269,15 @@ function BackendNav({
     // Generate route maps dynamically based on current tenant
     // If no tenantSlug, routes will be null (prevents bad navigation)
     const ROUTE_MAPS = tenantSlug ? getRouteMaps(tenantSlug) : null
+
+    // Fetch current user email
+    useEffect(() => {
+        const fetchUserEmail = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            setUserEmail(session?.user?.email || '')
+        }
+        fetchUserEmail()
+    }, [])
 
     // Check reduced motion preference
     useEffect(() => {
@@ -486,11 +496,17 @@ function BackendNav({
         lineHeight: 1
     }
     const localizedTabs = useMemo(() => tabs
-        .filter(tab => !tab.desktopOnly || isDesktop)
+        .filter(tab => {
+            // Hide tutorials unless user is hikaribrandan3@gmail.com
+            if (tab.id === 'tutorials' && userEmail !== 'hikaribrandan3@gmail.com') {
+                return false
+            }
+            return !tab.desktopOnly || isDesktop
+        })
         .map(tab => ({
             ...tab,
             label: t(tab.id) || tab.label
-        })), [tabs, t, isDesktop])
+        })), [tabs, t, isDesktop, userEmail])
 
     const storeName = tenantData?.venue_name || tenantData?.business_name || 'FoodSpot'
     const storeUrl = tenantSlug ? `/${tenantSlug}` : '/'
