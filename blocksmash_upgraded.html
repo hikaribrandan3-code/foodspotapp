@@ -254,7 +254,7 @@ let stage = 1, lives = 3, combo = 0, maxCombo = 0;
 let blink = 0, shake = 0, slowMo = 0;
 let last = null;
 
-const paddle = { cx: 500, y: 1300, w: 180, h: 24, baseW: 180, sticky: false, laser: false, laserTimer: 0 };
+const paddle = { cx: 500, y: 1300, w: 180, h: 24, baseW: 180, sticky: false, laser: false, laserTimer: 0, fire: false, fireTimer: 0 };
 const balls = [];
 const particles = [];
 const powerups = [];
@@ -591,6 +591,7 @@ function update(dt) {
         activePowerups[k] = false;
         if (k === 'wide') paddle.w = paddle.baseW;
         if (k === 'laser') paddle.laser = false;
+        if (k === 'fire') paddle.fire = false;
         if (k === 'sticky') paddle.sticky = false;
       }
     }
@@ -790,9 +791,22 @@ function update(dt) {
   if (paddle.laser) {
     paddle.laserTimer -= dt;
     if (paddle.laserTimer <= 0) {
-      projectiles.push({ x: paddle.cx - paddle.w*0.3, y: paddle.y });
-      projectiles.push({ x: paddle.cx + paddle.w*0.3, y: paddle.y });
+      projectiles.push({ x: paddle.cx - paddle.w*0.3, y: paddle.y, type: 'laser' });
+      projectiles.push({ x: paddle.cx + paddle.w*0.3, y: paddle.y, type: 'laser' });
       paddle.laserTimer = 0.25;
+      sfx('shoot');
+    }
+  }
+
+  // Fire auto-shoot (chaotic, faster & wider spread)
+  if (paddle.fire) {
+    paddle.fireTimer -= dt;
+    if (paddle.fireTimer <= 0) {
+      // Shoot 3 fireballs: left, center, right for chaos
+      projectiles.push({ x: paddle.cx - paddle.w*0.4, y: paddle.y, type: 'fire' });
+      projectiles.push({ x: paddle.cx, y: paddle.y, type: 'fire' });
+      projectiles.push({ x: paddle.cx + paddle.w*0.4, y: paddle.y, type: 'fire' });
+      paddle.fireTimer = 0.2;  // Faster than laser (5 shots/sec × 3 = chaos)
       sfx('shoot');
     }
   }
@@ -847,6 +861,8 @@ function applyPowerup(type) {
       break;
     case 'fire':
       activePowerups.fire = true;
+      paddle.fire = true;
+      paddle.fireTimer = 0;
       powerupTimers.fire = 8;
       break;
     case 'slow':
@@ -1109,11 +1125,51 @@ function drawPowerups() {
 
 function drawProjectiles() {
   for (const pr of projectiles) {
-    ctx.fillStyle = '#ff3b3b';
-    ctx.shadowColor = '#ff3b3b';
-    ctx.shadowBlur = 8 * S;
-    ctx.fillRect((pr.x - 2) * S, (pr.y - 6) * S, 4 * S, 12 * S);
-    ctx.shadowBlur = 0;
+    const isFire = pr.type === 'fire';
+    const x = pr.x * S;
+    const y = pr.y * S;
+
+    if (isFire) {
+      // FIRE: Amazing visuals with multiple layers
+
+      // 1. Outer glow (large, orange)
+      ctx.fillStyle = 'rgba(255, 150, 0, 0.15)';
+      ctx.shadowColor = '#ff6600';
+      ctx.shadowBlur = 16 * S;
+      ctx.beginPath();
+      ctx.arc(x, y, 12 * S, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Mid glow (medium, orange-red)
+      ctx.fillStyle = 'rgba(255, 100, 0, 0.25)';
+      ctx.shadowColor = '#ff3300';
+      ctx.shadowBlur = 10 * S;
+      ctx.beginPath();
+      ctx.arc(x, y, 8 * S, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Core flame (bright orange-yellow, moving wavy)
+      ctx.fillStyle = '#ffaa00';
+      ctx.shadowColor = '#ffff00';
+      ctx.shadowBlur = 12 * S;
+      const wave = Math.sin(frame * 0.15 + pr.x) * 1.5;
+      ctx.fillRect((pr.x - 2.5 + wave) * S, (pr.y - 7) * S, 5 * S, 14 * S);
+
+      // 4. Inner bright core
+      ctx.fillStyle = '#ffff99';
+      ctx.shadowColor = 'rgba(255, 255, 150, 0.8)';
+      ctx.shadowBlur = 6 * S;
+      ctx.fillRect((pr.x - 1 + wave) * S, (pr.y - 4) * S, 2 * S, 8 * S);
+
+      ctx.shadowBlur = 0;
+    } else {
+      // LASER: Original red laser
+      ctx.fillStyle = '#ff3b3b';
+      ctx.shadowColor = '#ff3b3b';
+      ctx.shadowBlur = 8 * S;
+      ctx.fillRect((pr.x - 2) * S, (pr.y - 6) * S, 4 * S, 12 * S);
+      ctx.shadowBlur = 0;
+    }
   }
 }
 
