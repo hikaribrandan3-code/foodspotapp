@@ -35,7 +35,7 @@ function TutorialsGuard({ children }) {
 import { useDevice } from './hooks/useDevice'
 import { detectAndroidInAppBrowser, getChromeIntentUrl } from './utils/detectBrowser.js'
 import { getConfig, normalizeConfig, HERO_ICON_DARK, HERO_DEFAULT } from './config/appConfig.v2.js'
-import { incrementVisit, updateOrder, getOrders } from './utils/storage.js'
+import { incrementVisit, updateOrder, getOrders, getScopedGuestToken } from './utils/storage.js'
 import { sanitizeForAdmin } from './utils/adminSanitize.js'
 import { getSession } from './utils/auth.js'
 import { AdminIntentProvider, useAdminIntent } from './contexts/AdminIntentContext.jsx'
@@ -607,7 +607,7 @@ function App() {
         if (!businessId) return;
         let realtimeChannel = null;
         const initCloudSync = async () => {
-            const guestToken = localStorage.getItem('fs_guest_token');
+            const guestToken = getScopedGuestToken();
             const customerPhone = localStorage.getItem('fs_customer_phone');
             if (guestToken) { try { const { data } = await getOrdersByGuestToken(guestToken, businessId); if (data?.length > 0) setOrders(data); } catch { } }
             else if (customerPhone) { try { const { data } = await getOrdersByPhone(customerPhone, businessId); if (data?.length > 0) setOrders(data); } catch { } }

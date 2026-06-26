@@ -314,21 +314,15 @@ export function TenantProvider({ children }) {
         // This ensures cameraPinStyle and other app_config changes update tenantData immediately
         const handleFrontendSync = (e) => {
             const syncData = e.detail;
-            if (syncData) {
-                // CRITICAL: Merge app_config first, then other branding/colors fields
-                const updatedData = {
-                    ...tenantData,
-                    ...syncData,
-                };
-                // EXPLICIT: Ensure app_config overwrites completely (not shallow merge)
+            if (!syncData) return;
+            setTenantData(prev => {
+                if (!prev) return syncData;
+                const updated = { ...prev, ...syncData };
                 if (syncData.app_config) {
-                    updatedData.app_config = {
-                        ...(tenantData?.app_config || {}),
-                        ...syncData.app_config
-                    };
+                    updated.app_config = { ...(prev.app_config || {}), ...syncData.app_config };
                 }
-                setTenantData(updatedData);
-            }
+                return updated;
+            });
         };
         window.addEventListener('frontendSync', handleFrontendSync);
 

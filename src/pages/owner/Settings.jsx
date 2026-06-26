@@ -331,8 +331,6 @@ const Settings = () => {
         // Apply CSS variables immediately
         applyCssVariables(tenant);
         
-        setIsPaused(tenant.is_paused || false);
-        setPauseMessage(tenant.pause_message || '');
 
         initializedForBusinessRef.current = tenant.business_id;
         setHasChanges(false);

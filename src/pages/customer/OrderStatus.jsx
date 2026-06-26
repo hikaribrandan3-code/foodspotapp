@@ -6,6 +6,7 @@ import { useCart } from '../../contexts/CartContext.jsx'
 import { useTenant } from '../../contexts/TenantContext.jsx'
 import { addToCurrentOrder, getScopedGuestToken } from '../../utils/storage.js'
 import { isOrderPaid } from '../../utils/paymentStatus.js'
+import { formatCurrency } from '../../utils/currency.js'
 import OrderStatusEmpty from '../../components/OrderStatusEmpty.jsx'
 import BurgerLoader from '../../components/BurgerLoader'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
@@ -244,7 +245,8 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         return <OrderStatusEmpty config={config} featuredItems={featuredItems} tenantSlug={tenantSlug} />
     }
 
-    const fmt = (n) => (n / 100).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    const currency = order.currency || 'ARS'
+    const fmt = (n) => formatCurrency(Math.round(n), currency)
     const isDelivery = order.order_type === 'delivery'
     const whatsappNumber = tenantData?.whatsapp_number || ''
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hola, necesito ayuda con mi pedido #${order.order_number}`
@@ -259,15 +261,14 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
     }
 
     const subtotal = order.items?.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0) || 0
-    const tax = order.tax || 0.01
+    const tax = 0
     const deliveryFee = isDelivery ? (order.delivery_fee || 0) : null
-    const total = order.total || (subtotal + (deliveryFee || 0) + tax)
+    const total = order.total || order.total_cents || (subtotal + (deliveryFee || 0))
 
-    /**
-     * 🎯 1:1 STATUS PARITY
-     * Every DB status maps to exactly one customer-facing heading + subtext.
-     * This matches 1:1 with staff/owner actions.
-     */
+    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
+    const isDelivered = order.status === ORDER_STATUS.DELIVERED
+    const paid = isOrderPaid(order) || (isDelivered && isCashMethod)
+
     const getStatusDisplay = () => {
         const s = order.status
         const type = order.order_type
@@ -325,10 +326,6 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
         // Fallback
         return { heading: t('heading_order_confirmed'), subtext: '' }
     }
-
-    const isCashMethod = order.payment_method === PAYMENT_METHOD.CASH
-    const isDelivered = order.status === ORDER_STATUS.DELIVERED
-    const paid = isOrderPaid(order) || (isDelivered && isCashMethod)
 
     const statusDisplay = getStatusDisplay()
 
@@ -458,7 +455,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                             fontFamily: 'monospace', fontSize: 13.5, color: '#0a0a0a',
                                             fontVariantNumeric: 'tabular-nums', fontWeight: 500,
                                         }}>
-                                            ${fmt(item.price || 0)}
+                                            {fmt(item.price || 0)}
                                         </span>
                                     </div>
                                 ))}
@@ -488,7 +485,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 fontWeight: 500, color: '#0a0a0a',
                                 fontVariantNumeric: 'tabular-nums',
                             }}>
-                                ${fmt(subtotal)}
+                                {fmt(subtotal)}
                             </span>
                         </div>
 
@@ -514,35 +511,37 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                     fontWeight: 500, color: '#0a0a0a',
                                     fontVariantNumeric: 'tabular-nums',
                                 }}>
-                                    {deliveryFee === 0 ? t('free_label') : `$${fmt(deliveryFee)}`}
+                                    {deliveryFee === 0 ? t('free_label') : fmt(deliveryFee)}
                                 </span>
                             </div>
                         )}
 
-                        <div style={{
-                            display: 'flex', alignItems: 'baseline',
-                            padding: '3px 0',
-                        }}>
-                            <span style={{
-                                fontSize: 13,
-                                fontWeight: 400,
-                                color: '#525252',
+                        {tax > 0 && (
+                            <div style={{
+                                display: 'flex', alignItems: 'baseline',
+                                padding: '3px 0',
                             }}>
-                                {t('tax')}
-                            </span>
-                            <span style={{
-                                flex: 1, margin: '0 6px',
-                                borderBottom: '1.5px dotted #d4d4d4',
-                                transform: 'translateY(-3px)',
-                            }} />
-                            <span style={{
-                                fontFamily: 'monospace', fontSize: 13,
-                                fontWeight: 500, color: '#0a0a0a',
-                                fontVariantNumeric: 'tabular-nums',
-                            }}>
-                                ${fmt(tax)}
-                            </span>
-                        </div>
+                                <span style={{
+                                    fontSize: 13,
+                                    fontWeight: 400,
+                                    color: '#525252',
+                                }}>
+                                    {t('tax')}
+                                </span>
+                                <span style={{
+                                    flex: 1, margin: '0 6px',
+                                    borderBottom: '1.5px dotted #d4d4d4',
+                                    transform: 'translateY(-3px)',
+                                }} />
+                                <span style={{
+                                    fontFamily: 'monospace', fontSize: 13,
+                                    fontWeight: 500, color: '#0a0a0a',
+                                    fontVariantNumeric: 'tabular-nums',
+                                }}>
+                                    {fmt(tax)}
+                                </span>
+                            </div>
+                        )}
 
                         <div style={{
                             display: 'flex', alignItems: 'baseline',
@@ -568,7 +567,7 @@ function OrderStatus({ config: configProp, featuredItems = [] }) {
                                 fontVariantNumeric: 'tabular-nums',
                                 letterSpacing: -0.2,
                             }}>
-                                ${fmt(total)}
+                                {fmt(total)}
                             </span>
                         </div>
                     </div>
