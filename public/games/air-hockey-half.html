@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Air Hockey (Half Screen Test) — HikariBoy Arcade</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; background:#000; overflow:hidden; position: relative; }
+  canvas { display:block; touch-action:none; position: absolute; right: 0; top: 0; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+/* ================================================================
+   AIR HOCKEY — Real Digital Arcade Table
+   Realistic physics: velocity-based reflection, goal pockets, black puck
+   ================================================================ */
+
+// ---------- Canvas / Layout ----------
+const VW = 1000;
+let VH = 1700;
+let S = 1;
+let DPR = 1;
+let needsLayout = true;
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const vp = window.visualViewport;
+  const W = vp ? vp.width : window.innerWidth;
+  const H = vp ? vp.height : window.innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  // RIGHT HALF SCREEN ONLY
+  const halfW = W / 2;
+  canvas.style.width  = halfW + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width  = Math.round(halfW * DPR);
+  canvas.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  needsLayout = true;
+
+  // Store offset for touch coordinate mapping
+  window.gameCanvasOffsetX = halfW;
+}
+window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', resizeCanvas);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function layout() {
+  const cssW = parseFloat(canvas.style.width)  || window.innerWidth / 2;
+  const cssH = parseFloat(canvas.style.height) || window.innerHeight;
+  S  = cssW / VW;
+  VH = cssH / S;
+}
+
+// ---------- Audio ----------
+let audioCtx = null;
+function ensureAudio() {
+  if (audioCtx) return;
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+}
+function playTone(freq, type, dur, vol) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + dur);
+}
+function sfx(name) {
+  ensureAudio();
+  switch(name) {
+    case 'wall':    playTone(180, 'sine', 0.08, 0.05); break;
+    case 'paddle':  playTone(420, 'square', 0.12, 0.07); break;
+    case 'goal':
+      playTone(523, 'sine', 0.3, 0.08);
+      setTimeout(() => playTone(659, 'sine', 0.3, 0.08), 150);
+      setTimeout(() => playTone(784, 'sine', 0.4, 0.08), 300);
+      break;
+    case 'ai_goal':
+      playTone(380, 'sawtooth', 0.4, 0.1);
+      setTimeout(() => playTone(280, 'sawtooth', 0.4, 0.1), 200);
+      break;
+    case 'win':
+      playTone(523,'sine',0.15,0.08);
+      setTimeout(()=>playTone(659,'sine',0.15,0.08),150);
+      setTimeout(()=>playTone(784,'sine',0.15,0.08),300);
+      setTimeout(()=>playTone(1047,'sine',0.4,0.08),450);
+      break;
+    case 'lose':
+      playTone(280,'sawtooth',0.3,0.1);
+      setTimeout(()=>playTone(220,'sawtooth',0.3,0.1),200);
+      setTimeout(()=>playTone(170,'sawtooth',0.5,0.1),400);
+      break;
+  }
+}
+const bgm = new Audio('./bgm.mp3');
+bgm.loop = true; bgm.volume = 0.35; bgm.load();
+
+// ---------- Haptics ----------
+function haptic(type) {
+  if (!navigator.vibrate) return;
+  switch(type) {
+    case 'puck_wall':   navigator.vibrate(8); break;
+    case 'puck_paddle': navigator.vibrate(20); break;
+    case 'goal':        navigator.vibrate([40, 20, 80]); break;
+    case 'win':         navigator.vibrate([30, 20, 30, 20, 100]); break;
+    case 'lose':        navigator.vibrate([80, 40, 80]); break;
+  }
+}
+
+// ---------- Shell Protocol ----------
+const keys = {};
+function confirmAction() {
+  if (state === STATE.MENU) { startMatch(); }
+  else if (state === STATE.READY) { launchPuck(); }
+  else if (state === STATE.WIN || state === STATE.LOSE) { resetToMenu(); }
+}
+window.addEventListener('message', (e) => {
+  const d = e.data || {};
+  if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') {
+    ensureAudio(); bgm.play().catch(()=>{});
+  }
+  const { type, button } = d;
+  if (!button) return;
+  if (type === 'BUTTON_PRESS') {
+    if (button === 'dpad-left')  keys['left']  = true;
+    if (button === 'dpad-right') keys['right'] = true;
+    if (button === 'dpad-up')    keys['up']    = true;
+    if (button === 'dpad-down')  keys['down']  = true;
+    if (button === 'a' || button === 'b' || button === 'start') confirmAction();
+    if (button === 'select') window.parent.postMessage({ type: 'GAME_EXIT' }, '*');
+  }
+  if (type === 'BUTTON_RELEASE') {
+    if (button === 'dpad-left')  keys['left']  = false;
+    if (button === 'dpad-right') keys['right'] = false;
+    if (button === 'dpad-up')    keys['up']    = false;
+    if (button === 'dpad-down')  keys['down']  = false;
+  }
+});
+window.addEventListener('load', () => {
+  window.parent.postMessage({ type: 'GAME_LOADED' }, '*');
+});
+
+// ---------- Touch / Mouse ----------
+let touchActive = false;
+let touchX = VW/2, touchY = VH*0.75;
+let lastTouchX = touchX, lastTouchY = touchY;
+let touchVX = 0, touchVY = 0;
+
+canvas.addEventListener('pointerdown', (e) => {
+  ensureAudio(); touchActive = true;
+  const rect = canvas.getBoundingClientRect();
+  touchX = (e.clientX - rect.left) / S;
+  touchY = (e.clientY - rect.top) / S;
+  lastTouchX = touchX; lastTouchY = touchY;
+  touchVX = 0; touchVY = 0;
+  if (state === STATE.MENU) startMatch();
+  else if (state === STATE.READY) launchPuck();
+  else if (state === STATE.WIN || state === STATE.LOSE) resetToMenu();
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!touchActive) return;
+  const rect = canvas.getBoundingClientRect();
+  const nx = (e.clientX - rect.left) / S;
+  const ny = (e.clientY - rect.top) / S;
+  touchVX = (nx - lastTouchX) / 0.016;
+  touchVY = (ny - lastTouchY) / 0.016;
+  lastTouchX = nx; lastTouchY = ny;
+  touchX = nx; touchY = ny;
+});
+canvas.addEventListener('pointerup', () => { touchActive = false; touchVX = 0; touchVY = 0; });
+canvas.addEventListener('pointercancel', () => { touchActive = false; touchVX = 0; touchVY = 0; });
+
+// ---------- Game Constants ----------
+const WIN_SCORE = 7;
+const MAX_SPEED = 2200;
+const MAX_PARTICLES = 80;
+const STATE = { MENU:0, READY:1, PLAYING:2, GOAL:3, WIN:4, LOSE:5 };
+let state = STATE.MENU;
+
+// ---------- Table Geometry ----------
+let TABLE = { x: 0, y: 0, w: 0, h: 0 };
+let GOAL_W = 0;
+let GOAL_DEPTH = 60;
+let CENTER_R = 0;
+let RAIL_W = 18;
+
+function recalcTable() {
+  // Full screen table, no brown frame
+  TABLE.x = 30;
+  TABLE.y = 110;
+  TABLE.w = VW - 60;
+  TABLE.h = VH - 220;
+  GOAL_W = Math.min(320, TABLE.w * 0.38);
+  GOAL_DEPTH = 55;
+  CENTER_R = TABLE.w * 0.10;
+  RAIL_W = 16;
+}
+
+// ---------- Entities ----------
+let puck = { x:VW/2, y:VH/2, vx:0, vy:0, r:20 };
+let playerMallet = { x:VW/2, y:VH*0.78, r:42, prevX:VW/2, prevY:VH*0.78 };
+let aiMallet = { x:VW/2, y:VH*0.22, r:42, prevX:VW/2, prevY:VH*0.22 };
+let playerScore = 0, aiScore = 0;
+let round = 1;
+let goalTimer = 0;
+let flashTimer = 0;
+let flashColor = '';
+let highScore = parseInt(localStorage.getItem('airHockeyHigh') || '0');
+
+// Particles
+let particles = [];
+function spawnParticles(x, y, color, count) {
+  for (let i=0;i<count;i++) {
+    if (particles.length >= MAX_PARTICLES) break;
+    const ang = Math.random()*Math.PI*2;
+    const spd = 100 + Math.random()*300;
+    particles.push({
+      x, y, vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd,
+      life:0.3+Math.random()*0.4, maxLife:0.3+Math.random()*0.4,
+      color, size:2+Math.random()*4
+    });
+  }
+}
+
+// Puck trail
+const trail = [];
+const TRAIL_LEN = 10;
+
+// Menu demo
+let menuPuck = { x:VW*0.35, y:VH*0.42, vx:300, vy:220, r:18 };
+
+// ---------- Helpers ----------
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function resetPuck(towardPlayer) {
+  puck.x = VW/2; puck.y = VH/2;
+  const ang = (Math.random()-0.5)*0.4 + (towardPlayer ? Math.PI/2 : -Math.PI/2);
+  const spd = 500 + Math.random()*200;
+  puck.vx = Math.cos(ang)*spd; puck.vy = Math.sin(ang)*spd;
+  trail.length = 0;
+}
+function launchPuck() { if (state !== STATE.READY) return; state = STATE.PLAYING; resetPuck(Math.random()>0.5); }
+function startMatch() { playerScore=0; aiScore=0; round=1; resetToReady(); }
+function resetToReady() {
+  state = STATE.READY;
+  puck.x=VW/2; puck.y=VH/2; puck.vx=0; puck.vy=0;
+  trail.length=0;
+  playerMallet.x=VW/2; playerMallet.y=TABLE.y + TABLE.h - 90;
+  aiMallet.x=VW/2; aiMallet.y=TABLE.y + 90;
+}
+function resetToMenu() {
+  state = STATE.MENU; playerScore=0; aiScore=0; round=1;
+  puck.x=VW/2; puck.y=VH/2; puck.vx=0; puck.vy=0; trail.length=0; particles=[];
+}
+function getAISpeed() { return round<=2 ? 5.0 : round<=4 ? 7.0 : 9.0; }
+
+// Store previous positions for velocity calculation
+function storePrevPositions() {
+  playerMallet.prevX = playerMallet.x;
+  playerMallet.prevY = playerMallet.y;
+  aiMallet.prevX = aiMallet.x;
+  aiMallet.prevY = aiMallet.y;
+}
+
+// ---------- Update ----------
+function update(dt) {
+  recalcTable();
+
+  // Particles
+  for (let i=particles.length-1;i>=0;i--) {
+    const p = particles[i];
+    p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt;
+    if (p.life <= 0) particles.splice(i,1);
+  }
+  if (flashTimer > 0) flashTimer -= dt;
+
+  // Menu
+  if (state === STATE.MENU) {
+    menuPuck.x += menuPuck.vx*dt; menuPuck.y += menuPuck.vy*dt;
+    if (menuPuck.x < menuPuck.r || menuPuck.x > VW-menuPuck.r) menuPuck.vx *= -1;
+    if (menuPuck.y < menuPuck.r || menuPuck.y > VH*0.55) menuPuck.vy *= -1;
+    return;
+  }
+
+  // Goal state
+  if (state === STATE.GOAL) {
+    goalTimer -= dt;
+    if (goalTimer <= 0) {
+      if (playerScore >= WIN_SCORE) { state=STATE.WIN; sfx('win'); haptic('win'); spawnParticles(VW/2,VH/2,'#00d4ff',50); }
+      else if (aiScore >= WIN_SCORE) { state=STATE.LOSE; sfx('lose'); haptic('lose'); spawnParticles(VW/2,VH/2,'#ff3333',50); }
+      else { resetToReady(); }
+    }
+    return;
+  }
+  if (state === STATE.WIN || state === STATE.LOSE) return;
+
+  storePrevPositions();
+
+  // Player mallet movement
+  const pSpeedX = 1600, pSpeedY = 1100;
+  if (keys['left'])  playerMallet.x -= pSpeedX*dt;
+  if (keys['right']) playerMallet.x += pSpeedX*dt;
+  if (keys['up'])    playerMallet.y -= pSpeedY*dt;
+  if (keys['down'])  playerMallet.y += pSpeedY*dt;
+  if (touchActive) { playerMallet.x = touchX; playerMallet.y = touchY; }
+
+  // Clamp player to table bottom half
+  const mR = playerMallet.r;
+  const tL = TABLE.x + RAIL_W + mR;
+  const tR = TABLE.x + TABLE.w - RAIL_W - mR;
+  const tMid = TABLE.y + TABLE.h/2;
+  const tBot = TABLE.y + TABLE.h - RAIL_W - mR;
+  playerMallet.x = clamp(playerMallet.x, tL, tR);
+  playerMallet.y = clamp(playerMallet.y, tMid + mR, tBot);
+
+  // AI mallet
+  const aiSpeed = getAISpeed();
+  aiMallet.x += (puck.x - aiMallet.x) * aiSpeed * dt;
+  const aiTargetY = (puck.y < tMid && puck.vy < 0)
+    ? clamp(puck.y, TABLE.y + RAIL_W + mR, tMid - mR)
+    : TABLE.y + TABLE.h*0.18;
+  aiMallet.y += (aiTargetY - aiMallet.y) * aiSpeed * 0.6 * dt;
+  aiMallet.x = clamp(aiMallet.x, tL, tR);
+  aiMallet.y = clamp(aiMallet.y, TABLE.y + RAIL_W + mR, tMid - mR);
+
+  // Puck physics
+  if (state === STATE.PLAYING) {
+    puck.x += puck.vx*dt; puck.y += puck.vy*dt;
+    // Very low friction = fast, slippery
+    puck.vx *= 0.998; puck.vy *= 0.998;
+    const spd = Math.sqrt(puck.vx*puck.vx + puck.vy*puck.vy);
+    if (spd > MAX_SPEED) { const r=MAX_SPEED/spd; puck.vx*=r; puck.vy*=r; }
+
+    trail.push({x:puck.x, y:puck.y});
+    if (trail.length > TRAIL_LEN) trail.shift();
+
+    const pR = puck.r;
+    const fL = TABLE.x + RAIL_W;
+    const fR = TABLE.x + TABLE.w - RAIL_W;
+    const fT = TABLE.y + RAIL_W;
+    const fB = TABLE.y + TABLE.h - RAIL_W;
+    const goalL = VW/2 - GOAL_W/2;
+    const goalR = VW/2 + GOAL_W/2;
+
+    // GOAL CHECKS (must pass fully into goal pocket)
+    // Top goal (AI side) — player scores
+    if (puck.y + pR < fT - GOAL_DEPTH*0.3) {
+      if (puck.x > goalL && puck.x < goalR) {
+        playerScore++; sfx('goal'); haptic('goal');
+        flashColor='#00d4ff'; flashTimer=0.4;
+        spawnParticles(puck.x, fT, '#00d4ff', 30);
+        state=STATE.GOAL; goalTimer=1.8;
+        if (playerScore > highScore) { highScore=playerScore; localStorage.setItem('airHockeyHigh', String(highScore)); }
+        return;
+      }
+    }
+    // Bottom goal (Player side) — AI scores
+    if (puck.y - pR > fB + GOAL_DEPTH*0.3) {
+      if (puck.x > goalL && puck.x < goalR) {
+        aiScore++; sfx('ai_goal'); haptic('goal');
+        flashColor='#ff3333'; flashTimer=0.4;
+        spawnParticles(puck.x, fB, '#ff3333', 30);
+        state=STATE.GOAL; goalTimer=1.8;
+        return;
+      }
+    }
+
+    // Left / Right walls
+    if (puck.x - pR < fL) { puck.x = fL + pR; puck.vx = Math.abs(puck.vx); sfx('wall'); haptic('puck_wall'); }
+    if (puck.x + pR > fR) { puck.x = fR - pR; puck.vx = -Math.abs(puck.vx); sfx('wall'); haptic('puck_wall'); }
+
+    // Top wall (non-goal area)
+    if (puck.y - pR < fT) {
+      if (puck.x <= goalL || puck.x >= goalR) {
+        puck.y = fT + pR; puck.vy = Math.abs(puck.vy); sfx('wall'); haptic('puck_wall');
+      }
+    }
+    // Bottom wall (non-goal area)
+    if (puck.y + pR > fB) {
+      if (puck.x <= goalL || puck.x >= goalR) {
+        puck.y = fB - pR; puck.vy = -Math.abs(puck.vy); sfx('wall'); haptic('puck_wall');
+      }
+    }
+
+    // === REALISTIC PADDLE COLLISION ===
+    // Player mallet — velocity-based reflection
+    const pdx = puck.x - playerMallet.x;
+    const pdy = puck.y - playerMallet.y;
+    const pDist = Math.sqrt(pdx*pdx + pdy*pdy);
+    const minPDist = puck.r + playerMallet.r;
+    if (pDist < minPDist && pdy < 0) {
+      const nx = pdx / pDist;
+      const ny = pdy / pDist;
+      const overlap = minPDist - pDist;
+      puck.x += nx * overlap;
+      puck.y += ny * overlap;
+
+      // Mallet velocity from movement
+      const malletVX = (playerMallet.x - playerMallet.prevX) / dt;
+      const malletVY = (playerMallet.y - playerMallet.prevY) / dt;
+      const malletSpeed = Math.sqrt(malletVX*malletVX + malletVY*malletVY);
+
+      // Reflect puck off normal
+      const dot = puck.vx*nx + puck.vy*ny;
+      puck.vx -= 2*dot*nx;
+      puck.vy -= 2*dot*ny;
+
+      // Add mallet velocity influence (the faster you hit, the harder it launches)
+      const powerFactor = Math.min(malletSpeed * 0.6, 1200);
+      puck.vx += nx * powerFactor * 0.3 + malletVX * 0.4;
+      puck.vy += ny * powerFactor * 0.5 + malletVY * 0.4;
+
+      // Minimum speed after hit + speed boost
+      const newSpd = Math.sqrt(puck.vx*puck.vx + puck.vy*puck.vy);
+      const targetSpd = Math.max(newSpd * 1.15, 500 + malletSpeed * 0.5);
+      const clampedSpd = Math.min(targetSpd, MAX_SPEED);
+      const scale = clampedSpd / Math.max(newSpd, 1);
+      puck.vx *= scale;
+      puck.vy *= scale;
+
+      sfx('paddle'); haptic('puck_paddle');
+    }
+
+    // AI mallet — same realistic physics
+    const adx = puck.x - aiMallet.x;
+    const ady = puck.y - aiMallet.y;
+    const aDist = Math.sqrt(adx*adx + ady*ady);
+    const minADist = puck.r + aiMallet.r;
+    if (aDist < minADist && ady > 0) {
+      const nx = adx / aDist;
+      const ny = ady / aDist;
+      const overlap = minADist - aDist;
+      puck.x += nx * overlap;
+      puck.y += ny * overlap;
+
+      const malletVX = (aiMallet.x - aiMallet.prevX) / dt;
+      const malletVY = (aiMallet.y - aiMallet.prevY) / dt;
+      const malletSpeed = Math.sqrt(malletVX*malletVX + malletVY*malletVY);
+
+      const dot = puck.vx*nx + puck.vy*ny;
+      puck.vx -= 2*dot*nx;
+      puck.vy -= 2*dot*ny;
+
+      const powerFactor = Math.min(malletSpeed * 0.6, 1200);
+      puck.vx += nx * powerFactor * 0.3 + malletVX * 0.4;
+      puck.vy += ny * powerFactor * 0.5 + malletVY * 0.4;
+
+      const newSpd = Math.sqrt(puck.vx*puck.vx + puck.vy*puck.vy);
+      const targetSpd = Math.max(newSpd * 1.15, 500 + malletSpeed * 0.5);
+      const clampedSpd = Math.min(targetSpd, MAX_SPEED);
+      const scale = clampedSpd / Math.max(newSpd, 1);
+      puck.vx *= scale;
+      puck.vy *= scale;
+
+      sfx('paddle'); haptic('puck_paddle');
+    }
+  }
+}
+
+// ---------- Drawing ----------
+function drawMallet(x, y, r, isPlayer) {
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(x+5, y+6, r, r*0.85, 0, 0, Math.PI*2); ctx.fill();
+
+  // Base disc
+  const baseGrad = ctx.createRadialGradient(x-6, y-6, 2, x, y, r);
+  baseGrad.addColorStop(0, isPlayer ? '#55ddff' : '#ff6666');
+  baseGrad.addColorStop(0.5, isPlayer ? '#0099cc' : '#cc2222');
+  baseGrad.addColorStop(1, isPlayer ? '#004466' : '#660000');
+  ctx.fillStyle = baseGrad;
+  ctx.beginPath(); ctx.ellipse(x, y, r, r*0.86, 0, 0, Math.PI*2); ctx.fill();
+
+  // Rim
+  ctx.strokeStyle = isPlayer ? '#66eeff' : '#ff9999';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(x, y, r-3, r*0.86-3, 0, 0, Math.PI*2); ctx.stroke();
+
+  // Handle
+  const hH = 20, hW = 13;
+  const hGrad = ctx.createLinearGradient(x-hW, y-r-hH, x+hW, y-r);
+  hGrad.addColorStop(0, isPlayer ? '#aaffff' : '#ffcccc');
+  hGrad.addColorStop(0.5, isPlayer ? '#00aadd' : '#dd3333');
+  hGrad.addColorStop(1, isPlayer ? '#003355' : '#550000');
+  ctx.fillStyle = hGrad;
+  ctx.beginPath(); ctx.ellipse(x, y-r-hH*0.5, hW, hH*0.5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Handle cap
+  ctx.fillStyle = isPlayer ? '#88ffff' : '#ffbbbb';
+  ctx.beginPath(); ctx.ellipse(x, y-r-hH, hW*0.8, hW*0.45, 0, 0, Math.PI*2); ctx.fill();
+
+  // Grip lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1.2;
+  for (let i=0;i<3;i++) {
+    const ly = y - r - hH + 5 + i*5;
+    ctx.beginPath(); ctx.moveTo(x-hW+2, ly); ctx.lineTo(x+hW-2, ly); ctx.stroke();
+  }
+}
+
+function drawPuck(x, y, r) {
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(x+3, y+4, r, r*0.88, 0, 0, Math.PI*2); ctx.fill();
+
+  // Black body
+  const pGrad = ctx.createRadialGradient(x-5, y-5, 1, x, y, r);
+  pGrad.addColorStop(0, '#333333');
+  pGrad.addColorStop(0.4, '#1a1a1a');
+  pGrad.addColorStop(1, '#050505');
+  ctx.fillStyle = pGrad;
+  ctx.beginPath(); ctx.ellipse(x, y, r, r*0.88, 0, 0, Math.PI*2); ctx.fill();
+
+  // Silver rim highlight
+  ctx.strokeStyle = '#555';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(x, y, r-2, r*0.88-2, 0, 0, Math.PI*2); ctx.stroke();
+
+  // Inner bevel ring
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.ellipse(x, y, r*0.6, r*0.53, 0, 0, Math.PI*2); ctx.stroke();
+}
+
+function drawScoreDigit(x, y, val, color) {
+  ctx.fillStyle = color;
+  const w = 26, h = 46, t = 5;
+  const segs = [
+    [0,0,w,t], [w-t,0,t,h/2], [w-t,h/2,t,h/2],
+    [0,h-t,w,t], [0,h/2,t,h/2], [0,0,t,h/2], [0,h/2-t/2,w,t]
+  ];
+  const on = [
+    [1,1,1,1,1,1,0],[0,1,1,0,0,0,0],[1,1,0,1,1,0,1],[1,1,1,1,0,0,1],
+    [0,1,1,0,0,1,1],[1,0,1,1,0,1,1],[1,0,1,1,1,1,1],[1,1,1,0,0,0,0],
+    [1,1,1,1,1,1,1],[1,1,1,1,0,1,1]
+  ];
+  const pat = on[val] || on[8];
+  for (let i=0;i<7;i++) if (pat[i]) {
+    const [sx,sy,sw,sh] = segs[i];
+    ctx.beginPath(); ctx.roundRect(x+sx, y+sy, sw, sh, 2); ctx.fill();
+  }
+}
+
+function drawScoreboard() {
+  const sbW = 300, sbH = 64;
+  const sbX = VW/2 - sbW/2;
+  const sbY = 24;
+  ctx.fillStyle = '#111';
+  ctx.beginPath(); ctx.roundRect(sbX-4, sbY-4, sbW+8, sbH+8, 6); ctx.fill();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  drawScoreDigit(sbX + 28, sbY + 8, aiScore, '#ff3333');
+  ctx.fillStyle = '#444';
+  ctx.beginPath(); ctx.arc(sbX + sbW/2, sbY + 20, 3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sbX + sbW/2, sbY + 44, 3, 0, Math.PI*2); ctx.fill();
+  drawScoreDigit(sbX + sbW - 28 - 26, sbY + 8, playerScore, '#00d4ff');
+  ctx.font = '9px "Press Start 2P"';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff5555';
+  ctx.fillText('AI', sbX + 42, sbY + sbH + 12);
+  ctx.fillStyle = '#44ddff';
+  ctx.fillText('YOU', sbX + sbW - 42, sbY + sbH + 12);
+}
+
+function draw() {
+  const W = parseFloat(canvas.style.width) || window.innerWidth;
+  const H = parseFloat(canvas.style.height) || window.innerHeight;
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  ctx.scale(S, S);
+
+  // === TABLE SURFACE (full screen, no brown frame) ===
+  const surfGrad = ctx.createLinearGradient(TABLE.x, TABLE.y, TABLE.x, TABLE.y + TABLE.h);
+  surfGrad.addColorStop(0, '#c8e8f0');
+  surfGrad.addColorStop(0.5, '#e0f4f8');
+  surfGrad.addColorStop(1, '#c8e8f0');
+  ctx.fillStyle = surfGrad;
+  ctx.fillRect(TABLE.x, TABLE.y, TABLE.w, TABLE.h);
+
+  // Air holes
+  ctx.fillStyle = 'rgba(0,70,110,0.1)';
+  for (let ry = TABLE.y + 18; ry < TABLE.y + TABLE.h; ry += 36) {
+    for (let rx = TABLE.x + 18; rx < TABLE.x + TABLE.w; rx += 36) {
+      ctx.beginPath(); ctx.arc(rx, ry, 1.2, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // Rails (bumpers)
+  ctx.fillStyle = '#003355';
+  // Top rail with goal cutout
+  ctx.fillRect(TABLE.x, TABLE.y, (TABLE.w - GOAL_W)/2, RAIL_W);
+  ctx.fillRect(TABLE.x + TABLE.w - (TABLE.w - GOAL_W)/2, TABLE.y, (TABLE.w - GOAL_W)/2, RAIL_W);
+  // Bottom rail with goal cutout
+  ctx.fillRect(TABLE.x, TABLE.y + TABLE.h - RAIL_W, (TABLE.w - GOAL_W)/2, RAIL_W);
+  ctx.fillRect(TABLE.x + TABLE.w - (TABLE.w - GOAL_W)/2, TABLE.y + TABLE.h - RAIL_W, (TABLE.w - GOAL_W)/2, RAIL_W);
+  // Side rails
+  ctx.fillRect(TABLE.x, TABLE.y, RAIL_W, TABLE.h);
+  ctx.fillRect(TABLE.x + TABLE.w - RAIL_W, TABLE.y, RAIL_W, TABLE.h);
+
+  // Rail highlights
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(TABLE.x + RAIL_W, TABLE.y + RAIL_W); ctx.lineTo(TABLE.x + TABLE.w - RAIL_W, TABLE.y + RAIL_W); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(TABLE.x + RAIL_W, TABLE.y + TABLE.h - RAIL_W); ctx.lineTo(TABLE.x + TABLE.w - RAIL_W, TABLE.y + TABLE.h - RAIL_W); ctx.stroke();
+
+  // Center line
+  ctx.strokeStyle = 'rgba(0,90,140,0.35)';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([16, 10]);
+  ctx.beginPath(); ctx.moveTo(TABLE.x + RAIL_W, TABLE.y + TABLE.h/2); ctx.lineTo(TABLE.x + TABLE.w - RAIL_W, TABLE.y + TABLE.h/2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Center circle
+  ctx.strokeStyle = 'rgba(0,90,140,0.3)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(VW/2, TABLE.y + TABLE.h/2, CENTER_R, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = 'rgba(0,90,140,0.06)';
+  ctx.beginPath(); ctx.arc(VW/2, TABLE.y + TABLE.h/2, CENTER_R, 0, Math.PI*2); ctx.fill();
+
+  // Face-off dots
+  ctx.fillStyle = 'rgba(0,90,140,0.22)';
+  const fd = CENTER_R * 0.55;
+  const cy = TABLE.y + TABLE.h/2;
+  ctx.beginPath(); ctx.arc(VW/2 - fd, cy - fd, 4.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(VW/2 + fd, cy - fd, 4.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(VW/2 - fd, cy + fd, 4.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(VW/2 + fd, cy + fd, 4.5, 0, Math.PI*2); ctx.fill();
+
+  // Goal creases
+  ctx.strokeStyle = 'rgba(0,90,140,0.25)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(VW/2, TABLE.y + RAIL_W + 35, 45, 0, Math.PI, false); ctx.stroke();
+  ctx.beginPath(); ctx.arc(VW/2, TABLE.y + TABLE.h - RAIL_W - 35, 45, Math.PI, 0, false); ctx.stroke();
+
+  // Goal pockets (dark slots the puck goes INTO)
+  const goalL = VW/2 - GOAL_W/2;
+  const goalR = VW/2 + GOAL_W/2;
+  // Top pocket
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(goalL, TABLE.y - GOAL_DEPTH, GOAL_W, GOAL_DEPTH + RAIL_W);
+  ctx.strokeStyle = '#cc2222';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(goalL, TABLE.y); ctx.lineTo(goalL, TABLE.y - GOAL_DEPTH); ctx.lineTo(goalR, TABLE.y - GOAL_DEPTH); ctx.lineTo(goalR, TABLE.y); ctx.stroke();
+  // Bottom pocket
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(goalL, TABLE.y + TABLE.h - RAIL_W, GOAL_W, GOAL_DEPTH);
+  ctx.strokeStyle = '#00aadd';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(goalL, TABLE.y + TABLE.h); ctx.lineTo(goalL, TABLE.y + TABLE.h + GOAL_DEPTH); ctx.lineTo(goalR, TABLE.y + TABLE.h + GOAL_DEPTH); ctx.lineTo(goalR, TABLE.y + TABLE.h); ctx.stroke();
+
+  // Goal posts (rounded)
+  ctx.fillStyle = '#cc2222';
+  ctx.beginPath(); ctx.arc(goalL, TABLE.y, 7, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(goalR, TABLE.y, 7, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#00aadd';
+  ctx.beginPath(); ctx.arc(goalL, TABLE.y + TABLE.h, 7, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(goalR, TABLE.y + TABLE.h, 7, 0, Math.PI*2); ctx.fill();
+
+  // Puck trail
+  for (let i=0;i<trail.length;i++) {
+    const t = trail[i];
+    const alpha = (i+1)/trail.length * 0.2;
+    const r = puck.r * (i+1)/trail.length;
+    ctx.fillStyle = `rgba(30,30,30,${alpha})`;
+    ctx.beginPath(); ctx.ellipse(t.x, t.y, r, r*0.88, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Entities
+  drawPuck(puck.x, puck.y, puck.r);
+  drawMallet(playerMallet.x, playerMallet.y, playerMallet.r, true);
+  drawMallet(aiMallet.x, aiMallet.y, aiMallet.r, false);
+
+  // Scoreboard
+  drawScoreboard();
+
+  // Particles
+  for (const p of particles) {
+    const alpha = p.life / p.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Flash
+  if (flashTimer > 0) {
+    ctx.fillStyle = flashColor;
+    ctx.globalAlpha = (flashTimer / 0.4) * 0.28;
+    ctx.fillRect(TABLE.x, TABLE.y, TABLE.w, TABLE.h);
+    ctx.globalAlpha = 1;
+  }
+
+  // READY
+  if (state === STATE.READY) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(TABLE.x, TABLE.y, TABLE.w, TABLE.h);
+    ctx.fillStyle = '#ffaa00';
+    ctx.font = '24px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    if (Math.sin(Date.now()/160) > 0) ctx.fillText('TAP TO SERVE', VW/2, TABLE.y + TABLE.h/2);
+  }
+
+  // WIN / LOSE
+  if (state === STATE.WIN || state === STATE.LOSE) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(TABLE.x, TABLE.y, TABLE.w, TABLE.h);
+    ctx.fillStyle = state === STATE.WIN ? '#00d4ff' : '#ff3333';
+    ctx.font = '36px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(state === STATE.WIN ? 'YOU WIN!' : 'GAME OVER', VW/2, TABLE.y + TABLE.h/2 - 30);
+    ctx.fillStyle = '#ffaa00';
+    ctx.font = '15px "Press Start 2P"';
+    if (Math.sin(Date.now()/200) > 0) ctx.fillText('TAP FOR MENU', VW/2, TABLE.y + TABLE.h/2 + 28);
+  }
+
+  // MENU
+  if (state === STATE.MENU) {
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(0,0,VW,VH);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#00d4ff';
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = 16;
+    ctx.font = '38px "Press Start 2P"';
+    ctx.fillText('AIR HOCKEY', VW/2, VH*0.18);
+    ctx.font = '13px "Press Start 2P"';
+    ctx.fillText('ARCADE EDITION', VW/2, VH*0.24);
+    ctx.shadowBlur = 0;
+    drawPuck(menuPuck.x, menuPuck.y, menuPuck.r);
+    drawMallet(VW*0.65, menuPuck.y + 28, 30, false);
+    ctx.fillStyle = '#ffaa00';
+    ctx.font = '17px "Press Start 2P"';
+    if (Math.sin(Date.now()/200) > 0) ctx.fillText('PRESS START / TAP', VW/2, VH*0.48);
+    ctx.fillStyle = '#888';
+    ctx.font = '10px "Press Start 2P"';
+    ctx.fillText('<- -> MOVE    A SERVE', VW/2, VH*0.56);
+    ctx.fillText('SELECT = QUIT', VW/2, VH*0.60);
+    ctx.fillStyle = '#ffdd44';
+    ctx.font = '12px "Press Start 2P"';
+    ctx.fillText('HIGH SCORE: ' + highScore, VW/2, VH*0.68);
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = '9px "Press Start 2P"';
+    ctx.fillText('@foodspotmobile', VW/2, VH*0.78);
+  }
+
+  ctx.restore();
+}
+
+// ---------- Loop ----------
+let last = 0;
+function loop(ts) {
+  if (needsLayout) { layout(); needsLayout = false; }
+  let dt = (ts - last) / 1000;
+  if (dt > 1/20) dt = 1/20;
+  last = ts;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
