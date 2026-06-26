@@ -132,6 +132,11 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
         return () => document.head.removeChild(style);
     }, []);
 
+    // Reset ugcPoints when a new photo is captured
+    React.useEffect(() => {
+        setUgcPoints(null);
+    }, [capturedImg]);
+
     // Confetti burst when points awarded
     React.useEffect(() => {
         if (ugcPoints) {
