@@ -54,22 +54,12 @@ export const translations = {
     camera_yes: { es: "Sí ✨", en: "Yes ✨", pt: "Sim ✨" },
     camera_no: { es: "No", en: "No", pt: "Não" },
 
-    // Rotating donut prompts — 8 variants per language, randomly picked
-    ugc_prompt_1:  { es: "Toma una foto",                   en: "Take a photo",         pt: "Tire uma foto" },
-    ugc_prompt_2:  { es: "Una foto rápida",                 en: "Quick pic?",           pt: "Foto rápida?" },
-    ugc_prompt_3:  { es: "Foto antes de comer",             en: "Photo before eating",  pt: "Foto antes de comer" },
-    ugc_prompt_4:  { es: "¿Una foto?",                      en: "Photo?",               pt: "Uma foto?" },
-    ugc_prompt_5:  { es: "Capturá esto",                    en: "Capture this",         pt: "Capture isso" },
-    ugc_prompt_6:  { es: "Fototeca",                        en: "Photo moment",         pt: "Momento de foto" },
-    ugc_prompt_7:  { es: "Una para guardar",                en: "One to save",          pt: "Uma para guardar" },
-    ugc_prompt_8:  { es: "Foto del día",                    en: "Today's shot",         pt: "Foto do dia" },
-    ugc_prompt_9:  { es: "Dale, fotograf",                  en: "Go on, shoot",         pt: "Vai, fotografa" },
-    ugc_prompt_10: { es: "Foto primero",                    en: "Photo first",          pt: "Foto primeiro" },
-    ugc_prompt_11: { es: "Captura el plato",                en: "Capture the plate",    pt: "Capture o prato" },
-    ugc_prompt_12: { es: "Una foto chiquita",               en: "Just one photo",       pt: "Uma fotinha" },
-    ugc_prompt_13: { es: "Fotito",                          en: "Quick photo",          pt: "Fotinho" },
-    ugc_prompt_14: { es: "Sacate una foto",                 en: "Snap a shot",          pt: "Tire um foto" },
-    ugc_prompt_15: { es: "Para la galería",                 en: "For the gallery",      pt: "Para a galeria" },
+    // UGC character prompts — 5 proven variants (A/B tested)
+    ugc_prompt_1:  { es: "Toma una foto",                   en: "Snap a pic!",          pt: "Tire uma foto" },
+    ugc_prompt_2:  { es: "Selfie time",                     en: "Selfie time",          pt: "Hora do selfie" },
+    ugc_prompt_3:  { es: "Una para compartir",              en: "Share it to the gram", pt: "Uma pra compartilhar" },
+    ugc_prompt_4:  { es: "Una para Instagram",              en: "One for Instagram",    pt: "Uma pro Insta" },
+    ugc_prompt_5:  { es: "¡Las calorías no cuentan con foto!", en: "Calories don't count if you photograph it!", pt: "Caloria não conta se tiver foto!" },
 
     // Owner Summary
     daily_payments: { es: "PAGOS DEL DÍA", en: "DAILY PAYMENTS", pt: "PAGAMENTOS DO DIA" },
@@ -1219,7 +1209,7 @@ export const translations = {
     whenFriendOrders:        { en: 'pts when friend orders',                es: 'pts cuando tu amigo ordene',          pt: 'pts quando seu amigo pedir' },
     linkCopied:              { en: '✓ Link copied!',                        es: '✓ Link copiado!',                     pt: '✓ Link copiado!' },
     shareAppText:            { en: 'Order food & earn rewards. Use my referral link for bonus points!', es: '¡Pedí comida y ganá puntos! Usá mi link de referido para puntos extra.', pt: 'Peça comida e ganhe pontos! Use meu link de indicação para pontos bônus.' },
-    ugcToastThanks:          { en: 'Thanks for your support!',              es: '¡Gracias por tu apoyo!',               pt: 'Obrigado pelo seu apoio!' },
+    ugcToastThanks:          { en: 'You\'re amazing!',                      es: '¡Sos lo máximo!',                     pt: 'Você é incrível!' },
     ugcToastEarned:          { en: 'pts earned',                            es: 'pts ganados',                         pt: 'pts ganhos' },
     ugcToastSeeYouNextTime:  { en: 'See you next time! 👋',                  es: '¡Hasta la próxima! 👋',                pt: 'Até a próxima! 👋' },
     referralConfirmed:       { en: 'Referral confirmed!',                   es: '¡Referido confirmado!',               pt: 'Referência confirmada!' },
