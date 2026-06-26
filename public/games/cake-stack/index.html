@@ -442,25 +442,119 @@ function drawIngFace(cx,cy,w,h,height){
 function drawIng(block,extraRot){
   var x=block.x,y=block.y,w=block.width,h=block.height,ii=block.ii,squash=block.squash||0,glow=block.glow||0;
   if(w<2||h<2)return;ii=ii%ING.length;var ing=ING[ii];
-  if(feverMode){var hue=(feverHue+ii*50)%360;ing={c:'hsl('+hue+',100%,55%)',h:'hsl('+hue+',100%,78%)',s:'hsl('+((hue+180)%360)+',100%,30%)',bun:ing.bun,seeds:ing.seeds,patty:ing.patty,cheese:ing.cheese,lettuce:ing.lettuce,tomato:ing.tomato,onion:ing.onion};}
-  var cx=x+w/2,cy=y+h/2;ctx.save();
+  if(feverMode){var hue=(feverHue+ii*50)%360;ing={c:'hsl('+hue+',100%,55%)',h:'hsl('+hue+',100%,78%)',s:'hsl('+((hue+180)%360)+',100%,30%)',cake:true};}
+  var cx=x+w/2,cy=y+h/2,seed=ii*7+Math.floor(x/10);
+  ctx.save();
   if(extraRot){ctx.translate(cx,cy);ctx.rotate(extraRot);ctx.translate(-cx,-cy);}
   ctx.translate(cx,cy);ctx.scale(1+squash*.1,1-squash*.07);ctx.translate(-cx,-cy);
-  // PERFORMANCE: Multi-layer stroke replaces shadowBlur for glow effect
-  ctx.fillStyle='rgba(0,0,0,.15)';ctx.beginPath();ctx.roundRect(x+3,y+4,w,h*.6,4);ctx.fill();
+  // Shadow under layer
+  ctx.fillStyle='rgba(0,0,0,.12)';ctx.beginPath();ctx.roundRect(x+2,y+h-3,w-4,3,2);ctx.fill();
+  // Glow
   if(glow>.05){var glowA=Math.min(.65,glow*.7),glowW=Math.min(14,glow*11);ctx.save();ctx.globalAlpha=glowA;ctx.strokeStyle=ing.c;ctx.lineWidth=glowW;ctx.lineJoin='round';ctx.beginPath();ctx.roundRect(x,y,w,h,6);ctx.stroke();ctx.restore();}
-  // All ingredients are cake layers
-  var g=ctx.createLinearGradient(x,y,x,y+h);g.addColorStop(0,ing.h);g.addColorStop(.5,ing.c);g.addColorStop(1,ing.s);
-  if(ing.top){ctx.beginPath();ctx.roundRect(x,y,w,h,[14,14,4,4]);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=ing.s;ctx.lineWidth=3;ctx.stroke();// fondant drip edges
-  ctx.fillStyle=ing.c;for(var di=0;di<5;di++){var dx2=x+w*.1+di*(w*.18),dw=6+Math.sin(di*1.7)*3;ctx.beginPath();ctx.roundRect(dx2,y+h-2,dw,6,[0,0,4,4]);ctx.fill();}}
-  else{ctx.beginPath();ctx.roundRect(x,y,w,h,[4,4,8,8]);ctx.fillStyle=g;ctx.fill();ctx.strokeStyle=ing.s;ctx.lineWidth=3;ctx.stroke();}
-  ctx.fillStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.roundRect(x+5,y+3,w-10,h*.28,3);ctx.fill();
-  // Sprinkles — seeded by ii for consistency
+  // Draw each cake type uniquely
+  var baseG=ctx.createLinearGradient(x,y,x,y+h);baseG.addColorStop(0,ing.h);baseG.addColorStop(.5,ing.c);baseG.addColorStop(1,ing.s);
+  if(ii===0){// Vanilla sponge — bumpy, crumbly
+    drawVanillaSponge(x,y,w,h,baseG,ing,seed);
+  }else if(ii===1){// Chocolate — cocoa texture, darker
+    drawChocolateLayer(x,y,w,h,baseG,ing,seed);
+  }else if(ii===2){// Strawberry — pink frosting swirls
+    drawStrawberryFrost(x,y,w,h,baseG,ing,seed);
+  }else if(ii===3){// Blueberry — purple, berry marks
+    drawBlueberryFrost(x,y,w,h,baseG,ing,seed);
+  }else if(ii===4){// Cream — whipped peaks
+    drawCreamFrost(x,y,w,h,baseG,ing,seed);
+  }else if(ii===5){// Matcha — streaked, dusty
+    drawMatchaLayer(x,y,w,h,baseG,ing,seed);
+  }else if(ii===6){// Mango — swirled, glossy drips
+    drawMangoFrost(x,y,w,h,baseG,ing,seed);
+  }else if(ii===7){// Fondant cap — smooth with fork marks
+    drawFondantTop(x,y,w,h,baseG,ing,seed);
+  }
+  // Sprinkles
   var sprCols=['#FF3860','#7C3AED','#FFD700','#10B981','#FFFFFF','#FF69B4','#00E5FF'];
-  var seed=ii*7+Math.floor(x/10);
-  for(var si=0;si<Math.min(14,Math.floor(w/14));si++){var sr=(seed*31+si*17)%1000/1000,sr2=(seed*13+si*29)%1000/1000,sr3=(seed*53+si*7)%1000/1000;var sx2=x+6+sr*(w-12),sy2=y+4+sr2*(h-8);ctx.save();ctx.translate(sx2,sy2);ctx.rotate(sr3*Math.PI);ctx.fillStyle=sprCols[(seed+si)%sprCols.length];ctx.beginPath();ctx.ellipse(0,0,1.5,4,0,0,Math.PI*2);ctx.fill();ctx.restore();}
+  for(var si=0;si<Math.min(12,Math.floor(w/16));si++){var sr=(seed*31+si*17)%1000/1000,sr2=(seed*13+si*29)%1000/1000,sr3=(seed*53+si*7)%1000/1000;var sx2=x+8+sr*(w-16),sy2=y+2+sr2*(h-6);ctx.save();ctx.translate(sx2,sy2);ctx.rotate(sr3*Math.PI);ctx.fillStyle=sprCols[(seed+si)%sprCols.length];ctx.beginPath();ctx.ellipse(0,0,1.2,3.5,0,0,Math.PI*2);ctx.fill();ctx.restore();}
   if(w>28)drawIngFace(cx,cy,w,h,stackH);
   ctx.restore();if(block.glow>0)block.glow*=.88;if(block.squash>0)block.squash*=.72;
+}
+function drawVanillaSponge(x,y,w,h,g,ing,seed){
+  // Bumpy sponge cake with crumbs
+  ctx.fillStyle=g;ctx.beginPath();
+  for(var i=0;i<=w;i+=8){var bump=Math.sin(seed+i/w*Math.PI*3)*2;ctx.lineTo(x+i,y+bump);}
+  ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.closePath();ctx.fill();
+  ctx.strokeStyle=ing.s;ctx.lineWidth=2;ctx.stroke();
+  // Crumbs scattered on top
+  for(var c=0;c<8;c++){var cx2=x+Math.random()*w,cy2=y+Math.random()*4;var sz=Math.random()*1.5+0.5;ctx.fillStyle='rgba(200,180,140,.6)';ctx.beginPath();ctx.ellipse(cx2,cy2,sz,sz*.7,0,0,Math.PI*2);ctx.fill();}
+}
+function drawChocolateLayer(x,y,w,h,g,ing,seed){
+  // Rich chocolate with cocoa powder effect
+  ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,w,h,[3,3,6,6]);ctx.fill();
+  ctx.strokeStyle=ing.s;ctx.lineWidth=2.5;ctx.stroke();
+  // Cocoa powder specks
+  for(var c=0;c<12;c++){var cx2=x+Math.random()*w,cy2=y+Math.random()*h;var sz=Math.random()*1+0.3;ctx.fillStyle='rgba(80,40,20,.4)';ctx.beginPath();ctx.arc(cx2,cy2,sz,0,Math.PI*2);ctx.fill();}
+  // Dark drips on sides
+  ctx.strokeStyle='rgba(40,20,10,.5)';ctx.lineWidth=2;for(var d=0;d<3;d++){ctx.beginPath();ctx.moveTo(x+Math.random()*w,y+h-2);ctx.quadraticCurveTo(x+w/2+Math.random()*20,y+h+8,x+w/2+Math.random()*10,y+h+14);ctx.stroke();}
+}
+function drawStrawberryFrost(x,y,w,h,g,ing,seed){
+  // Pink frosting with swirl pattern
+  ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,w,h,[4,4,7,7]);ctx.fill();
+  // Frosting swirl lines
+  ctx.strokeStyle='rgba(255,180,200,.4)';ctx.lineWidth=2;
+  for(var s=0;s<3;s++){ctx.beginPath();var sx=x+s*w/3;for(var i=0;i<=h;i+=4){ctx.lineTo(sx+Math.sin(seed+i/10)*3,y+i);}ctx.stroke();}
+  ctx.strokeStyle=ing.s;ctx.lineWidth=2;ctx.stroke();
+  // Strawberry chunk specks
+  for(var c=0;c<10;c++){var cx2=x+Math.random()*w,cy2=y+Math.random()*h;ctx.fillStyle='rgba(200,80,120,.5)';ctx.beginPath();ctx.ellipse(cx2,cy2,Math.random()*1.5+0.5,Math.random()*1+0.3,Math.random()*Math.PI,0,Math.PI*2);ctx.fill();}
+  // Glossy highlight
+  ctx.fillStyle='rgba(255,220,230,.3)';ctx.beginPath();ctx.ellipse(x+w*.3,y+h*.25,w*.25,h*.4,-.3,0,Math.PI*2);ctx.fill();
+}
+function drawBlueberryFrost(x,y,w,h,g,ing,seed){
+  // Purple frosting with berry marks
+  ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,w,h,[4,4,7,7]);ctx.fill();
+  ctx.strokeStyle=ing.s;ctx.lineWidth=2;ctx.stroke();
+  // Berry indent marks
+  for(var b=0;b<6;b++){var bx=x+Math.random()*w,by=y+Math.random()*h,br=Math.random()*2+1;ctx.strokeStyle='rgba(100,50,180,.3)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);ctx.stroke();}
+  // Dark smudges
+  for(var s=0;s<4;s++){ctx.fillStyle='rgba(50,20,100,.2)';ctx.beginPath();ctx.ellipse(x+Math.random()*w,y+Math.random()*h,Math.random()*8+3,Math.random()*3+1,0,0,Math.PI*2);ctx.fill();}
+}
+function drawCreamFrost(x,y,w,h,g,ing,seed){
+  // Whipped cream with peaks and crumbs
+  ctx.fillStyle=g;ctx.beginPath();
+  var peaks=6;for(var p=0;p<=peaks;p++){var px=(p/peaks)*w,peak=Math.sin(seed*0.7+p)*2+3;ctx.lineTo(x+px,y+peak);}
+  ctx.lineTo(x+w,y+h);ctx.lineTo(x,y+h);ctx.closePath();ctx.fill();
+  ctx.strokeStyle='rgba(200,180,150,.5)';ctx.lineWidth=2;ctx.stroke();
+  // Large crumbs scattered
+  for(var c=0;c<10;c++){var cx2=x+Math.random()*w,cy2=y+Math.random()*h;var csz=Math.random()*2.5+1;ctx.fillStyle='rgba(220,200,160,.7)';ctx.beginPath();ctx.roundRect(cx2-csz/2,cy2-csz/2,csz,csz,1);ctx.fill();}
+}
+function drawMatchaLayer(x,y,w,h,g,ing,seed){
+  // Green frosting with horizontal dust streaks
+  ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,w,h,[4,4,7,7]);ctx.fill();
+  // Horizontal matcha streaks
+  for(var st=0;st<4;st++){ctx.strokeStyle='rgba(100,150,80,.3)';ctx.lineWidth=1.5;ctx.beginPath();var sy=y+st*h/4+Math.random()*3;ctx.moveTo(x,sy);ctx.lineTo(x+w,sy+Math.sin(seed+st)*2);ctx.stroke();}
+  ctx.strokeStyle=ing.s;ctx.lineWidth=2;ctx.stroke();
+  // Dust specks
+  for(var d=0;d<8;d++){ctx.fillStyle='rgba(150,180,100,.4)';ctx.beginPath();ctx.arc(x+Math.random()*w,y+Math.random()*h,Math.random()+0.3,0,Math.PI*2);ctx.fill();}
+}
+function drawMangoFrost(x,y,w,h,g,ing,seed){
+  // Orange frosting with swirl and glossy drips
+  ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,w,h,[4,4,7,7]);ctx.fill();
+  // Swirl pattern
+  ctx.strokeStyle='rgba(255,200,100,.3)';ctx.lineWidth=2.5;
+  for(var sw=0;sw<2;sw++){ctx.beginPath();for(var i=0;i<=h;i+=5){var sx=x+Math.sin(seed+i/15+sw*2)*w*0.15;ctx.lineTo(sx+w*(sw*0.4),y+i);}ctx.stroke();}
+  ctx.strokeStyle=ing.s;ctx.lineWidth=2;ctx.stroke();
+  // Glossy highlight
+  ctx.fillStyle='rgba(255,230,180,.4)';ctx.beginPath();ctx.ellipse(x+w*.35,y+h*.3,w*.2,h*.35,.2,0,Math.PI*2);ctx.fill();
+  // Drips on sides
+  ctx.strokeStyle='rgba(200,150,80,.4)';ctx.lineWidth=2.5;for(var dr=0;dr<2;dr++){ctx.beginPath();ctx.moveTo(x+(dr===0?w*0.2:w*0.8),y+h-2);ctx.quadraticCurveTo(x+w*0.5+Math.random()*10,y+h+6,x+w*0.5,y+h+12);ctx.stroke();}
+}
+function drawFondantTop(x,y,w,h,g,ing,seed){
+  // Smooth fondant cap with fork marks and drips
+  ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(x,y,w,h,[10,10,3,3]);ctx.fill();
+  ctx.strokeStyle=ing.s;ctx.lineWidth=3;ctx.stroke();
+  // Fork marks texture
+  for(var f=0;f<5;f++){var fx=x+f*w/5+Math.random()*3;ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;for(var i=0;i<4;i++){ctx.beginPath();ctx.moveTo(fx,y+i*h/4);ctx.lineTo(fx+Math.random()*2,y+(i+1)*h/4);}ctx.stroke();}
+  // Candle hole damage
+  ctx.fillStyle='rgba(100,50,100,.3)';ctx.beginPath();ctx.arc(x+w/2,y+h/2-2,2,0,Math.PI*2);ctx.fill();
+  // Drip edges at bottom
+  for(var i=0;i<4;i++){var dx=x+w*.15+i*w*.2,dw=Math.random()*4+3;ctx.fillStyle=ing.c;ctx.beginPath();ctx.roundRect(dx,y+h-1,dw,5,[0,0,3,3]);ctx.fill();}
 }
 
 function drawLandingGhost(){
