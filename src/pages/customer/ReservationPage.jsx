@@ -5,6 +5,7 @@ import { useTenant } from '../../contexts/TenantContext.jsx'
 import { useLanguage } from '../../contexts/LanguageContext.jsx'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 import { normalizeTenantConfig } from '../../utils/configNormalizer'
+import ReservationIcon from '../../components/ReservationIcons.jsx'
 
 function generateTimeSlots(openTime = '11:00', closeTime = '23:00') {
     const slots = []
@@ -210,8 +211,8 @@ export default function ReservationPage() {
                 {/* Mode tabs */}
                 <div style={{ display: 'flex', background: '#F3F4F6', borderRadius: 14, padding: 4, marginBottom: 24 }}>
                     {[
-                        { id: 'table', label: t('res_tab_table'), icon: '🍽️' },
-                        { id: 'custom', label: t('res_tab_custom'), icon: '🎂' }
+                        { id: 'table', label: t('res_tab_table'), icon: 'plate' },
+                        { id: 'custom', label: t('res_tab_custom'), icon: 'cake' }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => { setMode(tab.id); setStep(1); setError(null) }}
                             style={{
@@ -222,7 +223,7 @@ export default function ReservationPage() {
                                 boxShadow: mode === tab.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
                                 transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                             }}>
-                            {tab.icon} {tab.label}
+                            <ReservationIcon name={tab.icon} size={16} color={mode === tab.id ? '#111827' : '#9CA3AF'} /> {tab.label}
                         </button>
                     ))}
                 </div>
@@ -406,9 +407,20 @@ export default function ReservationPage() {
                                                 borderColor: pickupOrDelivery === opt ? primary : '#E5E7EB',
                                                 background: pickupOrDelivery === opt ? primary + '15' : '#fff',
                                                 color: pickupOrDelivery === opt ? primary : '#6B7280',
-                                                fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s'
+                                                fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                                             }}>
-                                            {opt === 'pickup' ? `🏠 ${t('res_pickup')}` : `🚗 ${t('res_delivery')}`}
+                                            {opt === 'pickup' ? (
+                                                <>
+                                                    <ReservationIcon name="home" size={16} color={pickupOrDelivery === opt ? primary : '#6B7280'} />
+                                                    {t('res_pickup')}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ReservationIcon name="delivery" size={16} color={pickupOrDelivery === opt ? primary : '#6B7280'} />
+                                                    {t('res_delivery')}
+                                                </>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -442,8 +454,9 @@ export default function ReservationPage() {
                         {error && <div style={{ background: '#FEE2E2', borderRadius: 10, padding: '12px 14px' }}><p style={{ color: '#DC2626', fontSize: 14, margin: 0 }}>⚠️ {error}</p></div>}
 
                         <button onClick={handleCustomSubmit} disabled={isSubmitting}
-                            style={{ width: '100%', padding: 18, background: isSubmitting ? '#E5E7EB' : primary, color: isSubmitting ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 16, fontSize: 17, fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
-                            {isSubmitting ? t('res_sending') : `📲 ${t('res_send_whatsapp')}`}
+                            style={{ width: '100%', padding: 18, background: isSubmitting ? '#E5E7EB' : primary, color: isSubmitting ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 16, fontSize: 17, fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            {!isSubmitting && <ReservationIcon name="message" size={18} color="#fff" />}
+                            {isSubmitting ? t('res_sending') : t('res_send_whatsapp')}
                         </button>
                     </div>
                 )}
