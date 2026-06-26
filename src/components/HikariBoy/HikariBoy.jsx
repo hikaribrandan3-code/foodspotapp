@@ -35,7 +35,7 @@ const BUTTONS = {
 // ALL GAMES UNLOCKED FOR NOW
 const GAMES = [
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
-  { id: 'cake-stack',     name: 'Cake Stack',         cover: '/games/cake-stack/cover.webp',       url: '/games/cake-stack/index.html',       proOnly: false },
+  { id: 'cake-stack',     name: '🎂 Cake Stack',      cover: '/games/cake-stack/cover.webp',       url: '/games/cake-stack/index.html',       proOnly: false },
   { id: 'spice-invaders', name: 'Spice Invaders',      cover: '/games/spice-invaders/cover.webp',   url: '/games/spice-invaders/index.html',   proOnly: false },
   { id: 'kanzo',          name: 'Kanzo',              cover: '/games/kanzo/cover.png',             url: '/games/kanzo/index.html',            proOnly: false },
   { id: 'bubble-tea',     name: 'Bubble Tea',          cover: '/games/bubble-tea/cover.webp',       url: '/games/bubble-tea/index.html',       proOnly: false },
