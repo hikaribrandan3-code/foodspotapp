@@ -522,7 +522,7 @@ export default function CameraLayer({
         {!isReady && !error && (
           <div className="fsc-status">
             <div className="fsc-spinner"/>
-            {statusMessage || 'Iniciando cámara…'}
+            {statusMessage || 'Loading'}
           </div>
         )}
         {error && (

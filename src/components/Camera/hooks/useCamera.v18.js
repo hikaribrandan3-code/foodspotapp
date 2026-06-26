@@ -40,8 +40,8 @@ const HARDWARE_DISCHARGE_MS = {
 
 const SILICON_COOLDOWN_MS = 150
 
-const PHASE_1_END = 800
-const PHASE_2_END = 1600
+const PHASE_1_END = 300
+const PHASE_2_END = 700
 
 const SWITCHING_ZONE_LOW = 1.1
 const SWITCHING_ZONE_HIGH = 1.3
@@ -401,35 +401,35 @@ export function useCamera() {
 
         if (mode === 'user') {
             if (timeSinceLoad < PHASE_1_END) {
-                setStatusMessage('INHIBITING NEURAL ENGINE...')
+                setStatusMessage('Loading')
                 setCalibrationProgress(25)
                 const waitTime = PHASE_1_END - timeSinceLoad
                 await new Promise(function phase1(r) { setTimeout(r, waitTime) })
             }
 
             if (Date.now() - MODULE_LOAD_TIME < PHASE_2_END) {
-                setStatusMessage('CALIBRATING 18MP SQUARE ARRAY...')
+                setStatusMessage('Loading')
                 setCalibrationProgress(50)
                 const waitTime = PHASE_2_END - (Date.now() - MODULE_LOAD_TIME)
                 await new Promise(function phase2(r) { setTimeout(r, Math.max(0, waitTime)) })
             }
         } else {
             if (timeSinceLoad < PHASE_1_END) {
-                setStatusMessage('CALIBRATING 4K SENSOR ARRAY...')
+                setStatusMessage('Loading')
                 setCalibrationProgress(25)
                 const waitTime = PHASE_1_END - timeSinceLoad
                 await new Promise(function phase1(r) { setTimeout(r, waitTime) })
             }
 
             if (Date.now() - MODULE_LOAD_TIME < PHASE_2_END) {
-                setStatusMessage('OPTIMIZING SILICON THROUGHPUT [8.3MP]...')
+                setStatusMessage('Loading')
                 setCalibrationProgress(50)
                 const waitTime = PHASE_2_END - (Date.now() - MODULE_LOAD_TIME)
                 await new Promise(function phase2(r) { setTimeout(r, Math.max(0, waitTime)) })
             }
         }
 
-        setStatusMessage('NEGOTIATING HARDWARE BOND...')
+        setStatusMessage('Loading')
         setCalibrationProgress(75)
     }
 
@@ -485,18 +485,14 @@ export function useCamera() {
             setIsReady(true)
             setError(null)
 
-            if (facingMode === 'user') {
-                setStatusMessage('4K FRONT OPTIC LINK: ACTIVE [' + megapixels + 'MP]')
-            } else {
-                setStatusMessage('4K OPTIC LINK: ACTIVE')
-            }
+            setStatusMessage('Ready')
             setCalibrationProgress(100)
 
         } catch (err) {
             console.error('[IGNITION FAILED]', err)
             setError(err.message)
             setIsReady(false)
-            setStatusMessage('IGNITION FAILED: ' + err.message)
+            setStatusMessage('Failed to load camera')
             setCalibrationProgress(0)
         } finally {
             ignitionMutex.current = false
