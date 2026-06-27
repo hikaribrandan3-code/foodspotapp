@@ -903,79 +903,12 @@ function OwnerSummary() {
                     )}
                 </motion.div>
 
-                {/* Locations Hub — always at top */}
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.065 }}
-                    className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)] overflow-hidden"
-                >
-                    <div className="flex items-center justify-between px-4 pt-4 pb-2">
-                        <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-500/10">
-                                <MapPin size={13} className="text-emerald-600 dark:text-emerald-400" />
-                            </div>
-                            <span className="text-xs font-black uppercase tracking-[0.15em] text-stone-500 dark:text-white/60">
-                                {t('locations') || 'Locations'}
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => setShowAddLocation(true)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
-                        >
-                            <Plus size={11} />
-                            {t('add_location') || 'Add Location'}
-                        </button>
-                    </div>
-
-                    {/* Location tiles */}
-                    <div className="px-4 pb-3 flex flex-wrap gap-2">
-                        {locationsLoading ? (
-                            <div className="text-xs text-stone-400 dark:text-white/30 px-4 py-2">Loading...</div>
-                        ) : ownerLocations.length === 0 ? (
-                            <div className="text-xs text-stone-400 dark:text-white/30 px-4 py-2">
-                                {t('no_locations_yet') || 'No locations yet. Click "Add Location" above to get started.'}
-                            </div>
-                        ) : (
-                            ownerLocations.map(loc => {
-                                const isCurrent = loc.id === businessId
-                                return (
-                                    <button
-                                        key={loc.id}
-                                        onClick={() => {
-                                            if (isCurrent) return
-                                            localStorage.setItem('fs_last_active_slug', loc.slug)
-                                            window.location.href = `/${loc.slug}/owner/summary`
-                                        }}
-                                        className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
-                                            isCurrent
-                                                ? 'bg-emerald-600 text-white shadow-md'
-                                                : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
-                                            {loc.location_label || loc.name}
-                                            {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
-                                        </div>
-                                        {loc.hours && (
-                                            <div className="text-[10px] opacity-70 ml-3">
-                                                {loc.hours}
-                                            </div>
-                                        )}
-                                    </button>
-                                )
-                            })
-                        )}
-                    </div>
-                </motion.div>
-
-                {/* Hub Settings — only for 2+ locations */}
-                {ownerLocations.length >= 2 && (
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+                {/* Locations Management — merged locations + config */}
+                {ownerLocations.length >= 1 && (
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.065 }}>
                         <SectionHeader
                             icon={<MapPin size={14} />}
-                            title={t('hub_settings') || 'Hub Settings'}
+                            title="Locations Management"
                             isOpen={openSections.multiLocation}
                             onToggle={() => toggleSection('multiLocation')}
                         />
@@ -988,87 +921,145 @@ function OwnerSummary() {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="overflow-hidden"
                                     >
-                                        <div className="space-y-4">
-                                            {/* Full-width logo banner */}
-                                            <div>
-                                                <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-2 block px-5 pt-4">
-                                                    {t('brand_logo') || 'Hub Brand Logo'}
-                                                </label>
-                                                <div className="relative w-full h-32 bg-stone-100 dark:bg-white/5 border-b border-stone-200 dark:border-white/10 overflow-hidden">
-                                                    {parentBrandLogo ? (
-                                                        <img src={parentBrandLogo} alt="Brand" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-stone-300 dark:text-white/20">
-                                                            <span className="text-sm">No logo selected</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="px-5 pb-4 pt-3">
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                const reader = new FileReader();
-                                                                reader.onload = (event) => {
-                                                                    setParentBrandLogo(event.target.result);
-                                                                };
-                                                                reader.readAsDataURL(file);
-                                                            }
-                                                        }}
-                                                        className="w-full px-4 py-2.5 rounded-lg bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-600 dark:text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-emerald-100 dark:file:bg-emerald-900 file:text-emerald-700 dark:file:text-emerald-200 outline-none focus:border-emerald-500"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Form fields */}
-                                            <div className="px-5 space-y-3 pb-4">
-                                                <div>
-                                                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
-                                                        {t('location_label') || 'Location Label'}
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={locationLabel}
-                                                        onChange={(e) => setLocationLabel(e.target.value)}
-                                                        placeholder="e.g. Downtown, Belgrano"
-                                                        className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
-                                                        {t('brand_name') || 'Brand Name'}
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={parentBrandName}
-                                                        onChange={(e) => setParentBrandName(e.target.value)}
-                                                        placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
-                                                        className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
-                                                    />
-                                                </div>
+                                        {/* Location Switcher */}
+                                        <div className="px-5 pt-4 pb-3 border-b border-stone-200 dark:border-white/10">
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-xs font-black uppercase tracking-[0.15em] text-stone-500 dark:text-white/60">
+                                                    {t('locations') || 'Locations'}
+                                                </span>
                                                 <button
-                                                    onClick={saveLocationConfig}
-                                                    disabled={locationConfigSaving}
-                                                    className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                                                    onClick={() => setShowAddLocation(true)}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                                                 >
-                                                    {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
+                                                    <Plus size={11} />
+                                                    {t('add_location') || 'Add Location'}
                                                 </button>
-                                                {/* Delete this location — available if you have 2+ locations */}
-                                                {ownerLocations.length > 1 && (
-                                                    <button
-                                                        onClick={() => {
-                                                            const current = ownerLocations.find(l => l.id === businessId)
-                                                            if (current) { setDeletingLocation({ id: current.id, name: current.location_label || current.name }); setDeleteConfirmText('') }
-                                                        }}
-                                                        className="w-full py-2.5 rounded-full text-sm font-bold text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                                    >
-                                                        {t('delete_location') || 'Delete This Location'}
-                                                    </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {locationsLoading ? (
+                                                    <div className="text-xs text-stone-400 dark:text-white/30">Loading...</div>
+                                                ) : ownerLocations.length === 0 ? (
+                                                    <div className="text-xs text-stone-400 dark:text-white/30">
+                                                        {t('no_locations_yet') || 'No locations yet.'}
+                                                    </div>
+                                                ) : (
+                                                    ownerLocations.map(loc => {
+                                                        const isCurrent = loc.id === businessId
+                                                        return (
+                                                            <button
+                                                                key={loc.id}
+                                                                onClick={() => {
+                                                                    if (isCurrent) return
+                                                                    localStorage.setItem('fs_last_active_slug', loc.slug)
+                                                                    window.location.href = `/${loc.slug}/owner/summary`
+                                                                }}
+                                                                className={`flex flex-col items-start gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${
+                                                                    isCurrent
+                                                                        ? 'bg-emerald-600 text-white shadow-md'
+                                                                        : 'bg-stone-100 dark:bg-white/5 text-stone-600 dark:text-white/60 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 border border-stone-200 dark:border-white/10'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`w-1.5 h-1.5 rounded-full ${isCurrent ? 'bg-white' : 'bg-stone-400 dark:bg-white/30'}`} />
+                                                                    {loc.location_label || loc.name}
+                                                                    {isCurrent && <span className="text-[9px] opacity-70">● here</span>}
+                                                                </div>
+                                                                {loc.hours && (
+                                                                    <div className="text-[10px] opacity-70 ml-3">
+                                                                        {loc.hours}
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                        )
+                                                    })
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Configuration */}
+                                        {ownerLocations.length >= 2 && (
+                                            <div className="space-y-4 p-5">
+                                                {/* Full-width logo banner */}
+                                                <div>
+                                                    <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-2 block">
+                                                        {t('brand_logo') || 'Hub Brand Logo'}
+                                                    </label>
+                                                    <div className="relative w-full h-32 bg-stone-100 dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-lg overflow-hidden">
+                                                        {parentBrandLogo ? (
+                                                            <img src={parentBrandLogo} alt="Brand" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-stone-300 dark:text-white/20">
+                                                                <span className="text-sm">No logo selected</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-3">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (file) {
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (event) => {
+                                                                        setParentBrandLogo(event.target.result);
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                }
+                                                            }}
+                                                            className="w-full px-4 py-2.5 rounded-lg bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-600 dark:text-white/60 file:mr-2 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-bold file:bg-emerald-100 dark:file:bg-emerald-900 file:text-emerald-700 dark:file:text-emerald-200 outline-none focus:border-emerald-500"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Form fields */}
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                            {t('location_label') || 'Location Label'}
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={locationLabel}
+                                                            onChange={(e) => setLocationLabel(e.target.value)}
+                                                            placeholder="e.g. Downtown, Belgrano"
+                                                            className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase tracking-[0.15em] text-stone-400 dark:text-white/40 mb-1.5 block">
+                                                            {t('brand_name') || 'Brand Name'}
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={parentBrandName}
+                                                            onChange={(e) => setParentBrandName(e.target.value)}
+                                                            placeholder={tenantData?.business_name || tenantData?.venue_name || 'Brand Name'}
+                                                            className="w-full px-4 py-2.5 rounded-full bg-stone-50 dark:bg-white/5 border border-stone-200 dark:border-white/10 text-sm text-stone-800 dark:text-white placeholder-stone-300 dark:placeholder-white/20 outline-none focus:border-emerald-500"
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={saveLocationConfig}
+                                                        disabled={locationConfigSaving}
+                                                        className="w-full py-2.5 rounded-full text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+                                                    >
+                                                        {locationConfigSaving ? '...' : locationConfigSaved ? (t('saved') || 'Saved!') : (t('save') || 'Save')}
+                                                    </button>
+                                                    {/* Delete this location — available if you have 2+ locations */}
+                                                    {ownerLocations.length > 1 && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const current = ownerLocations.find(l => l.id === businessId)
+                                                                if (current) { setDeletingLocation({ id: current.id, name: current.location_label || current.name }); setDeleteConfirmText('') }
+                                                            }}
+                                                            className="w-full py-2.5 rounded-full text-sm font-bold text-red-500 border border-red-200 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                                                        >
+                                                            {t('delete_location') || 'Delete This Location'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </motion.div>
                                 )}
                             </AnimatePresence>
