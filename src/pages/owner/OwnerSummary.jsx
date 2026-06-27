@@ -402,7 +402,6 @@ function OwnerSummary() {
     // Stats from transaction_ledger (permanent, delete-proof)
     const stats = useMemo(() => {
         const today = new Date().toDateString()
-        const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
 
         const todayEntries = ledgerEntries.filter(l => new Date(l.processed_at).toDateString() === today)
         const mpEntries = todayEntries.filter(l => l.payment_method !== 'cash')
@@ -410,14 +409,10 @@ function OwnerSummary() {
         const mpTotal = mpEntries.reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
         const cashTotal = cashEntries.reduce((sum, l) => sum + (l.amount_gross_cents || 0), 0) / 100
 
-        const weekEntries = ledgerEntries.filter(l => new Date(l.processed_at) >= weekAgo)
-
         return {
             todayOrders: todayEntries, mpOrders: mpEntries, cashOrders: cashEntries,
             mpTotal, cashTotal,
-            totalToday: mpTotal + cashTotal,
-            weekCount: weekEntries.length,
-            monthCount: ledgerEntries.length
+            totalToday: mpTotal + cashTotal
         }
     }, [ledgerEntries])
 
@@ -1176,25 +1171,6 @@ function OwnerSummary() {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </motion.div>
-
-                {/* Sessions */}
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-                    <SectionHeader
-                        icon={<BarChart3 size={14} />}
-                        title={t('sessions') || 'Sessions'}
-                        isOpen={true}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-2xl p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                            <p className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.weekCount}</p>
-                            <p className="text-[10px] text-stone-400 dark:text-white mt-1 font-bold uppercase tracking-widest">{t('this_week') || 'This Week'}</p>
-                        </div>
-                        <div className="bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 rounded-2xl p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                            <p className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-['Outfit',sans-serif]">{stats.monthCount}</p>
-                            <p className="text-[10px] text-stone-400 dark:text-white mt-1 font-bold uppercase tracking-widest">{t('this_month') || 'This Month'}</p>
-                        </div>
-                    </div>
                 </motion.div>
 
                 {/* Venue Info */}
