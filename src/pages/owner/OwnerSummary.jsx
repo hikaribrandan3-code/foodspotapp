@@ -838,6 +838,13 @@ function OwnerSummary() {
                             )}
                         </div>
                     </div>
+                    <button
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="shrink-0 p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
+                        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                    >
+                        {theme === 'dark' ? <Sun size={18} className="text-stone-400" /> : <Moon size={18} className="text-stone-600" />}
+                    </button>
                 </motion.div>
 
                 {/* Store Status (Pause Orders) */}
@@ -1138,30 +1145,6 @@ function OwnerSummary() {
                         </div>
                     </motion.div>
                 )}
-
-                {/* Preferences */}
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-                    <SectionHeader
-                        icon={<Settings size={14} />}
-                        title="Preferences"
-                        isOpen={true}
-                    />
-                    <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
-                        <button
-                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                            className="w-full flex items-center gap-3 px-4 py-3.5"
-                        >
-                            <span className="text-stone-400 dark:text-white">
-                                {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-                            </span>
-                            <span className="text-sm font-medium text-stone-950 dark:text-white flex-1 text-left">Theme</span>
-                            <span className="text-xs font-semibold px-2 py-1 rounded-md bg-stone-100 dark:bg-[#334155] text-stone-500 dark:text-white">
-                                {theme === 'dark' ? 'Dark' : 'Light'}
-                            </span>
-                            <ChevronRight size={16} className="text-stone-300 dark:text-[#475569]" />
-                        </button>
-                    </div>
-                </motion.div>
 
                 {/* Features */}
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
