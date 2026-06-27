@@ -15,6 +15,8 @@ import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { updateBranding } from '../../lib/supabaseClient.js'
 import { getLoyaltySettings, upsertLoyaltySettings, getLoyaltyFreeItems, saveLoyaltyFreeItems } from '../../lib/loyaltyClient.js'
+import { useCustomerContacts } from '../../hooks/useCustomerContacts.js'
+import { exportContactsToCSV } from '../../services/contactsService.js'
 import { useDebouncedAutoSave } from '../../hooks/useDebouncedAutoSave'
 import { useCurrency } from '../../hooks/useCurrency.js'
 import { getSession } from '../../utils/auth.js'
@@ -238,8 +240,13 @@ function OwnerSummary() {
         team: false,
         loyalty: false,
         multiLocation: true,
+        clientInfo: false,
     })
     const toggleSection = (key) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
+
+    // ─── CRM / CLIENT INFO ──────────────────────────────────────────
+    const { contacts, loading: contactsLoading } = useCustomerContacts(businessId)
+    const [crmSearch, setCrmSearch] = useState('')
 
     // ─── LOYALTY REWARDS STATE ──────────────────────────────────────
     const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
@@ -1813,6 +1820,87 @@ function OwnerSummary() {
                                     >
                                         {loyaltySaved ? <><Check size={14} /> {t('saved') || 'Saved'}</> : loyaltySaving ? (t('saving') || 'Saving...') : <><Gift size={14} /> {t('saveLoyalty') || 'Save Loyalty'}</>}
                                     </motion.button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </motion.div>
+
+                {/* Dato de Clientes / Client Info */}
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.40 }}>
+                    <SectionHeader
+                        icon={<Users size={14} />}
+                        title={t('dato_de_clientes') || 'Client Info'}
+                        isOpen={openSections.clientInfo}
+                        onToggle={() => toggleSection('clientInfo')}
+                    />
+                    <AnimatePresence>
+                        {openSections.clientInfo && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 space-y-3 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    {/* Header row: count + export */}
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+                                            {contactsLoading ? '…' : contacts.length} {t('crm_contact_count') || 'contacts'}
+                                        </span>
+                                        {contacts.length > 0 && (
+                                            <button
+                                                onClick={() => exportContactsToCSV(contacts)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 transition-colors"
+                                            >
+                                                <Download size={11} />
+                                                {t('crm_export_csv') || 'Export CSV'}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Search */}
+                                    <input
+                                        type="text"
+                                        value={crmSearch}
+                                        onChange={e => setCrmSearch(e.target.value)}
+                                        placeholder={t('crm_search_placeholder') || 'Search by name or phone…'}
+                                        className="w-full px-4 py-2.5 rounded-xl text-sm bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 outline-none focus:border-emerald-500 transition-all"
+                                    />
+
+                                    {/* Contact list */}
+                                    {contactsLoading ? (
+                                        <div className="text-xs text-stone-400 dark:text-stone-500 text-center py-4">Loading…</div>
+                                    ) : contacts.length === 0 ? (
+                                        <p className="text-xs text-stone-400 dark:text-stone-500 text-center py-4 leading-relaxed">
+                                            {t('crm_no_contacts') || 'No customers yet. They appear here after their first order.'}
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-1 max-h-56 overflow-y-auto">
+                                            {contacts
+                                                .filter(c => {
+                                                    if (!crmSearch.trim()) return true
+                                                    const q = crmSearch.toLowerCase()
+                                                    return (c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q)
+                                                })
+                                                .slice(0, 50)
+                                                .map(c => (
+                                                    <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-stone-50 dark:bg-white/5">
+                                                        <span className="text-sm font-medium text-stone-800 dark:text-white truncate max-w-[55%]">{c.name}</span>
+                                                        <span className="text-xs text-stone-400 dark:text-stone-500 font-mono">{c.phone}</span>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    )}
+
+                                    {/* Link to full page */}
+                                    <button
+                                        onClick={() => navigate(`/${tenantSlug}/owner/contacts`)}
+                                        className="w-full text-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
+                                    >
+                                        {t('crm_view_all') || 'View all contacts →'}
+                                    </button>
                                 </div>
                             </motion.div>
                         )}

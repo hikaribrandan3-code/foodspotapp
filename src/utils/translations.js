@@ -1402,5 +1402,13 @@ export const translations = {
     adjusted_by:              { en: 'Adjusted by',         es: 'Ajustado por',            pt: 'Ajustado por' },
     resolve:                  { en: 'Resolve',             es: 'Resolver',                pt: 'Resolver' },
     total_variance:           { en: 'Total Variance',      es: 'Diferencia Total',        pt: 'Diferença Total' },
+
+    // ── CRM / Client Info ──────────────────────────────────────────────────────
+    dato_de_clientes:         { en: 'Client Info',          es: 'Dato de Clientes',        pt: 'Dados dos Clientes' },
+    crm_contact_count:        { en: 'contacts',             es: 'contactos',               pt: 'contatos' },
+    crm_search_placeholder:   { en: 'Search by name or phone…', es: 'Buscar por nombre o teléfono…', pt: 'Buscar por nome ou telefone…' },
+    crm_export_csv:           { en: 'Export CSV',           es: 'Exportar CSV',            pt: 'Exportar CSV' },
+    crm_view_all:             { en: 'View all contacts →',  es: 'Ver todos los contactos →', pt: 'Ver todos os contatos →' },
+    crm_no_contacts:          { en: 'No customers yet. They appear here after their first order.', es: 'Sin clientes aún. Aparecen aquí después de su primer pedido.', pt: 'Sem clientes ainda. Aparecem aqui após o primeiro pedido.' },
 };
 
