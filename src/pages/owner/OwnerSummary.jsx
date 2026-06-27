@@ -908,7 +908,7 @@ function OwnerSummary() {
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.065 }}>
                         <SectionHeader
                             icon={<MapPin size={14} />}
-                            title="Locations Management"
+                            title={t('locations_management') || 'Locations Management'}
                             isOpen={openSections.multiLocation}
                             onToggle={() => toggleSection('multiLocation')}
                         />
