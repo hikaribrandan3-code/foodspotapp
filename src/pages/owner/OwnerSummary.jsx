@@ -642,7 +642,7 @@ function OwnerSummary() {
             await supabase
                 .from('branding')
                 .update({ app_config: updatedConfig })
-                .eq('business_id', businessId)
+                .eq('business_id', primaryLocationId)
 
             setBusinessCurrency(currencyCode)
             setAutoSaveStatus({ type: 'currency', timestamp: Date.now() })
@@ -704,7 +704,7 @@ function OwnerSummary() {
     const saveMpToken = async () => {
         setMpTokenSaving(true)
         setMpTokenSaved(false)
-        const { error } = await supabase.from('branding').update({ mp_access_token: mpTokenInput }).eq('business_id', businessId)
+        const { error } = await supabase.from('branding').update({ mp_access_token: mpTokenInput }).eq('business_id', primaryLocationId)
         if (error) {
             console.error('Failed to save MP token:', error)
             alert('Error al guardar token MP: ' + error.message)
@@ -718,7 +718,7 @@ function OwnerSummary() {
     const saveMpUserId = async () => {
         setMpUserIdSaving(true)
         setMpUserIdSaved(false)
-        const { error } = await supabase.from('branding').update({ mp_user_id: mpUserIdInput }).eq('business_id', businessId)
+        const { error } = await supabase.from('branding').update({ mp_user_id: mpUserIdInput }).eq('business_id', primaryLocationId)
         if (error) {
             console.error('Failed to save MP User ID:', error)
             alert('Error al guardar MP User ID: ' + error.message)
@@ -766,6 +766,10 @@ function OwnerSummary() {
         setIsPaused(tenantData?.is_paused || false)
         setPauseMessage(tenantData?.pause_message || '')
     }, [tenantData?.is_paused, tenantData?.pause_message])
+
+    // Primary location is the first/oldest one (payments + currency unified here)
+    const primaryLocationId = ownerLocations.length > 0 ? ownerLocations[0].id : businessId
+    const isCurrentLocationPrimary = businessId === primaryLocationId
 
     // AUTO-SAVE: Pause Orders (1.2s debounce)
     useDebouncedAutoSave(
@@ -1494,18 +1498,22 @@ function OwnerSummary() {
                                                     <li>{t('mp_api_token_step_5')}</li>
                                                 </ol>
                                             </div>
+                                            {!isCurrentLocationPrimary && (
+                                                <p className="text-xs text-stone-500 dark:text-stone-400 mb-2">🔒 {t('locked_to_primary') || 'Managed at primary location only'}</p>
+                                            )}
                                             <div className="flex gap-2 items-end">
                                                 <input
                                                     type="password"
                                                     placeholder="APP_USR_..."
                                                     value={mpTokenInput}
                                                     onChange={(e) => setMpTokenInput(e.target.value)}
-                                                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                    disabled={!isCurrentLocationPrimary}
+                                                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all ${!isCurrentLocationPrimary ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                 />
                                                 <button
                                                     onClick={saveMpToken}
-                                                    disabled={mpTokenSaving || !mpTokenInput.trim()}
-                                                    className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${mpTokenSaved ? 'bg-green-500 text-white' : mpTokenSaving ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
+                                                    disabled={mpTokenSaving || !mpTokenInput.trim() || !isCurrentLocationPrimary}
+                                                    className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${mpTokenSaved ? 'bg-green-500 text-white' : mpTokenSaving ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : !isCurrentLocationPrimary ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
                                                 >
                                                     {mpTokenSaved ? <><Check size={14} /> Saved</> : mpTokenSaving ? <><RefreshCw size={14} className="animate-spin" /> ...</> : 'Save'}
                                                 </button>
@@ -1538,12 +1546,13 @@ function OwnerSummary() {
                                                     placeholder="123456789"
                                                     value={mpUserIdInput}
                                                     onChange={(e) => setMpUserIdInput(e.target.value)}
-                                                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all"
+                                                    disabled={!isCurrentLocationPrimary}
+                                                    className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white placeholder-stone-400 dark:placeholder-[#64748b] outline-none focus:bg-white focus:border-emerald-600 transition-all ${!isCurrentLocationPrimary ? 'opacity-60 cursor-not-allowed' : ''}`}
                                                 />
                                                 <button
                                                     onClick={saveMpUserId}
-                                                    disabled={mpUserIdSaving || !mpUserIdInput.trim()}
-                                                    className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${mpUserIdSaved ? 'bg-green-500 text-white' : mpUserIdSaving ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
+                                                    disabled={mpUserIdSaving || !mpUserIdInput.trim() || !isCurrentLocationPrimary}
+                                                    className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 whitespace-nowrap ${mpUserIdSaved ? 'bg-green-500 text-white' : mpUserIdSaving ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : !isCurrentLocationPrimary ? 'bg-stone-300 text-stone-600 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
                                                 >
                                                     {mpUserIdSaved ? <><Check size={14} /> Saved</> : mpUserIdSaving ? <><RefreshCw size={14} className="animate-spin" /> ...</> : 'Save'}
                                                 </button>
@@ -1576,11 +1585,14 @@ function OwnerSummary() {
                                 className="overflow-hidden"
                             >
                                 <div className="rounded-2xl bg-white dark:bg-[#1e293b] border border-stone-200 dark:border-white/5 p-4 md:p-5 shadow-[0_20px_50px_rgba(28,25,23,0.03)]">
+                                    {!isCurrentLocationPrimary && (
+                                        <p className="text-xs text-stone-500 dark:text-stone-400 mb-3">🔒 {t('locked_to_primary') || 'Managed at primary location only'}</p>
+                                    )}
                                     <select
                                         value={businessCurrency}
                                         onChange={(e) => handleCurrencyChange(e.target.value)}
-                                        disabled={currencySaving}
-                                        className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all appearance-none cursor-pointer"
+                                        disabled={currencySaving || !isCurrentLocationPrimary}
+                                        className={`w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-stone-50 dark:bg-[#334155] border border-stone-200 dark:border-white/10 text-stone-950 dark:text-white outline-none focus:bg-white focus:border-emerald-600 transition-all appearance-none ${!isCurrentLocationPrimary ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                                     >
                                         <option value="ARS">ARS — Argentine Peso</option>
                                         <option value="BRL">BRL — Brazilian Real</option>
