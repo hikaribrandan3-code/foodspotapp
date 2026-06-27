@@ -98,6 +98,7 @@ AS $$
     AND o.created_at >= NOW() - (p_days || ' days')::INTERVAL
     AND o.status NOT IN ('cancelled', 'refunded')
   WHERE b.owner_id = auth.uid()
+    AND b.deleted_at IS NULL
   GROUP BY b.id, br.slug, br.business_name, b.name
   ORDER BY b.created_at ASC;
 $$;
