@@ -12,6 +12,7 @@ import { clearAuth } from '../../utils/storage.js'
 import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
+import ColorPickerModal from '../../components/ColorPickerModal.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { updateBranding } from '../../lib/supabaseClient.js'
 import { getLoyaltySettings, upsertLoyaltySettings, getLoyaltyFreeItems, saveLoyaltyFreeItems } from '../../lib/loyaltyClient.js'
@@ -258,6 +259,8 @@ function OwnerSummary() {
     const [loyaltyItemCosts, setLoyaltyItemCosts] = useState({})
     const [ugcPointsPerShare, setUgcPointsPerShare] = useState('10')
     const [referralPoints, setReferralPoints] = useState('100')
+    const [loyaltyUIColor, setLoyaltyUIColor] = useState('#059669')
+    const [colorPickerOpen, setColorPickerOpen] = useState(false)
     const [loyaltySaving, setLoyaltySaving] = useState(false)
     const [loyaltySaved, setLoyaltySaved] = useState(false)
     const loyaltyInitialized = useRef(false)
@@ -280,6 +283,7 @@ function OwnerSummary() {
                 setLoyaltyItemCosts(settings.item_point_costs ?? {})
                 setUgcPointsPerShare(String(settings.ugc_points_per_share ?? 10))
                 setReferralPoints(String(settings.referral_points ?? 100))
+                setLoyaltyUIColor(settings.loyalty_ui_color ?? '#059669')
             }
             if (freeItems?.length) {
                 const slots = ['', '', '']
@@ -303,6 +307,7 @@ function OwnerSummary() {
             item_point_costs: loyaltyItemCosts,
             ugc_points_per_share: parseInt(ugcPointsPerShare || '10'),
             referral_points: parseInt(referralPoints || '100'),
+            loyalty_ui_color: loyaltyUIColor,
         }, businessId)
         const chosenItems = loyaltyFreeSlots
             .map(id => loyaltyMenuItems.find(m => m.id === id))
@@ -1811,6 +1816,29 @@ function OwnerSummary() {
                                         </div>
                                     )}
 
+                                    {loyaltyEnabled && (
+                                        <div className="border-t border-stone-100 dark:border-white/5 pt-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-bold text-stone-950 dark:text-white">{t('loyaltyCardColor') || 'Card Color'}</p>
+                                                    <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">{t('loyaltyCardColorHint') || 'Customize your loyalty card appearance'}</p>
+                                                </div>
+                                                <div
+                                                    onClick={() => setColorPickerOpen(true)}
+                                                    style={{
+                                                        width: 48,
+                                                        height: 48,
+                                                        borderRadius: 12,
+                                                        background: loyaltyUIColor,
+                                                        border: '2px solid rgba(0,0,0,0.1)',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Save button */}
                                     <motion.button
                                         whileTap={{ scale: 0.97 }}
@@ -2354,6 +2382,20 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Color Picker Modal for Loyalty Card */}
+            {colorPickerOpen && (
+                <ColorPickerModal
+                    title={t('loyaltyCardColor') || 'Card Color'}
+                    initialColor={loyaltyUIColor}
+                    onLiveChange={(color) => setLoyaltyUIColor(color)}
+                    onApply={(color) => {
+                        setLoyaltyUIColor(color)
+                        setColorPickerOpen(false)
+                    }}
+                    onClose={() => setColorPickerOpen(false)}
+                />
+            )}
 
         </motion.div>
     )

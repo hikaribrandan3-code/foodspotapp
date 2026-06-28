@@ -4,6 +4,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabaseClient';
 import { getLoyaltyBalance, getLoyaltySettings, getCustomerIdentifier } from '../../lib/loyaltyClient';
+import { deriveColorShades, hexToRgba } from '../../utils/colorUtils.js';
 import HeaderClamp from '../../components/HeaderClamp.jsx';
 import BurgerLoader from '../../components/BurgerLoader';
 
@@ -144,6 +145,10 @@ const Info = ({ config }) => {
 
     if (loading) return <BurgerLoader />;
 
+    // Derive loyalty card color shades
+    const loyaltyBaseColor = loyaltySettings?.loyalty_ui_color || '#059669';
+    const loyaltyShades = deriveColorShades(loyaltyBaseColor);
+
     const primaryColor = tenantData?.confirmation_color || '#DB0007';
     const whatsapp = tenantData?.whatsapp_number || tenantData?.app_config?.businessInfo?.whatsapp || tenantData?.business_info?.whatsapp || tenantData?.whatsapp || '';
     const address = tenantData?.address_label || tenantData?.app_config?.businessInfo?.address || tenantData?.address || '';
@@ -233,20 +238,20 @@ const Info = ({ config }) => {
                                 background: '#ffffff',
                                 borderRadius: 20,
                                 marginBottom: 16,
-                                boxShadow: '0 2px 20px rgba(5,150,105,0.10)',
-                                border: '1px solid #D1FAE5',
+                                boxShadow: `0 2px 20px ${hexToRgba(loyaltyShades.primary, 0.10)}`,
+                                border: `1px solid ${loyaltyShades.veryLight}`,
                                 overflow: 'hidden',
                             }}>
                                 {/* Top: points + badge */}
                                 <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                                     <div style={{ textAlign: 'left' }}>
-                                        <p style={{ fontSize: 10, color: '#059669', margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                                        <p style={{ fontSize: 10, color: loyaltyShades.primary, margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
                                             {t('loyaltyYourPoints')}
                                         </p>
-                                        <p style={{ fontSize: 48, color: '#064e3b', margin: '2px 0 0', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                                        <p style={{ fontSize: 48, color: loyaltyShades.dark, margin: '2px 0 0', fontWeight: 900, lineHeight: 1, letterSpacing: '-0.02em' }}>
                                             {loyaltyPoints}
                                         </p>
-                                        <p style={{ fontSize: 12, color: isReady ? '#059669' : '#6B7280', margin: '5px 0 0', fontWeight: 600 }}>
+                                        <p style={{ fontSize: 12, color: isReady ? loyaltyShades.primary : '#6B7280', margin: '5px 0 0', fontWeight: 600 }}>
                                             {isReady
                                                 ? t('loyaltyReadyToRedeem')
                                                 : `${cap - loyaltyPoints} ${t('loyaltyPointsAway')}`
@@ -256,11 +261,11 @@ const Info = ({ config }) => {
                                     {/* Circle badge */}
                                     <div style={{
                                         width: 48, height: 48, borderRadius: '50%',
-                                        background: isReady ? '#059669' : '#F0FDF4',
-                                        border: `2px solid ${isReady ? '#059669' : '#A7F3D0'}`,
+                                        background: isReady ? loyaltyShades.primary : loyaltyShades.veryLight,
+                                        border: `2px solid ${isReady ? loyaltyShades.primary : loyaltyShades.lighter}`,
                                         display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                                     }}>
-                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isReady ? '#fff' : '#059669'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isReady ? '#fff' : loyaltyShades.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
                                         </svg>
                                     </div>
@@ -271,7 +276,7 @@ const Info = ({ config }) => {
                                     <div style={{ height: 5, background: '#E5E7EB', borderRadius: 99, overflow: 'hidden' }}>
                                         <div style={{
                                             height: '100%', width: `${pct}%`,
-                                            background: 'linear-gradient(90deg, #059669 0%, #34d399 100%)',
+                                            background: `linear-gradient(90deg, ${loyaltyShades.primary} 0%, ${loyaltyShades.light} 100%)`,
                                             borderRadius: 99, transition: 'width 0.6s ease',
                                         }} />
                                     </div>
@@ -286,7 +291,7 @@ const Info = ({ config }) => {
                                     <div style={{
                                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                         width: '100%', padding: '12px 20px',
-                                        background: '#F0FDF4', borderTop: '1px solid #D1FAE5',
+                                        background: loyaltyShades.veryLight, borderTop: `1px solid ${loyaltyShades.veryLight}`,
                                         color: '#6B7280', fontSize: 13, fontWeight: 600,
                                         boxSizing: 'border-box',
                                     }}>
@@ -298,9 +303,9 @@ const Info = ({ config }) => {
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                             width: '100%', padding: '12px 20px',
-                                            background: shareToast ? '#059669' : '#F0FDF4',
-                                            border: 'none', borderTop: '1px solid #D1FAE5',
-                                            color: shareToast ? '#ffffff' : '#059669',
+                                            background: shareToast ? loyaltyShades.primary : loyaltyShades.veryLight,
+                                            border: 'none', borderTop: `1px solid ${loyaltyShades.veryLight}`,
+                                            color: shareToast ? '#ffffff' : loyaltyShades.primary,
                                             fontSize: 13, fontWeight: 700, cursor: 'pointer',
                                         }}
                                     >
@@ -323,8 +328,8 @@ const Info = ({ config }) => {
                             background: '#FFFFFF',
                             borderRadius: 20,
                             marginBottom: 16,
-                            boxShadow: '0 2px 20px rgba(5,150,105,0.10)',
-                            border: '1px solid #D1FAE5',
+                            boxShadow: `0 2px 20px ${hexToRgba(loyaltyShades.primary, 0.10)}`,
+                            border: `1px solid ${loyaltyShades.veryLight}`,
                             overflow: 'hidden',
                         }}>
                             <button
@@ -342,7 +347,7 @@ const Info = ({ config }) => {
                                 }}
                             >
                                 <div style={{ textAlign: 'left' }}>
-                                    <p style={{ fontSize: 12, color: '#059669', margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
+                                    <p style={{ fontSize: 12, color: loyaltyShades.primary, margin: 0, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.14em' }}>
                                         {t('loyaltyPointsNotFound')}
                                     </p>
                                     <p style={{ fontSize: 13, color: '#374151', margin: '4px 0 0', fontWeight: 600 }}>
@@ -377,7 +382,7 @@ const Info = ({ config }) => {
                                         style={{
                                             width: '100%',
                                             padding: '12px 16px',
-                                            background: '#059669',
+                                            background: loyaltyShades.primary,
                                             color: '#fff',
                                             border: 'none',
                                             borderRadius: 12,
