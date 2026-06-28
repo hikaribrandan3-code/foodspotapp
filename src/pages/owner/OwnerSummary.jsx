@@ -2089,6 +2089,20 @@ function OwnerSummary() {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Color Picker Modal for Loyalty Card */}
+            {colorPickerOpen && (
+                <ColorPickerModal
+                    title={t('loyaltyCardColor') || 'Card Color'}
+                    initialColor={loyaltyUIColor}
+                    onLiveChange={(color) => setLoyaltyUIColor(color)}
+                    onApply={(color) => {
+                        setLoyaltyUIColor(color)
+                        setColorPickerOpen(false)
+                    }}
+                    onClose={() => setColorPickerOpen(false)}
+                />
+            )}
         </div>
     )
 }
@@ -2383,20 +2397,6 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Color Picker Modal for Loyalty Card */}
-            {colorPickerOpen && (
-                <ColorPickerModal
-                    title={t('loyaltyCardColor') || 'Card Color'}
-                    initialColor={loyaltyUIColor}
-                    onLiveChange={(color) => setLoyaltyUIColor(color)}
-                    onApply={(color) => {
-                        setLoyaltyUIColor(color)
-                        setColorPickerOpen(false)
-                    }}
-                    onClose={() => setColorPickerOpen(false)}
-                />
-            )}
 
         </motion.div>
     )
