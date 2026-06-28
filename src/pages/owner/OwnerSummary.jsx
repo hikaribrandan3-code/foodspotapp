@@ -250,6 +250,7 @@ function OwnerSummary() {
     const [crmSearch, setCrmSearch] = useState('')
 
     // ─── LOYALTY REWARDS STATE ──────────────────────────────────────
+    // Includes color customization for loyalty card UI
     const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
     const [loyaltyMinOrder, setLoyaltyMinOrder] = useState('8000')
     const [loyaltyPointsPerOrder, setLoyaltyPointsPerOrder] = useState('50')
