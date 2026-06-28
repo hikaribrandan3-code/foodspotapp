@@ -1207,6 +1207,8 @@ export const translations = {
     shareAndEarn:            { en: 'Share & Earn',                          es: 'Compartir y Ganar',                   pt: 'Compartilhar e Ganhar' },
     linkSharedDone:          { en: '✓ Link shared',                         es: '✓ Link compartido',                   pt: '✓ Link compartilhado' },
     whenFriendOrders:        { en: 'pts when friend orders',                es: 'pts cuando tu amigo ordene',          pt: 'pts quando seu amigo pedir' },
+    loyaltyCardColor:        { en: 'Loyalty Card Color',                    es: 'Color de Tarjeta de Lealtad',         pt: 'Cor do Cartão de Fidelidade' },
+    loyaltyCardColorHint:    { en: 'Customize your loyalty card appearance', es: 'Personaliza la apariencia de tu tarjeta de lealtad', pt: 'Personalize a aparência do seu cartão de fidelidade' },
     linkCopied:              { en: '✓ Link copied!',                        es: '✓ Link copiado!',                     pt: '✓ Link copiado!' },
     shareAppText:            { en: 'Order food & earn rewards. Use my referral link for bonus points!', es: '¡Pedí comida y ganá puntos! Usá mi link de referido para puntos extra.', pt: 'Peça comida e ganhe pontos! Use meu link de indicação para pontos bônus.' },
     ugcToastThanks:          { en: 'You\'re amazing!',                      es: '¡Sos lo máximo!',                     pt: 'Você é incrível!' },
