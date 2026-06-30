@@ -111,16 +111,28 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
 
     const handleTriggered = async () => {
       if (hasTriggeredRef.current || !mounted) return;
+
+      // Check if banner was already shown on a previous load (prevents race with loadState)
+      const { data: existing } = await supabase
+        .from('ugc_activation_states')
+        .select('status')
+        .eq('order_id', orderId)
+        .eq('user_id', effectiveUserId)
+        .maybeSingle();
+
+      if (!mounted) return;
+      if (existing?.status === 'shown') {
+        hasTriggeredRef.current = true;
+        hasShownBannerRef.current = true;
+        setActivationStatus('ready');
+        console.log('[camera] found existing shown status, skipping re-trigger');
+        return;
+      }
+
       markTriggered();
       clearTimers(); // stop polling
 
       console.log(`[camera] TRIGGERED — orderType=${orderType}`);
-
-      // If banner was already shown on a previous load, don't re-trigger
-      if (hasShownBannerRef.current) {
-        console.log('[camera] banner already shown, skipping re-trigger');
-        return;
-      }
 
       await supabase.from('ugc_activation_states').upsert(
         {
