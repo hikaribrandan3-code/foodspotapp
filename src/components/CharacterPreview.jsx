@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
-// All characters share the same viewBox — UGC bodies use ugcT (scale+translate) to fit
 const KAWAII_VB = "80 130 240 230";
 
 const characters = [
@@ -15,7 +14,6 @@ const characters = [
   { id: 'strawberry',  name: 'Strawberry',  phoneColor: '#EF4444' },
   { id: 'tennis',      name: 'Tennis',      phoneColor: '#A3E635' },
   { id: 'lollipop',    name: 'Lollipop',    phoneColor: '#F472B6' },
-  // UGC: ugcT maps their native coords into KAWAII_VB space (scale 0.84/0.83/0.73)
   { id: 'burger', name: 'Burger', isUGC: true, ugcT: 'translate(67,122) scale(0.84)' },
   { id: 'taco',   name: 'Taco',   isUGC: true, ugcT: 'translate(75,89)  scale(0.83)' },
   { id: 'pizza',  name: 'Pizza',  isUGC: true, ugcT: 'translate(91,119) scale(0.73)' },
@@ -27,8 +25,8 @@ const CharacterBody = ({ id }) => {
       <g>
         <path d="M 160 250 L 172 280 A 8 8 0 0 0 180 286 L 220 286 A 8 8 0 0 0 228 280 L 240 250 Z" fill="#A5B4FC" stroke="#E11D48" strokeWidth="3.5"/>
         <path d="M 160 250 L 152 245 C 135 245, 140 210, 165 210 C 165 195, 235 195, 235 210 C 260 210, 265 245, 248 245 L 240 250 Z" fill="#FCE7F3" stroke="#BE123C" strokeWidth="3" strokeLinejoin="round"/>
-        <circle cx="182" cy="228" r="8" fill="#1F2937"/><circle cx="180" cy="225" r="3" fill="#FFFFFF"/>
-        <circle cx="218" cy="228" r="8" fill="#1F2937"/><circle cx="216" cy="225" r="3" fill="#FFFFFF"/>
+        <circle cx="182" cy="228" r="8" fill="#1F2937"/><circle cx="180" cy="225" r="3" fill="#FFF"/>
+        <circle cx="218" cy="228" r="8" fill="#1F2937"/><circle cx="216" cy="225" r="3" fill="#FFF"/>
         <path d="M 192 242 Q 200 248 208 242" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx="175" cy="256" r="5" fill="#F43F5E" opacity="0.6"/>
         <circle cx="225" cy="256" r="5" fill="#F43F5E" opacity="0.6"/>
@@ -43,8 +41,8 @@ const CharacterBody = ({ id }) => {
     case 'cookie': return (
       <g>
         <circle cx="200" cy="250" r="45" fill="#D97706" stroke="#78350F" strokeWidth="3.5"/>
-        <circle cx="185" cy="235" r="7" fill="#1F2937"/><circle cx="183" cy="232" r="2.5" fill="#FFFFFF"/>
-        <circle cx="215" cy="235" r="7" fill="#1F2937"/><circle cx="217" cy="232" r="2.5" fill="#FFFFFF"/>
+        <circle cx="185" cy="235" r="7" fill="#1F2937"/><circle cx="183" cy="232" r="2.5" fill="#FFF"/>
+        <circle cx="215" cy="235" r="7" fill="#1F2937"/><circle cx="217" cy="232" r="2.5" fill="#FFF"/>
         <path d="M 192 248 Q 200 253 208 248" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx="178" cy="225" r="4" fill="#451A03"/><circle cx="222" cy="225" r="4" fill="#451A03"/>
         <circle cx="200" cy="218" r="3.5" fill="#451A03"/><circle cx="210" cy="270" r="4.5" fill="#451A03"/>
@@ -55,9 +53,9 @@ const CharacterBody = ({ id }) => {
     case 'coffee': return (
       <g>
         <path d="M 235 230 C 265 230, 265 270, 235 270" fill="none" stroke="#94A3B8" strokeWidth="8"/>
-        <rect x="160" y="210" width="80" height="80" rx="15" fill="#FFFFFF" stroke="#64748B" strokeWidth="3.5"/>
-        <circle cx="182" cy="250" r="7" fill="#1F2937"/><circle cx="180" cy="247" r="2.5" fill="#FFFFFF"/>
-        <circle cx="218" cy="250" r="7" fill="#1F2937"/><circle cx="216" cy="247" r="2.5" fill="#FFFFFF"/>
+        <rect x="160" y="210" width="80" height="80" rx="15" fill="#FFF" stroke="#64748B" strokeWidth="3.5"/>
+        <circle cx="182" cy="250" r="7" fill="#1F2937"/><circle cx="180" cy="247" r="2.5" fill="#FFF"/>
+        <circle cx="218" cy="250" r="7" fill="#1F2937"/><circle cx="216" cy="247" r="2.5" fill="#FFF"/>
         <path d="M 192 262 Q 200 267 208 262" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
       </g>
     );
@@ -65,15 +63,13 @@ const CharacterBody = ({ id }) => {
       <g>
         <circle cx="200" cy="250" r="45" fill="#F59E0B" stroke="#B45309" strokeWidth="3.5"/>
         <circle cx="200" cy="250" r="16" fill="#FEF3C7" stroke="#B45309" strokeWidth="2"/>
-        <circle cx="185" cy="230" r="7" fill="#1F2937"/><circle cx="183" cy="227" r="2.5" fill="#FFFFFF"/>
-        <circle cx="215" cy="230" r="7" fill="#1F2937"/><circle cx="217" cy="227" r="2.5" fill="#FFFFFF"/>
+        <circle cx="185" cy="230" r="7" fill="#1F2937"/><circle cx="183" cy="227" r="2.5" fill="#FFF"/>
+        <circle cx="215" cy="230" r="7" fill="#1F2937"/><circle cx="217" cy="227" r="2.5" fill="#FFF"/>
         <path d="M 192 243 Q 200 249 208 243" fill="none" stroke="#1F2937" strokeWidth="3" strokeLinecap="round"/>
         <line x1="185" y1="217" x2="183" y2="212" stroke="#EC4899" strokeWidth="2" strokeLinecap="round"/>
         <line x1="215" y1="217" x2="217" y2="212" stroke="#06B6D4" strokeWidth="2" strokeLinecap="round"/>
         <line x1="168" y1="238" x2="162" y2="235" stroke="#FDE047" strokeWidth="2" strokeLinecap="round"/>
         <line x1="232" y1="238" x2="238" y2="235" stroke="#06B6D4" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="190" y1="283" x2="188" y2="290" stroke="#FDE047" strokeWidth="2" strokeLinecap="round"/>
-        <line x1="210" y1="283" x2="212" y2="290" stroke="#06B6D4" strokeWidth="2" strokeLinecap="round"/>
         <circle cx="180" cy="235" r="1.5" fill="#EC4899"/>
         <circle cx="220" cy="235" r="1.5" fill="#FDE047"/>
         <circle cx="163" cy="250" r="1.5" fill="#06B6D4"/>
@@ -86,8 +82,8 @@ const CharacterBody = ({ id }) => {
         <path d="M 160 250 L 152 245 C 135 245, 140 210, 165 210 C 165 195, 235 195, 235 210 C 260 210, 265 245, 248 245 L 240 250 Z" fill="#A7F3D0" stroke="#059669" strokeWidth="3" strokeLinejoin="round"/>
         <line x1="200" y1="175" x2="202" y2="160" stroke="#78350F" strokeWidth="1.5"/>
         <circle cx="200" cy="190" r="10" fill="#DC2626" stroke="#991B1B" strokeWidth="2.5"/>
-        <circle cx="182" cy="233" r="7" fill="#1F2937"/><circle cx="180" cy="230" r="2.5" fill="#FFFFFF"/>
-        <circle cx="218" cy="233" r="7" fill="#1F2937"/><circle cx="216" cy="230" r="2.5" fill="#FFFFFF"/>
+        <circle cx="182" cy="233" r="7" fill="#1F2937"/><circle cx="180" cy="230" r="2.5" fill="#FFF"/>
+        <circle cx="218" cy="233" r="7" fill="#1F2937"/><circle cx="216" cy="230" r="2.5" fill="#FFF"/>
         <path d="M 192 245 Q 200 250 208 245" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx="168" cy="242" r="5" fill="#F43F5E" opacity="0.6"/>
         <circle cx="232" cy="242" r="5" fill="#F43F5E" opacity="0.6"/>
@@ -96,19 +92,17 @@ const CharacterBody = ({ id }) => {
     case 'icecream': return (
       <g>
         <polygon points="175,280 225,280 200,340" fill="#D97706" stroke="#78350F" strokeWidth="3.5" strokeLinejoin="round"/>
-        <line x1="185" y1="290" x2="215" y2="290" stroke="#B45309" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="183" y1="305" x2="217" y2="305" stroke="#B45309" strokeWidth="1.5" opacity="0.6"/>
         <circle cx="200" cy="270" r="32" fill="#FEF3C7" stroke="#FCD34D" strokeWidth="3.5"/>
         <circle cx="200" cy="225" r="35" fill="#FBCFE8" stroke="#EC4899" strokeWidth="3.5"/>
         <circle cx="200" cy="175" r="33" fill="#A7F3D0" stroke="#10B981" strokeWidth="3.5"/>
-        <circle cx="185" cy="163" r="5.5" fill="#1F2937"/><circle cx="183" cy="160" r="2.5" fill="#FFFFFF"/>
-        <circle cx="215" cy="163" r="5.5" fill="#1F2937"/><circle cx="217" cy="160" r="2.5" fill="#FFFFFF"/>
+        <circle cx="185" cy="163" r="5.5" fill="#1F2937"/><circle cx="183" cy="160" r="2.5" fill="#FFF"/>
+        <circle cx="215" cy="163" r="5.5" fill="#1F2937"/><circle cx="217" cy="160" r="2.5" fill="#FFF"/>
         <path d="M 190 172 Q 200 178 210 172" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx="185" cy="215" r="6" fill="#1F2937"/><circle cx="183" cy="212" r="2.2" fill="#FFFFFF"/>
-        <circle cx="215" cy="215" r="6" fill="#1F2937"/><circle cx="217" cy="212" r="2.2" fill="#FFFFFF"/>
+        <circle cx="185" cy="215" r="6" fill="#1F2937"/><circle cx="183" cy="212" r="2.2" fill="#FFF"/>
+        <circle cx="215" cy="215" r="6" fill="#1F2937"/><circle cx="217" cy="212" r="2.2" fill="#FFF"/>
         <path d="M 192 228 Q 200 233 208 228" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="188" cy="266" r="5" fill="#1F2937"/><circle cx="186" cy="264" r="1.8" fill="#FFFFFF"/>
-        <circle cx="212" cy="266" r="5" fill="#1F2937"/><circle cx="214" cy="264" r="1.8" fill="#FFFFFF"/>
+        <circle cx="188" cy="266" r="5" fill="#1F2937"/><circle cx="186" cy="264" r="1.8" fill="#FFF"/>
+        <circle cx="212" cy="266" r="5" fill="#1F2937"/><circle cx="214" cy="264" r="1.8" fill="#FFF"/>
         <path d="M 193 275 Q 200 278 207 275" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round"/>
       </g>
     );
@@ -117,16 +111,16 @@ const CharacterBody = ({ id }) => {
         <path d="M 200 190 C 160 190, 150 250, 150 270 C 150 295, 172 310, 200 310 C 228 310, 250 295, 250 270 C 250 250, 240 190, 200 190 Z" fill="#22C55E" stroke="#059669" strokeWidth="3.5"/>
         <path d="M 200 198 C 167 198, 158 250, 158 268 C 158 288, 177 301, 200 301 C 223 301, 242 288, 242 268 C 242 250, 233 198, 200 198 Z" fill="#86EFAC" stroke="#166534" strokeWidth="1.5" opacity="0.85"/>
         <circle cx="200" cy="261" r="22" fill="#78350F" stroke="#451A03" strokeWidth="2"/>
-        <circle cx="185" cy="230" r="6" fill="#1F2937"/><circle cx="183" cy="227" r="2" fill="#FFFFFF"/>
-        <circle cx="215" cy="230" r="6" fill="#1F2937"/><circle cx="213" cy="227" r="2" fill="#FFFFFF"/>
+        <circle cx="185" cy="230" r="6" fill="#1F2937"/><circle cx="183" cy="227" r="2" fill="#FFF"/>
+        <circle cx="215" cy="230" r="6" fill="#1F2937"/><circle cx="213" cy="227" r="2" fill="#FFF"/>
         <path d="M 195 245 Q 200 250 205 245" fill="none" stroke="#1F2937" strokeWidth="2" strokeLinecap="round"/>
       </g>
     );
     case 'strawberry': return (
       <g>
         <path d="M 200 198 Q 150 198 160 260 Q 165 305 200 305 Q 235 305 240 260 Q 250 198 200 198 Z" fill="#EF4444" stroke="#991B1B" strokeWidth="3.5"/>
-        <circle cx="185" cy="250" r="7" fill="#1F2937"/><circle cx="183" cy="247" r="2.5" fill="#FFFFFF"/>
-        <circle cx="215" cy="250" r="7" fill="#1F2937"/><circle cx="217" cy="247" r="2.5" fill="#FFFFFF"/>
+        <circle cx="185" cy="250" r="7" fill="#1F2937"/><circle cx="183" cy="247" r="2.5" fill="#FFF"/>
+        <circle cx="215" cy="250" r="7" fill="#1F2937"/><circle cx="217" cy="247" r="2.5" fill="#FFF"/>
         <path d="M 192 264 Q 200 269 208 264" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx="175" cy="270" r="4" fill="#F43F5E" opacity="0.6"/>
         <circle cx="225" cy="270" r="4" fill="#F43F5E" opacity="0.6"/>
@@ -144,30 +138,29 @@ const CharacterBody = ({ id }) => {
     case 'tennis': return (
       <g>
         <circle cx="200" cy="250" r="40" fill="#A3E635" stroke="#4D7C0F" strokeWidth="3.5"/>
-        <circle cx="185" cy="240" r="7" fill="#1F2937"/><circle cx="183" cy="237" r="2.5" fill="#FFFFFF"/>
-        <circle cx="215" cy="240" r="7" fill="#1F2937"/><circle cx="217" cy="237" r="2.5" fill="#FFFFFF"/>
+        <circle cx="185" cy="240" r="7" fill="#1F2937"/><circle cx="183" cy="237" r="2.5" fill="#FFF"/>
+        <circle cx="215" cy="240" r="7" fill="#1F2937"/><circle cx="217" cy="237" r="2.5" fill="#FFF"/>
         <path d="M 192 255 Q 200 260 208 255" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
-        <path d="M 168 226 A 40 40 0 0 1 168 274" fill="none" stroke="#FFFFFF" strokeWidth="3.5"/>
-        <path d="M 232 226 A 40 40 0 0 0 232 274" fill="none" stroke="#FFFFFF" strokeWidth="3.5"/>
+        <path d="M 168 226 A 40 40 0 0 1 168 274" fill="none" stroke="#FFF" strokeWidth="3.5"/>
+        <path d="M 232 226 A 40 40 0 0 0 232 274" fill="none" stroke="#FFF" strokeWidth="3.5"/>
       </g>
     );
     case 'lollipop': return (
       <g>
         <rect x="196" y="280" width="8" height="40" rx="3" fill="#E2E8F0" stroke="#475569" strokeWidth="2"/>
         <circle cx="200" cy="245" r="40" fill="#F472B6" stroke="#9D174D" strokeWidth="3.5"/>
-        <circle cx="182" cy="235" r="7" fill="#1F2937"/><circle cx="180" cy="233" r="2.5" fill="#FFFFFF"/>
-        <circle cx="218" cy="235" r="7" fill="#1F2937"/><circle cx="220" cy="233" r="2.5" fill="#FFFFFF"/>
+        <circle cx="182" cy="235" r="7" fill="#1F2937"/><circle cx="180" cy="233" r="2.5" fill="#FFF"/>
+        <circle cx="218" cy="235" r="7" fill="#1F2937"/><circle cx="220" cy="233" r="2.5" fill="#FFF"/>
         <path d="M 190 248 Q 200 253 210 248" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
       </g>
     );
-    // UGC — phone arm wrapped in cp-arm-r, left arm in cp-arm-l
+    // UGC — legs get cp-leg-l/r directly on rects, phone arm gets cp-arm-r
     case 'burger': return (
       <g>
-        <rect x="110" y="240" width="25" height="45" rx="12" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
-        <rect x="165" y="240" width="25" height="45" rx="12" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
-        <g className="cp-arm-l">
-          <circle cx="30" cy="180" r="14" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
-        </g>
+        {/* Legs: transform-origin at hip joint via transform-box:fill-box */}
+        <rect className="cp-leg-l" x="110" y="240" width="25" height="45" rx="12" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+        <rect className="cp-leg-r" x="165" y="240" width="25" height="45" rx="12" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+        <g className="cp-arm-l"><circle cx="30" cy="180" r="14" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/></g>
         <path d="M 45 190 C 45 250, 255 250, 255 190 Z" fill="#F4B41A" stroke="#C77A00" strokeWidth="6"/>
         <rect x="40" y="150" width="220" height="45" rx="15" fill="#5D4037" stroke="#3E2723" strokeWidth="6"/>
         <path d="M 45 155 L 75 185 L 105 155 L 135 185 L 165 155 L 195 185 L 225 155 L 255 185 L 250 150 Z" fill="#F1C40F" stroke="#F39C12" strokeWidth="4"/>
@@ -184,19 +177,19 @@ const CharacterBody = ({ id }) => {
         <g className="cp-arm-r">
           <rect x="245" y="130" width="35" height="65" rx="6" fill="#FF69B4" stroke="#D1478B" strokeWidth="3" transform="rotate(20 262 162)"/>
           <rect x="249" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 262 162)"/>
+          <circle cx="253" cy="138" r="3" fill="#666" transform="rotate(20 262 162)"/>
+          <circle cx="261" cy="146" r="3" fill="#666" transform="rotate(20 262 162)"/>
+          <circle className="cp-flash" cx="261" cy="138" r="25" fill="#FFFDE7" opacity="0" transform="rotate(20 262 162)"/>
           <circle cx="261" cy="138" r="2" fill="#FFF" transform="rotate(20 262 162)"/>
           <circle cx="270" cy="180" r="14" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
-          <circle className="cp-flash" cx="261" cy="133" r="10" fill="#FFFDE7" transform="rotate(20 262 162)"/>
         </g>
       </g>
     );
     case 'taco': return (
       <g>
-        <rect x="110" y="240" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-        <rect x="165" y="240" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-        <g className="cp-arm-l">
-          <circle cx="20" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-        </g>
+        <rect className="cp-leg-l" x="110" y="240" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <rect className="cp-leg-r" x="165" y="240" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <g className="cp-arm-l"><circle cx="20" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/></g>
         <path d="M 25 100 C 25 250, 275 250, 275 100 Z" fill="#E67E22" stroke="#D35400" strokeWidth="6"/>
         <path d="M 35 100 Q 55 70 85 90 T 150 75 T 215 90 T 265 100 Z" fill="#6D4C41" stroke="#4E342E" strokeWidth="4"/>
         <path d="M 40 90 Q 50 60 70 80 T 110 50 T 150 70 T 190 50 T 230 75 T 260 90 Z" fill="#8BC34A" stroke="#689F38" strokeWidth="4"/>
@@ -209,19 +202,19 @@ const CharacterBody = ({ id }) => {
         <g className="cp-arm-r">
           <rect x="245" y="130" width="35" height="65" rx="6" fill="#FF69B4" stroke="#D1478B" strokeWidth="3" transform="rotate(20 262 162)"/>
           <rect x="249" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 262 162)"/>
+          <circle cx="253" cy="138" r="3" fill="#666" transform="rotate(20 262 162)"/>
+          <circle cx="261" cy="146" r="3" fill="#666" transform="rotate(20 262 162)"/>
+          <circle className="cp-flash" cx="261" cy="138" r="25" fill="#FFFDE7" opacity="0" transform="rotate(20 262 162)"/>
           <circle cx="261" cy="138" r="2" fill="#FFF" transform="rotate(20 262 162)"/>
           <circle cx="270" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-          <circle className="cp-flash" cx="261" cy="133" r="10" fill="#FFFDE7" transform="rotate(20 262 162)"/>
         </g>
       </g>
     );
     case 'pizza': return (
       <g>
-        <rect x="110" y="230" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-        <rect x="165" y="230" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-        <g className="cp-arm-l">
-          <circle cx="65" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-        </g>
+        <rect className="cp-leg-l" x="110" y="230" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <rect className="cp-leg-r" x="165" y="230" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <g className="cp-arm-l"><circle cx="65" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/></g>
         <path d="M 5 75 Q 150 25 295 75 Q 315 95 285 105 Q 150 70 15 105 Q -15 95 5 75 Z" fill="#E67E22" stroke="#D35400" strokeWidth="6" strokeLinejoin="round"/>
         <path d="M 15 100 Q 150 65 285 100 L 195 240 Q 150 270 105 240 Z" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="6" strokeLinejoin="round"/>
         <circle cx="125" cy="110" r="16" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
@@ -233,9 +226,11 @@ const CharacterBody = ({ id }) => {
         <g className="cp-arm-r">
           <rect x="210" y="130" width="35" height="65" rx="6" fill="#FF69B4" stroke="#D1478B" strokeWidth="3" transform="rotate(20 227 162)"/>
           <rect x="214" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 227 162)"/>
+          <circle cx="218" cy="138" r="3" fill="#666" transform="rotate(20 227 162)"/>
+          <circle cx="226" cy="146" r="3" fill="#666" transform="rotate(20 227 162)"/>
+          <circle className="cp-flash" cx="226" cy="138" r="25" fill="#FFFDE7" opacity="0" transform="rotate(20 227 162)"/>
           <circle cx="226" cy="138" r="2" fill="#FFF" transform="rotate(20 227 162)"/>
           <circle cx="235" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
-          <circle className="cp-flash" cx="226" cy="133" r="10" fill="#FFFDE7" transform="rotate(20 227 162)"/>
         </g>
       </g>
     );
@@ -252,66 +247,92 @@ const FAKE_MENU = {
 const BUBBLE_KEYS = ['ugc_prompt_1','ugc_prompt_2','ugc_prompt_3','ugc_prompt_4','ugc_prompt_5'];
 
 const CSS = `
+  /* ── Walk-in ── */
   @keyframes cpRunIn {
-    0%   { transform: translateX(-340px) rotate(-8deg); }
-    55%  { transform: translateX(14px) rotate(1deg); }
-    72%  { transform: translateX(-6px) rotate(0deg); }
+    0%   { transform: translateX(-120%) rotate(-5deg); opacity: 0.2; }
+    5%   { opacity: 1; }
+    60%  { transform: translateX(8px) rotate(1deg); }
+    75%  { transform: translateX(-4px) rotate(0deg); }
     100% { transform: translateX(0) rotate(0deg); }
   }
-  @keyframes cpPopIn {
-    0%   { transform: scale(0.3); opacity: 0; }
-    65%  { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
+  /* ── Body waddle (matches real frontend burgerWaddle) ── */
+  @keyframes cpWaddle {
+    0%, 50%, 100% { transform: translateY(0); }
+    25%, 75%      { transform: translateY(-5px); }
   }
-  @keyframes cpBob {
-    0%, 100% { transform: translateY(0px); }
-    50%      { transform: translateY(-5px); }
+  /* ── Leg lift cycles (matches pizzaWalkCycleLeft/Right) ── */
+  @keyframes cpLegLiftL {
+    0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+    25%           { transform: rotate(20deg) translateY(-12px); }
   }
-  @keyframes cpLegL {
-    0%, 100% { transform: rotate(-24deg); }
+  @keyframes cpLegLiftR {
+    0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+    75%           { transform: rotate(20deg) translateY(-12px); }
+  }
+  /* ── Arm wave ── */
+  @keyframes cpArmL {
+    0%, 100% { transform: rotate(-15deg); }
     50%      { transform: rotate(20deg); }
   }
-  @keyframes cpLegR {
-    0%, 100% { transform: rotate(20deg); }
-    50%      { transform: rotate(-24deg); }
-  }
-  @keyframes cpArmL {
-    0%, 100% { transform: rotate(-18deg); }
-    50%      { transform: rotate(22deg); }
-  }
+  /* ── Phone snap (lift up twice per cycle) ── */
   @keyframes cpPhoneWave {
-    0%          { transform: translateY(0px) rotate(0deg); }
-    28%         { transform: translateY(-15px) rotate(-14deg); }
-    45%         { transform: translateY(-10px) rotate(-6deg); }
-    68%         { transform: translateY(-18px) rotate(-16deg); }
-    82%         { transform: translateY(-12px) rotate(-9deg); }
-    100%        { transform: translateY(0px) rotate(0deg); }
+    0%    { transform: translateY(0)   rotate(0deg); }
+    25%   { transform: translateY(-14px) rotate(-12deg); }
+    45%   { transform: translateY(-8px)  rotate(-5deg); }
+    65%   { transform: translateY(-16px) rotate(-14deg); }
+    80%   { transform: translateY(-10px) rotate(-7deg); }
+    100%  { transform: translateY(0)   rotate(0deg); }
   }
-  @keyframes cpFlash {
-    0%, 76%, 100% { transform: scale(0); opacity: 0; }
-    78%            { transform: scale(0.8); opacity: 1; }
-    88%            { transform: scale(10); opacity: 0; }
+  /* ── Camera flash burst (matches original flash anims) ── */
+  @keyframes cpFlashBurst {
+    0%, 88%, 100% { opacity: 0; }
+    93%           { opacity: 0.9; }
   }
+  /* ── Bubble animations ── */
   @keyframes cpBubblePop {
-    0%   { transform: scale(0) translateY(10px); opacity: 0; }
+    0%   { transform: scale(0) translateY(8px); opacity: 0; }
     65%  { transform: scale(1.07) translateY(-2px); opacity: 1; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
   }
+  @keyframes cpBubblePulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
+  }
   @keyframes cpTextIn {
-    0%   { opacity: 0; transform: translateY(5px); }
+    0%   { opacity: 0; transform: translateY(4px); }
     100% { opacity: 1; transform: translateY(0); }
   }
-  .cp-run-in   { animation: cpRunIn 0.75s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-  .cp-pop-in   { animation: cpPopIn 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-  .cp-bob      { animation: cpBob 0.44s 0.75s ease-in-out infinite; }
-  .cp-leg-l    { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegL 0.36s ease-in-out infinite; }
-  .cp-leg-r    { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegR 0.36s ease-in-out infinite; animation-delay:0.18s; }
-  .cp-arm-l    { transform-box:fill-box; transform-origin:100% 0%; animation:cpArmL 0.6s ease-in-out infinite; }
-  .cp-arm-r    { transform-box:fill-box; transform-origin:10% 0%; animation:cpPhoneWave 1.2s ease-in-out infinite; }
-  .cp-flash    { transform-box:fill-box; transform-origin:center; animation:cpFlash 3s 1.6s ease-out infinite; pointer-events:none; }
-  .cp-bubble-pop { animation: cpBubblePop 0.55s 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
-  .cp-text-in  { animation: cpTextIn 0.35s 1s both; display: inline-block; }
-  .cp-nav-btn  { flex:1; background:var(--color-primary,#ec4899); color:white; border:none; border-radius:12px; padding:14px; cursor:pointer; font-size:16px; font-weight:700; transition:transform 0.1s,opacity 0.15s; }
+
+  .cp-run-in  { animation: cpRunIn 0.9s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+  .cp-waddle  { animation: cpWaddle 0.4s ease-in-out infinite; }
+  /* Kawaii thin legs (line elements, <g> wrappers) */
+  .cp-leg-l   { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegLiftL 0.3s ease-in-out infinite; }
+  .cp-leg-r   { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegLiftR 0.3s ease-in-out infinite; }
+  .cp-arm-l   { transform-box:fill-box; transform-origin:100% 0%; animation:cpArmL 0.55s ease-in-out infinite; }
+  .cp-arm-r   { transform-box:fill-box; transform-origin:10% 0%; animation:cpPhoneWave 1.15s ease-in-out infinite; }
+  .cp-flash   { animation:cpFlashBurst 3s 2s ease-in-out infinite; pointer-events:none; }
+
+  /* Pink bubble (matches CameraActivationBanner.css .speech-bubble) */
+  .cp-bubble-pink {
+    background: linear-gradient(135deg, #FFF0F5 0%, #FFFFFF 50%, #FFF8F0 100%);
+    border: 3px dashed #FF69B4;
+    color: #8B1C62;
+    box-shadow: 0 8px 32px rgba(255,105,180,0.25), 0 4px 12px rgba(0,0,0,0.1);
+    animation: cpBubblePop 0.4s 0.6s cubic-bezier(0.34,1.56,0.64,1) both,
+               cpBubblePulse 2.5s 1.1s ease-in-out infinite;
+  }
+  .cp-bubble-pink::after {
+    border-top-color: #FFF0F5 !important;
+  }
+  /* Dark bubble */
+  .cp-bubble-dark {
+    background: #1F2937;
+    color: #fff;
+    animation: cpBubblePop 0.55s 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .cp-text-in { animation: cpTextIn 0.35s 1s both; display:inline-block; }
+
+  .cp-nav-btn { flex:1; background:var(--color-primary,#ec4899); color:white; border:none; border-radius:12px; padding:14px; cursor:pointer; font-size:16px; font-weight:700; transition:transform 0.1s,opacity 0.15s; }
   .cp-nav-btn:active { transform:scale(0.95); opacity:0.75; }
 `;
 
@@ -323,9 +344,9 @@ const CharacterPreview = () => {
   const current = characters[currentIndex];
   const menu = FAKE_MENU[language] || FAKE_MENU.es;
   const bubbleText = t(BUBBLE_KEYS[animKey % BUBBLE_KEYS.length]);
-
-  // Alternate entrance per click: even = run in from left, odd = pop in
-  const enterClass = animKey % 2 === 0 ? 'cp-run-in' : 'cp-pop-in';
+  // Alternate bubble style per click so both versions are visible
+  const bubbleClass = animKey % 2 === 0 ? 'cp-bubble-pink' : 'cp-bubble-dark';
+  const tailColor   = animKey % 2 === 0 ? '#FFF0F5' : '#1F2937';
 
   const goTo = (idx) => {
     setCurrentIndex(idx);
@@ -333,63 +354,64 @@ const CharacterPreview = () => {
   };
 
   return (
-    <div style={{ padding: '16px 16px 0', maxWidth: '420px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ padding:'16px 16px 0', maxWidth:'420px', margin:'0 auto', fontFamily:'system-ui,sans-serif' }}>
       <style>{CSS}</style>
 
-      <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.09)', overflow: 'hidden', marginBottom: 14 }}>
+      <div style={{ background:'#fff', borderRadius:18, boxShadow:'0 2px 16px rgba(0,0,0,0.09)', overflow:'hidden', marginBottom:14 }}>
 
-        {/* Receipt header */}
-        <div style={{ padding: '20px 20px 14px', textAlign: 'center' }}>
-          <div style={{ width:52, height:52, borderRadius:'50%', background:'#D1FAE5', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 10px', fontSize:26, color:'#059669', fontWeight:700 }}>✓</div>
-          <div style={{ fontWeight:700, fontSize:17, color:'#111827' }}>{menu.confirmed}</div>
-          <div style={{ fontSize:13, color:'#9CA3AF', marginTop:3 }}>FoodSpot · #4281</div>
+        {/* Receipt */}
+        <div style={{ padding:'20px 20px 14px', textAlign:'center' }}>
+          <div style={{ width:52,height:52,borderRadius:'50%',background:'#D1FAE5',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:26,color:'#059669',fontWeight:700 }}>✓</div>
+          <div style={{ fontWeight:700,fontSize:17,color:'#111827' }}>{menu.confirmed}</div>
+          <div style={{ fontSize:13,color:'#9CA3AF',marginTop:3 }}>FoodSpot · #4281</div>
         </div>
 
-        <div style={{ borderTop:'2px dashed #E5E7EB', margin:'0 20px' }}/>
+        <div style={{ borderTop:'2px dashed #E5E7EB',margin:'0 20px' }}/>
 
-        {/* Items */}
         <div style={{ padding:'14px 20px' }}>
-          {menu.items.map(([name, price], i) => (
-            <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: i < menu.items.length-1 ? 9 : 0 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <span style={{ width:22, height:22, borderRadius:'50%', background:'#F3F4F6', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#6B7280', fontWeight:600 }}>x1</span>
-                <span style={{ fontSize:14, color:'#374151' }}>{name}</span>
+          {menu.items.map(([name,price],i) => (
+            <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:i<menu.items.length-1?9:0 }}>
+              <div style={{ display:'flex',alignItems:'center',gap:8 }}>
+                <span style={{ width:22,height:22,borderRadius:'50%',background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#6B7280',fontWeight:600 }}>x1</span>
+                <span style={{ fontSize:14,color:'#374151' }}>{name}</span>
               </div>
-              <span style={{ fontSize:14, fontWeight:500, color:'#374151' }}>{price}</span>
+              <span style={{ fontSize:14,fontWeight:500,color:'#374151' }}>{price}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ borderTop:'2px dashed #E5E7EB', margin:'0 20px' }}/>
+        <div style={{ borderTop:'2px dashed #E5E7EB',margin:'0 20px' }}/>
 
-        {/* Total */}
-        <div style={{ padding:'12px 20px 16px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontWeight:700, fontSize:15, color:'#111827' }}>Total</span>
-          <span style={{ fontWeight:700, fontSize:17, color:'#111827' }}>{menu.total}</span>
+        <div style={{ padding:'12px 20px 16px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+          <span style={{ fontWeight:700,fontSize:15,color:'#111827' }}>Total</span>
+          <span style={{ fontWeight:700,fontSize:17,color:'#111827' }}>{menu.total}</span>
         </div>
 
         {/* Stage */}
-        <div style={{ background:'linear-gradient(180deg,#fffbf4 0%,#fff8ef 100%)', borderTop:'1px solid #F3F4F6', display:'flex', flexDirection:'column', alignItems:'center', overflow:'hidden', paddingTop:14, minHeight:210 }}>
+        <div style={{ background:'linear-gradient(180deg,#fffbf4 0%,#fff8ef 100%)',borderTop:'1px solid #F3F4F6',display:'flex',flexDirection:'column',alignItems:'center',overflow:'hidden',paddingTop:14,minHeight:220 }}>
 
-          {/* Speech bubble */}
-          <div key={`bubble-${animKey}`} className="cp-bubble-pop" style={{ background:'#1F2937', color:'#fff', borderRadius:14, padding:'9px 16px', fontSize:13, fontWeight:600, maxWidth:'82%', textAlign:'center', position:'relative', marginBottom:10 }}>
+          {/* Bubble (alternates pink ↔ dark per click) */}
+          <div
+            key={`bubble-${animKey}`}
+            className={bubbleClass}
+            style={{ borderRadius:22,padding:'10px 18px',fontSize:14,fontWeight:800,maxWidth:'82%',textAlign:'center',position:'relative',marginBottom:10,letterSpacing:'0.3px' }}
+          >
             <span className="cp-text-in">{bubbleText}</span>
-            <div style={{ position:'absolute', bottom:-8, left:'50%', transform:'translateX(-50%)', width:0, height:0, borderLeft:'9px solid transparent', borderRight:'9px solid transparent', borderTop:'9px solid #1F2937' }}/>
+            <div style={{ position:'absolute',bottom:-9,left:'50%',transform:'translateX(-50%)',width:0,height:0,borderLeft:'10px solid transparent',borderRight:'10px solid transparent',borderTop:`10px solid ${tailColor}` }}/>
           </div>
 
-          {/* Character */}
-          <div key={`char-${animKey}`} className={enterClass}>
-            <div className="cp-bob">
-              <svg viewBox={KAWAII_VB} style={{ width:'100%', maxWidth:'210px', display:'block' }} xmlns="http://www.w3.org/2000/svg">
+          {/* Running character */}
+          <div key={`char-${animKey}`} className="cp-run-in">
+            <div className="cp-waddle">
+              <svg viewBox={KAWAII_VB} style={{ width:'100%',maxWidth:'210px',display:'block' }} xmlns="http://www.w3.org/2000/svg">
 
                 {current.isUGC ? (
-                  /* UGC: scale+translate into kawaii coordinate space */
                   <g transform={current.ugcT}>
                     <CharacterBody id={current.id} />
                   </g>
                 ) : (
-                  /* Kawaii: legs, arms, phone, flash */
                   <>
+                    {/* Kawaii skeleton: legs, arms, colored phone */}
                     <g className="cp-leg-l">
                       <line x1="180" y1="290" x2="175" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
                       <circle cx="173" cy="315" r="5" fill="#1F2937"/>
@@ -400,11 +422,11 @@ const CharacterPreview = () => {
                     </g>
                     <g className="cp-arm-l">
                       <path d="M 165 260 Q 140 255 142 240" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
-                      <circle cx="142" cy="238" r="6.5" fill="#FFFFFF" stroke="#1F2937" strokeWidth="2"/>
+                      <circle cx="142" cy="238" r="6.5" fill="#FFF" stroke="#1F2937" strokeWidth="2"/>
                     </g>
                     <g className="cp-arm-r">
                       <path d="M 235 260 Q 255 265 258 280" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
-                      <circle cx="258" cy="280" r="6.5" fill="#FFFFFF" stroke="#1F2937" strokeWidth="2"/>
+                      <circle cx="258" cy="280" r="6.5" fill="#FFF" stroke="#1F2937" strokeWidth="2"/>
                       <g transform="translate(258,265) rotate(18) scale(1.5)">
                         <rect x="0" y="0" width="18" height="30" rx="4.5" fill={current.phoneColor} stroke="#1E293B" strokeWidth="2"/>
                         <rect x="3" y="3" width="12" height="12" rx="3.5" fill={current.phoneColor} stroke="#1E293B" strokeWidth="1.5" opacity="0.7"/>
@@ -412,7 +434,7 @@ const CharacterPreview = () => {
                         <circle cx="6.5" cy="11.5" r="2.5" fill="#0F172A"/><circle cx="6.5" cy="11.5" r="1.2" fill="#475569"/>
                         <circle cx="11.5" cy="9" r="1.5" fill="#FEF08A"/>
                       </g>
-                      <circle className="cp-flash" cx="270" cy="267" r="10" fill="#FFFDE7"/>
+                      <circle className="cp-flash" cx="270" cy="267" r="18" fill="#FFFDE7"/>
                     </g>
                     <CharacterBody id={current.id} />
                   </>
@@ -421,15 +443,15 @@ const CharacterPreview = () => {
             </div>
           </div>
 
-          <div style={{ fontSize:12, color:'#9CA3AF', padding:'4px 0 14px', fontWeight:500 }}>
-            {current.name} {current.isUGC ? '📷' : '✨'} · {currentIndex + 1} / {characters.length}
+          <div style={{ fontSize:12,color:'#9CA3AF',padding:'4px 0 14px',fontWeight:500 }}>
+            {current.name} {current.isUGC?'📷':'✨'} · {currentIndex+1} / {characters.length}
           </div>
         </div>
       </div>
 
-      <div style={{ display:'flex', gap:12, paddingBottom:20 }}>
-        <button className="cp-nav-btn" onClick={() => goTo((currentIndex - 1 + characters.length) % characters.length)}>← Prev</button>
-        <button className="cp-nav-btn" onClick={() => goTo((currentIndex + 1) % characters.length)}>Next →</button>
+      <div style={{ display:'flex',gap:12,paddingBottom:20 }}>
+        <button className="cp-nav-btn" onClick={() => goTo((currentIndex-1+characters.length)%characters.length)}>← Prev</button>
+        <button className="cp-nav-btn" onClick={() => goTo((currentIndex+1)%characters.length)}>Next →</button>
       </div>
     </div>
   );
