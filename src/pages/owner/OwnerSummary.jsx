@@ -13,7 +13,7 @@ import BackendHeader from '../../components/BackendHeader.jsx'
 import BackendNav from '../../components/BackendNav.jsx'
 import OnboardingModal from '../../components/Onboarding/OnboardingModal.jsx'
 import ColorPickerModal from '../../components/ColorPickerModal.jsx'
-import CharacterAnimationQA from '../../components/CharacterAnimationQA.jsx'
+import CharacterPreview from '../../components/CharacterPreview.jsx'
 import { supabase } from '../../lib/supabaseClient.js'
 import { updateBranding } from '../../lib/supabaseClient.js'
 import { getLoyaltySettings, upsertLoyaltySettings, getLoyaltyFreeItems, saveLoyaltyFreeItems } from '../../lib/loyaltyClient.js'
@@ -2399,10 +2399,7 @@ function TeamManagement({ businessId, t, primaryColor, isOpen, onToggle, onSaved
                 )}
             </AnimatePresence>
 
-            {/* CHARACTER ANIMATION QA PREVIEW */}
-            <div style={{ marginTop: 40, marginBottom: 40 }}>
-                <CharacterAnimationQA />
-            </div>
+            <CharacterPreview />
 
         </motion.div>
     )
