@@ -116,6 +116,12 @@ export function useCameraActivation(orderId, userId, orderType = 'delivery', del
 
       console.log(`[camera] TRIGGERED — orderType=${orderType}`);
 
+      // If banner was already shown on a previous load, don't re-trigger
+      if (hasShownBannerRef.current) {
+        console.log('[camera] banner already shown, skipping re-trigger');
+        return;
+      }
+
       await supabase.from('ugc_activation_states').upsert(
         {
           user_id: effectiveUserId,
