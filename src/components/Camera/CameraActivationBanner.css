@@ -150,7 +150,7 @@
 /* Speech bubble ABOVE donut */
 .speech-bubble {
   position: absolute;
-  top: -110px;
+  top: -85px;
   left: 50%;
   transform: translateX(-50%);
   background: linear-gradient(135deg, #FFF0F5 0%, #FFFFFF 50%, #FFF8F0 100%);
