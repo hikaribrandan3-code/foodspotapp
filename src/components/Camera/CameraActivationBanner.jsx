@@ -426,3 +426,4 @@ export default function CameraActivationBanner({
     </>
   );
 }
+// audit: character banner overflow handling
