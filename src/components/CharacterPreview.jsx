@@ -434,14 +434,18 @@ const CharacterPreview = () => {
                 ) : (
                   <>
                     {/* Kawaii skeleton: legs, arms, colored phone */}
-                    <g className="cp-leg-l">
-                      <line x1="180" y1="290" x2="175" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
-                      <circle cx="173" cy="315" r="5" fill="#1F2937"/>
-                    </g>
-                    <g className="cp-leg-r">
-                      <line x1="220" y1="290" x2="225" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
-                      <circle cx="227" cy="315" r="5" fill="#1F2937"/>
-                    </g>
+                    {current.id !== 'lollipop' && (
+                      <>
+                        <g className="cp-leg-l">
+                          <line x1="180" y1="290" x2="175" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
+                          <circle cx="173" cy="315" r="5" fill="#1F2937"/>
+                        </g>
+                        <g className="cp-leg-r">
+                          <line x1="220" y1="290" x2="225" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
+                          <circle cx="227" cy="315" r="5" fill="#1F2937"/>
+                        </g>
+                      </>
+                    )}
                     <g className="cp-arm-l">
                       <path d="M 165 260 Q 140 255 142 240" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
                       <circle cx="142" cy="238" r="6.5" fill="#FFF" stroke="#1F2937" strokeWidth="2"/>
