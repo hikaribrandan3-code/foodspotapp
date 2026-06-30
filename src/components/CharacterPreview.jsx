@@ -1,19 +1,22 @@
 import { useState } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
+
+const KAWAII_VB = "80 130 240 230";
 
 const characters = [
-  { id: 'cupcake',    name: 'Cupcake',    phoneColor: '#EC4899' },
-  { id: 'cookie',     name: 'Cookie',     phoneColor: '#8B5CF6' },
-  { id: 'coffee',     name: 'Coffee',     phoneColor: '#06B6D4' },
-  { id: 'donut',      name: 'Donut',      phoneColor: '#F59E0B' },
-  { id: 'mintcupcake',name: 'Mint Cupcake',phoneColor: '#10B981' },
-  { id: 'icecream',   name: 'Ice Cream',  phoneColor: '#EC4899' },
-  { id: 'avocado',    name: 'Avocado',    phoneColor: '#84CC16' },
-  { id: 'strawberry', name: 'Strawberry', phoneColor: '#EF4444' },
-  { id: 'tennis',     name: 'Tennis',     phoneColor: '#A3E635' },
-  { id: 'lollipop',   name: 'Lollipop',   phoneColor: '#F472B6' },
-  { id: 'burger',     name: 'Burger',     isUGC: true },
-  { id: 'taco',       name: 'Taco',       isUGC: true },
-  { id: 'pizza',      name: 'Pizza',      isUGC: true },
+  { id: 'cupcake',     name: 'Cupcake',     phoneColor: '#EC4899', vb: KAWAII_VB },
+  { id: 'cookie',      name: 'Cookie',      phoneColor: '#8B5CF6', vb: KAWAII_VB },
+  { id: 'coffee',      name: 'Coffee',      phoneColor: '#06B6D4', vb: KAWAII_VB },
+  { id: 'donut',       name: 'Donut',       phoneColor: '#F59E0B', vb: KAWAII_VB },
+  { id: 'mintcupcake', name: 'Mint Cupcake',phoneColor: '#10B981', vb: KAWAII_VB },
+  { id: 'icecream',    name: 'Ice Cream',   phoneColor: '#EC4899', vb: KAWAII_VB },
+  { id: 'avocado',     name: 'Avocado',     phoneColor: '#84CC16', vb: KAWAII_VB },
+  { id: 'strawberry',  name: 'Strawberry',  phoneColor: '#EF4444', vb: KAWAII_VB },
+  { id: 'tennis',      name: 'Tennis',      phoneColor: '#A3E635', vb: KAWAII_VB },
+  { id: 'lollipop',    name: 'Lollipop',    phoneColor: '#F472B6', vb: KAWAII_VB },
+  { id: 'burger',      name: 'Burger',      isUGC: true, vb: "30 0 260 295" },
+  { id: 'taco',        name: 'Taco',        isUGC: true, vb: "20 50 260 250" },
+  { id: 'pizza',       name: 'Pizza',       isUGC: true, vb: "5 20 300 270" },
 ];
 
 const CharacterBody = ({ id }) => {
@@ -177,6 +180,7 @@ const CharacterBody = ({ id }) => {
         <rect x="249" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 262 162)"/>
         <circle cx="261" cy="138" r="2" fill="#FFF" transform="rotate(20 262 162)"/>
         <circle cx="270" cy="180" r="14" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+        <circle className="cp-flash" cx="261" cy="133" r="10" fill="#FFFDE7" transform="rotate(20 262 162)"/>
       </g>
     );
     case 'taco': return (
@@ -197,6 +201,7 @@ const CharacterBody = ({ id }) => {
         <rect x="249" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 262 162)"/>
         <circle cx="261" cy="138" r="2" fill="#FFF" transform="rotate(20 262 162)"/>
         <circle cx="270" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <circle className="cp-flash" cx="261" cy="133" r="10" fill="#FFFDE7" transform="rotate(20 262 162)"/>
       </g>
     );
     case 'pizza': return (
@@ -216,96 +221,264 @@ const CharacterBody = ({ id }) => {
         <rect x="214" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 227 162)"/>
         <circle cx="226" cy="138" r="2" fill="#FFF" transform="rotate(20 227 162)"/>
         <circle cx="235" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <circle className="cp-flash" cx="226" cy="133" r="10" fill="#FFFDE7" transform="rotate(20 227 162)"/>
       </g>
     );
     default: return null;
   }
 };
 
+const FAKE_MENU = {
+  es: {
+    confirmed: '¡Pedido Confirmado!',
+    items: [['Combo Especial', '$850'], ['Bebida', '$250']],
+    total: '$1.100',
+  },
+  en: {
+    confirmed: 'Order Confirmed!',
+    items: [['Special Combo', '$8.50'], ['Drink', '$2.50']],
+    total: '$11.00',
+  },
+  pt: {
+    confirmed: 'Pedido Confirmado!',
+    items: [['Combo Especial', 'R$25,90'], ['Bebida', 'R$8,90']],
+    total: 'R$34,80',
+  },
+};
+
+const BUBBLE_KEYS = ['ugc_prompt_1', 'ugc_prompt_2', 'ugc_prompt_3', 'ugc_prompt_4', 'ugc_prompt_5'];
+
+const CSS = `
+  @keyframes cpRunIn {
+    0%   { transform: translateX(-340px) rotate(-8deg); }
+    55%  { transform: translateX(14px) rotate(1deg); }
+    72%  { transform: translateX(-6px) rotate(0deg); }
+    100% { transform: translateX(0) rotate(0deg); }
+  }
+  @keyframes cpBob {
+    0%, 100% { transform: translateY(0px); }
+    50%      { transform: translateY(-5px); }
+  }
+  @keyframes cpLegL {
+    0%, 100% { transform: rotate(-24deg); }
+    50%      { transform: rotate(20deg); }
+  }
+  @keyframes cpLegR {
+    0%, 100% { transform: rotate(20deg); }
+    50%      { transform: rotate(-24deg); }
+  }
+  @keyframes cpArmWave {
+    0%, 100% { transform: rotate(-18deg); }
+    50%      { transform: rotate(22deg); }
+  }
+  @keyframes cpFlash {
+    0%, 76%, 100% { transform: scale(0); opacity: 0; }
+    78%            { transform: scale(0.8); opacity: 1; }
+    88%            { transform: scale(10); opacity: 0; }
+  }
+  @keyframes cpBubblePop {
+    0%   { transform: scale(0) translateY(10px); opacity: 0; }
+    65%  { transform: scale(1.07) translateY(-2px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  @keyframes cpTextIn {
+    0%   { opacity: 0; transform: translateY(5px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .cp-run-in {
+    animation: cpRunIn 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  .cp-bob {
+    animation: cpBob 0.44s 0.75s ease-in-out infinite;
+  }
+  .cp-leg-l {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: cpLegL 0.36s ease-in-out infinite;
+  }
+  .cp-leg-r {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+    animation: cpLegR 0.36s ease-in-out infinite;
+    animation-delay: 0.18s;
+  }
+  .cp-arm-l {
+    transform-box: fill-box;
+    transform-origin: 100% 0%;
+    animation: cpArmWave 0.5s ease-in-out infinite;
+  }
+  .cp-flash {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: cpFlash 3s 1.6s ease-out infinite;
+    pointer-events: none;
+  }
+  .cp-bubble-pop {
+    animation: cpBubblePop 0.55s 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .cp-text-in {
+    animation: cpTextIn 0.35s 1s both;
+    display: inline-block;
+  }
+  .cp-nav-btn {
+    flex: 1;
+    background: var(--color-primary, #ec4899);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    transition: transform 0.1s, opacity 0.15s;
+  }
+  .cp-nav-btn:active { transform: scale(0.95); opacity: 0.75; }
+`;
+
 const CharacterPreview = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [animKey, setAnimKey] = useState(0);
-  const current = characters[currentIndex];
+  const { t, language } = useLanguage();
 
-  const goTo = (index) => {
-    setCurrentIndex(index);
+  const current = characters[currentIndex];
+  const menu = FAKE_MENU[language] || FAKE_MENU.es;
+  const bubbleText = t(BUBBLE_KEYS[animKey % BUBBLE_KEYS.length]);
+
+  const goTo = (idx) => {
+    setCurrentIndex(idx);
     setAnimKey(k => k + 1);
   };
 
-  const isUGC = current.isUGC;
-  const viewBox = isUGC ? "0 -40 300 350" : "80 130 240 230";
-
   return (
-    <div style={{ padding: '20px', maxWidth: '400px', margin: '0 auto' }}>
-      <style>{`
-        @keyframes runIn {
-          0%   { transform: translateX(-300px); }
-          60%  { transform: translateX(10px); }
-          75%  { transform: translateX(-5px); }
-          100% { transform: translateX(0px); }
-        }
-        .char-run { animation: runIn 0.7s ease-out forwards; }
-      `}</style>
+    <div style={{ padding: '16px 16px 0', maxWidth: '420px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
+      <style>{CSS}</style>
 
-      {/* Fake Receipt */}
-      <div style={{
-        background: 'linear-gradient(135deg, #fffbf7 0%, #fef5f0 100%)',
-        border: '2px solid #d1c4b8',
-        borderRadius: '12px',
-        padding: '16px',
-        textAlign: 'center',
-        marginBottom: '20px',
-        overflow: 'hidden',
-        minHeight: '300px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <svg key={animKey} viewBox={viewBox} style={{ width: '100%', maxWidth: '260px' }} className="char-run">
-          {!isUGC && (
-            <>
-              {/* Legs */}
-              <line x1="180" y1="290" x2="175" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
-              <line x1="220" y1="290" x2="225" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
-              <circle cx="173" cy="315" r="5" fill="#1F2937"/>
-              <circle cx="227" cy="315" r="5" fill="#1F2937"/>
-              {/* Left arm */}
-              <path d="M 165 260 Q 140 255 142 240" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
-              <circle cx="142" cy="238" r="6.5" fill="#FFFFFF" stroke="#1F2937" strokeWidth="2"/>
-              {/* Right arm + phone */}
-              <path d="M 235 260 Q 255 265 258 280" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
-              <circle cx="258" cy="280" r="6.5" fill="#FFFFFF" stroke="#1F2937" strokeWidth="2"/>
-              <g transform="translate(258, 265) rotate(18) scale(1.5)">
-                <rect x="0" y="0" width="18" height="30" rx="4.5" fill={current.phoneColor} stroke="#1E293B" strokeWidth="2"/>
-                <rect x="3" y="3" width="12" height="12" rx="3.5" fill={current.phoneColor} stroke="#1E293B" strokeWidth="1.5" opacity="0.7"/>
-                <circle cx="6.5" cy="6.5" r="2.5" fill="#0F172A"/><circle cx="6.5" cy="6.5" r="1.2" fill="#475569"/>
-                <circle cx="6.5" cy="11.5" r="2.5" fill="#0F172A"/><circle cx="6.5" cy="11.5" r="1.2" fill="#475569"/>
-                <circle cx="11.5" cy="9" r="1.5" fill="#FEF08A"/>
-              </g>
-            </>
-          )}
-          <CharacterBody id={current.id} />
-        </svg>
+      {/* Receipt card */}
+      <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.09)', overflow: 'hidden', marginBottom: 14 }}>
 
-        <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#1f2937', marginTop: '4px' }}>
-          {current.name} {isUGC ? '📷' : '✨'}
+        {/* Header */}
+        <div style={{ padding: '20px 20px 14px', textAlign: 'center' }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%', background: '#D1FAE5',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 10px', fontSize: 26, color: '#059669', fontWeight: 700,
+          }}>✓</div>
+          <div style={{ fontWeight: 700, fontSize: 17, color: '#111827' }}>{menu.confirmed}</div>
+          <div style={{ fontSize: 13, color: '#9CA3AF', marginTop: 3 }}>FoodSpot · #4281</div>
         </div>
-        <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-          {currentIndex + 1} / {characters.length}
+
+        <div style={{ borderTop: '2px dashed #E5E7EB', margin: '0 20px' }} />
+
+        {/* Items */}
+        <div style={{ padding: '14px 20px' }}>
+          {menu.items.map(([name, price], i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < menu.items.length - 1 ? 9 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#6B7280', fontWeight: 600 }}>x1</span>
+                <span style={{ fontSize: 14, color: '#374151' }}>{name}</span>
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#374151' }}>{price}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ borderTop: '2px dashed #E5E7EB', margin: '0 20px' }} />
+
+        {/* Total */}
+        <div style={{ padding: '12px 20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>Total</span>
+          <span style={{ fontWeight: 700, fontSize: 17, color: '#111827' }}>{menu.total}</span>
+        </div>
+
+        {/* Character stage */}
+        <div style={{
+          background: 'linear-gradient(180deg, #fffbf4 0%, #fff8ef 100%)',
+          borderTop: '1px solid #F3F4F6',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          overflow: 'hidden',
+          paddingTop: 14,
+          minHeight: 210,
+        }}>
+          {/* Speech bubble */}
+          <div
+            key={`bubble-${animKey}`}
+            className="cp-bubble-pop"
+            style={{
+              background: '#1F2937',
+              color: '#fff',
+              borderRadius: 14,
+              padding: '9px 16px',
+              fontSize: 13,
+              fontWeight: 600,
+              maxWidth: '82%',
+              textAlign: 'center',
+              position: 'relative',
+              marginBottom: 10,
+            }}
+          >
+            <span className="cp-text-in">{bubbleText}</span>
+            <div style={{
+              position: 'absolute', bottom: -8, left: '50%',
+              transform: 'translateX(-50%)',
+              width: 0, height: 0,
+              borderLeft: '9px solid transparent',
+              borderRight: '9px solid transparent',
+              borderTop: '9px solid #1F2937',
+            }} />
+          </div>
+
+          {/* Character */}
+          <div key={`char-${animKey}`} className="cp-run-in">
+            <div className="cp-bob">
+              <svg
+                viewBox={current.vb}
+                style={{ width: '100%', maxWidth: '210px', display: 'block' }}
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {!current.isUGC && (
+                  <>
+                    <g className="cp-leg-l">
+                      <line x1="180" y1="290" x2="175" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
+                      <circle cx="173" cy="315" r="5" fill="#1F2937"/>
+                    </g>
+                    <g className="cp-leg-r">
+                      <line x1="220" y1="290" x2="225" y2="315" stroke="#1F2937" strokeWidth="7" strokeLinecap="round"/>
+                      <circle cx="227" cy="315" r="5" fill="#1F2937"/>
+                    </g>
+                    <g className="cp-arm-l">
+                      <path d="M 165 260 Q 140 255 142 240" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
+                      <circle cx="142" cy="238" r="6.5" fill="#FFFFFF" stroke="#1F2937" strokeWidth="2"/>
+                    </g>
+                    <path d="M 235 260 Q 255 265 258 280" fill="none" stroke="#1F2937" strokeWidth="5" strokeLinecap="round"/>
+                    <circle cx="258" cy="280" r="6.5" fill="#FFFFFF" stroke="#1F2937" strokeWidth="2"/>
+                    <g transform="translate(258, 265) rotate(18) scale(1.5)">
+                      <rect x="0" y="0" width="18" height="30" rx="4.5" fill={current.phoneColor} stroke="#1E293B" strokeWidth="2"/>
+                      <rect x="3" y="3" width="12" height="12" rx="3.5" fill={current.phoneColor} stroke="#1E293B" strokeWidth="1.5" opacity="0.7"/>
+                      <circle cx="6.5" cy="6.5" r="2.5" fill="#0F172A"/><circle cx="6.5" cy="6.5" r="1.2" fill="#475569"/>
+                      <circle cx="6.5" cy="11.5" r="2.5" fill="#0F172A"/><circle cx="6.5" cy="11.5" r="1.2" fill="#475569"/>
+                      <circle cx="11.5" cy="9" r="1.5" fill="#FEF08A"/>
+                    </g>
+                    <circle className="cp-flash" cx="270" cy="267" r="10" fill="#FFFDE7"/>
+                  </>
+                )}
+                <CharacterBody id={current.id} />
+              </svg>
+            </div>
+          </div>
+
+          {/* Name + counter */}
+          <div style={{ fontSize: 12, color: '#9CA3AF', padding: '4px 0 14px', fontWeight: 500, letterSpacing: '0.02em' }}>
+            {current.name} {current.isUGC ? '📷' : '✨'} · {currentIndex + 1} / {characters.length}
+          </div>
         </div>
       </div>
 
-      {/* Buttons */}
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <button
-          onClick={() => goTo((currentIndex - 1 + characters.length) % characters.length)}
-          style={{ flex: 1, background: '#ec4899', color: 'white', border: 'none', borderRadius: '10px', padding: '14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
-        >← Prev</button>
-        <button
-          onClick={() => goTo((currentIndex + 1) % characters.length)}
-          style={{ flex: 1, background: '#ec4899', color: 'white', border: 'none', borderRadius: '10px', padding: '14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
-        >Next →</button>
+      {/* Nav */}
+      <div style={{ display: 'flex', gap: 12, paddingBottom: 20 }}>
+        <button className="cp-nav-btn" onClick={() => goTo((currentIndex - 1 + characters.length) % characters.length)}>← Prev</button>
+        <button className="cp-nav-btn" onClick={() => goTo((currentIndex + 1) % characters.length)}>Next →</button>
       </div>
     </div>
   );
