@@ -232,7 +232,7 @@ const KawaiiBody = ({ id }) => {
 const KawaiiCharacter = ({ id }) => {
   const isUGC = id in UGC_TRANSFORMS;
   return (
-    <svg viewBox={KAWAII_VB} style={{ width: '100%', maxWidth: '200px', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox={KAWAII_VB} style={{ width: '100%', maxWidth: '200px', display: 'block', overflow: 'visible' }} xmlns="http://www.w3.org/2000/svg">
       {isUGC ? (
         <g transform={UGC_TRANSFORMS[id]}>
           <KawaiiBody id={id} />
