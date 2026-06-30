@@ -43,6 +43,32 @@ const CharacterAnimationQA = () => {
 
   const currentCharacter = characters[currentCharIndex];
 
+  // Character SVG renders
+  const characterVisuals = {
+    cupcake: '🧁',
+    cookie: '🍪',
+    coffee: '☕',
+    donut: '🍩',
+    mintcupcake: '🧁',
+    icecream: '🍦',
+    avocado: '🥑',
+    strawberry: '🍓',
+    watermelon: '🍉',
+    tennis: '🎾',
+    lollipop: '🍭',
+    ugc1: '👨‍🍳',
+    ugc2: '👨‍🍳',
+    ugc3: '👨‍🍳',
+    ugc4: '👨‍🍳',
+    ugc5: '👨‍🍳',
+    ugc6: '👨‍🍳',
+    ugc7: '👨‍🍳',
+    ugc8: '👨‍🍳',
+    ugc9: '👨‍🍳',
+    ugc10: '👨‍🍳',
+    ugc11: '👨‍🍳',
+  };
+
   // Animation loop
   useEffect(() => {
     if (!isPlaying) return;
@@ -100,8 +126,7 @@ const CharacterAnimationQA = () => {
 
               <div className="character-animation">
                 <div className="animated-character">
-                  {/* Placeholder for character animation */}
-                  <div className="char-visual">🎭</div>
+                  <div className="char-visual">{characterVisuals[currentCharacter.id]}</div>
                   <div className="char-label">{currentCharacter.name}</div>
                 </div>
               </div>
