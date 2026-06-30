@@ -14,9 +14,9 @@ const characters = [
   { id: 'strawberry',  name: 'Strawberry',  phoneColor: '#EF4444' },
   { id: 'tennis',      name: 'Tennis',      phoneColor: '#A3E635' },
   { id: 'lollipop',    name: 'Lollipop',    phoneColor: '#F472B6' },
-  { id: 'burger', name: 'Burger', isUGC: true, ugcT: 'translate(67,122) scale(0.84)' },
-  { id: 'taco',   name: 'Taco',   isUGC: true, ugcT: 'translate(75,89)  scale(0.83)' },
-  { id: 'pizza',  name: 'Pizza',  isUGC: true, ugcT: 'translate(91,119) scale(0.73)' },
+  { id: 'burger', name: 'Burger', isUGC: true, ugcT: 'translate(67,122) scale(0.65)' },
+  { id: 'taco',   name: 'Taco',   isUGC: true, ugcT: 'translate(75,89)  scale(0.65)' },
+  { id: 'pizza',  name: 'Pizza',  isUGC: true, ugcT: 'translate(91,119) scale(0.65)' },
 ];
 
 const CharacterBody = ({ id }) => {
@@ -310,7 +310,7 @@ const CSS = `
   .cp-leg-r   { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegLiftR 0.3s ease-in-out infinite; }
   .cp-arm-l   { transform-box:fill-box; transform-origin:100% 0%; animation:cpArmL 0.55s ease-in-out infinite; }
   .cp-arm-r   { transform-box:fill-box; transform-origin:10% 0%; animation:cpPhoneWave 1.15s ease-in-out infinite; }
-  .cp-flash   { animation:cpFlashBurst 3s 2s ease-in-out infinite; pointer-events:none; }
+  .cp-flash   { animation:cpFlashBurst 3s 0.9s ease-in-out infinite; pointer-events:none; }
 
   /* Pink bubble (matches CameraActivationBanner.css .speech-bubble) */
   .cp-bubble-pink {
@@ -365,32 +365,38 @@ const CharacterPreview = () => {
 
       <div style={{ background:'#fff', borderRadius:18, boxShadow:'0 2px 16px rgba(0,0,0,0.09)', overflow:'hidden', marginBottom:14 }}>
 
-        {/* Receipt */}
-        <div style={{ padding:'20px 20px 14px', textAlign:'center' }}>
-          <div style={{ width:52,height:52,borderRadius:'50%',background:'#D1FAE5',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 10px',fontSize:26,color:'#059669',fontWeight:700 }}>✓</div>
-          <div style={{ fontWeight:700,fontSize:17,color:'#111827' }}>{menu.confirmed}</div>
-          <div style={{ fontSize:13,color:'#9CA3AF',marginTop:3 }}>FoodSpot · #4281</div>
+        {/* Receipt Header */}
+        <div style={{ background:'#fff', padding:'24px 16px', textAlign:'center', borderBottom:'1px solid #F3F4F6' }}>
+          <div style={{ width:64,height:64,borderRadius:'50%',background:'#D1FAE5',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',fontSize:32,color:'#10B981' }}>✓</div>
+          <div style={{ fontWeight:700,fontSize:18,color:'#111827',marginBottom:4 }}>{menu.confirmed}</div>
+          <div style={{ fontSize:13,color:'#6B7280' }}>#{String(4281).padStart(3,'0')}</div>
         </div>
 
-        <div style={{ borderTop:'2px dashed #E5E7EB',margin:'0 20px' }}/>
+        {/* Payment Status Card */}
+        <div style={{ background:'#EFF6FF',padding:'14px 16px',margin:'12px 16px 0',borderRadius:12,display:'flex',gap:12,alignItems:'flex-start' }}>
+          <div style={{ fontSize:16,marginTop:2 }}>💳</div>
+          <div>
+            <p style={{ fontWeight:600,fontSize:13,color:'#2563EB' }}>Payment Confirmed</p>
+            <p style={{ fontSize:12,color:'#6B7280',marginTop:2 }}>Processed successfully</p>
+          </div>
+        </div>
 
-        <div style={{ padding:'14px 20px' }}>
+        {/* Items Section */}
+        <div style={{ padding:'16px' }}>
+          <p style={{ fontSize:13,fontWeight:600,color:'#111827',marginBottom:10 }}>Your Order</p>
           {menu.items.map(([name,price],i) => (
-            <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:i<menu.items.length-1?9:0 }}>
+            <div key={i} style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:i<menu.items.length-1?10:0,fontSize:14 }}>
               <div style={{ display:'flex',alignItems:'center',gap:8 }}>
-                <span style={{ width:22,height:22,borderRadius:'50%',background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#6B7280',fontWeight:600 }}>x1</span>
-                <span style={{ fontSize:14,color:'#374151' }}>{name}</span>
+                <span style={{ width:24,height:24,borderRadius:'50%',background:'#F3F4F6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#6B7280',fontWeight:600 }}>x1</span>
+                <span style={{ color:'#374151' }}>{name}</span>
               </div>
-              <span style={{ fontSize:14,fontWeight:500,color:'#374151' }}>{price}</span>
+              <span style={{ fontWeight:500,color:'#374151' }}>{price}</span>
             </div>
           ))}
-        </div>
-
-        <div style={{ borderTop:'2px dashed #E5E7EB',margin:'0 20px' }}/>
-
-        <div style={{ padding:'12px 20px 16px',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-          <span style={{ fontWeight:700,fontSize:15,color:'#111827' }}>Total</span>
-          <span style={{ fontWeight:700,fontSize:17,color:'#111827' }}>{menu.total}</span>
+          <div style={{ borderTop:'1px solid #F3F4F6',marginTop:12,paddingTop:12,display:'flex',justifyContent:'space-between' }}>
+            <span style={{ fontWeight:600,color:'#111827' }}>Total</span>
+            <span style={{ fontWeight:700,fontSize:16,color:'#111827' }}>{menu.total}</span>
+          </div>
         </div>
 
         {/* Stage */}
