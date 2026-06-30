@@ -299,7 +299,7 @@ export default function CameraActivationBanner({
     return Math.floor(Math.random() * CHARACTERS.length);
   });
 
-  // Pick random bubble color: 50% pink, 50% blue
+  // Randomly pick bubble color: 50% pink, 50% blue
   const [bubbleColor] = useState(() => Math.random() < 0.5 ? 'pink' : 'blue');
 
   const character = CHARACTERS[charIndex];
