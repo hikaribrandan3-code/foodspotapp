@@ -314,8 +314,8 @@ export default function CameraActivationBanner({
 
   const isDineIn = orderType === 'dine_in';
 
-  // Pick a random UGC prompt (1-8) to match the character
-  const idx = Math.floor(Math.random() * 8) + 1;
+  // Pick a random UGC prompt (1-5) to match the character
+  const idx = Math.floor(Math.random() * 5) + 1;
   const randomPrompt = translations[`ugc_prompt_${idx}`]?.[lang] || "Food's here. Snap it?";
 
   const speechText = isDineIn
