@@ -12,7 +12,7 @@ const characters = [
   { id: 'icecream',    name: 'Ice Cream',   phoneColor: '#EC4899' },
   { id: 'avocado',     name: 'Avocado',     phoneColor: '#84CC16' },
   { id: 'strawberry',  name: 'Strawberry',  phoneColor: '#EF4444' },
-  { id: 'tennis',      name: 'Tennis',      phoneColor: '#A3E635' },
+  // { id: 'tennis',      name: 'Tennis',      phoneColor: '#A3E635' }, // TODO: padel court version for cousin
   { id: 'lollipop',    name: 'Lollipop',    phoneColor: '#F472B6' },
   { id: 'burger', name: 'Burger', isUGC: true, ugcT: 'translate(67,122) scale(0.65)' },
   { id: 'taco',   name: 'Taco',   isUGC: true, ugcT: 'translate(75,89)  scale(0.65)' },
@@ -28,8 +28,8 @@ const CharacterBody = ({ id }) => {
         <circle cx="182" cy="228" r="8" fill="#1F2937"/><circle cx="180" cy="225" r="3" fill="#FFF"/>
         <circle cx="218" cy="228" r="8" fill="#1F2937"/><circle cx="216" cy="225" r="3" fill="#FFF"/>
         <path d="M 192 242 Q 200 248 208 242" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx="175" cy="256" r="5" fill="#F43F5E" opacity="0.6"/>
-        <circle cx="225" cy="256" r="5" fill="#F43F5E" opacity="0.6"/>
+        <circle cx="175" cy="242" r="5" fill="#F43F5E" opacity="0.6"/>
+        <circle cx="225" cy="242" r="5" fill="#F43F5E" opacity="0.6"/>
         <line x1="200" y1="175" x2="202" y2="160" stroke="#78350F" strokeWidth="1.5"/>
         <circle cx="200" cy="190" r="10" fill="#DC2626" stroke="#991B1B" strokeWidth="2.5"/>
         <line x1="165" y1="238" x2="160" y2="230" stroke="#FDE047" strokeWidth="2" strokeLinecap="round"/>
@@ -146,12 +146,12 @@ const CharacterBody = ({ id }) => {
       </g>
     );
     case 'lollipop': return (
-      <g>
-        <rect x="196" y="280" width="8" height="40" rx="3" fill="#E2E8F0" stroke="#475569" strokeWidth="2"/>
-        <circle cx="200" cy="245" r="40" fill="#F472B6" stroke="#9D174D" strokeWidth="3.5"/>
-        <circle cx="182" cy="235" r="7" fill="#1F2937"/><circle cx="180" cy="233" r="2.5" fill="#FFF"/>
-        <circle cx="218" cy="235" r="7" fill="#1F2937"/><circle cx="220" cy="233" r="2.5" fill="#FFF"/>
-        <path d="M 190 248 Q 200 253 210 248" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
+      <g className="cp-lollipop-hop">
+        <rect x="194" y="270" width="12" height="60" rx="4" fill="#E2E8F0" stroke="#475569" strokeWidth="3"/>
+        <circle cx="200" cy="225" r="42" fill="#F472B6" stroke="#9D174D" strokeWidth="3.5"/>
+        <circle cx="180" cy="212" r="8" fill="#1F2937"/><circle cx="178" cy="209" r="2.5" fill="#FFF"/>
+        <circle cx="220" cy="212" r="8" fill="#1F2937"/><circle cx="222" cy="209" r="2.5" fill="#FFF"/>
+        <path d="M 188 228 Q 200 235 212 228" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
       </g>
     );
     // UGC — legs get cp-leg-l/r directly on rects, phone arm gets cp-arm-r
@@ -220,6 +220,9 @@ const CharacterBody = ({ id }) => {
         <circle cx="125" cy="110" r="16" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
         <circle cx="230" cy="120" r="15" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
         <circle cx="70" cy="140" r="15" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
+        <circle cx="150" cy="135" r="14" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
+        <circle cx="95" cy="160" r="13" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
+        <circle cx="195" cy="150" r="13" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
         <circle cx="95" cy="160" r="26" fill="#333"/><circle cx="90" cy="150" r="11" fill="white"/><circle cx="105" cy="170" r="5" fill="white"/>
         <circle cx="205" cy="160" r="26" fill="#333"/><circle cx="200" cy="150" r="11" fill="white"/><circle cx="215" cy="170" r="5" fill="white"/>
         <path d="M 120 185 Q 150 245 180 185 Z" fill="white" stroke="#333" strokeWidth="6" strokeLinejoin="round"/>
@@ -311,6 +314,12 @@ const CSS = `
   .cp-arm-l   { transform-box:fill-box; transform-origin:100% 0%; animation:cpArmL 0.55s ease-in-out infinite; }
   .cp-arm-r   { transform-box:fill-box; transform-origin:10% 0%; animation:cpPhoneWave 1.15s ease-in-out infinite; }
   .cp-flash   { animation:cpFlashBurst 3s 1.5s ease-in-out infinite; pointer-events:none; }
+  /* Lollipop hop on center stick */
+  @keyframes cpLollipopHop {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-16px); }
+  }
+  .cp-lollipop-hop { animation: cpLollipopHop 0.5s ease-in-out infinite; }
 
   /* Pink bubble (matches CameraActivationBanner.css .speech-bubble) */
   .cp-bubble-pink {
