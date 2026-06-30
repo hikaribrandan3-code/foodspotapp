@@ -11,8 +11,9 @@ const characters = [
   { id: 'strawberry', name: 'Strawberry', phoneColor: '#EF4444' },
   { id: 'tennis',     name: 'Tennis',     phoneColor: '#A3E635' },
   { id: 'lollipop',   name: 'Lollipop',   phoneColor: '#F472B6' },
-  { id: 'taco',       name: 'Taco',       phoneColor: '#FF69B4', isUGC: true },
-  { id: 'pizza',      name: 'Pizza',      phoneColor: '#FF69B4', isUGC: true },
+  { id: 'burger',     name: 'Burger',     isUGC: true },
+  { id: 'taco',       name: 'Taco',       isUGC: true },
+  { id: 'pizza',      name: 'Pizza',      isUGC: true },
 ];
 
 const CharacterBody = ({ id }) => {
@@ -154,41 +155,67 @@ const CharacterBody = ({ id }) => {
         <path d="M 190 248 Q 200 253 210 248" fill="none" stroke="#1F2937" strokeWidth="2.5" strokeLinecap="round"/>
       </g>
     );
+    case 'burger': return (
+      <g>
+        <rect x="110" y="240" width="25" height="45" rx="12" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+        <rect x="165" y="240" width="25" height="45" rx="12" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+        <circle cx="30" cy="180" r="14" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+        <path d="M 45 190 C 45 250, 255 250, 255 190 Z" fill="#F4B41A" stroke="#C77A00" strokeWidth="6"/>
+        <rect x="40" y="150" width="220" height="45" rx="15" fill="#5D4037" stroke="#3E2723" strokeWidth="6"/>
+        <path d="M 45 155 L 75 185 L 105 155 L 135 185 L 165 155 L 195 185 L 225 155 L 255 185 L 250 150 Z" fill="#F1C40F" stroke="#F39C12" strokeWidth="4"/>
+        <path d="M 35 140 Q 55 160 75 140 T 115 140 T 155 140 T 195 140 T 235 140 T 265 140 L 265 130 L 35 130 Z" fill="#2ECC71" stroke="#27AE60" strokeWidth="5"/>
+        <path d="M 40 140 C 40 10, 260 10, 260 140 Z" fill="#F4B41A" stroke="#C77A00" strokeWidth="6"/>
+        <ellipse cx="100" cy="50" rx="4" ry="8" fill="#FFFDE7" opacity="0.8" transform="rotate(25 100 50)"/>
+        <ellipse cx="150" cy="35" rx="4" ry="8" fill="#FFFDE7" opacity="0.8" transform="rotate(75 150 35)"/>
+        <ellipse cx="200" cy="60" rx="4" ry="8" fill="#FFFDE7" opacity="0.8" transform="rotate(-30 200 60)"/>
+        <circle cx="85" cy="90" r="26" fill="#333"/><circle cx="80" cy="80" r="11" fill="white"/><circle cx="95" cy="100" r="5" fill="white"/>
+        <circle cx="215" cy="90" r="26" fill="#333"/><circle cx="210" cy="80" r="11" fill="white"/><circle cx="225" cy="100" r="5" fill="white"/>
+        <ellipse cx="55" cy="125" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
+        <ellipse cx="245" cy="125" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
+        <path d="M 110 110 Q 150 170 190 110 Z" fill="white" stroke="#333" strokeWidth="6" strokeLinejoin="round"/>
+        <rect x="245" y="130" width="35" height="65" rx="6" fill="#FF69B4" stroke="#D1478B" strokeWidth="3" transform="rotate(20 262 162)"/>
+        <rect x="249" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 262 162)"/>
+        <circle cx="261" cy="138" r="2" fill="#FFF" transform="rotate(20 262 162)"/>
+        <circle cx="270" cy="180" r="14" fill="#F4B41A" stroke="#C77A00" strokeWidth="4"/>
+      </g>
+    );
     case 'taco': return (
-      <g transform="translate(-50, 40) scale(1)">
+      <g>
         <rect x="110" y="240" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
         <rect x="165" y="240" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <circle cx="20" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
         <path d="M 25 100 C 25 250, 275 250, 275 100 Z" fill="#E67E22" stroke="#D35400" strokeWidth="6"/>
         <path d="M 35 100 Q 55 70 85 90 T 150 75 T 215 90 T 265 100 Z" fill="#6D4C41" stroke="#4E342E" strokeWidth="4"/>
         <path d="M 40 90 Q 50 60 70 80 T 110 50 T 150 70 T 190 50 T 230 75 T 260 90 Z" fill="#8BC34A" stroke="#689F38" strokeWidth="4"/>
         <path d="M 35 120 C 35 270, 265 270, 265 120 Z" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="6"/>
-        <circle cx="95" cy="160" r="26" fill="#333"/>
-        <circle cx="90" cy="150" r="11" fill="white"/>
-        <circle cx="105" cy="170" r="5" fill="white"/>
-        <circle cx="205" cy="160" r="26" fill="#333"/>
-        <circle cx="200" cy="150" r="11" fill="white"/>
-        <circle cx="215" cy="170" r="5" fill="white"/>
+        <circle cx="95" cy="160" r="26" fill="#333"/><circle cx="90" cy="150" r="11" fill="white"/><circle cx="105" cy="170" r="5" fill="white"/>
+        <circle cx="205" cy="160" r="26" fill="#333"/><circle cx="200" cy="150" r="11" fill="white"/><circle cx="215" cy="170" r="5" fill="white"/>
         <ellipse cx="65" cy="195" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
         <ellipse cx="235" cy="195" rx="18" ry="10" fill="#FFB6C1" opacity="0.8"/>
         <path d="M 120 180 Q 150 240 180 180 Z" fill="white" stroke="#333" strokeWidth="6" strokeLinejoin="round"/>
+        <rect x="245" y="130" width="35" height="65" rx="6" fill="#FF69B4" stroke="#D1478B" strokeWidth="3" transform="rotate(20 262 162)"/>
+        <rect x="249" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 262 162)"/>
+        <circle cx="261" cy="138" r="2" fill="#FFF" transform="rotate(20 262 162)"/>
+        <circle cx="270" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
       </g>
     );
     case 'pizza': return (
-      <g transform="translate(-50, 40) scale(1)">
+      <g>
         <rect x="110" y="230" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
         <rect x="165" y="230" width="25" height="45" rx="12" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
+        <circle cx="65" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
         <path d="M 5 75 Q 150 25 295 75 Q 315 95 285 105 Q 150 70 15 105 Q -15 95 5 75 Z" fill="#E67E22" stroke="#D35400" strokeWidth="6" strokeLinejoin="round"/>
         <path d="M 15 100 Q 150 65 285 100 L 195 240 Q 150 270 105 240 Z" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="6" strokeLinejoin="round"/>
         <circle cx="125" cy="110" r="16" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
         <circle cx="230" cy="120" r="15" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
         <circle cx="70" cy="140" r="15" fill="#E53935" stroke="#C62828" strokeWidth="4"/>
-        <circle cx="95" cy="160" r="26" fill="#333"/>
-        <circle cx="90" cy="150" r="11" fill="white"/>
-        <circle cx="105" cy="170" r="5" fill="white"/>
-        <circle cx="205" cy="160" r="26" fill="#333"/>
-        <circle cx="200" cy="150" r="11" fill="white"/>
-        <circle cx="215" cy="170" r="5" fill="white"/>
+        <circle cx="95" cy="160" r="26" fill="#333"/><circle cx="90" cy="150" r="11" fill="white"/><circle cx="105" cy="170" r="5" fill="white"/>
+        <circle cx="205" cy="160" r="26" fill="#333"/><circle cx="200" cy="150" r="11" fill="white"/><circle cx="215" cy="170" r="5" fill="white"/>
         <path d="M 120 185 Q 150 245 180 185 Z" fill="white" stroke="#333" strokeWidth="6" strokeLinejoin="round"/>
+        <rect x="210" y="130" width="35" height="65" rx="6" fill="#FF69B4" stroke="#D1478B" strokeWidth="3" transform="rotate(20 227 162)"/>
+        <rect x="214" y="134" width="16" height="16" rx="4" fill="#333" transform="rotate(20 227 162)"/>
+        <circle cx="226" cy="138" r="2" fill="#FFF" transform="rotate(20 227 162)"/>
+        <circle cx="235" cy="180" r="14" fill="#F4D03F" stroke="#D4AC0D" strokeWidth="4"/>
       </g>
     );
     default: return null;
@@ -206,7 +233,7 @@ const CharacterPreview = () => {
   };
 
   const isUGC = current.isUGC;
-  const viewBox = isUGC ? "0 0 300 320" : "80 130 240 230";
+  const viewBox = isUGC ? "0 -40 300 350" : "80 130 240 230";
 
   return (
     <div style={{ padding: '20px', maxWidth: '400px', margin: '0 auto' }}>
