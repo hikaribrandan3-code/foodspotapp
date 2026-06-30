@@ -310,7 +310,7 @@ const CSS = `
   .cp-leg-r   { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegLiftR 0.3s ease-in-out infinite; }
   .cp-arm-l   { transform-box:fill-box; transform-origin:100% 0%; animation:cpArmL 0.55s ease-in-out infinite; }
   .cp-arm-r   { transform-box:fill-box; transform-origin:10% 0%; animation:cpPhoneWave 1.15s ease-in-out infinite; }
-  .cp-flash   { animation:cpFlashBurst 3s 0.9s ease-in-out infinite; pointer-events:none; }
+  .cp-flash   { animation:cpFlashBurst 3s 1.5s ease-in-out infinite; pointer-events:none; }
 
   /* Pink bubble (matches CameraActivationBanner.css .speech-bubble) */
   .cp-bubble-pink {
