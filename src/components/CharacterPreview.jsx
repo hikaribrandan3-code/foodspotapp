@@ -308,18 +308,19 @@ const CSS = `
 
   .cp-run-in  { animation: cpRunIn 0.9s cubic-bezier(0.34,1.2,0.64,1) forwards; }
   .cp-waddle  { animation: cpWaddle 0.4s ease-in-out infinite; }
+  .cp-waddle:has(.cp-lollipop-hop) { animation: none; }
   /* Kawaii thin legs (line elements, <g> wrappers) */
   .cp-leg-l   { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegLiftL 0.3s ease-in-out infinite; }
   .cp-leg-r   { transform-box:fill-box; transform-origin:50% 0%; animation:cpLegLiftR 0.3s ease-in-out infinite; }
   .cp-arm-l   { transform-box:fill-box; transform-origin:100% 0%; animation:cpArmL 0.55s ease-in-out infinite; }
   .cp-arm-r   { transform-box:fill-box; transform-origin:10% 0%; animation:cpPhoneWave 1.15s ease-in-out infinite; }
-  .cp-flash   { animation:cpFlashBurst 3s 1.5s ease-in-out infinite; pointer-events:none; }
-  /* Lollipop hop on center stick */
+  .cp-flash   { animation:cpFlashBurst 3s 0.5s ease-in-out infinite; pointer-events:none; }
+  /* Lollipop hop on center stick (no waddle) */
   @keyframes cpLollipopHop {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-16px); }
   }
-  .cp-lollipop-hop { animation: cpLollipopHop 0.5s ease-in-out infinite; }
+  .cp-lollipop-hop { animation: cpLollipopHop 0.5s ease-in-out infinite !important; }
 
   /* Pink bubble (matches CameraActivationBanner.css .speech-bubble) */
   .cp-bubble-pink {
