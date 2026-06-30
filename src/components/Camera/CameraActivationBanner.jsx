@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { translations } from '../../utils/translations';
 import RamenBowl from './RamenBowl';
@@ -11,9 +11,9 @@ const KAWAII_PHONE_COLORS = {
   strawberry: '#EF4444', lollipop: '#F472B6',
 };
 const UGC_TRANSFORMS = {
-  burger: 'translate(67,122) scale(0.65)',
-  taco:   'translate(75,89)  scale(0.65)',
-  pizza:  'translate(91,119) scale(0.65)',
+  burger: 'translate(67,122) scale(0.975)',
+  taco:   'translate(75,89)  scale(0.975)',
+  pizza:  'translate(91,119) scale(0.975)',
 };
 
 // Body paths for the 13-character roster, matching the owner-backend CharacterPreview module.
@@ -274,12 +274,11 @@ const KawaiiCharacter = ({ id }) => {
   );
 };
 
-// Sequential 13-character roster (cycles one-by-one, not random)
+// 13-character roster — one is randomly selected per banner load
 const CHARACTERS = [
   'cupcake', 'cookie', 'coffee', 'donut', 'mintcupcake', 'icecream',
   'avocado', 'strawberry', 'lollipop', 'burger', 'taco', 'pizza', 'ramen',
 ];
-const CAROUSEL_INTERVAL_MS = 3000;
 
 export default function CameraActivationBanner({
   onCapture,
@@ -291,17 +290,14 @@ export default function CameraActivationBanner({
   const { lang } = useLanguage();
   const [isVisible, setIsVisible] = useState(true);
 
-  // Cycle through all 13 characters one-by-one (not random), looping until dismissed
-  const startIndex = characterProp && CHARACTERS.includes(characterProp) ? CHARACTERS.indexOf(characterProp) : 0;
-  const [charIndex, setCharIndex] = useState(startIndex);
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setCharIndex((i) => (i + 1) % CHARACTERS.length);
-    }, CAROUSEL_INTERVAL_MS);
-    return () => clearInterval(timerRef.current);
-  }, []);
+  // Pick ONE random character when the banner loads and keep it visible.
+  // On page refresh, a new random character is selected.
+  const [charIndex] = useState(() => {
+    if (characterProp && CHARACTERS.includes(characterProp)) {
+      return CHARACTERS.indexOf(characterProp);
+    }
+    return Math.floor(Math.random() * CHARACTERS.length);
+  });
 
   const character = CHARACTERS[charIndex];
 
@@ -310,7 +306,6 @@ export default function CameraActivationBanner({
   };
 
   const handleDismiss = () => {
-    clearInterval(timerRef.current);
     onDismiss?.();
     setTimeout(() => setIsVisible(false), 100);
   };
@@ -319,8 +314,8 @@ export default function CameraActivationBanner({
 
   const isDineIn = orderType === 'dine_in';
 
-  // Cycle UGC prompt (1-8) alongside the character
-  const idx = (charIndex % 8) + 1;
+  // Pick a random UGC prompt (1-8) to match the character
+  const idx = Math.floor(Math.random() * 8) + 1;
   const randomPrompt = translations[`ugc_prompt_${idx}`]?.[lang] || "Food's here. Snap it?";
 
   const speechText = isDineIn
@@ -399,7 +394,7 @@ export default function CameraActivationBanner({
       {/* Character modal - walks in and bounces */}
       <div className={`camera-activation-banner ${className}`}>
         <div className="banner-donut-wrapper">
-          <div className="donut-entry" key={charIndex}>
+          <div className="donut-entry">
             {/* Speech bubble ABOVE character */}
             <div className="speech-bubble">{speechText}</div>
 
