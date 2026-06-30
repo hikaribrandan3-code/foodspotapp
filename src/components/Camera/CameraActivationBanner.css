@@ -587,6 +587,56 @@
   95% { opacity: 0.3; }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   KAWAII CHARACTER ANIMATIONS (9 plain + burger/taco/pizza bodies)
+   Matches the approved owner-backend CharacterPreview module exactly.
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes kwWaddle {
+  0%, 50%, 100% { transform: translateY(0); }
+  25%, 75%      { transform: translateY(-5px); }
+}
+.kw-waddle { animation: kwWaddle 0.4s ease-in-out infinite; }
+
+@keyframes kwLegLiftL {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  25%           { transform: rotate(20deg) translateY(-12px); }
+}
+@keyframes kwLegLiftR {
+  0%, 50%, 100% { transform: rotate(0deg) translateY(0); }
+  75%           { transform: rotate(20deg) translateY(-12px); }
+}
+.kw-leg-l { transform-box: fill-box; transform-origin: 50% 0%; animation: kwLegLiftL 0.3s ease-in-out infinite; }
+.kw-leg-r { transform-box: fill-box; transform-origin: 50% 0%; animation: kwLegLiftR 0.3s ease-in-out infinite; }
+
+@keyframes kwArmL {
+  0%, 100% { transform: rotate(-15deg); }
+  50%      { transform: rotate(20deg); }
+}
+.kw-arm-l { transform-box: fill-box; transform-origin: 100% 0%; animation: kwArmL 0.55s ease-in-out infinite; }
+
+@keyframes kwPhoneWave {
+  0%    { transform: translateY(0)   rotate(0deg); }
+  25%   { transform: translateY(-14px) rotate(-12deg); }
+  45%   { transform: translateY(-8px)  rotate(-5deg); }
+  65%   { transform: translateY(-16px) rotate(-14deg); }
+  80%   { transform: translateY(-10px) rotate(-7deg); }
+  100%  { transform: translateY(0)   rotate(0deg); }
+}
+.kw-arm-r { transform-box: fill-box; transform-origin: 10% 0%; animation: kwPhoneWave 1.15s ease-in-out infinite; }
+
+@keyframes kwFlashBurst {
+  0%, 88%, 100% { opacity: 0; }
+  93%           { opacity: 0.9; }
+}
+.kw-flash { animation: kwFlashBurst 3s 0.5s ease-in-out infinite; pointer-events: none; }
+
+@keyframes kwLollipopHop {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-16px); }
+}
+.kw-lollipop-hop { animation: kwLollipopHop 0.5s ease-in-out infinite !important; }
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .donut-entry {
@@ -601,6 +651,9 @@
     opacity: 1;
   }
   .eyes {
+    animation: none;
+  }
+  .kw-waddle, .kw-leg-l, .kw-leg-r, .kw-arm-l, .kw-arm-r, .kw-lollipop-hop {
     animation: none;
   }
 }
