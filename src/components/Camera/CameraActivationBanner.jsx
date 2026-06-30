@@ -11,9 +11,9 @@ const KAWAII_PHONE_COLORS = {
   strawberry: '#EF4444', lollipop: '#F472B6',
 };
 const UGC_TRANSFORMS = {
-  burger: 'translate(67,122) scale(0.70)',
-  taco:   'translate(75,89)  scale(0.70)',
-  pizza:  'translate(91,119) scale(0.70)',
+  burger: 'translate(67,122) scale(0.65)',
+  taco:   'translate(75,89)  scale(0.65)',
+  pizza:  'translate(91,119) scale(0.65)',
 };
 
 // Body paths for the 13-character roster, matching the owner-backend CharacterPreview module.
@@ -328,8 +328,9 @@ export default function CameraActivationBanner({
       case 'cupcake': case 'cookie': case 'coffee': case 'donut': case 'mintcupcake':
       case 'icecream': case 'avocado': case 'strawberry': case 'lollipop':
       case 'burger': case 'taco': case 'pizza':
+        const isKawaii = ['cupcake', 'cookie', 'coffee', 'donut', 'mintcupcake', 'icecream', 'avocado', 'strawberry', 'lollipop'].includes(character);
         return (
-          <div className={character === 'lollipop' ? 'kw-lollipop-hop' : 'kw-waddle'}>
+          <div className={character === 'lollipop' ? 'kw-lollipop-hop' : 'kw-waddle'} style={isKawaii ? { transform: 'scale(1.015)' } : {}}>
             <KawaiiCharacter id={character} />
           </div>
         );
