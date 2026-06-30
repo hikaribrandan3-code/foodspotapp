@@ -324,11 +324,17 @@ const CSS = `
   .cp-bubble-pink::after {
     border-top-color: #FFF0F5 !important;
   }
-  /* Dark bubble */
-  .cp-bubble-dark {
-    background: #1F2937;
-    color: #fff;
-    animation: cpBubblePop 0.55s 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  /* Blue bubble — tinted cloud version */
+  .cp-bubble-blue {
+    background: linear-gradient(135deg, #EFF6FF 0%, #FFFFFF 50%, #F0F9FF 100%);
+    border: 3px dashed #3B82F6;
+    color: #1E40AF;
+    box-shadow: 0 8px 32px rgba(59,130,246,0.25), 0 4px 12px rgba(0,0,0,0.1);
+    animation: cpBubblePop 0.4s 0.6s cubic-bezier(0.34,1.56,0.64,1) both,
+               cpBubblePulse 2.5s 1.1s ease-in-out infinite;
+  }
+  .cp-bubble-blue::after {
+    border-top-color: #EFF6FF !important;
   }
   .cp-text-in { animation: cpTextIn 0.35s 1s both; display:inline-block; }
 
@@ -344,9 +350,9 @@ const CharacterPreview = () => {
   const current = characters[currentIndex];
   const menu = FAKE_MENU[language] || FAKE_MENU.es;
   const bubbleText = t(BUBBLE_KEYS[animKey % BUBBLE_KEYS.length]);
-  // Alternate bubble style per click so both versions are visible
-  const bubbleClass = animKey % 2 === 0 ? 'cp-bubble-pink' : 'cp-bubble-dark';
-  const tailColor   = animKey % 2 === 0 ? '#FFF0F5' : '#1F2937';
+  // Alternate bubble style per click — pink ↔ blue tinted clouds
+  const bubbleClass = animKey % 2 === 0 ? 'cp-bubble-pink' : 'cp-bubble-blue';
+  const tailColor   = animKey % 2 === 0 ? '#FFF0F5' : '#EFF6FF';
 
   const goTo = (idx) => {
     setCurrentIndex(idx);
