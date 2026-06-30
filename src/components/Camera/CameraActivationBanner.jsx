@@ -11,9 +11,9 @@ const KAWAII_PHONE_COLORS = {
   strawberry: '#EF4444', lollipop: '#F472B6',
 };
 const UGC_TRANSFORMS = {
-  burger: 'translate(67,122) scale(0.975)',
-  taco:   'translate(75,89)  scale(0.975)',
-  pizza:  'translate(91,119) scale(0.975)',
+  burger: 'translate(67,122) scale(0.70)',
+  taco:   'translate(75,89)  scale(0.70)',
+  pizza:  'translate(91,119) scale(0.70)',
 };
 
 // Body paths for the 13-character roster, matching the owner-backend CharacterPreview module.
