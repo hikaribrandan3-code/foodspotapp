@@ -55,10 +55,10 @@ export const translations = {
     camera_no: { es: "No", en: "No", pt: "Não" },
 
     // UGC character prompts — 5 proven variants (A/B tested)
-    ugc_prompt_1:  { es: "Toma una foto",                   en: "Snap a pic!",          pt: "Tire uma foto" },
-    ugc_prompt_2:  { es: "Selfie time",                     en: "Selfie time",          pt: "Hora do selfie" },
-    ugc_prompt_3:  { es: "Una para compartir",              en: "Share it to the gram", pt: "Uma pra compartilhar" },
-    ugc_prompt_4:  { es: "Una para Instagram",              en: "One for Instagram",    pt: "Uma pro Insta" },
+    ugc_prompt_1:  { es: "¿Toma una foto?",                  en: "Snap a pic?",          pt: "Tire uma foto?" },
+    ugc_prompt_2:  { es: "¿Selfie time?",                    en: "Selfie time?",         pt: "Hora do selfie?" },
+    ugc_prompt_3:  { es: "¿Una para compartir?",             en: "Share it to the gram?", pt: "Uma pra compartilhar?" },
+    ugc_prompt_4:  { es: "¿Una para Instagram?",             en: "One for Instagram?",   pt: "Uma pro Insta?" },
     ugc_prompt_5:  { es: "¡Las calorías no cuentan con foto!", en: "Calories don't count if you photograph it!", pt: "Caloria não conta se tiver foto!" },
 
     // Owner Summary

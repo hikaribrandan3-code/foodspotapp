@@ -299,6 +299,9 @@ export default function CameraActivationBanner({
     return Math.floor(Math.random() * CHARACTERS.length);
   });
 
+  // Pick random bubble color: 50% pink, 50% blue
+  const [bubbleColor] = useState(() => Math.random() < 0.5 ? 'pink' : 'blue');
+
   const character = CHARACTERS[charIndex];
 
   const handleCapture = () => {
@@ -397,7 +400,7 @@ export default function CameraActivationBanner({
         <div className="banner-donut-wrapper">
           <div className="donut-entry">
             {/* Speech bubble ABOVE character */}
-            <div className="speech-bubble">{speechText}</div>
+            <div className={`speech-bubble ${bubbleColor === 'blue' ? 'bubble-blue' : ''}`}>{speechText}</div>
 
             {renderCharacter()}
 
