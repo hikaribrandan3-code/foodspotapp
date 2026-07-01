@@ -352,25 +352,6 @@ function drawHUDOnCanvas() {
     ctx.textAlign = 'right';
     ctx.fillText('MOVE: ' + Math.round(p.movementUsed) + '/120', W - 115, H - 28);
 
-    // Pause / sound icons (top-right corner, pixel style)
-    ctx.font = '16px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillRect(W - 74, H - 74, 28, 28);
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(W - 74, H - 74, 28, 28);
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillText(document.getElementById('bgMusic').muted ? '🔇' : '🔊', W - 60, H - 55);
-    hitRegions.push({ x: W - 74, y: H - 74, w: 28, h: 28, action: 'sound' });
-
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(W - 40, H - 40, 28, 28);
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-    ctx.strokeRect(W - 40, H - 40, 28, 28);
-    ctx.fillStyle = '#fff';
-    ctx.fillText('⏸', W - 26, H - 21);
-    hitRegions.push({ x: W - 40, y: H - 40, w: 28, h: 28, action: 'pause' });
 }
 
 function drawTrajectoryPreview() {
