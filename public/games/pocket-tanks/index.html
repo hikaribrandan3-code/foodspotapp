@@ -60,9 +60,10 @@ const TANK_W = 28, TANK_H = 14;
 const GRAVITY = 0.25;
 
 /* ---------- SCREEN STATE MACHINE ---------- */
-const SCREEN = { MODE_SELECT: 0, INSTRUCTIONS: 1, PLAYING: 2, PAUSED: 3, GAMEOVER: 4 };
+const SCREEN = { MODE_SELECT: 0, DIFFICULTY_SELECT: 1, INSTRUCTIONS: 2, PLAYING: 3, PAUSED: 4, GAMEOVER: 5 };
 let screen = SCREEN.MODE_SELECT;
 let modeSelectIndex = 0; // 0 = PvP, 1 = PvC
+let difficultySelectIndex = 0; // 0 = easy, 1 = medium, 2 = hard
 let pauseSelectIndex = 0; // 0=resume,1=restart,2=exit
 let blink = 0;
 let winner = 0;
@@ -722,6 +723,17 @@ function startGameWithMode(mode) {
     gameMode = mode;
     isAIOpponent = (mode === 'pvc');
     isAITurn = false;
+    difficultySelectIndex = 1; // default to medium
+    if (mode === 'pvc') {
+        screen = SCREEN.DIFFICULTY_SELECT;
+    } else {
+        screen = SCREEN.INSTRUCTIONS;
+    }
+}
+
+function selectDifficulty(index) {
+    const difficulties = ['easy', 'medium', 'hard'];
+    aiDifficulty = difficulties[index];
     screen = SCREEN.INSTRUCTIONS;
 }
 
@@ -1052,6 +1064,45 @@ function drawOverlay() {
         ctx.fillText('@foodspotmobile', W/2, H*0.94);
     }
 
+    if (screen === SCREEN.DIFFICULTY_SELECT) {
+        ctx.fillStyle = 'rgba(5,5,16,0.92)';
+        ctx.fillRect(0, 0, W, H);
+
+        for (let i = 0; i < 4; i++) {
+            const x = (W/5) * (i+0.5), y = H*0.15;
+            const pulse = 0.6 + Math.sin(blink*2+i)*0.3;
+            ctx.fillStyle = `rgba(0,255,136,${pulse*0.12})`;
+            ctx.fillRect(x-20*pulse, y-20*pulse, 40*pulse, 40*pulse);
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.round(H*0.065)}px "Press Start 2P"`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 16;
+        ctx.fillText('DIFFICULTY', W/2, H*0.2);
+        ctx.shadowBlur = 0;
+
+        const btnW = 260, btnH = 80, gap = 25;
+        const totalW = btnW * 3 + gap * 2;
+        const startX = W/2 - totalW/2;
+        const btnY = H * 0.38;
+
+        drawPixelButton(startX, btnY, btnW, btnH, 'EASY', '#00ff88', difficultySelectIndex === 0, 'diff_easy');
+        drawPixelButton(startX + btnW + gap, btnY, btnW, btnH, 'MEDIUM', '#ffd700', difficultySelectIndex === 1, 'diff_medium');
+        drawPixelButton(startX + (btnW + gap) * 2, btnY, btnW, btnH, 'HARD', '#ff4444', difficultySelectIndex === 2, 'diff_hard');
+
+        if (Math.sin(blink*3) > -0.3) {
+            ctx.fillStyle = '#00ff88';
+            ctx.font = `${Math.round(H*0.026)}px "Press Start 2P"`;
+            ctx.fillText('TAP OR PRESS A TO SELECT', W/2, H*0.65);
+        }
+
+        ctx.fillStyle = '#28e0e0';
+        ctx.font = `${Math.round(H*0.02)}px "Press Start 2P"`;
+        ctx.fillText('@foodspotmobile', W/2, H*0.94);
+    }
+
     if (screen === SCREEN.INSTRUCTIONS) {
         ctx.fillStyle = 'rgba(5,5,16,0.94)';
         ctx.fillRect(0, 0, W, H);
@@ -1153,6 +1204,9 @@ function handleOverlayAction(action) {
     if (!action) return;
     if (action === 'mode_pvp') startGameWithMode('pvp');
     else if (action === 'mode_pvc') startGameWithMode('pvc');
+    else if (action === 'diff_easy') selectDifficulty(0);
+    else if (action === 'diff_medium') selectDifficulty(1);
+    else if (action === 'diff_hard') selectDifficulty(2);
     else if (action === 'begin_game') startGame();
     else if (action === 'resume') togglePause();
     else if (action === 'restart') restartGame();
@@ -1302,6 +1356,16 @@ document.addEventListener('keydown', e => {
         }
         return;
     }
+    if (screen === SCREEN.DIFFICULTY_SELECT) {
+        if (e.key === 'ArrowLeft') difficultySelectIndex = 0;
+        if (e.key === 'ArrowRight' && difficultySelectIndex < 2) difficultySelectIndex += 1;
+        if (e.key === 'ArrowLeft' && difficultySelectIndex > 0) difficultySelectIndex -= 1;
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            selectDifficulty(difficultySelectIndex);
+        }
+        return;
+    }
     if (screen === SCREEN.INSTRUCTIONS) {
         if (e.key === ' ' || e.key === 'Enter') {
             e.preventDefault();
@@ -1376,6 +1440,12 @@ window.addEventListener('message', (e) => {
             if (button === 'dpad-left') modeSelectIndex = 0;
             if (button === 'dpad-right') modeSelectIndex = 1;
             if (button === 'a' || button === 'start') startGameWithMode(modeSelectIndex === 0 ? 'pvp' : 'pvc');
+            return;
+        }
+        if (screen === SCREEN.DIFFICULTY_SELECT) {
+            if (button === 'dpad-left' && difficultySelectIndex > 0) difficultySelectIndex -= 1;
+            if (button === 'dpad-right' && difficultySelectIndex < 2) difficultySelectIndex += 1;
+            if (button === 'a' || button === 'start') selectDifficulty(difficultySelectIndex);
             return;
         }
         if (screen === SCREEN.INSTRUCTIONS) {
