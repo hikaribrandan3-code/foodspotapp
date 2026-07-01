@@ -209,22 +209,20 @@ export default function ReservationPage() {
                 </div>
 
                 {/* Mode tabs */}
-                <div style={{ display: 'flex', gap: 16, marginBottom: 24, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
                     {[
-                        { id: 'table', label: t('res_tab_table') },
-                        { id: 'custom', label: t('res_tab_custom') }
+                        { id: 'table', label: t('res_tab_table'), icon: 'plate' },
+                        { id: 'custom', label: t('res_tab_custom'), icon: 'cake' }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => { setMode(tab.id); setStep(1); setError(null) }}
                             style={{
-                                padding: 0, border: 'none',
-                                background: 'transparent',
-                                color: mode === tab.id ? '#111827' : '#9CA3AF',
-                                fontWeight: mode === tab.id ? 700 : 500, fontSize: 15, cursor: 'pointer',
-                                transition: 'all 0.15s',
-                                borderBottom: mode === tab.id ? `3px solid ${primary}` : 'none',
-                                paddingBottom: 8, marginBottom: -20
+                                flex: 1, padding: '10px 8px', borderRadius: 20, border: 'none',
+                                background: mode === tab.id ? primary : '#f0f0f0',
+                                color: mode === tab.id ? '#fff' : '#6B7280',
+                                fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                                transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                             }}>
-                            {tab.label}
+                            <ReservationIcon name={tab.icon} size={16} color={mode === tab.id ? '#fff' : '#6B7280'} /> {tab.label}
                         </button>
                     ))}
                 </div>
