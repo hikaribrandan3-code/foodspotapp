@@ -187,9 +187,9 @@ export default function CameraLayer({
     zoomTimer.current = setTimeout(() => setZoomActive(false), 2400);
   }, [zoomLevel]);
 
-  // ── auto-stabilizer: enable at 4× (best-effort software) ─────────────────
+  // ── auto-stabilizer: enable at 2× (shaky hand suppression) ───────────────
   useEffect(() => {
-    const want = zoomLevel >= STABILIZE_AT;
+    const want = zoomLevel >= 2;
     if (want && !gimbalEnabled)  toggleGimbal(true);
     if (!want && gimbalEnabled)  toggleGimbal(false);
   }, [zoomLevel]); // eslint-disable-line
@@ -205,8 +205,8 @@ export default function CameraLayer({
 
     let raf = 0;
     let smX = 0, smY = 0;
-    const ALPHA = 0.08; // EMA weight — lower = heavier damping
-    const MAX_PX = 3;   // max translate pixels (keeps it subtle)
+    const ALPHA = 0.12; // EMA weight — faster response to motion
+    const MAX_PX = 6;   // max translate pixels (stronger hand-shake suppression)
 
     const onMotion = (e) => {
       const a = e.accelerationIncludingGravity || e.acceleration || {};

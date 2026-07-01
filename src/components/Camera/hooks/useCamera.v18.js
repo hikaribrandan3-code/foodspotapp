@@ -124,8 +124,8 @@ const KINETIC_CONFIG = Object.freeze({
     DAMPING: Object.freeze({
         0.5: 0.3,   // Ultra-wide: minimal damping
         1.0: 0.5,   // Standard: moderate damping
-        2.0: 0.7,   // Portrait: higher damping
-        4.0: 0.85,  // Telephoto: heavy damping
+        2.0: 0.85,  // Portrait: stronger damping for shaky hands
+        4.0: 0.9,   // Telephoto: aggressive damping
         8.0: 0.95   // Super-tele: maximum damping
     }),
 
@@ -133,7 +133,7 @@ const KINETIC_CONFIG = Object.freeze({
     GYRO_SENSITIVITY: 0.0015,
 
     // Maximum UV offset (prevents over-correction)
-    MAX_OFFSET: 0.08
+    MAX_OFFSET: 0.15  // increased from 0.08 for stronger hand-shake suppression
 })
 
 // ═══════════════════════════════════════════════════════════════════════
