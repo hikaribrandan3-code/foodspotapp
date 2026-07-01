@@ -97,6 +97,25 @@ canvas {
     z-index: 10;
 }
 #pauseBtn:hover { background: rgba(255,255,255,0.2); }
+#gameModeOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+#gameModeOverlay h1 {
+    font-size: 48px;
+    margin-bottom: 60px;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
 #instructionsOverlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -254,6 +273,14 @@ canvas {
     <div id="powerUpIndicator">★ POWER UP!</div>
     <div id="turnIndicator">PLAYER 1</div>
 
+    <div id="gameModeOverlay">
+        <h1>⚔️ POCKET TANKS ⚔️</h1>
+        <div style="margin-top: 40px; display: flex; gap: 30px;">
+            <button id="pvpBtn" style="padding: 15px 30px; font-size: 18px; background: #00ff88; color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Player vs Player</button>
+            <button id="pvcBtn" style="padding: 15px 30px; font-size: 18px; background: #ffd700; color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Player vs CPU</button>
+        </div>
+    </div>
+
     <div id="instructionsOverlay">
     <h1>⚔️ POCKET TANKS ⚔️</h1>
     <div class="controls-grid">
@@ -320,12 +347,15 @@ let wind = 0;
 let windTimer = 0;
 let cameraShake = 0;
 let canFire = true;
+let gameMode = null; // 'pvp' or 'pvc'
+let isAIOpponent = false;
+let isAITurn = false;
 
 const weapons = [
     { name: 'Standard Shell', damage: 25, radius: 28, color: '#ff6600', type: 'normal' },
     { name: 'Dirt Ball', damage: 5, radius: 22, color: '#8B4513', type: 'dirt', bury: true },
     { name: 'Napalm', damage: 8, radius: 28, color: '#ff0000', type: 'fire', spread: 5, burnRounds: 2 },
-    { name: 'Tracer', damage: 15, radius: 18, color: '#00ff00', type: 'bounce' },
+    { name: 'Tracer', damage: 15, radius: 18, color: '#00ff00', type: 'bounce', homing: true },
     { name: 'Nuke', damage: 55, radius: 55, color: '#ff00ff', type: 'nuke', mushroom: true },
     { name: 'Bouncer', damage: 18, radius: 22, color: '#00ffff', type: 'bouncer' },
 ];
@@ -346,6 +376,7 @@ function exitToArcade() {
 }
 
 function cycleWeapon() {
+    if (isAITurn) return;
     const p = players[turn];
     p.weapon = (p.weapon + 1) % weapons.length;
     showPowerUpMessage(weapons[p.weapon].name);
@@ -933,6 +964,24 @@ function fire() {
 
 let gameStarted = false;
 
+function showModeSelector() {
+    document.getElementById('gameModeOverlay').style.display = 'flex';
+    document.getElementById('instructionsOverlay').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'none';
+}
+
+function hideModeSelector() {
+    document.getElementById('gameModeOverlay').style.display = 'none';
+}
+
+function startGameWithMode(mode) {
+    gameMode = mode;
+    isAIOpponent = (mode === 'pvc');
+    isAITurn = false;
+    hideModeSelector();
+    document.getElementById('instructionsOverlay').style.display = 'flex';
+}
+
 function startGame() {
     gameStarted = true;
     document.getElementById('instructionsOverlay').style.display = 'none';
@@ -1092,15 +1141,55 @@ function nextTurn() {
     }
     updateUI();
     showTurnIndicator();
+
+    // AI turn if player 2 is AI
+    if (isAIOpponent && turn === 1) {
+        isAITurn = true;
+        setTimeout(aiTakeTurn, 1500);
+    } else {
+        isAITurn = false;
+    }
+}
+
+function aiTakeTurn() {
+    if (!isAIOpponent || turn !== 1 || gameOver) return;
+    const p = players[1];
+
+    // Random angle toward opponent
+    const targetX = players[0].x;
+    const distX = targetX - p.x;
+    const baseAngle = Math.atan2(0, distX) * 180 / Math.PI;
+    p.angle = Math.max(0, Math.min(180, 90 + (Math.random() - 0.5) * 40));
+
+    // Random power
+    p.power = 30 + Math.random() * 50;
+
+    // Random movement
+    if (Math.random() > 0.5) {
+        const moveDir = Math.random() > 0.5 ? 1 : -1;
+        const moveAmount = 20 + Math.random() * 40;
+        p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
+        p.movementUsed = Math.abs(p.x - p.startX);
+    }
+
+    // Fire
+    setTimeout(() => {
+        if (!gameOver && turn === 1) {
+            fire();
+        }
+        isAITurn = false;
+    }, 600 + Math.random() * 400);
 }
 
 function endGame(winner) {
     gameOver = true;
+    isAITurn = false;
     document.getElementById('winnerText').textContent = 'PLAYER ' + (winner + 1) + ' WINS!';
     document.getElementById('gameOver').style.display = 'flex';
 }
 
 function restartGame() {
+    gameStarted = false;
     gameOver = false;
     paused = false;
     canFire = true;
@@ -1122,8 +1211,7 @@ function restartGame() {
     damageNumbers = [];
     generateTerrain();
     updateUI();
-    showTurnIndicator();
-    document.getElementById('gameOver').style.display = 'none';
+    showModeSelector();
     document.getElementById('pauseOverlay').style.display = 'none';
     document.getElementById('pauseBtn').textContent = '⏸';
 }
@@ -1173,7 +1261,7 @@ document.addEventListener('keyup', e => {
 
 // Continuous key-hold handling in game loop
 function handleContinuousInput() {
-    if (gameOver) return;
+    if (gameOver || isAITurn) return;
     const p = players[turn];
 
     const MAX_MOVEMENT = 120;  // Max pixels per turn
@@ -1312,9 +1400,18 @@ window.addEventListener('load', () => {
     window.parent.postMessage({ type: 'GAME_LOADED' }, '*');
 });
 
+// Mode selector buttons
+document.getElementById('pvpBtn').addEventListener('click', () => {
+    startGameWithMode('pvp');
+});
+
+document.getElementById('pvcBtn').addEventListener('click', () => {
+    startGameWithMode('pvc');
+});
+
 generateTerrain();
 updateUI();
-showTurnIndicator();
+showModeSelector();
 spawnPowerUp();
 gameLoop();
 </script>
