@@ -209,21 +209,22 @@ export default function ReservationPage() {
                 </div>
 
                 {/* Mode tabs */}
-                <div style={{ display: 'flex', background: '#F3F4F6', borderRadius: 14, padding: 4, marginBottom: 24 }}>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 24, borderBottom: '1px solid #E5E7EB', paddingBottom: 12 }}>
                     {[
-                        { id: 'table', label: t('res_tab_table'), icon: 'plate' },
-                        { id: 'custom', label: t('res_tab_custom'), icon: 'cake' }
+                        { id: 'table', label: t('res_tab_table') },
+                        { id: 'custom', label: t('res_tab_custom') }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => { setMode(tab.id); setStep(1); setError(null) }}
                             style={{
-                                flex: 1, padding: '10px 8px', borderRadius: 10, border: 'none',
-                                background: mode === tab.id ? '#fff' : 'transparent',
+                                padding: 0, border: 'none',
+                                background: 'transparent',
                                 color: mode === tab.id ? '#111827' : '#9CA3AF',
-                                fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                                boxShadow: mode === tab.id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                                transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                fontWeight: mode === tab.id ? 700 : 500, fontSize: 15, cursor: 'pointer',
+                                transition: 'all 0.15s',
+                                borderBottom: mode === tab.id ? `3px solid ${primary}` : 'none',
+                                paddingBottom: 8, marginBottom: -20
                             }}>
-                            <ReservationIcon name={tab.icon} size={16} color={mode === tab.id ? '#111827' : '#9CA3AF'} /> {tab.label}
+                            {tab.label}
                         </button>
                     ))}
                 </div>
@@ -410,17 +411,10 @@ export default function ReservationPage() {
                                                 fontWeight: 700, fontSize: 14, cursor: 'pointer', transition: 'all 0.15s',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                                             }}>
-                                            {opt === 'pickup' ? (
-                                                <>
-                                                    <ReservationIcon name="home" size={16} color={pickupOrDelivery === opt ? primary : '#6B7280'} />
-                                                    {t('res_pickup')}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <ReservationIcon name="delivery" size={16} color={pickupOrDelivery === opt ? primary : '#6B7280'} />
-                                                    {t('res_delivery')}
-                                                </>
-                                            )}
+                                            <>
+                                                <ReservationIcon name="home" size={16} color={pickupOrDelivery === opt ? primary : '#6B7280'} />
+                                                {opt === 'pickup' ? t('res_pickup') : t('res_delivery')}
+                                            </>
                                         </button>
                                     ))}
                                 </div>
@@ -454,8 +448,7 @@ export default function ReservationPage() {
                         {error && <div style={{ background: '#FEE2E2', borderRadius: 10, padding: '12px 14px' }}><p style={{ color: '#DC2626', fontSize: 14, margin: 0 }}>⚠️ {error}</p></div>}
 
                         <button onClick={handleCustomSubmit} disabled={isSubmitting}
-                            style={{ width: '100%', padding: 18, background: isSubmitting ? '#E5E7EB' : primary, color: isSubmitting ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 16, fontSize: 17, fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                            {!isSubmitting && <ReservationIcon name="message" size={18} color="#fff" />}
+                            style={{ width: '100%', padding: 18, background: isSubmitting ? '#E5E7EB' : primary, color: isSubmitting ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 16, fontSize: 17, fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
                             {isSubmitting ? t('res_sending') : t('res_send_whatsapp')}
                         </button>
                     </div>
