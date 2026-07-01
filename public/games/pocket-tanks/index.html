@@ -254,6 +254,9 @@ canvas {
 </head>
 <body>
 <div id="gameContainer">
+    <audio id="bgMusic" loop>
+        <source src="arcade-beat.mp3" type="audio/mpeg">
+    </audio>
     <canvas id="gameCanvas" width="900" height="550"></canvas>
 
     <div id="ui">
@@ -268,6 +271,7 @@ canvas {
         </div>
     </div>
     <div id="windDisplay">Wind: 0</div>
+    <button id="soundBtn" onclick="toggleSound()" style="position: absolute; bottom: 50px; right: 10px; width: 36px; height: 36px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; color: #fff; font-size: 16px; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">🔊</button>
     <button id="pauseBtn" onclick="togglePause()">⏸</button>
 
     <div id="powerUpIndicator">★ POWER UP!</div>
@@ -369,6 +373,12 @@ function togglePause() {
     paused = !paused;
     document.getElementById('pauseOverlay').style.display = paused ? 'flex' : 'none';
     document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸';
+}
+
+function toggleSound() {
+    const music = document.getElementById('bgMusic');
+    music.muted = !music.muted;
+    document.getElementById('soundBtn').textContent = music.muted ? '🔇' : '🔊';
 }
 
 function exitToArcade() {
@@ -985,6 +995,7 @@ function startGameWithMode(mode) {
 function startGame() {
     gameStarted = true;
     document.getElementById('instructionsOverlay').style.display = 'none';
+    document.getElementById('bgMusic').play().catch(() => {});
 }
 
 function update() {
@@ -1184,6 +1195,8 @@ function aiTakeTurn() {
 function endGame(winner) {
     gameOver = true;
     isAITurn = false;
+    document.getElementById('bgMusic').pause();
+    document.getElementById('bgMusic').currentTime = 0;
     document.getElementById('winnerText').textContent = 'PLAYER ' + (winner + 1) + ' WINS!';
     document.getElementById('gameOver').style.display = 'flex';
 }
