@@ -528,6 +528,9 @@ function Order({ config: configProp }) {
             }
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
+            // 📸 Separate key for UGC eligibility — must survive past 'delivered',
+            // unlike _last_order_id which OrderStatus/Home clear on terminal status.
+            localStorage.setItem(`fs_${tenantSlug}_ugc_order_id`, savedOrder.id)
 
 
             // ─── STEP 4: PAYMENT ROUTING ──────────────────────
@@ -789,6 +792,9 @@ function Order({ config: configProp }) {
             }
             // 💾 Remember order so customer can find it after closing tab
             localStorage.setItem(`fs_${tenantSlug}_last_order_id`, savedOrder.id)
+            // 📸 Separate key for UGC eligibility — must survive past 'delivered',
+            // unlike _last_order_id which OrderStatus/Home clear on terminal status.
+            localStorage.setItem(`fs_${tenantSlug}_ugc_order_id`, savedOrder.id)
 
             // 🔒 MVP: Auto-open WhatsApp (Pedix style) — customer confirms order in chat
             const whatsappUrl = buildWhatsAppUrl(newOrder)

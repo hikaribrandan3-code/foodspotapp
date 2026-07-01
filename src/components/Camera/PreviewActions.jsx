@@ -76,7 +76,10 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone, isOwner = fa
         if (!identifier) return;
         // Only a verified real order unlocks points — prevents anyone (owner or a
         // visitor who never ordered) from farming points just by sharing a photo.
-        const orderId = tenantSlug ? localStorage.getItem(`fs_${tenantSlug}_last_order_id`) : null;
+        // Uses a dedicated key (not _last_order_id) because OrderStatus/Home clear
+        // _last_order_id as soon as the order hits 'delivered' — the exact moment
+        // the delivery/takeout camera share prompt appears.
+        const orderId = tenantSlug ? localStorage.getItem(`fs_${tenantSlug}_ugc_order_id`) : null;
         if (!orderId) return;
         earnUGCPoints(identifier, businessId, orderId).then(({ earned, points }) => {
             const pts = (earned && points) ? points : 0;
