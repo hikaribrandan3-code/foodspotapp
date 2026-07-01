@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Pocket Tanks - HTML5</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
 html, body {
+    position: fixed;
     width: 100%;
     height: 100%;
-    background: #1a1a2e;
+    background: #000;
     overflow: hidden;
-    font-family: 'Courier New', monospace;
+    font-family: 'Press Start 2P', monospace;
 }
 #gameContainer {
     width: 100vw;
@@ -28,6 +30,7 @@ canvas {
     width: auto;
     height: auto;
     background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 40%, #2d1b4e 100%);
+    touch-action: none;
 }
 @supports (padding: max(0px)) {
     #gameContainer {
@@ -37,219 +40,6 @@ canvas {
         padding-right: max(0px, env(safe-area-inset-right));
     }
 }
-#ui {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: none;
-    color: #fff;
-    font-size: 14px;
-    text-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
-#ui .player-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-#ui .health-bar {
-    width: 100px;
-    height: 14px;
-    background: rgba(0,0,0,0.5);
-    border: 2px solid #fff;
-    border-radius: 7px;
-    overflow: hidden;
-}
-#ui .health-fill { height: 100%; transition: width 0.3s; }
-#ui .p1-health { background: #00ff88; }
-#ui .p2-health { background: #ff4444; }
-#ui .weapon-name {
-    position: absolute;
-    left: 50%; top: 10px;
-    transform: translateX(-50%);
-    font-size: 14px;
-    font-weight: bold;
-    color: #ffd700;
-    text-shadow: 0 0 15px rgba(255,215,0,0.6);
-}
-#windDisplay {
-    position: absolute;
-    right: 20px; top: 32px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.6);
-}
-#pauseBtn {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    width: 36px; height: 36px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 16px;
-    font-family: inherit;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-}
-#pauseBtn:hover { background: rgba(255,255,255,0.2); }
-#gameModeOverlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    color: white;
-    font-family: Arial, sans-serif;
-}
-
-#gameModeOverlay h1 {
-    font-size: 48px;
-    margin-bottom: 60px;
-    text-shadow: 0 4px 8px rgba(0,0,0,0.5);
-}
-
-#instructionsOverlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(26, 26, 46, 0.95);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
-    padding: 20px;
-}
-#instructionsOverlay h1 {
-    color: #ffd700;
-    font-size: 32px;
-    margin-bottom: 30px;
-    text-shadow: 0 0 20px rgba(255,215,0,0.6);
-}
-#instructionsOverlay .controls-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    width: 100%;
-    max-width: 500px;
-    margin-bottom: 30px;
-}
-#instructionsOverlay .control-item {
-    background: rgba(255,255,255,0.05);
-    border: 2px solid rgba(255,215,0,0.3);
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    color: #fff;
-}
-#instructionsOverlay .control-item .key {
-    font-size: 18px;
-    font-weight: bold;
-    color: #ffd700;
-    margin-bottom: 5px;
-}
-#instructionsOverlay .control-item .action {
-    font-size: 12px;
-    opacity: 0.8;
-}
-#instructionsOverlay .start-prompt {
-    color: #00ff88;
-    font-size: 14px;
-    animation: pulse 1.5s infinite;
-}
-@keyframes pulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-}
-
-#pauseOverlay {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 36px;
-    font-weight: bold;
-    z-index: 20;
-}
-#pauseOverlay button {
-    margin-top: 20px;
-    padding: 12px 30px;
-    font-size: 18px;
-    font-family: inherit;
-    background: #00ff88;
-    color: #1a1a2e;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    pointer-events: all;
-    font-weight: bold;
-}
-#pauseOverlay button:hover { background: #00cc6a; }
-#pauseOverlay button.exit-btn { background: #ff4444; color: #fff; }
-#pauseOverlay button.exit-btn:hover { background: #cc3333; }
-#powerUpIndicator {
-    position: absolute;
-    top: 45%; left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 28px;
-    font-weight: bold;
-    color: #ffd700;
-    text-shadow: 0 0 30px rgba(255,215,0,0.8);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-}
-#turnIndicator {
-    position: absolute;
-    left: 50%; top: 40%;
-    transform: translate(-50%, -50%);
-    font-size: 48px;
-    font-weight: bold;
-    color: #ffd700;
-    text-shadow: 0 0 40px rgba(255,215,0,0.8);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-}
-#gameOver {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.85);
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 42px;
-    font-weight: bold;
-    z-index: 30;
-}
-#gameOver button {
-    margin-top: 20px;
-    padding: 12px 30px;
-    font-size: 18px;
-    font-family: inherit;
-    background: #00ff88;
-    color: #1a1a2e;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    pointer-events: all;
-    font-weight: bold;
-}
-#gameOver button:hover { background: #00cc6a; }
 </style>
 </head>
 <body>
@@ -258,75 +48,6 @@ canvas {
         <source src="arcade-beat.mp3" type="audio/mpeg">
     </audio>
     <canvas id="gameCanvas" width="900" height="550"></canvas>
-
-    <div id="ui">
-        <div class="player-info">
-            <span>P1</span>
-            <div class="health-bar"><div class="health-fill p1-health" id="p1Health" style="width:100%"></div></div>
-        </div>
-        <div class="weapon-name" id="weaponName">Standard Shell</div>
-        <div class="player-info">
-            <div class="health-bar"><div class="health-fill p2-health" id="p2Health" style="width:100%"></div></div>
-            <span>P2</span>
-        </div>
-    </div>
-    <div id="windDisplay">Wind: 0</div>
-    <button id="soundBtn" onclick="toggleSound()" style="position: absolute; bottom: 50px; right: 10px; width: 36px; height: 36px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 8px; color: #fff; font-size: 16px; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">🔊</button>
-    <button id="pauseBtn" onclick="togglePause()">⏸</button>
-
-    <div id="powerUpIndicator">★ POWER UP!</div>
-    <div id="turnIndicator">PLAYER 1</div>
-
-    <div id="gameModeOverlay">
-        <h1>⚔️ POCKET TANKS ⚔️</h1>
-        <div style="margin-top: 40px; display: flex; gap: 30px;">
-            <button id="pvpBtn" style="padding: 15px 30px; font-size: 18px; background: #00ff88; color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Player vs Player</button>
-            <button id="pvcBtn" style="padding: 15px 30px; font-size: 18px; background: #ffd700; color: #1a1a2e; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Player vs CPU</button>
-        </div>
-    </div>
-
-    <div id="instructionsOverlay">
-    <h1>⚔️ POCKET TANKS ⚔️</h1>
-    <div class="controls-grid">
-        <div class="control-item">
-            <div class="key">D-PAD</div>
-            <div class="action">Aim angle</div>
-        </div>
-        <div class="control-item">
-            <div class="key">A</div>
-            <div class="action">Fire</div>
-        </div>
-        <div class="control-item">
-            <div class="key">B</div>
-            <div class="action">Change weapon</div>
-        </div>
-        <div class="control-item">
-            <div class="key">L/R</div>
-            <div class="action">Move left / right</div>
-        </div>
-        <div class="control-item">
-            <div class="key">↑/↓</div>
-            <div class="action">Power</div>
-        </div>
-        <div class="control-item">
-            <div class="key">←/→</div>
-            <div class="action">Move</div>
-        </div>
-    </div>
-    <div class="start-prompt">Press START or A to begin</div>
-</div>
-
-<div id="pauseOverlay">
-        <div>PAUSED</div>
-        <button onclick="togglePause()">Resume</button>
-        <button onclick="restartGame()" style="margin-top:10px;background:#ff4444;color:#fff;">Restart</button>
-        <button class="exit-btn" onclick="exitToArcade()">Exit to Arcade</button>
-    </div>
-
-    <div id="gameOver">
-        <div id="winnerText"></div>
-        <button onclick="restartGame()">Play Again</button>
-    </div>
 </div>
 
 <script>
@@ -338,6 +59,14 @@ const GROUND_Y = 430;
 const TANK_W = 28, TANK_H = 14;
 const GRAVITY = 0.25;
 
+/* ---------- SCREEN STATE MACHINE ---------- */
+const SCREEN = { MODE_SELECT: 0, INSTRUCTIONS: 1, PLAYING: 2, PAUSED: 3, GAMEOVER: 4 };
+let screen = SCREEN.MODE_SELECT;
+let modeSelectIndex = 0; // 0 = PvP, 1 = PvC
+let pauseSelectIndex = 0; // 0=resume,1=restart,2=exit
+let blink = 0;
+let winner = 0;
+
 let terrain = [];
 let particles = [];
 let projectiles = [];
@@ -345,8 +74,6 @@ let powerUps = [];
 let explosions = [];
 let damageNumbers = [];
 let turn = 0;
-let gameOver = false;
-let paused = false;
 let wind = 0;
 let windTimer = 0;
 let cameraShake = 0;
@@ -354,6 +81,10 @@ let canFire = true;
 let gameMode = null; // 'pvp' or 'pvc'
 let isAIOpponent = false;
 let isAITurn = false;
+
+// transient canvas-drawn message overlays (replaces the old HTML fade divs)
+let turnMsg = { life: 0, text: '', color: '#ffd700' };
+let powerMsg = { life: 0, text: '' };
 
 const weapons = [
     { name: 'Standard Shell', damage: 25, radius: 28, color: '#ff6600', type: 'normal' },
@@ -369,16 +100,12 @@ let players = [
     { x: 800, y: 0, angle: 150, power: 50, health: 100, weapon: 0, color: '#ff4444', facing: -1, vx: 0, startX: 800, movementUsed: 0, hitFlash: 0 }
 ];
 
-function togglePause() {
-    paused = !paused;
-    document.getElementById('pauseOverlay').style.display = paused ? 'flex' : 'none';
-    document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸';
-}
+/* ---------- HIT-TEST REGIONS (recomputed each draw, used by click handler) ---------- */
+let hitRegions = []; // [{x,y,w,h,action}]
 
 function toggleSound() {
     const music = document.getElementById('bgMusic');
     music.muted = !music.muted;
-    document.getElementById('soundBtn').textContent = music.muted ? '🔇' : '🔊';
 }
 
 function exitToArcade() {
@@ -390,7 +117,6 @@ function cycleWeapon() {
     const p = players[turn];
     p.weapon = (p.weapon + 1) % weapons.length;
     showPowerUpMessage(weapons[p.weapon].name);
-    updateUI();
 }
 
 function generateTerrain() {
@@ -448,7 +174,6 @@ function drawTank(p, i) {
     ctx.fillStyle = p.color;
     ctx.fillRect(cx - TANK_W/2, cy - TANK_H/2, TANK_W, TANK_H);
 
-    // Damage cracks - more visible as health decreases
     if (healthPct < 0.9) {
         ctx.strokeStyle = 'rgba(0,0,0,0.6)';
         ctx.lineWidth = 2.5;
@@ -463,7 +188,6 @@ function drawTank(p, i) {
         }
     }
 
-    // Scorch marks on damaged tanks
     if (healthPct < 0.6) {
         for (let i = 0; i < 5; i++) {
             const intensity = 1 - healthPct;
@@ -476,13 +200,11 @@ function drawTank(p, i) {
         }
     }
 
-    // Red flash when critical health
     if (healthPct < 0.3) {
         ctx.fillStyle = 'rgba(255,0,0,0.2)';
         ctx.fillRect(cx - TANK_W/2, cy - TANK_H/2, TANK_W, TANK_H);
     }
 
-    // Hit flash - bright white pulse fired the instant this tank takes damage
     if (p.hitFlash > 0) {
         ctx.fillStyle = 'rgba(255,255,255,' + (p.hitFlash * 0.85) + ')';
         ctx.fillRect(cx - TANK_W/2 - 4, cy - TANK_H/2 - 4, TANK_W + 8, TANK_H + 8);
@@ -497,7 +219,6 @@ function drawTank(p, i) {
     ctx.fillStyle = '#666';
     ctx.fillRect(18, -3, 5, 7);
 
-    // Crosshair at barrel tip
     ctx.strokeStyle = '#ffff00';
     ctx.lineWidth = 1.5;
     const tipX = 22;
@@ -524,7 +245,7 @@ function drawTank(p, i) {
         ctx.fill();
     }
 
-    if (turn === i && !gameOver) {
+    if (turn === i && screen === SCREEN.PLAYING) {
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 4]);
@@ -536,7 +257,6 @@ function drawTank(p, i) {
 function drawHUDOnCanvas() {
     const p = players[turn];
 
-    // Angle & Power near active tank
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(p.x - 60, p.y - 70, 120, 55);
     ctx.strokeStyle = p.color;
@@ -544,15 +264,14 @@ function drawHUDOnCanvas() {
     ctx.strokeRect(p.x - 60, p.y - 70, 120, 55);
 
     ctx.fillStyle = '#fff';
-    ctx.font = 'bold 14px monospace';
+    ctx.font = 'bold 13px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('ANGLE: ' + Math.round(p.angle) + '°', p.x, p.y - 50);
     ctx.fillText('POWER: ' + Math.round(p.power), p.x, p.y - 33);
-    ctx.font = '11px monospace';
+    ctx.font = '10px monospace';
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.fillText('[← →] [↑ ↓]', p.x, p.y - 18);
 
-    // Pixelated power bar on right side
     const barW = 30, barH = 150, barX = W - 45, barY = 60;
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(barX - 5, barY - 5, barW + 10, barH + 10);
@@ -560,7 +279,6 @@ function drawHUDOnCanvas() {
     ctx.lineWidth = 2;
     ctx.strokeRect(barX - 5, barY - 5, barW + 10, barH + 10);
 
-    // Power fill (pixelated effect)
     const fillH = (p.power / 100) * barH;
     const fillY = barY + barH - fillH;
     for (let i = 0; i < fillH; i += 4) {
@@ -568,12 +286,11 @@ function drawHUDOnCanvas() {
         ctx.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
         ctx.fillRect(barX, fillY + i, barW, 4);
     }
-    ctx.font = 'bold 10px monospace';
+    ctx.font = 'bold 9px monospace';
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.fillText('PWR', barX + barW/2, barY - 12);
 
-    // Health bars for both tanks
     players.forEach((pl, i) => {
         const healthBarX = i === 0 ? 10 : W - 110;
         const healthW = 100, healthH = 12;
@@ -594,7 +311,21 @@ function drawHUDOnCanvas() {
         ctx.fillText('P' + (i+1) + ': ' + Math.round(pl.health), healthBarX + 2, 20);
     });
 
-    // Control legend at bottom
+    // Weapon name banner (top center)
+    ctx.font = 'bold 12px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffd700';
+    ctx.shadowColor = '#ffd700';
+    ctx.shadowBlur = 8;
+    ctx.fillText(weapons[p.weapon].name.toUpperCase(), W/2, 22);
+    ctx.shadowBlur = 0;
+
+    // Wind readout (top right)
+    ctx.font = '9px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.textAlign = 'right';
+    ctx.fillText('WIND: ' + (wind > 0 ? '+' : '') + wind, W - 10, 32);
+
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(10, H - 65, 220, 60);
     ctx.strokeStyle = '#00ff88';
@@ -608,7 +339,6 @@ function drawHUDOnCanvas() {
     ctx.fillText('← → = ANGLE  ↑ ↓ = POWER', 18, H - 35);
     ctx.fillText('L = WEAPON  SPACE = FIRE', 18, H - 22);
 
-    // Movement limit indicator
     const moveBar = Math.min(100, (p.movementUsed / 120) * 100);
     ctx.fillStyle = 'rgba(255,255,255,0.2)';
     ctx.fillRect(W - 110, H - 40, 100, 8);
@@ -621,10 +351,30 @@ function drawHUDOnCanvas() {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'right';
     ctx.fillText('MOVE: ' + Math.round(p.movementUsed) + '/120', W - 115, H - 28);
+
+    // Pause / sound icons (top-right corner, pixel style)
+    ctx.font = '16px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(W - 74, H - 74, 28, 28);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(W - 74, H - 74, 28, 28);
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillText(document.getElementById('bgMusic').muted ? '🔇' : '🔊', W - 60, H - 55);
+    hitRegions.push({ x: W - 74, y: H - 74, w: 28, h: 28, action: 'sound' });
+
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(W - 40, H - 40, 28, 28);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.strokeRect(W - 40, H - 40, 28, 28);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('⏸', W - 26, H - 21);
+    hitRegions.push({ x: W - 40, y: H - 40, w: 28, h: 28, action: 'pause' });
 }
 
 function drawTrajectoryPreview() {
-    if (gameOver) return;
+    if (screen !== SCREEN.PLAYING) return;
     const p = players[turn];
     const rad = (p.angle * Math.PI) / 180;
     const speed = p.power * 0.15;
@@ -672,6 +422,7 @@ function drawPowerUps() {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('?', 0, 0);
+        ctx.textBaseline = 'alphabetic';
         ctx.restore();
     });
 }
@@ -761,6 +512,43 @@ function drawStars() {
     ctx.globalAlpha = 1;
 }
 
+/* ---------- TRANSIENT MESSAGES (canvas-drawn, replaces old HTML fade divs) ---------- */
+function showPowerUpMessage(name) {
+    powerMsg.text = '★ ' + name.toUpperCase() + ' ★';
+    powerMsg.life = 1.2;
+}
+
+function showTurnIndicator() {
+    turnMsg.text = 'PLAYER ' + (turn + 1);
+    turnMsg.color = players[turn].color;
+    turnMsg.life = 1.0;
+}
+
+function drawTransientMessages() {
+    if (powerMsg.life > 0) {
+        ctx.globalAlpha = Math.min(1, powerMsg.life);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '18px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 16;
+        ctx.fillText(powerMsg.text, W/2, H * 0.45);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+    }
+    if (turnMsg.life > 0) {
+        ctx.globalAlpha = Math.min(1, turnMsg.life * 1.5);
+        ctx.fillStyle = turnMsg.color;
+        ctx.font = '30px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = turnMsg.color;
+        ctx.shadowBlur = 20;
+        ctx.fillText(turnMsg.text, W/2, H * 0.38);
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+    }
+}
+
 function createExplosion(x, y, radius, color, count = 20) {
     explosions.push({ x, y, radius, color, life: 1.0 });
     for (let i = 0; i < count; i++) {
@@ -786,12 +574,10 @@ function deformTerrain(cx, cy, radius, type) {
         if (dist < radius) {
             const depth = Math.sqrt(radius * radius - dx * dx);
             if (type === 'dirt') {
-                // Dirt ball ADDS dirt on top (raises terrain)
-                terrain[x] -= depth * 0.6;  // Raises terrain (negative = up in game coords)
+                terrain[x] -= depth * 0.6;
                 terrain[x] = Math.max(GROUND_Y - 50, terrain[x]);
             } else {
-                // Normal explosion creates a crater (lowers terrain)
-                terrain[x] += depth;  // Lowers terrain
+                terrain[x] += depth;
                 terrain[x] = Math.min(GROUND_Y + 100, terrain[x]);
             }
         }
@@ -815,55 +601,41 @@ function checkHit(proj) {
     if (tx >= 0 && tx < W && proj.y >= terrain[tx]) {
         createExplosion(proj.x, proj.y, w.radius, w.color);
 
-        // Weapon-specific terrain effects
         if (w.type === 'dirt') {
-            // Dirt ball: BURY players (raise terrain above them)
             deformTerrain(proj.x, proj.y, w.radius, 'dirt');
-            // Also add dirt on top of players to trap them
             for (let x = Math.max(0, Math.floor(proj.x - w.radius)); x < Math.min(W, Math.floor(proj.x + w.radius)); x++) {
-                terrain[x] = Math.min(terrain[x] - 15, terrain[x]); // Raise terrain (negative = up)
+                terrain[x] = Math.min(terrain[x] - 15, terrain[x]);
             }
         } else if (w.type === 'nuke') {
-            // Nuke destroys massive area
             deformTerrain(proj.x, proj.y, w.radius * 1.3, 'explode');
         } else if (w.type === 'fire') {
-            // Napalm spreads fire (minimal terrain destruction, lasting damage)
             deformTerrain(proj.x, proj.y, w.radius * 0.8, 'explode');
         } else {
             deformTerrain(proj.x, proj.y, w.radius, 'explode');
         }
 
-        // Damage to players
-        let anyDamage = false;
         players.forEach((p, i) => {
             const dist = Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
             let dmg = 0;
 
             if (w.type === 'dirt') {
-                // Dirt ball: bury damage (minimal per shot, but persistent if stuck)
                 if (dist < w.radius) dmg = 3;
             } else if (w.type === 'nuke') {
-                // Nuke: massive damage with falloff
                 if (dist < w.radius * 1.3) dmg = w.damage * (1 - dist / (w.radius * 1.3));
             } else if (w.type === 'fire') {
-                // Napalm: moderate per shot, but lingers (will tick next round if target is in burn zone)
                 if (dist < w.radius + 20) dmg = w.damage * (1 - dist / (w.radius + 20));
             } else {
-                // Standard weapons: damage falls off with distance
                 if (dist < w.radius + 20) dmg = w.damage * (1 - dist / (w.radius + 20));
             }
 
             if (dmg > 0) {
                 const actualDmg = Math.max(3, dmg);
                 p.health = Math.max(0, p.health - actualDmg);
-                anyDamage = true;
 
-                // Instant visual feedback on the tank itself — hit flash + floating damage number
                 p.hitFlash = 1.0;
                 damageNumbers.push({ x: p.x, y: p.y - 20, value: Math.round(actualDmg), life: 1.0, color: '#ffffff' });
 
                 if (p.health <= 0) endGame(i === 0 ? 1 : 0);
-                // Push effect
                 const pushDist = Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
                 if (pushDist < w.radius) {
                     const pushStr = (w.radius - pushDist) / w.radius;
@@ -872,12 +644,7 @@ function checkHit(proj) {
             }
         });
 
-        // Sync the top HUD health bars the instant damage happens (previously only refreshed on turn change)
-        if (anyDamage) updateUI();
-
-        // Weapon-specific effects
         if (w.type === 'fire') {
-            // Napalm spreads fire in a wide arc
             for (let i = 0; i < 20; i++) {
                 const angle = (Math.random() - 0.5) * Math.PI;
                 const speed = 1 + Math.random() * 2;
@@ -893,23 +660,20 @@ function checkHit(proj) {
                 });
             }
         } else if (w.type === 'nuke') {
-            // Nuke creates massive MUSHROOM CLOUD effect
-            // Stem: upward spray
             for (let i = 0; i < 40; i++) {
-                const angle = (Math.random() - 0.5) * (Math.PI / 3); // narrow upward cone
+                const angle = (Math.random() - 0.5) * (Math.PI / 3);
                 const speed = 2 + Math.random() * 5;
                 particles.push({
                     x: proj.x,
                     y: proj.y,
                     vx: Math.cos(angle) * speed,
-                    vy: -Math.abs(Math.sin(angle) * speed) - 2, // force upward
+                    vy: -Math.abs(Math.sin(angle) * speed) - 2,
                     life: 1.5,
                     decay: 0.005,
                     color: '#666666',
                     size: 6 + Math.random() * 8
                 });
             }
-            // Cap: spreading top
             for (let i = 0; i < 30; i++) {
                 const angle = (Math.random() * Math.PI * 2);
                 const speed = 1 + Math.random() * 3;
@@ -935,7 +699,7 @@ function checkHit(proj) {
 }
 
 function fire() {
-    if (gameOver || !canFire || paused) return;
+    if (screen !== SCREEN.PLAYING || !canFire) return;
     canFire = false;
 
     const p = players[turn];
@@ -943,9 +707,8 @@ function fire() {
     const speed = p.power * 0.15;
     const w = weapons[p.weapon];
 
-    // Spread shot for Napalm (5 projectiles in arc)
     if (w.spread) {
-        const spreadAngle = 15; // degrees
+        const spreadAngle = 15;
         for (let i = -Math.floor(w.spread / 2); i <= Math.floor(w.spread / 2); i++) {
             const spreadRad = rad + (i * spreadAngle * Math.PI / 180);
             projectiles.push({
@@ -972,46 +735,74 @@ function fire() {
     }
 }
 
-let gameStarted = false;
-
-function showModeSelector() {
-    document.getElementById('gameModeOverlay').style.display = 'flex';
-    document.getElementById('instructionsOverlay').style.display = 'none';
-    document.getElementById('gameOver').style.display = 'none';
-}
-
-function hideModeSelector() {
-    document.getElementById('gameModeOverlay').style.display = 'none';
-}
-
+/* ---------- SCREEN TRANSITIONS ---------- */
 function startGameWithMode(mode) {
     gameMode = mode;
     isAIOpponent = (mode === 'pvc');
     isAITurn = false;
-    hideModeSelector();
-    document.getElementById('instructionsOverlay').style.display = 'flex';
+    screen = SCREEN.INSTRUCTIONS;
 }
 
 function startGame() {
-    gameStarted = true;
-    document.getElementById('instructionsOverlay').style.display = 'none';
+    screen = SCREEN.PLAYING;
     document.getElementById('bgMusic').play().catch(() => {});
 }
 
-function update() {
-    handleContinuousInput();
-    if (gameOver || paused) return;
+function togglePause() {
+    if (screen === SCREEN.PLAYING) {
+        screen = SCREEN.PAUSED;
+        pauseSelectIndex = 0;
+    } else if (screen === SCREEN.PAUSED) {
+        screen = SCREEN.PLAYING;
+    }
+}
 
-    // Apply gravity to players so they fall when ground disappears
+function endGame(w) {
+    winner = w;
+    screen = SCREEN.GAMEOVER;
+    isAITurn = false;
+    document.getElementById('bgMusic').pause();
+    document.getElementById('bgMusic').currentTime = 0;
+}
+
+function restartGame() {
+    canFire = true;
+    players[0].health = 100;
+    players[1].health = 100;
+    players[0].weapon = 0;
+    players[1].weapon = 0;
+    players[0].startX = players[0].x;
+    players[0].movementUsed = 0;
+    players[0].hitFlash = 0;
+    players[1].startX = players[1].x;
+    players[1].movementUsed = 0;
+    players[1].hitFlash = 0;
+    turn = 0;
+    projectiles = [];
+    particles = [];
+    explosions = [];
+    powerUps = [];
+    damageNumbers = [];
+    generateTerrain();
+    screen = SCREEN.MODE_SELECT;
+    modeSelectIndex = 0;
+}
+
+function update(dt) {
+    blink += dt;
+
+    handleContinuousInput();
+    if (screen !== SCREEN.PLAYING) return;
+
     for (let p of players) {
         if (!p.vy) p.vy = 0;
-        p.vy += 0.3; // gravity acceleration
+        p.vy += 0.3;
         const terrainY = terrain[Math.floor(p.x)] - TANK_H;
         if (p.y >= terrainY) {
             p.y = terrainY;
-            p.vy = 0; // stop falling when hit ground
+            p.vy = 0;
         } else {
-            p.y += p.vy; // apply gravity when in air
+            p.y += p.vy;
         }
     }
 
@@ -1019,7 +810,6 @@ function update() {
     if (windTimer > 300) {
         windTimer = 0;
         wind = Math.floor((Math.random() - 0.5) * 10);
-        updateUI();
     }
 
     if (Math.random() < 0.002 && powerUps.length < 3) {
@@ -1039,11 +829,6 @@ function update() {
         proj.trail.push({ x: proj.x, y: proj.y });
         if (proj.trail.length > 15) proj.trail.shift();
 
-        // FIX: despawn any projectile that leaves the play field, regardless of weapon
-        // type or bounce count. Previously a Bouncer that flew off-screen before its
-        // 3rd bounce was never removed (the offscreen check only ran once bounces>=3),
-        // so projectiles.length never reached 0 and the turn would never advance —
-        // the game would appear to freeze forever.
         if (proj.x < -20 || proj.x > W + 20 || proj.y > H + 20) {
             projectiles.splice(i, 1);
             continue;
@@ -1108,40 +893,18 @@ function update() {
             p.weapon = pu.type;
             powerUps.splice(i, 1);
             showPowerUpMessage(weapons[pu.type].name);
-            updateUI();
         }
     }
 
     if (cameraShake > 0) cameraShake *= 0.9;
     if (cameraShake < 0.1) cameraShake = 0;
-}
 
-function showPowerUpMessage(name) {
-    const el = document.getElementById('powerUpIndicator');
-    el.textContent = '★ ' + name + '!';
-    el.style.opacity = '1';
-    setTimeout(() => el.style.opacity = '0', 1500);
-}
-
-function showTurnIndicator() {
-    const el = document.getElementById('turnIndicator');
-    el.textContent = 'PLAYER ' + (turn + 1);
-    el.style.color = players[turn].color;
-    el.style.opacity = '1';
-    setTimeout(() => el.style.opacity = '0', 1200);
-}
-
-function updateUI() {
-    const p = players[turn];
-    document.getElementById('weaponName').textContent = weapons[p.weapon].name;
-    document.getElementById('p1Health').style.width = players[0].health + '%';
-    document.getElementById('p2Health').style.width = players[1].health + '%';
-    document.getElementById('windDisplay').textContent = 'Wind: ' + (wind > 0 ? '+' : '') + wind;
+    if (powerMsg.life > 0) powerMsg.life -= dt;
+    if (turnMsg.life > 0) turnMsg.life -= dt;
 }
 
 function nextTurn() {
     turn = 1 - turn;
-    // Reset movement for new turn
     const p = players[turn];
     p.startX = p.x;
     p.movementUsed = 0;
@@ -1150,10 +913,8 @@ function nextTurn() {
     if (Math.random() < 0.3) {
         players[turn].weapon = 0;
     }
-    updateUI();
     showTurnIndicator();
 
-    // AI turn if player 2 is AI
     if (isAIOpponent && turn === 1) {
         isAITurn = true;
         setTimeout(aiTakeTurn, 1500);
@@ -1163,19 +924,12 @@ function nextTurn() {
 }
 
 function aiTakeTurn() {
-    if (!isAIOpponent || turn !== 1 || gameOver) return;
+    if (!isAIOpponent || turn !== 1 || screen !== SCREEN.PLAYING) return;
     const p = players[1];
 
-    // Random angle toward opponent
-    const targetX = players[0].x;
-    const distX = targetX - p.x;
-    const baseAngle = Math.atan2(0, distX) * 180 / Math.PI;
     p.angle = Math.max(0, Math.min(180, 90 + (Math.random() - 0.5) * 40));
-
-    // Random power
     p.power = 30 + Math.random() * 50;
 
-    // Random movement
     if (Math.random() > 0.5) {
         const moveDir = Math.random() > 0.5 ? 1 : -1;
         const moveAmount = 20 + Math.random() * 40;
@@ -1183,50 +937,196 @@ function aiTakeTurn() {
         p.movementUsed = Math.abs(p.x - p.startX);
     }
 
-    // Fire
     setTimeout(() => {
-        if (!gameOver && turn === 1) {
+        if (screen === SCREEN.PLAYING && turn === 1) {
             fire();
         }
         isAITurn = false;
     }, 600 + Math.random() * 400);
 }
 
-function endGame(winner) {
-    gameOver = true;
-    isAITurn = false;
-    document.getElementById('bgMusic').pause();
-    document.getElementById('bgMusic').currentTime = 0;
-    document.getElementById('winnerText').textContent = 'PLAYER ' + (winner + 1) + ' WINS!';
-    document.getElementById('gameOver').style.display = 'flex';
+/* ---------- PIXEL-STYLE BUTTON HELPER (matches Block Smash aesthetic) ---------- */
+function drawPixelButton(x, y, w, h, label, color, selected, action) {
+    ctx.fillStyle = selected ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = selected ? 3 : 2;
+    ctx.strokeRect(x, y, w, h);
+    if (selected) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 14;
+        ctx.strokeRect(x, y, w, h);
+        ctx.shadowBlur = 0;
+    }
+    ctx.fillStyle = color;
+    let fontSize = Math.round(h * 0.24);
+    ctx.font = `${fontSize}px "Press Start 2P"`;
+    // shrink further if the label is too wide for the button (with padding)
+    const maxTextW = w - 24;
+    while (ctx.measureText(label).width > maxTextW && fontSize > 8) {
+        fontSize -= 1;
+        ctx.font = `${fontSize}px "Press Start 2P"`;
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + w/2, y + h/2);
+    ctx.textBaseline = 'alphabetic';
+    hitRegions.push({ x, y, w, h, action });
 }
 
-function restartGame() {
-    gameStarted = false;
-    gameOver = false;
-    paused = false;
-    canFire = true;
-    players[0].health = 100;
-    players[1].health = 100;
-    players[0].weapon = 0;
-    players[1].weapon = 0;
-    players[0].startX = players[0].x;
-    players[0].movementUsed = 0;
-    players[0].hitFlash = 0;
-    players[1].startX = players[1].x;
-    players[1].movementUsed = 0;
-    players[1].hitFlash = 0;
-    turn = 0;
-    projectiles = [];
-    particles = [];
-    explosions = [];
-    powerUps = [];
-    damageNumbers = [];
-    generateTerrain();
-    updateUI();
-    showModeSelector();
-    document.getElementById('pauseOverlay').style.display = 'none';
-    document.getElementById('pauseBtn').textContent = '⏸';
+function drawOverlay() {
+    hitRegions = [];
+
+    if (screen === SCREEN.MODE_SELECT) {
+        ctx.fillStyle = 'rgba(5,5,16,0.92)';
+        ctx.fillRect(0, 0, W, H);
+
+        for (let i = 0; i < 4; i++) {
+            const x = (W/5) * (i+0.5), y = H*0.2;
+            const pulse = 0.6 + Math.sin(blink*2+i)*0.3;
+            ctx.fillStyle = `rgba(255,102,0,${pulse*0.15})`;
+            ctx.fillRect(x-20*pulse, y-20*pulse, 40*pulse, 40*pulse);
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.round(H*0.075)}px "Press Start 2P"`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#ff6600';
+        ctx.shadowBlur = 20;
+        ctx.fillText('POCKET TANKS', W/2, H*0.22);
+        ctx.shadowBlur = 0;
+
+        ctx.font = `${Math.round(H*0.022)}px "Press Start 2P"`;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText('CHOOSE YOUR BATTLE', W/2, H*0.30);
+
+        const btnW = 300, btnH = 70, gap = 30;
+        const totalW = btnW * 2 + gap;
+        const startX = W/2 - totalW/2;
+        const btnY = H * 0.42;
+
+        drawPixelButton(startX, btnY, btnW, btnH, 'PLAYER VS PLAYER', '#00ff88', modeSelectIndex === 0, 'mode_pvp');
+        drawPixelButton(startX + btnW + gap, btnY, btnW, btnH, 'PLAYER VS CPU', '#ffd700', modeSelectIndex === 1, 'mode_pvc');
+
+        if (Math.sin(blink*3) > -0.3) {
+            ctx.fillStyle = '#00ff88';
+            ctx.font = `${Math.round(H*0.026)}px "Press Start 2P"`;
+            ctx.fillText('TAP OR PRESS A TO SELECT', W/2, H*0.62);
+        }
+
+        ctx.fillStyle = '#28e0e0';
+        ctx.font = `${Math.round(H*0.02)}px "Press Start 2P"`;
+        ctx.fillText('@foodspotmobile', W/2, H*0.94);
+    }
+
+    if (screen === SCREEN.INSTRUCTIONS) {
+        ctx.fillStyle = 'rgba(5,5,16,0.94)';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = '#ffd700';
+        ctx.font = `${Math.round(H*0.055)}px "Press Start 2P"`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 16;
+        ctx.fillText('POCKET TANKS', W/2, H*0.13);
+        ctx.shadowBlur = 0;
+
+        const controls = [
+            ['D-PAD', 'AIM ANGLE'],
+            ['A', 'FIRE'],
+            ['B', 'CHANGE WEAPON'],
+            ['L / R', 'MOVE LEFT/RIGHT'],
+            ['↑ / ↓', 'POWER'],
+            ['← / →', 'MOVE'],
+        ];
+
+        const gridW = 700, gridH = 260;
+        const cellW = gridW/2, cellH = gridH/3;
+        const gx = W/2 - gridW/2, gy = H*0.22;
+
+        controls.forEach((c, i) => {
+            const col = i % 2, row = Math.floor(i/2);
+            const x = gx + col*cellW, y = gy + row*cellH;
+            const pad = 10;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fillRect(x+pad, y+pad, cellW-pad*2, cellH-pad*2);
+            ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x+pad, y+pad, cellW-pad*2, cellH-pad*2);
+
+            ctx.fillStyle = '#ffd700';
+            ctx.font = `${Math.round(cellH*0.22)}px "Press Start 2P"`;
+            ctx.textAlign = 'center';
+            ctx.fillText(c[0], x+cellW/2, y+cellH*0.42);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = `${Math.round(cellH*0.14)}px "Press Start 2P"`;
+            ctx.fillText(c[1], x+cellW/2, y+cellH*0.68);
+        });
+
+        if (Math.sin(blink*4) > -0.3) {
+            ctx.fillStyle = '#00ff88';
+            ctx.font = `${Math.round(H*0.026)}px "Press Start 2P"`;
+            ctx.fillText('PRESS START OR A TO BEGIN', W/2, H*0.92);
+        }
+        hitRegions.push({ x: 0, y: 0, w: W, h: H, action: 'begin_game' });
+    }
+
+    if (screen === SCREEN.PAUSED) {
+        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${Math.round(H*0.075)}px "Press Start 2P"`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 14;
+        ctx.fillText('PAUSED', W/2, H*0.28);
+        ctx.shadowBlur = 0;
+
+        const btnW = 280, btnH = 56, gap = 18;
+        const startY = H*0.42;
+        drawPixelButton(W/2-btnW/2, startY, btnW, btnH, 'RESUME', '#00ff88', pauseSelectIndex===0, 'resume');
+        drawPixelButton(W/2-btnW/2, startY+btnH+gap, btnW, btnH, 'RESTART', '#ffd700', pauseSelectIndex===1, 'restart');
+        drawPixelButton(W/2-btnW/2, startY+(btnH+gap)*2, btnW, btnH, 'EXIT TO ARCADE', '#ff4444', pauseSelectIndex===2, 'exit');
+    }
+
+    if (screen === SCREEN.GAMEOVER) {
+        ctx.fillStyle = 'rgba(10,0,0,0.85)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = players[winner].color;
+        ctx.font = `${Math.round(H*0.07)}px "Press Start 2P"`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = players[winner].color;
+        ctx.shadowBlur = 20;
+        ctx.fillText('PLAYER ' + (winner+1) + ' WINS!', W/2, H*0.32);
+        ctx.shadowBlur = 0;
+
+        const btnW = 280, btnH = 60;
+        drawPixelButton(W/2-btnW/2, H*0.48, btnW, btnH, 'PLAY AGAIN', '#00ff88', true, 'restart_to_menu');
+
+        if (Math.sin(blink*3) > -0.3) {
+            ctx.fillStyle = '#28e0e0';
+            ctx.font = `${Math.round(H*0.022)}px "Press Start 2P"`;
+            ctx.fillText('TAP TO CONTINUE', W/2, H*0.65);
+        }
+
+        ctx.fillStyle = '#28e0e0';
+        ctx.font = `${Math.round(H*0.02)}px "Press Start 2P"`;
+        ctx.fillText('@foodspotmobile', W/2, H*0.94);
+    }
+}
+
+function handleOverlayAction(action) {
+    if (!action) return;
+    if (action === 'mode_pvp') startGameWithMode('pvp');
+    else if (action === 'mode_pvc') startGameWithMode('pvc');
+    else if (action === 'begin_game') startGame();
+    else if (action === 'resume') togglePause();
+    else if (action === 'restart') restartGame();
+    else if (action === 'exit') exitToArcade();
+    else if (action === 'restart_to_menu') restartGame();
+    else if (action === 'sound') toggleSound();
+    else if (action === 'pause') togglePause();
 }
 
 function draw() {
@@ -1243,22 +1143,30 @@ function draw() {
     drawPowerUps();
     players.forEach((p, i) => drawTank(p, i));
     drawTrajectoryPreview();
-    drawHUDOnCanvas();
+    if (screen === SCREEN.PLAYING) drawHUDOnCanvas();
     drawProjectiles();
     drawParticles();
     drawExplosions();
     drawDamageNumbers();
+    drawTransientMessages();
 
     ctx.restore();
+
+    drawOverlay();
 }
 
-function gameLoop() {
-    update();
+let last = null;
+function gameLoop(ts) {
+    if (!last) last = ts;
+    let dt = (ts - last) / 1000;
+    last = ts;
+    if (dt > 1/20) dt = 1/20;
+    update(dt);
     draw();
     requestAnimationFrame(gameLoop);
 }
 
-// Keyboard controls (desktop testing)
+/* ---------- INPUT ---------- */
 canvas.addEventListener('click', () => canvas.focus());
 canvas.tabIndex = 0;
 
@@ -1272,20 +1180,18 @@ document.addEventListener('keyup', e => {
     keys[e.key] = false;
 });
 
-// Continuous key-hold handling in game loop
 function handleContinuousInput() {
-    if (gameOver || isAITurn) return;
+    if (screen !== SCREEN.PLAYING || isAITurn) return;
     const p = players[turn];
 
-    const MAX_MOVEMENT = 120;  // Max pixels per turn
+    const MAX_MOVEMENT = 120;
     const moveAccel = 0.15;
     const moveMaxSpeed = 4;
     const moveFriction = 0.92;
 
-    // Check movement limit
     const currentMovement = Math.abs(p.x - p.startX);
     if (currentMovement >= MAX_MOVEMENT) {
-        p.vx *= 0.8;  // Slow down if at limit
+        p.vx *= 0.8;
     }
 
     if (keys['a'] === true || keys['A'] === true) {
@@ -1300,14 +1206,12 @@ function handleContinuousInput() {
         p.vx *= moveFriction;
     }
 
-    // Apply velocity to position with bounds
     const newX = p.x + p.vx;
     const clampedX = Math.max(30, Math.min(W - 30, newX));
-    if (clampedX !== newX) p.vx = 0; // don't let velocity "bank" against the wall
+    if (clampedX !== newX) p.vx = 0;
     p.x = clampedX;
     p.movementUsed = Math.abs(p.x - p.startX);
 
-    // Arrow keys for angle/power
     if (keys['ArrowLeft'] === true) {
         p.angle = Math.max(0, p.angle - 1.5);
     }
@@ -1315,7 +1219,6 @@ function handleContinuousInput() {
         p.angle = Math.min(180, p.angle + 1.5);
     }
 
-    // Up/Down arrows to charge power
     if (keys['ArrowUp'] === true) {
         p.power = Math.min(100, p.power + 0.8);
     }
@@ -1324,17 +1227,74 @@ function handleContinuousInput() {
     }
 }
 
-// Single-press actions
+/* ---------- CANVAS CLICK / TOUCH HIT-TESTING (menus, buttons) ---------- */
+function getCanvasPoint(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+function hitTest(px, py) {
+    for (const r of hitRegions) {
+        if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+            return r.action;
+        }
+    }
+    return null;
+}
+
+canvas.addEventListener('click', (e) => {
+    const pt = getCanvasPoint(e.clientX, e.clientY);
+    const action = hitTest(pt.x, pt.y);
+    handleOverlayAction(action);
+});
+
+canvas.addEventListener('touchstart', (e) => {
+    if (screen === SCREEN.PLAYING) return; // gameplay uses controller, not touch
+    e.preventDefault();
+    const t = e.touches[0];
+    const pt = getCanvasPoint(t.clientX, t.clientY);
+    const action = hitTest(pt.x, pt.y);
+    handleOverlayAction(action);
+}, { passive: false });
+
 document.addEventListener('keydown', e => {
-    // Start game on Enter or Space
-    if (!gameStarted && (e.key === ' ' || e.key === 'Enter')) {
-        e.preventDefault();
-        startGame();
+    if (screen === SCREEN.MODE_SELECT) {
+        if (e.key === 'ArrowLeft') modeSelectIndex = 0;
+        if (e.key === 'ArrowRight') modeSelectIndex = 1;
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            startGameWithMode(modeSelectIndex === 0 ? 'pvp' : 'pvc');
+        }
+        return;
+    }
+    if (screen === SCREEN.INSTRUCTIONS) {
+        if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            startGame();
+        }
+        return;
+    }
+    if (screen === SCREEN.GAMEOVER) {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'r' || e.key === 'R') {
+            restartGame();
+        }
+        return;
+    }
+    if (screen === SCREEN.PAUSED) {
+        if (e.key === 'ArrowUp') pauseSelectIndex = Math.max(0, pauseSelectIndex - 1);
+        if (e.key === 'ArrowDown') pauseSelectIndex = Math.min(2, pauseSelectIndex + 1);
+        if (e.key === ' ' || e.key === 'Enter') {
+            if (pauseSelectIndex === 0) togglePause();
+            else if (pauseSelectIndex === 1) restartGame();
+            else exitToArcade();
+        }
+        if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') togglePause();
         return;
     }
 
-    if (gameOver && e.key !== 'r' && e.key !== 'R') return;
-
+    // PLAYING
     if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         fire();
@@ -1347,23 +1307,16 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// ============================================
-// HikariBoy controller integration
-//
-// NOTE: the HikariBoy shell (src/components/HikariBoy/HikariBoy.jsx) only wires
-// press+release for the D-pad and A/B buttons — the L/R shoulder buttons only ever
-// send BUTTON_PRESS, never BUTTON_RELEASE (confirmed by live testing: holding the
-// on-screen R button and releasing it left the angle climbing forever). So continuous
-// axes (angle, power) live on the D-pad, which does support holding, and L/R become
-// single-tap "nudge" moves instead of continuous movement.
-//   dpad-left/right -> angle       (Arrow Left/Right, continuous hold)
-//   dpad-up/down     -> power      (Arrow Up/Down, continuous hold)
-//   l / r shoulders  -> move tank  (fixed-step nudge per tap — shoulders are press-only)
-//   a                -> fire
-//   b                -> cycle weapon
-//   start            -> pause
-//   select           -> handled by the HikariBoy shell itself (exits to menu)
-// ============================================
+/* ============================================
+   HikariBoy controller integration
+   dpad-left/right -> angle (PLAYING) / mode select (MODE_SELECT) / pause select (PAUSED)
+   dpad-up/down     -> power (PLAYING) / pause select (PAUSED)
+   l / r shoulders  -> move tank (fixed-step nudge per tap)
+   a                -> fire / confirm
+   b                -> cycle weapon
+   start            -> pause / confirm
+   select           -> handled by the HikariBoy shell itself (exits to menu)
+   ============================================ */
 const HIKARIBOY_HOLD_MAP = {
     'dpad-left':  'ArrowLeft',
     'dpad-right': 'ArrowRight',
@@ -1372,7 +1325,7 @@ const HIKARIBOY_HOLD_MAP = {
 };
 
 function nudgeMove(dir) {
-    if (gameOver || paused) return;
+    if (screen !== SCREEN.PLAYING) return;
     const p = players[turn];
     const NUDGE = 12;
     if (Math.abs(p.x - p.startX) >= 120) return;
@@ -1386,12 +1339,32 @@ window.addEventListener('message', (e) => {
     if (!button) return;
 
     if (type === 'BUTTON_PRESS') {
-        // Start game on A or START button
-        if (!gameStarted && (button === 'a' || button === 'start')) {
-            startGame();
+        if (screen === SCREEN.MODE_SELECT) {
+            if (button === 'dpad-left') modeSelectIndex = 0;
+            if (button === 'dpad-right') modeSelectIndex = 1;
+            if (button === 'a' || button === 'start') startGameWithMode(modeSelectIndex === 0 ? 'pvp' : 'pvc');
+            return;
+        }
+        if (screen === SCREEN.INSTRUCTIONS) {
+            if (button === 'a' || button === 'start') startGame();
+            return;
+        }
+        if (screen === SCREEN.GAMEOVER) {
+            if (button === 'a' || button === 'start') restartGame();
+            return;
+        }
+        if (screen === SCREEN.PAUSED) {
+            if (button === 'dpad-up') pauseSelectIndex = Math.max(0, pauseSelectIndex - 1);
+            if (button === 'dpad-down') pauseSelectIndex = Math.min(2, pauseSelectIndex + 1);
+            if (button === 'a' || button === 'start') {
+                if (pauseSelectIndex === 0) togglePause();
+                else if (pauseSelectIndex === 1) restartGame();
+                else exitToArcade();
+            }
             return;
         }
 
+        // PLAYING
         if (HIKARIBOY_HOLD_MAP[button]) {
             keys[HIKARIBOY_HOLD_MAP[button]] = true;
             return;
@@ -1408,25 +1381,20 @@ window.addEventListener('message', (e) => {
     }
 });
 
-// Tell the HikariBoy shell the game is ready (removes its loading overlay)
 window.addEventListener('load', () => {
     window.parent.postMessage({ type: 'GAME_LOADED' }, '*');
 });
 
-// Mode selector buttons
-document.getElementById('pvpBtn').addEventListener('click', () => {
-    startGameWithMode('pvp');
-});
-
-document.getElementById('pvcBtn').addEventListener('click', () => {
-    startGameWithMode('pvc');
-});
-
 generateTerrain();
-updateUI();
-showModeSelector();
 spawnPowerUp();
-gameLoop();
+
+if (document.fonts && document.fonts.load) {
+    document.fonts.load('16px "Press Start 2P"').finally(() => {
+        requestAnimationFrame(gameLoop);
+    });
+} else {
+    requestAnimationFrame(gameLoop);
+}
 </script>
 </body>
 </html>
