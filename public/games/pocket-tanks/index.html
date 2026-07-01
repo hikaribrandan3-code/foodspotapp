@@ -97,6 +97,60 @@ canvas {
     z-index: 10;
 }
 #pauseBtn:hover { background: rgba(255,255,255,0.2); }
+#instructionsOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(26, 26, 46, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    padding: 20px;
+}
+#instructionsOverlay h1 {
+    color: #ffd700;
+    font-size: 32px;
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px rgba(255,215,0,0.6);
+}
+#instructionsOverlay .controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 30px;
+}
+#instructionsOverlay .control-item {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    color: #fff;
+}
+#instructionsOverlay .control-item .key {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 5px;
+}
+#instructionsOverlay .control-item .action {
+    font-size: 12px;
+    opacity: 0.8;
+}
+#instructionsOverlay .start-prompt {
+    color: #00ff88;
+    font-size: 14px;
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
 #pauseOverlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -200,7 +254,38 @@ canvas {
     <div id="powerUpIndicator">★ POWER UP!</div>
     <div id="turnIndicator">PLAYER 1</div>
 
-    <div id="pauseOverlay">
+    <div id="instructionsOverlay">
+    <h1>⚔️ POCKET TANKS ⚔️</h1>
+    <div class="controls-grid">
+        <div class="control-item">
+            <div class="key">D-PAD</div>
+            <div class="action">Aim angle</div>
+        </div>
+        <div class="control-item">
+            <div class="key">A</div>
+            <div class="action">Fire</div>
+        </div>
+        <div class="control-item">
+            <div class="key">B</div>
+            <div class="action">Change weapon</div>
+        </div>
+        <div class="control-item">
+            <div class="key">L/R</div>
+            <div class="action">Fine nudge aim</div>
+        </div>
+        <div class="control-item">
+            <div class="key">↑/↓</div>
+            <div class="action">Power</div>
+        </div>
+        <div class="control-item">
+            <div class="key">←/→</div>
+            <div class="action">Move</div>
+        </div>
+    </div>
+    <div class="start-prompt">Press START or A to begin</div>
+</div>
+
+<div id="pauseOverlay">
         <div>PAUSED</div>
         <button onclick="togglePause()">Resume</button>
         <button onclick="restartGame()" style="margin-top:10px;background:#ff4444;color:#fff;">Restart</button>
@@ -803,9 +888,29 @@ function fire() {
     });
 }
 
+let gameStarted = false;
+
+function startGame() {
+    gameStarted = true;
+    document.getElementById('instructionsOverlay').style.display = 'none';
+}
+
 function update() {
     handleContinuousInput();
     if (gameOver || paused) return;
+
+    // Apply gravity to players so they fall when ground disappears
+    for (let p of players) {
+        if (!p.vy) p.vy = 0;
+        p.vy += 0.3; // gravity acceleration
+        const terrainY = terrain[Math.floor(p.x)] - TANK_H;
+        if (p.y >= terrainY) {
+            p.y = terrainY;
+            p.vy = 0; // stop falling when hit ground
+        } else {
+            p.y += p.vy; // apply gravity when in air
+        }
+    }
 
     windTimer++;
     if (windTimer > 300) {
@@ -1077,6 +1182,13 @@ function handleContinuousInput() {
 
 // Single-press actions
 document.addEventListener('keydown', e => {
+    // Start game on Enter or Space
+    if (!gameStarted && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault();
+        startGame();
+        return;
+    }
+
     if (gameOver && e.key !== 'r' && e.key !== 'R') return;
 
     if (e.key === ' ' || e.key === 'Enter') {
@@ -1130,6 +1242,12 @@ window.addEventListener('message', (e) => {
     if (!button) return;
 
     if (type === 'BUTTON_PRESS') {
+        // Start game on A or START button
+        if (!gameStarted && (button === 'a' || button === 'start')) {
+            startGame();
+            return;
+        }
+
         if (HIKARIBOY_HOLD_MAP[button]) {
             keys[HIKARIBOY_HOLD_MAP[button]] = true;
             return;
