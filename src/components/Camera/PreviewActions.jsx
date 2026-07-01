@@ -1,5 +1,6 @@
 import React from 'react';
 import confetti from 'canvas-confetti';
+import { useParams } from 'react-router-dom';
 import { useTenant } from '../../contexts/TenantContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
@@ -10,8 +11,9 @@ import { earnUGCPoints, getCustomerIdentifier } from '../../lib/loyaltyClient';
  * Renders inside the glassmorphism action bar (no self-positioning).
  * Updated: UGC share confirmation modal with center-screen notification.
  */
-export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
+export const PreviewActions = ({ capturedImg, capturedBlob, onDone, isOwner = false }) => {
     const { businessId } = useTenant();
+    const { tenantSlug } = useParams();
     const { t } = useLanguage();
     const [debugLogs, setDebugLogs] = React.useState([]);
     const [ugcPoints, setUgcPoints] = React.useState(null);
@@ -66,17 +68,24 @@ export const PreviewActions = ({ capturedImg, capturedBlob, onDone }) => {
     }, [shareFile, capturedBlob, capturedImg, addLog]);
 
     const awardUGCPoints = React.useCallback(() => {
+        // Owner's Building Camera is a testing/setup tool, not a customer reward
+        // flow — never award points here, regardless of order history on this device.
+        if (isOwner) return;
         if (!businessId) return;
         const identifier = getCustomerIdentifier(businessId);
         if (!identifier) return;
-        earnUGCPoints(identifier, businessId).then(({ earned, points }) => {
+        // Only a verified real order unlocks points — prevents anyone (owner or a
+        // visitor who never ordered) from farming points just by sharing a photo.
+        const orderId = tenantSlug ? localStorage.getItem(`fs_${tenantSlug}_last_order_id`) : null;
+        if (!orderId) return;
+        earnUGCPoints(identifier, businessId, orderId).then(({ earned, points }) => {
             const pts = (earned && points) ? points : 0;
             if (pts > 0) {
                 setUgcPoints(pts);
                 addLog(`UGC points earned: +${pts} pts`);
             }
         }).catch(() => {});
-    }, [businessId, addLog]);
+    }, [businessId, isOwner, tenantSlug, addLog]);
 
     // 🚀 SHARE TO SOCIALS
     const handleShare = React.useCallback(async (e) => {

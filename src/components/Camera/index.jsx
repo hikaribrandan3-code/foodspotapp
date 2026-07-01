@@ -168,6 +168,7 @@ function Camera({ neonContext = null, branding = null }) {
                     toolPosition={toolPosition}
                     neonContext={neonContext}
                     branding={branding}
+                    isOwner={isOwner}
                 />
             )}
 

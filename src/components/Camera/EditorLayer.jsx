@@ -15,7 +15,7 @@ import './EditorLayer.css'
  * + Persistent Close (X) with high z-index (keyboard-safe)
  * + Instagram-style text wrapping (~16-18 chars)
  */
-export default function EditorLayer({ imageData, onRetake, onDone, toolPosition, neonContext = null, branding = null }) {
+export default function EditorLayer({ imageData, onRetake, onDone, toolPosition, neonContext = null, branding = null, isOwner = false }) {
     const { tenantData, businessId } = useTenant()
     const businessName = tenantData?.business_name || 'FoodSpot'
 
@@ -814,6 +814,7 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                         setPreview(null)
                     }}
                     onComplete={onDone}
+                    isOwner={isOwner}
                 />
             )}
         </div>
