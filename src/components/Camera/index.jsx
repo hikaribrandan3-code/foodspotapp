@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext'
 import CameraLayer from './CameraLayer.jsx'
-import CameraLayerV18 from './CameraLayerV18.jsx'
 import EditorLayer from './EditorLayer.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
 import { useCamTechBroadcaster } from '../../hooks/useCamTech'
@@ -142,22 +141,15 @@ function Camera({ neonContext = null, branding = null }) {
             )}
 
             {mode === 'CAMERA' && (
-                isOwner ? (
-                    <CameraLayerV18
-                        onCapture={handleCapture}
-                        onClose={handleClose}
-                        locationLabel={businessName}
-                        pinBg={pinBg}
-                        pinText={pinText}
-                    />
-                ) : (
-                    <CameraLayer
-                        onCapture={handleCapture}
-                        onOpenSettings={handleOpenSettings}
-                        onClose={handleClose}
-                        toolPosition={toolPosition}
-                    />
-                )
+                <CameraLayer
+                    onCapture={handleCapture}
+                    onClose={handleClose}
+                    locationLabel={businessName}
+                    pinBg={pinBg}
+                    pinText={pinText}
+                    toolPosition={toolPosition}
+                    isOwner={isOwner}
+                />
             )}
 
             {mode === 'EDITOR' && capturedImage && (

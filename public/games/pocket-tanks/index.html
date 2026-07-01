@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Pocket Tanks - HTML5</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+html, body {
+    width: 100%;
+    height: 100%;
+    background: #1a1a2e;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+}
+#gameContainer {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 40%, #2d1b4e 100%);
+}
+@supports (padding: max(0px)) {
+    #gameContainer {
+        padding-top: max(0px, env(safe-area-inset-top));
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+    }
+}
+#ui {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+    color: #fff;
+    font-size: 14px;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+#ui .player-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+#ui .health-bar {
+    width: 100px;
+    height: 14px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #fff;
+    border-radius: 7px;
+    overflow: hidden;
+}
+#ui .health-fill { height: 100%; transition: width 0.3s; }
+#ui .p1-health { background: #00ff88; }
+#ui .p2-health { background: #ff4444; }
+#ui .weapon-name {
+    position: absolute;
+    left: 50%; top: 10px;
+    transform: translateX(-50%);
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255,215,0,0.6);
+}
+#windDisplay {
+    position: absolute;
+    right: 20px; top: 32px;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+}
+#pauseBtn {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+#pauseBtn:hover { background: rgba(255,255,255,0.2); }
+#pauseOverlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 36px;
+    font-weight: bold;
+    z-index: 20;
+}
+#pauseOverlay button {
+    margin-top: 20px;
+    padding: 12px 30px;
+    font-size: 18px;
+    font-family: inherit;
+    background: #00ff88;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    pointer-events: all;
+    font-weight: bold;
+}
+#pauseOverlay button:hover { background: #00cc6a; }
+#pauseOverlay button.exit-btn { background: #ff4444; color: #fff; }
+#pauseOverlay button.exit-btn:hover { background: #cc3333; }
+#powerUpIndicator {
+    position: absolute;
+    top: 45%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 30px rgba(255,215,0,0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+#turnIndicator {
+    position: absolute;
+    left: 50%; top: 40%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 40px rgba(255,215,0,0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+#gameOver {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 42px;
+    font-weight: bold;
+    z-index: 30;
+}
+#gameOver button {
+    margin-top: 20px;
+    padding: 12px 30px;
+    font-size: 18px;
+    font-family: inherit;
+    background: #00ff88;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    pointer-events: all;
+    font-weight: bold;
+}
+#gameOver button:hover { background: #00cc6a; }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+    <div id="ui">
+        <div class="player-info">
+            <span>P1</span>
+            <div class="health-bar"><div class="health-fill p1-health" id="p1Health" style="width:100%"></div></div>
+        </div>
+        <div class="weapon-name" id="weaponName">Standard Shell</div>
+        <div class="player-info">
+            <div class="health-bar"><div class="health-fill p2-health" id="p2Health" style="width:100%"></div></div>
+            <span>P2</span>
+        </div>
+    </div>
+    <div id="windDisplay">Wind: 0</div>
+    <button id="pauseBtn" onclick="togglePause()">⏸</button>
+
+    <div id="powerUpIndicator">★ POWER UP!</div>
+    <div id="turnIndicator">PLAYER 1</div>
+
+    <div id="pauseOverlay">
+        <div>PAUSED</div>
+        <button onclick="togglePause()">Resume</button>
+        <button onclick="restartGame()" style="margin-top:10px;background:#ff4444;color:#fff;">Restart</button>
+        <button class="exit-btn" onclick="exitToArcade()">Exit to Arcade</button>
+    </div>
+
+    <div id="gameOver">
+        <div id="winnerText"></div>
+        <button onclick="restartGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const W = 900, H = 550;
+const GROUND_Y = 430;
+const TANK_W = 28, TANK_H = 14;
+const GRAVITY = 0.25;
+
+let terrain = [];
+let particles = [];
+let projectiles = [];
+let powerUps = [];
+let explosions = [];
+let damageNumbers = [];
+let turn = 0;
+let gameOver = false;
+let paused = false;
+let wind = 0;
+let windTimer = 0;
+let cameraShake = 0;
+let canFire = true;
+
+const weapons = [
+    { name: 'Standard Shell', damage: 25, radius: 28, color: '#ff6600', type: 'normal' },
+    { name: 'Dirt Ball', damage: 5, radius: 22, color: '#8B4513', type: 'dirt' },
+    { name: 'Napalm', damage: 35, radius: 32, color: '#ff0000', type: 'fire' },
+    { name: 'Tracer', damage: 15, radius: 18, color: '#00ff00', type: 'bounce' },
+    { name: 'Nuke', damage: 55, radius: 55, color: '#ff00ff', type: 'nuke' },
+    { name: 'Bouncer', damage: 18, radius: 22, color: '#00ffff', type: 'bouncer' },
+];
+
+let players = [
+    { x: 100, y: 0, angle: 30, power: 50, health: 100, weapon: 0, color: '#00ff88', facing: 1, vx: 0, startX: 100, movementUsed: 0, hitFlash: 0 },
+    { x: 800, y: 0, angle: 150, power: 50, health: 100, weapon: 0, color: '#ff4444', facing: -1, vx: 0, startX: 800, movementUsed: 0, hitFlash: 0 }
+];
+
+function togglePause() {
+    paused = !paused;
+    document.getElementById('pauseOverlay').style.display = paused ? 'flex' : 'none';
+    document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸';
+}
+
+function exitToArcade() {
+    window.parent.postMessage({ type: 'GAME_EXIT' }, '*');
+}
+
+function cycleWeapon() {
+    const p = players[turn];
+    p.weapon = (p.weapon + 1) % weapons.length;
+    showPowerUpMessage(weapons[p.weapon].name);
+    updateUI();
+}
+
+function generateTerrain() {
+    terrain = [];
+    let y = GROUND_Y;
+    for (let x = 0; x < W; x++) {
+        y += (Math.random() - 0.5) * 7;
+        y = Math.max(320, Math.min(GROUND_Y + 50, y));
+        terrain.push(y);
+    }
+    for (let pass = 0; pass < 3; pass++) {
+        for (let x = 1; x < W - 1; x++) {
+            terrain[x] = (terrain[x-1] + terrain[x] + terrain[x+1]) / 3;
+        }
+    }
+    players[0].x = 70 + Math.random() * 130;
+    players[1].x = W - 200 + Math.random() * 130;
+    players.forEach(p => {
+        p.y = terrain[Math.floor(p.x)] - TANK_H;
+    });
+}
+
+function spawnPowerUp() {
+    const x = 80 + Math.random() * (W - 160);
+    const y = 40 + Math.random() * 180;
+    const type = Math.floor(Math.random() * weapons.length);
+    powerUps.push({ x, y, type, bob: 0 });
+}
+
+function drawTerrain() {
+    ctx.fillStyle = '#3d2914';
+    ctx.beginPath();
+    ctx.moveTo(0, H);
+    for (let x = 0; x < W; x++) {
+        ctx.lineTo(x, terrain[x]);
+    }
+    ctx.lineTo(W, H);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#4a7c2a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x < W; x += 3) {
+        ctx.moveTo(x, terrain[x]);
+        ctx.lineTo(x, terrain[x] - 3);
+    }
+    ctx.stroke();
+}
+
+function drawTank(p, i) {
+    const cx = p.x, cy = p.y + TANK_H/2;
+    const healthPct = p.health / 100;
+
+    ctx.fillStyle = p.color;
+    ctx.fillRect(cx - TANK_W/2, cy - TANK_H/2, TANK_W, TANK_H);
+
+    // Damage cracks - more visible as health decreases
+    if (healthPct < 0.9) {
+        ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+        ctx.lineWidth = 2.5;
+        const crackCount = Math.floor((1 - healthPct) * 8);
+        for (let i = 0; i < crackCount; i++) {
+            ctx.beginPath();
+            const sx = cx - TANK_W/2 + Math.random() * TANK_W;
+            const sy = cy - TANK_H/2 + Math.random() * TANK_H;
+            ctx.moveTo(sx, sy);
+            ctx.lineTo(sx + (Math.random() - 0.5) * 15, sy + (Math.random() - 0.5) * 15);
+            ctx.stroke();
+        }
+    }
+
+    // Scorch marks on damaged tanks
+    if (healthPct < 0.6) {
+        for (let i = 0; i < 5; i++) {
+            const intensity = 1 - healthPct;
+            ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * intensity) + ')';
+            const sx = cx - TANK_W/2 + Math.random() * TANK_W;
+            const sy = cy - TANK_H/2 + Math.random() * TANK_H;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 8 + Math.random() * 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Red flash when critical health
+    if (healthPct < 0.3) {
+        ctx.fillStyle = 'rgba(255,0,0,0.2)';
+        ctx.fillRect(cx - TANK_W/2, cy - TANK_H/2, TANK_W, TANK_H);
+    }
+
+    // Hit flash - bright white pulse fired the instant this tank takes damage
+    if (p.hitFlash > 0) {
+        ctx.fillStyle = 'rgba(255,255,255,' + (p.hitFlash * 0.85) + ')';
+        ctx.fillRect(cx - TANK_W/2 - 4, cy - TANK_H/2 - 4, TANK_W + 8, TANK_H + 8);
+    }
+
+    ctx.save();
+    ctx.translate(cx, cy - 3);
+    const turretAngle = p.facing === 1 ? (-p.angle * Math.PI / 180) : (Math.PI + p.angle * Math.PI / 180);
+    ctx.rotate(turretAngle);
+    ctx.fillStyle = '#888';
+    ctx.fillRect(0, -2, 22, 5);
+    ctx.fillStyle = '#666';
+    ctx.fillRect(18, -3, 5, 7);
+
+    // Crosshair at barrel tip
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 1.5;
+    const tipX = 22;
+    ctx.beginPath();
+    ctx.moveTo(tipX - 3, -1);
+    ctx.lineTo(tipX + 3, -1);
+    ctx.moveTo(tipX - 3, 1);
+    ctx.lineTo(tipX + 3, 1);
+    ctx.moveTo(tipX - 1, -3);
+    ctx.lineTo(tipX - 1, 3);
+    ctx.moveTo(tipX + 1, -3);
+    ctx.lineTo(tipX + 1, 3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(tipX, 0, 2, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.restore();
+
+    ctx.fillStyle = '#333';
+    for (let w = -10; w <= 10; w += 7) {
+        ctx.beginPath();
+        ctx.arc(cx + w, cy + TANK_H/2 + 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    if (turn === i && !gameOver) {
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(cx - TANK_W/2 - 3, cy - TANK_H/2 - 3, TANK_W + 6, TANK_H + 10);
+        ctx.setLineDash([]);
+    }
+}
+
+function drawHUDOnCanvas() {
+    const p = players[turn];
+
+    // Angle & Power near active tank
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(p.x - 60, p.y - 70, 120, 55);
+    ctx.strokeStyle = p.color;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x - 60, p.y - 70, 120, 55);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ANGLE: ' + Math.round(p.angle) + '°', p.x, p.y - 50);
+    ctx.fillText('POWER: ' + Math.round(p.power), p.x, p.y - 33);
+    ctx.font = '11px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('[← →] [↑ ↓]', p.x, p.y - 18);
+
+    // Pixelated power bar on right side
+    const barW = 30, barH = 150, barX = W - 45, barY = 60;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(barX - 5, barY - 5, barW + 10, barH + 10);
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(barX - 5, barY - 5, barW + 10, barH + 10);
+
+    // Power fill (pixelated effect)
+    const fillH = (p.power / 100) * barH;
+    const fillY = barY + barH - fillH;
+    for (let i = 0; i < fillH; i += 4) {
+        const hue = Math.floor((fillH - i) / fillH * 120);
+        ctx.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
+        ctx.fillRect(barX, fillY + i, barW, 4);
+    }
+    ctx.font = 'bold 10px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText('PWR', barX + barW/2, barY - 12);
+
+    // Health bars for both tanks
+    players.forEach((pl, i) => {
+        const healthBarX = i === 0 ? 10 : W - 110;
+        const healthW = 100, healthH = 12;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(healthBarX, 10, healthW, healthH);
+        ctx.strokeStyle = pl.color;
+        ctx.lineWidth = 1;
+        ctx.strokeRect(healthBarX, 10, healthW, healthH);
+
+        const healthPct = pl.health / 100;
+        const hue = healthPct > 0.5 ? 120 : healthPct > 0.25 ? 60 : 0;
+        ctx.fillStyle = 'hsl(' + hue + ', 100%, 50%)';
+        ctx.fillRect(healthBarX, 10, healthW * healthPct, healthH);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText('P' + (i+1) + ': ' + Math.round(pl.health), healthBarX + 2, 20);
+    });
+
+    // Control legend at bottom
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(10, H - 65, 220, 60);
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(10, H - 65, 220, 60);
+
+    ctx.fillStyle = '#00ff88';
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('A / D = MOVE', 18, H - 48);
+    ctx.fillText('← → = ANGLE  ↑ ↓ = POWER', 18, H - 35);
+    ctx.fillText('L = WEAPON  SPACE = FIRE', 18, H - 22);
+
+    // Movement limit indicator
+    const moveBar = Math.min(100, (p.movementUsed / 120) * 100);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(W - 110, H - 40, 100, 8);
+    ctx.fillStyle = moveBar > 80 ? '#ff4444' : moveBar > 50 ? '#ffff00' : '#00ff88';
+    ctx.fillRect(W - 110, H - 40, moveBar, 8);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(W - 110, H - 40, 100, 8);
+    ctx.font = '9px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'right';
+    ctx.fillText('MOVE: ' + Math.round(p.movementUsed) + '/120', W - 115, H - 28);
+}
+
+function drawTrajectoryPreview() {
+    if (gameOver) return;
+    const p = players[turn];
+    const rad = (p.angle * Math.PI) / 180;
+    const speed = p.power * 0.15;
+    const vx = Math.cos(rad) * speed * p.facing;
+    const vy = -Math.sin(rad) * speed;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.35)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    let px = p.x + Math.cos(rad) * 26 * p.facing;
+    let py = p.y - 3 - Math.sin(rad) * 26;
+    let tvx = vx, tvy = vy;
+    ctx.moveTo(px, py);
+    for (let step = 0; step < 50; step++) {
+        tvx += wind * 0.01;
+        tvy += GRAVITY;
+        px += tvx;
+        py += tvy;
+        if (px < 0 || px > W || py > H) break;
+        const tx = Math.floor(px);
+        if (tx >= 0 && tx < W && py >= terrain[tx]) break;
+        ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+}
+
+function drawPowerUps() {
+    powerUps.forEach(pu => {
+        const bob = Math.sin(Date.now() / 300) * 5;
+        ctx.save();
+        ctx.translate(pu.x, pu.y + bob);
+        ctx.shadowColor = weapons[pu.type].color;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#444';
+        ctx.fillRect(-10, -10, 20, 20);
+        ctx.strokeStyle = weapons[pu.type].color;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-10, -10, 20, 20);
+        ctx.fillStyle = weapons[pu.type].color;
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', 0, 0);
+        ctx.restore();
+    });
+}
+
+function drawProjectiles() {
+    projectiles.forEach(proj => {
+        ctx.save();
+        ctx.translate(proj.x, proj.y);
+        const w = weapons[proj.weaponIdx];
+        ctx.shadowColor = w.color;
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = w.color;
+
+        if (w.type === 'bouncer') {
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (w.type === 'nuke') {
+            ctx.beginPath();
+            ctx.arc(0, 0, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.globalAlpha = 0.3;
+        for (let i = 0; i < proj.trail.length; i++) {
+            const t = proj.trail[i];
+            ctx.fillStyle = w.color;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 2 - i * 0.08, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+    });
+}
+
+function drawParticles() {
+    particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+}
+
+function drawExplosions() {
+    explosions.forEach(ex => {
+        ctx.globalAlpha = ex.life;
+        ctx.fillStyle = ex.color;
+        ctx.beginPath();
+        ctx.arc(ex.x, ex.y, ex.radius * (1 - ex.life) * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    });
+}
+
+function drawDamageNumbers() {
+    damageNumbers.forEach(d => {
+        ctx.globalAlpha = d.life;
+        ctx.fillStyle = d.color;
+        ctx.font = 'bold 20px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('-' + d.value, d.x, d.y);
+        ctx.globalAlpha = 1;
+    });
+}
+
+function drawStars() {
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 60; i++) {
+        const x = (i * 137.5 + 50) % W;
+        const y = (i * 93.7 + 30) % (H - 180);
+        const twinkle = Math.sin(Date.now() / 1000 + i) * 0.5 + 0.5;
+        ctx.globalAlpha = twinkle * 0.8;
+        ctx.fillRect(x, y, 1.5, 1.5);
+    }
+    ctx.globalAlpha = 1;
+}
+
+function createExplosion(x, y, radius, color, count = 20) {
+    explosions.push({ x, y, radius, color, life: 1.0 });
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 2;
+        particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1.0,
+            decay: 0.02 + Math.random() * 0.02,
+            color,
+            size: Math.random() * 4 + 2
+        });
+    }
+    cameraShake = radius / 10;
+}
+
+function deformTerrain(cx, cy, radius, type) {
+    for (let x = Math.max(0, Math.floor(cx - radius)); x < Math.min(W, Math.ceil(cx + radius)); x++) {
+        const dx = x - cx;
+        const dist = Math.sqrt(dx * dx + 0);
+        if (dist < radius) {
+            const depth = Math.sqrt(radius * radius - dx * dx);
+            if (type === 'dirt') {
+                // Dirt ball ADDS dirt on top (raises terrain)
+                terrain[x] -= depth * 0.6;  // Raises terrain (negative = up in game coords)
+                terrain[x] = Math.max(GROUND_Y - 50, terrain[x]);
+            } else {
+                // Normal explosion creates a crater (lowers terrain)
+                terrain[x] += depth;  // Lowers terrain
+                terrain[x] = Math.min(GROUND_Y + 100, terrain[x]);
+            }
+        }
+    }
+
+    players.forEach(p => {
+        const tx = Math.floor(p.x);
+        if (tx >= 0 && tx < W) {
+            const groundY = terrain[tx] - TANK_H;
+            if (p.y < groundY) {
+                p.y += 3;
+                if (p.y > groundY) p.y = groundY;
+            }
+        }
+    });
+}
+
+function checkHit(proj) {
+    const w = weapons[proj.weaponIdx];
+    const tx = Math.floor(proj.x);
+    if (tx >= 0 && tx < W && proj.y >= terrain[tx]) {
+        createExplosion(proj.x, proj.y, w.radius, w.color);
+
+        // Weapon-specific terrain effects
+        if (w.type === 'dirt') {
+            deformTerrain(proj.x, proj.y, w.radius, 'dirt');
+        } else if (w.type === 'nuke') {
+            // Nuke destroys massive area
+            deformTerrain(proj.x, proj.y, w.radius * 1.3, 'explode');
+        } else if (w.type === 'fire') {
+            // Napalm spreads fire
+            deformTerrain(proj.x, proj.y, w.radius, 'explode');
+        } else {
+            deformTerrain(proj.x, proj.y, w.radius, 'explode');
+        }
+
+        // Damage to players
+        let anyDamage = false;
+        players.forEach((p, i) => {
+            const dist = Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
+            let dmg = 0;
+
+            if (w.type === 'dirt') {
+                // Dirt ball: minimal damage, just pushes
+                if (dist < w.radius) dmg = 3;
+            } else if (w.type === 'nuke') {
+                // Nuke: massive damage
+                if (dist < w.radius * 1.3) dmg = w.damage * (1 - dist / (w.radius * 1.3));
+            } else {
+                // Standard weapons: damage falls off with distance
+                if (dist < w.radius + 20) dmg = w.damage * (1 - dist / (w.radius + 20));
+            }
+
+            if (dmg > 0) {
+                const actualDmg = Math.max(3, dmg);
+                p.health = Math.max(0, p.health - actualDmg);
+                anyDamage = true;
+
+                // Instant visual feedback on the tank itself — hit flash + floating damage number
+                p.hitFlash = 1.0;
+                damageNumbers.push({ x: p.x, y: p.y - 20, value: Math.round(actualDmg), life: 1.0, color: '#ffffff' });
+
+                if (p.health <= 0) endGame(i === 0 ? 1 : 0);
+                // Push effect
+                const pushDist = Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
+                if (pushDist < w.radius) {
+                    const pushStr = (w.radius - pushDist) / w.radius;
+                    p.vx += Math.sign(p.x - proj.x) * pushStr * 2;
+                }
+            }
+        });
+
+        // Sync the top HUD health bars the instant damage happens (previously only refreshed on turn change)
+        if (anyDamage) updateUI();
+
+        // Weapon-specific effects
+        if (w.type === 'fire') {
+            // Napalm spreads fire in a wide arc
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.random() - 0.5) * Math.PI;
+                const speed = 1 + Math.random() * 2;
+                particles.push({
+                    x: proj.x,
+                    y: proj.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: -Math.sin(angle) * speed - 1,
+                    life: 1.0,
+                    decay: 0.008,
+                    color: Math.random() > 0.5 ? '#ff4400' : '#ffaa00',
+                    size: 3 + Math.random() * 3
+                });
+            }
+        } else if (w.type === 'nuke') {
+            // Nuke creates massive particle spray
+            for (let i = 0; i < 30; i++) {
+                const angle = (Math.random() * Math.PI * 2);
+                const speed = 2 + Math.random() * 4;
+                particles.push({
+                    x: proj.x,
+                    y: proj.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1.0,
+                    decay: 0.01,
+                    color: Math.random() > 0.6 ? '#ffff00' : '#ff6600',
+                    size: 4 + Math.random() * 5
+                });
+            }
+        }
+
+        return true;
+    }
+
+    if (proj.x < 0 || proj.x > W || proj.y > H) return true;
+
+    return false;
+}
+
+function fire() {
+    if (gameOver || !canFire || paused) return;
+    canFire = false;
+
+    const p = players[turn];
+    const rad = (p.angle * Math.PI) / 180;
+    const speed = p.power * 0.15;
+
+    projectiles.push({
+        x: p.x + Math.cos(rad) * 26 * p.facing,
+        y: p.y - 3 - Math.sin(rad) * 26,
+        vx: Math.cos(rad) * speed * p.facing,
+        vy: -Math.sin(rad) * speed,
+        weaponIdx: p.weapon,
+        trail: [],
+        bounces: 0
+    });
+}
+
+function update() {
+    handleContinuousInput();
+    if (gameOver || paused) return;
+
+    windTimer++;
+    if (windTimer > 300) {
+        windTimer = 0;
+        wind = Math.floor((Math.random() - 0.5) * 10);
+        updateUI();
+    }
+
+    if (Math.random() < 0.002 && powerUps.length < 3) {
+        spawnPowerUp();
+    }
+
+    let anyFlying = projectiles.length > 0;
+
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        const proj = projectiles[i];
+        const w = weapons[proj.weaponIdx];
+
+        proj.vx += wind * 0.01;
+        proj.vy += GRAVITY;
+        proj.x += proj.vx;
+        proj.y += proj.vy;
+        proj.trail.push({ x: proj.x, y: proj.y });
+        if (proj.trail.length > 15) proj.trail.shift();
+
+        // FIX: despawn any projectile that leaves the play field, regardless of weapon
+        // type or bounce count. Previously a Bouncer that flew off-screen before its
+        // 3rd bounce was never removed (the offscreen check only ran once bounces>=3),
+        // so projectiles.length never reached 0 and the turn would never advance —
+        // the game would appear to freeze forever.
+        if (proj.x < -20 || proj.x > W + 20 || proj.y > H + 20) {
+            projectiles.splice(i, 1);
+            continue;
+        }
+
+        if (w.type === 'bouncer' && proj.y >= terrain[Math.floor(proj.x)]) {
+            proj.bounces++;
+            if (proj.bounces < 3) {
+                proj.vy = -proj.vy * 0.7;
+                proj.y = terrain[Math.floor(proj.x)] - 2;
+            } else {
+                if (checkHit(proj)) {
+                    projectiles.splice(i, 1);
+                }
+            }
+        } else if (w.type !== 'bouncer') {
+            if (checkHit(proj)) {
+                projectiles.splice(i, 1);
+            }
+        }
+    }
+
+    if (anyFlying && projectiles.length === 0) {
+        setTimeout(() => {
+            nextTurn();
+            canFire = true;
+        }, 800);
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += GRAVITY * 0.3;
+        p.life -= p.decay;
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    for (let i = explosions.length - 1; i >= 0; i--) {
+        explosions[i].life -= 0.05;
+        if (explosions[i].life <= 0) explosions.splice(i, 1);
+    }
+
+    for (let i = damageNumbers.length - 1; i >= 0; i--) {
+        damageNumbers[i].y -= 0.6;
+        damageNumbers[i].life -= 0.02;
+        if (damageNumbers[i].life <= 0) damageNumbers.splice(i, 1);
+    }
+
+    players.forEach(p => {
+        if (p.hitFlash > 0) {
+            p.hitFlash *= 0.85;
+            if (p.hitFlash < 0.02) p.hitFlash = 0;
+        }
+    });
+
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+        const pu = powerUps[i];
+        const p = players[turn];
+        const dist = Math.sqrt((p.x - pu.x) ** 2 + (p.y - pu.y) ** 2);
+        if (dist < 30) {
+            p.weapon = pu.type;
+            powerUps.splice(i, 1);
+            showPowerUpMessage(weapons[pu.type].name);
+            updateUI();
+        }
+    }
+
+    if (cameraShake > 0) cameraShake *= 0.9;
+    if (cameraShake < 0.1) cameraShake = 0;
+}
+
+function showPowerUpMessage(name) {
+    const el = document.getElementById('powerUpIndicator');
+    el.textContent = '★ ' + name + '!';
+    el.style.opacity = '1';
+    setTimeout(() => el.style.opacity = '0', 1500);
+}
+
+function showTurnIndicator() {
+    const el = document.getElementById('turnIndicator');
+    el.textContent = 'PLAYER ' + (turn + 1);
+    el.style.color = players[turn].color;
+    el.style.opacity = '1';
+    setTimeout(() => el.style.opacity = '0', 1200);
+}
+
+function updateUI() {
+    const p = players[turn];
+    document.getElementById('weaponName').textContent = weapons[p.weapon].name;
+    document.getElementById('p1Health').style.width = players[0].health + '%';
+    document.getElementById('p2Health').style.width = players[1].health + '%';
+    document.getElementById('windDisplay').textContent = 'Wind: ' + (wind > 0 ? '+' : '') + wind;
+}
+
+function nextTurn() {
+    turn = 1 - turn;
+    // Reset movement for new turn
+    const p = players[turn];
+    p.startX = p.x;
+    p.movementUsed = 0;
+    p.vx = 0;
+
+    if (Math.random() < 0.3) {
+        players[turn].weapon = 0;
+    }
+    updateUI();
+    showTurnIndicator();
+}
+
+function endGame(winner) {
+    gameOver = true;
+    document.getElementById('winnerText').textContent = 'PLAYER ' + (winner + 1) + ' WINS!';
+    document.getElementById('gameOver').style.display = 'flex';
+}
+
+function restartGame() {
+    gameOver = false;
+    paused = false;
+    canFire = true;
+    players[0].health = 100;
+    players[1].health = 100;
+    players[0].weapon = 0;
+    players[1].weapon = 0;
+    players[0].startX = players[0].x;
+    players[0].movementUsed = 0;
+    players[0].hitFlash = 0;
+    players[1].startX = players[1].x;
+    players[1].movementUsed = 0;
+    players[1].hitFlash = 0;
+    turn = 0;
+    projectiles = [];
+    particles = [];
+    explosions = [];
+    powerUps = [];
+    damageNumbers = [];
+    generateTerrain();
+    updateUI();
+    showTurnIndicator();
+    document.getElementById('gameOver').style.display = 'none';
+    document.getElementById('pauseOverlay').style.display = 'none';
+    document.getElementById('pauseBtn').textContent = '⏸';
+}
+
+function draw() {
+    ctx.save();
+
+    if (cameraShake > 0) {
+        ctx.translate((Math.random() - 0.5) * cameraShake * 2, (Math.random() - 0.5) * cameraShake * 2);
+    }
+
+    ctx.clearRect(0, 0, W, H);
+
+    drawStars();
+    drawTerrain();
+    drawPowerUps();
+    players.forEach((p, i) => drawTank(p, i));
+    drawTrajectoryPreview();
+    drawHUDOnCanvas();
+    drawProjectiles();
+    drawParticles();
+    drawExplosions();
+    drawDamageNumbers();
+
+    ctx.restore();
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Keyboard controls (desktop testing)
+canvas.addEventListener('click', () => canvas.focus());
+canvas.tabIndex = 0;
+
+const keys = {};
+
+document.addEventListener('keydown', e => {
+    keys[e.key] = true;
+});
+
+document.addEventListener('keyup', e => {
+    keys[e.key] = false;
+});
+
+// Continuous key-hold handling in game loop
+function handleContinuousInput() {
+    if (gameOver) return;
+    const p = players[turn];
+
+    const MAX_MOVEMENT = 120;  // Max pixels per turn
+    const moveAccel = 0.15;
+    const moveMaxSpeed = 4;
+    const moveFriction = 0.92;
+
+    // Check movement limit
+    const currentMovement = Math.abs(p.x - p.startX);
+    if (currentMovement >= MAX_MOVEMENT) {
+        p.vx *= 0.8;  // Slow down if at limit
+    }
+
+    if (keys['a'] === true || keys['A'] === true) {
+        if (currentMovement < MAX_MOVEMENT) {
+            p.vx = Math.max(-moveMaxSpeed, p.vx - moveAccel);
+        }
+    } else if (keys['d'] === true || keys['D'] === true) {
+        if (currentMovement < MAX_MOVEMENT) {
+            p.vx = Math.min(moveMaxSpeed, p.vx + moveAccel);
+        }
+    } else {
+        p.vx *= moveFriction;
+    }
+
+    // Apply velocity to position with bounds
+    const newX = p.x + p.vx;
+    const clampedX = Math.max(30, Math.min(W - 30, newX));
+    if (clampedX !== newX) p.vx = 0; // don't let velocity "bank" against the wall
+    p.x = clampedX;
+    p.movementUsed = Math.abs(p.x - p.startX);
+
+    // Arrow keys for angle/power
+    if (keys['ArrowLeft'] === true) {
+        p.angle = Math.max(0, p.angle - 1.5);
+    }
+    if (keys['ArrowRight'] === true) {
+        p.angle = Math.min(180, p.angle + 1.5);
+    }
+
+    // Up/Down arrows to charge power
+    if (keys['ArrowUp'] === true) {
+        p.power = Math.min(100, p.power + 0.8);
+    }
+    if (keys['ArrowDown'] === true) {
+        p.power = Math.max(10, p.power - 0.8);
+    }
+}
+
+// Single-press actions
+document.addEventListener('keydown', e => {
+    if (gameOver && e.key !== 'r' && e.key !== 'R') return;
+
+    if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        fire();
+    }
+    if (e.key === 'l' || e.key === 'L') {
+        cycleWeapon();
+    }
+    if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+        togglePause();
+    }
+});
+
+// ============================================
+// HikariBoy controller integration
+//
+// NOTE: the HikariBoy shell (src/components/HikariBoy/HikariBoy.jsx) only wires
+// press+release for the D-pad and A/B buttons — the L/R shoulder buttons only ever
+// send BUTTON_PRESS, never BUTTON_RELEASE (confirmed by live testing: holding the
+// on-screen R button and releasing it left the angle climbing forever). So continuous
+// axes (angle, power) live on the D-pad, which does support holding, and L/R become
+// single-tap "nudge" moves instead of continuous movement.
+//   dpad-left/right -> angle       (Arrow Left/Right, continuous hold)
+//   dpad-up/down     -> power      (Arrow Up/Down, continuous hold)
+//   l / r shoulders  -> move tank  (fixed-step nudge per tap — shoulders are press-only)
+//   a                -> fire
+//   b                -> cycle weapon
+//   start            -> pause
+//   select           -> handled by the HikariBoy shell itself (exits to menu)
+// ============================================
+const HIKARIBOY_HOLD_MAP = {
+    'dpad-left':  'ArrowLeft',
+    'dpad-right': 'ArrowRight',
+    'dpad-up':    'ArrowUp',
+    'dpad-down':  'ArrowDown',
+};
+
+function nudgeMove(dir) {
+    if (gameOver || paused) return;
+    const p = players[turn];
+    const NUDGE = 12;
+    if (Math.abs(p.x - p.startX) >= 120) return;
+    p.x = Math.max(30, Math.min(W - 30, p.x + dir * NUDGE));
+    p.movementUsed = Math.abs(p.x - p.startX);
+}
+
+window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    const { type, button } = data;
+    if (!button) return;
+
+    if (type === 'BUTTON_PRESS') {
+        if (HIKARIBOY_HOLD_MAP[button]) {
+            keys[HIKARIBOY_HOLD_MAP[button]] = true;
+            return;
+        }
+        if (button === 'a') { fire(); return; }
+        if (button === 'b') { cycleWeapon(); return; }
+        if (button === 'l') { nudgeMove(-1); return; }
+        if (button === 'r') { nudgeMove(1); return; }
+        if (button === 'start') { togglePause(); return; }
+    } else if (type === 'BUTTON_RELEASE') {
+        if (HIKARIBOY_HOLD_MAP[button]) {
+            keys[HIKARIBOY_HOLD_MAP[button]] = false;
+        }
+    }
+});
+
+// Tell the HikariBoy shell the game is ready (removes its loading overlay)
+window.addEventListener('load', () => {
+    window.parent.postMessage({ type: 'GAME_LOADED' }, '*');
+});
+
+generateTerrain();
+updateUI();
+showTurnIndicator();
+spawnPowerUp();
+gameLoop();
+</script>
+</body>
+</html>

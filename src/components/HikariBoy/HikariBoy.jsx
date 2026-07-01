@@ -42,6 +42,7 @@ const GAMES = [
   { id: 'pool',           name: 'Munchboy Billiards',  cover: '/games/pool/cover.png',              url: '/games/pool/index.html',             proOnly: false, shellPause: false },
   { id: 'golden-crust',   name: 'Golden Crust',       cover: '/games/bakery-timer/assets/game-chip.png', url: '/games/bakery-timer/index.html',     proOnly: false },
   { id: 'brick-breaker',  name: 'Block Smash',        cover: '/games/brick-breaker/cover.png',      url: '/games/brick-breaker/index.html',    proOnly: false, shellPause: false },
+  { id: 'pocket-tanks',   name: 'Pocket Tanks',       cover: '/games/pocket-tanks/cover.png',       url: '/games/pocket-tanks/index.html',     proOnly: false },
 ];
 
 export function HikariBoy({
