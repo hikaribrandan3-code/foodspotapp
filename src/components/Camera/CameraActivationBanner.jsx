@@ -16,6 +16,13 @@ const UGC_TRANSFORMS = {
   pizza:  'translate(91,119) scale(0.65)',
 };
 
+// Bubble top positioning per character (accounts for visual top variance)
+const BUBBLE_TOP_OFFSETS = {
+  cupcake: '-90px', cookie: '-92px', coffee: '-88px', donut: '-95px',
+  mintcupcake: '-90px', icecream: '-87px', avocado: '-93px', strawberry: '-91px',
+  lollipop: '-86px', burger: '-89px', taco: '-88px', pizza: '-90px', ramen: '-92px',
+};
+
 // Body paths for the 13-character roster, matching the owner-backend CharacterPreview module.
 const KawaiiBody = ({ id }) => {
   switch (id) {
@@ -400,7 +407,7 @@ export default function CameraActivationBanner({
         <div className="banner-donut-wrapper">
           <div className="donut-entry">
             {/* Speech bubble ABOVE character */}
-            <div className={`speech-bubble ${bubbleColor === 'blue' ? 'bubble-blue' : ''}`}>{speechText}</div>
+            <div className={`speech-bubble ${bubbleColor === 'blue' ? 'bubble-blue' : ''}`} style={{ top: BUBBLE_TOP_OFFSETS[character] || '-85px' }}>{speechText}</div>
 
             {renderCharacter()}
 
