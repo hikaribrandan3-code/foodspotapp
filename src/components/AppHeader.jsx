@@ -154,7 +154,7 @@ function AppHeader({ config: configProp, isHomePage = false }) {
             }}>
                 {logo ? (
                     <img
-                        src={getOptimizedImageUrl(logo, { width: 200, quality: 80 })}
+                        src={getOptimizedImageUrl(logo, { width: 120, quality: 80 })}
                         alt={businessName}
                         style={{
                             height: 48,

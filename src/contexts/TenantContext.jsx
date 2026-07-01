@@ -21,14 +21,15 @@ import { setTenantStoragePrefix } from '../utils/storage.js'
 const prefetchImages = (urls) => {
     if (!urls || urls.length === 0) return
     
-    // Use requestIdleCallback for low-priority fetching, fallback to setTimeout
-    const schedulePrefetch = window.requestIdleCallback || ((cb) => setTimeout(cb, 1))
+    // Use requestAnimationFrame so prefetch starts right after paint, not after the browser goes idle
+    const schedulePrefetch = window.requestAnimationFrame || ((cb) => setTimeout(cb, 1))
     
     schedulePrefetch(() => {
-        urls.forEach(url => {
+        urls.forEach((url, index) => {
             if (!url || url.startsWith('blob:')) return
             const img = new Image()
-            img.fetchPriority = 'low'
+            // Logo is always first in the list — it renders in the header immediately, so it gets high priority
+            img.fetchPriority = index === 0 ? 'high' : 'low'
             img.decoding = 'async'
             img.src = url
         })
@@ -39,16 +40,22 @@ const prefetchImages = (urls) => {
 // 🛡️ MOBILE-CONSTRAINED: Only hero + top 5 featured items (prevents network saturation)
 const extractPrefetchUrls = (brandingData) => {
     const urls = []
-    
-    // 1. Hero/Banner image (PRIORITY)
+
+    // 1. Logo (HIGHEST PRIORITY — renders in header on every page, was the load bottleneck)
+    const logo = brandingData?.logoLight || brandingData?.logoDark || brandingData?.logo
+    if (logo) {
+        urls.push(logo)
+    }
+
+    // 2. Hero/Banner image
     if (brandingData?.hero_url) {
         urls.push(brandingData.hero_url)
     }
-    
-    // 2. Top 5 featured menu items ONLY (no category items to prevent mobile network saturation)
+
+    // 3. Top 5 featured menu items ONLY (no category items to prevent mobile network saturation)
     // 🗑️ featuredPhotos system removed — no prefetching needed
 
-    return urls.slice(0, 3) // Max 3 images (hero + menu items)
+    return urls.slice(0, 3) // Max 3 images (logo + hero + menu items)
 }
 
 // Context Definition
