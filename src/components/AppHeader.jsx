@@ -18,18 +18,7 @@
  */
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
-
-// 🚀 IMAGE OPTIMIZATION: Reduce logo/cover load time
-const getOptimizedImageUrl = (url, options = {}) => {
-    if (!url || url.startsWith('blob:')) return url
-    if (url.includes('unsplash.com')) {
-        return url.includes('?') ? url : `${url}?w=600&q=80&fit=crop`
-    }
-    if (url.includes('width=') || url.includes('quality=')) return url
-    const { width = 200, quality = 80, format = 'webp' } = options
-    const separator = url.includes('?') ? '&' : '?'
-    return `${url}${separator}width=${width}&quality=${quality}&format=${format}`
-}
+import { getOptimizedImageUrl } from '../utils/imageUrl.js'
 
 function getBreakpoint() {
     if (typeof window === 'undefined') return 'mobile'
