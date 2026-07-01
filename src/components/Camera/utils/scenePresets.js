@@ -34,7 +34,7 @@ export const CAPTURE_FILTERS = [
   { id: 'sabroso',  label: 'Sabroso',  grade: { saturate: 1.30, contrast: 1.08 } },
   { id: 'dorado',   label: 'Dorado',   grade: { brightness: 1.06, saturate: 1.20, sepia: 0.28 } },
   { id: 'fresco',   label: 'Fresco',   grade: { brightness: 1.04, saturate: 1.12 } },
-  { id: 'mono',     label: 'Mono',     grade: { saturate: 0 } },
+  { id: 'mono',     label: 'Mono',     grade: { grayscale: 1, contrast: 1.1 } },
 ];
 
 const FILTER_BY_ID = Object.fromEntries(CAPTURE_FILTERS.map((f) => [f.id, f]));
@@ -55,6 +55,7 @@ function gradeToCss(g) {
   const parts = [];
   if (g.brightness && g.brightness !== 1) parts.push(`brightness(${g.brightness})`);
   if (g.contrast && g.contrast !== 1) parts.push(`contrast(${g.contrast})`);
+  if (g.grayscale) parts.push(`grayscale(${g.grayscale})`);
   if (g.saturate && g.saturate !== 1) parts.push(`saturate(${g.saturate})`);
   if (g.sepia) parts.push(`sepia(${g.sepia})`);
   return parts.join(' ');
@@ -74,9 +75,10 @@ function applyGrade(data, g) {
   if (!g) return;
   const b = g.brightness ?? 1;
   const c = g.contrast ?? 1;
+  const gray = g.grayscale ?? 0;
   const s = g.saturate ?? 1;
   const sep = g.sepia ?? 0;
-  if (b === 1 && c === 1 && s === 1 && sep === 0) return;
+  if (b === 1 && c === 1 && gray === 0 && s === 1 && sep === 0) return;
 
   const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : v);
   for (let i = 0; i < data.length; i += 4) {
@@ -88,6 +90,13 @@ function applyGrade(data, g) {
     if (b !== 1) { r *= b; gr *= b; bl *= b; }
     // contrast ( (v-128)*c+128 — matches CSS contrast() )
     if (c !== 1) { r = (r - 128) * c + 128; gr = (gr - 128) * c + 128; bl = (bl - 128) * c + 128; }
+    // grayscale (blend toward Rec.709 luma — matches CSS grayscale() )
+    if (gray > 0) {
+      const luma = r * 0.2126 + gr * 0.7152 + bl * 0.0722;
+      r = luma + (r - luma) * (1 - gray);
+      gr = luma + (gr - luma) * (1 - gray);
+      bl = luma + (bl - luma) * (1 - gray);
+    }
     // saturate (blend toward Rec.709 luma — matches CSS saturate() )
     if (s !== 1) {
       const luma = r * 0.2126 + gr * 0.7152 + bl * 0.0722;
