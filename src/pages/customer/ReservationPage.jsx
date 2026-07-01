@@ -211,8 +211,8 @@ export default function ReservationPage() {
                 {/* Mode tabs */}
                 <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
                     {[
-                        { id: 'table', label: t('res_tab_table'), icon: 'plate' },
-                        { id: 'custom', label: t('res_tab_custom'), icon: 'cake' }
+                        { id: 'table', label: t('res_tab_table') },
+                        { id: 'custom', label: t('res_tab_custom') }
                     ].map(tab => (
                         <button key={tab.id} onClick={() => { setMode(tab.id); setStep(1); setError(null) }}
                             style={{
@@ -220,9 +220,9 @@ export default function ReservationPage() {
                                 background: mode === tab.id ? primary : '#f0f0f0',
                                 color: mode === tab.id ? '#fff' : '#6B7280',
                                 fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                                transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                transition: 'all 0.15s'
                             }}>
-                            <ReservationIcon name={tab.icon} size={16} color={mode === tab.id ? '#fff' : '#6B7280'} /> {tab.label}
+                            {tab.label}
                         </button>
                     ))}
                 </div>
