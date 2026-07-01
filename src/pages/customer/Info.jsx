@@ -559,4 +559,4 @@ const Info = ({ config }) => {
     );
 };
 
-export default Info;
+export default Info; // v1
