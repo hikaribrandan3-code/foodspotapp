@@ -81,6 +81,7 @@ let canFire = true;
 let gameMode = null; // 'pvp' or 'pvc'
 let isAIOpponent = false;
 let isAITurn = false;
+let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard'
 
 // transient canvas-drawn message overlays (replaces the old HTML fade divs)
 let turnMsg = { life: 0, text: '', color: '#ffd700' };
@@ -907,23 +908,74 @@ function nextTurn() {
 function aiTakeTurn() {
     if (!isAIOpponent || turn !== 1 || screen !== SCREEN.PLAYING) return;
     const p = players[1];
+    const target = players[0];
 
-    p.angle = Math.max(0, Math.min(180, 90 + (Math.random() - 0.5) * 40));
-    p.power = 30 + Math.random() * 50;
+    // Calculate distance and height difference
+    const distX = target.x - p.x;
+    const distY = target.y - p.y;
+    const distance = Math.sqrt(distX * distX + distY * distY);
 
-    if (Math.random() > 0.5) {
-        const moveDir = Math.random() > 0.5 ? 1 : -1;
-        const moveAmount = 20 + Math.random() * 40;
+    // Estimate required angle to hit target (basic ballistic calc)
+    const baseAngle = Math.atan2(-distY, Math.abs(distX)) * 180 / Math.PI;
+
+    if (aiDifficulty === 'easy') {
+        // Easy: mostly random with occasional targeting
+        if (Math.random() < 0.3) {
+            // 30% chance to aim vaguely at target
+            p.angle = Math.max(0, Math.min(180, baseAngle + (Math.random() - 0.5) * 60));
+            p.power = 40 + Math.random() * 40;
+        } else {
+            // 70% random
+            p.angle = Math.max(0, Math.min(180, 90 + (Math.random() - 0.5) * 50));
+            p.power = 25 + Math.random() * 55;
+        }
+    } else if (aiDifficulty === 'medium') {
+        // Medium: decent targeting with wind compensation
+        const windFactor = wind * 0.05;
+        p.angle = Math.max(0, Math.min(180, baseAngle + windFactor + (Math.random() - 0.5) * 20));
+        p.power = Math.max(30, Math.min(100, distance * 0.35 + (Math.random() - 0.5) * 20));
+    } else if (aiDifficulty === 'hard') {
+        // Hard: accurate targeting with trajectory prediction
+        const windFactor = wind * 0.08;
+        const heightBonus = Math.max(0, distY) * 0.1;
+        p.angle = Math.max(0, Math.min(180, baseAngle + windFactor + heightBonus + (Math.random() - 0.5) * 8));
+        p.power = Math.max(35, Math.min(100, distance * 0.4 + heightBonus * 2));
+    }
+
+    // Movement (avoid being too predictable)
+    if (aiDifficulty === 'easy') {
+        if (Math.random() > 0.6) {
+            const moveDir = distX > 0 ? 1 : -1;
+            const moveAmount = 15 + Math.random() * 35;
+            p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
+            p.movementUsed = Math.abs(p.x - p.startX);
+        }
+    } else if (aiDifficulty === 'medium') {
+        if (Math.random() > 0.4) {
+            const moveDir = distX > 0 ? 1 : -1;
+            const moveAmount = 20 + Math.random() * 40;
+            p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
+            p.movementUsed = Math.abs(p.x - p.startX);
+        }
+    } else {
+        // Hard: always move strategically
+        const moveDir = distX > 0 ? 1 : -1;
+        const moveAmount = 30 + Math.random() * 50;
         p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
         p.movementUsed = Math.abs(p.x - p.startX);
     }
+
+    // Fire with slight delay
+    const delay = aiDifficulty === 'easy' ? 800 + Math.random() * 600 :
+                  aiDifficulty === 'medium' ? 600 + Math.random() * 300 :
+                  400 + Math.random() * 200;
 
     setTimeout(() => {
         if (screen === SCREEN.PLAYING && turn === 1) {
             fire();
         }
         isAITurn = false;
-    }, 600 + Math.random() * 400);
+    }, delay);
 }
 
 /* ---------- PIXEL-STYLE BUTTON HELPER (matches Block Smash aesthetic) ---------- */
