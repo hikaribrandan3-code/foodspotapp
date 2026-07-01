@@ -208,7 +208,7 @@ const Info = ({ config }) => {
             display: 'flex',
             flexDirection: 'column',
             padding: 0,
-            paddingBottom: 'calc(24px + env(safe-area-inset-bottom))',
+            paddingBottom: 'calc(44px + env(safe-area-inset-bottom))',
             background: 'white',
             minHeight: '100vh',
             textAlign: 'center',
