@@ -21,8 +21,10 @@ import {
 } from './utils/scenePresets.js';
 
 const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
-// w/h ratios (portrait frames)
+// w/h ratios (portrait frames) — rotated to their landscape equivalent at capture time
 const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 };
+// Label shown when the device is held in landscape (mirrors the rotated ratio)
+const LANDSCAPE_LABEL = { '9:16': '16:9', '4:3': '4:3', '1:1': '1:1' };
 const ZOOM_STOPS   = [0.5, 1, 2, 5, 10];
 const STABILIZE_AT = 4;
 const TIMER_OPTS   = [null, 3, 5, 7];
@@ -108,6 +110,16 @@ export default function CameraLayer({
     gimbalEnabled, toggleGimbal,
     statusMessage,
   } = useCamera();
+
+  // Track landscape vs portrait — same matchMedia approach as the customer
+  // CameraLayer.jsx, so the capture crop can rotate with the device.
+  const [isLandscape, setIsLandscape] = useState(() => window.innerWidth > window.innerHeight);
+  useEffect(() => {
+    const mq = window.matchMedia('(orientation: landscape)');
+    const handler = (e) => setIsLandscape(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const [aspect,        setAspect]        = useState('9:16');
   const [filterId,      setFilterId]      = useState('original');
@@ -267,7 +279,10 @@ export default function CameraLayer({
 
     const sw  = v.videoWidth;
     const sh  = v.videoHeight;
-    const targetRatio = ASPECT_RATIO[aspect] || 9 / 16;
+    const baseRatio = ASPECT_RATIO[aspect] || 9 / 16;
+    // In landscape, rotate the selected shape (9:16 -> 16:9, 4:3 -> 4:3 wide).
+    // 1:1 stays square either way.
+    const targetRatio = isLandscape ? 1 / baseRatio : baseRatio;
     const srcRatio    = sw / sh;
 
     let cropW, cropH;
@@ -324,7 +339,7 @@ export default function CameraLayer({
       aspectRatio: cropW / cropH,
       meta: { scene: nicheMode, filter: filterId, aspect, zoom: zoomLevel, facing: facingMode, ts: Date.now() },
     };
-  }, [aspect, nicheMode, filterId, facingMode, zoomLevel]); // eslint-disable-line
+  }, [aspect, isLandscape, nicheMode, filterId, facingMode, zoomLevel]); // eslint-disable-line
 
   // Keep captureRef always current so timer callback uses latest version
   useEffect(() => { captureRef.current = captureFromVideo; }, [captureFromVideo]);
@@ -537,7 +552,7 @@ export default function CameraLayer({
 
       {/* ── RIGHT RAIL: aspect · flip · flash · timer ─────────────────────── */}
       <div className="fsc-toolbar">
-        <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} aria-label="Formato">{aspect}</button>
+        <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} aria-label="Formato">{isLandscape ? LANDSCAPE_LABEL[aspect] || aspect : aspect}</button>
         <button className="fsc-tool" onClick={flipCamera} aria-label="Girar">{FLIP_ICON}</button>
         <button
           className={`fsc-tool ${flashMode !== 'off' ? 'is-on' : ''}`}

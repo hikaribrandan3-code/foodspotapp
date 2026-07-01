@@ -48,8 +48,6 @@ const SWITCHING_ZONE_HIGH = 1.3
 const OIS_SETTLING_MS = 50
 const ZOOM_DEADBAND = 0.02
 
-const ASPECT_RATIO_16_9 = 1.777777778
-
 // ═══════════════════════════════════════════════════════════════════════
 // NICHE PHYSICS CONSTANTS (GHOST WAKE)
 // ═══════════════════════════════════════════════════════════════════════
@@ -254,7 +252,10 @@ export function useCamera() {
     function buildConstraints(mode) {
         const constraints = {
             video: {
-                aspectRatio: { exact: ASPECT_RATIO_16_9 },
+                // No aspectRatio lock — sensor runs at its native ratio and we crop
+                // to the target shape in software (captureFromVideo), same as the
+                // customer camera. Locking this to 16:9 was why landscape shots
+                // never came out wide: the hardware feed itself was pinned.
                 facingMode: { exact: mode },
                 width: { ideal: 3840, min: 1920 },
                 height: { ideal: 2160, min: 1080 },
