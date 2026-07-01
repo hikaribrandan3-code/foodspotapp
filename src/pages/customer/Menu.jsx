@@ -270,7 +270,7 @@ export default function Menu({ config: configProp }) {
             try {
                 // PRIMARY: Always fetch fresh relational data to match backend MenuManager
                 const [{ data: items, error: itemsError }, { data: categories, error: catError }] = await Promise.all([
-                    supabase.from('menu_items').select('*').eq('business_id', businessId).order('display_order', { ascending: true }).limit(200),
+                    supabase.from('menu_items').select('id, name, price, image_url, image, category_id, category, available, description, calories, is_vegan, is_gluten_free, is_spicy, featured, display_order, sort_order').eq('business_id', businessId).order('display_order', { ascending: true }).limit(200),
                     supabase.from('categories').select('id, name, sort_order').eq('business_id', businessId).order('sort_order', { ascending: true, nullsFirst: false })
                 ])
 
