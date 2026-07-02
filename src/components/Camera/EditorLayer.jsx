@@ -134,6 +134,9 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
     const [isDrawMode, setIsDrawMode] = useState(false)
     const [strokes, setStrokes] = useState([])
 
+    // Polaroid mode state
+    const [polaroidMode, setPolaroidMode] = useState(false)
+
     // Export state
     const [isExporting, setIsExporting] = useState(false)
 
@@ -552,20 +555,34 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                 onClick={handleCanvasTap}
                 style={{
                     ...(!!preview ? { pointerEvents: 'none' } : {}),
-                    aspectRatio: '9/16',
+                    aspectRatio: polaroidMode ? '1/1.25' : '9/16',
                     width: '100%',
                     maxWidth: '100vw',
-                    maxHeight: 'calc(100vw * 16/9)',
+                    maxHeight: polaroidMode ? 'calc(100vw * 1.25)' : 'calc(100vw * 16/9)',
                     margin: 'auto',
                     overflow: 'hidden',
-                    position: 'relative'
+                    position: 'relative',
+                    background: polaroidMode ? '#ffffff' : 'transparent',
+                    padding: polaroidMode ? '0 0 calc(100vw * 0.25) 0' : '0',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
                 }}
             >
                 {/* Layer 1: Base Canvas - Frozen Frame */}
                 <canvas
                     ref={baseCanvasRef}
                     className="base-canvas"
-                    style={{ borderRadius: `${photoCornerRadius}px`, overflow: 'hidden' }}
+                    style={{
+                        borderRadius: `${photoCornerRadius}px`,
+                        overflow: 'hidden',
+                        ...(polaroidMode ? {
+                            width: '100%',
+                            aspectRatio: '1/1',
+                            objectFit: 'cover'
+                        } : {})
+                    }}
                 />
 
                 {/* Layer 2: Draw Tool - Canvas overlay */}
@@ -718,6 +735,34 @@ export default function EditorLayer({ imageData, onRetake, onDone, toolPosition,
                             <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 0 0-1.41 0L9 12.25 11.75 15l8.96-8.96a.996.996 0 0 0 0-1.41z" />
                         </svg>
                     </button>
+
+                    {/* Polaroid */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setPolaroidMode(!polaroidMode)
+                        }}
+                        aria-label="Polaroid Mode"
+                        style={{
+                            width: '44px',
+                            height: '44px',
+                            background: polaroidMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.15)',
+                            border: '2px solid ' + (polaroidMode ? 'rgba(255, 255, 255, 0.6)' : 'transparent'),
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            color: '#fff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            touchAction: 'manipulation',
+                            pointerEvents: 'auto',
+                            position: 'relative',
+                            zIndex: 800,
+                            fontSize: '20px',
+                            transition: 'all 0.2s ease'
+                        }}
+                        title="Polaroid"
+                    >📷</button>
 
                     {/* Retake */}
                     <button
