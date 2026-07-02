@@ -132,7 +132,6 @@ serve(async (req: Request) => {
         const { error: secretsError } = await supabase
             .from("branding_secrets")
             .upsert({
-                id: data.id,
                 business_id: state,
                 mp_user_id: mp_user_id?.toString() || null,
                 mp_access_token: access_token,
