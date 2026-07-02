@@ -480,6 +480,23 @@ export function useCamera() {
                     currentZoomRef.current = hwZoom
                     setZoomLevel(hwZoom)
                 }
+
+                // CONTINUOUS MODE LOCK: no-op on iOS (Safari ignores unsupported
+                // modes), decisive on Android — without this, one tap-to-focus
+                // call permanently freezes AF/AE on Chrome for Android.
+                const continuousAdvanced = []
+                if (capabilities.focusMode?.includes('continuous')) {
+                    continuousAdvanced.push({ focusMode: 'continuous' })
+                }
+                if (capabilities.exposureMode?.includes('continuous')) {
+                    continuousAdvanced.push({ exposureMode: 'continuous' })
+                }
+                if (capabilities.whiteBalanceMode?.includes('continuous')) {
+                    continuousAdvanced.push({ whiteBalanceMode: 'continuous' })
+                }
+                if (continuousAdvanced.length) {
+                    videoTrack.applyConstraints({ advanced: continuousAdvanced }).catch(() => {})
+                }
             }
 
             lastFacingModeRef.current = facingMode
@@ -741,6 +758,8 @@ export function useCamera() {
                 setIsReady(false)
                 setStatusMessage('STANDBY')
                 setCalibrationProgress(0)
+            } else if (!document.hidden && !streamRef.current) {
+                initCamera()
             }
         }
         document.addEventListener('visibilitychange', handleVisibility)
@@ -748,7 +767,7 @@ export function useCamera() {
             document.removeEventListener('visibilitychange', handleVisibility)
             if (zoomTimeoutRef.current) clearTimeout(zoomTimeoutRef.current)
         }
-    }, [])
+    }, [initCamera])
 
     useEffect(function mountIgnition() {
         initCamera()
