@@ -223,8 +223,8 @@ export default function CameraLayer({
         const tx = Math.max(-MAX_PX, Math.min(MAX_PX, -smX * 0.4));
         const ty = Math.max(-MAX_PX, Math.min(MAX_PX,  smY * 0.4));
         el.style.transform = mirrorBase
-          ? `scaleX(-1) translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(1.04)`
-          : `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(1.04)`;
+          ? `scaleX(-1) translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`
+          : `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px)`;
       }
       raf = requestAnimationFrame(loop);
     };
