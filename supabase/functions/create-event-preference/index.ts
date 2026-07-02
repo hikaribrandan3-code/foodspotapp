@@ -172,7 +172,7 @@ serve(async (req: Request) => {
         // ── 6. Fetch branding (needed by both free events and MP flow) ──
         const { data: branding, error: brandingError } = await supabase
             .from('branding')
-            .select("business_name, slug, app_config")
+            .select("mp_access_token, business_name, slug, app_config")
             .eq("business_id", event.business_id)
             .single();
 
@@ -209,20 +209,14 @@ serve(async (req: Request) => {
             );
         }
 
-        const { data: secret, error: secretError } = await supabase
-            .from('branding_secrets')
-            .select("mp_access_token")
-            .eq("business_id", event.business_id)
-            .single();
-
-        if (brandingError || secretError || !secret?.mp_access_token) {
+        if (brandingError || !branding?.mp_access_token) {
             return new Response(
                 JSON.stringify({ error: "mp_not_configured" }),
                 { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        const accessToken = secret.mp_access_token;
+        const accessToken = branding.mp_access_token;
         const businessName = branding.business_name || "FoodSpot";
         const externalReference = `${event.business_id}:${order.id}`;
 

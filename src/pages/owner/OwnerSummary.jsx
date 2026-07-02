@@ -600,25 +600,21 @@ function OwnerSummary() {
         }
     }, [appConfig?.externalOrdering?.googleReviewUrl])
 
-    // Sync MP Token + User ID from server on first load.
-    // Fetched via an ownership-checked RPC (not the public `branding` row) —
-    // the raw token never travels through TenantContext's anon-readable select.
+    // Sync MP Token from server on first load
     useEffect(() => {
-        const mpPrimaryLocationId = ownerLocations.length > 0 ? ownerLocations[0].id : businessId
-        if (mpTokenInitialized.current || !mpPrimaryLocationId) return
-        mpTokenInitialized.current = true
-        mpUserIdInitialized.current = true
-        supabase.rpc('get_mp_credentials', { p_business_id: mpPrimaryLocationId })
-            .then(({ data, error }) => {
-                if (error) {
-                    console.error('Failed to load MP credentials:', error)
-                    return
-                }
-                const row = Array.isArray(data) ? data[0] : data
-                setMpTokenInput(row?.mp_access_token || '')
-                setMpUserIdInput(row?.mp_user_id || '')
-            })
-    }, [ownerLocations, businessId])
+        if (!mpTokenInitialized.current && tenantData?.mp_access_token !== undefined) {
+            setMpTokenInput(tenantData.mp_access_token || '')
+            mpTokenInitialized.current = true
+        }
+    }, [tenantData?.mp_access_token])
+
+    // Sync MP User ID from server on first load
+    useEffect(() => {
+        if (!mpUserIdInitialized.current && tenantData?.mp_user_id !== undefined) {
+            setMpUserIdInput(tenantData.mp_user_id || '')
+            mpUserIdInitialized.current = true
+        }
+    }, [tenantData?.mp_user_id])
 
     const updatePayments = (updates) => {
         if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
@@ -717,10 +713,7 @@ function OwnerSummary() {
     const saveMpToken = async () => {
         setMpTokenSaving(true)
         setMpTokenSaved(false)
-        const { error } = await supabase.rpc('set_mp_credentials', {
-            p_business_id: primaryLocationId,
-            p_access_token: mpTokenInput,
-        })
+        const { error } = await supabase.from('branding').update({ mp_access_token: mpTokenInput }).eq('business_id', primaryLocationId)
         if (error) {
             console.error('Failed to save MP token:', error)
             alert('Error al guardar token MP: ' + error.message)
@@ -734,10 +727,7 @@ function OwnerSummary() {
     const saveMpUserId = async () => {
         setMpUserIdSaving(true)
         setMpUserIdSaved(false)
-        const { error } = await supabase.rpc('set_mp_credentials', {
-            p_business_id: primaryLocationId,
-            p_user_id: mpUserIdInput,
-        })
+        const { error } = await supabase.from('branding').update({ mp_user_id: mpUserIdInput }).eq('business_id', primaryLocationId)
         if (error) {
             console.error('Failed to save MP User ID:', error)
             alert('Error al guardar MP User ID: ' + error.message)

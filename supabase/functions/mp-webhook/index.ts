@@ -209,8 +209,23 @@ serve(async (req: Request) => {
             }
         }
 
+        // FALLBACK: Try branding table by mp_user_id (legacy / single-tenant setups)
+        if (!accessToken && mpUserId) {
+            const { data: branding, error: brandingError } = await supabase
+                .from("branding")
+                .select("mp_access_token, business_id")
+                .eq("mp_user_id", mpUserId)
+                .single();
+
+            if (!brandingError && branding?.mp_access_token) {
+                accessToken = branding.mp_access_token;
+                businessId = branding.business_id;
+                console.log(`🏢 Tenant from branding (fallback): Business: ${businessId}`);
+            }
+        }
+
         if (!accessToken) {
-            console.error(`❌ No MP access token found in branding_secrets (mp_user_id=${mpUserId}).`);
+            console.error(`❌ No MP access token found. Checked branding_secrets (mp_user_id=${mpUserId}) and branding fallback.`);
             return new Response(JSON.stringify({ error: "No access token found" }), { status: 404, headers: corsHeaders });
         }
 
