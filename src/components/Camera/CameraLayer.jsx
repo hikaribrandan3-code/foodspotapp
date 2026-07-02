@@ -497,7 +497,7 @@ export default function CameraLayer({
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="fsc-root" data-aspect={aspect}>
+    <div className="fsc-root" data-aspect={aspect} data-polaroid={filterId === 'polaroid' ? 'on' : 'off'}>
       <style>{styles}</style>
 
       {/* ── VIEWFINDER ────────────────────────────────────────────────────── */}
@@ -663,6 +663,22 @@ const styles = `
   border-radius: 18px;
 }
 .fsc-video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
+
+/* ── polaroid mode: 1:1 square with white frame below ── */
+.fsc-root[data-polaroid="on"] {
+  background: #fff;
+}
+.fsc-root[data-polaroid="on"] .fsc-frame {
+  width:  min(100vw, calc(100dvh * 0.8));
+  height: min(100vw, calc(100dvh * 0.8));
+  border-radius: 0;
+  background: #000;
+  margin: auto auto calc(100dvh * 0.1) auto;
+}
+.fsc-root[data-polaroid="on"] .fsc-toolbar,
+.fsc-root[data-polaroid="on"] .fsc-bottom {
+  display: none;
+}
 
 /* ── reticle ── */
 .fsc-reticle {
