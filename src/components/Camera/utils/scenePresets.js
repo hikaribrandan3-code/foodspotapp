@@ -35,7 +35,6 @@ export const CAPTURE_FILTERS = [
   { id: 'dorado',   label: 'Dorado',   grade: { brightness: 1.06, saturate: 1.20, sepia: 0.28 } },
   { id: 'fresco',   label: 'Fresco',   grade: { brightness: 1.04, saturate: 1.12 } },
   { id: 'mono',     label: 'Mono',     grade: { grayscale: 1, contrast: 1.1 } },
-  { id: 'polaroid', label: 'Polaroid', grade: {} },
 ];
 
 const FILTER_BY_ID = Object.fromEntries(CAPTURE_FILTERS.map((f) => [f.id, f]));
