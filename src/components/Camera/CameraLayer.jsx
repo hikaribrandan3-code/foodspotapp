@@ -134,7 +134,6 @@ export default function CameraLayer({
   const [reticle,       setReticle]       = useState(null);
   const [screenFlash,   setScreenFlash]   = useState(false);
   const [shutterPulse,  setShutterPulse]  = useState(false);
-  const [polaroidMode,  setPolaroidMode]  = useState(false);
 
   const frameRef         = useRef(null);
   const lastUrlRef       = useRef(null);
@@ -498,7 +497,7 @@ export default function CameraLayer({
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="fsc-root" data-aspect={aspect} data-polaroid={polaroidMode ? 'on' : 'off'}>
+    <div className="fsc-root" data-aspect={aspect}>
       <style>{styles}</style>
 
       {/* ── VIEWFINDER ────────────────────────────────────────────────────── */}
@@ -553,7 +552,7 @@ export default function CameraLayer({
         )}
       </div>
 
-      {/* ── RIGHT RAIL: aspect · flip · flash · timer · polaroid ─────────────────────── */}
+      {/* ── RIGHT RAIL: aspect · flip · flash · timer ─────────────────────── */}
       <div className="fsc-toolbar">
         <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} aria-label="Formato">{isLandscape ? LANDSCAPE_LABEL[aspect] || aspect : aspect}</button>
         <button className="fsc-tool" onClick={flipCamera} aria-label="Girar">{FLIP_ICON}</button>
@@ -575,14 +574,6 @@ export default function CameraLayer({
             {TIMER_ICON}
             {timerSec !== null && <span className="fsc-timerbadge">{timerSec}s</span>}
           </span>
-        </button>
-        {/* polaroid: 1:1 square with white frame */}
-        <button
-          className={`fsc-tool ${polaroidMode ? 'is-on' : ''}`}
-          onClick={() => setPolaroidMode(!polaroidMode)}
-          aria-label="Polaroid"
-        >
-          📷
         </button>
       </div>
 
@@ -671,27 +662,6 @@ const styles = `
   height: min(100vw, 100dvh);
   border-radius: 18px;
 }
-
-/* ── polaroid mode: 1:1 square with white frame below ── */
-.fsc-root[data-polaroid="on"] {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-}
-.fsc-root[data-polaroid="on"] .fsc-frame {
-  width:  min(100vw, calc(100dvh * 0.8));
-  height: min(100vw, calc(100dvh * 0.8));
-  border-radius: 0;
-  background: #000;
-  margin: 0 auto;
-  margin-bottom: calc(100dvh * 0.1);
-}
-.fsc-root[data-polaroid="on"] .fsc-toolbar,
-.fsc-root[data-polaroid="on"] .fsc-bottom {
-  display: none;
-}
-
 .fsc-video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
 
 /* ── reticle ── */
