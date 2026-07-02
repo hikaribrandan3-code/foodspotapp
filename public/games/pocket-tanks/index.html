@@ -54,6 +54,71 @@ canvas {
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+/* ---------- SYNTHESIZED SFX ENGINE (WebAudio, no external files) ---------- */
+const SFX = (function() {
+    let actx = null;
+    function ac() {
+        if (!actx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            actx = new AC();
+        }
+        if (actx.state === 'suspended') actx.resume().catch(() => {});
+        return actx;
+    }
+    function noiseBuffer(c, dur) {
+        const buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        return buf;
+    }
+    function tone(freq, dur, type, gainAmt, freqEnd) {
+        try {
+            const c = ac();
+            const osc = c.createOscillator();
+            const gain = c.createGain();
+            osc.type = type || 'sine';
+            osc.frequency.setValueAtTime(freq, c.currentTime);
+            if (freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), c.currentTime + dur);
+            gain.gain.setValueAtTime(gainAmt || 0.2, c.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+            osc.connect(gain).connect(c.destination);
+            osc.start();
+            osc.stop(c.currentTime + dur);
+        } catch (e) {}
+    }
+    function burst(dur, gainAmt, filterFreq) {
+        try {
+            const c = ac();
+            const src = c.createBufferSource();
+            src.buffer = noiseBuffer(c, dur);
+            const filt = c.createBiquadFilter();
+            filt.type = 'lowpass';
+            filt.frequency.setValueAtTime(filterFreq || 800, c.currentTime);
+            filt.frequency.exponentialRampToValueAtTime(60, c.currentTime + dur);
+            const gain = c.createGain();
+            gain.gain.setValueAtTime(gainAmt || 0.3, c.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+            src.connect(filt).connect(gain).connect(c.destination);
+            src.start();
+        } catch (e) {}
+    }
+    return {
+        unlock() { ac(); },
+        fire() { tone(180, 0.12, 'sawtooth', 0.15, 60); burst(0.08, 0.12, 1200); },
+        explosion(radius) {
+            const size = Math.min(1.6, Math.max(0.4, radius / 35));
+            burst(0.5 * size, 0.35 * size, 500);
+            tone(90 / size, 0.4 * size, 'sine', 0.2, 30);
+        },
+        dirtThud() { burst(0.3, 0.22, 300); tone(70, 0.2, 'sine', 0.15, 40); },
+        hit() { tone(320, 0.1, 'square', 0.12, 120); },
+        switch() { tone(500, 0.06, 'triangle', 0.12, 700); },
+        turn() { tone(440, 0.1, 'sine', 0.1, 660); setTimeout(() => tone(660, 0.12, 'sine', 0.1), 90); },
+        click() { tone(600, 0.05, 'square', 0.1, 800); },
+        win() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => tone(f, 0.25, 'triangle', 0.12), i * 110)); }
+    };
+})();
+
 const W = 900, H = 550;
 const GROUND_Y = 430;
 const TANK_W = 40, TANK_H = 20;
@@ -74,6 +139,8 @@ let projectiles = [];
 let powerUps = [];
 let explosions = [];
 let damageNumbers = [];
+let muzzleFlashes = [];
+let dustPuffs = [];
 let turn = 0;
 let wind = 0;
 let windTimer = 0;
@@ -98,8 +165,8 @@ const weapons = [
 ];
 
 let players = [
-    { x: 100, y: 0, angle: 30, power: 50, health: 100, weapon: 0, color: '#00ff88', glowColor: '#7CFFCB', facing: 1, vx: 0, startX: 100, movementUsed: 0, hitFlash: 0, treadOffset: 0 },
-    { x: 800, y: 0, angle: 150, power: 50, health: 100, weapon: 0, color: '#ff4444', glowColor: '#FF9E9E', facing: -1, vx: 0, startX: 800, movementUsed: 0, hitFlash: 0, treadOffset: 0 }
+    { x: 100, y: 0, angle: 30, power: 50, health: 100, weapon: 0, color: '#00ff88', glowColor: '#7CFFCB', facing: 1, vx: 0, startX: 100, movementUsed: 0, hitFlash: 0, treadOffset: 0, buryLevel: 0 },
+    { x: 800, y: 0, angle: 150, power: 50, health: 100, weapon: 0, color: '#ff4444', glowColor: '#FF9E9E', facing: -1, vx: 0, startX: 800, movementUsed: 0, hitFlash: 0, treadOffset: 0, buryLevel: 0 }
 ];
 
 /* ---------- HIT-TEST REGIONS (recomputed each draw, used by click handler) ---------- */
@@ -119,6 +186,7 @@ function cycleWeapon() {
     const p = players[turn];
     p.weapon = (p.weapon + 1) % weapons.length;
     showPowerUpMessage(weapons[p.weapon].name);
+    SFX.switch();
 }
 
 function generateTerrain() {
@@ -209,28 +277,55 @@ function drawTank(p, i) {
     const hullLeft = cx - hullW / 2;
     const rad = 5;
 
-    // ---- TREADS (behind hull, animated scroll) ----
-    const treadH = 8;
-    const treadY = hullBottom - 3;
-    const treadW = hullW + 10;
+    // ---- TREADS (behind hull, bigger + animated scroll + bogie wheels) ----
+    const treadH = 13;
+    const treadY = hullBottom - 5;
+    const treadW = hullW + 16;
     const treadX = cx - treadW / 2;
     ctx.save();
-    roundRectPath(ctx, treadX, treadY, treadW, treadH, 3);
-    ctx.fillStyle = '#161616';
+    // drop shadow under tread
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    roundRectPath(ctx, treadX + 1, treadY + treadH - 2, treadW - 2, 3, 2);
+    ctx.fill();
+
+    roundRectPath(ctx, treadX, treadY, treadW, treadH, 4);
+    const treadGrad = ctx.createLinearGradient(0, treadY, 0, treadY + treadH);
+    treadGrad.addColorStop(0, '#2a2a2a');
+    treadGrad.addColorStop(0.5, '#141414');
+    treadGrad.addColorStop(1, '#050505');
+    ctx.fillStyle = treadGrad;
     ctx.fill();
     ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
+
+    // scrolling tread links (bigger, chunkier)
     ctx.save();
-    roundRectPath(ctx, treadX, treadY, treadW, treadH, 3);
+    roundRectPath(ctx, treadX, treadY, treadW, treadH, 4);
     ctx.clip();
-    ctx.fillStyle = 'rgba(255,255,255,0.16)';
-    const segGap = 6;
+    const segGap = 9;
     const scroll = ((p.treadOffset % segGap) + segGap) % segGap;
     for (let sx = treadX - segGap + scroll; sx < treadX + treadW; sx += segGap) {
-        ctx.fillRect(sx, treadY + 1.5, 2, treadH - 3);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(sx, treadY + 2, 3.5, treadH - 4);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(sx + 3.5, treadY + 2, 1.5, treadH - 4);
     }
     ctx.restore();
+
+    // bogie wheels riding along the top of the tread
+    const wheelR = treadH * 0.42;
+    const wheelY = treadY + treadH * 0.5;
+    for (let wx = treadX + wheelR + 2; wx <= treadX + treadW - wheelR - 2; wx += wheelR * 2.1) {
+        ctx.fillStyle = '#3a3a3a';
+        ctx.beginPath();
+        ctx.arc(wx, wheelY, wheelR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = shadeColor(p.color, -0.1);
+        ctx.beginPath();
+        ctx.arc(wx, wheelY, wheelR * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+    }
     ctx.restore();
 
     // ---- HULL (gradient armor body) ----
@@ -348,6 +443,38 @@ function drawTank(p, i) {
         ctx.fillStyle = 'rgba(255,255,255,' + (p.hitFlash * 0.85) + ')';
         roundRectPath(ctx, hullLeft - 4, hullTop - 4, hullW + 8, hullH + 8, rad + 2);
         ctx.fill();
+    }
+
+    // ---- DIRT BURIAL (Dirt Ball pile-up hides the lower hull) ----
+    if (p.buryLevel > 0) {
+        const buryH = p.buryLevel * (hullH + 8);
+        const dirtTop = hullBottom - buryH;
+        const mL = hullLeft - 7, mR = hullLeft + hullW + 7;
+        ctx.save();
+        ctx.fillStyle = '#6b4423';
+        ctx.beginPath();
+        ctx.moveTo(mL, hullBottom + 6);
+        const bumps = 6;
+        for (let b = 0; b <= bumps; b++) {
+            const bx = mL + (mR - mL) * (b / bumps);
+            const jag = Math.sin(b * 2.1 + i * 4) * 2.5;
+            ctx.lineTo(bx, dirtTop + jag);
+        }
+        ctx.lineTo(mR, hullBottom + 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#4a2f18';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        for (let d = 0; d < 5; d++) {
+            const dx = mL + Math.random() * (mR - mL);
+            const dy = dirtTop + Math.random() * buryH * 0.7;
+            ctx.beginPath();
+            ctx.arc(dx, dy, 1.5 + Math.random() * 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
     }
 
     // ---- TURRET ----
@@ -601,22 +728,64 @@ function drawParticles() {
 
 function drawExplosions() {
     explosions.forEach(ex => {
+        const growR = ex.radius * (1 - ex.life) * 3;
         ctx.globalAlpha = ex.life;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(ex.x, ex.y, growR * 0.35, 0, Math.PI * 2);
+        ctx.fill();
         ctx.fillStyle = ex.color;
         ctx.beginPath();
-        ctx.arc(ex.x, ex.y, ex.radius * (1 - ex.life) * 3, 0, Math.PI * 2);
+        ctx.arc(ex.x, ex.y, growR, 0, Math.PI * 2);
         ctx.fill();
+        // expanding shockwave ring
+        ctx.globalAlpha = ex.life * 0.6;
+        ctx.strokeStyle = ex.color;
+        ctx.lineWidth = 2.5 * ex.life;
+        ctx.beginPath();
+        ctx.arc(ex.x, ex.y, growR * 1.5, 0, Math.PI * 2);
+        ctx.stroke();
         ctx.globalAlpha = 1;
     });
 }
 
 function drawDamageNumbers() {
     damageNumbers.forEach(d => {
-        ctx.globalAlpha = d.life;
+        const pop = d.life > 0.85 ? (1 - d.life) / 0.15 : 1;
+        ctx.globalAlpha = Math.min(1, d.life * 1.4);
         ctx.fillStyle = d.color;
-        ctx.font = 'bold 20px monospace';
+        ctx.font = 'bold ' + Math.round(20 + pop * 8) + 'px monospace';
         ctx.textAlign = 'center';
         ctx.fillText('-' + d.value, d.x, d.y);
+        ctx.globalAlpha = 1;
+    });
+}
+
+function drawMuzzleFlashes() {
+    muzzleFlashes.forEach(f => {
+        ctx.save();
+        ctx.globalAlpha = f.life;
+        ctx.shadowColor = f.color;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 6 * f.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = f.color;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 10 * f.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+}
+
+function drawDustPuffs() {
+    dustPuffs.forEach(d => {
+        ctx.globalAlpha = d.life * 0.4;
+        ctx.fillStyle = '#c9a878';
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.size * (1.6 - d.life), 0, Math.PI * 2);
+        ctx.fill();
         ctx.globalAlpha = 1;
     });
 }
@@ -721,12 +890,10 @@ function checkHit(proj) {
     const tx = Math.floor(proj.x);
     if (tx >= 0 && tx < W && proj.y >= terrain[tx]) {
         createExplosion(proj.x, proj.y, w.radius, w.color);
+        if (w.type === 'dirt') { SFX.dirtThud(); } else { SFX.explosion(w.radius); }
 
         if (w.type === 'dirt') {
             deformTerrain(proj.x, proj.y, w.radius, 'dirt');
-            for (let x = Math.max(0, Math.floor(proj.x - w.radius)); x < Math.min(W, Math.floor(proj.x + w.radius)); x++) {
-                terrain[x] = Math.min(terrain[x] - 15, terrain[x]);
-            }
         } else if (w.type === 'nuke') {
             deformTerrain(proj.x, proj.y, w.radius * 1.3, 'explode');
         } else if (w.type === 'fire') {
@@ -741,6 +908,11 @@ function checkHit(proj) {
 
             if (w.type === 'dirt') {
                 if (dist < w.radius) dmg = 3;
+                // burial: dirt piling near a tank buries it visually, wider radius than the damage zone
+                const buryRadius = w.radius * 1.7;
+                if (dist < buryRadius) {
+                    p.buryLevel = Math.min(1, (p.buryLevel || 0) + (1 - dist / buryRadius) * 0.65);
+                }
             } else if (w.type === 'nuke') {
                 if (dist < w.radius * 1.3) dmg = w.damage * (1 - dist / (w.radius * 1.3));
             } else if (w.type === 'fire') {
@@ -755,6 +927,7 @@ function checkHit(proj) {
 
                 p.hitFlash = 1.0;
                 damageNumbers.push({ x: p.x, y: p.y - 20, value: Math.round(actualDmg), life: 1.0, color: '#ffffff' });
+                SFX.hit();
 
                 if (p.health <= 0) endGame(i === 0 ? 1 : 0);
                 const pushDist = Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
@@ -828,6 +1001,15 @@ function fire() {
     const speed = p.power * 0.15;
     const w = weapons[p.weapon];
 
+    SFX.fire();
+    muzzleFlashes.push({
+        x: p.x + Math.cos(rad) * 26 * p.facing,
+        y: p.y - 3 - Math.sin(rad) * 26,
+        color: w.color,
+        life: 1.0
+    });
+    cameraShake = Math.max(cameraShake, 2.5);
+
     if (w.spread) {
         const spreadAngle = 15;
         for (let i = -Math.floor(w.spread / 2); i <= Math.floor(w.spread / 2); i++) {
@@ -895,6 +1077,7 @@ function endGame(w) {
     isAITurn = false;
     document.getElementById('bgMusic').pause();
     document.getElementById('bgMusic').currentTime = 0;
+    SFX.win();
 }
 
 function restartGame() {
@@ -906,15 +1089,19 @@ function restartGame() {
     players[0].startX = players[0].x;
     players[0].movementUsed = 0;
     players[0].hitFlash = 0;
+    players[0].buryLevel = 0;
     players[1].startX = players[1].x;
     players[1].movementUsed = 0;
     players[1].hitFlash = 0;
+    players[1].buryLevel = 0;
     turn = 0;
     projectiles = [];
     particles = [];
     explosions = [];
     powerUps = [];
     damageNumbers = [];
+    muzzleFlashes = [];
+    dustPuffs = [];
     generateTerrain();
     screen = SCREEN.MODE_SELECT;
     modeSelectIndex = 0;
@@ -1010,10 +1197,32 @@ function update(dt) {
         if (damageNumbers[i].life <= 0) damageNumbers.splice(i, 1);
     }
 
+    for (let i = muzzleFlashes.length - 1; i >= 0; i--) {
+        muzzleFlashes[i].life -= 0.12;
+        if (muzzleFlashes[i].life <= 0) muzzleFlashes.splice(i, 1);
+    }
+
+    for (let i = dustPuffs.length - 1; i >= 0; i--) {
+        const d = dustPuffs[i];
+        d.x += d.vx;
+        d.y += d.vy;
+        d.vy -= 0.03;
+        d.life -= 0.03;
+        if (d.life <= 0) dustPuffs.splice(i, 1);
+    }
+
     players.forEach(p => {
         if (p.hitFlash > 0) {
             p.hitFlash *= 0.85;
             if (p.hitFlash < 0.02) p.hitFlash = 0;
+        }
+        if (Math.abs(p.vx) > 0.4 && Math.random() < 0.4) {
+            dustPuffs.push({
+                x: p.x - p.vx * 3, y: p.y + TANK_H / 2 + 2,
+                vx: -p.vx * 0.2 + (Math.random() - 0.5) * 0.3,
+                vy: -0.3 - Math.random() * 0.3,
+                life: 1.0, size: 2 + Math.random() * 2
+            });
         }
     });
 
@@ -1041,11 +1250,13 @@ function nextTurn() {
     p.startX = p.x;
     p.movementUsed = 0;
     p.vx = 0;
+    players.forEach(pl => { pl.buryLevel = Math.max(0, (pl.buryLevel || 0) - 0.35); });
 
     if (Math.random() < 0.3) {
         players[turn].weapon = 0;
     }
     showTurnIndicator();
+    SFX.turn();
 
     if (isAIOpponent && turn === 1) {
         isAITurn = true;
@@ -1346,6 +1557,8 @@ function drawOverlay() {
 
 function handleOverlayAction(action) {
     if (!action) return;
+    SFX.unlock();
+    SFX.click();
     if (action === 'mode_pvp') startGameWithMode('pvp');
     else if (action === 'mode_pvc') startGameWithMode('pvc');
     else if (action === 'diff_easy') selectDifficulty(0);
@@ -1371,11 +1584,13 @@ function draw() {
 
     drawStars();
     drawTerrain();
+    drawDustPuffs();
     drawPowerUps();
     players.forEach((p, i) => drawTank(p, i));
     drawTrajectoryPreview();
     if (screen === SCREEN.PLAYING) drawHUDOnCanvas();
     drawProjectiles();
+    drawMuzzleFlashes();
     drawParticles();
     drawExplosions();
     drawDamageNumbers();
@@ -1398,7 +1613,7 @@ function gameLoop(ts) {
 }
 
 /* ---------- INPUT ---------- */
-canvas.addEventListener('click', () => canvas.focus());
+canvas.addEventListener('click', () => { canvas.focus(); SFX.unlock(); });
 canvas.tabIndex = 0;
 
 const keys = {};
