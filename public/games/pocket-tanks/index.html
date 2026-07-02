@@ -56,7 +56,7 @@ const ctx = canvas.getContext('2d');
 
 const W = 900, H = 550;
 const GROUND_Y = 430;
-const TANK_W = 28, TANK_H = 14;
+const TANK_W = 40, TANK_H = 20;
 const GRAVITY = 0.25;
 
 /* ---------- SCREEN STATE MACHINE ---------- */
@@ -98,8 +98,8 @@ const weapons = [
 ];
 
 let players = [
-    { x: 100, y: 0, angle: 30, power: 50, health: 100, weapon: 0, color: '#00ff88', facing: 1, vx: 0, startX: 100, movementUsed: 0, hitFlash: 0 },
-    { x: 800, y: 0, angle: 150, power: 50, health: 100, weapon: 0, color: '#ff4444', facing: -1, vx: 0, startX: 800, movementUsed: 0, hitFlash: 0 }
+    { x: 100, y: 0, angle: 30, power: 50, health: 100, weapon: 0, color: '#00ff88', glowColor: '#7CFFCB', facing: 1, vx: 0, startX: 100, movementUsed: 0, hitFlash: 0, treadOffset: 0 },
+    { x: 800, y: 0, angle: 150, power: 50, health: 100, weapon: 0, color: '#ff4444', glowColor: '#FF9E9E', facing: -1, vx: 0, startX: 800, movementUsed: 0, hitFlash: 0, treadOffset: 0 }
 ];
 
 /* ---------- HIT-TEST REGIONS (recomputed each draw, used by click handler) ---------- */
@@ -169,89 +169,227 @@ function drawTerrain() {
     ctx.stroke();
 }
 
+/* ---------- TANK RENDER HELPERS ---------- */
+function roundRectPath(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + w - r, y);
+    c.quadraticCurveTo(x + w, y, x + w, y + r);
+    c.lineTo(x + w, y + h - r);
+    c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    c.lineTo(x + r, y + h);
+    c.quadraticCurveTo(x, y + h, x, y + h - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.closePath();
+}
+
+function shadeColor(hex, pct) {
+    // pct > 0 lightens, pct < 0 darkens. hex like '#00ff88'
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+    const amt = Math.round(255 * pct);
+    r = Math.max(0, Math.min(255, r + amt));
+    g = Math.max(0, Math.min(255, g + amt));
+    b = Math.max(0, Math.min(255, b + amt));
+    return '#' + (0x1000000 + r * 0x10000 + g * 0x100 + b).toString(16).slice(1);
+}
+
 function drawTank(p, i) {
     const cx = p.x, cy = p.y + TANK_H/2;
     const healthPct = p.health / 100;
+    const opp = players[1 - i];
+    const eyeDX = opp ? Math.sign((opp.x - p.x) || p.facing) : p.facing;
+    const eyeDY = opp ? Math.max(-1, Math.min(1, (opp.y - p.y) / 150)) : 0;
+    const glow = p.glowColor || p.color;
 
-    ctx.fillStyle = p.color;
-    ctx.fillRect(cx - TANK_W/2, cy - TANK_H/2, TANK_W, TANK_H);
+    const hullW = TANK_W, hullH = TANK_H;
+    const hullTop = cy - hullH / 2;
+    const hullBottom = cy + hullH / 2;
+    const hullLeft = cx - hullW / 2;
+    const rad = 5;
 
+    // ---- TREADS (behind hull, animated scroll) ----
+    const treadH = 8;
+    const treadY = hullBottom - 3;
+    const treadW = hullW + 10;
+    const treadX = cx - treadW / 2;
+    ctx.save();
+    roundRectPath(ctx, treadX, treadY, treadW, treadH, 3);
+    ctx.fillStyle = '#161616';
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.save();
+    roundRectPath(ctx, treadX, treadY, treadW, treadH, 3);
+    ctx.clip();
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    const segGap = 6;
+    const scroll = ((p.treadOffset % segGap) + segGap) % segGap;
+    for (let sx = treadX - segGap + scroll; sx < treadX + treadW; sx += segGap) {
+        ctx.fillRect(sx, treadY + 1.5, 2, treadH - 3);
+    }
+    ctx.restore();
+    ctx.restore();
+
+    // ---- HULL (gradient armor body) ----
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, hullTop, 0, hullBottom);
+    grad.addColorStop(0, shadeColor(p.color, 0.35));
+    grad.addColorStop(0.5, p.color);
+    grad.addColorStop(1, shadeColor(p.color, -0.4));
+    roundRectPath(ctx, hullLeft, hullTop, hullW, hullH, rad);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = shadeColor(p.color, -0.55);
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(hullLeft + hullW * 0.3, hullTop + 1);
+    ctx.lineTo(hullLeft + hullW * 0.3, hullBottom - 1);
+    ctx.moveTo(hullLeft + hullW * 0.7, hullTop + 1);
+    ctx.lineTo(hullLeft + hullW * 0.7, hullBottom - 1);
+    ctx.stroke();
+    ctx.restore();
+
+    // ---- POWER CORE (pulsing glow, lower hull so turret doesn't cover it) ----
+    const corePulse = 0.7 + Math.sin(blink * 4 + i * 2) * 0.3;
+    const coreY = hullBottom - hullH * 0.28;
+    ctx.save();
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 12 * corePulse;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, coreY, 3.2 * corePulse + p.hitFlash * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.arc(cx, coreY, 1.1 * corePulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // ---- EYES (glowing, track opponent, front-lower hull below the turret) ----
+    ctx.save();
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 6;
+    const eyeY = hullBottom - hullH * 0.22;
+    for (const side of [-1, 1]) {
+        const ex = cx + eyeDX * hullW * 0.3 + side * hullW * 0.1;
+        const ey = eyeY + eyeDY * 2;
+        ctx.fillStyle = '#0a0a0a';
+        ctx.beginPath();
+        ctx.arc(ex, ey, 2.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(ex + eyeDX * 0.7, ey + eyeDY * 0.7, 1.3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+
+    // ---- ANTENNA (bobbing) ----
+    const antBaseX = cx - hullW * 0.28 * p.facing;
+    const antSway = Math.sin(blink * 2.4 + i * 1.7) * 4;
+    const antLen = 15;
+    const antTipX = antBaseX + antSway;
+    const antTipY = hullTop - antLen;
+    ctx.save();
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(antBaseX, hullTop);
+    ctx.quadraticCurveTo(antBaseX + antSway * 0.5, hullTop - antLen * 0.6, antTipX, antTipY);
+    ctx.stroke();
+    ctx.shadowColor = glow;
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(antTipX, antTipY, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // ---- DAMAGE FX ----
     if (healthPct < 0.9) {
         ctx.strokeStyle = 'rgba(0,0,0,0.6)';
         ctx.lineWidth = 2.5;
         const crackCount = Math.floor((1 - healthPct) * 8);
-        for (let i = 0; i < crackCount; i++) {
+        for (let c = 0; c < crackCount; c++) {
             ctx.beginPath();
-            const sx = cx - TANK_W/2 + Math.random() * TANK_W;
-            const sy = cy - TANK_H/2 + Math.random() * TANK_H;
+            const sx = hullLeft + Math.random() * hullW;
+            const sy = hullTop + Math.random() * hullH;
             ctx.moveTo(sx, sy);
             ctx.lineTo(sx + (Math.random() - 0.5) * 15, sy + (Math.random() - 0.5) * 15);
             ctx.stroke();
         }
     }
-
     if (healthPct < 0.6) {
-        for (let i = 0; i < 5; i++) {
+        for (let c = 0; c < 5; c++) {
             const intensity = 1 - healthPct;
             ctx.fillStyle = 'rgba(0,0,0,' + (0.3 * intensity) + ')';
-            const sx = cx - TANK_W/2 + Math.random() * TANK_W;
-            const sy = cy - TANK_H/2 + Math.random() * TANK_H;
+            const sx = hullLeft + Math.random() * hullW;
+            const sy = hullTop + Math.random() * hullH;
             ctx.beginPath();
             ctx.arc(sx, sy, 8 + Math.random() * 8, 0, Math.PI * 2);
             ctx.fill();
         }
     }
-
     if (healthPct < 0.3) {
         ctx.fillStyle = 'rgba(255,0,0,0.2)';
-        ctx.fillRect(cx - TANK_W/2, cy - TANK_H/2, TANK_W, TANK_H);
-    }
-
-    if (p.hitFlash > 0) {
-        ctx.fillStyle = 'rgba(255,255,255,' + (p.hitFlash * 0.85) + ')';
-        ctx.fillRect(cx - TANK_W/2 - 4, cy - TANK_H/2 - 4, TANK_W + 8, TANK_H + 8);
-    }
-
-    ctx.save();
-    ctx.translate(cx, cy - 3);
-    const turretAngle = p.facing === 1 ? (-p.angle * Math.PI / 180) : (Math.PI + p.angle * Math.PI / 180);
-    ctx.rotate(turretAngle);
-    ctx.fillStyle = '#888';
-    ctx.fillRect(0, -2, 22, 5);
-    ctx.fillStyle = '#666';
-    ctx.fillRect(18, -3, 5, 7);
-
-    ctx.strokeStyle = '#ffff00';
-    ctx.lineWidth = 1.5;
-    const tipX = 22;
-    ctx.beginPath();
-    ctx.moveTo(tipX - 3, -1);
-    ctx.lineTo(tipX + 3, -1);
-    ctx.moveTo(tipX - 3, 1);
-    ctx.lineTo(tipX + 3, 1);
-    ctx.moveTo(tipX - 1, -3);
-    ctx.lineTo(tipX - 1, 3);
-    ctx.moveTo(tipX + 1, -3);
-    ctx.lineTo(tipX + 1, 3);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(tipX, 0, 2, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.restore();
-
-    ctx.fillStyle = '#333';
-    for (let w = -10; w <= 10; w += 7) {
-        ctx.beginPath();
-        ctx.arc(cx + w, cy + TANK_H/2 + 3, 3, 0, Math.PI * 2);
+        roundRectPath(ctx, hullLeft, hullTop, hullW, hullH, rad);
         ctx.fill();
     }
+    if (p.hitFlash > 0) {
+        ctx.fillStyle = 'rgba(255,255,255,' + (p.hitFlash * 0.85) + ')';
+        roundRectPath(ctx, hullLeft - 4, hullTop - 4, hullW + 8, hullH + 8, rad + 2);
+        ctx.fill();
+    }
+
+    // ---- TURRET ----
+    ctx.save();
+    ctx.translate(cx, cy - hullH * 0.15);
+    const turretAngle = p.facing === 1 ? (-p.angle * Math.PI / 180) : (Math.PI + p.angle * Math.PI / 180);
+    ctx.rotate(turretAngle);
+
+    ctx.fillStyle = shadeColor(p.color, -0.15);
+    ctx.beginPath();
+    ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = shadeColor(p.color, -0.5);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const barrelLen = 30;
+    const bGrad = ctx.createLinearGradient(0, -3.5, 0, 3.5);
+    bGrad.addColorStop(0, '#bbb');
+    bGrad.addColorStop(0.5, '#777');
+    bGrad.addColorStop(1, '#333');
+    ctx.fillStyle = bGrad;
+    ctx.fillRect(0, -3.5, barrelLen, 7);
+    ctx.fillStyle = '#444';
+    ctx.fillRect(barrelLen - 5, -4.5, 6, 9);
+
+    ctx.shadowColor = '#ffe066';
+    ctx.shadowBlur = 7;
+    ctx.strokeStyle = '#ffe066';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(barrelLen, 0, 3, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.restore();
 
     if (turn === i && screen === SCREEN.PLAYING) {
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 2;
         ctx.setLineDash([4, 4]);
-        ctx.strokeRect(cx - TANK_W/2 - 3, cy - TANK_H/2 - 3, TANK_W + 6, TANK_H + 10);
+        ctx.strokeRect(hullLeft - 5, hullTop - 5, hullW + 10, hullH + 14);
         ctx.setLineDash([]);
     }
 }
@@ -959,21 +1097,27 @@ function aiTakeTurn() {
         if (Math.random() > 0.6) {
             const moveDir = distX > 0 ? 1 : -1;
             const moveAmount = 15 + Math.random() * 35;
+            const prevX = p.x;
             p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
+            p.treadOffset = (p.treadOffset || 0) + (p.x - prevX);
             p.movementUsed = Math.abs(p.x - p.startX);
         }
     } else if (aiDifficulty === 'medium') {
         if (Math.random() > 0.4) {
             const moveDir = distX > 0 ? 1 : -1;
             const moveAmount = 20 + Math.random() * 40;
+            const prevX = p.x;
             p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
+            p.treadOffset = (p.treadOffset || 0) + (p.x - prevX);
             p.movementUsed = Math.abs(p.x - p.startX);
         }
     } else {
         // Hard: always move strategically
         const moveDir = distX > 0 ? 1 : -1;
         const moveAmount = 30 + Math.random() * 50;
+        const prevX = p.x;
         p.x = Math.max(30, Math.min(W - 30, p.x + moveDir * moveAmount));
+        p.treadOffset = (p.treadOffset || 0) + (p.x - prevX);
         p.movementUsed = Math.abs(p.x - p.startX);
     }
 
@@ -1296,6 +1440,7 @@ function handleContinuousInput() {
     const newX = p.x + p.vx;
     const clampedX = Math.max(30, Math.min(W - 30, newX));
     if (clampedX !== newX) p.vx = 0;
+    p.treadOffset = (p.treadOffset || 0) + (clampedX - p.x);
     p.x = clampedX;
     p.movementUsed = Math.abs(p.x - p.startX);
 
