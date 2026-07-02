@@ -74,18 +74,24 @@ serve(async (req: Request) => {
         // Get business branding
         const { data: branding, error: brandingError } = await supabase
             .from("branding")
-            .select("mp_access_token, business_name, slug, app_config")
+            .select("business_name, slug, app_config")
             .eq("business_id", business_id)
             .single();
 
-        if (brandingError || !branding?.mp_access_token) {
+        const { data: secret, error: secretError } = await supabase
+            .from("branding_secrets")
+            .select("mp_access_token")
+            .eq("business_id", business_id)
+            .single();
+
+        if (brandingError || secretError || !secret?.mp_access_token) {
             return new Response(
                 JSON.stringify({ error: "mp_not_configured", message: "Mercado Pago no configurado" }),
                 { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
         }
 
-        const accessToken = branding.mp_access_token;
+        const accessToken = secret.mp_access_token;
         const businessName = branding.business_name || "Local";
         const slug = branding.slug || "";
 

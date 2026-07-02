@@ -126,18 +126,6 @@ async function getPaymentDetails(paymentId: number, supabase: any, mpUserId: str
             }
         }
 
-        // Fallback to branding table by mp_user_id
-        if (!accessToken && mpUserId) {
-            const { data: branding } = await supabase
-                .from("branding")
-                .select("mp_access_token")
-                .eq("mp_user_id", mpUserId)
-                .single();
-            if (branding?.mp_access_token) {
-                accessToken = branding.mp_access_token;
-            }
-        }
-
         if (!accessToken) {
             console.error("No MP access token found for split payment");
             return null;

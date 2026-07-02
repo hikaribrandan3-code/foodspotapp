@@ -108,15 +108,14 @@ serve(async (req: Request) => {
 
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+        // mp_user_id is non-secret (a public merchant account id) and stays on
+        // branding since mp-webhook/mp-event-webhook look up branding_secrets
+        // by it. The actual credentials (access/refresh token, expiry, public
+        // key) live ONLY in branding_secrets, which anon can't read.
         const { data, error: updateError } = await supabase
             .from("branding")
             .update({
-                mp_access_token: access_token,
-                mp_refresh_token: refresh_token,
-                mp_token_expires_at: expiresAt.toISOString(),
                 mp_user_id: mp_user_id?.toString() || null,
-                mp_public_key: public_key || null,
-                mp_connected_at: now.toISOString(),
             })
             .eq("business_id", state)
             .select()
@@ -128,21 +127,25 @@ serve(async (req: Request) => {
         }
 
         // ============================================
-        // 5b. UPSERT TO BRANDING_SECRETS (sync for webhook lookup)
+        // 5b. UPSERT TO BRANDING_SECRETS (the only place tokens are stored)
         // ============================================
         const { error: secretsError } = await supabase
             .from("branding_secrets")
             .upsert({
+                id: data.id,
                 business_id: state,
                 mp_user_id: mp_user_id?.toString() || null,
                 mp_access_token: access_token,
                 mp_refresh_token: refresh_token,
+                mp_token_expires_at: expiresAt.toISOString(),
+                mp_public_key: public_key || null,
+                mp_connected_at: now.toISOString(),
                 updated_at: now.toISOString(),
             }, { onConflict: "business_id" });
 
         if (secretsError) {
             console.error("Failed to upsert branding_secrets:", secretsError);
-            // Non-fatal: branding table is the source of truth, but log for monitoring
+            return redirectToSettings(state, false, "error=db_update_failed");
         }
 
         console.log(`🏦 Saved tokens for business: ${data.business_name}`);
@@ -198,66 +201,7 @@ function redirectToSettings(businessId: string | null, success: boolean, params?
     });
 }
 
-// ============================================
-// TOKEN REFRESH FUNCTION (for scheduled runs)
-// ============================================
-export async function refreshExpiredTokens() {
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const MP_CLIENT_ID = Deno.env.get("MP_CLIENT_ID")!;
-    const MP_CLIENT_SECRET = Deno.env.get("MP_CLIENT_SECRET")!;
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    // Find tokens expiring in the next 24 hours
-    const expiryThreshold = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    const { data: expiringTokens, error } = await supabase
-        .from("branding")
-        .select("business_id, mp_refresh_token")
-        .not("mp_refresh_token", "is", null)
-        .lt("mp_token_expires_at", expiryThreshold);
-
-    if (error || !expiringTokens) {
-        console.error("Failed to fetch expiring tokens:", error);
-        return;
-    }
-
-    for (const row of expiringTokens) {
-        try {
-            const refreshResponse = await fetch("https://api.mercadopago.com/oauth/token", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: new URLSearchParams({
-                    grant_type: "refresh_token",
-                    client_id: MP_CLIENT_ID,
-                    client_secret: MP_CLIENT_SECRET,
-                    refresh_token: row.mp_refresh_token,
-                }),
-            });
-
-            if (!refreshResponse.ok) {
-                console.error(`Failed to refresh token for ${row.business_id}`);
-                continue;
-            }
-
-            const newTokens = await refreshResponse.json();
-            const expiresAt = new Date(Date.now() + newTokens.expires_in * 1000);
-
-            await supabase
-                .from("branding")
-                .update({
-                    mp_access_token: newTokens.access_token,
-                    mp_refresh_token: newTokens.refresh_token,
-                    mp_token_expires_at: expiresAt.toISOString(),
-                })
-                .eq("business_id", row.business_id);
-
-            console.log(`🔄 Refreshed token for ${row.business_id}`);
-        } catch (err) {
-            console.error(`Error refreshing token for ${row.business_id}:`, err);
-        }
-    }
-}
+// Scheduled token refresh lives in the separate `refresh-tokens` edge
+// function (operates on branding_secrets, the sole token store). This file
+// used to have a second, unused copy that read/wrote `branding` directly —
+// removed rather than fixed in two places.
