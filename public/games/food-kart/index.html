@@ -1306,9 +1306,7 @@ function stepPickups() {
     for (const k of karts) {
       if (k.fallT > 0 || k.rouletteT > 0) continue;
       if (dist2(b.x, b.y, k.x, k.y) < 144) {
-        if (!k.item) { k.rouletteT = 55; }
-        else if (!k.isPlayer) { /* has item, ignore */ continue; }
-        else continue;
+        k.rouletteT = 55;  // always grab: either new item, or swap current item
         b.t = 180;
         for (let i = 0; i < 6; i++) parts.push({ x: b.x, y: b.y, vx: rnd(-1.2, 1.2), vy: rnd(-1.2, 1.2), life: 18, col: ['#FF6EC7', '#5E8CFF', '#FFD23F'][ri(0, 2)], sz: 2 });
         break;
