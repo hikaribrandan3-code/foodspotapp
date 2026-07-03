@@ -350,7 +350,7 @@ function spawnPowerup(x,y){
   const pool=POWERUP_TYPES.filter(p=>Math.random()<p.chance);
   if(!pool.length) return;
   const type=pool[Math.floor(Math.random()*pool.length)];
-  powerups.push({x,y,w:52,h:30,vy:110,type,color:type.color,pulse:0,trail:[]});
+  powerups.push({x,y,w:52,h:30,vy:110,type,color:type.color,pulse:0,trail:[],spawnT:0});
 }
 
 /* ---------- UPDATE ---------- */
@@ -458,7 +458,12 @@ function update(dt){
           haptic(br.explosive?'explode':'brick');
           shake+=br.explosive?0.4:0.2;
 
-          // Update fighting-game combo display
+          // Update fighting-game combo display + milestones
+          const milestones=[3,5,8,12,20];
+          if(milestones.includes(combo)){
+            spawnFloater(VW/2,VH*0.35,['','TRIPLE!','PENTA!','OCTUPLE!','BEAST!','GODLIKE!'][milestones.indexOf(combo)],'#ff9b21');
+            shake+=0.3;
+          }
           if(combo>=3){
             comboDisplay.count=combo;
             comboDisplay.timer=comboDisplay.maxTimer;
@@ -513,6 +518,7 @@ function update(dt){
   for(let i=powerups.length-1;i>=0;i--){
     const p=powerups[i];
     p.pulse+=dt*5;
+    p.spawnT=Math.min(0.3,(p.spawnT||0)+dt);
     p.y+=p.vy*sdt;
     // Spawn tiny sparkle trail
     if(Math.random()<0.15&&particles.length<MAX_PARTICLES) particles.push({x:p.x+(Math.random()-0.5)*20,y:p.y-10,vx:(Math.random()-0.5)*40,vy:-20-Math.random()*60,life:0.2+Math.random()*0.2,maxLife:0.3,color:p.color,size:1+Math.random()*2,circle:true,rot:0});
@@ -637,7 +643,11 @@ function drawBrick(b){
 function drawPaddle(){
   const x=(paddle.cx-paddle.w/2)*S,y=paddle.y*S,w=paddle.w*S,h=paddle.h*S;
   ctx.save();
-  ctx.shadowColor=paddle.sticky?'#a371ff':'#28e0e0';ctx.shadowBlur=16*S;
+  let glow='#28e0e0';
+  if(activePowerups.wide) glow='#35e85a';
+  else if(activePowerups.laser) glow='#ff3b3b';
+  else if(activePowerups.shield) glow='#a371ff';
+  ctx.shadowColor=glow;ctx.shadowBlur=16*S;
   const cg=ctx.createLinearGradient(0,y,0,y+h);
   cg.addColorStop(0,paddle.sticky?'#c8a0ff':'#7df0ff');cg.addColorStop(1,paddle.sticky?'#663399':'#16a8c8');
   ctx.fillStyle=cg;rr(x,y,w,h,h/2);ctx.fill();ctx.restore();
@@ -783,28 +793,35 @@ function drawFloaters(){
 
 function drawPowerups(){
   for(const p of powerups){
+    const pop=Math.min(1,(p.spawnT||0)/0.3);
+    const scale=pop<1?(1.3-pop*0.3):1;
     const x=p.x*S,y=p.y*S,w=p.w*S,h=p.h*S;
     const glow=8+Math.sin(p.pulse)*5;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(scale,scale);
+    ctx.globalAlpha=Math.min(1,pop*1.5);
     // Name ABOVE pill
     ctx.fillStyle=p.color;ctx.font=`bold ${13*S}px 'Press Start 2P'`;ctx.textAlign='center';
     ctx.shadowColor=p.color;ctx.shadowBlur=14*S;
-    ctx.fillText(p.type.name,x,y-h/2-12*S);
+    ctx.fillText(p.type.name,0,-h/2-12*S);
     ctx.shadowBlur=0;
     // Pill
     ctx.save();
     ctx.shadowColor=p.color;ctx.shadowBlur=glow*S*2;
     ctx.fillStyle=p.color;
-    rr(x-w/2,y-h/2,w,h,h/2);ctx.fill();
+    rr(-w/2,-h/2,w,h,h/2);ctx.fill();
     ctx.restore();
     // White inner pill shine
     ctx.save();
     ctx.globalAlpha=0.25;ctx.fillStyle='#fff';
-    rr(x-w/2+3*S,y-h/2+3*S,w-6*S,h/2-2*S,h/4);ctx.fill();
+    rr(-w/2+3*S,-h/2+3*S,w-6*S,h/2-2*S,h/4);ctx.fill();
     ctx.restore();
     // Down arrow indicator
     ctx.fillStyle=p.color;ctx.globalAlpha=0.6+Math.sin(p.pulse)*0.3;
-    ctx.font=`${10*S}px sans-serif`;ctx.fillText('▼',x,y+h/2+14*S);
+    ctx.font=`${10*S}px sans-serif`;ctx.textAlign='center';ctx.fillText('▼',0,h/2+14*S);
     ctx.globalAlpha=1;
+    ctx.restore();
   }
 }
 
