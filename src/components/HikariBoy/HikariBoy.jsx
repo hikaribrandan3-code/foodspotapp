@@ -533,13 +533,21 @@ export function HikariBoy({
       <div className="hb-controller">
         {/* Shoulder Buttons */}
         <div className="hb-shoulders">
-          <button 
+          <button
             className="shoulder-l"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
+            onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
+            onMouseDown={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
+            onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
+            onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(currentGame ? BUTTONS.L : BUTTONS.SELECT); }}
           >L</button>
-          <button 
+          <button
             className="shoulder-r"
             onTouchStart={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
+            onTouchEnd={(e) => { e.preventDefault(); handleButtonRelease(currentGame ? BUTTONS.R : BUTTONS.START); }}
+            onMouseDown={(e) => { e.preventDefault(); handleButtonPress(currentGame ? BUTTONS.R : BUTTONS.START); }}
+            onMouseUp={(e) => { e.preventDefault(); handleButtonRelease(currentGame ? BUTTONS.R : BUTTONS.START); }}
+            onMouseLeave={(e) => { e.preventDefault(); handleButtonRelease(currentGame ? BUTTONS.R : BUTTONS.START); }}
           >R</button>
         </div>
 
