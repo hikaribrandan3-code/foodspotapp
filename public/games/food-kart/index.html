@@ -41,7 +41,7 @@ const LAPS = 3;
 
 const canvas = document.getElementById('game-canvas');
 canvas.width = W; canvas.height = H;
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
 ctx.imageSmoothingEnabled = false;
 
 function fitCanvas() {
@@ -1264,7 +1264,7 @@ function stepParts() {
 // ---------------- race update ----------------
 function updateRace() {
   const pl = player();
-  if ((frame & 1) === 0) track.boostPads.forEach(pad => repaintBoostPad(track, pad));
+  if (frame % 6 === 0) track.boostPads.forEach(pad => repaintBoostPad(track, pad));
   if (state === ST.COUNT) {
     countT--;
     if (countT === 180 || countT === 120 || countT === 60) SND.count();
@@ -1321,6 +1321,7 @@ function updateRace() {
 
 // ---------------- rendering ----------------
 function renderGround() {
+  if (!track) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); return; }
   const sinA = Math.sin(camA), cosA = Math.cos(camA);
   const fwdX = sinA, fwdY = -cosA, rgtX = cosA, rgtY = sinA;
   // sky with parallax
