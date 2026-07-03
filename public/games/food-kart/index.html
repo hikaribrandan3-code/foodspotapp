@@ -45,6 +45,28 @@ canvas.width = W; canvas.height = H;
 const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
 ctx.imageSmoothingEnabled = false;
 
+// ---------------- device tier detection ----------------
+// navigator.hardwareConcurrency/deviceMemory are unreliable alone (iOS Safari
+// doesn't expose deviceMemory at all, and misreports cores on some models), so
+// a quick synthetic timing probe backs them up. One-time cost at boot, ~1-2ms.
+function detectDeviceTier() {
+  let score = 0;
+  const cores = navigator.hardwareConcurrency || 4;
+  score += cores >= 6 ? 2 : (cores >= 4 ? 1 : 0);
+  if (navigator.deviceMemory) score += navigator.deviceMemory >= 6 ? 2 : (navigator.deviceMemory >= 4 ? 1 : 0);
+  const t0 = performance.now();
+  let acc = 0;
+  for (let i = 0; i < 200000; i++) acc += Math.sin(i * 0.001) * Math.cos(i * 0.002);
+  const probeMs = performance.now() - t0;
+  score += probeMs < 4 ? 2 : (probeMs < 9 ? 1 : 0);
+  if (score >= 5) return 'high';
+  if (score >= 3) return 'mid';
+  return 'low';
+}
+const DEVICE_TIER = detectDeviceTier();
+const TIER_LOW = DEVICE_TIER === 'low';
+const BOOST_REPAINT_INTERVAL = DEVICE_TIER === 'low' ? 12 : (DEVICE_TIER === 'mid' ? 8 : 4);
+
 function fitCanvas() {
   const c = document.getElementById('game-container');
   const sx = c.clientWidth / W, sy = c.clientHeight / H;
@@ -1265,7 +1287,7 @@ function stepParts() {
 // ---------------- race update ----------------
 function updateRace() {
   const pl = player();
-  if (frame % 6 === 0) track.boostPads.forEach(pad => repaintBoostPad(track, pad));
+  if (frame % BOOST_REPAINT_INTERVAL === 0) track.boostPads.forEach(pad => repaintBoostPad(track, pad));
   if (state === ST.COUNT) {
     countT--;
     if (countT === 180 || countT === 120 || countT === 60) SND.count();
@@ -1409,16 +1431,22 @@ function drawOneSpr(s) {
     // soft dark oval sitting exactly at the ground-contact point (p.sx, p.sy).
     // a thin flat bar reads as a smudge; a proper blob reads as "touching the ground".
     const rx = Math.max(2, w * 0.34), ry = Math.max(1.4, w * 0.14);
-    ctx.fillStyle = 'rgba(0,0,0,.16)';
-    ctx.beginPath(); ctx.ellipse(p.sx, p.sy, rx * 1.35, ry * 1.35, 0, 0, PI2); ctx.fill();
+    if (!TIER_LOW) {
+      ctx.fillStyle = 'rgba(0,0,0,.16)';
+      ctx.beginPath(); ctx.ellipse(p.sx, p.sy, rx * 1.35, ry * 1.35, 0, 0, PI2); ctx.fill();
+    }
     ctx.fillStyle = 'rgba(0,0,0,.38)';
     ctx.beginPath(); ctx.ellipse(p.sx, p.sy, rx, ry, 0, 0, PI2); ctx.fill();
   }
-  if (o.hue) {
+  // canvas `filter` forces a software compositing pass — a real frame-killer on
+  // mobile GPUs. Star power-up still works (speed + invuln) on low tier, it
+  // just skips the color-cycle tint.
+  const useHueFilter = o.hue && !TIER_LOW;
+  if (useHueFilter) {
     try { ctx.filter = 'hue-rotate(' + o.hue + 'deg)'; } catch (e) {}
   }
   ctx.drawImage(img, x, y, w | 0 || 1, h | 0 || 1);
-  if (o.hue) { try { ctx.filter = 'none'; } catch (e) {} }
+  if (useHueFilter) { try { ctx.filter = 'none'; } catch (e) {} }
   if (alpha < 1) ctx.globalAlpha = 1;
 }
 function drawSprQ() {
