@@ -382,41 +382,101 @@ const BODY_PAINTERS = [
   },
 ];
 // Build 16 rotation frames per character (index 0 = heading away from viewer).
-// Each frame also records `foot`: the fraction (0-1) down the 32px canvas where
-// the wheels actually touch ground, so the renderer can anchor the sprite to
-// the true ground line instead of the canvas bottom edge (which has empty
-// padding above the wheels and made karts look like they were floating).
+// Frames are painted at 64x64 by reusing the 32-unit painters through a 2x
+// scale (clean integer scaling, no half-pixel smear), then a detail pass adds
+// half-unit accents directly in 64-space — genuinely finer than the old grid.
+// Each rotation gets 2 animation frames (wheel-spin hubs + 1px body bob).
+// `foot` records the fraction (0-1) down the canvas where wheels touch ground
+// so the renderer anchors sprites to the true ground line.
+function detailPass(g, ci, sh2, fy2, by2, wxl, wxr, anim) {
+  // wheel hubs: alternate a light bar horizontal/vertical for a spin illusion
+  const hw = anim ? 2 : 6, hh = anim ? 6 : 2;
+  const backOff = sh2 * 2; // back wheels sit at -sh (vs front +sh) → 2*sh2 apart in 64-space
+  [[wxl, fy2, '#b8b8c0'], [wxr, fy2, '#b8b8c0'], [wxl - backOff, by2, '#c8c8d0'], [wxr - backOff, by2, '#c8c8d0']].forEach(([x, y, col]) => {
+    g.fillStyle = col;
+    g.fillRect(x - (hw >> 1), y - (hh >> 1), hw, hh);
+  });
+  // chassis underline shadow
+  g.fillStyle = 'rgba(0,0,0,.35)';
+  g.fillRect(14 + sh2, 52, 36, 1);
+  // per-character half-unit accents (drawn on the body zone, follow sh2 shift)
+  const x = 32 + sh2;
+  switch (ci) {
+    case 0: // burger — extra sesame
+      g.fillStyle = '#FFF3C4';
+      g.fillRect(x - 9, 19, 1, 1); g.fillRect(x + 3, 17, 1, 1); g.fillRect(x + 9, 20, 1, 1);
+      g.fillStyle = '#FFD9A0'; g.fillRect(x - 3, 22, 1, 1);
+      break;
+    case 1: // taco — lettuce flecks + meat crumbs
+      g.fillStyle = '#A8E063';
+      g.fillRect(x - 11, 20, 2, 1); g.fillRect(x + 7, 19, 2, 1);
+      g.fillStyle = '#6E3A20'; g.fillRect(x - 1, 15, 1, 1); g.fillRect(x + 4, 16, 1, 1);
+      break;
+    case 2: // pizza — cheese bubbles + crust dots
+      g.fillStyle = '#FFEB99';
+      g.fillRect(x - 5, 25, 1, 1); g.fillRect(x + 6, 30, 1, 1); g.fillRect(x - 1, 33, 1, 1);
+      g.fillStyle = '#C98A3B'; g.fillRect(x - 7, 41, 1, 1); g.fillRect(x + 5, 41, 1, 1);
+      break;
+    case 3: // pancake — syrup shine
+      g.fillStyle = '#FFE8A0';
+      g.fillRect(x - 13, 25, 3, 1); g.fillRect(x + 8, 31, 3, 1);
+      g.fillStyle = '#FFF6D0'; g.fillRect(x - 4, 13, 2, 1);
+      break;
+    case 4: // pasta — noodle strands + hat band
+      g.fillStyle = '#E8C558';
+      g.fillRect(x - 13, 23, 4, 1); g.fillRect(x + 6, 27, 5, 1); g.fillRect(x - 3, 31, 4, 1);
+      g.fillStyle = '#D8D8D8'; g.fillRect(x - 9, 15, 18, 1);
+      break;
+    case 5: // hotdog — mustard highlights + sausage sheen
+      g.fillStyle = '#FFE97A';
+      g.fillRect(x - 9, 21, 1, 1); g.fillRect(x - 3, 23, 1, 1); g.fillRect(x + 3, 21, 1, 1);
+      g.fillStyle = '#D96A5A'; g.fillRect(x - 11, 18, 20, 1);
+      break;
+  }
+}
 function makeCharFrames(ci) {
-  const frames = [], feet = [];
+  const frames = [], framesB = [], feet = [];
   for (let f = 0; f < 16; f++) {
     const rel = (f / 16) * PI2;                     // kart heading minus view direction
     const s = Math.sin(rel), c = Math.cos(rel);
-    const cv = mkCanvas(32, 32), g = cv.getContext('2d');
     const sh = Math.round(s * 3);
     const face = c < -0.25;                          // facing the camera
     // wheels: front pair further from viewer when heading away
     const fy = 24 - c * 2.5, by = 24 + c * 2.5;
     const wx = Math.max(4, 7 - Math.abs(s) * 2);
-    P(g, 16 - wx - 2 + sh, fy - 2, 4, 4, '#222'); P(g, 16 + wx - 2 + sh, fy - 2, 4, 4, '#222');
-    P(g, 16 - wx - 1 + sh, fy - 1, 2, 2, '#888'); P(g, 16 + wx - 1 + sh, fy - 1, 2, 2, '#888');
-    // chassis
-    P(g, 6 + sh, 21, 20, 5, '#3A3A44'); P(g, 7 + sh, 21, 18, 1, '#55555F');
-    P(g, 8 + sh, 26, 16, 1, CHARS[ci].hue);
-    // back wheels drawn over chassis
-    P(g, 16 - wx - 2 - sh, by - 2, 4, 4, '#1a1a1a'); P(g, 16 + wx - 2 - sh, by - 2, 4, 4, '#1a1a1a');
-    P(g, 16 - wx - 1 - sh, by - 1, 2, 2, '#999'); P(g, 16 + wx - 1 - sh, by - 1, 2, 2, '#999');
-    BODY_PAINTERS[ci](g, sh, face, Math.round(s * -2));
-    frames.push(cv);
+    for (let anim = 0; anim < 2; anim++) {
+      const cv = mkCanvas(64, 64), g = cv.getContext('2d');
+      g.imageSmoothingEnabled = false;
+      g.save();
+      g.scale(2, 2);
+      P(g, 16 - wx - 2 + sh, fy - 2, 4, 4, '#222'); P(g, 16 + wx - 2 + sh, fy - 2, 4, 4, '#222');
+      P(g, 16 - wx - 1 + sh, fy - 1, 2, 2, '#888'); P(g, 16 + wx - 1 + sh, fy - 1, 2, 2, '#888');
+      // chassis
+      P(g, 6 + sh, 21, 20, 5, '#3A3A44'); P(g, 7 + sh, 21, 18, 1, '#55555F');
+      P(g, 8 + sh, 26, 16, 1, CHARS[ci].hue);
+      // back wheels drawn over chassis
+      P(g, 16 - wx - 2 - sh, by - 2, 4, 4, '#1a1a1a'); P(g, 16 + wx - 2 - sh, by - 2, 4, 4, '#1a1a1a');
+      P(g, 16 - wx - 1 - sh, by - 1, 2, 2, '#999'); P(g, 16 + wx - 1 - sh, by - 1, 2, 2, '#999');
+      // body bobs 1px (64-space) on the alternate frame; wheels stay grounded
+      if (anim) g.translate(0, -0.5);
+      BODY_PAINTERS[ci](g, sh, face, Math.round(s * -2));
+      g.restore();
+      // hi-res accents in raw 64-space
+      detailPass(g, ci, sh * 2, (fy - 0) * 2, (by - 0) * 2, (16 - wx + sh) * 2, (16 + wx + sh) * 2, anim);
+      (anim ? framesB : frames).push(cv);
+    }
     feet.push((Math.max(fy, by) + 2) / 32);
   }
-  return { frames, feet };
+  return { frames, framesB, feet };
 }
 const charData = CHARS.map((_, i) => makeCharFrames(i));
 const charFrames = charData.map(d => d.frames);
+const charFramesB = charData.map(d => d.framesB);
 const charFeet = charData.map(d => d.feet);
 const charIcons = CHARS.map((_, i) => {
   const cv = mkCanvas(16, 16), g = cv.getContext('2d');
-  g.drawImage(charFrames[i][8], 4, 2, 24, 24, 0, 0, 16, 16); // front view crop
+  g.imageSmoothingEnabled = false;
+  g.drawImage(charFrames[i][8], 8, 4, 48, 48, 0, 0, 16, 16); // front view crop (64-space coords)
   return cv;
 });
 
@@ -817,10 +877,19 @@ function onBtn(b, down) {
   const was = keys[b];
   keys[b] = down;
   if (down && !was) {
-    console.log('[FoodKart] btnPress called for:', b);
     btnPress(b);
   }
 }
+// The shell d-pad reports 8 directions; the game reads only the 4 cardinals.
+// A thumb drifting into a diagonal sector used to release the cardinal and
+// press a button nobody listened to — steering (especially left) cut out
+// mid-turn. Expand diagonals into their two components instead.
+const DIAG = {
+  'dpad-up-left':   ['dpad-up', 'dpad-left'],
+  'dpad-up-right':  ['dpad-up', 'dpad-right'],
+  'dpad-down-left': ['dpad-down', 'dpad-left'],
+  'dpad-down-right':['dpad-down', 'dpad-right'],
+};
 const KEYMAP = {
   ArrowLeft: 'dpad-left', ArrowRight: 'dpad-right', ArrowUp: 'dpad-up', ArrowDown: 'dpad-down',
   KeyZ: 'item', KeyX: 'b', Space: 'a', KeyC: 'item', Enter: 'start', Escape: 'start',
@@ -839,15 +908,15 @@ window.addEventListener('message', e => {
   if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') { initAC(); resumeAC(); return; }
   if (d.type === 'BUTTON_PRESS') {
     let b = d.button;
-    console.log('[FoodKart] Button PRESS received:', b, 'in state', state);
     if (b === 'l' || b === 'r') b = 'item';
     if (b === 'select') { exitGame(); return; }
     if (b === 'menu') return;
+    if (DIAG[b]) { DIAG[b].forEach(c => onBtn(c, true)); return; }
     onBtn(b, true);
   } else if (d.type === 'BUTTON_RELEASE') {
     let b = d.button;
-    console.log('[FoodKart] Button RELEASE received:', b);
     if (b === 'l' || b === 'r') b = 'item';
+    if (DIAG[b]) { DIAG[b].forEach(c => onBtn(c, false)); return; }
     onBtn(b, false);
   }
 });
@@ -978,10 +1047,16 @@ function useItem(k) {
   switch (k.item) {
     case 'chili': case 'triple':
       k.boostT = Math.max(k.boostT, 80);
+      // triple-spark ignition burst fanning out behind the kart
+      for (let i = -1; i <= 1; i++) {
+        const ba = k.a + Math.PI + i * 0.5;
+        parts.push({ x: k.x, y: k.y, vx: Math.sin(ba) * 1.6, vy: -Math.cos(ba) * 1.6, life: 16, col: i === 0 ? '#FFD23F' : '#FF8C42', sz: 2 });
+      }
       if (k.isPlayer) SND.boost();
       break;
     case 'banana':
       hazards.push({ type: 'banana', x: k.x - fwdX * 16, y: k.y - fwdY * 16, life: 3600, owner: k, ownCd: 40 });
+      for (let i = 0; i < 4; i++) parts.push({ x: k.x - fwdX * 16 + rnd(-3, 3), y: k.y - fwdY * 16 + rnd(-3, 3), vx: rnd(-0.5, 0.5), vy: rnd(-0.8, -0.2), life: 14, col: '#FFD23F', sz: 1.5 });
       if (k.isPlayer) SND.throwIt();
       break;
     case 'meat':
@@ -1014,6 +1089,8 @@ function hurt(k, big) {
   if (k.isPlayer) { SND.hit(); shakeT = 12; }
   else if (dist2(k.x, k.y, camX, camY) < 90000) SND.spinout();
   for (let i = 0; i < 8; i++) parts.push({ x: k.x + rnd(-6, 6), y: k.y + rnd(-6, 6), vx: rnd(-1, 1), vy: rnd(-1, 1), life: ri(15, 30), col: '#FFD23F', sz: 2 });
+  // hot white flash sparks on top for punch
+  for (let i = 0; i < 3; i++) parts.push({ x: k.x + rnd(-4, 4), y: k.y + rnd(-4, 4), vx: rnd(-1.4, 1.4), vy: rnd(-1.4, 1.4), life: ri(8, 14), col: '#fff', sz: 2.5 });
   return true;
 }
 function stepKart(k) {
@@ -1085,8 +1162,18 @@ function stepKart(k) {
       }
       if (k.drift === 1) {
         if (k.brake === 0 || k.speed < baseMax * 0.3) {
-          if (k.driftCharge > 110) { k.boostT = Math.max(k.boostT, 75); SND.boost(); }
-          else if (k.driftCharge > 50) { k.boostT = Math.max(k.boostT, 40); SND.boost(); }
+          if (k.driftCharge > 50) {
+            const turbo = k.driftCharge > 110;
+            k.boostT = Math.max(k.boostT, turbo ? 75 : 40);
+            SND.boost();
+            // mini-turbo release burst — the payoff moment deserves fireworks
+            const relCol = turbo ? '#FF8C42' : '#5EDCFF';
+            for (let i = 0; i < 16; i++) {
+              const ra = (i / 16) * PI2;
+              const rs = 0.8 + rnd(0, 1.2);
+              parts.push({ x: k.x, y: k.y, vx: Math.sin(ra) * rs, vy: -Math.cos(ra) * rs, life: ri(12, 22), col: (i & 3) === 0 ? '#fff' : relCol, sz: 2 });
+            }
+          }
           k.drift = 0; k.driftCharge = 0;
         } else {
           k.driftCharge++;
@@ -1296,6 +1383,11 @@ function updateRace() {
       state = ST.RACE;
       SND.go();
       musicStart(track.th.song, 1);
+      // GO! — circular launch burst around the player
+      for (let i = 0; i < 24; i++) {
+        const ba = (i / 24) * PI2;
+        parts.push({ x: pl.x + Math.sin(ba) * 6, y: pl.y - Math.cos(ba) * 6, vx: Math.sin(ba) * 1.4, vy: -Math.cos(ba) * 1.4, life: ri(14, 24), col: (i & 1) ? '#4CD34C' : '#fff', sz: 2 });
+      }
       // rocket start: A pressed during last beat
       if (keys['a'] && pl.rocketOk) { pl.boostT = 50; SND.boost(); }
     }
@@ -1476,6 +1568,48 @@ function renderRace() {
   for (const h of hazards) {
     const img = h.type === 'banana' ? ITEMS_SPR.banana : (h.type === 'meat' ? ITEMS_SPR.meat : ITEMS_SPR.tomato);
     queueSpr(img, h.x, h.y, 8, h.type === 'banana' ? {} : { lift: 2 });
+    if (h.type === 'tomato') {
+      // red danger glow under the shell + faint homing arc to its target
+      const pr = project(h.x, h.y);
+      if (pr && pr.d < 700) {
+        const r = Math.max(2, 6 * pr.scale);
+        ctx.fillStyle = 'rgba(255,60,40,.22)';
+        ctx.beginPath(); ctx.ellipse(pr.sx, pr.sy, r, r * 0.4, 0, 0, PI2); ctx.fill();
+        if (!TIER_LOW && h.target && !h.target.finished) {
+          const tp = project(h.target.x, h.target.y);
+          if (tp && tp.d < 700) {
+            ctx.strokeStyle = 'rgba(255,60,40,.25)';
+            ctx.beginPath(); ctx.moveTo(pr.sx, pr.sy); ctx.lineTo(tp.sx, tp.sy); ctx.stroke();
+          }
+        }
+      }
+    } else if (h.type === 'meat') {
+      // spin-streak: blobs orbiting the flying meatball
+      const pr = project(h.x, h.y);
+      if (pr && pr.d < 700) {
+        for (let i = 0; i < 3; i++) {
+          const a = frame * 0.3 + i * 2.09;
+          const or = 5 * pr.scale;
+          const bs = Math.max(1, 1.6 * pr.scale) | 0;
+          ctx.fillStyle = i === 0 ? '#A66239' : (i === 1 ? '#8B4A2B' : '#C9814A');
+          ctx.fillRect((pr.sx + Math.cos(a) * or - bs / 2) | 0, (pr.sy - 2 * pr.scale + Math.sin(a) * or * 0.4 - bs / 2) | 0, bs, bs);
+        }
+      }
+    }
+  }
+  // star power ground ring (under sprites): pulsing gold→white halo
+  for (const k of karts) {
+    if (k.starT > 0 && k.fallT === 0) {
+      const pr = project(k.x, k.y);
+      if (pr && pr.d < 700) {
+        const pulse = 0.5 + Math.sin(frame * 0.25) * 0.5;
+        const r = (9 + pulse * 2) * pr.scale;
+        ctx.strokeStyle = pulse > 0.5 ? 'rgba(255,255,255,.5)' : 'rgba(255,210,63,.55)';
+        ctx.lineWidth = Math.max(1, 1.5 * pr.scale);
+        ctx.beginPath(); ctx.ellipse(pr.sx, pr.sy, r, r * 0.38, 0, 0, PI2); ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+    }
   }
   // karts
   for (const k of karts) {
@@ -1486,7 +1620,9 @@ function renderRace() {
     if (k.invulnT > 0 && (frame & 3) < 2 && k.spinT === 0) o.alpha = 0.45;
     if (k.fallT > 40) { o.alpha = (k.fallT - 40) / 40; o.lift = -(80 - k.fallT) * 0.9; }
     if (k.hopT > 0) o.lift = Math.sin((10 - k.hopT) / 10 * Math.PI) * 5;
-    queueSpr(charFrames[k.ci][vf], k.x, k.y, 17, o);
+    // wheel-spin / body-bob animation while moving
+    const set = (k.speed > 0.3 && ((frame >> 2) & 1)) ? charFramesB : charFrames;
+    queueSpr(set[k.ci][vf], k.x, k.y, 17, o);
   }
   // particles (drawn in the same depth-sorted pass)
   for (const p of parts) {
@@ -1501,19 +1637,35 @@ function renderRace() {
     const pr = project(bx, by);
     if (pr) {
       const sz = (6 * pr.scale) | 0;
+      // soft glow layers behind the flame, tinted per track theme
+      if (!TIER_LOW) {
+        const glowCol = BOOST_GLOW[track.def.theme] || 'rgba(255,140,66,';
+        const g2 = (sz * 1.5) | 0;
+        ctx.fillStyle = glowCol + '.14)';
+        ctx.fillRect((pr.sx - g2 / 2) | 0, (pr.sy - g2) | 0, g2, g2);
+        ctx.fillStyle = glowCol + '.2)';
+        ctx.fillRect((pr.sx - sz * 0.6) | 0, (pr.sy - sz * 1.2) | 0, (sz * 1.2) | 0, (sz * 1.2) | 0);
+      }
       ctx.fillStyle = (frame & 2) ? '#FF8C42' : '#FFD23F';
       ctx.fillRect((pr.sx - sz / 2) | 0, (pr.sy - sz) | 0, sz, sz);
       ctx.fillStyle = '#fff';
       ctx.fillRect((pr.sx - sz / 4) | 0, (pr.sy - sz * 0.7) | 0, sz >> 1, (sz * 0.4) | 0);
     }
     // speed lines
-    ctx.fillStyle = 'rgba(255,255,255,.25)';
-    for (let i = 0; i < 5; i++) {
+    ctx.fillStyle = 'rgba(255,255,255,.4)';
+    for (let i = 0; i < 8; i++) {
       const ly = ri(HOR + 4, H - 8);
       ctx.fillRect(ri(0, W - 30), ly, ri(14, 34), 1);
     }
   }
 }
+// per-theme boost glow tints (rgba prefixes, alpha appended at draw)
+const BOOST_GLOW = {
+  candy:   'rgba(255,210,63,',
+  desert:  'rgba(255,140,66,',
+  ice:     'rgba(94,220,255,',
+  rainbow: 'rgba(255,110,199,',
+};
 function drawMinimap() {
   ctx.globalAlpha = 0.9;
   ctx.drawImage(track.mm, W - 50, 34);
@@ -1557,7 +1709,10 @@ function drawHUD() {
     const img = ITEM_DEFS[its[(frame >> 2) % its.length]].spr();
     ctx.drawImage(img, W - 22, H - 22, 14, 14);
   } else if (pl.item) {
+    // golden burger pulses in the slot so you know you're holding the big one
+    if (pl.item === 'gold') ctx.globalAlpha = 0.7 + Math.sin(frame * 0.3) * 0.3;
     ctx.drawImage(ITEM_DEFS[pl.item].spr(), W - 22, H - 22, 14, 14);
+    ctx.globalAlpha = 1;
     if (pl.itemN > 1) text('X' + pl.itemN, W - 6, H - 11, 1, '#fff', '#333', 2);
   }
   // banners
