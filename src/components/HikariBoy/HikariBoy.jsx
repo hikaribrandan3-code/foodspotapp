@@ -347,6 +347,7 @@ export function HikariBoy({
     }
 
     if (currentGame) {
+      console.log('[HikariBoy] Sending button to game:', button);
       gameFrameRef.current?.contentWindow?.postMessage({
         type: 'BUTTON_PRESS',
         button
