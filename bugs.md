@@ -1,8 +1,102 @@
 # FOODSPOT DATABASE FIXES TRACKER
 
-**Last Updated:** 2026-05-26  
+**Last Updated:** 2026-07-02  
 **Database Version:** v2.2.1  
 **Status:** 5/7 Quick Wins Applied
+
+---
+
+## 🚨 INCIDENT: MP Token Security Fix Attempt (2026-07-02)
+
+**Summary:** Attempted to move Mercado Pago access tokens from public `branding` table to private `branding_secrets` table with RLS. Implementation broke payment webhooks and order processing. **Reverted.** Security issue remains unfixed.
+
+**Date:** 2026-07-02  
+**Duration:** ~4 hours (revert + redeploy)  
+**Impact:** 4-hour production outage (orders stuck at "esperando pago")  
+**Status:** ✅ Reverted to working state; ⚠️ Security issue documented for future fix
+
+### What We Tried
+
+1. **Created 3 SQL migrations:**
+   - `20260702000000_secure_mp_tokens_backfill.sql` — Add `mp_access_token`, `mp_refresh_token`, `mp_token_expires_at`, `mp_public_key`, `mp_connected_at` columns to `branding_secrets`
+   - `20260702000001_secure_mp_tokens_rpcs.sql` — Create SECURITY DEFINER RPCs: `get_mp_credentials()` and `set_mp_credentials()` with ownership checks
+   - `20260702000002_secure_mp_tokens_drop_from_branding.sql` — Drop token columns from `branding` table
+
+2. **Modified frontend + edge functions:**
+   - `OwnerSummary.jsx` — Changed from reading `tenantData.mp_access_token` to calling `get_mp_credentials()` RPC
+   - `OwnerSummary.jsx` — Changed token save from direct `.update({mp_access_token})` to `.rpc('set_mp_credentials')`
+   - `create-preference/index.ts` — Changed to read from `branding_secrets` instead of `branding`
+   - `mp-oauth/index.ts` — Changed to write to `branding_secrets` instead of `branding`
+   - Similar updates to `mp-webhook`, `mp-event-webhook`, `create-event-preference`, `create-split-preference`
+
+3. **Deployed to Vercel** — Code live with token lookups pointing to `branding_secrets`
+
+### Why It Broke (Cascade of Issues)
+
+**Issue #1: Primary Key Collision**
+- `branding_secrets.id` was being forced to `= branding.id` (copying a BIGINT)
+- But `branding_secrets.id` is independent; two different businesses could have the same id number
+- Result: INSERT failed with "duplicate key violates unique constraint branding_secrets_pkey"
+- **Attempted fix:** Remove forced id → but then id field was NULL because column had no DEFAULT
+- **Another attempt:** Add sequence + default → BUT column was BIGINT with FK to branding.id (BIGINT), not UUID
+- **Final attempt:** Drop FK, use BIGINT sequence → but branding.id is the actual FK constraint, making id not independent after all
+
+**Issue #2: RPC Parameter Signature Mismatches**
+- Initially wrote `set_mp_credentials(p_business_id, p_access_token, p_user_id)` 
+- Frontend called it correctly
+- RPC attempted `INSERT INTO branding_secrets (id, business_id, ...)` with forced id from branding lookup
+- When id lookup returned NULL or collided, RPC failed silently
+- Result: Frontend got "mp_not_configured" error even though token existed
+
+**Issue #3: Edge Function JWT Blocking**
+- After revert, webhooks still returned 401
+- Root cause: `mp-webhook`, `create-preference`, `mp-oauth` need `--no-verify-jwt` flag at deploy time
+- The flag is only in the source code comments (`// Deploy: supabase functions deploy mp-webhook --no-verify-jwt`)
+- Flag is NOT persisted in `supabase/config.toml`
+- When Vercel auto-redeployed, Supabase reset to default (require JWT), blocking Mercado Pago calls
+- **Fix:** Manually redeployed with flag: `supabase functions deploy mp-webhook --no-verify-jwt`
+
+### What Should Have Happened (Better Approach)
+
+Instead of moving tokens to a separate table mid-implementation, safer options:
+1. **Encrypt token in-place** — Add `mp_access_token_encrypted TEXT` to `branding`, encrypt/decrypt with SECURITY DEFINER, leave column structure alone
+2. **RLS-restrict the column** — Keep token in `branding`, add column-level RLS policy (if Postgres supports it) or separate view
+3. **Schedule the fix** — Choose a maintenance window, test thoroughly first, have rollback ready
+
+### Lessons (Don't Repeat)
+
+**Pattern Recognition:**
+- **Never force a PK when the table is shared across tenants** — Each tenant's row needs its own id, not borrowed from another table
+- **Test RPCs with real data before deploying** — The signature looked right but behavior was silent-failure
+- **Edge function deploy flags are not persistent** — Comments are read by humans, not machines. Need a deploy checklist or CI integration
+
+**Testing Gaps:**
+- Tested migrations in isolation (they "ran"), not end-to-end (did payment actually work?)
+- Didn't verify the RPC returned the token (just trusted the function definition)
+- Assumed `--no-verify-jwt` persisted across deploys (it doesn't)
+
+**The Real Fix (For Later):**
+The mp_access_token is still exposed in the public `branding` table. The security issue is real but not trivially exploitable (requires schema knowledge + business_id). Mark as **backlog** and implement properly when:
+- Time to do it right (no rushing)
+- All edge functions are tested end-to-end before deploy
+- Deploy flags are in CI/config, not comments
+- Rollback procedure is documented
+
+### Current Status
+
+✅ **Reverted to:**
+- Code: Pre-migration state (mp_access_token read from `branding`)
+- Database: branding_secrets columns dropped, mp_access_token back in branding
+- Edge Functions: Redeployed with `--no-verify-jwt` flag
+
+✅ **Payments working:**
+- Orders → MP checkout → webhook → order status updates → KDS auto-approve
+
+⚠️ **Security debt:**
+- mp_access_token readable from public branding table
+- Both food orders and event orders share this exposure
+- Affects all tenants equally
+- Document in product roadmap as "MP token encryption / RLS hardening"
 
 ---
 
