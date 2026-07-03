@@ -66,6 +66,7 @@ let shieldActive=false,shieldTimer=0,magnetActive=false,magnetTimer=0;
 let slowmoActive=false,slowmoTimer=0,multi2Active=false,multi2Timer=0;
 let feverActive=false,feverTimer=0,feverColor=0;
 let flashFrames=0,chromaFrames=0,lastTime=0,frameNum=0,gameTime=0;
+let puFlashFrames=0,puFlashCol='#FFFFFF';
 let nextHypeIdx=0,lastHypeTime=-99999;
 let squishX=1,squishY=1;
 let comboCount=0,comboDisplay=0;
@@ -95,7 +96,7 @@ function resetGame(){
   if(currentRunFrames.length>30){ghostData=[...currentRunFrames];ghostVisible=true;}
   currentRunFrames=[];tutorialAlpha=1;
   score=0;gravDown=true;playerY=floorY-C.PLAYER_SIZE;
-  obstacles=[];coins=[];powerups=[];particles=[];popups=[];lensFlares=[];speedLines=[];deathParticles=[];
+  obstacles=[];coins=[];powerups=[];particles=[];popups=[];lensFlares=[];speedLines=[];deathParticles=[];shockwaves=[];puFlashFrames=0;
   speed=C.INIT_SPEED;spawnInt=C.INIT_SPAWN;lastSpawn=0;countVal=3;
   feverActive=false;feverTimer=0;feverColor=0;
   shieldActive=false;shieldTimer=0;magnetActive=false;magnetTimer=0;
@@ -197,6 +198,12 @@ function spawnDeathBurst(x,y){deathParticles=[];for(let i=0;i<40;i++){const a=Ma
 function updateDeathParticles(){for(const p of deathParticles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.vx*=0.97;p.life--;p.rot+=p.rotSpd;}}
 function drawDeathParticles(){for(const p of deathParticles){if(p.life<=0)continue;ctx.save();ctx.globalAlpha=(p.life/p.maxLife);ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.col;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);ctx.restore();}}
 
+// power-up pickup shockwave ring — bounded array, few active at once, cheap to draw
+let shockwaves=[];
+function spawnShockwave(x,y,col){shockwaves.push({x,y,col,life:22,maxLife:22});}
+function updateShockwaves(){for(let i=shockwaves.length-1;i>=0;i--){shockwaves[i].life--;if(shockwaves[i].life<=0)shockwaves.splice(i,1);}}
+function drawShockwaves(){for(const s of shockwaves){const t=1-s.life/s.maxLife,r=6+t*48;ctx.save();ctx.globalAlpha=(1-t)*0.8;ctx.strokeStyle=s.col;ctx.lineWidth=4*(1-t*0.6);ctx.beginPath();ctx.arc(s.x,s.y,r,0,Math.PI*2);ctx.stroke();ctx.restore();}}
+
 function addPopup(txt,x,y,col='#FFFFFF',scale=1){popups.push({txt,x,y,col,life:80,maxLife:80,scale});}
 function updatePopups(){for(let i=popups.length-1;i>=0;i--){popups[i].life--;popups[i].y-=0.4;if(popups[i].life<=0)popups.splice(i,1);}}
 function drawPopups(){for(const p of popups){const a=Math.min(1,p.life/p.maxLife*2);ctx.save();ctx.globalAlpha=a;ctx.translate(p.x,p.y);ctx.font=`bold ${Math.round(18*p.scale)}px "Segoe UI",sans-serif`;ctx.textAlign='center';ctx.strokeStyle='rgba(0,0,0,0.7)';ctx.lineWidth=4;ctx.strokeText(p.txt,0,0);ctx.fillStyle=p.col;ctx.fillText(p.txt,0,0);ctx.restore();}}
@@ -263,11 +270,12 @@ function update(dt){
   for(let i=coins.length-1;i>=0;i--){coins[i].life-=dt/2000;if(coins[i].x+9<0||coins[i].life<=0)coins.splice(i,1);}
   for(let i=powerups.length-1;i>=0;i--){powerups[i].x-=spd;powerups[i].spin+=0.05;if(powerups[i].x<-20)powerups.splice(i,1);}
   for(const cn of coins){if(!cn.collected){const dx=C.PLAYER_X+C.PLAYER_SIZE/2-cn.x,dy=playerY+C.PLAYER_SIZE/2-cn.y;if(Math.sqrt(dx*dx+dy*dy)<9+C.PLAYER_SIZE/2){cn.collected=true;cn.life=-1;score+=10*fm;sfxCoin();Haptics.fire(Haptics.coin);addFlare(cn.x,cn.y);spawnParticles(cn.x,cn.y,8,['#FFD700','#FFECB3','#FFA500'],3,25);addPopup(multi2Active?'+20':'+10',cn.x,cn.y-12,'#FFD700');}}}
-  for(let i=powerups.length-1;i>=0;i--){const pu=powerups[i];const dx=C.PLAYER_X+C.PLAYER_SIZE/2-pu.x,dy=playerY+C.PLAYER_SIZE/2-pu.y;if(Math.sqrt(dx*dx+dy*dy)<pu.r+C.PLAYER_SIZE/2){const m=PU_META[pu.type];if(pu.type==='shield'){shieldActive=true;shieldTimer=C.SHIELD_DUR;}if(pu.type==='magnet'){magnetActive=true;magnetTimer=C.MAGNET_DUR;}if(pu.type==='slowmo'){slowmoActive=true;slowmoTimer=C.SLOWMO_DUR;sfxSlowmo();}if(pu.type==='multi2'){multi2Active=true;multi2Timer=C.MULTI2_DUR;sfxMulti();}Haptics.fire(Haptics.powerup);addPopup(m.icon+' '+m.label+'!',C.W/2,C.H/2-10,m.col,1.15);spawnParticles(pu.x,pu.y,12,CANDY_COLS,3,30);powerups.splice(i,1);}}
+  for(let i=powerups.length-1;i>=0;i--){const pu=powerups[i];const dx=C.PLAYER_X+C.PLAYER_SIZE/2-pu.x,dy=playerY+C.PLAYER_SIZE/2-pu.y;if(Math.sqrt(dx*dx+dy*dy)<pu.r+C.PLAYER_SIZE/2){const m=PU_META[pu.type];if(pu.type==='shield'){shieldActive=true;shieldTimer=C.SHIELD_DUR;}if(pu.type==='magnet'){magnetActive=true;magnetTimer=C.MAGNET_DUR;}if(pu.type==='slowmo'){slowmoActive=true;slowmoTimer=C.SLOWMO_DUR;sfxSlowmo();}if(pu.type==='multi2'){multi2Active=true;multi2Timer=C.MULTI2_DUR;sfxMulti();}Haptics.fire(Haptics.powerup);addPopup(m.icon+' '+m.label+'!',C.W/2,C.H/2-10,m.col,1.15);spawnParticles(pu.x,pu.y,20,[m.col,'#FFFFFF'],4,34);spawnShockwave(pu.x,pu.y,m.col);puFlashFrames=10;puFlashCol=m.col;powerups.splice(i,1);}}
   if(checkCollision()){if(shieldActive){shieldActive=false;shieldTimer=0;sfxShield();Haptics.fire(Haptics.shieldBreak,true);flashFrames=8;chromaFrames=10;spawnParticles(C.PLAYER_X+C.PLAYER_SIZE/2,playerY+C.PLAYER_SIZE/2,16,['#00BFFF','#FFFFFF'],4,40);addPopup('🛡 BLOCKED!',C.PLAYER_X+30,playerY-10,'#00BFFF',1.1);}else triggerDeath();}
   speed=Math.min(C.MAX_SPEED,speed+C.SPEED_INC);spawnInt=Math.max(C.MIN_SPAWN,spawnInt-C.SPAWN_DEC);
   updateParticles();updatePopups();
-  if(flashFrames>0)flashFrames--;if(chromaFrames>0)chromaFrames--;
+  if(flashFrames>0)flashFrames--;if(chromaFrames>0)chromaFrames--;if(puFlashFrames>0)puFlashFrames--;
+  updateShockwaves();
 }
 
 function checkCollision(){const px=C.PLAYER_X+3,py=playerY+3,pw=C.PLAYER_SIZE-6,ph=C.PLAYER_SIZE-6;for(const o of obstacles){if(px<o.x+o.w&&px+pw>o.x&&py<o.y+o.h&&py+ph>o.y)return true;}return false;}
@@ -1047,7 +1055,7 @@ function render(){
   if(state!==GS.START){
     drawObstacles();drawCoins();drawPowerups();
     drawGhost();drawPlayer();
-    drawParticles();drawDeathParticles();drawFlares();drawPopups();
+    drawParticles();drawDeathParticles();drawFlares();drawShockwaves();drawPopups();
     if(state===GS.PLAY)drawTutorial();
   }
   ctx.restore();
@@ -1055,6 +1063,7 @@ function render(){
   switch(state){case GS.START:drawStartScreen();break;case GS.COUNT:drawCountdown();break;case GS.PAUSE:drawPauseScreen();break;case GS.OVER:drawOverScreen();break;}
 
   if(flashFrames>0&&state!==GS.OVER){ctx.fillStyle=`rgba(255,230,245,${flashFrames/12*0.55})`;ctx.fillRect(0,0,C.W,C.H);}
+  if(puFlashFrames>0&&state!==GS.OVER){ctx.save();ctx.globalAlpha=puFlashFrames/10*0.32;ctx.fillStyle=puFlashCol;ctx.fillRect(0,0,C.W,C.H);ctx.restore();}
 }
 
 function loop(ts){const dt=Math.min(ts-lastTime,50);lastTime=ts;if(state===GS.PLAY)frameNum++;update(dt);render();requestAnimationFrame(loop);}
