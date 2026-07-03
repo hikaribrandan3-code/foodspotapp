@@ -990,7 +990,8 @@ function useItem(k) {
       break;
     case 'tomato': {
       let target = null;
-      karts.forEach(o => { if (o !== k && !o.finished && o.rank === k.rank - 1) target = o; });
+      let bestRank = Infinity;
+      karts.forEach(o => { if (o !== k && !o.finished && o.rank < bestRank) { target = o; bestRank = o.rank; } });
       hazards.push({ type: 'tomato', x: k.x + fwdX * 14, y: k.y + fwdY * 14, a: k.a, spd: 4.8, life: 360, owner: k, ownCd: 30, target });
       if (k.isPlayer) SND.throwIt();
       break;
@@ -1043,10 +1044,10 @@ function stepKart(k) {
     return;
   }
 
-  const baseMax = 2.9 * C.spd * (1 + k.coins * 0.004);
+  const baseMax = 4.5 * C.spd * (1 + k.coins * 0.004);
   let maxS = baseMax;
-  if (k.boostT > 0) maxS *= 1.35;
-  if (k.starT > 0) maxS *= 1.2;
+  if (k.boostT > 0) maxS *= 1.4;
+  if (k.starT > 0) maxS *= 1.25;
   if (!k.isPlayer) maxS *= k.skill * k.rubber;
   const offroad = surf === SURF.SLOW && k.starT === 0 && k.boostT === 0;
   if (offroad) maxS = Math.min(maxS, 1.9);
@@ -1059,7 +1060,7 @@ function stepKart(k) {
     // throttle
     if (k.throttle > 0) {
       const target = maxS;
-      if (k.speed < target) k.speed += (target - k.speed) * (0.018 + 0.012 * C.acc) * (k.boostT > 0 ? 3 : 1);
+      if (k.speed < target) k.speed += (target - k.speed) * (0.025 + 0.015 * C.acc) * (k.boostT > 0 ? 3.2 : 1);
     }
     if (k.brake > 0 && k.drift === 0) {
       k.speed *= 0.93;
@@ -1074,7 +1075,7 @@ function stepKart(k) {
 
     // steering + drift
     const spdF = clamp(Math.abs(k.speed) / 1.1, 0, 1);
-    const turnR = 0.045 * (0.8 + 0.35 * C.hdl);
+    const turnR = 0.062 * (0.8 + 0.35 * C.hdl);
     let grip = 0.16 * (0.8 + 0.4 * C.hdl);
     if (track.grip < 1) grip *= track.grip + (surf === SURF.SLOW ? 0.25 : 0);
     if (k.isPlayer) {
