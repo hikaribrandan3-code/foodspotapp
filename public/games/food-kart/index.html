@@ -1607,22 +1607,26 @@ function btnPress(b) {
     return;
   }
   if (state === ST.TRACK) {
-    if (b === 'dpad-up')   { selTrack = (selTrack + 3) % 4; SND.menuMove(); }
-    if (b === 'dpad-down') { selTrack = (selTrack + 1) % 4; SND.menuMove(); }
-    if (b === 'a' || b === 'start') { SND.menuPick(); initRace(selChar, selTrack); }
-    if (b === 'b') { SND.menuBack(); state = ST.CHAR; }
+    if (b === 'dpad-up')   { selTrack = (selTrack + 3) % 4; SND.menuMove(); return; }
+    if (b === 'dpad-down') { selTrack = (selTrack + 1) % 4; SND.menuMove(); return; }
+    if (b === 'dpad-left') { selTrack = (selTrack + 3) % 4; SND.menuMove(); return; }
+    if (b === 'dpad-right'){ selTrack = (selTrack + 1) % 4; SND.menuMove(); return; }
+    if (b === 'a' || b === 'start') { SND.menuPick(); initRace(selChar, selTrack); return; }
+    if (b === 'b') { SND.menuBack(); state = ST.CHAR; return; }
     return;
   }
   if (state === ST.COUNT || state === ST.RACE || state === ST.FINISH) {
     if (paused) {
-      if (b === 'dpad-up')   { pauseSel = (pauseSel + 3) % 4; SND.menuMove(); }
-      if (b === 'dpad-down') { pauseSel = (pauseSel + 1) % 4; SND.menuMove(); }
+      if (b === 'dpad-up')   { pauseSel = (pauseSel + 3) % 4; SND.menuMove(); return; }
+      if (b === 'dpad-down') { pauseSel = (pauseSel + 1) % 4; SND.menuMove(); return; }
       if (b === 'a' || b === 'start') {
         if (b === 'start' || pauseSel === 0) { paused = false; if (state === ST.RACE) musicStart(track.th.song, player().lap === LAPS ? 1.12 : 1); }
         else if (pauseSel === 1) { musicStop(); initRace(selChar, selTrack); paused = false; }
         else if (pauseSel === 2) { setMuted(!muted); }
         else if (pauseSel === 3) { paused = false; musicStop(); engineStop(); state = ST.TITLE; exitGameIfEmbeddedElseTitle(); }
+        return;
       }
+      if (b === 'b') { paused = false; if (state === ST.RACE) musicStart(track.th.song, player().lap === LAPS ? 1.12 : 1); return; }
       return;
     }
     if (b === 'start') { paused = true; pauseSel = 0; musicStop(); engineStop(); return; }
