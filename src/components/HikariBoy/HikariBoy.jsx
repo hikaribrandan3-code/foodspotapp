@@ -73,6 +73,7 @@ export function HikariBoy({
   const dpadCrossRef = useRef(null);
   const dpadDir = useRef({ up: false, down: false, left: false, right: false });
   const currentDpadBtnRef = useRef(null);
+  const dpadTouchIdRef = useRef(null);
 
   // LEAK FIX: Hide background signup/auth when HikariBoy opens
   useEffect(() => {
@@ -270,7 +271,20 @@ export function HikariBoy({
 
   const handleDpadTouch = (e) => {
     e.preventDefault();
-    const touch = e.touches[0];
+
+    // Multiple fingers can be on screen at once (steer + A/B). Track the
+    // specific touch that started on the D-pad by identifier — grabbing
+    // touches[0] blindly picks up whichever finger touched down first,
+    // which could be the A/B thumb and would peg the angle to that side.
+    if (e.type === 'touchstart') {
+      const startTouch = e.changedTouches[0];
+      if (startTouch) dpadTouchIdRef.current = startTouch.identifier;
+    }
+    if (dpadTouchIdRef.current === null) return;
+    let touch = null;
+    for (let i = 0; i < e.touches.length; i++) {
+      if (e.touches[i].identifier === dpadTouchIdRef.current) { touch = e.touches[i]; break; }
+    }
     if (!touch) return;
 
     const dpadEl = e.currentTarget;
@@ -322,6 +336,11 @@ export function HikariBoy({
 
   const handleDpadTouchEnd = (e) => {
     e.preventDefault();
+    // Only release if the finger that lifted is the one we were tracking —
+    // lifting an unrelated finger (e.g. the A/B thumb) must not cancel steering.
+    const ended = Array.from(e.changedTouches).some(t => t.identifier === dpadTouchIdRef.current);
+    if (!ended) return;
+    dpadTouchIdRef.current = null;
     if (currentDpadBtnRef.current) {
       releaseDpad(currentDpadBtnRef.current);
       currentDpadBtnRef.current = null;
