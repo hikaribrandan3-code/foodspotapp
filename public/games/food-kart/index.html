@@ -326,14 +326,30 @@ function drawFace(g, cx, y, ex, happy) {
   P(g, cx - 4 + ex, y, 1, 1, '#fff'); P(g, cx + 2 + ex, y, 1, 1, '#fff');
   if (happy) { P(g, cx - 2 + ex, y + 4, 4, 1, '#1a1a1a'); P(g, cx - 3 + ex, y + 3, 1, 1, '#1a1a1a'); P(g, cx + 2 + ex, y + 3, 1, 1, '#1a1a1a'); }
 }
-// Old painted sprite system replaced by Gemini PNG loader
-// sprite generation replaced by Gemini PNG loader (see spriteLoadPromise below)
-// sprites now load from Gemini PNG files (see spriteLoadPromise below)
-// initialize empty arrays; loader populates them
+// Paint minimal fallback sprite per character (used if PNG load fails)
+function makeFallbackSprite(ci) {
+  const frames = [];
+  const hues = ['#F0B04C', '#F4C542', '#FFD966', '#FFE97A', '#F2D272', '#C0392B'];
+  const col = hues[ci];
+  for (let f = 0; f < 16; f++) {
+    const cv = mkCanvas(64, 64), g = cv.getContext('2d');
+    g.fillStyle = col;
+    g.fillRect(20, 20, 24, 24);
+    g.fillStyle = '#222';
+    g.fillRect(18, 30, 6, 6);
+    g.fillRect(28, 30, 6, 6);
+    frames.push(cv);
+  }
+  return frames;
+}
 const charFrames = CHARS.map(() => []);
-const charFeet = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]; // defaults; update if needed per char
-const charIcons = CHARS.map(() => mkCanvas(16, 16)); // rebuilt after sprite load
-// load Gemini kart sprites (all 6 chars) with 5s timeout, else use defaults
+const charFeet = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
+const charIcons = CHARS.map(() => mkCanvas(16, 16));
+// Initialize fallback sprites for all characters
+for (let ci = 0; ci < CHARS.length; ci++) {
+  charFrames[ci] = makeFallbackSprite(ci);
+}
+// Try loading PNG sprites; fall back to painted if load fails
 const spriteLoadPromise = (async function loadAllSprites() {
   const angles = ['0', '22.5', '45', '67.5', '90', '112.5', '135', '157.5', '180', '202.5', '225', '247.5', '270', '292.5', '315', '337.5'];
   const chars = ['burger', 'taco', 'pizza', 'pancake', 'pasta', 'hotdog'];
@@ -343,10 +359,10 @@ const spriteLoadPromise = (async function loadAllSprites() {
     try {
       for (const ang of angles) {
         const img = new Image();
-        img.src = `sprites/${charName}/${charName}-${ang}deg.png`;
+        img.src = `/games/food-kart/sprites/${charName}/${charName}-${ang}deg.png`;
         await Promise.race([
           new Promise((res, rej) => { img.onload = res; img.onerror = rej; }),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1500))
         ]);
         frames.push(img);
       }
@@ -357,7 +373,7 @@ const spriteLoadPromise = (async function loadAllSprites() {
         g.drawImage(charFrames[ci][8], 8, 4, 48, 48, 0, 0, 16, 16);
         charIcons[ci] = cv;
       }
-    } catch (e) { console.log(`${charName} sprites skipped:`, e.message); }
+    } catch (e) { console.log(`${charName} using fallback`); }
   };
   await Promise.all(chars.map((_, ci) => loadChar(ci)));
 })();
