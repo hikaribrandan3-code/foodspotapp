@@ -359,8 +359,12 @@ const BODY_PAINTERS = [
   },
 ];
 // Build 16 rotation frames per character (index 0 = heading away from viewer).
+// Each frame also records `foot`: the fraction (0-1) down the 32px canvas where
+// the wheels actually touch ground, so the renderer can anchor the sprite to
+// the true ground line instead of the canvas bottom edge (which has empty
+// padding above the wheels and made karts look like they were floating).
 function makeCharFrames(ci) {
-  const frames = [];
+  const frames = [], feet = [];
   for (let f = 0; f < 16; f++) {
     const rel = (f / 16) * PI2;                     // kart heading minus view direction
     const s = Math.sin(rel), c = Math.cos(rel);
@@ -380,10 +384,13 @@ function makeCharFrames(ci) {
     P(g, 16 - wx - 1 - sh, by - 1, 2, 2, '#999'); P(g, 16 + wx - 1 - sh, by - 1, 2, 2, '#999');
     BODY_PAINTERS[ci](g, sh, face, Math.round(s * -2));
     frames.push(cv);
+    feet.push((Math.max(fy, by) + 2) / 32);
   }
-  return frames;
+  return { frames, feet };
 }
-const charFrames = CHARS.map((_, i) => makeCharFrames(i));
+const charData = CHARS.map((_, i) => makeCharFrames(i));
+const charFrames = charData.map(d => d.frames);
+const charFeet = charData.map(d => d.feet);
 const charIcons = CHARS.map((_, i) => {
   const cv = mkCanvas(16, 16), g = cv.getContext('2d');
   g.drawImage(charFrames[i][8], 4, 2, 24, 24, 0, 0, 16, 16); // front view crop
@@ -523,13 +530,13 @@ const THEMES = {
   },
 };
 const TRACKS = [
-  { name: 'SPRINKLE CIRCUIT', theme: 'candy', roadW: 92, diff: 1, grip: 1.0,
+  { name: 'SPRINKLE CIRCUIT', theme: 'candy', roadW: 100, diff: 1, grip: 1.0,
     pts: [[300,180],[620,150],[830,300],[860,540],[760,800],[520,880],[300,820],[180,600],[170,380]] },
-  { name: 'SALSA DESERT', theme: 'desert', roadW: 86, diff: 2, grip: 1.0,
+  { name: 'SALSA DESERT', theme: 'desert', roadW: 94, diff: 2, grip: 1.0,
     pts: [[180,220],[460,130],[760,180],[880,380],[760,520],[560,470],[430,600],[600,720],[820,700],[880,860],[640,920],[340,880],[160,720],[140,440]] },
-  { name: 'GELATO GLACIER', theme: 'ice', roadW: 96, diff: 2, grip: 0.45,
+  { name: 'GELATO GLACIER', theme: 'ice', roadW: 104, diff: 2, grip: 0.45,
     pts: [[240,150],[680,130],[890,300],[830,530],[890,760],[650,910],[380,850],[150,800],[120,540],[160,300]] },
-  { name: 'RAINBOW ROAD', theme: 'rainbow', roadW: 64, diff: 3, grip: 1.0,
+  { name: 'RAINBOW ROAD', theme: 'rainbow', roadW: 78, diff: 3, grip: 1.0,
     pts: [[500,110],[780,180],[690,380],[900,470],[800,700],[560,640],[430,860],[200,760],[300,540],[140,420],[300,240]] },
 ];
 
@@ -743,7 +750,7 @@ function onBtn(b, down) {
 }
 const KEYMAP = {
   ArrowLeft: 'dpad-left', ArrowRight: 'dpad-right', ArrowUp: 'a', ArrowDown: 'b',
-  KeyZ: 'a', KeyX: 'b', Space: 'item', KeyC: 'item', Enter: 'start', Escape: 'start',
+  KeyZ: 'item', KeyX: 'b', Space: 'item', KeyC: 'item', Enter: 'start', Escape: 'start',
   ShiftLeft: 'item', KeyM: 'mute',
 };
 document.addEventListener('keydown', e => {
@@ -961,7 +968,7 @@ function stepKart(k) {
   if (k.starT > 0) maxS *= 1.2;
   if (!k.isPlayer) maxS *= k.skill * k.rubber;
   const offroad = surf === SURF.SLOW && k.starT === 0 && k.boostT === 0;
-  if (offroad) maxS = Math.min(maxS, 1.15);
+  if (offroad) maxS = Math.min(maxS, 1.9);
 
   if (k.spinT > 0) {
     k.spinT--;
@@ -979,8 +986,8 @@ function stepKart(k) {
     }
     if (k.speed > maxS) k.speed = lerp(k.speed, maxS, 0.06);
     k.speed *= 0.9965;
-    if (offroad && k.speed > 1.2) {
-      k.speed *= 0.93;
+    if (offroad && k.speed > 1.9) {
+      k.speed *= 0.975;
       if ((frame & 3) === 0) parts.push({ x: k.x + rnd(-5, 5), y: k.y + rnd(-5, 5), vx: 0, vy: 0, life: 20, col: track.def.theme === 'ice' ? '#fff' : '#9B8B6E', sz: 3 });
     }
 
@@ -1317,8 +1324,9 @@ function drawOneSpr(s) {
   }
   const w = Math.max(2, wu * p.scale);
   const h = w * (img.height / img.width);
+  const foot = o.foot !== undefined ? o.foot : 1;      // fraction of h that is "above ground" (wheel contact row)
   const x = (p.sx - w / 2) | 0;
-  const y = (p.sy - h - (o.lift ? o.lift * p.scale : 0)) | 0;
+  const y = (p.sy - h * foot - (o.lift ? o.lift * p.scale : 0)) | 0;
   if (!o.noShadow) {
     ctx.fillStyle = 'rgba(0,0,0,.28)';
     ctx.fillRect((p.sx - w * 0.32) | 0, (p.sy - 2) | 0, (w * 0.64) | 0, Math.max(1, (w * 0.14) | 0));
@@ -1360,12 +1368,13 @@ function renderRace() {
   // karts
   for (const k of karts) {
     if (k.fallT > 0 && k.fallT <= 40) continue; // waiting to respawn
-    const o = {};
+    const vf = viewFrame(k);
+    const o = { foot: charFeet[k.ci][vf] };
     if (k.starT > 0) o.hue = (frame * 37) % 360;
     if (k.invulnT > 0 && (frame & 3) < 2 && k.spinT === 0) o.alpha = 0.45;
     if (k.fallT > 40) { o.alpha = (k.fallT - 40) / 40; o.lift = -(80 - k.fallT) * 0.9; }
     if (k.hopT > 0) o.lift = Math.sin((10 - k.hopT) / 10 * Math.PI) * 5;
-    queueSpr(charFrames[k.ci][viewFrame(k)], k.x, k.y, 17, o);
+    queueSpr(charFrames[k.ci][vf], k.x, k.y, 17, o);
   }
   // particles (drawn in the same depth-sorted pass)
   for (const p of parts) {
