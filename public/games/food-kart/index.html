@@ -31,8 +31,8 @@ canvas { display:block; image-rendering:pixelated; image-rendering:crisp-edges; 
 'use strict';
 
 const isMobileDevice = /mobile|android|phone/i.test(navigator.userAgent);
-const W = isMobileDevice ? 240 : 240, H = isMobileDevice ? 120 : 160;
-const HOR = isMobileDevice ? 42 : 56;            // horizon row
+const W = 240, H = 160;
+const HOR = 56;            // horizon row
 const FOCAL = 110;         // projection focal length
 const CAMH = 26;           // camera height (world units)
 const CAMBACK = 40;        // camera distance behind player
@@ -1119,7 +1119,7 @@ function stepKart(k) {
   k.kmh = Math.round(Math.abs(k.speed) * 34);
 }
 function controlPlayer(k) {
-  k.steer = (keys['dpad-left'] ? 1 : 0) + (keys['dpad-right'] ? -1 : 0);
+  k.steer = (keys['dpad-left'] ? -1 : 0) + (keys['dpad-right'] ? 1 : 0);
   k.throttle = keys['a'] ? 1 : 0;
   k.brake = (keys['b'] || keys['dpad-down']) ? 1 : 0;
 }
