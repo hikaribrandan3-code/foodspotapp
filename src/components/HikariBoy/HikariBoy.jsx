@@ -1,12 +1,13 @@
 /**
  * HikariBoy Emulator Shell - Delta 1:1 (Updated)
  * Full-screen game display, foodspot branding
- * 
+ *
  * Features:
  * - Game fills entire top screen (no frame)
  * - foodspot logo in mid bar
  * - Labels below system buttons (MENU/SELECT/START)
  * - Responsive: iPhone Regular / Pro / Pro Max
+ * - FoodKart GP integrated as game #10
  */
 
 import React, { useState, useRef, useEffect } from 'react';
