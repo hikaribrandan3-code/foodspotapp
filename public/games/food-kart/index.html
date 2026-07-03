@@ -876,7 +876,12 @@ function makeKart(ci, isPlayer, gridIdx) {
   };
 }
 function initRace(ci, ti) {
-  track = buildTrack(ti);
+  try {
+    track = buildTrack(ti);
+  } catch (e) {
+    console.error('[FoodKart] Failed to build track', ti, ':', e);
+    return;
+  }
   hazards = []; parts = [];
   karts = [];
   // AI picks: everyone except player's char, shuffled
