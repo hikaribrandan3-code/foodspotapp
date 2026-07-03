@@ -1038,8 +1038,8 @@ function rollItem(k) {
   const w = itemWeights(k.rank);
   let tot = 0; w.forEach(e => tot += e[1]);
   let r = Math.random() * tot;
-  for (const [it, p] of w) { r -= p; if (r <= 0) { k.item = it; k.itemN = it === 'triple' ? 3 : 1; return; } }
-  k.item = 'chili'; k.itemN = 1;
+  for (const [it, p] of w) { r -= p; if (r <= 0) { k.item = it; k.itemN = it === 'triple' ? 3 : 1; k.itemHold = 0; return; } }
+  k.item = 'chili'; k.itemN = 1; k.itemHold = 0;
 }
 function useItem(k) {
   if (!k.item || k.rouletteT > 0) return;
