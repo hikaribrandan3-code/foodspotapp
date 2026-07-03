@@ -44,7 +44,7 @@ const GAMES = [
   { id: 'golden-crust',   name: 'Golden Crust',       cover: '/games/bakery-timer/assets/game-chip.png', url: '/games/bakery-timer/index.html',     proOnly: false },
   { id: 'brick-breaker',  name: 'Block Smash',        cover: '/games/brick-breaker/cover.png',      url: '/games/brick-breaker/index.html',    proOnly: false, shellPause: false },
   { id: 'pocket-tanks',   name: 'Pocket Tanks',       cover: '/games/pocket-tanks/cover.webp',      url: '/games/pocket-tanks/index.html',     proOnly: false, shellPause: false },
-  { id: 'food-kart',      name: 'FoodKart GP',        cover: '/games/food-kart/cover.png',         url: '/games/food-kart/index.html',        proOnly: false, shellPause: false },
+  { id: 'food-kart',      name: 'FoodKart GP',        cover: '/games/food-kart/cover.webp',        url: '/games/food-kart/index.html',        proOnly: false, shellPause: false },
 ];
 
 export function HikariBoy({
