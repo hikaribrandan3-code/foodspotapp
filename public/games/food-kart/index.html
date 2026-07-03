@@ -479,30 +479,33 @@ const charIcons = CHARS.map((_, i) => {
   g.drawImage(charFrames[i][8], 8, 4, 48, 48, 0, 0, 16, 16); // front view crop (64-space coords)
   return cv;
 });
-// load Gemini kart sprites (all 6 chars) if available, else keep defaults
+// load Gemini kart sprites (all 6 chars) with 5s timeout, else use defaults
 const spriteLoadPromise = (async function loadAllSprites() {
   const angles = ['0', '22.5', '45', '67.5', '90', '112.5', '135', '157.5', '180', '202.5', '225', '247.5', '270', '292.5', '315', '337.5'];
   const chars = ['burger', 'taco', 'pizza', 'pancake', 'pasta', 'hotdog'];
-  for (let ci = 0; ci < chars.length; ci++) {
+  const loadChar = async (ci) => {
     const charName = chars[ci];
     const frames = [];
     try {
       for (const ang of angles) {
         const img = new Image();
         img.src = `sprites/${charName}/${charName}-${ang}deg.png`;
-        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+        await Promise.race([
+          new Promise((res, rej) => { img.onload = res; img.onerror = rej; }),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+        ]);
         frames.push(img);
       }
       if (frames.length === 16) {
         charFrames[ci] = frames;
-        // rebuild icon with new sprites
         const cv = mkCanvas(16, 16), g = cv.getContext('2d');
         g.imageSmoothingEnabled = false;
         g.drawImage(charFrames[ci][8], 8, 4, 48, 48, 0, 0, 16, 16);
         charIcons[ci] = cv;
       }
-    } catch (e) { console.log(`${charName} sprites not found, using defaults`); }
-  }
+    } catch (e) { console.log(`${charName} sprites skipped:`, e.message); }
+  };
+  await Promise.all(chars.map((_, ci) => loadChar(ci)));
 })();
 
 // ---------------- item / pickup sprites ----------------
