@@ -31,10 +31,11 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 8 games
+// Curated game library - 10 games
 // ALL GAMES UNLOCKED FOR NOW
 const GAMES = [
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
+  { id: 'food-kart',      name: 'FoodKart GP',        cover: '/games/food-kart/cover.png',         url: '/games/food-kart/index.html',        proOnly: false, shellPause: false },
   { id: 'spice-invaders', name: 'Spice Invaders',      cover: '/games/spice-invaders/cover.webp',   url: '/games/spice-invaders/index.html',   proOnly: false },
   { id: 'kanzo',          name: 'Kanzo',              cover: '/games/kanzo/cover.png',             url: '/games/kanzo/index.html',            proOnly: false },
   { id: 'bubble-tea',     name: 'Bubble Tea',          cover: '/games/bubble-tea/cover.webp',       url: '/games/bubble-tea/index.html',       proOnly: false },
