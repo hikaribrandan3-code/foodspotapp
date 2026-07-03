@@ -792,7 +792,10 @@ function onBtn(b, down) {
   if (down) resumeAC();
   const was = keys[b];
   keys[b] = down;
-  if (down && !was) btnPress(b);
+  if (down && !was) {
+    console.log('[FoodKart] btnPress called for:', b);
+    btnPress(b);
+  }
 }
 const KEYMAP = {
   ArrowLeft: 'dpad-left', ArrowRight: 'dpad-right', ArrowUp: 'dpad-up', ArrowDown: 'dpad-down',
@@ -812,12 +815,14 @@ window.addEventListener('message', e => {
   if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') { initAC(); resumeAC(); return; }
   if (d.type === 'BUTTON_PRESS') {
     let b = d.button;
+    console.log('[FoodKart] Button PRESS received:', b, 'in state', state);
     if (b === 'l' || b === 'r') b = 'item';
     if (b === 'select') { exitGame(); return; }
     if (b === 'menu') return;
     onBtn(b, true);
   } else if (d.type === 'BUTTON_RELEASE') {
     let b = d.button;
+    console.log('[FoodKart] Button RELEASE received:', b);
     if (b === 'l' || b === 'r') b = 'item';
     onBtn(b, false);
   }
