@@ -30,9 +30,8 @@ canvas { display:block; image-rendering:pixelated; image-rendering:crisp-edges; 
 // ============================================================
 'use strict';
 
-const isMobileDevice = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-const W = 240, H = isMobileDevice ? 100 : 160;
-const HOR = Math.floor(H * 0.35);
+const W = 240, H = 160;
+const HOR = 56;            // horizon row
 const FOCAL = 110;         // projection focal length
 const CAMH = 26;           // camera height (world units)
 const CAMBACK = 40;        // camera distance behind player
