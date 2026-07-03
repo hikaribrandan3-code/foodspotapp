@@ -134,6 +134,7 @@ const STATE = { MENU:0, READY:1, PLAYING:2, PAUSED:3, STAGE_CLEAR:4, GAMEOVER:5 
 let state = STATE.MENU;
 let score = 0, hi = 0, stage = 1, lives = 3, combo = 0, maxCombo = 0;
 let blink = 0, shake = 0, stageClearT = 0;
+let flashT = 0, flashColor = '#ffffff';
 let last = null;
 
 /* --- Fighting-game combo display --- */
@@ -190,11 +191,15 @@ document.addEventListener('keyup', (e) => {
   else keys[key] = false;
 });
 
-window.addEventListener('message', (e) => {
-  const d = e.data || {};
-  if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') ensureAudio();
-  const { type, button } = d;
-  if (!button) return;
+const DPAD_DIAG = {
+  'dpad-up-left':    ['dpad-up', 'dpad-left'],
+  'dpad-up-right':   ['dpad-up', 'dpad-right'],
+  'dpad-down-left':  ['dpad-down', 'dpad-left'],
+  'dpad-down-right': ['dpad-down', 'dpad-right'],
+};
+
+function handleHikariButton(type, button) {
+  if (DPAD_DIAG[button]) { DPAD_DIAG[button].forEach(b => handleHikariButton(type, b)); return; }
   if (type === 'BUTTON_PRESS') {
     if      (button === 'dpad-left'  || button === 'left')  keys['a'] = true;
     else if (button === 'dpad-right' || button === 'right') keys['d'] = true;
@@ -210,6 +215,14 @@ window.addEventListener('message', (e) => {
     if      (button === 'dpad-left'  || button === 'left')  keys['a'] = false;
     else if (button === 'dpad-right' || button === 'right') keys['d'] = false;
   }
+}
+
+window.addEventListener('message', (e) => {
+  const d = e.data || {};
+  if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') ensureAudio();
+  const { type, button } = d;
+  if (!button) return;
+  handleHikariButton(type, button);
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -304,7 +317,7 @@ function loadStage(n){
   const idx=Math.min(n-1,STAGE_LAYOUTS.length-1);
   bricks=STAGE_LAYOUTS[idx](n);
   if(n>STAGE_LAYOUTS.length){bricks=STAGE_LAYOUTS[STAGE_LAYOUTS.length-1](n);for(const b of bricks)if(!b.indestruct&&Math.random()<0.15)b.hp++;}
-  state=STATE.READY; stageAnim.timer=0;
+  state=STATE.READY; stageAnim.timer=0; flashT=0;
   spawnBall(paddle.cx,paddle.y-16,0,0,true); combo=0;
 }
 
@@ -344,6 +357,7 @@ function spawnPowerup(x,y){
 function update(dt){
   blink+=dt;
   if(shake>0){shake-=dt*2.5;if(shake<0)shake=0;}
+  if(flashT>0){flashT-=dt*3;if(flashT<0)flashT=0;}
   if(state===STATE.STAGE_CLEAR) stageClearT+=dt;
 
   // Combo display timer
@@ -396,9 +410,9 @@ function update(dt){
     if(b.trail.length>8) b.trail.shift();
     b.x+=b.vx*sdt; b.y+=b.vy*sdt;
 
-    if(b.x-b.r<pf.x)        {b.x=pf.x+b.r;          b.vx= Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.1;}
-    if(b.x+b.r>pf.x+pf.w)   {b.x=pf.x+pf.w-b.r;     b.vx=-Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.1;}
-    if(b.y-b.r<pf.y)         {b.y=pf.y+b.r;           b.vy= Math.abs(b.vy); sfx('wall'); haptic('wall'); shake+=0.1;}
+    if(b.x-b.r<pf.x)        {b.x=pf.x+b.r;          b.vx= Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.1; spawnParticles(b.x,b.y,'#28e0e0',4);}
+    if(b.x+b.r>pf.x+pf.w)   {b.x=pf.x+pf.w-b.r;     b.vx=-Math.abs(b.vx); sfx('wall'); haptic('wall'); shake+=0.1; spawnParticles(b.x,b.y,'#28e0e0',4);}
+    if(b.y-b.r<pf.y)         {b.y=pf.y+b.r;           b.vy= Math.abs(b.vy); sfx('wall'); haptic('wall'); shake+=0.1; spawnParticles(b.x,b.y,'#28e0e0',4);}
     if(b.y-b.r>pf.y+pf.h)   {balls.splice(i,1); continue;}
 
     const px=paddle.cx-paddle.w/2,py=paddle.y;
@@ -412,6 +426,11 @@ function update(dt){
         sfx('paddle'); haptic('paddle');
         shake+=0.15; combo=0;
         comboDisplay.timer=0;
+        spawnParticles(b.x,py,'#7df0ff',6);
+        if(Math.abs(hitPos)<0.08){
+          score+=15; spawnFloater(b.x,py-10,'PERFECT!','#ffe000');
+          if(score>hi){hi=score;localStorage.setItem('blocksmash_hi',String(hi));}
+        }
       }
     }
 
@@ -445,6 +464,7 @@ function update(dt){
             comboDisplay.timer=comboDisplay.maxTimer;
             comboDisplay.scale=1.6;
           }
+          if(combo===20){ flashT=0.2; flashColor='#a371ff'; }
 
           if(br.explosive){
             for(const nb of bricks){
@@ -473,6 +493,7 @@ function update(dt){
     sfx('clear'); haptic('clear');
     spawnParticles(VW/2,VH/2,'#ffe000',40);
     spawnShockwave(VW/2,VH/2,'#ffe000');
+    flashT=0.25; flashColor='#ffe000';
   }
   if(balls.length===0&&state===STATE.PLAYING){
     if(activePowerups.shield){
@@ -590,6 +611,18 @@ function drawBrick(b){
     const grd=ctx.createLinearGradient(0,y,0,y+h);grd.addColorStop(0,'#ff5555');grd.addColorStop(1,'#aa0000');
     ctx.fillStyle=grd;rr(x,y,w,h,5*S);ctx.fill();
     ctx.fillStyle='#ffaaaa';ctx.font=`${10*S}px 'Press Start 2P'`;ctx.textAlign='center';ctx.fillText('!',x+w/2,y+h/2+4*S);
+  } else if(b.isBoss){
+    const pulse=0.6+Math.sin(blink*4)*0.4;
+    ctx.shadowColor='#ffe000';ctx.shadowBlur=(14+pulse*10)*S;
+    const grd=ctx.createLinearGradient(0,y,0,y+h);grd.addColorStop(0,'#ffe066');grd.addColorStop(1,'#cc8800');
+    ctx.fillStyle=grd;rr(x,y,w,h,5*S);ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='#ffe000';ctx.lineWidth=2*S;rr(x,y,w,h,5*S);ctx.stroke();
+    ctx.fillStyle='#000';ctx.font=`${8*S}px 'Press Start 2P'`;ctx.textAlign='center';ctx.fillText(String(b.hp),x+w/2,y+h/2+3*S);
+    const bw=w*0.9,bx=x+w*0.05,by=y-8*S;
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(bx,by,bw,3*S);
+    ctx.fillStyle='#ffe000';ctx.fillRect(bx,by,bw*Math.max(0,b.hp/b.maxHp),3*S);
+    return;
   } else {
     const grd=ctx.createLinearGradient(0,y,0,y+h);grd.addColorStop(0,col);grd.addColorStop(1,dark);
     ctx.fillStyle=grd;rr(x,y,w,h,5*S);ctx.fill();
@@ -688,6 +721,30 @@ function drawStars(){
     ctx.fillStyle=`rgba(255,255,255,${alpha})`;
     ctx.fillRect(s.x*S,s.y*S,s.size*S,s.size*S);
   }
+}
+
+function drawNeonGrid(){
+  const rows=10, spacing=pf.h/rows;
+  const scroll=(blink*12)%spacing;
+  ctx.save();
+  ctx.strokeStyle='rgba(40,224,224,0.06)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  for(let r=0;r<=rows;r++){
+    const y=(pf.y+r*spacing+scroll)*S;
+    ctx.moveTo(pf.x*S,y);ctx.lineTo((pf.x+pf.w)*S,y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawScreenFlash(){
+  if(flashT<=0) return;
+  ctx.save();
+  ctx.globalAlpha=flashT*0.5;
+  ctx.fillStyle=flashColor;
+  ctx.fillRect(0,0,VW*S,VH*S);
+  ctx.restore();
 }
 
 function drawParticles(){
@@ -862,6 +919,7 @@ function draw(){
 
   ctx.save();
   ctx.beginPath();ctx.rect(pf.x*S,pf.y*S,pf.w*S,pf.h*S);ctx.clip();
+  drawNeonGrid();
   for(const b of bricks)  drawBrick(b);
   drawShockwaves();
   for(const b of balls)   drawBall(b);
@@ -870,6 +928,7 @@ function draw(){
   ctx.restore();
 
   ctx.restore();
+  drawScreenFlash();
   drawHUD();
   drawOverlay();
 }
