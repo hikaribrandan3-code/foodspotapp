@@ -30,8 +30,9 @@ canvas { display:block; image-rendering:pixelated; image-rendering:crisp-edges; 
 // ============================================================
 'use strict';
 
-const W = 240, H = 160;
-const HOR = 56;            // horizon row
+const isMobileDevice = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+const W = 240, H = isMobileDevice ? 100 : 160;
+const HOR = Math.floor(H * 0.35);
 const FOCAL = 110;         // projection focal length
 const CAMH = 26;           // camera height (world units)
 const CAMBACK = 40;        // camera distance behind player
@@ -1727,8 +1728,7 @@ function exitGameIfEmbeddedElseTitle() {
 }
 
 // ---------------- main loop ----------------
-const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-const FPS = isMobile ? 30 : 60;
+const FPS = isMobileDevice ? 30 : 60;
 const STEP = 1 / FPS;
 let last = performance.now(), acc = 0;
 function loop(now) {
