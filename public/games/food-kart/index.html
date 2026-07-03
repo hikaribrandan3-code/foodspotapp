@@ -1673,6 +1673,7 @@ function drawPause() {
 
 // ---------------- state machine ----------------
 function btnPress(b) {
+  console.log('[btnPress] Called with button:', b, 'state:', state, 'ST.TRACK=', ST.TRACK);
   if (state === ST.TITLE) {
     if (b === 'start' || b === 'a') { SND.menuPick(); state = ST.CHAR; }
     return;
@@ -1681,11 +1682,12 @@ function btnPress(b) {
     if (b === 'dpad-left')  { selChar = (selChar + 5) % 6; SND.menuMove(); return; }
     if (b === 'dpad-right') { selChar = (selChar + 1) % 6; SND.menuMove(); return; }
     if (b === 'dpad-up' || b === 'dpad-down') { selChar = (selChar + 3) % 6; SND.menuMove(); return; }
-    if (b === 'a' || b === 'start') { SND.menuPick(); state = ST.TRACK; return; }
+    if (b === 'a' || b === 'start') { SND.menuPick(); state = ST.TRACK; console.log('[btnPress] Transitioning to TRACK state'); return; }
     if (b === 'b') { SND.menuBack(); state = ST.TITLE; return; }
     return;
   }
   if (state === ST.TRACK) {
+    console.log('[btnPress] In TRACK state, button:', b);
     if (b === 'dpad-up')   { selTrack = (selTrack + 3) % 4; SND.menuMove(); return; }
     if (b === 'dpad-down') { selTrack = (selTrack + 1) % 4; SND.menuMove(); return; }
     if (b === 'dpad-left') { selTrack = (selTrack + 3) % 4; SND.menuMove(); return; }
