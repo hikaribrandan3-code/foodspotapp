@@ -1727,6 +1727,9 @@ function exitGameIfEmbeddedElseTitle() {
 }
 
 // ---------------- main loop ----------------
+const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+const FPS = isMobile ? 30 : 60;
+const STEP = 1 / FPS;
 let last = performance.now(), acc = 0;
 function loop(now) {
   requestAnimationFrame(loop);
@@ -1734,8 +1737,8 @@ function loop(now) {
   if (dt > 0.1) dt = 0.1;
   acc += dt;
   let stepped = false;
-  while (acc >= 1 / 60) {
-    acc -= 1 / 60;
+  while (acc >= STEP) {
+    acc -= STEP;
     frame++;
     if (state === ST.TITLE || state === ST.CHAR || state === ST.TRACK) titleT++;
     else if (!paused && (state === ST.COUNT || state === ST.RACE || state === ST.FINISH)) updateRace();
