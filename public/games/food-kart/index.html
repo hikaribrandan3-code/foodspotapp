@@ -480,7 +480,7 @@ const charIcons = CHARS.map((_, i) => {
   return cv;
 });
 // load burger sprites (Gemini-generated) if available, else keep defaults
-(async function loadBurgerSprites() {
+const spriteLoadPromise = (async function loadBurgerSprites() {
   const angles = ['0', '22.5', '45', '67.5', '90', '112.5', '135', '157.5', '180', '202.5', '225', '247.5', '270', '292.5', '315', '337.5'];
   const burgerFrames = [];
   try {
@@ -1968,7 +1968,8 @@ function loop(now) {
   else if (state === ST.RESULT) drawResults();
   ctx.restore();
 }
-requestAnimationFrame(loop);
+// wait for sprites to load before starting game loop (avoid flicker on first frame)
+spriteLoadPromise.finally(() => requestAnimationFrame(loop));
 
 // cover-render mode for generating the arcade card (?cover=1)
 if (location.search.indexOf('cover=1') >= 0) {
