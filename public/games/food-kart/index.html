@@ -345,9 +345,13 @@ function makeFallbackSprite(ci) {
 const charFrames = CHARS.map(() => []);
 const charFeet = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5];
 const charIcons = CHARS.map(() => mkCanvas(16, 16));
-// Initialize fallback sprites for all characters
+// Initialize fallback sprites for all characters + build their icons
 for (let ci = 0; ci < CHARS.length; ci++) {
   charFrames[ci] = makeFallbackSprite(ci);
+  const cv = mkCanvas(16, 16), g = cv.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(charFrames[ci][8], 8, 4, 48, 48, 0, 0, 16, 16);
+  charIcons[ci] = cv;
 }
 // Try loading PNG sprites; fall back to painted if load fails
 const spriteLoadPromise = (async function loadAllSprites() {
