@@ -1668,11 +1668,11 @@ function btnPress(b) {
     return;
   }
   if (state === ST.CHAR) {
-    if (b === 'dpad-left')  { selChar = (selChar + 5) % 6; SND.menuMove(); }
-    if (b === 'dpad-right') { selChar = (selChar + 1) % 6; SND.menuMove(); }
-    if (b === 'dpad-up' || b === 'dpad-down') { selChar = (selChar + 3) % 6; SND.menuMove(); }
-    if (b === 'a' || b === 'start') { SND.menuPick(); state = ST.TRACK; }
-    if (b === 'b') { SND.menuBack(); state = ST.TITLE; }
+    if (b === 'dpad-left')  { selChar = (selChar + 5) % 6; SND.menuMove(); return; }
+    if (b === 'dpad-right') { selChar = (selChar + 1) % 6; SND.menuMove(); return; }
+    if (b === 'dpad-up' || b === 'dpad-down') { selChar = (selChar + 3) % 6; SND.menuMove(); return; }
+    if (b === 'a' || b === 'start') { SND.menuPick(); state = ST.TRACK; return; }
+    if (b === 'b') { SND.menuBack(); state = ST.TITLE; return; }
     return;
   }
   if (state === ST.TRACK) {
