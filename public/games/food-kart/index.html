@@ -1614,8 +1614,12 @@ function drawTrackSelect() {
     text(stars, 28, y + 13, 1, sel ? '#E8402A' : '#FFD23F');
     const b = best(i);
     text(b ? fmtTime(b) : '--:--.--', 214, y + 13, 1, sel ? '#7A3010' : '#8CB4FF', undefined, 2);
-    const preview = buildTrack(i).mm;
-    ctx.drawImage(preview, 190, y + 1, 20, 20);
+    try {
+      const preview = buildTrack(i).mm;
+      ctx.drawImage(preview, 190, y + 1, 20, 20);
+    } catch (e) {
+      // Skip preview on error, continue drawing other tracks
+    }
   }
   text('A: RACE!   B: BACK', W / 2, H - 10, 1, '#fff', '#333', 1);
 }
