@@ -1498,9 +1498,7 @@ function renderRace() {
     if (k.invulnT > 0 && (frame & 3) < 2 && k.spinT === 0) o.alpha = 0.45;
     if (k.fallT > 40) { o.alpha = (k.fallT - 40) / 40; o.lift = -(80 - k.fallT) * 0.9; }
     if (k.hopT > 0) o.lift = Math.sin((10 - k.hopT) / 10 * Math.PI) * 5;
-    // wheel-spin / body-bob animation while moving (disabled for burger Gemini sprites)
-    const set = (k.ci !== 0 && k.speed > 0.3 && ((frame >> 2) & 1)) ? charFramesB : charFrames;
-    queueSpr(set[k.ci][vf], k.x, k.y, 17, o);
+    queueSpr(charFrames[k.ci][vf], k.x, k.y, 17, o);
   }
   // particles (drawn in the same depth-sorted pass)
   for (const p of parts) {
