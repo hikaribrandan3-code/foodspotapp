@@ -1076,8 +1076,6 @@ function useItem(k) {
       if (k.isPlayer) SND.star();
       break;
   }
-  k.itemN--;
-  if (k.itemN <= 0) k.item = null;
 }
 function hurt(k, big) {
   if (k.invulnT > 0 || k.starT > 0 || k.fallT > 0) return false;
