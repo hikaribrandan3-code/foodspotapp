@@ -632,6 +632,13 @@ function buildTrack(ti) {
       }
     }
   }
+  // --- boost pads: arrow strips painted right on the road, oriented with the track ---
+  const boostPads = [60, 220].map((wi, gi) => {
+    const p = wps[wi], pa = tang[wi];
+    return { wi, x: p[0], y: p[1], a: pa, phase: gi * 150, cd: 0 };
+  });
+  boostPads.forEach(pad => paintBoostPad(g, roadW, pad, pad.phase));
+
   const texU32 = new Uint32Array(g.getImageData(0, 0, 1024, 1024).data.buffer);
 
   // --- surface map ---
@@ -729,6 +736,7 @@ function buildTrack(ti) {
 
   const t = {
     def, th, wps, tang, roadW, texU32, surf, boxes, coins, decor, sky: skyU32,
+    boostPads, texCtx: g,
     mm, mmap,
     g1: u32(th.ground[0]), g2: u32(th.ground[1]),
     fog: u32(th.void_ ? th.sky[0] : th.sky[1]),
@@ -736,6 +744,44 @@ function buildTrack(ti) {
   };
   trackCache[ti] = t;
   return t;
+}
+// Draws 3 stacked arrow chevrons (oriented along the track direction) onto the
+// texture context, then patches just that small region back into texU32 so the
+// repaint is cheap enough to call every couple of frames for a "flowing" animation.
+function paintBoostPad(g, roadW, pad, hueBase) {
+  const padW = roadW * 0.6, span = 40, chevH = 12;
+  g.save();
+  g.translate(pad.x, pad.y);
+  g.rotate(pad.a);
+  g.fillStyle = '#232030';
+  g.fillRect(-padW / 2 - 2, -span / 2 - 4, padW + 4, span + 8);
+  for (let i = 0; i < 3; i++) {
+    const yy = span / 2 - 6 - i * 14;
+    const hue = (hueBase + i * 40) % 360;
+    g.fillStyle = 'hsl(' + hue + ',95%,58%)';
+    g.beginPath();
+    g.moveTo(0, yy - chevH);
+    g.lineTo(padW * 0.42, yy + chevH * 0.6);
+    g.lineTo(0, yy + chevH * 0.1);
+    g.lineTo(-padW * 0.42, yy + chevH * 0.6);
+    g.closePath();
+    g.fill();
+  }
+  g.restore();
+}
+function repaintBoostPad(t, pad) {
+  paintBoostPad(t.texCtx, t.roadW, pad, (frame * 5 + pad.phase) % 360);
+  const r = Math.ceil(t.roadW * 0.75) + 6;
+  const x0 = clamp(Math.floor(pad.x - r), 0, 1023), y0 = clamp(Math.floor(pad.y - r), 0, 1023);
+  const x1 = clamp(Math.ceil(pad.x + r), 0, 1023), y1 = clamp(Math.ceil(pad.y + r), 0, 1023);
+  const w = x1 - x0 + 1, h = y1 - y0 + 1;
+  if (w <= 0 || h <= 0) return;
+  const id = t.texCtx.getImageData(x0, y0, w, h);
+  const src = new Uint32Array(id.data.buffer);
+  for (let row = 0; row < h; row++) {
+    const off = row * w;
+    t.texU32.set(src.subarray(off, off + w), (y0 + row) * 1024 + x0);
+  }
 }
 
 // ---------------- input ----------------
@@ -816,7 +862,7 @@ function makeKart(ci, isPlayer, gridIdx) {
     x: 0, y: 0, a: 0, va: 0, speed: 0,
     steer: 0, throttle: 0, brake: 0,
     drift: 0, driftDir: 0, driftCharge: 0, hopT: 0,
-    boostT: 0, spinT: 0, spinDir: 1, fallT: 0, invulnT: 0,
+    boostT: 0, spinT: 0, spinDir: 1, fallT: 0, invulnT: 0, padCd: 0,
     starT: 0, item: null, itemN: 0, rouletteT: 0,
     coins: 0, lap: 1, wp: 0, cpHalf: false, prog: 0, rank: gridIdx,
     finished: false, finishTime: 0,
@@ -952,6 +998,7 @@ function stepKart(k) {
     else if (k.isPlayer && k.rouletteT % 6 === 0) SND.roll();
   }
   if (k.invulnT > 0) k.invulnT--;
+  if (k.padCd > 0) k.padCd--;
   if (k.starT > 0) k.starT--;
   if (k.boostT > 0) k.boostT--;
 
@@ -1160,6 +1207,22 @@ function stepPickups() {
     }
   });
 }
+function stepBoostPads() {
+  const rad2 = (track.roadW * 0.34) * (track.roadW * 0.34);
+  for (const pad of track.boostPads) {
+    for (const k of karts) {
+      if (k.fallT > 0 || k.padCd > 0) continue;
+      if (dist2(pad.x, pad.y, k.x, k.y) < rad2) {
+        k.boostT = Math.max(k.boostT, 55);
+        k.padCd = 50;
+        if (k.isPlayer) { SND.boost(); shakeT = Math.max(shakeT, 3); }
+        for (let i = 0; i < 7; i++) {
+          parts.push({ x: k.x + rnd(-5, 5), y: k.y + rnd(-5, 5), vx: rnd(-0.6, 0.6), vy: rnd(-0.6, 0.6), life: 16, col: ['#FF6EC7', '#5E8CFF', '#FFD23F', '#4CD34C'][ri(0, 3)], sz: 2 });
+        }
+      }
+    }
+  }
+}
 function updateRanks() {
   const idx = karts.map((k, i) => i);
   idx.sort((a, b) => {
@@ -1190,6 +1253,7 @@ function stepParts() {
 // ---------------- race update ----------------
 function updateRace() {
   const pl = player();
+  if ((frame & 1) === 0) track.boostPads.forEach(pad => repaintBoostPad(track, pad));
   if (state === ST.COUNT) {
     countT--;
     if (countT === 180 || countT === 120 || countT === 60) SND.count();
@@ -1214,6 +1278,7 @@ function updateRace() {
   collideKarts();
   stepHazards();
   stepPickups();
+  stepBoostPads();
   stepParts();
   if (frame % 6 === 0) updateRanks();
   updateCamera();
