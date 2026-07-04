@@ -31,6 +31,13 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 
 export const MAX_VIDEO_SEC = 15
 
+// DIAGNOSTIC FLAG — flip to false to re-enable the pin burn pass. Set true
+// to isolate whether phase 1 (raw capture, zero JS per frame) is smooth on
+// its own. If the raw output is STILL choppy with this on, the problem is
+// not the pin/burn pass — it's something in phase 1 itself (bitrate,
+// container timestamps, thermal) and burning the pin back in won't fix it.
+const SKIP_BURN_FOR_TEST = true
+
 // Same crop ratios as CameraLayer's photo capture
 const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 }
 
@@ -314,6 +321,21 @@ export default function useVideoRecorder() {
             const rawBlob = new Blob(chunksRef.current, { type: rawType })
             chunksRef.current = []
             if (!rawBlob.size) { console.error('[FSC-VIDEO] empty raw recording'); return }
+
+            if (SKIP_BURN_FOR_TEST) {
+                // No pin, no processing wait — ships the untouched phase-1
+                // capture straight through. Isolates phase 1's smoothness.
+                session.onComplete?.({
+                    type: 'video',
+                    blob: rawBlob,
+                    objectURL: URL.createObjectURL(rawBlob),
+                    mimeType: rawType,
+                    width: videoTrack.getSettings?.().width,
+                    height: videoTrack.getSettings?.().height,
+                    meta: { ts: Date.now(), burnSkipped: true },
+                })
+                return
+            }
 
             setIsProcessing(true)
             try {
