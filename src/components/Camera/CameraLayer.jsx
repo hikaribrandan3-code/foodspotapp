@@ -167,7 +167,7 @@ export default function CameraLayer({
 
   // ── VIDEO MODE (CamTech Video) ─────────────────────────────────────────────
   const isVideoMode = uiMode === 'VIDEO';
-  const { isRecording, elapsedSec, startRecording, stopRecording } = useVideoRecorder();
+  const { isRecording, isProcessing, elapsedSec, startRecording, stopRecording } = useVideoRecorder();
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
   useEffect(() => { initCamera(); }, [facingMode]); // eslint-disable-line
@@ -587,8 +587,8 @@ export default function CameraLayer({
 
       {/* ── RIGHT RAIL: aspect · flip · flash · timer ─────────────────────── */}
       <div className="fsc-toolbar">
-        <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} disabled={isRecording} aria-label="Formato">{isLandscape ? LANDSCAPE_LABEL[aspect] || aspect : aspect}</button>
-        <button className="fsc-tool" onClick={flipCamera} disabled={isRecording} aria-label="Girar">{FLIP_ICON}</button>
+        <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} disabled={isRecording || isProcessing} aria-label="Formato">{isLandscape ? LANDSCAPE_LABEL[aspect] || aspect : aspect}</button>
+        <button className="fsc-tool" onClick={flipCamera} disabled={isRecording || isProcessing} aria-label="Girar">{FLIP_ICON}</button>
         <button
           className={`fsc-tool ${flashMode !== 'off' ? 'is-on' : ''}`}
           onClick={cycleFlash}
@@ -630,6 +630,14 @@ export default function CameraLayer({
         </div>
       )}
 
+      {/* ── PROCESSING OVERLAY: burning the pin in after stop ─────────────── */}
+      {isProcessing && (
+        <div className="fsc-processing">
+          <div className="fsc-processing-spinner" />
+          <span>Procesando video…</span>
+        </div>
+      )}
+
       {/* ── TIMER TOAST (brief "3s set" / "OFF") ─────────────────────────── */}
       {timerToast && (
         <div className="fsc-timertoast">
@@ -649,13 +657,13 @@ export default function CameraLayer({
         <div className="fsc-shutterrow">
           {/* MODE button — always says "MODE" (cycles Food → Portrait → Video) */}
           <div className="fsc-side">
-            <button className="fsc-modebtn" onClick={cycleMode} disabled={isRecording}>MODE</button>
+            <button className="fsc-modebtn" onClick={cycleMode} disabled={isRecording || isProcessing}>MODE</button>
           </div>
 
           <button
             className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''} ${isVideoMode ? 'fsc-shutter--video' : ''} ${isRecording ? 'is-recording' : ''}`}
             onClick={handleShutter}
-            disabled={!isReady}
+            disabled={!isReady || isProcessing}
             aria-label={isVideoMode ? (isRecording ? 'Detener' : 'Grabar') : 'Capturar'}
           >
             <span className="fsc-shutter-inner"/>
@@ -904,6 +912,18 @@ const styles = `
   background: #FF3B30; animation: fsc-recblink 1s ease-in-out infinite;
 }
 @keyframes fsc-recblink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+.fsc-processing {
+  position: absolute; inset: 0; z-index: 80;
+  display: flex; flex-direction: column; gap: 14px;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 0.03em;
+}
+.fsc-processing-spinner {
+  width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.18);
+  border-top-color: #fff; border-radius: 50%; animation: fsc-spin 0.8s linear infinite;
+}
 
 @media (orientation: landscape) {
   .fsc-bottom { left: auto; right: calc(env(safe-area-inset-right,0px) + 18px); top: 0; bottom: 0; align-items: center; }

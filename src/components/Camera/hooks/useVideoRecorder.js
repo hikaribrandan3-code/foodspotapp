@@ -1,13 +1,27 @@
 /**
  * useVideoRecorder.js — CamTech Video Mode engine
  *
- * Records the live <video> element through an offscreen canvas so the
- * business pin is burned into every frame (same spot as the live-view pin).
+ * TWO-PHASE PIPELINE (v2):
  *
- * Pipeline: <video> → rVFC/rAF draw loop → canvas.captureStream() →
- *           MediaRecorder (MP4 preferred, WebM fallback on older Android).
+ *   Phase 1 — LIVE RECORD: MediaRecorder taps the raw camera MediaStream
+ *   track directly. Zero JS touches a frame during capture — same hardware
+ *   decode/encode path as the live viewfinder, so it's exactly as smooth.
  *
- * No MediaRecorder on the raw camera stream — that path can't watermark.
+ *   Phase 2 — BURN (post-process, after the user stops): play the raw clip
+ *   back in a hidden <video>, draw each frame through canvas (crop to the
+ *   selected aspect, mirror if front camera, burn the business pin — all the
+ *   same math the old live-relay pipeline did), and re-encode via
+ *   canvas.captureStream() + a second MediaRecorder into the final clip.
+ *
+ * Why split it: burning a pin requires touching every frame in JS, which
+ * only the browser's native video pipeline can do without JS in the loop.
+ * Doing that DURING live capture competed with real camera frame delivery
+ * for the main thread and caused visible stutter, even on an iPhone 17 Pro
+ * Max — Safari's canvas→captureStream path especially. Moving the burn to
+ * an offline pass after recording removes that time pressure entirely: it
+ * just takes a few seconds of "Processing…" instead of degrading the
+ * recording the user is trying to capture.
+ *
  * Works on iOS Safari 15+ and Android Chrome. Audio is intentionally off
  * (camera stream is video-only; adding mic would trigger a second
  * permission prompt mid-flow).
@@ -52,201 +66,283 @@ function roundedRect(ctx, x, y, w, h, r) {
 }
 
 export default function useVideoRecorder() {
-    const [isRecording, setIsRecording] = useState(false)
-    const [elapsedSec, setElapsedSec] = useState(0)
+    const [isRecording,  setIsRecording]  = useState(false)
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [elapsedSec,   setElapsedSec]   = useState(0)
 
     const recorderRef  = useRef(null)
     const chunksRef    = useRef([])
-    const rafRef       = useRef(0)
-    const rvfcRef      = useRef(0)
     const tickRef      = useRef(null)
     const autoStopRef  = useRef(null)
     const startTsRef   = useRef(0)
     const abortedRef   = useRef(false)
-    const sessionRef   = useRef(null) // { canvas, video, onComplete, meta }
+    const sessionRef   = useRef(null) // { onComplete, pinSpec, aspect, isLandscape, facingMode }
 
     const cleanupTimers = useCallback(() => {
         clearInterval(tickRef.current)
         clearTimeout(autoStopRef.current)
-        cancelAnimationFrame(rafRef.current)
-        const s = sessionRef.current
-        if (s?.video && rvfcRef.current && s.video.cancelVideoFrameCallback) {
-            try { s.video.cancelVideoFrameCallback(rvfcRef.current) } catch { /* noop */ }
-        }
     }, [])
 
     /**
-     * Start recording.
+     * Phase 2: decode the raw clip and burn crop + mirror + pin, offline.
+     * Runs at its own pace (driven by the hidden video's playback, not a
+     * live camera) so there's no real-time pressure to drop frames under.
+     */
+    const burnPin = useCallback((rawBlob, session) => {
+        return new Promise((resolve, reject) => {
+            const { pinSpec, aspect, isLandscape, facingMode, rawMimeType } = session
+            const video = document.createElement('video')
+            video.muted = true
+            video.playsInline = true
+            video.src = URL.createObjectURL(rawBlob)
+
+            const teardown = () => URL.revokeObjectURL(video.src)
+
+            video.onloadedmetadata = () => {
+                const sw = video.videoWidth
+                const sh = video.videoHeight
+                if (!sw || !sh) { teardown(); reject(new Error('burn: no video dimensions')); return }
+
+                const baseRatio   = ASPECT_RATIO[aspect] || 9 / 16
+                const targetRatio = isLandscape ? 1 / baseRatio : baseRatio
+                const srcRatio    = sw / sh
+                let cropW, cropH
+                if (srcRatio > targetRatio) { cropH = sh; cropW = Math.round(sh * targetRatio) }
+                else                        { cropW = sw; cropH = Math.round(sw / targetRatio) }
+                const cropX = Math.round((sw - cropW) / 2)
+                const cropY = Math.round((sh - cropH) / 2)
+
+                const shortSide = Math.min(cropW, cropH)
+                const scaleDown = Math.min(1, 1080 / shortSide)
+                const outW = Math.round((cropW * scaleDown) / 2) * 2
+                const outH = Math.round((cropH * scaleDown) / 2) * 2
+
+                const canvas = document.createElement('canvas')
+                canvas.width = outW
+                canvas.height = outH
+                const ctx = canvas.getContext('2d', { alpha: false })
+
+                // Pin geometry was captured as fractions of the frame at record
+                // time (see startRecording) — reapply against the output size,
+                // no DOM dependency here.
+                const pin = pinSpec ? {
+                    x: pinSpec.xFrac * outW,
+                    y: pinSpec.yFrac * outH,
+                    w: pinSpec.wFrac * outW,
+                    h: pinSpec.hFrac * outH,
+                    fontPx: pinSpec.fontFrac * outW,
+                    iconPx: pinSpec.iconFrac * outW,
+                    padX:   pinSpec.padFrac  * outW,
+                    gap:    pinSpec.gapFrac  * outW,
+                    label: pinSpec.label,
+                    bg: pinSpec.bg,
+                    text: pinSpec.text,
+                    path: new Path2D(PIN_PATH),
+                } : null
+
+                const mirrored = facingMode === 'user'
+
+                const drawFrame = () => {
+                    if (mirrored) {
+                        ctx.save()
+                        ctx.translate(outW, 0)
+                        ctx.scale(-1, 1)
+                        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH)
+                        ctx.restore()
+                    } else {
+                        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH)
+                    }
+                    if (pin) {
+                        roundedRect(ctx, pin.x, pin.y, pin.w, pin.h, pin.h / 2)
+                        ctx.fillStyle = pin.bg
+                        ctx.fill()
+                        const iScale = pin.iconPx / 24
+                        const iY = pin.y + (pin.h - pin.iconPx) / 2
+                        ctx.save()
+                        ctx.translate(pin.x + pin.padX * 0.85, iY)
+                        ctx.scale(iScale, iScale)
+                        ctx.fillStyle = pin.text
+                        ctx.fill(pin.path)
+                        ctx.restore()
+                        ctx.fillStyle = pin.text
+                        ctx.font = `700 ${pin.fontPx}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`
+                        ctx.textBaseline = 'middle'
+                        const maxTextW = pin.w - pin.padX * 1.7 - pin.iconPx - pin.gap
+                        ctx.fillText(pin.label, pin.x + pin.padX * 0.85 + pin.iconPx + pin.gap, pin.y + pin.h / 2 + pin.fontPx * 0.06, Math.max(maxTextW, 10))
+                    }
+                }
+
+                const useRvfc = typeof video.requestVideoFrameCallback === 'function'
+                let rafId = 0, rvfcId = 0, done = false
+                const loop = () => {
+                    if (done) return
+                    drawFrame()
+                    if (useRvfc) rvfcId = video.requestVideoFrameCallback(loop)
+                    else         rafId  = requestAnimationFrame(loop)
+                }
+
+                let stream
+                try { stream = canvas.captureStream() }
+                catch { stream = canvas.captureStream(30) }
+
+                const outMime = rawMimeType && MediaRecorder.isTypeSupported?.(rawMimeType) ? rawMimeType : (pickMimeType() || '')
+                let outRecorder
+                try {
+                    outRecorder = new MediaRecorder(stream, {
+                        ...(outMime ? { mimeType: outMime } : {}),
+                        videoBitsPerSecond: 8_000_000,
+                    })
+                } catch (err) {
+                    teardown(); reject(err); return
+                }
+
+                const outChunks = []
+                outRecorder.ondataavailable = (e) => { if (e.data?.size > 0) outChunks.push(e.data) }
+                outRecorder.onstop = () => {
+                    done = true
+                    cancelAnimationFrame(rafId)
+                    if (useRvfc && video.cancelVideoFrameCallback) { try { video.cancelVideoFrameCallback(rvfcId) } catch { /* noop */ } }
+                    stream.getTracks().forEach((t) => t.stop())
+                    teardown()
+                    const type = (outRecorder.mimeType || outMime || 'video/mp4').split(';')[0]
+                    const blob = new Blob(outChunks, { type })
+                    if (!blob.size) { reject(new Error('burn: empty output')); return }
+                    resolve({ blob, width: outW, height: outH, mimeType: blob.type })
+                }
+                outRecorder.onerror = (e) => { done = true; reject(e?.error || new Error('burn recorder error')) }
+
+                const finish = () => { if (outRecorder.state === 'recording') outRecorder.stop() }
+                video.onended = finish
+                // Safety net: if 'ended' doesn't fire (some Android WebM quirks), stop
+                // slightly after the known source duration.
+                video.onloadeddata = () => {
+                    const durMs = (Number.isFinite(video.duration) ? video.duration : MAX_VIDEO_SEC) * 1000
+                    setTimeout(finish, durMs + 700)
+                }
+
+                video.play().then(() => {
+                    outRecorder.start()
+                    loop()
+                }).catch((err) => { teardown(); reject(err) })
+            }
+
+            video.onerror = () => { teardown(); reject(new Error('burn: source video failed to load')) }
+        })
+    }, [])
+
+    /**
+     * Start recording. Phase 1 only — taps the raw stream, no canvas.
      * @param {object} opts
-     *   video       — the live <video> element
-     *   frameEl     — the viewfinder frame element (for pin position mapping)
-     *   pinEl       — the on-screen .fsc-pin element (position/size source of truth)
+     *   video       — the live <video> element (source: video.srcObject)
+     *   frameEl     — viewfinder frame element (for pin position → fractions)
+     *   pinEl       — on-screen .fsc-pin element (position/size source of truth)
      *   pinLabel    — business name (uppercased for burn)
      *   pinBg/pinText — pill colors
      *   facingMode  — 'user' mirrors the burn like the live view
      *   aspect      — '9:16' | '4:3' | '1:1'
      *   isLandscape — rotate the crop like photo capture does
-     *   onComplete  — called with the result when recording stops (manual or 15s cap)
+     *   onComplete  — called with the final (burned) result, or null on failure
      */
     const startRecording = useCallback((opts) => {
         const { video, frameEl, pinEl, pinLabel, pinBg, pinText, facingMode, aspect, isLandscape, onComplete } = opts
-        if (recorderRef.current || !video || !video.videoWidth) return false
+        if (recorderRef.current || !video?.srcObject) return false
+
+        const rawStream = video.srcObject
+        const videoTrack = rawStream.getVideoTracks?.()[0]
+        if (!videoTrack) return false
 
         const mimeType = pickMimeType()
-        if (mimeType === null) {
-            console.error('[FSC-VIDEO] MediaRecorder unsupported')
-            return false
-        }
+        if (mimeType === null) { console.error('[FSC-VIDEO] MediaRecorder unsupported'); return false }
 
-        // ── crop math: identical shape to captureFromVideo ──────────────────
-        const sw = video.videoWidth
-        const sh = video.videoHeight
-        const baseRatio   = ASPECT_RATIO[aspect] || 9 / 16
-        const targetRatio = isLandscape ? 1 / baseRatio : baseRatio
-        const srcRatio    = sw / sh
-        let cropW, cropH
-        if (srcRatio > targetRatio) { cropH = sh; cropW = Math.round(sh * targetRatio) }
-        else                        { cropW = sw; cropH = Math.round(sw / targetRatio) }
-        const cropX = Math.round((sw - cropW) / 2)
-        const cropY = Math.round((sh - cropH) / 2)
-
-        // 1080p target: cap the SHORT side at 1080, never upscale
-        const shortSide = Math.min(cropW, cropH)
-        const scaleDown = Math.min(1, 1080 / shortSide)
-        // H.264 wants even dimensions
-        const outW = Math.round((cropW * scaleDown) / 2) * 2
-        const outH = Math.round((cropH * scaleDown) / 2) * 2
-
-        const canvas = document.createElement('canvas')
-        canvas.width  = outW
-        canvas.height = outH
-        const ctx = canvas.getContext('2d', { alpha: false })
-
-        // ── pin burn geometry: measured off the REAL on-screen pin ─────────
-        // so the burned pin lands exactly where the user sees it in live view.
-        let pin = null
-        if (frameEl && pinEl) {
-            const fr = frameEl.getBoundingClientRect()
-            const pr = pinEl.getBoundingClientRect()
-            if (fr.width > 0) {
-                const s = outW / fr.width
-                pin = {
-                    x: (pr.left - fr.left) * s,
-                    y: (pr.top  - fr.top)  * s,
-                    w: pr.width  * s,
-                    h: pr.height * s,
-                    fontPx: 11 * s,
-                    iconPx: 13 * s,
-                    padX: 12 * s,
-                    gap: 5 * s,
-                    label: String(pinLabel || 'FoodSpot').toUpperCase(),
-                    bg: pinBg || 'rgba(20,20,24,0.55)',
-                    text: pinText || '#ffffff',
-                    path: new Path2D(PIN_PATH),
-                }
-            }
-        }
-
-        const mirrored = facingMode === 'user'
-
-        const drawFrame = () => {
-            if (mirrored) {
-                ctx.save()
-                ctx.translate(outW, 0)
-                ctx.scale(-1, 1)
-                ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH)
-                ctx.restore()
-            } else {
-                ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH)
-            }
-            if (pin) {
-                roundedRect(ctx, pin.x, pin.y, pin.w, pin.h, pin.h / 2)
-                ctx.fillStyle = pin.bg
-                ctx.fill()
-                // icon
-                const iScale = pin.iconPx / 24
-                const iY = pin.y + (pin.h - pin.iconPx) / 2
-                ctx.save()
-                ctx.translate(pin.x + pin.padX * 0.85, iY)
-                ctx.scale(iScale, iScale)
-                ctx.fillStyle = pin.text
-                ctx.fill(pin.path)
-                ctx.restore()
-                // label
-                ctx.fillStyle = pin.text
-                ctx.font = `700 ${pin.fontPx}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`
-                ctx.textBaseline = 'middle'
-                const maxTextW = pin.w - pin.padX * 1.7 - pin.iconPx - pin.gap
-                ctx.fillText(pin.label, pin.x + pin.padX * 0.85 + pin.iconPx + pin.gap, pin.y + pin.h / 2 + pin.fontPx * 0.06, Math.max(maxTextW, 10))
-            }
-        }
-
-        // draw loop: rVFC (frame-accurate, iOS 15.4+/Chrome) with rAF fallback
-        const useRvfc = typeof video.requestVideoFrameCallback === 'function'
-        const loop = () => {
-            drawFrame()
-            if (useRvfc) rvfcRef.current = video.requestVideoFrameCallback(loop)
-            else         rafRef.current  = requestAnimationFrame(loop)
-        }
-
-        // ── stream + recorder ────────────────────────────────────────────────
-        // Zero-arg captureStream() emits a stream frame each time the canvas is
-        // drawn to, so it tracks our actual draw loop (rVFC-paced to the real
-        // camera frame rate) instead of a fixed clock. Passing a numeric rate
-        // (e.g. captureStream(30)) makes the browser sample on an INDEPENDENT
-        // timer that can drift against our draws — camera frame rate dips in
-        // low light (24fps, sometimes lower), and a 30fps sampler then repeats
-        // stale frames to fill the gap, which is exactly the choppiness seen
-        // on-device. Draw-triggered mode is the fix; only fall back to a fixed
-        // rate if the zero-arg form isn't supported at all.
-        let stream
-        try { stream = canvas.captureStream() }
-        catch { stream = canvas.captureStream(30) }
+        // Record ONLY the video track (a fresh MediaStream) — recording the
+        // exact live-view stream directly, untouched, is what makes phase 1
+        // as smooth as the viewfinder itself.
+        const tapStream = new MediaStream([videoTrack])
 
         let recorder
         try {
-            recorder = new MediaRecorder(stream, {
+            recorder = new MediaRecorder(tapStream, {
                 ...(mimeType ? { mimeType } : {}),
-                videoBitsPerSecond: 8_000_000,
+                videoBitsPerSecond: 12_000_000, // generous — this is the burn pass's source
             })
         } catch (err) {
             console.error('[FSC-VIDEO] MediaRecorder init failed:', err)
             return false
         }
 
-        chunksRef.current = []
-        abortedRef.current = false
-        sessionRef.current = { canvas, video, onComplete, meta: { outW, outH, mimeType: recorder.mimeType || mimeType } }
-
-        recorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) chunksRef.current.push(e.data)
+        // Pin geometry captured as FRACTIONS of the frame, once, at record
+        // start — decouples the burn pass from needing the DOM to still be
+        // in the same state (or even mounted) later.
+        let pinSpec = null
+        if (frameEl && pinEl) {
+            const fr = frameEl.getBoundingClientRect()
+            const pr = pinEl.getBoundingClientRect()
+            if (fr.width > 0 && fr.height > 0) {
+                pinSpec = {
+                    xFrac: (pr.left - fr.left) / fr.width,
+                    yFrac: (pr.top  - fr.top)  / fr.height,
+                    wFrac: pr.width  / fr.width,
+                    hFrac: pr.height / fr.width, // pill height scales off width like the live CSS pill does
+                    fontFrac: (11 / fr.width),
+                    iconFrac: (13 / fr.width),
+                    padFrac:  (12 / fr.width),
+                    gapFrac:  (5  / fr.width),
+                    label: String(pinLabel || 'FoodSpot').toUpperCase(),
+                    bg: pinBg || 'rgba(20,20,24,0.55)',
+                    text: pinText || '#ffffff',
+                }
+            }
         }
 
-        recorder.onstop = () => {
+        chunksRef.current = []
+        abortedRef.current = false
+        sessionRef.current = { onComplete, pinSpec, aspect, isLandscape, facingMode, rawMimeType: recorder.mimeType || mimeType }
+
+        recorder.ondataavailable = (e) => { if (e.data?.size > 0) chunksRef.current.push(e.data) }
+
+        recorder.onstop = async () => {
             cleanupTimers()
-            stream.getTracks().forEach((t) => t.stop())
+            setIsRecording(false)
+            setElapsedSec(0)
+
             const session = sessionRef.current
             recorderRef.current = null
             sessionRef.current = null
-            setIsRecording(false)
-            setElapsedSec(0)
-            if (abortedRef.current || !session) return
+            if (abortedRef.current || !session) { chunksRef.current = []; return }
 
-            const type = session.meta.mimeType || 'video/mp4'
-            const blob = new Blob(chunksRef.current, { type: type.split(';')[0] })
+            const rawType = (session.rawMimeType || 'video/mp4').split(';')[0]
+            const rawBlob = new Blob(chunksRef.current, { type: rawType })
             chunksRef.current = []
-            if (!blob.size) { console.error('[FSC-VIDEO] empty recording'); return }
+            if (!rawBlob.size) { console.error('[FSC-VIDEO] empty raw recording'); return }
 
-            session.onComplete?.({
-                type: 'video',
-                blob,
-                objectURL: URL.createObjectURL(blob),
-                mimeType: blob.type,
-                width: session.meta.outW,
-                height: session.meta.outH,
-                durationSec: Math.min(MAX_VIDEO_SEC, (Date.now() - startTsRef.current) / 1000),
-                meta: { ts: Date.now() },
-            })
+            setIsProcessing(true)
+            try {
+                const burned = await burnPin(rawBlob, session)
+                session.onComplete?.({
+                    type: 'video',
+                    blob: burned.blob,
+                    objectURL: URL.createObjectURL(burned.blob),
+                    mimeType: burned.mimeType,
+                    width: burned.width,
+                    height: burned.height,
+                    meta: { ts: Date.now() },
+                })
+            } catch (err) {
+                console.error('[FSC-VIDEO] burn failed:', err)
+                // Fail open: hand back the raw (smooth, unwatermarked) clip
+                // rather than losing the recording entirely.
+                session.onComplete?.({
+                    type: 'video',
+                    blob: rawBlob,
+                    objectURL: URL.createObjectURL(rawBlob),
+                    mimeType: rawType,
+                    width: videoTrack.getSettings?.().width,
+                    height: videoTrack.getSettings?.().height,
+                    meta: { ts: Date.now(), burnFailed: true },
+                })
+            } finally {
+                setIsProcessing(false)
+            }
         }
 
         recorder.onerror = (e) => {
@@ -255,18 +351,11 @@ export default function useVideoRecorder() {
             try { recorder.stop() } catch { /* already stopped */ }
         }
 
-        // fire the first frame before start so the stream has content, then roll
-        drawFrame()
-        // No timeslice arg: one buffer flushed at stop() instead of every 1s.
-        // Periodic ondataavailable flushes were stalling the single-threaded
-        // draw loop for a beat on-device (visible as a stutter). A 15s clip
-        // at 8Mbps is ~15MB — fine to hold in memory until stop.
         recorder.start()
         recorderRef.current = recorder
         startTsRef.current = Date.now()
         setIsRecording(true)
         setElapsedSec(0)
-        loop()
 
         tickRef.current = setInterval(() => {
             setElapsedSec(Math.min(MAX_VIDEO_SEC, (Date.now() - startTsRef.current) / 1000))
@@ -278,7 +367,7 @@ export default function useVideoRecorder() {
 
         if (navigator.vibrate) navigator.vibrate(20)
         return true
-    }, [cleanupTimers])
+    }, [cleanupTimers, burnPin])
 
     const stopRecording = useCallback(() => {
         const r = recorderRef.current
@@ -297,5 +386,5 @@ export default function useVideoRecorder() {
         recorderRef.current = null
     }, [cleanupTimers])
 
-    return { isRecording, elapsedSec, startRecording, stopRecording }
+    return { isRecording, isProcessing, elapsedSec, startRecording, stopRecording }
 }
