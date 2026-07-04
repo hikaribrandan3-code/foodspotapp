@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './preview.css'
 import CoffeeCafeTemplate from './templates/coffee-cafe/CoffeeCafeTemplate.jsx'
 import BurgerQsrTemplate from './templates/burger-qsr/BurgerQsrTemplate.jsx'
+import BakeryTemplate from './templates/bakery/BakeryTemplate.jsx'
 
 // Standalone preview harness — no Supabase, no TenantContext, no auth.
 // Pick a template via ?template=coffee-cafe (defaults to coffee-cafe).
@@ -10,6 +11,7 @@ import BurgerQsrTemplate from './templates/burger-qsr/BurgerQsrTemplate.jsx'
 const TEMPLATES = {
   'coffee-cafe': CoffeeCafeTemplate,
   'burger-qsr': BurgerQsrTemplate,
+  'bakery': BakeryTemplate,
 }
 
 const templateId = new URLSearchParams(window.location.search).get('template') || 'coffee-cafe'
