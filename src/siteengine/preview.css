@@ -1,0 +1,8 @@
+/* Minimal Tailwind entry for SiteEngine template previews.
+   Deliberately NOT importing src/index.css — that file has global rules
+   keyed to the main app's tenant theming (data-theme, body classes) that
+   would bleed into template previews unpredictably. Templates should look
+   right standalone, driven only by their own component styles. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

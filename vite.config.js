@@ -19,6 +19,7 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
         'staff-ops': path.resolve(__dirname, 'staff-ops.html'),
+        'siteengine-preview': path.resolve(__dirname, 'siteengine-preview.html'),
       },
       output: {
         manualChunks: {
