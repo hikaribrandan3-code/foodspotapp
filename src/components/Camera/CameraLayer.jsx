@@ -459,8 +459,12 @@ export default function CameraLayer({
     clearTimeout(modeToastTimer.current);
     modeToastTimer.current = setTimeout(() => setModeToast(null), 2400);
     setUiMode(next);
-    if (next !== 'VIDEO' && next !== 'BOOMERANG') applyNicheMode(next);
-  }, [uiMode, isRecording, applyNicheMode]);
+    if (next === 'VIDEO' || next === 'BOOMERANG') {
+      setZoom(1); // video/boomerang reset to 1x zoom, not inheriting photo zoom
+    } else {
+      applyNicheMode(next);
+    }
+  }, [uiMode, isRecording, applyNicheMode, setZoom]);
 
   const cycleFilter = useCallback(() => {
     setFilterId((cur) => {
