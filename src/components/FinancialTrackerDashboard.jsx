@@ -117,7 +117,13 @@ export default function FinancialTrackerDashboard() {
     localStorage.setItem(budgetKey, JSON.stringify(budgets));
   }, [budgets, budgetKey]);
 
+  // Date filter
+  const [dateFilter, setDateFilter] = useState('all');
+  const [rangeStart, rangeEnd] = getDateRange(dateFilter);
+
   // Fetch orders (operational counts), ledger (revenue), and menu items
+  // Bounded server-side by rangeStart so we don't pull the whole table on
+  // every load — matches the .gte() pattern used in Analytics.jsx.
   useEffect(() => {
     if (!businessId) return;
     let cancelled = false;
@@ -128,13 +134,15 @@ export default function FinancialTrackerDashboard() {
           .from('orders')
           .select('total, status, created_at')
           .eq('business_id', businessId)
-          .not('status', 'in', '(pending,pending_payment,cancelled,refunded)'),
+          .not('status', 'in', '(pending,pending_payment,cancelled,refunded)')
+          .gte('created_at', rangeStart),
         supabase
           .from('transaction_ledger')
           .select('amount_gross_cents, processed_at')
           .eq('business_id', businessId)
           .eq('transaction_type', 'payment')
-          .eq('status', 'completed'),
+          .eq('status', 'completed')
+          .gte('processed_at', rangeStart),
         supabase
           .from('menu_items')
           .select('id, available')
@@ -147,11 +155,8 @@ export default function FinancialTrackerDashboard() {
       setLoading(false);
     };
     fetchData();
-  }, [businessId]);
-
-  // Date filter
-  const [dateFilter, setDateFilter] = useState('all');
-  const [rangeStart, rangeEnd] = getDateRange(dateFilter);
+    return () => { cancelled = true; };
+  }, [businessId, rangeStart]);
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((e) => e.date >= rangeStart && e.date <= rangeEnd);
