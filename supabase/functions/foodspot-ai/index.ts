@@ -51,7 +51,17 @@ const CURRENCY_CONFIG: Record<string, { locale: string; symbol: string }> = {
 };
 
 // ─── CONTEXT FETCHER ─────────────────────────────────────────────────────
+// Business data barely changes turn-to-turn within a chat session, but this
+// used to re-run 3 RPCs + 1 select on EVERY message. Warm edge instances keep
+// module state, so a short TTL cache skips all 4 DB calls on turns 2+.
+const CONTEXT_TTL_MS = 60_000;
+const contextCache = new Map<string, { value: { context: string; currency: string }; ts: number }>();
+
 async function fetchBusinessContext(businessId: string, supabase: any): Promise<{ context: string; currency: string }> {
+    const cached = contextCache.get(businessId);
+    if (cached && Date.now() - cached.ts < CONTEXT_TTL_MS) {
+        return cached.value;
+    }
     try {
         const [{ data: orders }, { data: menu }, { data: inventory }, { data: branding }] = await Promise.all([
             supabase.rpc("get_ai_business_context", {
@@ -74,7 +84,9 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
         const currency: string = branding?.app_config?.businessCurrency || "ARS";
 
         if (!orders?.has_data) {
-            return { context: "", currency };
+            const value = { context: "", currency };
+            contextCache.set(businessId, { value, ts: Date.now() });
+            return value;
         }
 
         const lines: string[] = [];
@@ -173,7 +185,9 @@ async function fetchBusinessContext(businessId: string, supabase: any): Promise<
             }
         }
 
-        return { context: lines.join("\n"), currency };
+        const value = { context: lines.join("\n"), currency };
+        contextCache.set(businessId, { value, ts: Date.now() });
+        return value;
     } catch (err) {
         console.error("[context] fetch failed:", err);
         return { context: "", currency: "ARS" };
@@ -299,13 +313,16 @@ ${contextBlock}
 ${coreRules}${planModeRules}${motivationalRules}${examples}`;
 }
 
-// ─── GROQ CALLER ─────────────────────────────────────────────────────────
-async function callGroq(
+// ─── GROQ CALLER (STREAMING) ─────────────────────────────────────────────
+// Returns the raw Groq SSE body on success (OpenAI chunk format, ends with
+// `data: [DONE]`) so the edge function can pipe it straight to the client.
+// Errors still come back as plain objects → serialized as JSON by main().
+async function callGroqStream(
     messages: any[],
     systemPrompt: string,
     apiKey: string
-): Promise<{ reply: string; provider: string } | { error: string; detail?: string }> {
-    console.log("[foodspot-ai] 🧠 Routing to GROQ");
+): Promise<{ stream: ReadableStream } | { error: string; detail?: string }> {
+    console.log("[foodspot-ai] 🧠 Routing to GROQ (stream)");
 
     const groqMessages = [
         { role: "system", content: systemPrompt },
@@ -327,17 +344,16 @@ async function callGroq(
             temperature: 0.65,
             max_tokens: 1500,
             top_p: 0.9,
+            stream: true,
         }),
     });
 
-    if (!res.ok) {
+    if (!res.ok || !res.body) {
         const errText = await res.text();
         return { error: res.status === 429 ? "RATE_LIMIT" : "API_ERROR", detail: errText };
     }
 
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content || "No pude generar una respuesta. Intentá de nuevo.";
-    return { reply, provider: "groq" };
+    return { stream: res.body };
 }
 
 // ─── GEMINI CALLER ────────────────────────────────────────────────────────
@@ -434,12 +450,26 @@ serve(async (req: Request) => {
             );
         }
 
-        const result = await callGroq(messages, builtPrompt, GROQ_API_KEY);
+        const result = await callGroqStream(messages, builtPrompt, GROQ_API_KEY);
 
-        return new Response(
-            JSON.stringify({ ...result, planMode }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        if ("error" in result) {
+            return new Response(
+                JSON.stringify({ ...result, planMode }),
+                { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+        }
+
+        // Pipe Groq's SSE straight through. Client detects text/event-stream
+        // and renders tokens as they arrive; JSON responses remain the error path.
+        return new Response(result.stream, {
+            status: 200,
+            headers: {
+                ...corsHeaders,
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "x-plan-mode": planMode ? "true" : "false",
+            },
+        });
 
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Unknown error";

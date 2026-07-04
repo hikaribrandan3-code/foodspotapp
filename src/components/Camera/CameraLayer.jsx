@@ -22,7 +22,7 @@ import {
 } from './utils/scenePresets.js';
 
 // Mode cycle: photo scenes + VIDEO as the last stop
-const CAPTURE_MODE_ORDER = [...SCENE_ORDER, 'VIDEO'];
+const CAPTURE_MODE_ORDER = [...SCENE_ORDER, 'VIDEO', 'BOOMERANG'];
 
 const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
 // w/h ratios (portrait frames) — rotated to their landscape equivalent at capture time
@@ -141,7 +141,6 @@ export default function CameraLayer({
   const [shutterPulse,  setShutterPulse]  = useState(false);
 
   const frameRef         = useRef(null);
-  const pinRef           = useRef(null);
   const lastUrlRef       = useRef(null);
   const pinchStartRef    = useRef(0);
   const pinchZoomRef     = useRef(1);
@@ -165,8 +164,9 @@ export default function CameraLayer({
   useEffect(() => { flashSuppRef.current  = flashSupported;}, [flashSupported]);
   useEffect(() => { facingModeRef.current = facingMode;    }, [facingMode]);
 
-  // ── VIDEO MODE (CamTech Video) ─────────────────────────────────────────────
-  const isVideoMode = uiMode === 'VIDEO';
+  // ── VIDEO / BOOMERANG MODE (CamTech Video) ─────────────────────────────────
+  const isVideoMode     = uiMode === 'VIDEO';
+  const isBoomerangMode = uiMode === 'BOOMERANG';
   const { isRecording, isProcessing, elapsedSec, startRecording, stopRecording } = useVideoRecorder();
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
@@ -394,25 +394,23 @@ export default function CameraLayer({
   }, [applyFlash, onCapture]); // eslint-disable-line
 
   // ── video record toggle (tap = start, tap again or 15s cap = stop) ────────
+  // Boomerang is a single tap: fixed ~1s auto-capture, no manual stop needed.
   const handleVideoShutter = useCallback(() => {
     if (isRecording) { stopRecording(); return; }
     const ok = startRecording({
+      mode: isBoomerangMode ? 'boomerang' : 'video',
       video: videoRef.current,
-      frameEl: frameRef.current,
-      pinEl: pinRef.current,
-      pinLabel: locationLabel,
-      pinBg, pinText,
       facingMode: facingModeRef.current,
       aspect,
       isLandscape,
       onComplete: (result) => { if (onCapture) onCapture(result); },
     });
     if (!ok) dbg('VIDEO start failed — recorder unavailable');
-  }, [isRecording, stopRecording, startRecording, locationLabel, pinBg, pinText, aspect, isLandscape, onCapture]); // eslint-disable-line
+  }, [isRecording, isBoomerangMode, stopRecording, startRecording, aspect, isLandscape, onCapture]); // eslint-disable-line
 
   // ── shutter handler (starts timer if set, else fires immediately) ─────────
   const handleShutter = useCallback(async () => {
-    if (isVideoMode) { handleVideoShutter(); return; }
+    if (isVideoMode || isBoomerangMode) { handleVideoShutter(); return; }
     if (timerSec !== null) {
       clearInterval(timerInterval.current);
       let remaining = timerSec;
@@ -431,7 +429,7 @@ export default function CameraLayer({
       return;
     }
     fireCapture();
-  }, [isVideoMode, handleVideoShutter, timerSec, fireCapture]);
+  }, [isVideoMode, isBoomerangMode, handleVideoShutter, timerSec, fireCapture]);
 
   // ── timer cycle (null→3→5→7→null) with brief toast ───────────────────────
   const cycleTimer = useCallback(() => {
@@ -458,7 +456,7 @@ export default function CameraLayer({
     clearTimeout(modeToastTimer.current);
     modeToastTimer.current = setTimeout(() => setModeToast(null), 2400);
     setUiMode(next);
-    if (next !== 'VIDEO') applyNicheMode(next);
+    if (next !== 'VIDEO' && next !== 'BOOMERANG') applyNicheMode(next);
   }, [uiMode, isRecording, applyNicheMode]);
 
   const cycleFilter = useCallback(() => {
@@ -522,9 +520,9 @@ export default function CameraLayer({
     }
   }, [zoomLevel, setZoom, focusAt]);
 
-  // Video records raw frames (no scene grade baked) — keep the preview
-  // WYSIWYG by dropping the CSS grade in video mode.
-  const liveFilter = isVideoMode ? 'none' : previewCss(nicheMode, filterId);
+  // Video/Boomerang record raw frames (no scene grade baked) — keep the
+  // preview WYSIWYG by dropping the CSS grade in both modes.
+  const liveFilter = (isVideoMode || isBoomerangMode) ? 'none' : previewCss(nicheMode, filterId);
   const timerLabel = timerSec ? `${timerSec}s` : null;
   const recClock = `0:${String(Math.floor(elapsedSec)).padStart(2, '0')}`;
 
@@ -562,12 +560,23 @@ export default function CameraLayer({
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
-        <div className="fsc-pin" ref={pinRef} style={{ background: pinBg, color: pinText }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
-          </svg>
-          <span>{String(locationLabel).toUpperCase()}</span>
-        </div>
+        {/* Video/Boomerang never burn the tag into the file (offline-reassembly
+            pipeline, no per-frame text draw) — showing the business pin here
+            would imply it ends up in the clip, which is misleading. A REC
+            chip in the same slot signals "recording mode" instead. */}
+        {(isVideoMode || isBoomerangMode) ? (
+          <div className="fsc-pin fsc-pin--rec">
+            <span className="fsc-recdot" />
+            <span>REC</span>
+          </div>
+        ) : (
+          <div className="fsc-pin" style={{ background: pinBg, color: pinText }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+            </svg>
+            <span>{String(locationLabel).toUpperCase()}</span>
+          </div>
+        )}
 
         {!isReady && !error && (
           <div className="fsc-status">
@@ -597,8 +606,8 @@ export default function CameraLayer({
         >
           {FLASH_ICON[flashMode]}
         </button>
-        {/* timer: photo-only (hidden in video mode) */}
-        {!isVideoMode && (
+        {/* timer: photo-only (hidden in video/boomerang mode) */}
+        {!isVideoMode && !isBoomerangMode && (
           <button
             className={`fsc-tool ${timerSec !== null ? 'is-on' : ''}`}
             onClick={cycleTimer}
@@ -655,23 +664,23 @@ export default function CameraLayer({
       <div className="fsc-bottom">
         {/* zoom pill: shows above shutter, subtle */}
         <div className="fsc-shutterrow">
-          {/* MODE button — always says "MODE" (cycles Food → Portrait → Video) */}
+          {/* MODE button — always says "MODE" (cycles Food → Portrait → Video → Boomerang) */}
           <div className="fsc-side">
             <button className="fsc-modebtn" onClick={cycleMode} disabled={isRecording || isProcessing}>MODE</button>
           </div>
 
           <button
-            className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''} ${isVideoMode ? 'fsc-shutter--video' : ''} ${isRecording ? 'is-recording' : ''}`}
+            className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''} ${(isVideoMode || isBoomerangMode) ? 'fsc-shutter--video' : ''} ${isRecording ? 'is-recording' : ''}`}
             onClick={handleShutter}
             disabled={!isReady || isProcessing}
-            aria-label={isVideoMode ? (isRecording ? 'Detener' : 'Grabar') : 'Capturar'}
+            aria-label={isBoomerangMode ? 'Boomerang' : isVideoMode ? (isRecording ? 'Detener' : 'Grabar') : 'Capturar'}
           >
             <span className="fsc-shutter-inner"/>
           </button>
 
           <div className="fsc-side fsc-side-right">
-            {/* filters are photo-only — video records clean frames */}
-            {!isVideoMode ? (
+            {/* filters are photo-only — video/boomerang record clean frames */}
+            {!isVideoMode && !isBoomerangMode ? (
               <button className="fsc-filterbtn" onClick={cycleFilter} aria-label="Filtros">
                 {FILTER_ICON}
               </button>
@@ -752,6 +761,10 @@ const styles = `
   font-size: 11px; font-weight: 700; letter-spacing: 0.08em; line-height: 1;
   white-space: nowrap; max-width: 44vw; overflow: hidden; text-overflow: ellipsis;
 }
+.fsc-pin--rec {
+  background: rgba(0,0,0,0.55); color: #fff;
+}
+.fsc-pin--rec span { color: #fff; }
 
 /* ── status ── */
 .fsc-status {
