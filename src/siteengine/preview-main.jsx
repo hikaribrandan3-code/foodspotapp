@@ -6,6 +6,7 @@ import BurgerQsrTemplate from './templates/burger-qsr/BurgerQsrTemplate.jsx'
 import BurgerDarkTemplate from './templates/burger-dark/BurgerDarkTemplate.jsx'
 import BurgerFunTemplate from './templates/burger-fun/BurgerFunTemplate.jsx'
 import BakeryTemplate from './templates/bakery/BakeryTemplate.jsx'
+import BakeryRusticTemplate from './templates/bakery-rustic/BakeryRusticTemplate.jsx'
 
 // Standalone preview harness — no Supabase, no TenantContext, no auth.
 // Pick a template via ?template=coffee-cafe (defaults to coffee-cafe).
@@ -16,6 +17,7 @@ const TEMPLATES = {
   'burger-dark': BurgerDarkTemplate,
   'burger-fun': BurgerFunTemplate,
   'bakery': BakeryTemplate,
+  'bakery-rustic': BakeryRusticTemplate,
 }
 
 const templateId = new URLSearchParams(window.location.search).get('template') || 'coffee-cafe'
