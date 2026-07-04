@@ -9,7 +9,7 @@ export const mockBurgerData = {
     heroEyebrow: 'Explore Our Menu',
     heroHeadline: 'Order Your Favorites in Minutes',
     heroSub: 'Juicy burgers, crispy sides, and ice-cold drinks — delivered fast across town.',
-    heroImage: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=900&q=80',
+    heroImage: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=1200&q=90',
   },
   highlights: [
     { id: 'ordered',  title: 'Most Ordered',   subtitle: 'The crowd favorites',      image: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=500&q=80' },
