@@ -739,11 +739,12 @@ const styles = `
 }
 .fsc-video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
 
-/* ── vintage grain overlay (live preview only — see fsc-grain render) ── */
+/* ── polaroid grain overlay (live preview only — see fsc-grain render) ── */
 .fsc-grain {
   position: absolute; inset: 0; z-index: 3; pointer-events: none;
-  opacity: 0.22; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.24; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' result='noise'/%3E%3CfeColorMatrix in='noise' type='saturate' values='0.3'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
 }
 
 /* ── reticle ── */
@@ -830,7 +831,7 @@ const styles = `
   left: 50%; transform: translateX(-50%); z-index: 60;
   background: rgba(0,0,0,0.46); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   color: #fff; padding: 5px 16px; border-radius: 999px;
-  font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  font-size: 15px; font-weight: 700; letter-spacing: 0.02em; line-height: 1;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   animation: fsc-modehold 2.4s ease-out forwards;
 }
@@ -901,7 +902,7 @@ const styles = `
   background: var(--fsc-glass); border: 1px solid var(--fsc-stroke);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
-  padding: 8px 13px; border-radius: 999px;
+  padding: 8px 13px; border-radius: 999px; line-height: 1; display: flex; align-items: center;
 }
 
 .fsc-shutter {
@@ -934,7 +935,7 @@ const styles = `
   display: flex; align-items: center; gap: 7px;
   background: rgba(0,0,0,0.62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   color: #fff; padding: 7px 16px; border-radius: 999px;
-  font-size: 14px; font-weight: 800; letter-spacing: 0.06em;
+  font-size: 14px; font-weight: 800; letter-spacing: 0.06em; line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .fsc-recdot {
