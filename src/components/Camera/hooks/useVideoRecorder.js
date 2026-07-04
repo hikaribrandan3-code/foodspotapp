@@ -24,15 +24,21 @@
  * cheap blit) instead of up to 15s of 4K video, so the same class of work
  * that caused stutter at Video-mode scale should be comfortably light here.
  *
- * Works on iOS Safari 15+ and Android Chrome. Audio is intentionally off
- * (camera stream is video-only; adding mic would trigger a second
- * permission prompt mid-flow).
+ * Works on iOS Safari 15+ and Android Chrome.
+ *
+ * AUDIO: Video mode only. Mic access is requested lazily on first recording
+ * and the resulting audio track is cached (audioStreamRef) so repeat
+ * recordings in the same camera session don't re-prompt. If mic permission
+ * is denied or getUserMedia fails, we fail open — recording proceeds
+ * video-only rather than blocking capture. Boomerang never requests or
+ * carries audio: its output is rebuilt from canvas frames during the
+ * reassembly pass, which has no audio path by construction.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 export const MAX_VIDEO_SEC = 15
-export const MAX_BOOMERANG_SEC = 1
+export const MAX_BOOMERANG_SEC = 1.7
 
 // Same crop ratios as CameraLayer's photo capture
 const ASPECT_RATIO = { '9:16': 9 / 16, '4:3': 3 / 4, '1:1': 1 }
@@ -85,10 +91,28 @@ export default function useVideoRecorder() {
     const durationCapRef = useRef(MAX_VIDEO_SEC)
     const abortedRef    = useRef(false)
     const sessionRef    = useRef(null) // { onComplete, mode, aspect, isLandscape, facingMode, rawMimeType }
+    const audioStreamRef = useRef(null) // cached mic stream — Video mode only, reused across recordings
+    const startingRef    = useRef(false) // guards re-entrant starts while awaiting mic permission
 
     const cleanupTimers = useCallback(() => {
         clearInterval(tickRef.current)
         clearTimeout(autoStopRef.current)
+    }, [])
+
+    // Lazily grab a mic track for Video mode, caching the stream so repeat
+    // recordings in the same session don't re-prompt. Fails open (returns
+    // null) on denial/error — never blocks recording from proceeding.
+    const getAudioTrack = useCallback(async () => {
+        const cached = audioStreamRef.current?.getAudioTracks?.()[0]
+        if (cached && cached.readyState === 'live') return cached
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            audioStreamRef.current = stream
+            return stream.getAudioTracks()[0] || null
+        } catch (err) {
+            console.warn('[FSC-VIDEO] mic unavailable, recording video without audio:', err)
+            return null
+        }
     }, [])
 
     /**
@@ -252,9 +276,12 @@ export default function useVideoRecorder() {
      *   isLandscape — rotate the crop like photo capture does
      *   onComplete  — called with the final result, or null on failure
      */
-    const startRecording = useCallback((opts) => {
+    const startRecording = useCallback(async (opts) => {
+        if (recorderRef.current || startingRef.current) return false
+        startingRef.current = true
+        try {
         const { mode = 'video', video, facingMode, aspect, isLandscape, onComplete } = opts
-        if (recorderRef.current || !video?.srcObject) return false
+        if (!video?.srcObject) return false
 
         const rawStream = video.srcObject
         const videoTrack = rawStream.getVideoTracks?.()[0]
@@ -263,10 +290,19 @@ export default function useVideoRecorder() {
         const mimeType = pickMimeType()
         if (mimeType === null) { console.error('[FSC-VIDEO] MediaRecorder unsupported'); return false }
 
-        // Record ONLY the video track (a fresh MediaStream) — recording the
-        // exact live-view stream directly, untouched, is what makes capture
-        // as smooth as the viewfinder itself.
-        const tapStream = new MediaStream([videoTrack])
+        // Video mode only: try to attach a mic track. Boomerang stays
+        // video-only — its output is rebuilt from canvas frames anyway
+        // (no audio path), so there's nothing to request or mute.
+        const tracks = [videoTrack]
+        if (mode === 'video') {
+            const audioTrack = await getAudioTrack()
+            if (audioTrack) tracks.push(audioTrack)
+        }
+
+        // Fresh MediaStream tapping the live tracks directly — recording
+        // them untouched (no canvas relay) is what makes capture as smooth
+        // as the viewfinder itself.
+        const tapStream = new MediaStream(tracks)
 
         let recorder
         try {
@@ -369,7 +405,10 @@ export default function useVideoRecorder() {
 
         if (navigator.vibrate) navigator.vibrate(20)
         return true
-    }, [cleanupTimers, assembleBoomerang])
+        } finally {
+            startingRef.current = false
+        }
+    }, [cleanupTimers, assembleBoomerang, getAudioTrack])
 
     const stopRecording = useCallback(() => {
         const r = recorderRef.current
@@ -386,6 +425,8 @@ export default function useVideoRecorder() {
         const r = recorderRef.current
         if (r && r.state === 'recording') { try { r.stop() } catch { /* noop */ } }
         recorderRef.current = null
+        audioStreamRef.current?.getTracks().forEach((t) => t.stop())
+        audioStreamRef.current = null
     }, [cleanupTimers])
 
     return { isRecording, isProcessing, elapsedSec, startRecording, stopRecording }

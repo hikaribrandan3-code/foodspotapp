@@ -394,10 +394,13 @@ export default function CameraLayer({
   }, [applyFlash, onCapture]); // eslint-disable-line
 
   // ── video record toggle (tap = start, tap again or 15s cap = stop) ────────
-  // Boomerang is a single tap: fixed ~1s auto-capture, no manual stop needed.
-  const handleVideoShutter = useCallback(() => {
+  // Boomerang is a single tap: fixed ~1.7s auto-capture, no manual stop needed.
+  // startRecording is async (Video mode awaits mic permission before it can
+  // start) — startRecording itself guards against a double-tap firing a
+  // second start while that await is in flight.
+  const handleVideoShutter = useCallback(async () => {
     if (isRecording) { stopRecording(); return; }
-    const ok = startRecording({
+    const ok = await startRecording({
       mode: isBoomerangMode ? 'boomerang' : 'video',
       video: videoRef.current,
       facingMode: facingModeRef.current,
@@ -548,6 +551,15 @@ export default function CameraLayer({
             filter:    liveFilter !== 'none'  ? liveFilter  : undefined,
           }}
         />
+
+        {/* Vintage grain — CSS filter() can't express noise, so the live
+            preview gets a static SVG turbulence texture here; the actual
+            capture bakes real per-pixel noise (see applyGrade in
+            scenePresets.js). Stills only — filters are hidden in Video/
+            Boomerang mode already. */}
+        {filterId === 'vintage' && !isVideoMode && !isBoomerangMode && (
+          <div className="fsc-grain" aria-hidden="true" />
+        )}
 
         {/* tap-to-focus reticle */}
         {reticle && <div className="fsc-reticle" style={{ left: reticle.x, top: reticle.y }} />}
@@ -728,6 +740,13 @@ const styles = `
   border-radius: 18px;
 }
 .fsc-video { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
+
+/* ── vintage grain overlay (live preview only — see fsc-grain render) ── */
+.fsc-grain {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  opacity: 0.22; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
 
 /* ── reticle ── */
 .fsc-reticle {

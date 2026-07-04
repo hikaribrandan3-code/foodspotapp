@@ -29,12 +29,17 @@ export const SCENE_LABEL = { FOOD: 'FOOD', PORTRAIT: 'PORTRAIT' };
 export const DEFAULT_SCENE = 'FOOD';
 
 // ── Filter strip (tap-to-cycle). 'original' = no-op. ─────────────────────
+// 'vintage' adds `grain` — a noise amount CSS can't express as a filter()
+// function, so it's handled specially: the live preview gets a static SVG
+// noise texture overlay (see CameraLayer's grain overlay, gated on this id),
+// and the capture bake applies real per-pixel random noise in applyGrade().
 export const CAPTURE_FILTERS = [
   { id: 'original', label: 'Original', grade: {} },
   { id: 'sabroso',  label: 'Sabroso',  grade: { saturate: 1.30, contrast: 1.08 } },
   { id: 'dorado',   label: 'Dorado',   grade: { brightness: 1.06, saturate: 1.20, sepia: 0.28 } },
   { id: 'fresco',   label: 'Fresco',   grade: { brightness: 1.04, saturate: 1.12 } },
   { id: 'mono',     label: 'Mono',     grade: { grayscale: 1, contrast: 1.1 } },
+  { id: 'vintage',  label: 'Vintage',  grade: { brightness: 0.97, contrast: 1.10, saturate: 0.78, sepia: 0.22, grain: 0.10 } },
 ];
 
 const FILTER_BY_ID = Object.fromEntries(CAPTURE_FILTERS.map((f) => [f.id, f]));
@@ -78,7 +83,8 @@ function applyGrade(data, g) {
   const gray = g.grayscale ?? 0;
   const s = g.saturate ?? 1;
   const sep = g.sepia ?? 0;
-  if (b === 1 && c === 1 && gray === 0 && s === 1 && sep === 0) return;
+  const grain = g.grain ?? 0;
+  if (b === 1 && c === 1 && gray === 0 && s === 1 && sep === 0 && grain === 0) return;
 
   const clamp = (v) => (v < 0 ? 0 : v > 255 ? 255 : v);
   for (let i = 0; i < data.length; i += 4) {
@@ -112,6 +118,12 @@ function applyGrade(data, g) {
       r = r + (sr - r) * sep;
       gr = gr + (sg - gr) * sep;
       bl = bl + (sb - bl) * sep;
+    }
+    // grain (single-shot random luminance noise — same jitter on all three
+    // channels so it reads as film grain, not colored static)
+    if (grain > 0) {
+      const n = (Math.random() - 0.5) * grain * 255;
+      r += n; gr += n; bl += n;
     }
 
     data[i] = clamp(r);
