@@ -87,28 +87,28 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
           </div>
 
           {/* Right side: hero burger with bubble + badge */}
-          <div className="relative w-1/2 h-full flex items-center justify-center px-6">
-            {/* hero burger image */}
+          <div className="relative w-1/2 h-full flex items-center justify-center px-8 overflow-hidden">
+            {/* hero burger image — LARGE, dominates yellow space */}
             <img
               src={business.heroImage}
               alt={business.name}
-              className="max-w-xs h-64 object-contain drop-shadow-2xl"
+              className="w-[500px] h-auto object-contain drop-shadow-2xl"
               loading="lazy"
             />
 
-            {/* YUMMY speech bubble — positioned above/right of burger */}
-            <div className="absolute top-20 right-16 bg-yellow-300 rounded-full px-6 py-3 transform -rotate-12 shadow-lg">
-              <div className="text-2xl font-black text-[#1a1a1a] italic">{business.heroBubble}</div>
-              <div className="absolute bottom-0 left-4 w-4 h-4 bg-yellow-300 rounded-full transform translate-y-4" />
+            {/* YUMMY speech bubble — positioned top right of burger */}
+            <div className="absolute top-24 right-20 bg-yellow-300 rounded-full px-8 py-4 transform -rotate-12 shadow-lg">
+              <div className="text-3xl font-black text-[#1a1a1a] italic">{business.heroBubble}</div>
+              <div className="absolute bottom-0 left-6 w-5 h-5 bg-yellow-300 rounded-full transform translate-y-5" />
             </div>
 
             {/* Badge — positioned bottom right of burger */}
-            <div className="absolute bottom-20 right-10 bg-[#1f5a4a] text-white rounded-full px-5 py-4 text-center border-4 border-[#ff8c00] shadow-lg">
+            <div className="absolute bottom-32 right-8 bg-[#1f5a4a] text-white rounded-full px-6 py-5 text-center border-4 border-[#ff8c00] shadow-lg">
               <div className="text-xs font-bold uppercase tracking-wide leading-tight">{business.heroBadge}</div>
             </div>
 
             {/* Carousel indicators (01, 04) */}
-            <div className="absolute bottom-8 right-8 text-white/30 text-xs tracking-widest font-bold">
+            <div className="absolute bottom-12 right-12 text-white/30 text-sm tracking-widest font-bold">
               <div>01</div>
               <div>04</div>
             </div>
