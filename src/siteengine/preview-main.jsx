@@ -4,6 +4,7 @@ import './preview.css'
 import CoffeeCafeTemplate from './templates/coffee-cafe/CoffeeCafeTemplate.jsx'
 import BurgerQsrTemplate from './templates/burger-qsr/BurgerQsrTemplate.jsx'
 import BurgerDarkTemplate from './templates/burger-dark/BurgerDarkTemplate.jsx'
+import BurgerFunTemplate from './templates/burger-fun/BurgerFunTemplate.jsx'
 import BakeryTemplate from './templates/bakery/BakeryTemplate.jsx'
 
 // Standalone preview harness — no Supabase, no TenantContext, no auth.
@@ -13,6 +14,7 @@ const TEMPLATES = {
   'coffee-cafe': CoffeeCafeTemplate,
   'burger-qsr': BurgerQsrTemplate,
   'burger-dark': BurgerDarkTemplate,
+  'burger-fun': BurgerFunTemplate,
   'bakery': BakeryTemplate,
 }
 
