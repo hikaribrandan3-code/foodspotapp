@@ -374,20 +374,19 @@ export default function MenuTab({
               {t('menu_management_subtitle') || 'Simple tagging, full control. Diet-friendly, spicy, natural, promoted—your way.'}
             </p>
           </div>
-          <div className="flex gap-4 md:gap-3 w-full md:w-auto">
+          <div className="flex flex-col gap-3 w-full">
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex-grow md:flex-none flex items-center justify-center gap-3 md:gap-2 px-12 md:px-6 h-16 md:h-10 bg-amber-600 text-white font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-amber-500 transition-all shadow-2xl md:shadow-lg active:scale-95"
+              className="flex items-center justify-center gap-3 px-12 h-16 md:h-10 bg-emerald-100 text-emerald-700 font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-200 transition-all shadow-lg active:scale-95"
             >
-              📄
-              {t('import_menu') || 'Import Menu'}
+              📄 Import Menu
             </button>
             <button
               onClick={() => setIsAdding(true)}
-              className="flex-grow md:flex-none flex items-center justify-center gap-3 md:gap-2 px-12 md:px-6 h-16 md:h-10 bg-emerald-600 text-white font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-500 transition-all shadow-2xl md:shadow-lg active:scale-95"
+              className="flex items-center justify-center gap-3 px-12 h-16 md:h-10 bg-emerald-600 text-white font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-500 transition-all shadow-2xl md:shadow-lg active:scale-95"
             >
               <Plus className="h-5 w-5 md:h-4 md:w-4" />
-              {t('new_recipe') || 'New Recipe'}
+              New Recipe
             </button>
           </div>
         </div>
@@ -573,8 +572,8 @@ export default function MenuTab({
                 <X className="w-5 h-5 text-stone-400" />
               </button>
 
-              <h2 className="text-2xl font-black mb-2">{t('import_menu_title') || 'Import Menu'}</h2>
-              <p className="text-sm text-stone-600 mb-6">{t('import_menu_desc') || 'Upload a PDF of your menu'}</p>
+              <h2 className="text-2xl font-black mb-2">Import Menu</h2>
+              <p className="text-sm text-stone-600 mb-6">Upload a PDF of your menu</p>
 
               {uploadError && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -596,7 +595,7 @@ export default function MenuTab({
                 />
                 <div className="text-center">
                   <div className="text-3xl mb-2">📄</div>
-                  <p className="text-sm font-bold">{uploading ? 'Processing...' : t('upload_pdf') || 'Upload PDF'}</p>
+                  <p className="text-sm font-bold">{uploading ? 'Processing...' : 'Upload PDF'}</p>
                 </div>
               </button>
             </motion.div>
