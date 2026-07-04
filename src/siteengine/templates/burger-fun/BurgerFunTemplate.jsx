@@ -28,68 +28,91 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
           <a href="#contact" className="hover:text-[#ff8c00]">CONTACT</a>
         </nav>
         <span className="text-2xl font-black text-[#ff8c00]">{business.name}</span>
-        <div className="flex items-center gap-3 text-lg">
-          <button aria-label="Search">🔍</button>
-          <button aria-label="Account">👤</button>
-          <button aria-label="Wishlist">❤️</button>
-          <button className="relative">🛒<span className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-[#ff8c00] text-white text-xs font-bold">0</span></button>
+        <div className="flex items-center gap-4">
+          {/* SVG search icon */}
+          <button aria-label="Search" className="w-5 h-5 hover:text-[#ff8c00]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </button>
+          {/* SVG account icon */}
+          <button aria-label="Account" className="w-5 h-5 hover:text-[#ff8c00]">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M 12 14 C 7 14 4 16 4 20 v 2 h 16 v -2 c 0 -4 -3 -6 -8 -6 Z" />
+            </svg>
+          </button>
+          {/* SVG heart icon */}
+          <button aria-label="Wishlist" className="w-5 h-5 hover:text-[#ff8c00]">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M 12 21.35 l -1.45 -1.32 C 5.4 15.36 2 12.28 2 8.5 C 2 5.42 4.42 3 7.5 3 c 1.74 0 3.41 0.81 4.5 2.09 C 13.09 3.81 14.76 3 16.5 3 C 19.58 3 22 5.42 22 8.5 c 0 3.78 -3.4 6.86 -8.55 11.54 L 12 21.35 Z" />
+            </svg>
+          </button>
+          {/* SVG cart icon */}
+          <button aria-label="Cart" className="relative w-5 h-5 hover:text-[#ff8c00]">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M 7 4 V 3 h 2 l 1 5 h 9 l 1.5 -3 h 2 l -1.5 3 v 10 c 0 1.1 -0.9 2 -2 2 H 6 c -1.1 0 -2 -0.9 -2 -2 V 4 Z M 9 19 c 1.1 0 2 0.9 2 2 s -0.9 2 -2 2 s -2 -0.9 -2 -2 s 0.9 -2 2 -2 Z m 8 0 c 1.1 0 2 0.9 2 2 s -0.9 2 -2 2 s -2 -0.9 -2 -2 s 0.9 -2 2 -2 Z" />
+            </svg>
+            <span className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-[#ff8c00] text-white text-[10px] font-bold">0</span>
+          </button>
         </div>
       </header>
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section
-        id="home"
-        className="relative min-h-[500px] md:min-h-[600px] flex items-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(to right, #1f5a4a 0%, #1f5a4a 45%, #ffc107 45%, #ffc107 100%)',
-        }}
-      >
-        {/* Left side: text + CTA */}
-        <div className="relative z-10 px-6 md:px-16 w-full md:w-1/2 text-white">
-          {/* burger icon */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="text-3xl">{business.heroIcon}</div>
-            <span className="text-sm font-bold uppercase tracking-widest text-[#ff8c00]">Fresh Burgers Daily</span>
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-black leading-tight mb-4">
-            {business.heroHeadline}<br />{business.heroHeadline2}
-          </h1>
-          <p className="text-white/80 max-w-sm mb-6 text-sm">{business.heroSub}</p>
-          <button className="px-8 py-3 rounded-full bg-[#ff8c00] text-white font-bold hover:bg-[#e67e00] uppercase tracking-wide">
-            ORDER NOW
-          </button>
+      <section id="home" className="relative min-h-[500px] md:min-h-[600px]">
+        <div className="absolute inset-0 grid grid-cols-2">
+          {/* Left: green */}
+          <div className="bg-[#1f5a4a]" />
+          {/* Right: yellow */}
+          <div className="bg-[#ffc107]" />
         </div>
 
-        {/* Right side: hero burger image with bubble + badge */}
-        <div className="relative hidden md:flex w-1/2 items-center justify-end pr-10 h-full">
-          {/* yellow background bubble */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-yellow-300/30 blur-3xl" />
+        <div className="relative z-10 h-full flex items-center">
+          {/* Left side: text + CTA */}
+          <div className="w-1/2 px-6 md:px-16 text-white">
+            {/* burger icon + label */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-3xl">{business.heroIcon}</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-[#ff8c00]">Fresh Burgers Daily</span>
+            </div>
 
-          {/* hero burger */}
-          <img
-            src={business.heroImage}
-            alt={business.name}
-            className="relative z-10 max-w-sm drop-shadow-2xl object-contain"
-            loading="lazy"
-          />
-
-          {/* YUMMY speech bubble */}
-          <div className="absolute top-20 right-40 bg-yellow-300 rounded-full px-6 py-3 transform -rotate-12 shadow-lg">
-            <div className="text-2xl font-black text-[#1a1a1a] italic">{business.heroBubble}</div>
-            <div className="absolute bottom-0 left-4 w-4 h-4 bg-yellow-300 rounded-full transform translate-y-4" />
+            <h1 className="text-5xl md:text-6xl font-black leading-tight mb-4">
+              {business.heroHeadline}<br />{business.heroHeadline2}
+            </h1>
+            <p className="text-white/80 max-w-sm mb-6 text-sm">{business.heroSub}</p>
+            <button className="px-8 py-3 rounded-full bg-[#ff8c00] text-white font-bold hover:bg-[#e67e00] uppercase tracking-wide">
+              ORDER NOW
+            </button>
           </div>
 
-          {/* Badge */}
-          <div className="absolute bottom-20 right-20 bg-[#1f5a4a] text-white rounded-full px-6 py-4 text-center border-4 border-[#ff8c00] shadow-lg">
-            <div className="text-xs font-bold uppercase tracking-wide">{business.heroBadge}</div>
-          </div>
-        </div>
+          {/* Right side: hero burger with bubble + badge */}
+          <div className="relative w-1/2 h-full flex items-center justify-center px-6">
+            {/* hero burger image */}
+            <img
+              src={business.heroImage}
+              alt={business.name}
+              className="max-w-xs h-64 object-contain drop-shadow-2xl"
+              loading="lazy"
+            />
 
-        {/* carousel indicators (01, 04) */}
-        <div className="absolute bottom-8 right-8 text-white/40 text-sm tracking-widest">
-          <div>01</div>
-          <div>04</div>
+            {/* YUMMY speech bubble — positioned above/right of burger */}
+            <div className="absolute top-20 right-16 bg-yellow-300 rounded-full px-6 py-3 transform -rotate-12 shadow-lg">
+              <div className="text-2xl font-black text-[#1a1a1a] italic">{business.heroBubble}</div>
+              <div className="absolute bottom-0 left-4 w-4 h-4 bg-yellow-300 rounded-full transform translate-y-4" />
+            </div>
+
+            {/* Badge — positioned bottom right of burger */}
+            <div className="absolute bottom-20 right-10 bg-[#1f5a4a] text-white rounded-full px-5 py-4 text-center border-4 border-[#ff8c00] shadow-lg">
+              <div className="text-xs font-bold uppercase tracking-wide leading-tight">{business.heroBadge}</div>
+            </div>
+
+            {/* Carousel indicators (01, 04) */}
+            <div className="absolute bottom-8 right-8 text-white/30 text-xs tracking-widest font-bold">
+              <div>01</div>
+              <div>04</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -120,7 +143,9 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
             <p className="text-lg md:text-xl font-medium mb-6 italic">"{testimonials[activeTestimonial].quote}"</p>
             <div className="flex justify-center gap-2 mb-4">
               {[...Array(5)].map((_, i) => (
-                <span key={i} className="text-2xl">⭐</span>
+                <svg key={i} className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M 12 2 l 3.09 6.26 L 22 9.27 l -5 4.87 l 1.18 6.88 L 12 17.77 l -6.18 3.25 L 7 14.14 L 2 9.27 l 6.91 -1.01 L 12 2 Z" />
+                </svg>
               ))}
             </div>
             <div className="text-sm font-bold">{testimonials[activeTestimonial].author}</div>
@@ -153,12 +178,15 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
           </div>
         </div>
 
-        {/* mentions */}
+        {/* mentions — SVG placeholders */}
         <div className="mt-16 pt-8 border-t border-white/30 text-center">
           <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
             {mentions.map((m) => (
-              <div key={m.name} className="text-xs font-bold text-white/80 flex flex-col items-center gap-1">
-                <span className="text-2xl">{m.logo}</span>
+              <div key={m.name} className="text-xs font-bold text-white/80 flex flex-col items-center gap-2">
+                {/* SVG placeholder circles for logos */}
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-black">
+                  {m.name.slice(0, 1)}
+                </div>
                 {m.name}
               </div>
             ))}
