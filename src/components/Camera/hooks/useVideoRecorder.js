@@ -190,9 +190,18 @@ export default function useVideoRecorder() {
         }
 
         // ── stream + recorder ────────────────────────────────────────────────
+        // Zero-arg captureStream() emits a stream frame each time the canvas is
+        // drawn to, so it tracks our actual draw loop (rVFC-paced to the real
+        // camera frame rate) instead of a fixed clock. Passing a numeric rate
+        // (e.g. captureStream(30)) makes the browser sample on an INDEPENDENT
+        // timer that can drift against our draws — camera frame rate dips in
+        // low light (24fps, sometimes lower), and a 30fps sampler then repeats
+        // stale frames to fill the gap, which is exactly the choppiness seen
+        // on-device. Draw-triggered mode is the fix; only fall back to a fixed
+        // rate if the zero-arg form isn't supported at all.
         let stream
-        try { stream = canvas.captureStream(30) }
-        catch { stream = canvas.captureStream() }
+        try { stream = canvas.captureStream() }
+        catch { stream = canvas.captureStream(30) }
 
         let recorder
         try {
@@ -248,7 +257,11 @@ export default function useVideoRecorder() {
 
         // fire the first frame before start so the stream has content, then roll
         drawFrame()
-        recorder.start(1000) // 1s timeslices — steadier memory on iOS
+        // No timeslice arg: one buffer flushed at stop() instead of every 1s.
+        // Periodic ondataavailable flushes were stalling the single-threaded
+        // draw loop for a beat on-device (visible as a stutter). A 15s clip
+        // at 8Mbps is ~15MB — fine to hold in memory until stop.
+        recorder.start()
         recorderRef.current = recorder
         startTsRef.current = Date.now()
         setIsRecording(true)

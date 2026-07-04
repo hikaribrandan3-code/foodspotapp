@@ -7,9 +7,16 @@ import React from 'react'
  * The business pin is already burned into the pixels by useVideoRecorder,
  * so no overlay pill is rendered (it would double up).
  *
- * Note: browsers cannot deep-link media into Instagram Stories — both share
- * buttons open the OS share sheet with the video file attached; the user
- * picks Stories / WhatsApp / etc. from there.
+ * Two actions only: Save to Device, Share to Social. (Dropped a third
+ * "Share to Stories" button — browsers can't deep-link into Instagram
+ * Stories anyway, both routes were the same OS share sheet, just a
+ * confusing duplicate.)
+ *
+ * All three buttons bind onclick/ontouchend natively via refs instead of
+ * React's onClick — same fix PreviewActions.jsx already needed for the
+ * photo preview screen (see the "CRITICAL: Manually bind native DOM
+ * events" comment there). React's synthetic click doesn't reliably fire
+ * on top of this camera surface; native listeners do.
  *
  * Props:
  *   videoData  — { objectURL, blob, mimeType, durationSec }
@@ -19,6 +26,10 @@ import React from 'react'
 export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
     const [toast, setToast] = React.useState(null)
     const toastTimer = React.useRef(null)
+
+    const closeBtnRef = React.useRef(null)
+    const shareBtnRef = React.useRef(null)
+    const saveBtnRef  = React.useRef(null)
 
     const showToast = React.useCallback((msg) => {
         setToast(msg)
@@ -34,11 +45,11 @@ export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
         return new File([videoData.blob], `foodspot-${Date.now()}.${ext}`, { type: videoData.blob.type })
     }, [videoData, ext])
 
-    const shareVideo = React.useCallback(async (title) => {
+    const handleShareSocial = React.useCallback(async () => {
         try {
             if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
-                await navigator.share({ files: [shareFile], title })
-                return true
+                await navigator.share({ files: [shareFile], title: 'FoodSpot moment' })
+                return
             }
             showToast('Compartir no disponible — usá Guardar')
         } catch (err) {
@@ -47,11 +58,7 @@ export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
                 showToast('No se pudo compartir')
             }
         }
-        return false
     }, [shareFile, showToast])
-
-    const handleShareStories = React.useCallback(() => shareVideo('FoodSpot Story'), [shareVideo])
-    const handleShareSocial  = React.useCallback(() => shareVideo('FoodSpot moment'), [shareVideo])
 
     const handleSave = React.useCallback(async () => {
         // iOS: share sheet is the only path to Photos. Android: download works.
@@ -75,6 +82,32 @@ export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
         }
     }, [shareFile, videoData, ext, showToast])
 
+    // Native DOM binding — bypasses React SyntheticEvents (see file header).
+    React.useEffect(() => {
+        const closeBtn = closeBtnRef.current
+        const shareBtn = shareBtnRef.current
+        const saveBtn  = saveBtnRef.current
+
+        if (closeBtn) {
+            closeBtn.onclick = onRetake
+            closeBtn.ontouchend = (e) => { e.preventDefault(); onRetake?.() }
+        }
+        if (shareBtn) {
+            shareBtn.onclick = handleShareSocial
+            shareBtn.ontouchend = (e) => { e.preventDefault(); handleShareSocial() }
+        }
+        if (saveBtn) {
+            saveBtn.onclick = handleSave
+            saveBtn.ontouchend = (e) => { e.preventDefault(); handleSave() }
+        }
+
+        return () => {
+            if (closeBtn) { closeBtn.onclick = null; closeBtn.ontouchend = null }
+            if (shareBtn) { shareBtn.onclick = null; shareBtn.ontouchend = null }
+            if (saveBtn)  { saveBtn.onclick  = null; saveBtn.ontouchend  = null }
+        }
+    }, [onRetake, handleShareSocial, handleSave])
+
     if (!videoData?.objectURL) return null
 
     return (
@@ -89,7 +122,7 @@ export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
             />
 
             {/* Retake — dump video, back to camera */}
-            <button onClick={onRetake} aria-label="Retake" style={styles.closeButton}>
+            <button ref={closeBtnRef} aria-label="Retake" style={styles.closeButton}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
@@ -97,16 +130,9 @@ export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
 
             {toast && <div style={styles.toast}>{toast}</div>}
 
-            {/* Glassmorphism action bar — mirrors DualPostScreen */}
+            {/* Glassmorphism action bar — two buttons, both same glass treatment */}
             <div style={styles.actionBar}>
-                <button onClick={handleShareStories} style={styles.primaryButton}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="9" />
-                        <circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none" />
-                    </svg>
-                    <span>SHARE TO STORIES</span>
-                </button>
-                <button onClick={handleShareSocial} style={styles.secondaryButton}>
+                <button ref={shareBtnRef} style={{ ...styles.glassButton, ...styles.glassButtonAccent }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
                         <polyline points="16 6 12 2 8 6" />
@@ -114,7 +140,7 @@ export default function VideoPostScreen({ videoData, onRetake, onComplete }) {
                     </svg>
                     <span>SHARE TO SOCIAL</span>
                 </button>
-                <button onClick={handleSave} style={styles.tertiaryButton}>
+                <button ref={saveBtnRef} style={styles.glassButton}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                         <polyline points="7 10 12 15 17 10" />
@@ -133,6 +159,8 @@ const styles = {
         inset: 0,
         zIndex: 9999,
         background: '#000',
+        touchAction: 'auto',
+        pointerEvents: 'auto',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         userSelect: 'none',
     },
@@ -162,6 +190,8 @@ const styles = {
         justifyContent: 'center',
         color: '#fff',
         zIndex: 1000,
+        pointerEvents: 'auto',
+        touchAction: 'manipulation',
     },
     toast: {
         position: 'absolute',
@@ -177,6 +207,7 @@ const styles = {
         fontWeight: 600,
         whiteSpace: 'nowrap',
         zIndex: 1001,
+        pointerEvents: 'none',
     },
     actionBar: {
         position: 'absolute',
@@ -192,56 +223,36 @@ const styles = {
         padding: '20px 20px',
         paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))',
         zIndex: 10,
+        pointerEvents: 'auto',
     },
-    primaryButton: {
+    // Shared "neoglassmorphism" treatment — matches the tertiary button style
+    // from the previous version (translucent white + soft border + blur).
+    glassButton: {
         width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '10px',
         padding: '16px 0',
-        background: '#22C55E',
-        border: 'none',
-        borderRadius: '16px',
-        color: '#fff',
-        fontSize: '15px',
-        fontWeight: 800,
-        letterSpacing: '0.04em',
-        cursor: 'pointer',
-        touchAction: 'manipulation',
-    },
-    secondaryButton: {
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        padding: '16px 0',
-        background: '#FFFFFF',
-        border: 'none',
-        borderRadius: '16px',
-        color: '#000',
-        fontSize: '15px',
-        fontWeight: 800,
-        letterSpacing: '0.04em',
-        cursor: 'pointer',
-        touchAction: 'manipulation',
-    },
-    tertiaryButton: {
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-        padding: '14px 0',
         background: 'rgba(255,255,255,0.14)',
         border: '1px solid rgba(255,255,255,0.25)',
         borderRadius: '16px',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         color: '#fff',
-        fontSize: '14px',
-        fontWeight: 700,
+        fontSize: '15px',
+        fontWeight: 800,
         letterSpacing: '0.04em',
         cursor: 'pointer',
         touchAction: 'manipulation',
+        pointerEvents: 'auto',
+        position: 'relative',
+        zIndex: 20,
+    },
+    // Primary action gets a subtle green-tinted border to keep hierarchy
+    // without breaking the glass look with a solid fill.
+    glassButtonAccent: {
+        border: '1px solid rgba(34,197,94,0.55)',
+        background: 'rgba(34,197,94,0.16)',
     },
 }
