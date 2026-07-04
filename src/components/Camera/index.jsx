@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTenant } from '../../contexts/TenantContext'
 import CameraLayer from './CameraLayer.jsx'
 import EditorLayer from './EditorLayer.jsx'
+import VideoPostScreen from './VideoPostScreen.jsx'
 import SettingsSheet from './SettingsSheet.jsx'
 import { useCamTechBroadcaster } from '../../hooks/useCamTech'
 import './CameraLayer.css'
@@ -63,15 +64,26 @@ function Camera({ neonContext = null, branding = null }) {
     const handleCapture = (captureResult) => {
         if (!captureResult) return
         setCapturedImage(captureResult)
-        setMode('EDITOR')
+        // Video skips the editor entirely: capture → share preview
+        setMode(captureResult.type === 'video' ? 'VIDEO_PREVIEW' : 'EDITOR')
+    }
+
+    // Video blob URLs are owned HERE (photos are owned by EditorLayer) —
+    // dump from memory on retake/done so 15MB clips don't accumulate.
+    const releaseVideo = (capture) => {
+        if (capture?.type === 'video' && capture.objectURL) {
+            URL.revokeObjectURL(capture.objectURL)
+        }
     }
 
     const handleRetake = () => {
+        releaseVideo(capturedImage)
         setCapturedImage(null)
         setMode('CAMERA')
     }
 
     const handleDone = () => {
+        releaseVideo(capturedImage)
         // Reset to camera mode
         setMode('CAMERA')
         setTimeout(() => setCapturedImage(null), 0)
@@ -161,6 +173,14 @@ function Camera({ neonContext = null, branding = null }) {
                     neonContext={neonContext}
                     branding={branding}
                     isOwner={isOwner}
+                />
+            )}
+
+            {mode === 'VIDEO_PREVIEW' && capturedImage?.type === 'video' && (
+                <VideoPostScreen
+                    videoData={capturedImage}
+                    onRetake={handleRetake}
+                    onComplete={handleDone}
                 />
             )}
 

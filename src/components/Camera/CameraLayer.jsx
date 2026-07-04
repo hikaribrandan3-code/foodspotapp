@@ -13,12 +13,16 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import useCamera from './hooks/useCamera.js';
+import useVideoRecorder, { MAX_VIDEO_SEC } from './hooks/useVideoRecorder.js';
 import {
   SCENE_ORDER,
   CAPTURE_FILTERS,
   previewCss,
   bakeCapture,
 } from './utils/scenePresets.js';
+
+// Mode cycle: photo scenes + VIDEO as the last stop
+const CAPTURE_MODE_ORDER = [...SCENE_ORDER, 'VIDEO'];
 
 const ASPECT_CYCLE = ['9:16', '4:3', '1:1'];
 // w/h ratios (portrait frames) — rotated to their landscape equivalent at capture time
@@ -124,6 +128,7 @@ export default function CameraLayer({
   }, []);
 
   const [aspect,        setAspect]        = useState('9:16');
+  const [uiMode,        setUiMode]        = useState(initialScene); // FOOD | PORTRAIT | VIDEO
   const [filterId,      setFilterId]      = useState('original');
   const [filterToast,   setFilterToast]   = useState(null);
   const [modeToast,     setModeToast]     = useState(null);
@@ -136,6 +141,7 @@ export default function CameraLayer({
   const [shutterPulse,  setShutterPulse]  = useState(false);
 
   const frameRef         = useRef(null);
+  const pinRef           = useRef(null);
   const lastUrlRef       = useRef(null);
   const pinchStartRef    = useRef(0);
   const pinchZoomRef     = useRef(1);
@@ -158,6 +164,10 @@ export default function CameraLayer({
   useEffect(() => { flashModeRef.current  = flashMode;     }, [flashMode]);
   useEffect(() => { flashSuppRef.current  = flashSupported;}, [flashSupported]);
   useEffect(() => { facingModeRef.current = facingMode;    }, [facingMode]);
+
+  // ── VIDEO MODE (CamTech Video) ─────────────────────────────────────────────
+  const isVideoMode = uiMode === 'VIDEO';
+  const { isRecording, elapsedSec, startRecording, stopRecording } = useVideoRecorder();
 
   // ── lifecycle ──────────────────────────────────────────────────────────────
   useEffect(() => { initCamera(); }, [facingMode]); // eslint-disable-line
@@ -383,8 +393,26 @@ export default function CameraLayer({
     }
   }, [applyFlash, onCapture]); // eslint-disable-line
 
+  // ── video record toggle (tap = start, tap again or 15s cap = stop) ────────
+  const handleVideoShutter = useCallback(() => {
+    if (isRecording) { stopRecording(); return; }
+    const ok = startRecording({
+      video: videoRef.current,
+      frameEl: frameRef.current,
+      pinEl: pinRef.current,
+      pinLabel: locationLabel,
+      pinBg, pinText,
+      facingMode: facingModeRef.current,
+      aspect,
+      isLandscape,
+      onComplete: (result) => { if (onCapture) onCapture(result); },
+    });
+    if (!ok) dbg('VIDEO start failed — recorder unavailable');
+  }, [isRecording, stopRecording, startRecording, locationLabel, pinBg, pinText, aspect, isLandscape, onCapture]); // eslint-disable-line
+
   // ── shutter handler (starts timer if set, else fires immediately) ─────────
   const handleShutter = useCallback(async () => {
+    if (isVideoMode) { handleVideoShutter(); return; }
     if (timerSec !== null) {
       clearInterval(timerInterval.current);
       let remaining = timerSec;
@@ -403,7 +431,7 @@ export default function CameraLayer({
       return;
     }
     fireCapture();
-  }, [timerSec, fireCapture]);
+  }, [isVideoMode, handleVideoShutter, timerSec, fireCapture]);
 
   // ── timer cycle (null→3→5→7→null) with brief toast ───────────────────────
   const cycleTimer = useCallback(() => {
@@ -424,12 +452,14 @@ export default function CameraLayer({
   }, []);
 
   const cycleMode = useCallback(() => {
-    const next = SCENE_ORDER[(SCENE_ORDER.indexOf(nicheMode) + 1) % SCENE_ORDER.length];
+    if (isRecording) return; // locked while recording
+    const next = CAPTURE_MODE_ORDER[(CAPTURE_MODE_ORDER.indexOf(uiMode) + 1) % CAPTURE_MODE_ORDER.length];
     setModeToast(next);
     clearTimeout(modeToastTimer.current);
     modeToastTimer.current = setTimeout(() => setModeToast(null), 2400);
-    applyNicheMode(next);
-  }, [nicheMode, applyNicheMode]);
+    setUiMode(next);
+    if (next !== 'VIDEO') applyNicheMode(next);
+  }, [uiMode, isRecording, applyNicheMode]);
 
   const cycleFilter = useCallback(() => {
     setFilterId((cur) => {
@@ -492,8 +522,11 @@ export default function CameraLayer({
     }
   }, [zoomLevel, setZoom, focusAt]);
 
-  const liveFilter = previewCss(nicheMode, filterId);
+  // Video records raw frames (no scene grade baked) — keep the preview
+  // WYSIWYG by dropping the CSS grade in video mode.
+  const liveFilter = isVideoMode ? 'none' : previewCss(nicheMode, filterId);
   const timerLabel = timerSec ? `${timerSec}s` : null;
+  const recClock = `0:${String(Math.floor(elapsedSec)).padStart(2, '0')}`;
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
@@ -529,7 +562,7 @@ export default function CameraLayer({
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
-        <div className="fsc-pin" style={{ background: pinBg, color: pinText }}>
+        <div className="fsc-pin" ref={pinRef} style={{ background: pinBg, color: pinText }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill={pinText} style={{ flexShrink: 0 }}>
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
           </svg>
@@ -554,8 +587,8 @@ export default function CameraLayer({
 
       {/* ── RIGHT RAIL: aspect · flip · flash · timer ─────────────────────── */}
       <div className="fsc-toolbar">
-        <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} aria-label="Formato">{isLandscape ? LANDSCAPE_LABEL[aspect] || aspect : aspect}</button>
-        <button className="fsc-tool" onClick={flipCamera} aria-label="Girar">{FLIP_ICON}</button>
+        <button className="fsc-tool fsc-aspecttool" onClick={cycleAspect} disabled={isRecording} aria-label="Formato">{isLandscape ? LANDSCAPE_LABEL[aspect] || aspect : aspect}</button>
+        <button className="fsc-tool" onClick={flipCamera} disabled={isRecording} aria-label="Girar">{FLIP_ICON}</button>
         <button
           className={`fsc-tool ${flashMode !== 'off' ? 'is-on' : ''}`}
           onClick={cycleFlash}
@@ -564,17 +597,19 @@ export default function CameraLayer({
         >
           {FLASH_ICON[flashMode]}
         </button>
-        {/* timer: badge shows current value */}
-        <button
-          className={`fsc-tool ${timerSec !== null ? 'is-on' : ''}`}
-          onClick={cycleTimer}
-          aria-label="Temporizador"
-        >
-          <span className="fsc-timerwrap">
-            {TIMER_ICON}
-            {timerSec !== null && <span className="fsc-timerbadge">{timerSec}s</span>}
-          </span>
-        </button>
+        {/* timer: photo-only (hidden in video mode) */}
+        {!isVideoMode && (
+          <button
+            className={`fsc-tool ${timerSec !== null ? 'is-on' : ''}`}
+            onClick={cycleTimer}
+            aria-label="Temporizador"
+          >
+            <span className="fsc-timerwrap">
+              {TIMER_ICON}
+              {timerSec !== null && <span className="fsc-timerbadge">{timerSec}s</span>}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ── ZOOM READOUT: subtle, above shutter row ───────────────────────── */}
@@ -585,6 +620,14 @@ export default function CameraLayer({
       {/* ── TIMER COUNTDOWN ───────────────────────────────────────────────── */}
       {timerCd !== null && (
         <div className="fsc-timercount">{timerCd}</div>
+      )}
+
+      {/* ── RECORDING BADGE: red dot + count-up clock ─────────────────────── */}
+      {isRecording && (
+        <div className="fsc-recbadge">
+          <span className="fsc-recdot" />
+          {recClock}
+        </div>
       )}
 
       {/* ── TIMER TOAST (brief "3s set" / "OFF") ─────────────────────────── */}
@@ -604,24 +647,29 @@ export default function CameraLayer({
       <div className="fsc-bottom">
         {/* zoom pill: shows above shutter, subtle */}
         <div className="fsc-shutterrow">
-          {/* MODE button — always says "MODE" (cycles scene on tap) */}
+          {/* MODE button — always says "MODE" (cycles Food → Portrait → Video) */}
           <div className="fsc-side">
-            <button className="fsc-modebtn" onClick={cycleMode}>MODE</button>
+            <button className="fsc-modebtn" onClick={cycleMode} disabled={isRecording}>MODE</button>
           </div>
 
           <button
-            className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''}`}
+            className={`fsc-shutter ${shutterPulse ? 'is-firing' : ''} ${isVideoMode ? 'fsc-shutter--video' : ''} ${isRecording ? 'is-recording' : ''}`}
             onClick={handleShutter}
             disabled={!isReady}
-            aria-label="Capturar"
+            aria-label={isVideoMode ? (isRecording ? 'Detener' : 'Grabar') : 'Capturar'}
           >
             <span className="fsc-shutter-inner"/>
           </button>
 
           <div className="fsc-side fsc-side-right">
-            <button className="fsc-filterbtn" onClick={cycleFilter} aria-label="Filtros">
-              {FILTER_ICON}
-            </button>
+            {/* filters are photo-only — video records clean frames */}
+            {!isVideoMode ? (
+              <button className="fsc-filterbtn" onClick={cycleFilter} aria-label="Filtros">
+                {FILTER_ICON}
+              </button>
+            ) : (
+              <span className="fsc-filterspacer" aria-hidden="true" />
+            )}
           </div>
         </div>
       </div>
@@ -833,6 +881,29 @@ const styles = `
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   color: #fff; display: flex; align-items: center; justify-content: center;
 }
+.fsc-filterspacer { width: 44px; height: 44px; display: block; }
+
+/* ── VIDEO MODE ── */
+.fsc-shutter--video .fsc-shutter-inner { background: #FF3B30; }
+.fsc-shutter--video { box-shadow: 0 4px 18px rgba(255,59,48,0.35); }
+.fsc-shutter.is-recording .fsc-shutter-inner {
+  transform: scale(0.55); border-radius: 10px;
+  transition: transform 0.18s ease-out, border-radius 0.18s ease-out;
+}
+.fsc-recbadge {
+  position: absolute; top: calc(env(safe-area-inset-top,0px) + 22px);
+  left: 50%; transform: translateX(-50%); z-index: 70;
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(0,0,0,0.62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: #fff; padding: 7px 16px; border-radius: 999px;
+  font-size: 14px; font-weight: 800; letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.fsc-recdot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #FF3B30; animation: fsc-recblink 1s ease-in-out infinite;
+}
+@keyframes fsc-recblink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
 
 @media (orientation: landscape) {
   .fsc-bottom { left: auto; right: calc(env(safe-area-inset-right,0px) + 18px); top: 0; bottom: 0; align-items: center; }
