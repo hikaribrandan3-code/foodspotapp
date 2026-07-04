@@ -223,7 +223,7 @@ export default function useVideoRecorder() {
                     try {
                         outRecorder = new MediaRecorder(outStream, {
                             ...(outMime ? { mimeType: outMime } : {}),
-                            videoBitsPerSecond: 6_000_000, // short clip — doesn't need Video mode's bitrate
+                            videoBitsPerSecond: 4_500_000, // aggressive bitrate for faster encode — boomerang is short, quality loss minimal
                         })
                     } catch (err) {
                         frames.forEach((f) => f.close?.())

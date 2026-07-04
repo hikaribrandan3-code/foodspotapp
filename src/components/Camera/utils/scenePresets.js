@@ -29,7 +29,7 @@ export const SCENE_LABEL = { FOOD: 'FOOD', PORTRAIT: 'PORTRAIT' };
 export const DEFAULT_SCENE = 'FOOD';
 
 // ── Filter strip (tap-to-cycle). 'original' = no-op. ─────────────────────
-// 'vintage' adds `grain` — a noise amount CSS can't express as a filter()
+// 'polaroid' adds `grain` — a noise amount CSS can't express as a filter()
 // function, so it's handled specially: the live preview gets a static SVG
 // noise texture overlay (see CameraLayer's grain overlay, gated on this id),
 // and the capture bake applies real per-pixel random noise in applyGrade().
@@ -39,7 +39,7 @@ export const CAPTURE_FILTERS = [
   { id: 'dorado',   label: 'Dorado',   grade: { brightness: 1.06, saturate: 1.20, sepia: 0.28 } },
   { id: 'fresco',   label: 'Fresco',   grade: { brightness: 1.04, saturate: 1.12 } },
   { id: 'mono',     label: 'Mono',     grade: { grayscale: 1, contrast: 1.1 } },
-  { id: 'vintage',  label: 'Vintage',  grade: { brightness: 0.97, contrast: 1.10, saturate: 0.78, sepia: 0.22, grain: 0.10 } },
+  { id: 'polaroid', label: 'Polaroid', grade: { brightness: 0.95, contrast: 1.15, saturate: 1.25, sepia: 0.40, grain: 0.18 } },
 ];
 
 const FILTER_BY_ID = Object.fromEntries(CAPTURE_FILTERS.map((f) => [f.id, f]));

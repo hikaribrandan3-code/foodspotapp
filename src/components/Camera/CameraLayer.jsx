@@ -557,7 +557,7 @@ export default function CameraLayer({
             capture bakes real per-pixel noise (see applyGrade in
             scenePresets.js). Stills only — filters are hidden in Video/
             Boomerang mode already. */}
-        {filterId === 'vintage' && !isVideoMode && !isBoomerangMode && (
+        {filterId === 'polaroid' && !isVideoMode && !isBoomerangMode && (
           <div className="fsc-grain" aria-hidden="true" />
         )}
 
@@ -572,11 +572,9 @@ export default function CameraLayer({
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
-        {/* Video/Boomerang never burn the tag into the file (offline-reassembly
-            pipeline, no per-frame text draw) — showing the business pin here
-            would imply it ends up in the clip, which is misleading. A REC
-            chip in the same slot signals "recording mode" instead. */}
-        {(isVideoMode || isBoomerangMode) ? (
+        {/* Video: show REC indicator during recording. Boomerang: silent auto-capture,
+            no UI needed — just shoot. Neither burn the tag into the file. */}
+        {isVideoMode && isRecording ? (
           <div className="fsc-pin fsc-pin--rec">
             <span className="fsc-recdot" />
             <span>REC</span>
@@ -643,8 +641,8 @@ export default function CameraLayer({
         <div className="fsc-timercount">{timerCd}</div>
       )}
 
-      {/* ── RECORDING BADGE: red dot + count-up clock ─────────────────────── */}
-      {isRecording && (
+      {/* ── RECORDING BADGE: red dot + count-up clock (Video only, hidden in Boomerang auto-capture) ─── */}
+      {isRecording && !isBoomerangMode && (
         <div className="fsc-recbadge">
           <span className="fsc-recdot" />
           {recClock}
