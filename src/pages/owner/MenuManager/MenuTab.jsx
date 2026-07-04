@@ -4,6 +4,7 @@ import { Plus, Camera, X, Flame, Leaf, Wheat, Star, Edit2, AlertCircle } from 'l
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { processAndStoreImage } from '../../../utils/imageOptimizer';
 import MenuItemCard from './MenuItemCard';
+import pdfIcon from '../../../assets/pdf-icon.svg';
 
 // Convert a base64 data URL to a File object for Supabase Storage upload
 function dataURLtoFile(dataurl, filename) {
@@ -379,7 +380,8 @@ export default function MenuTab({
               onClick={() => setShowUploadModal(true)}
               className="flex items-center justify-center gap-3 px-12 h-16 md:h-10 bg-emerald-100 text-emerald-700 font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-200 transition-all shadow-lg active:scale-95"
             >
-              📄 Import Menu
+              <img src={pdfIcon} alt="PDF" className="w-5 h-5" />
+              Import Menu
             </button>
             <button
               onClick={() => setIsAdding(true)}
@@ -594,7 +596,7 @@ export default function MenuTab({
                   className="hidden"
                 />
                 <div className="text-center">
-                  <div className="text-3xl mb-2">📄</div>
+                  <img src={pdfIcon} alt="PDF" className="w-16 h-16 mx-auto mb-4 opacity-70" />
                   <p className="text-sm font-bold">{uploading ? 'Processing...' : 'Upload PDF'}</p>
                 </div>
               </button>
