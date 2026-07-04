@@ -94,28 +94,35 @@ export default function MenuTab({
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
-        const base64 = event.target?.result?.split(',')[1];
-        if (!base64) throw new Error('Failed to encode file');
+        try {
+          const base64 = event.target?.result?.split(',')[1];
+          if (!base64) throw new Error('Failed to encode file');
 
-        const { data, error } = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-menu`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({ business_id: businessId, file_base64: base64 }),
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-menu`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({ business_id: businessId, file_base64: base64 }),
+            }
+          );
+
+          const data = await response.json();
+
+          if (data?.error) {
+            throw new Error(data?.detail || 'Import failed');
           }
-        ).then(r => r.json());
 
-        if (error || data?.error) {
-          throw new Error(data?.detail || error?.message || 'Import failed');
+          alert(`Found ${data.items?.length || 0} items. Review them next.`);
+          setShowUploadModal(false);
+          setUploading(false);
+        } catch (err) {
+          setUploadError(err.message);
+          setUploading(false);
         }
-
-        alert(`Found ${data.items?.length || 0} items. Review them next.`);
-        setShowUploadModal(false);
-        setUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (err) {
