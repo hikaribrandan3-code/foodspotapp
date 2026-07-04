@@ -10,11 +10,21 @@ import { mockBurgerDarkData } from './mockData.js'
  * QSR energy — this is premium, dramatic, sophisticated.
  */
 export default function BurgerDarkTemplate({ data = mockBurgerDarkData }) {
-  const { business, burgers, sides } = data
+  const { business, burgers, sides, info } = data
   const [carouselIndex, setCarouselIndex] = useState(0)
+  const [quantities, setQuantities] = useState(() => Object.fromEntries(burgers.map((b) => [b.id, 1])))
+  const [cartCount, setCartCount] = useState(0)
 
   const handlePrev = () => setCarouselIndex((i) => (i - 1 + burgers.length) % burgers.length)
   const handleNext = () => setCarouselIndex((i) => (i + 1) % burgers.length)
+
+  const adjustQty = (id, delta) => {
+    setQuantities((prev) => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }))
+  }
+
+  const addToCart = (id) => {
+    setCartCount((c) => c + (quantities[id] || 1))
+  }
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-white overflow-hidden">
@@ -30,10 +40,17 @@ export default function BurgerDarkTemplate({ data = mockBurgerDarkData }) {
           <a href="#contact" className="hover:text-[#d63031]">Contact</a>
         </nav>
         <div className="flex items-center gap-4">
-          <button aria-label="Cart" className="relative hover:text-[#d63031]">🛒</button>
-          <button className="px-4 py-2 rounded-full bg-[#d63031] text-white text-sm font-bold hover:bg-[#c41e3a]">
-            Do Koszyka
+          <button aria-label="Cart" className="relative hover:text-[#d63031]">
+            🛒
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-[#27ae60] text-[10px] font-bold">
+                {cartCount}
+              </span>
+            )}
           </button>
+          <a href="#menu" className="px-4 py-2 rounded-full bg-[#d63031] text-white text-sm font-bold hover:bg-[#c41e3a]">
+            Do Koszyka
+          </a>
         </div>
       </header>
 
@@ -85,12 +102,12 @@ export default function BurgerDarkTemplate({ data = mockBurgerDarkData }) {
 
           {/* CTAs */}
           <div className="flex gap-4 justify-center mt-8">
-            <button className="px-8 py-3 rounded-full bg-[#d63031] text-white font-bold hover:bg-[#c41e3a]">
+            <a href="#menu" className="px-8 py-3 rounded-full bg-[#d63031] text-white font-bold hover:bg-[#c41e3a]">
               Do Koszyka 🛒
-            </button>
-            <button className="px-8 py-3 rounded-full border border-white/30 text-white font-bold hover:border-[#d63031] hover:text-[#d63031]">
+            </a>
+            <a href="#menu" className="px-8 py-3 rounded-full border border-white/30 text-white font-bold hover:border-[#d63031] hover:text-[#d63031]">
               Zobacz menu
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -111,15 +128,29 @@ export default function BurgerDarkTemplate({ data = mockBurgerDarkData }) {
                   <span className="text-[#d63031] font-bold whitespace-nowrap">{burger.price.toFixed(2)} zł</span>
                 </div>
                 <p className="text-xs text-white/50 mb-4">{burger.desc}</p>
-                <div className="flex gap-2">
-                  <button className="flex-1 py-2 rounded-lg bg-white/10 text-white text-xs font-bold hover:bg-white/20">
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={() => adjustQty(burger.id, -1)}
+                    className="flex-1 py-2 rounded-lg bg-white/10 text-white text-xs font-bold hover:bg-white/20"
+                  >
                     –
                   </button>
-                  <span className="w-8 flex items-center justify-center text-sm font-bold bg-[#27ae60]/80 rounded-lg">1</span>
-                  <button className="flex-1 py-2 rounded-lg bg-[#27ae60] text-white text-xs font-bold hover:bg-[#229954]">
+                  <span className="w-8 flex items-center justify-center text-sm font-bold bg-[#27ae60]/80 rounded-lg">
+                    {quantities[burger.id] || 1}
+                  </span>
+                  <button
+                    onClick={() => adjustQty(burger.id, 1)}
+                    className="flex-1 py-2 rounded-lg bg-[#27ae60] text-white text-xs font-bold hover:bg-[#229954]"
+                  >
                     +
                   </button>
                 </div>
+                <button
+                  onClick={() => addToCart(burger.id)}
+                  className="w-full py-2 rounded-lg bg-[#d63031] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#c41e3a]"
+                >
+                  Add to Cart
+                </button>
               </div>
             </article>
           ))}
@@ -152,8 +183,26 @@ export default function BurgerDarkTemplate({ data = mockBurgerDarkData }) {
         </div>
       </section>
 
+      {/* ── INFO ──────────────────────────────────────────────────────────── */}
+      <section id="contact" className="px-6 md:px-10 py-14 bg-[#2a2a2a] border-t border-[#d63031]/20">
+        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#d63031] font-bold">Hours</div>
+            <div className="mt-2 font-medium text-white/70">{info.hours}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#d63031] font-bold">Location</div>
+            <div className="mt-2 font-medium text-white/70">{info.address}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#d63031] font-bold">Contact</div>
+            <div className="mt-2 font-medium text-white/70">{info.phone}</div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer className="bg-[#1a1a1a] text-white/40 text-sm text-center py-8 mt-10 border-t border-[#d63031]/20">
+      <footer className="bg-[#1a1a1a] text-white/40 text-sm text-center py-8 border-t border-[#d63031]/20">
         © {new Date().getFullYear()} {business.name} — Powered by FoodSpot
       </footer>
     </div>

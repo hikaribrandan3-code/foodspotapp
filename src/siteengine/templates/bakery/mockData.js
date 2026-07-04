@@ -39,4 +39,9 @@ export const mockBakeryData = {
     'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&q=80',
     'https://images.unsplash.com/photo-1587668178277-295251f900ce?w=500&q=80',
   ],
+  info: {
+    hours: 'Tue–Sun: 7:00 AM – 6:00 PM',
+    address: '45 Baker Street, Old Town',
+    phone: '+1 (555) 062-4471',
+  },
 }

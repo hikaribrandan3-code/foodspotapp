@@ -12,7 +12,7 @@ import { mockCafeData } from './mockData.js'
  * pills, featured-drink promo banner).
  */
 export default function CoffeeCafeTemplate({ data = mockCafeData }) {
-  const { business, categories, items, featuredDrink } = data
+  const { business, categories, items, featuredDrink, info } = data
   const [activeCategory, setActiveCategory] = useState(null) // null = all
   const [cartCount, setCartCount] = useState(0)
   const scrollerRef = useRef(null)
@@ -72,9 +72,9 @@ export default function CoffeeCafeTemplate({ data = mockCafeData }) {
             <h2 className="text-2xl md:text-3xl font-bold text-[#3b2a20]">Menu</h2>
             <span className="italic text-[#c98a5e] text-sm">drinks</span>
           </div>
-          <button className="px-5 py-2 rounded-full bg-[#c98a5e] text-white text-sm font-semibold hover:bg-[#b57a4f]">
-            my basket
-          </button>
+          <span className="px-5 py-2 rounded-full bg-[#c98a5e] text-white text-sm font-semibold">
+            {cartCount} in basket
+          </span>
         </div>
 
         {/* category pills */}
@@ -181,8 +181,26 @@ export default function CoffeeCafeTemplate({ data = mockCafeData }) {
         </div>
       </section>
 
+      {/* ── INFO / DELIVERY ─────────────────────────────────────────────── */}
+      <section id="delivery" className="bg-[#f4ede6] px-6 md:px-16 py-14">
+        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#c98a5e] font-semibold">Hours</div>
+            <div className="mt-2 text-[#3b2a20] font-medium">{info.hours}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#c98a5e] font-semibold">Location</div>
+            <div className="mt-2 text-[#3b2a20] font-medium">{info.address}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#c98a5e] font-semibold">Contact</div>
+            <div className="mt-2 text-[#3b2a20] font-medium">{info.phone}</div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer id="delivery" className="bg-[#3b2a20] text-white/70 text-sm text-center py-8">
+      <footer className="bg-[#3b2a20] text-white/70 text-sm text-center py-8">
         © {new Date().getFullYear()} {business.name} — Powered by FoodSpot
       </footer>
     </div>

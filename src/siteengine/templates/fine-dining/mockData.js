@@ -42,4 +42,9 @@ export const mockFineDiningData = {
     aboutTitle: 'Our Story',
     aboutText: 'For over a decade we have brought fine dining directly to your table — the same care, plating, and ingredients as our dining room, delivered fresh to your door.',
   },
+  info: {
+    hours: 'Tue–Sun: 5:00 PM – 11:00 PM',
+    address: '901 Vine Street, Uptown',
+    phone: '+1 (555) 091-6650',
+  },
 }

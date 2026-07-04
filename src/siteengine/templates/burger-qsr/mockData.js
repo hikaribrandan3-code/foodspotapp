@@ -42,4 +42,9 @@ export const mockBurgerData = {
     deliveryFee: 7,
     taxRate: 0.05,
   },
+  info: {
+    hours: 'Mon–Sun: 11:00 AM – 11:00 PM',
+    address: '88 Grill Avenue, Midtown',
+    phone: '+1 (555) 044-9210',
+  },
 }

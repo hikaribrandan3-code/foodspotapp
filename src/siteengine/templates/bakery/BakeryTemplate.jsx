@@ -12,8 +12,11 @@ import { mockBakeryData } from './mockData.js'
  * burger-qsr template.
  */
 export default function BakeryTemplate({ data = mockBakeryData }) {
-  const { business, whyChooseUs, categories, items, gallery } = data
+  const { business, whyChooseUs, categories, items, gallery, info } = data
   const [activeCategory, setActiveCategory] = useState(categories[0].id)
+  const [cartCount, setCartCount] = useState(0)
+
+  const addToCart = () => setCartCount((c) => c + 1)
 
   const visibleItems = useMemo(
     () => items.filter((i) => i.category === activeCategory),
@@ -34,9 +37,21 @@ export default function BakeryTemplate({ data = mockBakeryData }) {
           <a href="#about" className="hover:text-[#8a5a3b]">About Us</a>
           <a href="#contact" className="hover:text-[#8a5a3b]">Contact Us</a>
         </nav>
-        <button className="px-6 py-2.5 rounded-full bg-[#8a5a3b] text-white text-sm font-semibold hover:bg-[#734a2f]">
-          Order Now
-        </button>
+        <div className="flex items-center gap-4">
+          <button aria-label="Cart" className="relative w-5 h-5 text-[#3a2a1d] hover:text-[#8a5a3b]">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M 7 4 V 3 h 2 l 1 5 h 9 l 1.5 -3 h 2 l -1.5 3 v 10 c 0 1.1 -0.9 2 -2 2 H 6 c -1.1 0 -2 -0.9 -2 -2 V 4 Z M 9 19 c 1.1 0 2 0.9 2 2 s -0.9 2 -2 2 s -2 -0.9 -2 -2 s 0.9 -2 2 -2 Z m 8 0 c 1.1 0 2 0.9 2 2 s -0.9 2 -2 2 s -2 -0.9 -2 -2 s 0.9 -2 2 -2 Z" />
+            </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-[#8a5a3b] text-white text-[10px] font-bold">
+                {cartCount}
+              </span>
+            )}
+          </button>
+          <a href="#menu" className="px-6 py-2.5 rounded-full bg-[#8a5a3b] text-white text-sm font-semibold hover:bg-[#734a2f]">
+            Order Now
+          </a>
+        </div>
       </header>
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
@@ -51,9 +66,9 @@ export default function BakeryTemplate({ data = mockBakeryData }) {
             {business.heroHeadline}<br />{business.heroHeadline2}
           </h1>
           <p className="text-[#3a2a1d]/70 mt-4">{business.heroSub}</p>
-          <button className="mt-6 px-8 py-3 rounded-full bg-[#8a5a3b] text-white font-semibold hover:bg-[#734a2f]">
+          <a href="#menu" className="inline-block mt-6 px-8 py-3 rounded-full bg-[#8a5a3b] text-white font-semibold hover:bg-[#734a2f]">
             Order Now
-          </button>
+          </a>
         </div>
       </section>
 
@@ -116,12 +131,18 @@ export default function BakeryTemplate({ data = mockBakeryData }) {
                   </span>
                 )}
               </div>
-              <div className="flex items-start justify-between mt-3">
-                <div>
-                  <h3 className="font-semibold">{item.name}</h3>
-                  <p className="text-xs text-[#3a2a1d]/55 mt-1 max-w-[220px]">{item.desc}</p>
+              <div className="mt-3">
+                <h3 className="font-semibold">{item.name}</h3>
+                <p className="text-xs text-[#3a2a1d]/55 mt-1 max-w-[220px]">{item.desc}</p>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="font-bold text-[#8a5a3b]">${item.price.toFixed(2)}</span>
+                  <button
+                    onClick={addToCart}
+                    className="px-4 py-1.5 rounded-full bg-[#8a5a3b] text-white text-xs font-semibold hover:bg-[#734a2f]"
+                  >
+                    Add to Order
+                  </button>
                 </div>
-                <span className="font-bold text-[#8a5a3b] whitespace-nowrap ml-3">${item.price.toFixed(2)}</span>
               </div>
             </article>
           ))}
@@ -143,6 +164,24 @@ export default function BakeryTemplate({ data = mockBakeryData }) {
           {gallery.slice(0, 4).map((img, i) => (
             <img key={i} src={img} alt="" className={`rounded-xl object-cover w-full ${i === 0 ? 'h-48' : 'h-32'}`} loading="lazy" />
           ))}
+        </div>
+      </section>
+
+      {/* ── INFO ──────────────────────────────────────────────────────────── */}
+      <section id="about" className="bg-[#f4ede0] px-6 md:px-16 py-14">
+        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#8a5a3b] font-semibold">Hours</div>
+            <div className="mt-2 font-medium text-[#3a2a1d]">{info.hours}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#8a5a3b] font-semibold">Location</div>
+            <div className="mt-2 font-medium text-[#3a2a1d]">{info.address}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-[#8a5a3b] font-semibold">Contact</div>
+            <div className="mt-2 font-medium text-[#3a2a1d]">{info.phone}</div>
+          </div>
         </div>
       </section>
 

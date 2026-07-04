@@ -17,7 +17,7 @@ const BADGE_STYLE = {
  * sidebar with order summary breakdown ("Burger District Dubai" style).
  */
 export default function BurgerQsrTemplate({ data = mockBurgerData }) {
-  const { business, highlights, categories, items, cart } = data
+  const { business, highlights, categories, items, cart, info } = data
   const [activeCategory, setActiveCategory] = useState(null) // null = all
   const [cartItems, setCartItems] = useState(cart.items)
 
@@ -208,8 +208,26 @@ export default function BurgerQsrTemplate({ data = mockBurgerData }) {
         </aside>
       </section>
 
+      {/* ── INFO ──────────────────────────────────────────────────────────── */}
+      <section id="about" className="bg-[#1a0f0d] text-white px-6 md:px-10 py-14">
+        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-yellow-400 font-bold">Hours</div>
+            <div className="mt-2 font-medium text-white/80">{info.hours}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-yellow-400 font-bold">Location</div>
+            <div className="mt-2 font-medium text-white/80">{info.address}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-yellow-400 font-bold">Contact</div>
+            <div className="mt-2 font-medium text-white/80">{info.phone}</div>
+          </div>
+        </div>
+      </section>
+
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer id="contact" className="bg-[#1a0f0d] text-white/60 text-sm text-center py-8 mt-10">
+      <footer id="contact" className="bg-[#0d0807] text-white/60 text-sm text-center py-8">
         © {new Date().getFullYear()} {business.name} — Powered by FoodSpot
       </footer>
     </div>

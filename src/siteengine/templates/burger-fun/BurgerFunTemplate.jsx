@@ -10,8 +10,11 @@ import { mockBurgerFunData } from './mockData.js'
  * to burger-qsr and burger-dark. Community-focused, lighthearted, approachable.
  */
 export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
-  const { business, featured, testimonials, mentions } = data
+  const { business, featured, menu, testimonials, mentions, info } = data
   const [activeTestimonial, setActiveTestimonial] = useState(0)
+  const [cartCount, setCartCount] = useState(0)
+
+  const addToCart = () => setCartCount((c) => c + 1)
 
   const prevTestimonial = () => setActiveTestimonial((i) => (i - 1 + testimonials.length) % testimonials.length)
   const nextTestimonial = () => setActiveTestimonial((i) => (i + 1) % testimonials.length)
@@ -22,7 +25,7 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
       <header className="flex items-center justify-between px-6 md:px-10 py-4 bg-[#1f5a4a] text-white">
         <nav className="flex items-center gap-8 text-sm font-semibold">
           <a href="#home" className="hover:text-[#ff8c00]">HOME</a>
-          <a href="#shop" className="hover:text-[#ff8c00]">SHOP</a>
+          <a href="#menu" className="hover:text-[#ff8c00]">SHOP</a>
           <a href="#pages" className="hover:text-[#ff8c00]">PAGES</a>
           <a href="#blog" className="hover:text-[#ff8c00]">BLOG</a>
           <a href="#contact" className="hover:text-[#ff8c00]">CONTACT</a>
@@ -54,7 +57,7 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M 7 4 V 3 h 2 l 1 5 h 9 l 1.5 -3 h 2 l -1.5 3 v 10 c 0 1.1 -0.9 2 -2 2 H 6 c -1.1 0 -2 -0.9 -2 -2 V 4 Z M 9 19 c 1.1 0 2 0.9 2 2 s -0.9 2 -2 2 s -2 -0.9 -2 -2 s 0.9 -2 2 -2 Z m 8 0 c 1.1 0 2 0.9 2 2 s -0.9 2 -2 2 s -2 -0.9 -2 -2 s 0.9 -2 2 -2 Z" />
             </svg>
-            <span className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-[#ff8c00] text-white text-[10px] font-bold">0</span>
+            <span className="absolute -top-2 -right-2 w-4 h-4 flex items-center justify-center rounded-full bg-[#ff8c00] text-white text-[10px] font-bold">{cartCount}</span>
           </button>
         </div>
       </header>
@@ -81,9 +84,9 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
               {business.heroHeadline}<br />{business.heroHeadline2}
             </h1>
             <p className="text-white/80 max-w-sm mb-6 text-sm">{business.heroSub}</p>
-            <button className="px-8 py-3 rounded-full bg-[#ff8c00] text-white font-bold hover:bg-[#e67e00] uppercase tracking-wide">
+            <a href="#menu" className="inline-block px-8 py-3 rounded-full bg-[#ff8c00] text-white font-bold hover:bg-[#e67e00] uppercase tracking-wide">
               ORDER NOW
-            </button>
+            </a>
           </div>
 
           {/* Right side: hero burger with bubble + badge */}
@@ -125,6 +128,31 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
               <img src={burger.image} alt={burger.name} className="w-full h-64 object-cover rounded-2xl shadow-lg mb-4" loading="lazy" />
               <h3 className="text-lg font-black text-[#1a1a1a] mb-1">{burger.name}</h3>
               <p className="text-[#ff8c00] font-bold text-sm">{burger.subtitle}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── MENU / ORDERING ─────────────────────────────────────────────── */}
+      <section id="menu" className="px-6 md:px-16 py-16 max-w-6xl mx-auto">
+        <h2 className="text-3xl font-black text-center mb-10" style={{ color: '#1f5a4a' }}>Order Online</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {menu.map((item) => (
+            <article key={item.id} className="bg-[#faf7f2] rounded-2xl overflow-hidden shadow-sm">
+              <img src={item.image} alt={item.name} className="w-full h-36 object-cover" loading="lazy" />
+              <div className="p-4">
+                <h3 className="font-black text-sm text-[#1a1a1a]">{item.name}</h3>
+                <p className="text-xs text-[#1a1a1a]/55 mt-1 line-clamp-2">{item.desc}</p>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="font-black text-[#ff8c00]">${item.price.toFixed(2)}</span>
+                  <button
+                    onClick={addToCart}
+                    className="px-3 py-1.5 rounded-full bg-[#1f5a4a] text-white text-xs font-bold hover:bg-[#164137]"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
             </article>
           ))}
         </div>
@@ -190,6 +218,24 @@ export default function BurgerFunTemplate({ data = mockBurgerFunData }) {
                 {m.name}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── INFO ──────────────────────────────────────────────────────────── */}
+      <section id="contact" className="bg-white px-6 md:px-16 py-14">
+        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-xs uppercase tracking-widest font-bold" style={{ color: '#ff8c00' }}>Hours</div>
+            <div className="mt-2 font-medium text-[#1a1a1a]/70">{info.hours}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest font-bold" style={{ color: '#ff8c00' }}>Location</div>
+            <div className="mt-2 font-medium text-[#1a1a1a]/70">{info.address}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest font-bold" style={{ color: '#ff8c00' }}>Contact</div>
+            <div className="mt-2 font-medium text-[#1a1a1a]/70">{info.phone}</div>
           </div>
         </div>
       </section>

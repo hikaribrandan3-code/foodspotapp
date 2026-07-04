@@ -40,4 +40,9 @@ export const mockBurgerDarkData = {
     ],
     image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=85',
   },
+  info: {
+    hours: 'Pon–Ndz: 12:00 – 23:00',
+    address: 'ul. Grillowa 12, Warszawa',
+    phone: '+48 123 456 789',
+  },
 }

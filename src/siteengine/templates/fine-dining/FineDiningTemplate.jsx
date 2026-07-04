@@ -12,7 +12,7 @@ import { mockFineDiningData } from './mockData.js'
  * have real prices and an "Add to Order" action (not just a brochure menu).
  */
 export default function FineDiningTemplate({ data = mockFineDiningData }) {
-  const { business, process, categories, items, featured } = data
+  const { business, process, categories, items, featured, info } = data
   const [activeCategory, setActiveCategory] = useState(categories[0].id)
   const [orderCount, setOrderCount] = useState(0)
 
@@ -56,9 +56,9 @@ export default function FineDiningTemplate({ data = mockFineDiningData }) {
             {business.heroHeadline}
           </h1>
           <p className="text-[#f0e9e0]/70 mt-5 max-w-md mx-auto">{business.heroSub}</p>
-          <button className="mt-8 px-9 py-3.5 rounded-sm bg-[#c9995c] text-[#141110] font-bold uppercase tracking-wide hover:bg-[#d9a968]">
+          <a href="#menu" className="inline-block mt-8 px-9 py-3.5 rounded-sm bg-[#c9995c] text-[#141110] font-bold uppercase tracking-wide hover:bg-[#d9a968]">
             View Menu
-          </button>
+          </a>
         </div>
       </section>
 
@@ -132,7 +132,7 @@ export default function FineDiningTemplate({ data = mockFineDiningData }) {
       </section>
 
       {/* ── CHEF'S TABLE + ABOUT ────────────────────────────────────────── */}
-      <section className="px-6 md:px-10 py-16 max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+      <section id="about" className="px-6 md:px-10 py-16 max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
         <div className="bg-[#1c1815] rounded-lg p-8 md:p-10 border border-[#c9995c]/15">
           <h2 className="text-2xl md:text-3xl font-bold italic" style={{ fontFamily: 'Georgia, serif', color: '#c9995c' }}>
             {featured.aboutTitle}
@@ -150,6 +150,24 @@ export default function FineDiningTemplate({ data = mockFineDiningData }) {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── INFO ──────────────────────────────────────────────────────────── */}
+      <section id="contact" className="bg-[#1c1815] px-6 md:px-10 py-14 border-t border-[#c9995c]/15">
+        <div className="max-w-6xl mx-auto grid sm:grid-cols-3 gap-8 text-center">
+          <div>
+            <div className="text-xs uppercase tracking-[0.25em] font-semibold" style={{ color: '#c9995c' }}>Hours</div>
+            <div className="mt-2 font-medium text-[#f0e9e0]/80">{info.hours}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-[0.25em] font-semibold" style={{ color: '#c9995c' }}>Location</div>
+            <div className="mt-2 font-medium text-[#f0e9e0]/80">{info.address}</div>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-[0.25em] font-semibold" style={{ color: '#c9995c' }}>Contact</div>
+            <div className="mt-2 font-medium text-[#f0e9e0]/80">{info.phone}</div>
+          </div>
         </div>
       </section>
 

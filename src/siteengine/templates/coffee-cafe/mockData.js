@@ -43,4 +43,9 @@ export const mockCafeData = {
     ],
     image: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=600&q=80',
   },
+  info: {
+    hours: 'Mon–Sun: 7:00 AM – 8:00 PM',
+    address: '124 Market Street, Downtown',
+    phone: '+1 (555) 018-2043',
+  },
 }
