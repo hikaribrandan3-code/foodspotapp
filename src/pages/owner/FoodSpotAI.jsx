@@ -414,9 +414,22 @@ export function FoodSpotAI() {
         setPreviewUrl(null)
 
         try {
-            // Edge function handles context fetching + system prompt building server-side
-            const response = await supabase.functions.invoke('foodspot-ai', {
-                body: {
+            // Edge function handles context fetching + system prompt building
+            // server-side, and streams the reply back as SSE (Groq passthrough).
+            // Raw fetch instead of functions.invoke because invoke can't stream.
+            const fnUrl = `${import.meta.env?.VITE_SUPABASE_URL || 'https://buendqgmwpxdixwvlkhd.supabase.co'}/functions/v1/foodspot-ai`
+            const anonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
+            const { data: sessionData } = await supabase.auth.getSession()
+            const accessToken = sessionData?.session?.access_token || anonKey
+
+            const response = await fetch(fnUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'apikey': anonKey,
+                },
+                body: JSON.stringify({
                     messages: newMessages.map(m => {
                         const msg = { role: m.role, content: m.content };
                         if (m.attachedImage) {
@@ -427,16 +440,54 @@ export function FoodSpotAI() {
                     businessId: businessId,
                     businessName: businessName,
                     language: lang,
-                }
+                })
             });
 
-            const data = response.data;
+            let aiResponse = ''
+            const assistantId = `a-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
 
-            if (data?.error) throw new Error(data.detail || data.error);
+            if (response.headers.get('content-type')?.includes('text/event-stream')) {
+                // Streaming path: render tokens as they arrive
+                const reader = response.body.getReader()
+                const decoder = new TextDecoder()
+                let buffer = ''
+                let firstToken = true
 
-            let aiResponse = data.reply ||
-                            'No pude procesar eso. ¿Puedes reformular?';
-            
+                while (true) {
+                    const { done, value } = await reader.read()
+                    if (done) break
+                    buffer += decoder.decode(value, { stream: true })
+
+                    const lines = buffer.split('\n')
+                    buffer = lines.pop() // keep incomplete line for next chunk
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue
+                        const payload = line.slice(6).trim()
+                        if (payload === '[DONE]') continue
+                        try {
+                            const delta = JSON.parse(payload)?.choices?.[0]?.delta?.content
+                            if (!delta) continue
+                            aiResponse += delta
+                            if (firstToken) {
+                                firstToken = false
+                                setIsLoading(false)
+                                setMessages([...newMessages, { id: assistantId, role: 'assistant', content: aiResponse }])
+                            } else {
+                                const partial = aiResponse
+                                setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: partial } : m))
+                            }
+                        } catch { /* ignore malformed SSE chunks */ }
+                    }
+                }
+                if (!aiResponse) throw new Error('Empty stream response')
+            } else {
+                // JSON path: server-side errors (and pre-streaming compatibility)
+                const data = await response.json()
+                if (data?.error) throw new Error(data.detail || data.error)
+                aiResponse = data.reply || 'No pude procesar eso. ¿Puedes reformular?'
+            }
+
             let draftPayload = null;
 
             // Scan for the ||| { JSON } ||| protocol
@@ -451,7 +502,7 @@ export function FoodSpotAI() {
             }
 
             aiResponse = aiResponse.replace(/\|\|\|\s*\{[\s\S]*?\}\s*\|\|\|/g, '').trim()
-            setMessages([...newMessages, { id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, role: 'assistant', content: aiResponse, draftPayload }])
+            setMessages([...newMessages, { id: assistantId, role: 'assistant', content: aiResponse, draftPayload }])
 
         } catch (e) {
             console.error('AI Error:', e)
