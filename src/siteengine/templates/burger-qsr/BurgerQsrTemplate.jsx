@@ -66,29 +66,37 @@ export default function BurgerQsrTemplate({ data = mockBurgerData }) {
         </div>
       </header>
 
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section
-        id="home"
-        className="relative overflow-hidden bg-gradient-to-br from-red-700 via-red-800 to-[#1a0f0d] text-white px-6 md:px-16 py-16 md:py-20"
-      >
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
-          <div>
-            <span className="text-yellow-400 font-bold tracking-wide text-sm uppercase">{business.heroEyebrow}</span>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mt-2">{business.heroHeadline}</h1>
-            <p className="text-white/80 mt-4 max-w-md">{business.heroSub}</p>
-            <div className="flex gap-3 mt-6">
-              <button className="px-6 py-3 rounded-full bg-yellow-400 text-red-900 font-bold hover:bg-yellow-300">
+      {/* ── HERO ────────────────────────────────────────────────────────────
+          Bigger and bolder — dominant hero photo, huge headline, solid CTA.
+          Reference: "Mokr" (burgernewmain.png) — full-bleed red band, hero
+          burger scaled large and bleeding past its column, stacked bold
+          white headline instead of a smaller two-column card. ──────────── */}
+      <section id="home" className="relative overflow-hidden bg-gradient-to-b from-red-700 to-red-800 text-white">
+        <div className="max-w-6xl mx-auto px-6 md:px-16 py-14 md:py-20 grid md:grid-cols-[1.1fr_1fr] gap-6 items-center">
+          <div className="relative z-10">
+            <span className="text-yellow-300 font-bold tracking-wide text-sm uppercase">{business.heroEyebrow}</span>
+            <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.02] mt-3">{business.heroHeadline}</h1>
+            <p className="text-white/85 mt-5 max-w-md text-lg">{business.heroSub}</p>
+            <div className="flex gap-3 mt-8">
+              <button className="px-7 py-3.5 rounded-full bg-yellow-400 text-red-900 font-bold text-lg hover:bg-yellow-300 shadow-lg shadow-black/20">
                 Order Now
               </button>
-              <button className="px-6 py-3 rounded-full border-2 border-white/70 text-white font-bold hover:bg-white/10">
+              <button className="px-7 py-3.5 rounded-full border-2 border-white/70 text-white font-bold text-lg hover:bg-white/10">
                 View Menu
               </button>
             </div>
           </div>
-          <div className="flex justify-center">
-            <img src={business.heroImage} alt={business.name} className="w-full max-w-md rounded-2xl shadow-2xl object-cover" loading="lazy" />
+          <div className="relative flex justify-center md:justify-end">
+            <img
+              src={business.heroImage}
+              alt={business.name}
+              className="w-full max-w-lg md:max-w-none md:w-[130%] md:-mr-10 rounded-full object-cover aspect-square shadow-2xl"
+              loading="lazy"
+            />
           </div>
         </div>
+        {/* subtle bottom curve to separate hero from the highlight cards, echoing Mokr's pointer/notch transition */}
+        <div className="absolute -bottom-1 left-0 right-0 h-8 bg-[#fdf6f0]" style={{ clipPath: 'ellipse(60% 100% at 50% 100%)' }} />
       </section>
 
       {/* ── HIGHLIGHT BANNERS ───────────────────────────────────────────── */}
