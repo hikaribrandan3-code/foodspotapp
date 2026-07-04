@@ -63,6 +63,12 @@ export default function MenuTab({
     featured: false
   });
 
+  // Menu import state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const importFileInputRef = useRef(null);
+
   const filteredItems = activeCategory
     ? menuItems.filter((item) => item.category_id === activeCategory)
     : menuItems;
@@ -75,6 +81,45 @@ export default function MenuTab({
         setNewRecipe({ ...newRecipe, image: event.target?.result });
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const base64 = event.target?.result?.split(',')[1];
+        if (!base64) throw new Error('Failed to encode file');
+
+        const { data, error } = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-menu`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ business_id: businessId, file_base64: base64 }),
+          }
+        ).then(r => r.json());
+
+        if (error || data?.error) {
+          throw new Error(data?.detail || error?.message || 'Import failed');
+        }
+
+        alert(`Found ${data.items?.length || 0} items. Review them next.`);
+        setShowUploadModal(false);
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setUploadError(err.message);
+      setUploading(false);
     }
   };
 
@@ -331,6 +376,13 @@ export default function MenuTab({
           </div>
           <div className="flex gap-4 md:gap-3 w-full md:w-auto">
             <button
+              onClick={() => setShowUploadModal(true)}
+              className="flex-grow md:flex-none flex items-center justify-center gap-3 md:gap-2 px-12 md:px-6 h-16 md:h-10 bg-amber-600 text-white font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-amber-500 transition-all shadow-2xl md:shadow-lg active:scale-95"
+            >
+              📄
+              {t('import_menu') || 'Import Menu'}
+            </button>
+            <button
               onClick={() => setIsAdding(true)}
               className="flex-grow md:flex-none flex items-center justify-center gap-3 md:gap-2 px-12 md:px-6 h-16 md:h-10 bg-emerald-600 text-white font-black text-sm md:text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-500 transition-all shadow-2xl md:shadow-lg active:scale-95"
             >
@@ -496,6 +548,61 @@ export default function MenuTab({
             </div>
           )}
         </div>
+
+      {/* Upload Menu Modal */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowUploadModal(false)}
+              className="absolute inset-0 bg-stone-950/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 p-8"
+            >
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="absolute top-4 right-4 p-2 hover:bg-stone-100 rounded-full transition"
+              >
+                <X className="w-5 h-5 text-stone-400" />
+              </button>
+
+              <h2 className="text-2xl font-black mb-2">{t('import_menu_title') || 'Import Menu'}</h2>
+              <p className="text-sm text-stone-600 mb-6">{t('import_menu_desc') || 'Upload a PDF of your menu'}</p>
+
+              {uploadError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                  {uploadError}
+                </div>
+              )}
+
+              <button
+                onClick={() => importFileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full py-4 border-2 border-dashed border-stone-300 rounded-2xl hover:border-emerald-500 hover:bg-emerald-50 transition disabled:opacity-50"
+              >
+                <input
+                  ref={importFileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleImportFile}
+                  className="hidden"
+                />
+                <div className="text-center">
+                  <div className="text-3xl mb-2">📄</div>
+                  <p className="text-sm font-bold">{uploading ? 'Processing...' : t('upload_pdf') || 'Upload PDF'}</p>
+                </div>
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* New Recipe Modal */}
       <AnimatePresence>
