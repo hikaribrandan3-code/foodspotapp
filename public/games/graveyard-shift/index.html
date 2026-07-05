@@ -28,14 +28,6 @@
   .hrow { display:flex; gap:2px; margin-top:3px; }
   .heart { width:16px; height:16px; image-rendering:pixelated; }
 
-  /* hotbar */
-  #hotbar { left:50%; bottom:8px; transform:translateX(-50%); display:flex; gap:4px; pointer-events:auto; }
-  .slot { width:46px; height:46px; background:rgba(10,10,14,.72); border:3px solid #3a3a44; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-direction:column; color:#999; font-size:9px; font-weight:bold; }
-  .slot.owned { color:#eee; border-color:#666; }
-  .slot.active { border-color:#fff; background:rgba(40,40,50,.85); }
-  .slot .ic { font-size:17px; line-height:1; }
-  .slot .nm { font-size:7px; margin-top:2px; letter-spacing:0; }
-
   #ammo { right:14px; bottom:64px; text-align:right; font-size:26px; font-weight:bold; }
   #ammo small { font-size:14px; color:#bbb; }
   #gunname { right:14px; bottom:98px; text-align:right; font-size:12px; color:#7fdcae; font-weight:bold; }
@@ -54,16 +46,11 @@
 
   /* touch controls */
   .tbtn { position:fixed; z-index:12; border-radius:50%; background:rgba(255,255,255,.10); border:2px solid rgba(255,255,255,.35); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-family:inherit; pointer-events:auto; text-shadow:1px 1px 0 #000; }
-  #btnFire { right:26px; bottom:96px; width:84px; height:84px; font-size:15px; background:rgba(229,72,77,.22); border-color:rgba(229,72,77,.6); }
-  #btnReload { right:122px; bottom:76px; width:54px; height:54px; font-size:11px; }
-  #btnJump { right:34px; bottom:196px; width:56px; height:56px; font-size:11px; }
-  #btnNade { right:126px; bottom:150px; width:50px; height:50px; font-size:16px; }
+  #btnJump { right:16px; bottom:76px; width:40px; height:40px; font-size:9px; }
   #btnAuto { left:12px; top:64px; width:auto; height:30px; border-radius:6px; padding:0 10px; font-size:11px; }
-  #stick { position:fixed; z-index:11; left:0; bottom:0; width:45%; height:70%; pointer-events:auto; }
-  #stickBase { position:fixed; z-index:12; width:110px; height:110px; border-radius:50%; border:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.06); display:none; pointer-events:none; }
-  #stickNub { position:fixed; z-index:13; width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.35); display:none; pointer-events:none; }
-  #look { position:fixed; z-index:11; right:0; top:0; width:55%; height:100%; pointer-events:auto; }
-  body.desktop .tbtn, body.desktop #stick, body.desktop #look, body.desktop #stickBase, body.desktop #stickNub { display:none !important; }
+  /* Movement comes from the HikariBoy shell's real dpad; this zone is drag-anywhere-to-aim only. */
+  #look { position:fixed; z-index:11; inset:0; pointer-events:auto; }
+  body.desktop .tbtn, body.desktop #look { display:none !important; }
 
   /* overlays */
   .ovl { position:fixed; inset:0; z-index:50; background:rgba(4,6,12,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; padding:20px; }
@@ -86,7 +73,6 @@
 <div id="hitm" class="hud"></div>
 <div id="vitals" class="hud"><div class="hrow" id="hearts"></div></div>
 <div id="expwrap" class="hud"><div id="expbar"></div></div>
-<div id="hotbar" class="hud"></div>
 <div id="gunname" class="hud"></div>
 <div id="ammo" class="hud"></div>
 <div id="round" class="hud">ROUND 1</div>
@@ -97,11 +83,8 @@
 <div id="pickup" class="hud"></div>
 <div id="fps" class="hud"></div>
 
-<div id="stick"></div><div id="stickBase"></div><div id="stickNub"></div><div id="look"></div>
-<button class="tbtn" id="btnFire">FIRE</button>
-<button class="tbtn" id="btnReload">RLD</button>
+<div id="look"></div>
 <button class="tbtn" id="btnJump">JMP</button>
-<button class="tbtn" id="btnNade">&#9679;</button>
 <button class="tbtn" id="btnAuto">AUTO: ON</button>
 
 <div class="ovl" id="start">
@@ -109,8 +92,10 @@
   <h2>GRAVEYARD SHIFT</h2>
   <p>DEMO v0.1 — Map review build.<br>
   All areas unlocked &bull; all 7 guns free on walls &bull; zombies from round 1.<br><br>
-  <b style="color:#ddd">MOBILE:</b> left thumb = move &bull; right thumb = look &bull; FIRE / auto-fire<br>
-  <b style="color:#ddd">DESKTOP:</b> WASD + mouse &bull; 1-8 weapons &bull; R reload &bull; G grenade &bull; SPACE jump</p>
+  <b style="color:#ddd">HOW TO PLAY</b><br>
+  <b style="color:#ddd">D-PAD</b> move (forward/back/strafe) &bull; <b style="color:#ddd">DRAG SCREEN</b> to aim<br>
+  <b style="color:#ddd">A</b> fire &bull; <b style="color:#ddd">B</b> tap = reload, hold = grenade &bull; <b style="color:#ddd">L / R</b> switch weapon<br>
+  <b style="color:#ddd">DESKTOP:</b> WASD move &bull; mouse look &bull; 1-7 weapons &bull; R reload &bull; G grenade &bull; SPACE jump</p>
   <button class="bigbtn" id="btnStart">TAP TO START</button>
 </div>
 
@@ -990,14 +975,13 @@ function switchGun(i) {
   player.cur = i; player.reloading = 0;
   gunModels[i].visible = true;
   gunSwitchT = 0.25;
-  updateAmmoHUD(); updateHotbar();
+  updateAmmoHUD();
 }
 function throwNade() {
   if (player.nades <= 0 || player.dead) return;
   player.nades--;
   camera.getWorldDirection(_dir);
   throwProjectile('nade', camera.position.x + _dir.x*0.4, camera.position.y - 0.1, camera.position.z + _dir.z*0.4, _dir.x, _dir.y + 0.25, _dir.z, 13);
-  updateHotbar();
 }
 function cycleGun(dir) {
   // dir: +1 next, -1 previous. Wraps through owned guns only.
@@ -1023,7 +1007,7 @@ function startRound(r) {
   document.getElementById('round').textContent = 'ROUND ' + r;
   showBanner('ROUND ' + r, r === 1 ? 'They’re coming. Grab guns off the walls — free in demo.' : '');
   SFX.round();
-  updateHUDRound(); updateHotbar();
+  updateHUDRound();
 }
 function updateRounds(dt) {
   if (intermission > 0) {
@@ -1068,20 +1052,6 @@ function updateAmmoHUD() {
   document.getElementById('ammo').innerHTML = `${player.mags[player.cur]} <small>/ ${res===Infinity?'∞':res}</small>`;
   document.getElementById('gunname').textContent = g.name + (player.reloading>0 ? ' — RELOADING' : '');
 }
-function updateHotbar() {
-  const hb = document.getElementById('hotbar');
-  let html = '';
-  GUNS.forEach((g, i) => {
-    const own = player.gunsOwned[i];
-    html += `<div class="slot ${own?'owned':''} ${i===player.cur?'active':''}" data-i="${i}"><span class="ic">${own?g.ic:'?'}</span><span class="nm">${i+1}</span></div>`;
-  });
-  html += `<div class="slot owned" data-i="7"><span class="ic">●</span><span class="nm">x${player.nades}</span></div>`;
-  hb.innerHTML = html;
-  hb.querySelectorAll('.slot').forEach(s => {
-    const go = (e) => { e.preventDefault(); const i = +s.dataset.i; if (i===7) throwNade(); else switchGun(i); };
-    s.addEventListener('touchstart', go, {passive:false}); s.addEventListener('mousedown', go);
-  });
-}
 function updateHUDRound() {
   const left = roundTotal - killsThisRound;
   document.getElementById('zleft').textContent = intermission > 0 ? '' : `☠ ${Math.max(0,left)} left`;
@@ -1091,7 +1061,7 @@ let ptsTimeout = null;
 function addPts() {
   document.getElementById('pts').textContent = player.points;
 }
-updateHearts(); updateHotbar(); updateAmmoHUD();
+updateHearts(); updateAmmoHUD();
 
 /* ---------------- INPUT ---------------- */
 const keys = {};
@@ -1120,21 +1090,22 @@ window.addEventListener('mousemove', e => {
    same contract every other game (food-kart, pocket-tanks, etc.) uses.
    button strings: 'dpad-left'/'dpad-right'/'dpad-up'/'dpad-down', 'a', 'b', 'l', 'r', 'start', 'select'.
 
-   Mapping for Graveyard Shift (agreed control scheme):
-     Dpad Left/Right = turn            Dpad Up/Down = look pitch (aim)
+   Mapping for Graveyard Shift:
+     Dpad = movement only (up/down/left/right = forward/back/strafe-L/strafe-R)
+     Aim/look = drag anywhere on screen (see #look touch handler below), or mouse on desktop
      A               = fire            B (tap)      = reload
      B (hold 0.45s+) = grenade         L / R        = previous / next weapon
-   This cabinet has no stick for forward/back, so a slow forward auto-creep
-   runs whenever the player isn't busy holding dpad-up/down to aim vertically.
+   gpMoveX/gpMoveZ below feed straight into the same movement vector as WASD.
 
    A raw Gamepad API fallback (navigator.getGamepads) is also polled underneath,
-   so the game still works standalone (outside the HikariBoy shell) for testing.
+   so the game still works standalone (outside the HikariBoy shell) for testing —
+   dpad buttons 12-15 / left-stick axes 0-1 drive movement the same way.
 */
 const isEmbedded = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
-let gpFireHeld = false, gpForwardCreep = 0;
+let gpFireHeld = false, gpMoveX = 0, gpMoveZ = 0;
 const gpState = { prevButtons: [], bHoldT: 0, bNadeThrown: false };
 const shellHeld = { left:false, right:false, up:false, down:false, a:false, b:false };
-const shellState = { bHoldT: 0, bNadeThrown: false, prevA:false, prevL:false, prevR:false };
+const shellState = { prevL:false, prevR:false };
 window.addEventListener('message', e => {
   const d = e.data || {};
   if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') { initAudio(); return; }
@@ -1164,21 +1135,16 @@ function pollGamepad(dt) {
   const pressed = (i) => held(i) && !prev[i];
   const DZ = 0.2;
 
-  // turn: shell dpad-left/right, or raw pad buttons 14/15, or left-stick x
-  let turn = 0;
-  if (shellHeld.left) turn -= 1; if (shellHeld.right) turn += 1;
-  if (turn === 0 && held(14)) turn -= 1; if (turn === 0 && held(15)) turn += 1;
-  if (turn === 0 && pad && Math.abs(pad.axes[0] || 0) > DZ) turn = pad.axes[0];
-  player.yaw -= turn * 2.4 * dt;
-
-  // look pitch: shell dpad-up/down, or raw pad buttons 12/13, or left-stick y
-  let look = 0;
-  if (shellHeld.up) look -= 1; if (shellHeld.down) look += 1;
-  if (look === 0 && held(12)) look -= 1; if (look === 0 && held(13)) look += 1;
-  if (look === 0 && pad && Math.abs(pad.axes[1] || 0) > DZ) look = pad.axes[1];
-  player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch + look * 1.7 * dt));
-  const anyPad = shellHeld.left||shellHeld.right||shellHeld.up||shellHeld.down||shellHeld.a||shellHeld.b||pad;
-  gpForwardCreep = (anyPad && look === 0) ? 1 : 0;
+  // movement: shell dpad (forward/back/strafe), or raw pad dpad buttons 12-15, or left-stick
+  gpMoveX = 0; gpMoveZ = 0;
+  if (shellHeld.up) gpMoveZ += 1; if (shellHeld.down) gpMoveZ -= 1;
+  if (shellHeld.left) gpMoveX -= 1; if (shellHeld.right) gpMoveX += 1;
+  if (gpMoveZ === 0) { if (held(12)) gpMoveZ += 1; if (held(13)) gpMoveZ -= 1; }
+  if (gpMoveX === 0) { if (held(14)) gpMoveX -= 1; if (held(15)) gpMoveX += 1; }
+  if (pad && gpMoveX === 0 && gpMoveZ === 0) {
+    if (Math.abs(pad.axes[0] || 0) > DZ) gpMoveX = pad.axes[0];
+    if (Math.abs(pad.axes[1] || 0) > DZ) gpMoveZ = -pad.axes[1];
+  }
 
   // fire: A (raw pad button 0 fallback — shell 'a' fires directly in the message handler above)
   gpFireHeld = shellHeld.a || held(0);
@@ -1200,26 +1166,11 @@ function pollGamepad(dt) {
   gpState.prevButtons = pad ? pad.buttons.map(b => b.pressed) : [];
 }
 
-/* touch */
-const stick = { active: false, id: -1, bx: 0, by: 0, dx: 0, dy: 0 };
+/* touch — movement now comes entirely from the shell dpad (see pollGamepad);
+   the only touch surface left on screen is drag-anywhere-to-aim, plus JMP/AUTO. */
 const lookT = { active: false, id: -1, lx: 0, ly: 0 };
-const stickEl = document.getElementById('stick'), baseEl = document.getElementById('stickBase'), nubEl = document.getElementById('stickNub');
-stickEl.addEventListener('touchstart', e => {
-  e.preventDefault();
-  const t = e.changedTouches[0];
-  stick.active = true; stick.id = t.identifier; stick.bx = t.clientX; stick.by = t.clientY; stick.dx = stick.dy = 0;
-  baseEl.style.display = 'block'; baseEl.style.left = (t.clientX-55)+'px'; baseEl.style.top = (t.clientY-55)+'px';
-  nubEl.style.display = 'block'; nubEl.style.left = (t.clientX-24)+'px'; nubEl.style.top = (t.clientY-24)+'px';
-}, {passive:false});
 window.addEventListener('touchmove', e => {
   for (const t of e.changedTouches) {
-    if (t.identifier === stick.id) {
-      let dx = t.clientX - stick.bx, dy = t.clientY - stick.by;
-      const len = Math.hypot(dx, dy), max = 52;
-      if (len > max) { dx = dx/len*max; dy = dy/len*max; }
-      stick.dx = dx/max; stick.dy = dy/max;
-      nubEl.style.left = (stick.bx+dx-24)+'px'; nubEl.style.top = (stick.by+dy-24)+'px';
-    }
     if (t.identifier === lookT.id) {
       player.yaw -= (t.clientX - lookT.lx) * 0.0058;
       player.pitch = Math.max(-1.45, Math.min(1.45, player.pitch - (t.clientY - lookT.ly) * 0.0058));
@@ -1228,10 +1179,7 @@ window.addEventListener('touchmove', e => {
   }
 }, {passive:false});
 window.addEventListener('touchend', e => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === stick.id) { stick.active = false; stick.id = -1; stick.dx = stick.dy = 0; baseEl.style.display='none'; nubEl.style.display='none'; }
-    if (t.identifier === lookT.id) { lookT.active = false; lookT.id = -1; }
-  }
+  for (const t of e.changedTouches) if (t.identifier === lookT.id) { lookT.active = false; lookT.id = -1; }
 });
 document.getElementById('look').addEventListener('touchstart', e => {
   e.preventDefault();
@@ -1243,10 +1191,7 @@ const bindBtn = (id, down, up) => {
   el.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); down(); }, {passive:false});
   if (up) el.addEventListener('touchend', e => { e.preventDefault(); up(); }, {passive:false});
 };
-bindBtn('btnFire', () => { fireHeld = true; fireGun(); }, () => fireHeld = false);
-bindBtn('btnReload', tryReload);
 bindBtn('btnJump', () => { if (player.onGround) player.vel.y = 6.6; });
-bindBtn('btnNade', throwNade);
 document.getElementById('btnAuto').addEventListener('touchstart', e => {
   e.preventDefault(); autoFire = !autoFire;
   document.getElementById('btnAuto').textContent = 'AUTO: ' + (autoFire?'ON':'OFF');
@@ -1273,8 +1218,8 @@ renderer.domElement.addEventListener('click', () => {
 window.dbg = {
   tp: (x, z, yaw) => { player.pos.set(x, 0.1, z); if (yaw !== undefined) player.yaw = yaw; },
   god: () => { god = !god; return god; },
-  giveAll: () => { player.gunsOwned.fill(true); updateHotbar(); },
-  state: () => ({ round, pos: player.pos.toArray(), hp: player.hp, zombies: zombies.filter(z=>z.alive).length, yaw: player.yaw, pitch: player.pitch, cur: GUNS[player.cur].id, shellHeld: {...shellHeld}, gpForwardCreep }),
+  giveAll: () => { player.gunsOwned.fill(true); },
+  state: () => ({ round, pos: player.pos.toArray(), hp: player.hp, zombies: zombies.filter(z=>z.alive).length, yaw: player.yaw, pitch: player.pitch, cur: GUNS[player.cur].id, shellHeld: {...shellHeld}, gpMoveX, gpMoveZ }),
 };
 
 /* ---------------- MAIN LOOP ---------------- */
@@ -1310,8 +1255,7 @@ function tick() {
     let mx = 0, mz = 0;
     if (keys['KeyW']) mz += 1; if (keys['KeyS']) mz -= 1;
     if (keys['KeyA']) mx -= 1; if (keys['KeyD']) mx += 1;
-    if (stick.active) { mx += stick.dx; mz -= stick.dy; }
-    if (gpForwardCreep) mz += gpForwardCreep;
+    mx += gpMoveX; mz += gpMoveZ;
     const ml = Math.hypot(mx, mz);
     if (ml > 1) { mx /= ml; mz /= ml; }
     let speed = 4.3;
