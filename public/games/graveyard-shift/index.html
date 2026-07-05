@@ -240,11 +240,35 @@ const moon = new THREE.DirectionalLight(0xaabbee, 0.5); moon.position.set(-30, 6
 
 // stars
 {
-  const n = 260, pos = new Float32Array(n*3);
+  const n = 700, pos = new Float32Array(n*3);
   for (let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, e=Math.random()*Math.PI*0.45+0.08, r=130;
     pos[i*3]=Math.cos(a)*Math.cos(e)*r; pos[i*3+1]=Math.sin(e)*r; pos[i*3+2]=Math.sin(a)*Math.cos(e)*r; }
   const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.BufferAttribute(pos,3));
   scene.add(new THREE.Points(gg, new THREE.PointsMaterial({ color:0xcfd8ff, size:1.6, sizeAttenuation:false, fog:false })));
+}
+// visible moon disc
+{
+  const m = new THREE.Mesh(new THREE.SphereGeometry(7, 12, 10), new THREE.MeshBasicMaterial({ color:0xd7d0c2, fog:false }));
+  m.position.set(-70, 95, -95); scene.add(m);
+}
+// easter egg: "FOODSPOT MOBILE" written in the stars, readable when you look straight up
+{
+  const F5 = { // 5x7 bitmap font, rows top→bottom
+    F:[31,16,16,28,16,16,16], O:[14,17,17,17,17,17,14], D:[30,17,17,17,17,17,30],
+    S:[15,16,16,14,1,1,30],  P:[30,17,17,30,16,16,16], T:[31,4,4,4,4,4,4],
+    M:[17,27,21,21,17,17,17], B:[30,17,17,30,17,17,30], I:[31,4,4,4,4,4,31],
+    L:[16,16,16,16,16,16,31], E:[31,16,16,30,16,16,31], ' ':[0,0,0,0,0,0,0]
+  };
+  const msg = 'FOODSPOT MOBILE', sc = 1.5, pts = [];
+  const w = msg.length*6*sc;
+  msg.split('').forEach((ch,ci) => {
+    const g = F5[ch]; if (!g) return;
+    for (let r=0;r<7;r++) for (let c=0;c<5;c++) if (g[r] & (16>>c))
+      pts.push(ci*6*sc + c*sc - w/2, 118 + (Math.random()-0.5)*0.6, (r-3)*sc*1.15 - 4);
+  });
+  const gg = new THREE.BufferGeometry();
+  gg.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  scene.add(new THREE.Points(gg, new THREE.PointsMaterial({ color:0xffe9a8, size:2.4, sizeAttenuation:false, fog:false })));
 }
 
 const atlasTex = makeAtlas();
@@ -350,7 +374,19 @@ function buildMap() {
       return T.ASPHALT; }, all:T.BLACK }, {skip:['bot']});
   box(-20,-0.5,-19, 2,0,-14, { top:T.ASPHALT, all:T.BLACK }, {skip:['bot']});             // alley floor
   // ceiling
-  box(-20,WH,-14, 20,WH+0.3,14, { bot:T.CEIL, all:T.BRICK }, {skip:['top']});
+  box(-20,WH,-14, 20,WH+0.3,14, { bot:T.CEIL, top:T.ASPHALT, all:T.BRICK });
+  // parapet lip around roof edge + rooftop AC units (visible from the parking lot)
+  box(-20.3,WH+0.3,-14.3, 20.3,WH+1.0,-14, T.BRICK); box(-20.3,WH+0.3,14, 20.3,WH+1.0,14.3, T.BRICK);
+  box(-20.3,WH+0.3,-14, -20,WH+1.0,14, T.BRICK); box(20,WH+0.3,-14, 20.3,WH+1.0,14, T.BRICK);
+  for (const [ax,az] of [[-12,-6],[2,3],[12,-8]]) {
+    box(ax,WH+0.3,az, ax+2.6,WH+1.6,az+2.2, { all:T.STEEL, top:T.GMETAL });
+    box(ax+0.4,WH+1.6,az+0.4, ax+2.2,WH+1.72,az+1.8, T.BLACK);
+  }
+  // interior ceiling light fixtures under each interior bake light
+  for (const L of bakeLights) {
+    if (L.x>-20 && L.x<20 && L.z>-14 && L.z<14 && L.y>=3.8)
+      box(L.x-0.7,WH-0.12,L.z-0.7, L.x+0.7,WH,L.z+0.7, { bot:T.LAMP, all:T.STEEL }, {skip:['top']});
+  }
 
   // ===== EXTERIOR WALLS ===== (brick outside, painted inside)
   // south wall (front): segments around door (-4..0) + windows (-14..-10, 4..8)
@@ -460,6 +496,32 @@ function buildMap() {
   slowZones.push({ x0:12, x1:19, z0:6, z1:11.7 });
   // toy car (from reference image)
   sbox(9,0,10.5, 10.6,0.7,11.5, { all:T.CAR1, top:T.CAR3 });
+  // crawl tube on the platform (ring segments you can walk through visually)
+  for (let s=0;s<4;s++) {
+    const tx0 = 11.6 + s*1.6, tc = [T.PAD_R,T.PAD_Y,T.PAD_G,T.PAD_B][s%4];
+    box(tx0,2.5,-7.6, tx0+1.3,2.72,-5.4, tc);                            // ring floor lip
+    box(tx0,3.9,-7.6, tx0+1.3,4.1,-5.4, tc);                             // ring top
+    box(tx0,2.72,-7.6, tx0+1.3,3.9,-7.4, tc);                            // ring back
+    box(tx0,2.72,-5.6, tx0+1.3,3.9,-5.4, tc);                            // ring front
+  }
+  // padded climbing wall on the east wall with grip studs
+  box(19.7,0,-8, 20,3.6,-3, T.PAD_R);
+  for (let gy=0;gy<5;gy++) for (let gz=0;gz<4;gz++)
+    box(19.55, 0.5+gy*0.65, -7.5+gz*1.2, 19.7, 0.78+gy*0.65, -7.22+gz*1.2, [T.PAD_Y,T.PAD_G,T.PAD_B][(gy+gz)%3]);
+  // hanging ceiling decorations (spinners/mobiles over the play floor)
+  for (const [hx,hz,hc] of [[10,-11,T.PAD_R],[13,1,T.PAD_G],[17,-4,T.PAD_Y],[15,9,T.PAD_B],[10.5,4,T.PAD_Y],[18,12,T.PAD_R]]) {
+    box(hx-0.05,3.1,hz-0.05, hx+0.05,WH,hz+0.05, T.GMETAL);              // string
+    box(hx-0.4,2.6,hz-0.4, hx+0.4,3.1,hz+0.4, hc);                       // block
+  }
+  // colorful floor rings painted near ball pit
+  for (const [rx,rz,rc] of [[9.5,7.5,T.PAD_G],[10.2,2,T.PAD_R],[9.2,-2.5,T.PAD_B]])
+    box(rx-0.8,0.021,rz-0.8, rx+0.8,0.032,rz+0.8, rc);
+  // bouncy horse toys
+  for (const [bx,bz,bc] of [[9.6,-6.5,T.PAD_Y],[10.4,-9.5,T.PAD_G]]) {
+    sbox(bx-0.35,0.35,bz-0.55, bx+0.35,0.85,bz+0.55, bc);
+    box(bx-0.12,0,bz-0.12, bx+0.12,0.35,bz+0.12, T.GMETAL);
+    box(bx-0.25,0.85,bz-0.75, bx+0.25,1.2,bz-0.35, bc);                  // head
+  }
 
   // ===== PARKING LOT =====
   // street lamps
