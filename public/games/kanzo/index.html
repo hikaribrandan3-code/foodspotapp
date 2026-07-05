@@ -773,6 +773,7 @@ let gorillaSpawnCount = 0;
 
 /* Spawn enemies with ID (fixes splice/hit issues) */
 function spawnWave() {
+  if (typeof fxBanner === 'function') fxBanner('WAVE ' + wave);
   // OPTION A: Legit Hard difficulty curve
   const count = (() => {
     if (wave < 5) return 5;                                 // early warm-up
@@ -954,6 +955,7 @@ function performLightAttack() {
     timeLeft: 0.12,
     hit: new Set()
   };
+  fxSlashArc(dir === 'right' ? 0 : dir === 'left' ? Math.PI : dir === 'down' ? Math.PI / 2 : -Math.PI / 2, false);
 }
 
 function performHeavyAttack() {
@@ -982,6 +984,8 @@ function performHeavyAttack() {
     timeLeft: 0.22,
     hit: new Set()
   };
+  fxSlashArc(dir === 'right' ? 0 : dir === 'left' ? Math.PI : dir === 'down' ? Math.PI / 2 : -Math.PI / 2, true);
+  fxShake(4);
 }
 
 function shootGun() {
@@ -1246,6 +1250,92 @@ function aabb(a, b) {
 }
 
 /* Attack collision handler */
+/* ============================================================
+   FX ENGINE — pure visual juice layer. Zero gameplay impact:
+   particles, slash arcs, damage popups, screen shake, combos,
+   wave banners, ambient dust, CRT overlay. Called from hit /
+   death / spawn sites; render() draws it all.
+   ============================================================ */
+const FX = { parts: [], texts: [], arcs: [], shake: 0, combo: 0, comboT: 0, banner: '', bannerT: 0, dust: [] };
+for (let i = 0; i < 26; i++) FX.dust.push({ x: Math.random() * 360, y: Math.random() * 640, s: 0.5 + Math.random() * 1.4, v: 6 + Math.random() * 14 });
+function fxShake(n) { FX.shake = Math.max(FX.shake, n); }
+function fxText(x, y, txt, col, size) { FX.texts.push({ x, y, txt, col, size: size || 13, life: 0.8, vy: -46 }); }
+function fxBurst(x, y, col, n, spd) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = (spd || 90) * (0.4 + Math.random() * 0.9);
+    FX.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 30, life: 0.35 + Math.random() * 0.35, col, sz: 2 + Math.random() * 3 });
+  }
+}
+function fxHit(e, dmg, col) {
+  const cx = e.x + e.width / 2, cy = e.y + e.height / 2;
+  fxBurst(cx, cy, col || '#ffd843', 8, 110);
+  fxBurst(cx, cy, '#fff', 4, 60);
+  fxText(cx, cy - 14, '-' + dmg, '#fff');
+  e.flashT = 0.12;
+  FX.combo++; FX.comboT = 2.0;
+  if (FX.combo > 0 && FX.combo % 5 === 0) fxText(player.x + 25, player.y - 20, 'COMBO x' + FX.combo + '!', '#ffd843', 17);
+  fxShake(3);
+}
+function fxDeath(e) {
+  const cx = e.x + e.width / 2, cy = e.y + e.height / 2;
+  fxBurst(cx, cy, '#ff5b4d', 16, 150); fxBurst(cx, cy, '#ffb347', 10, 90);
+  // derez ring
+  FX.arcs.push({ x: cx, y: cy, r: 6, vr: 190, life: 0.35, col: 'rgba(255,220,120,', ring: true });
+  fxText(cx, cy - 20, '+1', '#7dff8a', 15);
+  fxShake(6);
+}
+function fxSlashArc(dir, heavy) {
+  // crescent slash trail in front of the player
+  const cx = player.x + 25, cy = player.y + 25;
+  FX.arcs.push({ x: cx, y: cy, r: heavy ? 58 : 44, vr: 0, life: heavy ? 0.22 : 0.16,
+                 a0: dir - 1.1, a1: dir + 1.1, col: heavy ? 'rgba(255,120,80,' : 'rgba(255,240,190,', ring: false });
+}
+function fxBanner(t) { FX.banner = t; FX.bannerT = 1.8; }
+function updateFX(dt) {
+  if (FX.shake > 0) FX.shake = Math.max(0, FX.shake - 32 * dt);
+  if (FX.comboT > 0) { FX.comboT -= dt; if (FX.comboT <= 0) FX.combo = 0; }
+  if (FX.bannerT > 0) FX.bannerT -= dt;
+  for (let i = FX.parts.length - 1; i >= 0; i--) {
+    const p = FX.parts[i]; p.life -= dt;
+    if (p.life <= 0) { FX.parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * dt;
+  }
+  for (let i = FX.texts.length - 1; i >= 0; i--) {
+    const t = FX.texts[i]; t.life -= dt;
+    if (t.life <= 0) { FX.texts.splice(i, 1); continue; }
+    t.y += t.vy * dt; t.vy *= 0.93;
+  }
+  for (let i = FX.arcs.length - 1; i >= 0; i--) {
+    const a = FX.arcs[i]; a.life -= dt; a.r += (a.vr || 0) * dt;
+    if (a.life <= 0) FX.arcs.splice(i, 1);
+  }
+  for (const d of FX.dust) { d.y -= d.v * dt; d.x += Math.sin(d.y * 0.02) * 8 * dt; if (d.y < -4) { d.y = 644; d.x = Math.random() * 360; } }
+}
+function drawFX() {
+  for (const a of FX.arcs) {
+    const al = Math.max(0, a.life * (a.ring ? 2.8 : 6));
+    ctx.strokeStyle = a.col + al + ')'; ctx.lineWidth = a.ring ? 3 : 7; ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (a.ring) ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+    else ctx.arc(a.x, a.y, a.r, a.a0, a.a1);
+    ctx.stroke();
+    if (!a.ring) { ctx.strokeStyle = 'rgba(255,255,255,' + al * 0.7 + ')'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(a.x, a.y, a.r - 5, a.a0 + 0.15, a.a1 - 0.15); ctx.stroke(); }
+  }
+  for (const p of FX.parts) {
+    ctx.globalAlpha = Math.min(1, p.life * 3);
+    ctx.fillStyle = p.col; ctx.fillRect(p.x - p.sz / 2, p.y - p.sz / 2, p.sz, p.sz);
+  }
+  ctx.globalAlpha = 1;
+  ctx.textAlign = 'center';
+  for (const t of FX.texts) {
+    ctx.globalAlpha = Math.min(1, t.life * 2.2);
+    ctx.font = 'bold ' + t.size + 'px Courier New';
+    ctx.fillStyle = '#000'; ctx.fillText(t.txt, t.x + 1.5, t.y + 1.5);
+    ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
 function handleAttackHitbox(box, dt) {
   if (!box) return null;
 
@@ -1268,6 +1358,8 @@ function handleAttackHitbox(box, dt) {
     if (aabb(e, box)) {
       e.hp -= box.damage;
       box.hit.add(e.id);
+      fxHit(e, box.damage, box === heavyAttack ? '#ff8a5b' : box === whirlAttack ? '#b89bff' : '#ffe9a8');
+      if (box === heavyAttack) fxShake(7);
 
       /* knockback for heavy / whirl */
       if (box.knock || box === whirlAttack) {
@@ -1281,6 +1373,7 @@ function handleAttackHitbox(box, dt) {
       }
 
       if (e.hp <= 0) {
+        fxDeath(e);
         enemies.splice(i, 1);
         score++;
       }
@@ -1311,11 +1404,13 @@ function handleAttackHitbox(box, dt) {
         b.y > e.y && b.y < e.y + e.height
       ) {
         e.hp -= b.damage;
+        fxHit(e, b.damage, '#ffe36b');
 
         /* Remove bullet */
         bullets.splice(i, 1);
 
         if (e.hp <= 0) {
+          fxDeath(e);
           enemies.splice(j, 1);
           score++;
         }
@@ -2430,24 +2525,41 @@ function drawEnemy(e) {
 
 /* ---------- DRAW EVERYTHING ---------- */
 function render() {
+  ctx.save();
+  if (FX.shake > 0.3) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+
   /* Background */
   if (bgReady) ctx.drawImage(gameplayMap, 0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
   else {
     ctx.fillStyle = "#2d4a3e";
     ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
   }
+  /* dusk mood tint deepens with waves */
+  const duskA = Math.min(0.32, 0.06 + (wave - 1) * 0.02);
+  ctx.fillStyle = 'rgba(30,18,60,' + duskA + ')';
+  ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  /* drifting ember/dust motes */
+  ctx.fillStyle = 'rgba(255,220,170,.35)';
+  for (const d of FX.dust) ctx.fillRect(d.x, d.y, d.s, d.s);
 
   /* Player */
   drawPlayer();
 
-  /* Attack hitboxes */
-  if (lightAttack)
-    ctx.fillStyle = "rgba(255,200,100,0.3)",
-    ctx.fillRect(lightAttack.x, lightAttack.y, lightAttack.width, lightAttack.height);
-
-  if (heavyAttack)
-    ctx.fillStyle = "rgba(255,100,100,0.4)",
-    ctx.fillRect(heavyAttack.x, heavyAttack.y, heavyAttack.width, heavyAttack.height);
+  /* Attack hitboxes — soft radial pulses instead of flat rects */
+  if (lightAttack) {
+    const lx = lightAttack.x + lightAttack.width / 2, ly = lightAttack.y + lightAttack.height / 2;
+    const lr = Math.max(lightAttack.width, lightAttack.height) * 0.75;
+    const lg = ctx.createRadialGradient(lx, ly, 2, lx, ly, lr);
+    lg.addColorStop(0, 'rgba(255,240,200,.5)'); lg.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.fill();
+  }
+  if (heavyAttack) {
+    const hx2 = heavyAttack.x + heavyAttack.width / 2, hy2 = heavyAttack.y + heavyAttack.height / 2;
+    const hr = Math.max(heavyAttack.width, heavyAttack.height) * 0.8;
+    const hg2 = ctx.createRadialGradient(hx2, hy2, 2, hx2, hy2, hr);
+    hg2.addColorStop(0, 'rgba(255,150,90,.55)'); hg2.addColorStop(1, 'rgba(255,80,60,0)');
+    ctx.fillStyle = hg2; ctx.beginPath(); ctx.arc(hx2, hy2, hr, 0, Math.PI * 2); ctx.fill();
+  }
 
   if (whirlAttack) {
     const cx = whirlAttack.x + whirlAttack.width/2;
@@ -2482,14 +2594,25 @@ function render() {
     ctx.fill();
   }
 
-  /* Bullets */
-  ctx.fillStyle = "#ffff00";
+  /* Bullets — glowing tracers with trails */
   for (const b of bullets) {
-    ctx.fillRect(b.x - b.size/2, b.y - b.size/2, b.size, b.size);
+    ctx.strokeStyle = 'rgba(255,230,90,.45)'; ctx.lineWidth = b.size * 0.9; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(b.x - (b.vx || 0) * 0.035, b.y - (b.vy || 0) * 0.035); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,240,150,.35)';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.size * 1.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff8c8';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.size * 0.55, 0, Math.PI * 2); ctx.fill();
   }
 
-  /* Enemies */
-  for (const e of enemies) drawEnemy(e);
+  /* Enemies (+ hit flash overlay from the FX layer) */
+  for (const e of enemies) {
+    drawEnemy(e);
+    if (e.flashT > 0) {
+      e.flashT -= 0.016;
+      ctx.globalAlpha = Math.min(0.7, e.flashT * 6); ctx.fillStyle = '#fff';
+      ctx.fillRect(e.x, e.y, e.width, e.height); ctx.globalAlpha = 1;
+    }
+  }
 
   /* Chest */
   if (chestActive) drawChest();
@@ -2526,6 +2649,41 @@ function render() {
       116 * p,
       16
     );
+  }
+
+  /* FX layer: slash arcs, particles, damage popups */
+  drawFX();
+  ctx.restore(); // end screen shake
+
+  /* combo counter */
+  if (FX.combo >= 3) {
+    ctx.textAlign = 'center'; ctx.font = 'bold 20px Courier New';
+    const pulse = 1 + Math.sin(performance.now() * 0.02) * 0.06;
+    ctx.save(); ctx.translate(LOGICAL_WIDTH / 2, 46); ctx.scale(pulse, pulse);
+    ctx.fillStyle = '#000'; ctx.fillText(FX.combo + ' HITS', 2, 2);
+    ctx.fillStyle = FX.combo >= 10 ? '#ff5b4d' : '#ffd843'; ctx.fillText(FX.combo + ' HITS', 0, 0);
+    ctx.restore();
+  }
+  /* wave banner */
+  if (FX.bannerT > 0) {
+    const a = Math.min(1, FX.bannerT * 2) * Math.min(1, (1.8 - FX.bannerT) * 4);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, LOGICAL_HEIGHT / 2 - 44, LOGICAL_WIDTH, 88);
+    ctx.fillStyle = '#e5484d'; ctx.fillRect(0, LOGICAL_HEIGHT / 2 - 44, LOGICAL_WIDTH, 3);
+    ctx.fillRect(0, LOGICAL_HEIGHT / 2 + 41, LOGICAL_WIDTH, 3);
+    ctx.textAlign = 'center'; ctx.font = 'bold 34px Courier New';
+    ctx.fillStyle = '#000'; ctx.fillText(FX.banner, LOGICAL_WIDTH / 2 + 2, LOGICAL_HEIGHT / 2 + 13);
+    ctx.fillStyle = '#ffd843'; ctx.fillText(FX.banner, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 11);
+    ctx.globalAlpha = 1;
+  }
+  /* vignette */
+  const vg = ctx.createRadialGradient(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_HEIGHT * 0.35, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_HEIGHT * 0.75);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.42)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  /* low-hp danger pulse */
+  if (player.hp / player.maxHp < 0.3) {
+    ctx.fillStyle = 'rgba(200,30,30,' + (0.10 + Math.sin(performance.now() * 0.008) * 0.07) + ')';
+    ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
   }
 }
 
@@ -2670,6 +2828,7 @@ function fullReset() {
    MAIN UPDATE (DeltaTime engine)
    ============================================================ */
 function update(dt) {
+  updateFX(dt);
   if (bossIntroActive) {
     bossIntroTimer -= dt;
     if (bossIntroTimer <= 0) {
