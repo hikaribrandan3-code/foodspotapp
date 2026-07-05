@@ -114,6 +114,7 @@ function resetRound(keepRound) {
   for (let i = 0; i < nE; i++) bikes.push(mkBike(i + 1, spots[i][0], spots[i][1], spots[i][2]));
   for (const b of bikes) G[b.z * GS + b.x] = b.id;
   acc = 0; turnQ.length = 0;
+  camAngle = camDisplayAngle = Math.PI / 2; // player starts heading +z
 }
 
 function eraseTrail(b) { // derez: free the grid cells so the arena opens back up
@@ -179,6 +180,7 @@ function stepWorld() {
   if (p.alive && turnQ.length) {
     const t = turnQ.shift(); // +1 right, -1 left (90° snaps only; 180° impossible by construction)
     p.dir = (p.dir + (t > 0 ? 1 : 3)) % 4;
+    camAngle += (t > 0 ? 1 : -1) * (Math.PI / 2); // unbounded accumulator — camDisplayAngle eases toward this each frame, no wraparound
     p.pts.push([p.x, p.z]); sndTurn();
   }
   for (const b of bikes) {
@@ -228,12 +230,15 @@ addEventListener('message', e => {
 /* ---------------- 3D PROJECTION ---------------- */
 const FOC = W * 0.62, HOR = H * 0.40, CAMBACK = 4.6, CAMH = 2.35, WALLH = 0.85, NEAR = 0.22;
 let camX = 0, camZ = 0, Fx = 0, Fz = 1, Rx = 1, Rz = 0;
+let camAngle = Math.PI / 2, camDisplayAngle = Math.PI / 2; // camAngle: exact accumulated heading; camDisplayAngle eases toward it so turns swing instead of popping
 
-function updateCam() {
+function updateCam(dt) {
   const p = bikes[0];
   const f = Math.min(1, acc / STEP);
   const hx = p.px + (p.x - p.px) * f, hz = p.pz + (p.z - p.pz) * f;
-  Fx = DX[p.dir]; Fz = DZ[p.dir]; Rx = Fz; Rz = -Fx;   // camera snaps with the bike
+  const ease = 1 - Math.exp(-dt / 0.09); // frame-rate independent smoothing, ~90ms time constant
+  camDisplayAngle += (camAngle - camDisplayAngle) * ease;
+  Fx = Math.cos(camDisplayAngle); Fz = Math.sin(camDisplayAngle); Rx = Fz; Rz = -Fx;
   camX = hx - Fx * CAMBACK; camZ = hz - Fz * CAMBACK;
 }
 /* world (wx, wy, wz) -> camera space (lat, wy, fwd) */
@@ -260,7 +265,7 @@ function line3(x1, z1, x2, z2, y) {
 const wallList = []; // reused each frame: {x1,z1,x2,z2,col,d}
 function drawFrame(dt) {
   ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, W, H);
-  updateCam();
+  updateCam(dt);
   let shx = 0, shy = 0;
   if (shakeT > 0) { shakeT -= dt; shx = (Math.random() - 0.5) * 7 * shakeT * 3; shy = (Math.random() - 0.5) * 7 * shakeT * 3; }
   ctx.save(); ctx.translate(shx, shy);
