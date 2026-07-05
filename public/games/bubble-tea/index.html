@@ -140,6 +140,7 @@ let grid=[],parts=[],rings=[],confettiArr=[],ftexts=[],sparkArr=[],lbolts=[],sho
 let proj=null,curBoba=null,nxtBoba=null;
 let aimAngle=-Math.PI/2,aimPts=[];
 let score=0,hiScore=0,shots=0,ceilOff=0,combo=0;
+let hitstopT=0; // frames of freeze-frame on big pops (pure render pause — fighting-game style impact juice)
 let gameState=isHikariBoy?'playing':'splash';
 let shkX=0,shkY=0,shkT=0;
 let arcDotT=0;
@@ -672,6 +673,16 @@ function drawUI(t){
   const urgent=shotsLeft<=5&&shotsLeft>0;
   const hudPulse=Math.sin(t*.006)*.5+.5;
   cx.save();
+  // combo heat: pulsing screen-edge glow (2+ gold, 4+ red-hot) — 4 gradient strips, dirt cheap
+  if(combo>=2){
+    const hot=combo>=4, ec=hot?'255,68,0':'255,200,40', ea=(.18+hudPulse*.14)*(hot?1.4:1), ew=R*(hot?2.6:1.8);
+    let g1=cx.createLinearGradient(0,0,ew,0);g1.addColorStop(0,`rgba(${ec},${ea})`);g1.addColorStop(1,`rgba(${ec},0)`);
+    cx.fillStyle=g1;cx.fillRect(0,0,ew,H);
+    g1=cx.createLinearGradient(W,0,W-ew,0);g1.addColorStop(0,`rgba(${ec},${ea})`);g1.addColorStop(1,`rgba(${ec},0)`);
+    cx.fillStyle=g1;cx.fillRect(W-ew,0,ew,H);
+    g1=cx.createLinearGradient(0,H,0,H-ew);g1.addColorStop(0,`rgba(${ec},${ea})`);g1.addColorStop(1,`rgba(${ec},0)`);
+    cx.fillStyle=g1;cx.fillRect(0,H-ew,W,ew);
+  }
 
   // ── BAR BACKGROUND ──
   const barG=cx.createLinearGradient(0,0,0,barH);barG.addColorStop(0,'rgba(80,0,120,0.88)');barG.addColorStop(1,'rgba(40,0,80,0.95)');
@@ -1053,7 +1064,7 @@ function doLightning(lr){
 }
 
 function doBomb(br,bc,bx,by){
-  shake(18);flashAlpha=.7;flashCol='#FF4400';playFX('bomb');
+  hitstopT=6;shake(18);flashAlpha=.7;flashCol='#FF4400';playFX('bomb');
   ftexts.push(new FloatText(W/2,H*.44,'💣 KABOOM! 💣','#FF4400',true));
   shockwaves.push(new Shockwave(bx,by,'rgba(255,100,0,1)'));
   shockwaves.push(new Shockwave(bx,by,'rgba(255,200,0,1)'));
@@ -1086,7 +1097,7 @@ function doBomb(br,bc,bx,by){
 }
 
 function doFireball(fc2,fy,bx,by){
-  shake(10);flashAlpha=.4;flashCol='#FF6600';playFX('fireball');
+  hitstopT=4;shake(10);flashAlpha=.4;flashCol='#FF6600';playFX('fireball');
   ftexts.push(new FloatText(W/2,H*.44,'🔥 INFERNO! 🔥','#FF7700',true));
   const burned=[];
   for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;if(Math.abs(b.x-bx)<R*2.2)burned.push({r,c,b});}
@@ -1168,6 +1179,12 @@ function onStop(p){
     grid[spot.r][spot.c]=p.boba;
     rings.push(new Ring(x,y,'rgba(255,255,255,0.8)'));
     getNbrs(spot.r,spot.c).forEach(n=>{if(grid[n.r][n.c])grid[n.r][n.c].hit();});
+    // impact ripple: wobble propagates outward through nearby bubbles with distance falloff (visual only)
+    for(let rr=0;rr<grid.length;rr++)for(let cc2=0;cc2<grid[rr].length;cc2++){
+      const nb=grid[rr][cc2]; if(!nb||nb===p.boba)continue;
+      const d=Math.hypot(nb.x-x,nb.y-y);
+      if(d<R*3.6&&d>0){ nb.wobbleV+=(1-d/(R*3.6))*.55*(((rr+cc2)%2)?1:-1); }
+    }
     // POWER-UPS
     if(ct.name==='lightning'){ doLightning(spot.r); grid[spot.r][spot.c]=null; madeMatch=true; Haptics.fire(Haptics.lightning,true); }
     else if(ct.name==='bomb'){ grid[spot.r][spot.c]=null; doBomb(spot.r,spot.c,x,y); madeMatch=true; Haptics.fire(Haptics.bomb,true); }
@@ -1186,8 +1203,8 @@ function onStop(p){
         const mx=matches.reduce((s,m)=>s+m.b.x,0)/matches.length,my=matches.reduce((s,m)=>s+m.b.y,0)/matches.length;
         for(let r=0;r<grid.length;r++)for(let c=0;c<grid[r].length;c++){const b=grid[r][c];if(!b)continue;if(Math.sqrt((b.x-mx)**2+(b.y-my)**2)<R*4)b.hit();}
         triggerRipple(mx,my);
-        if(matches.length>=5){shake(9);flashAlpha=.35;flashCol='#FFF';shockwaves.push(new Shockwave(mx,my));for(let i=0;i<40;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,H*.3));ftexts.push(new FloatText(W/2,H*.44,'AMAZING! 🎉','#FFE040',true));mascot=new Mascot(Math.random()<.5?'left':'right');mascot.expr='surprised';}
-        else if(matches.length>=4){shake(5);shockwaves.push(new Shockwave(mx,my));ftexts.push(new FloatText(W/2,CNY-R*4,'GREAT! ✨','#FFE040',false));if(!mascot){mascot=new Mascot(Math.random()<.5?'left':'right');mascot.expr='happy';}}
+        if(matches.length>=5){hitstopT=5;shake(9);flashAlpha=.35;flashCol='#FFF';shockwaves.push(new Shockwave(mx,my));for(let i=0;i<40;i++)confettiArr.push(new ConfettiPiece(Math.random()*W,H*.3));ftexts.push(new FloatText(W/2,H*.44,'AMAZING! 🎉','#FFE040',true));mascot=new Mascot(Math.random()<.5?'left':'right');mascot.expr='surprised';}
+        else if(matches.length>=4){hitstopT=3;shake(5);shockwaves.push(new Shockwave(mx,my));ftexts.push(new FloatText(W/2,CNY-R*4,'GREAT! ✨','#FFE040',false));if(!mascot){mascot=new Mascot(Math.random()<.5?'left':'right');mascot.expr='happy';}}
         else if(combo>=2&&!mascot)mascot=new Mascot(Math.random()<.5?'left':'right');
         if(combo>1){ftexts.push(new FloatText(W/2,CNY-R*7,`${combo}x COMBO!`,'#FF6EB4',combo>=3));pushComboStack(combo);playFX('combo');Haptics.fire(combo>=4?Haptics.combo4:combo>=3?Haptics.combo3:Haptics.combo2);}
         score+=pts;animators.score.bounce=1;
@@ -1339,6 +1356,7 @@ function loop(t){
   requestAnimationFrame(loop);
   if(t-lastFrameTime<16)return;
   lastFrameTime=t;
+  if(hitstopT>0){hitstopT--;return;} // freeze-frame: canvas holds last frame for a few ticks on big impacts
   cx.shadowBlur=0;cx.shadowColor='transparent';
   // Process frame-based pending actions
   for(let i=pendingActions.length-1;i>=0;i--){
