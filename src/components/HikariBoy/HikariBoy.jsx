@@ -8,6 +8,7 @@
  * - Labels below system buttons (MENU/SELECT/START)
  * - Responsive: iPhone Regular / Pro / Pro Max
  * - FoodKart GP integrated as game #10
+ * - Graveyard Shift (voxel FPS zombie survival) integrated as game #11
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -32,7 +33,7 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 10 games
+// Curated game library - 11 games
 // ALL GAMES UNLOCKED FOR NOW
 const GAMES = [
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
@@ -45,6 +46,7 @@ const GAMES = [
   { id: 'brick-breaker',  name: 'Block Smash',        cover: '/games/brick-breaker/cover.png',      url: '/games/brick-breaker/index.html',    proOnly: false, shellPause: false },
   { id: 'pocket-tanks',   name: 'Pocket Tanks',       cover: '/games/pocket-tanks/cover.webp',      url: '/games/pocket-tanks/index.html',     proOnly: false, shellPause: false },
   { id: 'food-kart',      name: 'FoodKart GP',        cover: '/games/food-kart/cover.webp',        url: '/games/food-kart/index.html',        proOnly: false, shellPause: false },
+  { id: 'graveyard-shift', name: 'Graveyard Shift',   cover: '/games/graveyard-shift/cover.svg',   url: '/games/graveyard-shift/index.html',  proOnly: false, shellPause: false },
 ];
 
 export function HikariBoy({
