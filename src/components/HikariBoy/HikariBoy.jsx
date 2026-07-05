@@ -33,7 +33,7 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 12 games
+// Curated game library - 13 games
 // ALL GAMES UNLOCKED FOR NOW
 const GAMES = [
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
@@ -48,6 +48,7 @@ const GAMES = [
   { id: 'food-kart',      name: 'FoodKart GP',        cover: '/games/food-kart/cover.webp',        url: '/games/food-kart/index.html',        proOnly: false, shellPause: false },
   { id: 'graveyard-shift', name: 'Graveyard Shift',   cover: '/games/graveyard-shift/cover.svg',   url: '/games/graveyard-shift/index.html',  proOnly: false, shellPause: false },
   { id: 'light-cycles',   name: 'Light Cycles',       cover: '/games/light-cycles/cover.svg',      url: '/games/light-cycles/index.html',     proOnly: false, shellPause: false },
+  { id: 'rush-hour',      name: 'Rush Hour',          cover: '/games/rush-hour/cover.svg',         url: '/games/rush-hour/index.html',        proOnly: false, shellPause: false },
 ];
 
 export function HikariBoy({
