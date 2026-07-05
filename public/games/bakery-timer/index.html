@@ -34,6 +34,51 @@
 const TAU = Math.PI * 2;
 const W = 320, H = 240;
 
+/* FX layer — pure visual juice: crumb bursts, rings, float texts, flashes. No gameplay impact. */
+const FXG = { parts: [], texts: [], rings: [], flashA: 0, flashCol: '#fff', steam: [] };
+for (let i = 0; i < 10; i++) FXG.steam.push({ x: 40 + Math.random() * 240, y: 240 + Math.random() * 200, v: 9 + Math.random() * 12, s: 1 + Math.random() * 2 });
+function fxCrumbs(x, y, cols, n, spd) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = (spd || 80) * (0.4 + Math.random() * 0.9);
+    FXG.parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, life: 0.4 + Math.random() * 0.4,
+                     col: cols[(Math.random() * cols.length) | 0], sz: 1.5 + Math.random() * 2.5, rot: Math.random() * 6, rv: (Math.random() - 0.5) * 12 });
+  }
+}
+function fxRing(x, y, col) { FXG.rings.push({ x, y, r: 8, life: 0.4, col }); }
+function fxPts(x, y, txt, col, size) { FXG.texts.push({ x, y, txt, col, size: size || 11, life: 0.9, vy: -34 }); }
+function fxFlash(col, a) { FXG.flashCol = col; FXG.flashA = a; }
+function fxUpdateDraw(dt) {
+  for (let i = FXG.parts.length - 1; i >= 0; i--) {
+    const p = FXG.parts[i]; p.life -= dt;
+    if (p.life <= 0) { FXG.parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 210 * dt; p.rot += p.rv * dt;
+    ctx.save(); ctx.globalAlpha = Math.min(1, p.life * 2.5); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+    ctx.fillStyle = p.col; ctx.fillRect(-p.sz / 2, -p.sz / 2, p.sz, p.sz); ctx.restore();
+  }
+  for (let i = FXG.rings.length - 1; i >= 0; i--) {
+    const r = FXG.rings[i]; r.life -= dt; r.r += 190 * dt;
+    if (r.life <= 0) { FXG.rings.splice(i, 1); continue; }
+    ctx.globalAlpha = r.life * 2.2; ctx.strokeStyle = r.col; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.textAlign = 'center';
+  for (let i = FXG.texts.length - 1; i >= 0; i--) {
+    const t = FXG.texts[i]; t.life -= dt;
+    if (t.life <= 0) { FXG.texts.splice(i, 1); continue; }
+    t.y += t.vy * dt; t.vy *= 0.92;
+    ctx.globalAlpha = Math.min(1, t.life * 2);
+    ctx.font = 'bold ' + t.size + 'px monospace';
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.fillText(t.txt, t.x + 1, t.y + 1);
+    ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y);
+  }
+  ctx.globalAlpha = 1;
+  if (FXG.flashA > 0.01) {
+    ctx.fillStyle = FXG.flashCol; ctx.globalAlpha = FXG.flashA;
+    ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+    FXG.flashA *= 0.85;
+  }
+}
+
 const C = {
   bg: '#FFFDD0', wood: '#C19A6B', woodDk: '#A0784A',
   choc: '#4B3621', green: '#4ADE80', greenDk: '#22C55E',
@@ -243,6 +288,13 @@ const Game = {
       this.animTimer = 0.5;
       this.state = 'HIT_ANIM';
       this.zoomTarget = 1.07;
+      { // golden crumb burst + ring + points popup at the needle tip
+        const tx = 160 + Math.cos(this.needleAngle) * 61, ty = 118 + Math.sin(this.needleAngle) * 61;
+        fxCrumbs(tx, ty, ['#F4D03F', '#E8A33C', '#FFF3C0', '#C97B2D'], 14 + this.combo * 2, 90);
+        fxRing(tx, ty, '#F4D03F'); fxRing(160, 118, 'rgba(244,208,63,.7)');
+        fxPts(tx, ty - 12, '+' + pts, '#F4D03F', this.multiplier >= 3 ? 15 : 11);
+        fxFlash('#F4D03F', 0.10 + Math.min(0.12, this.combo * 0.02));
+      }
       for (let i = 0; i < 3; i++) if (i < this.lives) this.breadBob[i] = 1;
       if (this.combo >= 2) setTimeout(() => playCombo(this.combo), 60);
       else playHit();
@@ -263,6 +315,10 @@ const Game = {
         const newSpeed = 1.0 + (this.level - 1) * 0.12;
         setMusicSpeed(newSpeed);
         setTimeout(() => playLevelUp(), 220);
+        fxPts(160, 100, 'LEVEL ' + this.level + '!', '#FFF', 20);
+        fxCrumbs(160, 118, ['#F4D03F', '#FFF', '#E8A33C'], 26, 130);
+        fxRing(160, 118, '#FFF');
+        fxFlash('#FFF3C0', 0.28);
       }
     } else {
       const lostIdx = this.lives - 1;
@@ -279,6 +335,12 @@ const Game = {
       this.breadSpinActive = lostIdx;
       this.breadSpin[lostIdx] = 0;
       playMiss();
+      { // burnt smoke puff + red flash at the needle tip
+        const tx = 160 + Math.cos(this.needleAngle) * 61, ty = 118 + Math.sin(this.needleAngle) * 61;
+        fxCrumbs(tx, ty, ['#5a4a42', '#3a2f2a', '#8a6a5a', '#EF4444'], 16, 70);
+        fxPts(tx, ty - 12, 'BURNT!', '#EF4444', 12);
+        fxFlash('#B02020', 0.22);
+      }
     }
   },
 
@@ -402,6 +464,31 @@ const Game = {
       case 'MISS_ANIM': this.drawGame(); break;
       case 'PAUSED': this.drawGame(); this.drawPause(); break;
       case 'GAME_OVER': this.drawGameOver(); break;
+    }
+    const inGame = this.state === 'PLAYING' || this.state === 'HIT_ANIM' || this.state === 'MISS_ANIM' || this.state === 'COUNTDOWN';
+    if (inGame) {
+      // rising oven steam wisps
+      ctx.fillStyle = 'rgba(255,248,235,.14)';
+      for (const s of FXG.steam) {
+        s.y -= s.v / 60; s.x += Math.sin(s.y * 0.03) * 0.25;
+        if (s.y < -6) { s.y = H + 8; s.x = 40 + Math.random() * 240; }
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI * 2); ctx.fill();
+      }
+      // combo heat aura around the dial (2+ warm gold, 4+ blazing)
+      if (this.combo >= 2) {
+        const hot = this.combo >= 4, pu = Math.sin(this.time * 7) * 0.5 + 0.5;
+        const rr = 76 + pu * 4;
+        const g = ctx.createRadialGradient(160, 118, rr - 14, 160, 118, rr + 12);
+        g.addColorStop(0, 'rgba(255,150,40,0)');
+        g.addColorStop(0.6, hot ? 'rgba(255,80,20,' + (0.20 + pu * 0.16) + ')' : 'rgba(244,208,63,' + (0.14 + pu * 0.10) + ')');
+        g.addColorStop(1, 'rgba(255,150,40,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(160, 118, rr + 12, 0, Math.PI * 2); ctx.fill();
+      }
+      fxUpdateDraw(1 / 60);
+      // vignette
+      const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, H * 0.85);
+      vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(40,15,5,.35)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
     }
     ctx.restore();
   },
