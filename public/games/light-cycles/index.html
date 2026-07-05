@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Light Cycles</title>
+<style>
+  html,body { margin:0; padding:0; background:#050505; height:100%; overflow:hidden; touch-action:none; -webkit-user-select:none; user-select:none; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  canvas { image-rendering:pixelated; background:#050505; }
+  .ovl { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:20;
+         background:rgba(2,4,8,.88); color:#c8f6ff; font-family:'Courier New',monospace; text-align:center; }
+  .ovl h1 { font-size:34px; letter-spacing:6px; color:#16f2e7; text-shadow:0 0 18px #16f2e7, 0 0 40px rgba(22,242,231,.5); margin:0 0 4px; }
+  .ovl h2 { font-size:13px; letter-spacing:4px; color:#e23fff; text-shadow:0 0 12px #e23fff; margin:0 0 18px; }
+  .ovl p { font-size:11px; line-height:1.9; color:#9fd8e8; max-width:300px; margin:0 0 20px; }
+  .ovl b { color:#fff; }
+  .bigbtn { font-family:inherit; font-size:15px; letter-spacing:3px; padding:12px 34px; color:#050505; background:#16f2e7;
+            border:none; border-radius:4px; font-weight:bold; box-shadow:0 0 22px rgba(22,242,231,.7); }
+  #die.ovl h1 { color:#ff8a1e; text-shadow:0 0 18px #ff8a1e; }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="480" height="360"></canvas></div>
+
+<div class="ovl" id="start">
+  <h1>LIGHT CYCLES</h1>
+  <h2>FOODSPOT GRID</h2>
+  <p><b>D-PAD LEFT / RIGHT</b> — snap 90° turns<br>
+     Bikes auto-accelerate. Trails are walls.<br>
+     Cut off the enemy programs. Last bike riding wins.<br><br>
+     <b>DESKTOP:</b> ← → or A / D to turn</p>
+  <button class="bigbtn" id="btnStart">ENTER THE GRID</button>
+</div>
+<div class="ovl" id="die" style="display:none">
+  <h1>DEREZZED</h1>
+  <p id="dieStats"></p>
+  <button class="bigbtn" id="btnRe">RE-ENTER</button>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   LIGHT CYCLES — Tron-style survival racer for the HikariBoy cabinet.
+
+   Architecture (60fps rule):
+   - PHYSICS: flat 2D grid in a Uint8Array (GS x GS). Bikes advance one
+     cell per fixed timestep and write their id into the array. All
+     collision + AI lookahead reads this array only. Zero allocation
+     in the step loop.
+   - RENDERING: trails are stored separately as polylines (turn corners
+     only). The renderer projects those few segments + the floor grid
+     into a behind-the-bike 3D perspective. It never scans the grid.
+   ===================================================================== */
+
+const W = 480, H = 360;
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+function fit() {
+  const s = Math.min(innerWidth / W, innerHeight / H);
+  cv.style.width = (W * s) + 'px'; cv.style.height = (H * s) + 'px';
+}
+addEventListener('resize', fit); fit();
+
+/* ---------------- AUDIO (tiny procedural sfx) ---------------- */
+let AC = null, master = null;
+function initAudio() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  try { AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain(); master.gain.value = 0.35; master.connect(AC.destination); } catch (e) {}
+}
+function beep(f0, f1, dur, type, vol) {
+  if (!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, AC.currentTime);
+  o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), AC.currentTime + dur);
+  g.gain.setValueAtTime(vol, AC.currentTime); g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+  o.connect(g); g.connect(master); o.start(); o.stop(AC.currentTime + dur);
+}
+const sndTurn  = () => beep(880, 660, 0.06, 'square', 0.15);
+const sndCrash = () => { beep(220, 40, 0.5, 'sawtooth', 0.5); beep(160, 30, 0.6, 'square', 0.4); };
+const sndWin   = () => { beep(523, 523, 0.1, 'square', 0.3); setTimeout(() => beep(659, 659, 0.1, 'square', 0.3), 110); setTimeout(() => beep(784, 1046, 0.25, 'square', 0.3), 220); };
+const sndKill  = () => beep(440, 1200, 0.12, 'square', 0.25);
+
+/* ---------------- GRID PHYSICS ---------------- */
+const GS = 96;                       // grid cells per side
+const G = new Uint8Array(GS * GS);   // 0 = empty, 1..4 = bike trail ids
+const DX = [1, 0, -1, 0], DZ = [0, 1, 0, -1]; // dir: 0=+x 1=+z 2=-x 3=-z
+const STEP = 0.085;                  // seconds per cell (~11.7 cells/s)
+
+const COLS = [
+  { c: '#16f2e7', glow: 'rgba(22,242,231,'  }, // player cyan
+  { c: '#e23fff', glow: 'rgba(226,63,255,'  }, // enemy magenta
+  { c: '#ff8a1e', glow: 'rgba(255,138,30,'  }, // enemy orange
+  { c: '#b6ff2e', glow: 'rgba(182,255,46,'  }, // enemy acid green
+];
+
+const bikes = []; // [0] is always the player
+function mkBike(i, x, z, dir) {
+  return { id: i + 1, x, z, dir, alive: true, col: COLS[i],
+           pts: [[x, z]],           // polyline corners (render layer reads this)
+           px: x, pz: z,            // previous cell, for interpolation
+           ai: i > 0 };
+}
+
+let score = 0, lives = 3, round = 1, gs = 'start';
+let acc = 0, shakeT = 0, flashT = 0, msgT = 0, msgTxt = '';
+const parts = []; // explosion particles
+
+function resetRound(keepRound) {
+  G.fill(0); bikes.length = 0; parts.length = 0;
+  const m = 14;
+  bikes.push(mkBike(0, GS >> 1, m, 1));                       // player, heading +z
+  const nE = round >= 2 ? 3 : 2;
+  const spots = [[m, GS >> 1, 0], [GS - m, GS >> 1, 2], [GS >> 1, GS - m, 3]];
+  for (let i = 0; i < nE; i++) bikes.push(mkBike(i + 1, spots[i][0], spots[i][1], spots[i][2]));
+  for (const b of bikes) G[b.z * GS + b.x] = b.id;
+  acc = 0; turnQ.length = 0;
+}
+
+function eraseTrail(b) { // derez: free the grid cells so the arena opens back up
+  for (let i = 0; i < G.length; i++) if (G[i] === b.id) G[i] = 0;
+}
+
+function explode(b) {
+  for (let i = 0; i < 26; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 9;
+    parts.push({ x: b.x, y: 0.4, z: b.z, vx: Math.cos(a) * sp, vy: 2 + Math.random() * 7, vz: Math.sin(a) * sp,
+                 life: 0.6 + Math.random() * 0.5, col: b.col.c });
+  }
+  shakeT = 0.35; flashT = 0.12; sndCrash();
+}
+
+function crash(b) {
+  b.alive = false; explode(b); eraseTrail(b);
+  if (b === bikes[0]) {
+    lives--;
+    if (lives <= 0) { gs = 'over'; setTimeout(showGameOver, 900); }
+    else { msgTxt = 'DEREZZED'; msgT = 1.4; setTimeout(() => { if (gs === 'playing') resetRound(true); }, 1400); }
+  } else {
+    if (bikes[0].alive) { score += 250; sndKill(); }
+    if (bikes[0].alive && bikes.every((k, i) => i === 0 || !k.alive)) {
+      score += 1000; msgTxt = 'GRID CLEAR  +1000'; msgT = 1.6; sndWin();
+      round++; setTimeout(() => { if (gs === 'playing') resetRound(false); }, 1600);
+    }
+  }
+}
+
+/* how many free cells ahead of (x,z) facing d — the AI's only world sense */
+function rayFree(x, z, d, max) {
+  for (let i = 1; i <= max; i++) {
+    const nx = x + DX[d] * i, nz = z + DZ[d] * i;
+    if (nx < 1 || nz < 1 || nx >= GS - 1 || nz >= GS - 1 || G[nz * GS + nx]) return i - 1;
+  }
+  return max;
+}
+
+function aiThink(b) {
+  const L = (b.dir + 3) % 4, R = (b.dir + 1) % 4;
+  const fS = rayFree(b.x, b.z, b.dir, 14), fL = rayFree(b.x, b.z, L, 14), fR = rayFree(b.x, b.z, R, 14);
+  const p = bikes[0];
+  // intercept point: where the player will be in ~8 steps
+  const tx = p.x + DX[p.dir] * 8, tz = p.z + DZ[p.dir] * 8;
+  const aggr = (d) => {
+    const nx = b.x + DX[d] * 4, nz = b.z + DZ[d] * 4;
+    return -(Math.abs(tx - nx) + Math.abs(tz - nz)) * 0.35; // closer to cut-off point = better
+  };
+  const danger = fS <= 3;
+  if (!danger && Math.random() > 0.07) return; // mostly hold course unless threatened
+  let best = b.dir, bestSc = fS * 2 + aggr(b.dir) + (danger ? -30 : 1.5); // slight straight bias
+  const sL = fL * 2 + aggr(L) + (fL === 0 ? -999 : 0);
+  const sR = fR * 2 + aggr(R) + (fR === 0 ? -999 : 0);
+  if (sL > bestSc) { bestSc = sL; best = L; }
+  if (sR > bestSc) { bestSc = sR; best = R; }
+  b.dir = best;
+}
+
+/* one fixed physics tick: every bike advances exactly one cell */
+function stepWorld() {
+  const p = bikes[0];
+  if (p.alive && turnQ.length) {
+    const t = turnQ.shift(); // +1 right, -1 left (90° snaps only; 180° impossible by construction)
+    p.dir = (p.dir + (t > 0 ? 1 : 3)) % 4;
+    p.pts.push([p.x, p.z]); sndTurn();
+  }
+  for (const b of bikes) {
+    if (!b.alive) continue;
+    if (b.ai) {
+      const od = b.dir; aiThink(b);
+      if (b.dir !== od) b.pts.push([b.x, b.z]);
+    }
+    b.px = b.x; b.pz = b.z;
+    const nx = b.x + DX[b.dir], nz = b.z + DZ[b.dir];
+    if (nx < 1 || nz < 1 || nx >= GS - 1 || nz >= GS - 1 || G[nz * GS + nx]) { crash(b); continue; }
+    b.x = nx; b.z = nz; G[nz * GS + nx] = b.id;
+  }
+  if (p.alive) score += 1;
+}
+
+/* ---------------- INPUT ---------------- */
+const turnQ = [];
+function queueTurn(t) { if (gs === 'playing' && turnQ.length < 2) turnQ.push(t); }
+addEventListener('keydown', e => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') queueTurn(-1);
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') queueTurn(1);
+});
+// touch: tap left/right half of the screen to turn
+addEventListener('touchstart', e => {
+  if (gs !== 'playing') return;
+  const t = e.changedTouches[0];
+  queueTurn(t.clientX < innerWidth / 2 ? -1 : 1);
+}, { passive: true });
+
+/* HikariBoy shell contract: postMessage BUTTON_PRESS/BUTTON_RELEASE.
+   dpad-left/right = turn. dpad-down is ignored — that's the 180° guard.
+   a/start restart after game over, select exits to the shell. */
+const isEmbedded = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+addEventListener('message', e => {
+  const d = e.data || {};
+  if (d.type === 'AUDIO_UNLOCK' || d.type === 'AUDIO_RESUME') { initAudio(); return; }
+  if (d.type !== 'BUTTON_PRESS') return;
+  initAudio();
+  if (gs === 'start') { startGame(); return; }
+  if (gs === 'over' && (d.button === 'a' || d.button === 'start')) { restart(); return; }
+  if (d.button === 'dpad-left') queueTurn(-1);
+  else if (d.button === 'dpad-right') queueTurn(1);
+  else if (d.button === 'select' && isEmbedded) window.parent.postMessage({ type: 'GAME_EXIT', gameId: 'light-cycles' }, '*');
+});
+
+/* ---------------- 3D PROJECTION ---------------- */
+const FOC = W * 0.62, HOR = H * 0.40, CAMBACK = 4.6, CAMH = 2.35, WALLH = 0.85, NEAR = 0.22;
+let camX = 0, camZ = 0, Fx = 0, Fz = 1, Rx = 1, Rz = 0;
+
+function updateCam() {
+  const p = bikes[0];
+  const f = Math.min(1, acc / STEP);
+  const hx = p.px + (p.x - p.px) * f, hz = p.pz + (p.z - p.pz) * f;
+  Fx = DX[p.dir]; Fz = DZ[p.dir]; Rx = Fz; Rz = -Fx;   // camera snaps with the bike
+  camX = hx - Fx * CAMBACK; camZ = hz - Fz * CAMBACK;
+}
+/* world (wx, wy, wz) -> camera space (lat, wy, fwd) */
+function camSp(wx, wz, out) {
+  const dx = wx - camX, dz = wz - camZ;
+  out[0] = dx * Rx + dz * Rz; out[1] = dx * Fx + dz * Fz;
+}
+function px_(lat, y, fwd) { return W / 2 + lat * FOC / fwd; }
+function py_(lat, y, fwd) { return HOR + (CAMH - y) * FOC / fwd; }
+
+const _a = [0, 0], _b = [0, 0];
+/* clip a floor segment to the near plane and draw it */
+function line3(x1, z1, x2, z2, y) {
+  camSp(x1, z1, _a); camSp(x2, z2, _b);
+  let l1 = _a[0], f1 = _a[1], l2 = _b[0], f2 = _b[1];
+  if (f1 < NEAR && f2 < NEAR) return;
+  if (f1 < NEAR) { const t = (NEAR - f1) / (f2 - f1); l1 += (l2 - l1) * t; f1 = NEAR; }
+  if (f2 < NEAR) { const t = (NEAR - f2) / (f1 - f2); l2 += (l1 - l2) * t; f2 = NEAR; }
+  ctx.moveTo(px_(l1, y, f1), py_(l1, y, f1));
+  ctx.lineTo(px_(l2, y, f2), py_(l2, y, f2));
+}
+
+/* ---------------- RENDER ---------------- */
+const wallList = []; // reused each frame: {x1,z1,x2,z2,col,d}
+function drawFrame(dt) {
+  ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, W, H);
+  updateCam();
+  let shx = 0, shy = 0;
+  if (shakeT > 0) { shakeT -= dt; shx = (Math.random() - 0.5) * 7 * shakeT * 3; shy = (Math.random() - 0.5) * 7 * shakeT * 3; }
+  ctx.save(); ctx.translate(shx, shy);
+
+  // horizon glow
+  const hg = ctx.createLinearGradient(0, HOR - 26, 0, HOR + 30);
+  hg.addColorStop(0, 'rgba(22,120,160,0)'); hg.addColorStop(0.55, 'rgba(30,170,210,.20)'); hg.addColorStop(1, 'rgba(22,120,160,0)');
+  ctx.fillStyle = hg; ctx.fillRect(0, HOR - 26, W, 56);
+  // distant city blocks (cheap wireframe skyline, parallax with camera lateral pos)
+  const camLat = camX * Rx + camZ * Rz;
+  ctx.strokeStyle = 'rgba(90,200,230,.28)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = 0; i < 9; i++) {
+    const bx = ((i * 131 + 40 - camLat * 2.5) % (W + 160) + (W + 160)) % (W + 160) - 80;
+    const bw = 22 + (i * 37) % 30, bh = 14 + (i * 53) % 34;
+    ctx.rect(bx, HOR - bh, bw, bh);
+    if (i % 2 === 0) ctx.rect(bx + bw * 0.3, HOR - bh - 8, bw * 0.4, 8);
+  }
+  ctx.stroke();
+
+  // floor grid — lines are world-anchored so motion reads correctly
+  const camFwd = camX * Fx + camZ * Fz;
+  ctx.strokeStyle = 'rgba(22,170,190,.30)'; ctx.lineWidth = 1; ctx.beginPath();
+  for (let i = Math.floor(camLat) - 22; i <= Math.floor(camLat) + 22; i++) {
+    // world line parallel to travel at lateral coordinate i
+    const wx1 = camX + (i - camLat) * Rx + NEAR * Fx, wz1 = camZ + (i - camLat) * Rz + NEAR * Fz;
+    const wx2 = wx1 + 46 * Fx, wz2 = wz1 + 46 * Fz;
+    line3(wx1, wz1, wx2, wz2, 0);
+  }
+  for (let j = Math.floor(camFwd); j <= Math.floor(camFwd) + 46; j += 2) {
+    const wx1 = camX + (j - camFwd) * Fx - 23 * Rx, wz1 = camZ + (j - camFwd) * Fz - 23 * Rz;
+    const wx2 = wx1 + 46 * Rx, wz2 = wz1 + 46 * Rz;
+    line3(wx1, wz1, wx2, wz2, 0);
+  }
+  ctx.stroke();
+
+  // collect wall segments: arena boundary + every bike trail polyline
+  wallList.length = 0;
+  const pushWall = (x1, z1, x2, z2, col, h) => {
+    camSp((x1 + x2) / 2, (z1 + z2) / 2, _a);
+    if (_a[1] < -2 || _a[1] > 50 || Math.abs(_a[0]) > 34) return;
+    wallList.push({ x1, z1, x2, z2, col, d: _a[1], h });
+  };
+  const B = GS - 1, bc = { c: '#1a6fae', glow: 'rgba(40,140,220,' };
+  pushWall(1, 1, B, 1, bc, 1.6); pushWall(B, 1, B, B, bc, 1.6); pushWall(B, B, 1, B, bc, 1.6); pushWall(1, B, 1, 1, bc, 1.6);
+  for (const b of bikes) {
+    if (!b.alive) continue;
+    const f = Math.min(1, acc / STEP);
+    const hx = b.px + (b.x - b.px) * f, hz = b.pz + (b.z - b.pz) * f;
+    for (let i = 0; i < b.pts.length; i++) {
+      const p0 = b.pts[i], p1 = (i + 1 < b.pts.length) ? b.pts[i + 1] : [hx, hz];
+      if (p0[0] !== p1[0] || p0[1] !== p1[1]) pushWall(p0[0], p0[1], p1[0], p1[1], b.col, WALLH);
+    }
+  }
+  wallList.sort((a, b) => b.d - a.d); // painter: far to near
+
+  for (const w of wallList) {
+    camSp(w.x1, w.z1, _a); camSp(w.x2, w.z2, _b);
+    let l1 = _a[0], f1 = _a[1], l2 = _b[0], f2 = _b[1];
+    if (f1 < NEAR && f2 < NEAR) continue;
+    if (f1 < NEAR) { const t = (NEAR - f1) / (f2 - f1); l1 += (l2 - l1) * t; f1 = NEAR; }
+    if (f2 < NEAR) { const t = (NEAR - f2) / (f1 - f2); l2 += (l1 - l2) * t; f2 = NEAR; }
+    const ax = px_(l1, 0, f1), ay = py_(l1, 0, f1), bx2 = px_(l2, 0, f2), by2 = py_(l2, 0, f2);
+    const atx = ax, aty = py_(l1, w.h, f1), btx = bx2, bty = py_(l2, w.h, f2);
+    ctx.fillStyle = w.col.glow + '0.30)';
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx2, by2); ctx.lineTo(btx, bty); ctx.lineTo(atx, aty); ctx.closePath(); ctx.fill();
+    // bright top edge with soft glow underlay
+    ctx.strokeStyle = w.col.glow + '0.35)'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(atx, aty); ctx.lineTo(btx, bty); ctx.stroke();
+    ctx.strokeStyle = w.col.c; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(atx, aty); ctx.lineTo(btx, bty); ctx.stroke();
+    // floor reflection line
+    ctx.strokeStyle = w.col.glow + '0.5)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx2, by2); ctx.stroke();
+  }
+
+  // enemy bikes (billboards, depth-checked against nothing — they're on top of their own trail head)
+  for (let bi = 1; bi < bikes.length; bi++) {
+    const b = bikes[bi]; if (!b.alive) continue;
+    const f = Math.min(1, acc / STEP);
+    camSp(b.px + (b.x - b.px) * f, b.pz + (b.z - b.pz) * f, _a);
+    if (_a[1] < NEAR || _a[1] > 46) continue;
+    drawCycle(px_(_a[0], 0, _a[1]), py_(_a[0], 0, _a[1]), FOC / _a[1] * 0.020, b.col, false);
+  }
+  // player bike — fixed distance from camera, drawn with lean on queued turns
+  if (bikes[0].alive) drawCycle(W / 2, py_(0, 0, CAMBACK), FOC / CAMBACK * 0.020, bikes[0].col, true);
+
+  // particles
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.z += p.vz * dt; p.y += p.vy * dt; p.vy -= 22 * dt;
+    if (p.y < 0) { p.y = 0; p.vy *= -0.4; }
+    camSp(p.x, p.z, _a);
+    if (_a[1] < NEAR) continue;
+    const s = Math.max(1, FOC / _a[1] * 0.09);
+    ctx.globalAlpha = Math.min(1, p.life * 2);
+    ctx.fillStyle = p.col;
+    ctx.fillRect(px_(_a[0], p.y, _a[1]) - s / 2, py_(_a[0], p.y, _a[1]) - s / 2, s, s);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  if (flashT > 0) { flashT -= dt; ctx.fillStyle = 'rgba(255,255,255,' + (flashT * 4) + ')'; ctx.fillRect(0, 0, W, H); }
+
+  // HUD
+  ctx.font = 'bold 16px "Courier New", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = '#0a2e33'; ctx.fillText('SCORE: ' + score, 15, 13); ctx.fillText('LIVES: ' + lives, 15, 31);
+  ctx.fillStyle = '#c9f8ff'; ctx.fillText('SCORE: ' + score, 14, 12); ctx.fillText('LIVES: ' + lives, 14, 30);
+  ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(160,230,245,.55)'; ctx.fillText('RND ' + round, W - 12, 12);
+  if (msgT > 0) {
+    msgT -= dt;
+    ctx.textAlign = 'center'; ctx.font = 'bold 22px "Courier New", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,' + Math.min(1, msgT * 2) + ')';
+    ctx.fillText(msgTxt, W / 2, H * 0.30);
+  }
+  ctx.drawImage(crt, 0, 0);
+}
+
+function drawCycle(x, y, s, col, isPlayer) {
+  // s ~= pixels per world-decimeter; cartoon neon light cycle, rear view
+  const wR = 9 * s, bw = 13 * s, bh = 26 * s;
+  ctx.save(); ctx.translate(x, y);
+  if (isPlayer && turnQ.length) ctx.rotate(turnQ[0] * 0.10);
+  // glow pool
+  ctx.fillStyle = col.glow + '0.18)';
+  ctx.beginPath(); ctx.ellipse(0, 0, bw * 1.7, wR * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+  // rear wheel (big glowing ring)
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1.5, 3.2 * s);
+  ctx.beginPath(); ctx.arc(0, -wR, wR, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = col.glow + '0.35)'; ctx.lineWidth = Math.max(2.5, 6 * s);
+  ctx.beginPath(); ctx.arc(0, -wR, wR, 0, Math.PI * 2); ctx.stroke();
+  // hub
+  ctx.fillStyle = '#0a0a0e'; ctx.beginPath(); ctx.arc(0, -wR, wR * 0.55, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 1.6 * s);
+  ctx.beginPath(); ctx.arc(0, -wR, wR * 0.55, 0, Math.PI * 2); ctx.stroke();
+  // body / canopy rising over the wheel
+  ctx.fillStyle = '#0c0c12';
+  ctx.beginPath();
+  ctx.moveTo(-bw * 0.42, -wR * 0.7);
+  ctx.quadraticCurveTo(-bw * 0.5, -bh * 0.92, 0, -bh);
+  ctx.quadraticCurveTo(bw * 0.5, -bh * 0.92, bw * 0.42, -wR * 0.7);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 1.8 * s); ctx.stroke();
+  // canopy stripe + tail light
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 2.4 * s);
+  ctx.beginPath(); ctx.moveTo(0, -bh * 0.96); ctx.lineTo(0, -wR * 0.9); ctx.stroke();
+  ctx.fillStyle = col.c;
+  ctx.fillRect(-bw * 0.30, -wR * 1.55, bw * 0.60, Math.max(1.5, 2.6 * s));
+  ctx.restore();
+}
+
+/* pre-rendered CRT overlay: scanlines + vignette (drawn once, blitted per frame) */
+const crt = document.createElement('canvas'); crt.width = W; crt.height = H;
+{
+  const c = crt.getContext('2d');
+  c.fillStyle = 'rgba(0,0,0,.14)';
+  for (let y = 0; y < H; y += 3) c.fillRect(0, y, W, 1);
+  const v = c.createRadialGradient(W / 2, H / 2, H * 0.42, W / 2, H / 2, H * 0.82);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.5)');
+  c.fillStyle = v; c.fillRect(0, 0, W, H);
+}
+
+/* ---------------- GAME LOOP (fixed-step physics, free-running render) ---------------- */
+let last = 0;
+function loop(t) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (t - last) / 1000 || 0.016); last = t;
+  if (gs === 'playing' || gs === 'over') {
+    if (gs === 'playing') {
+      acc += dt;
+      while (acc >= STEP) { acc -= STEP; stepWorld(); }
+    }
+    drawFrame(dt);
+  }
+}
+requestAnimationFrame(loop);
+
+function startGame() {
+  initAudio();
+  document.getElementById('start').style.display = 'none';
+  score = 0; lives = 3; round = 1; gs = 'playing';
+  resetRound(false);
+}
+function showGameOver() {
+  document.getElementById('dieStats').textContent = 'FINAL SCORE: ' + score + '  —  ROUND ' + round;
+  document.getElementById('die').style.display = 'flex';
+}
+function restart() { document.getElementById('die').style.display = 'none'; startGame(); }
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnRe').addEventListener('click', restart);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) last = performance.now(); });
+</script>
+</body>
+</html>
