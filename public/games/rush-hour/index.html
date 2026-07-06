@@ -88,10 +88,11 @@ let hopT = 0, boostT = 0, boostMeter = 0, crashT = 0, crashSpin = 0, shakeT = 0;
 const obs = [];   // {z, lane, type}  types: 0 cone  1 car  2 slick  3 barrier
 const pick = [];  // {z, lane, type}  types: 0 pizza  1 burger
 const poles = []; // roadside telephone poles {z, side}
+const laneQ = []; // queued lane changes (+1 right, -1 left)
 let spawnZ = 40, poleZ = 10, msgT = 0, msgTxt = '';
 const parts = [];
 
-const BASESPD = 26, MAXSPD = 62;
+const BASESPD = 20, MAXSPD = 56;
 
 function resetGame() {
   dist = 0; score = 0; spd = BASESPD; lane = 1; carX = 0;
@@ -147,6 +148,13 @@ function update(dt) {
     if (crashT <= 0) { gs = 'over'; showGameOver(); }
     return;
   }
+  // process queued lane changes
+  if (laneQ.length) {
+    const d = laneQ.shift();
+    const n = Math.max(0, Math.min(2, lane + d));
+    if (n !== lane) { lane = n; sndLane(); }
+  }
+
   const topSpd = MAXSPD + Math.min(18, dist / 200);
   spd = Math.min(spd + 3.2 * dt, boostT > 0 ? topSpd * 1.5 : Math.min(topSpd, BASESPD + dist / 45));
   if (boostT > 0) boostT -= dt;
@@ -329,6 +337,8 @@ function drawFrame(dt) {
     ctx.fillStyle = '#1a0a14'; ctx.fillText(msgTxt, W / 2 + 2, H * 0.28 + 2);
     ctx.fillStyle = '#ffd843'; ctx.fillText(msgTxt, W / 2, H * 0.28);
   }
+  // spider crawling up the left edge
+  drawSpider();
   ctx.drawImage(crt, 0, 0);
 }
 
@@ -406,8 +416,50 @@ function drawPickup(x, y, s, t) {
   }
 }
 
+function drawSpider() {
+  // spider climbing up from bottom-left, cycles every 8 seconds
+  const cycle = 8000;
+  const time = performance.now() % cycle;
+  const progress = time / cycle; // 0 to 1
+  const spiderY = H - 20 - progress * (H - 20); // climbs from bottom to top
+  const spiderX = 14;
+  const legLength = 6;
+  const bodySize = 4;
+
+  ctx.save();
+  ctx.strokeStyle = '#8b4513';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+
+  // legs (simple diagonal lines)
+  for (let i = 0; i < 4; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const offset = (i < 2 ? 0 : 3);
+    ctx.beginPath();
+    ctx.moveTo(spiderX, spiderY + offset);
+    ctx.lineTo(spiderX + side * legLength, spiderY + offset - legLength);
+    ctx.stroke();
+  }
+
+  // body
+  ctx.fillStyle = '#5c3d3d';
+  ctx.beginPath();
+  ctx.arc(spiderX, spiderY, bodySize, 0, Math.PI * 2);
+  ctx.fill();
+
+  // web strand being climbed
+  ctx.strokeStyle = 'rgba(180,180,200,.3)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(spiderX, H);
+  ctx.lineTo(spiderX, 0);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawCar(dt) {
-  const carY = H - 38, s = 46;
+  const carY = H - 38, s = 56;
   const lean = (LANEX[lane] - carX) * 0.16;
   const hop = hopT > 0 ? Math.sin(Math.min(1, (0.75 - hopT) / 0.75) * Math.PI) * 30 : 0;
   const bounce = Math.sin(performance.now() * 0.02) * (spd / MAXSPD) * 1.4;
@@ -461,7 +513,7 @@ const crt = document.createElement('canvas'); crt.width = W; crt.height = H;
 }
 
 /* ---------------- INPUT ---------------- */
-function goLane(d) { if (gs !== 'playing' || crashT > 0) return; const n = Math.max(0, Math.min(2, lane + d)); if (n !== lane) { lane = n; sndLane(); } }
+function goLane(d) { if (gs !== 'playing' || crashT > 0) return; if (laneQ.length < 3) laneQ.push(d); }
 function doHop() { if (gs === 'playing' && crashT <= 0 && hopT <= 0) { hopT = 0.75; sndHop(); } }
 function doBoost() {
   if (gs === 'playing' && crashT <= 0 && boostMeter >= 1) {
