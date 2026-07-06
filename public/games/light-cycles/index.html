@@ -22,6 +22,9 @@
 </head>
 <body>
 <div id="wrap"><canvas id="cv" width="480" height="360"></canvas></div>
+<audio id="bgMusic" loop volume="0.6">
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
 
 <div class="ovl" id="start">
   <h1><span class="kanji">光</span>DAISUKE RACER</h1>
@@ -517,6 +520,8 @@ function startGame() {
   initAudio();
   document.getElementById('start').style.display = 'none';
   score = 0; lives = 3; round = 1; gs = 'playing';
+  const music = document.getElementById('bgMusic');
+  if (music) music.play().catch(() => {});
   resetRound(false);
 }
 function showGameOver() {
