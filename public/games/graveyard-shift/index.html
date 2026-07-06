@@ -66,6 +66,9 @@
 </head>
 <body>
 <canvas id="c"></canvas>
+<audio id="bgMusic" loop volume="0.6">
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
 
 <div class="demotag hud">FOODSPOT: GRAVEYARD SHIFT — DEMO v0.1 — ALL AREAS UNLOCKED</div>
 <div id="vig" class="hud"></div>
@@ -1271,6 +1274,8 @@ document.getElementById('btnStart').addEventListener('click', () => {
     screen.orientation?.lock?.('landscape').catch(()=>{});
   }
   startRound(1);
+  const music = document.getElementById('bgMusic');
+  if (music) music.play().catch(() => {});
 });
 renderer.domElement.addEventListener('click', () => {
   if (started && !isTouch && !document.pointerLockElement && !player.dead) renderer.domElement.requestPointerLock?.();
