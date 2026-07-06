@@ -337,8 +337,8 @@ function drawFrame(dt) {
     ctx.fillStyle = '#1a0a14'; ctx.fillText(msgTxt, W / 2 + 2, H * 0.28 + 2);
     ctx.fillStyle = '#ffd843'; ctx.fillText(msgTxt, W / 2, H * 0.28);
   }
-  // spider crawling up the left edge
-  drawSpider();
+  // speedometer gauge (bottom-left)
+  drawSpeedometer();
   ctx.drawImage(crt, 0, 0);
 }
 
@@ -416,44 +416,52 @@ function drawPickup(x, y, s, t) {
   }
 }
 
-function drawSpider() {
-  // spider climbing up from bottom-left, cycles every 8 seconds
-  const cycle = 8000;
-  const time = performance.now() % cycle;
-  const progress = time / cycle; // 0 to 1
-  const spiderY = H - 20 - progress * (H - 20); // climbs from bottom to top
-  const spiderX = 14;
-  const legLength = 6;
-  const bodySize = 4;
+function drawSpeedometer() {
+  const gaugeX = 36, gaugeY = H - 32, gaugeR = 24;
+  const topSpd = MAXSPD + Math.min(18, dist / 200);
+  const speedRatio = Math.min(1, spd / topSpd);
+  const needleAngle = -Math.PI / 2 + speedRatio * Math.PI; // sweeps from left to right (180°)
 
   ctx.save();
-  ctx.strokeStyle = '#8b4513';
-  ctx.lineWidth = 1.2;
-  ctx.lineCap = 'round';
 
-  // legs (simple diagonal lines)
-  for (let i = 0; i < 4; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const offset = (i < 2 ? 0 : 3);
-    ctx.beginPath();
-    ctx.moveTo(spiderX, spiderY + offset);
-    ctx.lineTo(spiderX + side * legLength, spiderY + offset - legLength);
-    ctx.stroke();
-  }
-
-  // body
-  ctx.fillStyle = '#5c3d3d';
-  ctx.beginPath();
-  ctx.arc(spiderX, spiderY, bodySize, 0, Math.PI * 2);
+  // gauge background circle
+  ctx.fillStyle = 'rgba(20,10,20,.7)';
+  ctx.beginPath(); ctx.arc(gaugeX, gaugeY, gaugeR, 0, Math.PI * 2);
   ctx.fill();
-
-  // web strand being climbed
-  ctx.strokeStyle = 'rgba(180,180,200,.3)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(spiderX, H);
-  ctx.lineTo(spiderX, 0);
+  ctx.strokeStyle = '#ffd843'; ctx.lineWidth = 2;
   ctx.stroke();
+
+  // color arc: green → yellow → red
+  const arcStart = -Math.PI / 2, arcEnd = Math.PI / 2;
+  const greenEnd = arcStart + (arcEnd - arcStart) * 0.3;
+  const yellowEnd = arcStart + (arcEnd - arcStart) * 0.7;
+
+  // green zone
+  ctx.strokeStyle = '#00ff00'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(gaugeX, gaugeY, gaugeR - 4, arcStart, greenEnd);
+  ctx.stroke();
+
+  // yellow zone
+  ctx.strokeStyle = '#ffff00';
+  ctx.beginPath(); ctx.arc(gaugeX, gaugeY, gaugeR - 4, greenEnd, yellowEnd);
+  ctx.stroke();
+
+  // red zone
+  ctx.strokeStyle = '#ff3333';
+  ctx.beginPath(); ctx.arc(gaugeX, gaugeY, gaugeR - 4, yellowEnd, arcEnd);
+  ctx.stroke();
+
+  // needle
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(gaugeX, gaugeY);
+  ctx.lineTo(gaugeX + Math.cos(needleAngle) * (gaugeR - 6), gaugeY + Math.sin(needleAngle) * (gaugeR - 6));
+  ctx.stroke();
+
+  // center dot
+  ctx.fillStyle = '#ffd843';
+  ctx.beginPath(); ctx.arc(gaugeX, gaugeY, 3, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.restore();
 }
