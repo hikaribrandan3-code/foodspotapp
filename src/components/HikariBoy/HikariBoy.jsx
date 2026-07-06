@@ -47,7 +47,7 @@ const GAMES = [
   { id: 'pocket-tanks',   name: 'Pocket Tanks',       cover: '/games/pocket-tanks/cover.webp',      url: '/games/pocket-tanks/index.html',     proOnly: false, shellPause: false },
   { id: 'food-kart',      name: 'FoodKart GP',        cover: '/games/food-kart/cover.webp',        url: '/games/food-kart/index.html',        proOnly: false, shellPause: false },
   { id: 'graveyard-shift', name: 'Graveyard Shift',   cover: '/games/graveyard-shift/cover.svg',   url: '/games/graveyard-shift/index.html',  proOnly: false, shellPause: false },
-  { id: 'light-cycles',   name: 'Light Cycles',       cover: '/games/light-cycles/cover.svg',      url: '/games/light-cycles/index.html',     proOnly: false, shellPause: false },
+  { id: 'light-cycles',   name: 'Daisuke Racer',       cover: '/games/light-cycles/cover.svg',      url: '/games/light-cycles/index.html',     proOnly: false, shellPause: false },
   { id: 'rush-hour',      name: 'Rush Hour',          cover: '/games/rush-hour/cover.svg',         url: '/games/rush-hour/index.html',        proOnly: false, shellPause: false },
 ];
 

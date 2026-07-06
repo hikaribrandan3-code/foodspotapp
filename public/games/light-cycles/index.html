@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Light Cycles</title>
+<title>Daisuke Racer</title>
 <style>
   html,body { margin:0; padding:0; background:#050505; height:100%; overflow:hidden; touch-action:none; -webkit-user-select:none; user-select:none; }
   #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
@@ -11,6 +11,7 @@
   .ovl { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:20;
          background:rgba(2,4,8,.88); color:#c8f6ff; font-family:'Courier New',monospace; text-align:center; }
   .ovl h1 { font-size:34px; letter-spacing:6px; color:#16f2e7; text-shadow:0 0 18px #16f2e7, 0 0 40px rgba(22,242,231,.5); margin:0 0 4px; }
+  .ovl h1 .kanji { font-size:.5em; opacity:.8; margin:0 10px; text-shadow:0 0 14px currentColor; }
   .ovl h2 { font-size:13px; letter-spacing:4px; color:#e23fff; text-shadow:0 0 12px #e23fff; margin:0 0 18px; }
   .ovl p { font-size:11px; line-height:1.9; color:#9fd8e8; max-width:300px; margin:0 0 20px; }
   .ovl b { color:#fff; }
@@ -23,7 +24,7 @@
 <div id="wrap"><canvas id="cv" width="480" height="360"></canvas></div>
 
 <div class="ovl" id="start">
-  <h1>LIGHT CYCLES</h1>
+  <h1><span class="kanji">光</span>DAISUKE RACER</h1>
   <h2>FOODSPOT GRID</h2>
   <p><b>D-PAD LEFT / RIGHT</b> — snap 90° turns<br>
      Bikes auto-accelerate. Trails are walls.<br>
@@ -32,7 +33,7 @@
   <button class="bigbtn" id="btnStart">ENTER THE GRID</button>
 </div>
 <div class="ovl" id="die" style="display:none">
-  <h1>DEREZZED</h1>
+  <h1><span class="kanji">終</span>CRASHED</h1>
   <p id="dieStats"></p>
   <button class="bigbtn" id="btnRe">RE-ENTER</button>
 </div>
@@ -40,7 +41,8 @@
 <script>
 'use strict';
 /* =====================================================================
-   LIGHT CYCLES — Tron-style survival racer for the HikariBoy cabinet.
+   DAISUKE RACER (formerly "Light Cycles") — Tron-style survival racer
+   for the HikariBoy cabinet.
 
    Architecture (60fps rule):
    - PHYSICS: flat 2D grid in a Uint8Array (GS x GS). Bikes advance one
@@ -179,8 +181,10 @@ function stepWorld() {
   const p = bikes[0];
   if (p.alive && turnQ.length) {
     const t = turnQ.shift(); // +1 right, -1 left (90° snaps only; 180° impossible by construction)
-    p.dir = (p.dir + (t > 0 ? 1 : 3)) % 4;
-    camAngle += (t > 0 ? 1 : -1) * (Math.PI / 2); // unbounded accumulator — camDisplayAngle eases toward this each frame, no wraparound
+    // dir+1 is a CCW rotation in world space (math convention), which is a
+    // driver-relative LEFT turn — so "right" (t>0) must subtract, not add.
+    p.dir = (p.dir + (t > 0 ? 3 : 1)) % 4;
+    camAngle += (t > 0 ? -1 : 1) * (Math.PI / 2); // unbounded accumulator — camDisplayAngle eases toward this each frame, no wraparound
     p.pts.push([p.x, p.z]); sndTurn();
   }
   for (const b of bikes) {
@@ -261,6 +265,44 @@ function line3(x1, z1, x2, z2, y) {
   ctx.lineTo(px_(l2, y, f2), py_(l2, y, f2));
 }
 
+/* ---------------- MINIMAP ---------------- */
+/* Top-down gauge so the boundary/trail layout is always legible, not just
+   guessed from the 3D perspective. Reads bikes[].pts (a handful of corner
+   points per bike) — never scans the grid. */
+const MAP_S = 62, MAP_X = W - MAP_S - 14, MAP_Y = 34;
+function drawMinimap() {
+  ctx.save();
+  ctx.fillStyle = 'rgba(4,14,22,.6)';
+  ctx.fillRect(MAP_X - 4, MAP_Y - 4, MAP_S + 8, MAP_S + 8);
+  ctx.strokeStyle = 'rgba(63,208,255,.85)'; ctx.lineWidth = 1.4;
+  ctx.strokeRect(MAP_X, MAP_Y, MAP_S, MAP_S);
+
+  const sc = MAP_S / GS;
+  const mx = (x) => MAP_X + x * sc, mz = (z) => MAP_Y + z * sc;
+
+  for (const b of bikes) {
+    if (!b.alive) continue;
+    ctx.strokeStyle = b.col.c; ctx.lineWidth = 1.2; ctx.beginPath();
+    ctx.moveTo(mx(b.pts[0][0]), mz(b.pts[0][1]));
+    for (let i = 1; i < b.pts.length; i++) ctx.lineTo(mx(b.pts[i][0]), mz(b.pts[i][1]));
+    ctx.lineTo(mx(b.x), mz(b.z));
+    ctx.stroke();
+  }
+  for (const b of bikes) {
+    if (!b.alive) continue;
+    const isPlayer = b === bikes[0];
+    ctx.fillStyle = isPlayer ? '#fff' : b.col.c;
+    ctx.beginPath(); ctx.arc(mx(b.x), mz(b.z), isPlayer ? 2.6 : 2, 0, Math.PI * 2); ctx.fill();
+    if (isPlayer) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.3; ctx.beginPath();
+      ctx.moveTo(mx(b.x), mz(b.z));
+      ctx.lineTo(mx(b.x + DX[b.dir] * 6), mz(b.z + DZ[b.dir] * 6));
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 /* ---------------- RENDER ---------------- */
 const wallList = []; // reused each frame: {x1,z1,x2,z2,col,d}
 function drawFrame(dt) {
@@ -305,11 +347,24 @@ function drawFrame(dt) {
   wallList.length = 0;
   const pushWall = (x1, z1, x2, z2, col, h) => {
     camSp((x1 + x2) / 2, (z1 + z2) / 2, _a);
-    if (_a[1] < -2 || _a[1] > 50 || Math.abs(_a[0]) > 34) return;
+    // 130 comfortably covers the arena diagonal (~133 at GS=96) so the
+    // boundary is never distance-culled from anywhere inside the grid.
+    if (_a[1] < -2 || _a[1] > 130 || Math.abs(_a[0]) > 34) return;
     wallList.push({ x1, z1, x2, z2, col, d: _a[1], h });
   };
-  const B = GS - 1, bc = { c: '#1a6fae', glow: 'rgba(40,140,220,' };
-  pushWall(1, 1, B, 1, bc, 1.6); pushWall(B, 1, B, B, bc, 1.6); pushWall(B, B, 1, B, bc, 1.6); pushWall(1, B, 1, 1, bc, 1.6);
+  // arena boundary — chunked into short segments (not one pushWall per whole
+  // edge) so each piece is culled by its own distance. A single midpoint
+  // check on a 94-unit edge meant the near corner of a wall could vanish
+  // just because the far end pulled the average out past the cull range —
+  // the boundary read as absent/"ghost" until you were nearly on top of it.
+  const B = GS - 1, bwc = { c: '#3fd0ff', glow: 'rgba(60,200,255,' }, bSeg = 8;
+  const pushBoundary = (x1, z1, x2, z2) => {
+    const dx = x2 - x1, dz = z2 - z1, n = Math.ceil(Math.hypot(dx, dz) / bSeg);
+    for (let i = 0; i < n; i++) {
+      pushWall(x1 + dx * i / n, z1 + dz * i / n, x1 + dx * (i + 1) / n, z1 + dz * (i + 1) / n, bwc, 2.4);
+    }
+  };
+  pushBoundary(1, 1, B, 1); pushBoundary(B, 1, B, B); pushBoundary(B, B, 1, B); pushBoundary(1, B, 1, 1);
   for (const b of bikes) {
     if (!b.alive) continue;
     const f = Math.min(1, acc / STEP);
@@ -347,10 +402,10 @@ function drawFrame(dt) {
     const f = Math.min(1, acc / STEP);
     camSp(b.px + (b.x - b.px) * f, b.pz + (b.z - b.pz) * f, _a);
     if (_a[1] < NEAR || _a[1] > 46) continue;
-    drawCycle(px_(_a[0], 0, _a[1]), py_(_a[0], 0, _a[1]), FOC / _a[1] * 0.020, b.col, false);
+    drawCycle(px_(_a[0], 0, _a[1]), py_(_a[0], 0, _a[1]), FOC / _a[1] * 0.028, b.col, false);
   }
   // player bike — fixed distance from camera, drawn with lean on queued turns
-  if (bikes[0].alive) drawCycle(W / 2, py_(0, 0, CAMBACK), FOC / CAMBACK * 0.020, bikes[0].col, true);
+  if (bikes[0].alive) drawCycle(W / 2, py_(0, 0, CAMBACK), FOC / CAMBACK * 0.028, bikes[0].col, true);
 
   // particles
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -375,6 +430,7 @@ function drawFrame(dt) {
   ctx.fillStyle = '#0a2e33'; ctx.fillText('SCORE: ' + score, 15, 13); ctx.fillText('LIVES: ' + lives, 15, 31);
   ctx.fillStyle = '#c9f8ff'; ctx.fillText('SCORE: ' + score, 14, 12); ctx.fillText('LIVES: ' + lives, 14, 30);
   ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(160,230,245,.55)'; ctx.fillText('RND ' + round, W - 12, 12);
+  drawMinimap();
   if (msgT > 0) {
     msgT -= dt;
     ctx.textAlign = 'center'; ctx.font = 'bold 22px "Courier New", monospace';
@@ -385,35 +441,49 @@ function drawFrame(dt) {
 }
 
 function drawCycle(x, y, s, col, isPlayer) {
-  // s ~= pixels per world-decimeter; cartoon neon light cycle, rear view
-  const wR = 9 * s, bw = 13 * s, bh = 26 * s;
+  // s ~= pixels per world-decimeter; cartoon neon light cycle, rear view.
+  // Widened stance + sharper canopy + side flares for a bulkier silhouette.
+  const wR = 10 * s, bw = 15.5 * s, bh = 30 * s;
   ctx.save(); ctx.translate(x, y);
   if (isPlayer && turnQ.length) ctx.rotate(turnQ[0] * 0.10);
   // glow pool
-  ctx.fillStyle = col.glow + '0.18)';
-  ctx.beginPath(); ctx.ellipse(0, 0, bw * 1.7, wR * 0.75, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = col.glow + '0.22)';
+  ctx.beginPath(); ctx.ellipse(0, 0, bw * 1.85, wR * 0.8, 0, 0, Math.PI * 2); ctx.fill();
   // rear wheel (big glowing ring)
-  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1.5, 3.2 * s);
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1.8, 3.6 * s);
   ctx.beginPath(); ctx.arc(0, -wR, wR, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = col.glow + '0.35)'; ctx.lineWidth = Math.max(2.5, 6 * s);
+  ctx.strokeStyle = col.glow + '0.4)'; ctx.lineWidth = Math.max(3, 7 * s);
   ctx.beginPath(); ctx.arc(0, -wR, wR, 0, Math.PI * 2); ctx.stroke();
   // hub
   ctx.fillStyle = '#0a0a0e'; ctx.beginPath(); ctx.arc(0, -wR, wR * 0.55, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 1.6 * s);
   ctx.beginPath(); ctx.arc(0, -wR, wR * 0.55, 0, Math.PI * 2); ctx.stroke();
-  // body / canopy rising over the wheel
+  // side flares — squared shoulders jutting out at the canopy base for a
+  // bulkier, more aggressive stance
+  ctx.fillStyle = '#0c0c12'; ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 1.5 * s);
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * bw * 0.40, -wR * 0.75);
+    ctx.lineTo(side * bw * 0.68, -wR * 0.95);
+    ctx.lineTo(side * bw * 0.55, -wR * 1.35);
+    ctx.lineTo(side * bw * 0.30, -wR * 1.15);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // body / canopy rising over the wheel — sharper nose
   ctx.fillStyle = '#0c0c12';
   ctx.beginPath();
-  ctx.moveTo(-bw * 0.42, -wR * 0.7);
-  ctx.quadraticCurveTo(-bw * 0.5, -bh * 0.92, 0, -bh);
-  ctx.quadraticCurveTo(bw * 0.5, -bh * 0.92, bw * 0.42, -wR * 0.7);
+  ctx.moveTo(-bw * 0.38, -wR * 0.7);
+  ctx.quadraticCurveTo(-bw * 0.46, -bh * 0.95, 0, -bh);
+  ctx.quadraticCurveTo(bw * 0.46, -bh * 0.95, bw * 0.38, -wR * 0.7);
   ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 1.8 * s); ctx.stroke();
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1.2, 2 * s); ctx.stroke();
   // canopy stripe + tail light
-  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 2.4 * s);
-  ctx.beginPath(); ctx.moveTo(0, -bh * 0.96); ctx.lineTo(0, -wR * 0.9); ctx.stroke();
+  ctx.strokeStyle = col.c; ctx.lineWidth = Math.max(1, 2.6 * s);
+  ctx.beginPath(); ctx.moveTo(0, -bh * 0.97); ctx.lineTo(0, -wR * 0.9); ctx.stroke();
+  ctx.fillStyle = col.glow + '0.5)';
+  ctx.fillRect(-bw * 0.36, -wR * 1.62, bw * 0.72, Math.max(2, 3.6 * s));
   ctx.fillStyle = col.c;
-  ctx.fillRect(-bw * 0.30, -wR * 1.55, bw * 0.60, Math.max(1.5, 2.6 * s));
+  ctx.fillRect(-bw * 0.30, -wR * 1.55, bw * 0.60, Math.max(1.8, 2.8 * s));
   ctx.restore();
 }
 
