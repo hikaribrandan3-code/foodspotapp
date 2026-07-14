@@ -84,9 +84,9 @@ const sndBoost = () => beep(120, 900, 0.5, 'sawtooth', 0.25);
 const sndCrash = () => { beep(200, 35, 0.55, 'sawtooth', 0.5); beep(150, 28, 0.65, 'square', 0.4); };
 
 /* ---------------- GAME STATE ---------------- */
-const LANEX = [-2.3, 0, 2.3], ROADW = 4.2;   // lane centers + road half-width (world units)
+const LANEX = [-4.0, -2.3, 0, 2.3, 4.0], ROADW = 4.2;   // lane centers + road half-width (world units)
 let gs = 'start', dist = 0, score = 0, spd = 0, best = +(localStorage.getItem('rushhour_best') || 0);
-let lane = 1, carX = 0;                       // carX follows LANEX[lane] smoothly
+let lane = 2, carX = 0;                       // carX follows LANEX[lane] smoothly
 let hopT = 0, boostT = 0, boostMeter = 0, crashT = 0, crashSpin = 0, shakeT = 0;
 const obs = [];   // {z, lane, type}  types: 0 cone  1 car  2 slick  3 barrier
 const pick = [];  // {z, lane, type}  types: 0 pizza  1 burger
@@ -98,7 +98,7 @@ const parts = [];
 const BASESPD = 20, MAXSPD = 56;
 
 function resetGame() {
-  dist = 0; score = 0; spd = BASESPD; lane = 1; carX = 0;
+  dist = 0; score = 0; spd = BASESPD; lane = 2; carX = 0;
   hopT = 0; boostT = 0; boostMeter = 0; crashT = 0; crashSpin = 0;
   obs.length = 0; pick.length = 0; poles.length = 0; parts.length = 0;
   spawnZ = 45; poleZ = 10; msgT = 0;
@@ -154,7 +154,7 @@ function update(dt) {
   // process queued lane changes
   if (laneQ.length) {
     const d = laneQ.shift();
-    const n = Math.max(0, Math.min(2, lane + d));
+    const n = Math.max(0, Math.min(4, lane + d));
     if (n !== lane) { lane = n; sndLane(); }
   }
 
@@ -470,7 +470,7 @@ function drawSpeedometer() {
 }
 
 function drawCar(dt) {
-  const carY = H - 38, s = 56;
+  const carY = H - 38, s = 72;
   const lean = (LANEX[lane] - carX) * 0.16;
   const hop = hopT > 0 ? Math.sin(Math.min(1, (0.75 - hopT) / 0.75) * Math.PI) * 30 : 0;
   const bounce = Math.sin(performance.now() * 0.02) * (spd / MAXSPD) * 1.4;
