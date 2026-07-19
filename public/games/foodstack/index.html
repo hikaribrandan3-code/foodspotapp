@@ -31,7 +31,7 @@ const GAME_W=448,GAME_H=520;
     gc.style.width=w+'px';gc.style.height=h+'px';
     gc.style.position='absolute';
     gc.style.left=(((window.innerWidth-w)/2)-45)+'px';
-    gc.style.top='0';
+    gc.style.top=((window.innerHeight-h)/2)+'px';
   }
   rs();window.addEventListener('resize',rs);
 })();
