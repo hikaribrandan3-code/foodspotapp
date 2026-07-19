@@ -10,6 +10,7 @@
  * - FoodKart GP integrated as game #10
  * - Graveyard Shift (voxel FPS zombie survival) integrated as game #11
  * - Food Wheel (Simon-style memory game) integrated as game #14
+ * - FoodStack (Tetris-style block stacking) integrated as game #15
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -34,7 +35,7 @@ const BUTTONS = {
   R: 'r'
 };
 
-// Curated game library - 14 games
+// Curated game library - 15 games
 // ALL GAMES UNLOCKED FOR NOW
 const GAMES = [
   { id: 'burger-stack',   name: 'Burger Stack',       cover: '/games/burger-stack/cover.webp',     url: '/games/burger-stack/index.html',     proOnly: false },
@@ -51,6 +52,7 @@ const GAMES = [
   { id: 'light-cycles',   name: 'Daisuke Racer',       cover: '/games/light-cycles/cover.webp',     url: '/games/light-cycles/index.html',     proOnly: false, shellPause: false },
   { id: 'rush-hour',      name: 'Rush Hour',          cover: '/games/rush-hour/cover.webp',        url: '/games/rush-hour/index.html',        proOnly: false, shellPause: false },
   { id: 'food-wheel',     name: 'Food Wheel',         cover: '/games/food-wheel/cover.svg',        url: '/games/food-wheel/index.html',       proOnly: false },
+  { id: 'foodstack',      name: 'FoodStack',          cover: '/games/foodstack/cover.svg',         url: '/games/foodstack/index.html',        proOnly: false },
 ];
 
 export function HikariBoy({
