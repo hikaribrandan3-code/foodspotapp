@@ -178,6 +178,7 @@ const ShareFood       = lazy(() => import('./pages/customer/ShareFood.jsx'))
 const PerfectPour     = lazy(() => import('./pages/customer/PerfectPour.jsx'))
 const Info            = lazy(() => import('./pages/customer/Info.jsx'))
 const EventThemeWrapper = lazy(() => import('./components/EventThemeWrapper.jsx'))
+const SportsThemeWrapper = lazy(() => import('./components/SportsThemeWrapper.jsx'))
 const Wall            = lazy(() => import('./pages/customer/Wall.jsx'))
 const Arcade          = lazy(() => import('./pages/customer/Arcade.jsx'))
 const Session         = lazy(() => import('./pages/customer/Session.jsx'))
@@ -198,6 +199,7 @@ const RewardsManager = lazy(() => import('./pages/owner/RewardsManager.jsx'))
 const Settings = lazy(() => import('./pages/owner/Settings.jsx'))
 const Analytics = lazy(() => import('./pages/owner/Analytics.jsx'))
 const Events = lazy(() => import('./pages/owner/Events.jsx'))
+const Sports = lazy(() => import('./pages/owner/Sports.jsx'))
 const FoodSpotAI = lazy(() => import('./pages/owner/FoodSpotAI.jsx'))
 const CustomerContacts = lazy(() => import('./pages/owner/CustomerContacts.jsx'))
 const Dashboard = lazy(() => import('./pages/owner/Dashboard.jsx'))
@@ -734,6 +736,7 @@ function App() {
                                             <Route path="/:tenantSlug/events" element={<Suspense fallback={<LazyFallback />}><EventThemeWrapper /></Suspense>} />
                                             <Route path="/:tenantSlug/events/ticket" element={<Suspense fallback={<LazyFallback />}><EventThemeWrapper /></Suspense>} />
                                             <Route path="/:tenantSlug/promos" element={<Suspense fallback={<LazyFallback />}><EventThemeWrapper /></Suspense>} />
+                                            <Route path="/:tenantSlug/deportes" element={<Suspense fallback={<LazyFallback />}><SportsThemeWrapper /></Suspense>} />
                                             <Route path="/:tenantSlug/reservation" element={<Suspense fallback={<LazyFallback />}><ReservationPage /></Suspense>} />
                                             <Route path="/:tenantSlug/wall" element={<Suspense fallback={<LazyFallback />}><Wall /></Suspense>} />
                                             <Route path="/:tenantSlug/session" element={<Suspense fallback={<LazyFallback />}><Session config={safeConfig} /></Suspense>} />
@@ -755,6 +758,7 @@ function App() {
                                             <Route path="/:tenantSlug/owner/rewards" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><RewardsManager /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/settings" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Settings config={safeConfig} /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/events" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Events /></Suspense></ProtectedRoute>} />
+                                            <Route path="/:tenantSlug/owner/deportes" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Sports /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/analytics" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><Analytics orders={orders} /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/contacts" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><CustomerContacts /></Suspense></ProtectedRoute>} />
                                             <Route path="/:tenantSlug/owner/ai" element={<ProtectedRoute requiredRole="owner"><Suspense fallback={<LazyFallback />}><FoodSpotAI /></Suspense></ProtectedRoute>} />
@@ -770,7 +774,7 @@ function App() {
                                     {pathname.startsWith('/admin') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/owner') && <BackendNav role="owner" useRoutes={true} />}
                                     {pathname.startsWith('/staff') && <BackendNav role="staff" useRoutes={true} />}
-                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && !pathname.includes('/web') && <BottomNavGuard config={safeConfig} />}
+                                    {!pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/start-trial') && !pathname.startsWith('/owner') && !pathname.startsWith('/staff') && !pathname.includes('/arcade') && !pathname.includes('/events') && !pathname.includes('/promos') && !pathname.includes('/deportes') && !pathname.includes('/web') && <BottomNavGuard config={safeConfig} />}
                                 </div>
                             </SessionProvider>
                         </CartProvider>

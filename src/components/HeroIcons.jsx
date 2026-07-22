@@ -46,6 +46,13 @@ export const EventsIcon = () => (
     </svg>
 )
 
+// --- DEPORTES: Trophy (shown instead of Events when sports_settings.enabled) ---
+export const SportsIcon = () => (
+    <svg width="36" height="36" viewBox="0 0 256 256" fill="currentColor">
+        <path d="M232,64H208V56a16,16,0,0,0-16-16H64A16,16,0,0,0,48,56v8H24A16,16,0,0,0,8,80v16a40,40,0,0,0,40,40h3.65A80.13,80.13,0,0,0,120,191.61V216H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16H136V191.61A80.13,80.13,0,0,0,204.35,136H208a40,40,0,0,0,40-40V80A16,16,0,0,0,232,64ZM48,120A24,24,0,0,1,24,96V80H48v32q0,4.05.34,8Zm160-16.53c0,32.36-26.28,58.8-58.61,59.53A56.34,56.34,0,0,1,64,120V56H192v47.36ZM232,96a24,24,0,0,1-24,24h-.34q.34-3.95.34-8V80h24Z"></path>
+    </svg>
+)
+
 // Icon map for dynamic lookup
 export const HERO_ICONS = {
     menu: MenuIcon,
@@ -53,7 +60,8 @@ export const HERO_ICONS = {
     events: EventsIcon,
     game: GameIcon,
     promos: EventsIcon, // Alias for backward compatibility
-    rewards: EventsIcon // Alias for backward compatibility
+    rewards: EventsIcon, // Alias for backward compatibility
+    deportes: SportsIcon
 }
 
 // Labels for display
@@ -63,5 +71,6 @@ export const HERO_LABELS = {
     events: 'Eventos',
     game: 'Juego',
     promos: 'Eventos', // Alias for backward compatibility
-    rewards: 'Eventos' // Alias for backward compatibility
+    rewards: 'Eventos', // Alias for backward compatibility
+    deportes: 'Deportes'
 }

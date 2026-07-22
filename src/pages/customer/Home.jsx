@@ -7,7 +7,8 @@ import { supabase } from '../../lib/supabaseClient'
 import { getSession } from '../../utils/auth.js'
 // import { isInDemoMode } from '../../utils/demoSession.js' // REMOVED: File deleted
 const isInDemoMode = () => false; // STUB: Demo mode disabled for now
-import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon, EventsIcon } from '../../components/HeroIcons.jsx'
+import { MenuIcon, DeliveryIcon, PromosIcon, GameIcon, EventsIcon, SportsIcon } from '../../components/HeroIcons.jsx'
+import { useSportsSettings } from '../../hooks/useSportsSettings'
 import HeaderClamp from '../../components/HeaderClamp.jsx'
 // 🚀 LAZY LOAD: HikariBoy only when arcade is opened
 const HikariBoy = lazy(() => import('../../components/HikariBoy/HikariBoy').then(mod => ({ default: mod.HikariBoy })))
@@ -55,6 +56,18 @@ function Home({ config: configProp }) {
     const { tenantData, loading, businessId, refreshTenantData: refreshTenant } = useTenant()
     const tenantSlug = tenantData?.slug
     const { lang, t } = useLanguage()
+
+    // 🏆 SPORTS TOGGLE: when enabled, the Eventos hero slot renders Deportes instead
+    const { settings: sportsSettings } = useSportsSettings(businessId)
+    const sportsEnabled = !!sportsSettings?.enabled
+    const resolveAction = useCallback((actionId) => {
+        const base = ACTION_DEFINITIONS[actionId]
+        if (!base) return null
+        if (sportsEnabled && (actionId === 'events' || actionId === 'promos' || actionId === 'rewards')) {
+            return { icon: SportsIcon, label: 'deportes', path: 'deportes' }
+        }
+        return base
+    }, [sportsEnabled])
 
     // 🌉 BRIDGE: Use centralized config normalizer (Phase 2 Alignment)
     // 🛡️ MOAT PROTECTION: useMemo guards against re-renders for drag physics
@@ -902,7 +915,7 @@ function Home({ config: configProp }) {
                 }}
             >
                 {localPrimaryActions.map((actionId, index) => {
-                    const action = ACTION_DEFINITIONS[actionId]
+                    const action = resolveAction(actionId)
                     if (!action) return null
 
                     const Icon = action.icon
@@ -1085,7 +1098,7 @@ function Home({ config: configProp }) {
                 let draggedContent = null
 
                 if (dragState.gridType === 'actions') {
-                    const action = ACTION_DEFINITIONS[dragState.itemId]
+                    const action = resolveAction(dragState.itemId)
                     if (!action) return null
                     const Icon = action.icon
                     draggedContent = (

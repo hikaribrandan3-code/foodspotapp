@@ -42,6 +42,36 @@ body.event-route.dark {
 }
 
 /* =============================================
+   SPORTS MODULE ISOLATION (Deportes)
+   Overrides global foodspot styles when on /deportes
+   ============================================= */
+body.sports-route {
+  --color-primary: #10b981 !important;
+  --color-accent: #84cc16 !important;
+  --text-primary: #1e293b !important;
+  --text-secondary: #64748b !important;
+  --border-color: #e2e8f0 !important;
+  --canvas-bg: #f0fdf4 !important;
+  --canvas-text: #1e293b !important;
+  background-color: #f0fdf4 !important;
+  color: #1e293b !important;
+  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+}
+body.sports-route.dark {
+  --color-primary: #10b981 !important;
+  --color-accent: #a3e635 !important;
+  --text-primary: #f1f5f9 !important;
+  --text-secondary: #94a3b8 !important;
+  --border-color: #1e293b !important;
+  --canvas-bg: #020617 !important;
+  --canvas-text: #f1f5f9 !important;
+  background-color: #020617 !important;
+  color: #f1f5f9 !important;
+}
+
+/* =============================================
    FOODSPOT - Design System
    Mobile-first: 360×640 primary viewport
    ============================================= */

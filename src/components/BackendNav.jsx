@@ -33,7 +33,7 @@ import { useTenant } from '../contexts/TenantContext'
 import { useTier } from '../hooks/useTier'
 import { supabase } from '../lib/supabaseClient'
 
-const PRO_ONLY_TABS = ['analytics', 'ai', 'events']
+const PRO_ONLY_TABS = ['analytics', 'ai', 'events', 'sports']
 
 // ============================================
 // TAB CONFIGURATIONS BY ROLE
@@ -45,6 +45,7 @@ const OWNER_TABS = [
     { id: 'branding', label: 'Branding', route: null },
     { id: 'orders', label: 'Orders', route: null, hasBadge: true },
     { id: 'events', label: 'Events', route: null, desktopOnly: true },
+    { id: 'sports', label: 'Deportes', route: null, desktopOnly: true },
     { id: 'analytics', label: 'Analytics', route: null },
     { id: 'contacts', label: 'CRM', route: null, desktopOnly: true },
     { id: 'ai', label: 'AI', route: null },
@@ -82,6 +83,7 @@ const getRouteMaps = (tenantSlug) => ({
         branding: `/${tenantSlug}/owner/branding`,
         orders: `/${tenantSlug}/owner/delivery`,
         events: `/${tenantSlug}/owner/events`,
+        sports: `/${tenantSlug}/owner/deportes`,
         analytics: `/${tenantSlug}/owner/analytics`,
         contacts: `/${tenantSlug}/owner/contacts`,
         ai: `/${tenantSlug}/owner/ai`,
@@ -149,6 +151,16 @@ function TabIcon({ id, active }) {
                 <line x1="8" y1="18" x2="8" y2="21" />
                 <line x1="16" y1="18" x2="16" y2="21" />
                 <circle cx="12" cy="12" r="1.5" fill={color} />
+            </svg>
+        ),
+        // Deportes (Trophy icon)
+        sports: (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 21h8" />
+                <path d="M12 17v4" />
+                <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+                <path d="M17 5h3a2 2 0 0 1-2 4h-1" />
+                <path d="M7 5H4a2 2 0 0 0 2 4h1" />
             </svg>
         ),
         // Menu (Fork & Knife / Utensils icon from reference)
